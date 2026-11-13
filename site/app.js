@@ -65,7 +65,7 @@ function card(p, i = 9) {
 
 // ---------- views ----------
 function viewHome() {
-  const picks = ["Sultan Totem", "Stuttgart Pure, Jade", "Regent Neon Blue", "Cairo Avatar", "Carbon Black", "Mamoun Moagza Copper", "Regent Neon Pink"].map(n => PRODUCTS.find(p => p.name === n));
+  const picks = ["Sultan Totem", "Stuttgart Pure, Jade", "Regent Neon Blue", "Cairo Avatar", "Carbon Black", "Mamoun Moagza Copper", "Regent Neon Pink", "Orbit"].map(n => PRODUCTS.find(p => p.name === n)).filter(Boolean).slice(0, 8);
   const resin = PRODUCTS.filter(p => p.dark);
   return `
   <section class="hero">
