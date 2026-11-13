@@ -1,0 +1,60 @@
+/* One Stop Shop tokens. Idea: THE PRICE AT YOUR DOOR. Device: Door Tag + Spec Stamp.
+   Faces: Archivo (variable width: condensed for the wordmark/display, normal for text;
+   19th-c. American gothic roots, reads like stencil on a shipping carton) and Martian Mono
+   (tabular, wide: every number reads like a carrier label). */
+@font-face{font-family:"Archivo";src:url(fonts/archivo.woff2) format("woff2");font-weight:100 900;font-stretch:62% 125%;font-display:swap}
+@font-face{font-family:"Martian Mono";src:url(fonts/martian.woff2) format("woff2");font-weight:100 800;font-stretch:75% 112.5%;font-display:swap}
+@font-face{font-family:"Archivo Fallback";src:local("Arial");size-adjust:101%;ascent-override:88%;descent-override:22%}
+@font-face{font-family:"Mono Fallback";src:local("Courier New");size-adjust:118%;ascent-override:78%;descent-override:20%}
+
+:root{
+  /* raw: warm paper ramp, hue 80 (kraft-leaning), chroma tapers to the poles */
+  --n-0: oklch(0.975 0.012 82);
+  --n-1: oklch(0.945 0.016 80);
+  --n-2: oklch(0.885 0.018 78);
+  --n-3: oklch(0.74 0.014 76);
+  --n-4: oklch(0.52 0.010 74);
+  --n-5: oklch(0.38 0.008 72);
+  --n-6: oklch(0.22 0.006 70);
+  /* raw: one accent, label red. Jobs: (1) the delivered price, (2) the primary action. */
+  --red:       oklch(0.53 0.19 29);
+  --red-press: oklch(0.48 0.18 29);
+  /* raw: semantics, desaturated */
+  --ok:   oklch(0.52 0.11 150);
+  --warn: oklch(0.53 0.12 70);
+
+  /* purpose */
+  --color-bg: var(--n-0);
+  --color-surface: var(--n-1);
+  --tag: oklch(0.99 0.004 82);
+  --color-tag: var(--tag);
+  --color-border: var(--n-2);
+  --color-rule: var(--n-3);        /* decorative hairline only */
+  --color-field: var(--n-4);       /* input + control boundaries (3:1) */
+  --color-muted: var(--n-4);
+  --color-ink-2: var(--n-5);
+  --color-ink: var(--n-6);
+  --color-price: var(--red);
+  --color-action: var(--red);
+  --color-action-press: var(--red-press);
+  --color-on-action: var(--n-0);
+  --color-focus: var(--n-6);
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
+
+  /* type */
+  --font-sans: "Archivo","Archivo Fallback",system-ui,sans-serif;
+  --font-mono: "Martian Mono","Mono Fallback",ui-monospace,monospace;
+  --t-12: 0.75rem; --t-14: 0.875rem; --t-16: 1rem; --t-18: 1.125rem; --t-24: 1.5rem;
+  --t-display-s: clamp(2rem, 1.2rem + 3.6vw, 3.5rem);
+  --t-display-l: clamp(3rem, 1rem + 9vw, 8.5rem);
+
+  /* space: 4px base, whole multiples */
+  --s-1:4px; --s-2:8px; --s-3:12px; --s-4:16px; --s-6:24px; --s-8:32px; --s-12:48px; --s-16:64px; --s-24:96px;
+  --gutter: clamp(16px, 4vw, 48px);
+  --radius: 2px;
+
+  /* motion */
+  --ease-out: cubic-bezier(.2,.7,.2,1);
+  --dur-micro: 120ms; --dur-state: 220ms;
+}
