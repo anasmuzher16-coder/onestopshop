@@ -65,9 +65,11 @@ function viewHome() {
   <section class="hero">
     <picture class="hero__bg"><source media="(max-width:700px)" srcset="img/wide-bar-800.webp"><img src="img/wide-bar.webp" alt="" width="1600" height="1068" fetchpriority="high"></picture>
     <div class="hero__in">
-      <h1 class="hero__h">Hookahs, and everything that goes with them.</h1>
-      <p class="hero__p">Egyptian brass, German steel and hand-cut glass. In store in Windsor, shipped across Canada.</p>
-      <div class="hero__cta"><a class="btn" href="#/shop/hookahs">Shop hookahs</a><a class="btn btn--ghost" href="#/shop">See everything</a></div>
+      <h1 class="hero__h"><span class="hero__big">Hookahs,</span> <span class="hero__rest">and everything that goes with them.</span></h1>
+      <div class="hero__side">
+        <p class="hero__p">Egyptian brass, German steel and hand-cut glass. In store in Windsor, shipped across Canada.</p>
+        <div class="hero__cta"><a class="btn" href="#/shop/hookahs">Shop hookahs</a><a class="btn btn--ghost" href="#/shop">See everything</a></div>
+      </div>
     </div>
   </section>
   <section class="cats" aria-label="Shop by category">
