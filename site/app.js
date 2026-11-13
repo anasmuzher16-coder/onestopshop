@@ -69,7 +69,7 @@ function viewHome() {
   const resin = PRODUCTS.filter(p => p.dark);
   return `
   <section class="hero">
-    <picture class="hero__bg"><img src="img/wide-bar.webp" srcset="img/wide-bar-800.webp 800w, img/wide-bar.webp 1600w, img/wide-bar-2400.webp 2400w" sizes="(max-width:700px) 230vw, 100vw" alt="" width="1600" height="1068" fetchpriority="high"></picture>
+    <picture class="hero__bg"><source media="(max-width:700px)" srcset="img/wide-bar-phone-s.webp 780w, img/wide-bar-phone.webp 1180w" sizes="100vw"><img src="img/wide-bar.webp" srcset="img/wide-bar.webp 1600w, img/wide-bar-2400.webp 2400w" sizes="100vw" alt="" width="1600" height="1068" fetchpriority="high"></picture>
     <div class="hero__in">
       <h1 class="hero__h"><span class="hero__big">Hookahs,</span> <span class="hero__rest">and everything that goes with them.</span></h1>
       <div class="hero__side">
