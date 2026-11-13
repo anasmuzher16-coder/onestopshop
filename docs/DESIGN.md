@@ -46,3 +46,20 @@ page, the cart, and the shipping page. No postal button in the top bar or the do
 on the counter (materials), not delivered prices. Captures now run with no postal code except product/cart
 shots (Toronto, as an example only).
 Idea, restated: THE COUNTER, ONLINE. Device: the price sticker (the counter's price gun), unchanged in form.
+
+## Direction 3 (2026-11-13 evening): THE COUNTER, CURATED
+His words on direction 2: "not sure I'm a fan of the blocky look, it somewhat looks similar to hmbarbershop.com,
+I want it to feel more curated". Checked against a capture of hmbarbershop.com: shared DNA was near-black ground,
+giant white display type over a full-bleed photo, hard rectangles, red accent. All four are gone.
+- Device: THE NICHE. Every product stands in an arched display niche (pale sand), numbered like a piece
+  ("No. 027"). Provenance: the shop's own form (things on a counter, shown one at a time) and the arch of the
+  niche a hookah sits in at a lounge. It generates the hero, the grid, the collection thumbnails, the cart
+  thumbnails and print (a numbered tag per piece).
+- Colour: deep jewel grounds, one per collection (emerald hookahs, teal bases, midnight bowls, oxblood heat,
+  forest hoses, aubergine parts, umber frames). The page ground changes as you move between collections.
+  Gilt is the one accent: Arabic display lines, link underlines, the cart count.
+- Type: Bodoni Moda (display; the perfume-house register the shop already sells in) with italic for the one
+  emphasis; Aref Ruqaa for Arabic display; Readex Pro for UI. Rounded pill controls, no hard rectangles.
+- Layout: fewer pieces per row (2 on a phone, 3 on desktop), staggered picks, collections as a ledger list
+  rather than colour blocks, a floating pill dock on phones.
+- Motion: one quiet move, niches rise into place once when first seen. Reduced motion shows them in place.

@@ -1,0 +1,8 @@
+{
+  // One Stop Shop mockup preview. Static files only (site/). Private preview for the client:
+  // noindex headers in site/_headers. Product photos are placeholders; not for a public launch.
+  "name": "onestopshop-preview",
+  "compatibility_date": "2026-10-01",
+  "workers_dev": true,
+  "assets": { "directory": "./site", "not_found_handling": "single-page-application" }
+}
