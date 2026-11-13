@@ -105,7 +105,11 @@ body:not([data-route]) .foot{visibility:hidden}
 .hero__slabs,.hero__pieces{position:absolute;inset:0;display:grid;grid-template-columns:repeat(3,1fr)}
 .hero__slabs span{background:var(--tile)}
 .hero__slabs span:nth-child(n+4),.hero__pieces .piece:nth-child(n+4){display:none}
-.hero__word{position:absolute;left:var(--gutter);bottom:-.07em;margin:0 0 0 -.045em;font:400 calc((100cqw - 2 * var(--gutter)) * .262)/.8 var(--font-display);letter-spacing:-.02em;color:var(--color-strong);white-space:nowrap}
+.hero__word{position:absolute;left:var(--gutter);bottom:-.07em;margin:0 0 0 -.045em;font:400 calc((100cqw - 2 * var(--gutter)) * .262)/.8 var(--font-display);letter-spacing:-.02em;color:var(--color-strong);white-space:nowrap;text-shadow:.028em .028em 0 var(--ink)}
+/* The word is drawn twice (atelier:typography, type over image gets one legibility rule): white fill with a hard ink
+   drop UNDER the packshots, then the same letters as an ink outline OVER them, so the hookahs pass through the
+   letters but every letter keeps its full contour. */
+.hero__word--line{color:transparent;text-shadow:none;-webkit-text-stroke:max(2px,.013em) var(--ink);pointer-events:none}
 .piece{position:relative;display:flex;align-items:flex-end;justify-content:center;height:100%;text-decoration:none;min-width:0}
 .piece .shot{flex:none;height:calc(var(--cm) / 118 * 100%);margin-bottom:calc(100cqw * .2);width:auto;max-width:none;aspect-ratio:4/5;object-fit:contain;object-position:50% 100%}
 .piece .sticker{top:var(--s-3);right:var(--s-2);bottom:auto;width:54px;height:54px;animation:slap var(--dur-reveal) var(--ease-enter) both;animation-delay:calc(420ms + var(--i) * 70ms)}
