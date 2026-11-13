@@ -1,0 +1,181 @@
+# SHIPPING - sources for every number in site/rates.js
+Updated 2026-11-13.
+
+## 1. Decisions taken for the mockup
+- Carrier in the mockup: Canada Post only (the one carrier with a price sheet we actually read).
+  Purolator/UPS appear in production via live rates; no unsourced numbers for them in the mockup.
+- Regular Parcel is never offered: at Solutions for Small Business level 4, Expedited Parcel and
+  Regular Parcel are the same price (guide text lines 2087 vs 2909, identical 5.0 kg rows).
+- Shisha tobacco, vapes and charcoal are not shippable products in the store (section 3 of research).
+  TVPA s.9.1(2) also bans ADVERTISING an offer to ship tobacco between provinces: the site copy says
+  only what we do ship. Verified by WebFetch of laws-lois.justice.gc.ca T-11.5, 2026-11-13.
+
+## 2. Rate card calibration
+Source PDF: https://www.canadapost-postescanada.ca/cpc/doc/en/smb/priceguide-level-4.pdf
+("Updated June 26, 2025", 16 pages). Extracted with pdftotext -layout.
+Each service has 128 rate-code prices per weight. Zone k uses this percentile (1 / 5 / 10 kg):
+| Zone | Meaning | Expedited | Xpresspost |
+|---|---|---|---|
+| 1 | Windsor area | min 9.09 / 10.63 / 14.23 | min 9.57 / 12.67 / 15.17 |
+| 2 | Southern Ontario | p10 11.56 / 15.53 / 22.53 | p10 12.92 / 19.20 / 25.50 |
+| 3 | Northern ON, Quebec | p30 14.82 / 21.17 / 30.03 | p30 17.53 / 27.18 / 41.20 |
+| 4 | Prairies, Maritimes | p50 16.86 / 25.00 / 36.05 | p50 19.80 / 37.78 / 63.55 |
+| 5 | BC, Newfoundland | p90 20.52 / 34.36 / 50.48 | p70 25.40 / 54.97 / 87.24 |
+| 6 | Territories | max 35.57 / 88.55 / 157.23 | max 46.09 / 108.02 / 188.40 |
+LIMITATION: real prices depend on the origin-destination RATE CODE (canadapost.ca/ratecodes), which
+we have not mapped. These are estimates; the production calculator calls the Canada Post Rating API.
+Fuel: 25% = the floor after Canada Post's 15% relief discount (news release 2026-10-05:
+"Fuel surcharges will be subject to a minimum threshold of 25 per cent after the discount"). Live
+value changes weekly.
+Dim weight divisor 5,000 cm3/kg: FedEx/UPS confirmed (research s.4); Canada Post VE rule to confirm.
+Delivery days per zone: ESTIMATES, COULD NOT VERIFY (Canada Post delivery standards not read).
+
+## 3. What the mockup taught us (tell Angel)
+- Box size decides the price more than weight: OSS-0101 (6.5 kg packed) bills at 17.5 kg in a
+  66x36x36 box. Right-sized hookah boxes are the single biggest shipping saving.
+  (node tools/test-rates.mjs: "OSS-0101 to Halifax: Canada Post Expedited Parcel $65.78 (billed 17.5 kg)")
+
+## 4. Data we need per item
+Packed weight (0.01 kg), packed box L/W/H (cm), glass yes/no, ships-disassembled yes/no, regulated
+flag, declared value. Plan: weigh and measure one of each product family, then the outliers.
+
+## 5. Full research (subagent, spot-checked: TVPA s.9.1 and Shopify CA pricing both confirmed by
+direct fetch 2026-11-13)
+# Shipping research: Windsor-Essex hookah store, national Canada, ~600 SKUs
+Researched 2026-11-13. Evidence tags: [FETCHED] = I read the page/PDF text; [SNIPPET] = search-result summary only (weaker); [3RD] = third party.
+Several carrier sites (UPS CA, Purolator, GoDaddy) returned 403/Access Denied to my fetcher. Those gaps are in section 7, not filled.
+
+## 1. CARRIERS
+
+| Carrier | Service levels relevant | Rating API (Y/N, name) | Small-business discount route | Dim-weight divisor (cm3/kg) | Fragile/glass policy | Notes |
+|---|---|---|---|---|---|---|
+| Canada Post | Regular Parcel, Expedited Parcel, Xpresspost, Priority | Y. Rating API (REST dev portal). "The Canada Post rating API returns all available shipping options and costs for package shipments." OAuth 2.0 mandatory "since April 30, 2026". https://developer-developpeur.canadapost-postescanada.ca/devportal-portaildesdeveloppeurs/api/overview/rating [FETCHED]. Legacy SOAP/REST docs: https://www.canadapost-postescanada.ca/info/mc/business/productsservices/developers/services/rating/getrates/default.jsf [FETCHED] | Solutions for Small Business (SfSB), free. Business prices go to "business customers and to Canada Post Solutions for Small Business cardholders who electronically transmit their order using Electronic Shipping Tools" https://www.canadapost-postescanada.ca/cpc/doc/en/support/prices/business-prices.pdf [FETCHED, price sheet effective Sept 7, 2026 on p3]. News release: through Dec 31, 2026 SfSB members "automatically receive the program's best available shipping discounts, regardless of shipping volume" https://www.canadapost-postescanada.ca/cpc/en/our-company/news-and-media/corporate-news/news-release/2026-09-21-canada-post-introduces-new-pricing-discounts-market-insights-and-ecommerce-solutions-to-support-canadian-businesses [FETCHED]. Commercial contract suggested at ~25+ parcels/week [SNIPPET] | Not stated by Canada Post as a number in the pages I read. Uses "Volumetric Equivalent (VE)": greater of actual weight or volumetric weight. https://www.canadapost-postescanada.ca/blogs/business/ecommerce/understanding-cubing-how-to-avoid-unexpected-shipping-fees/ [FETCHED]. A 3rd-party calculator claims 5000 (Priority, Xpresspost) and 6000 (Regular Parcel): COULD NOT VERIFY | No glass-specific rule found. Oversize: "any dimension exceeds 1 m", or "more than 76 cm along its second-longest side"; unpackaged/cylindrical/irregular items carry a surcharge; out-of-spec item "$300 or more" [FETCHED, cubing blog]. Out-of-spec surcharge in price sheet shows $300.00 / $400.00 [FETCHED, PDF] | API params: kg and cm, `contract-id` "must be omitted for Solutions for Small Business members"; `customer-number` omitted gives counter (consumer) rates. Response includes fuel surcharge as adjustment code FUELSC, taxes, and "due" total [FETCHED, getrates page]. Cubing adjustment appears if declared dims differ from detected dims. Tobacco/vape rules in section 3 |
+| Purolator | Purolator Express/Ground (courier) | Y in general (E-Ship Web Services), but I could not open Purolator developer pages. Shopify lists Purolator as a built-in Canadian carrier-calculated option https://help.shopify.com/en/manual/fulfillment/setup/shipping-rates/carrier-calculated-shipping-rates [FETCHED]. ShipStation API supports Purolator rate shopping https://www.shipengine.com/docs/carriers/purolator-canada/ [SNIPPET] | Purolator account/volume discount (details COULD NOT VERIFY). Via aggregators (ShipStation, Shippo, EasyPost, ClickShip, Freightcom) | COULD NOT VERIFY for courier. Freight/LTL guide uses L x W x H (in) / 1,728 [SNIPPET]. Notice: from July 19, 2026 "round each fractional measurement for a courier package dimension up to the next whole inch or centimetre for billing purposes" [SNIPPET, Purolator notice] | COULD NOT VERIFY | Fuel surcharge "applies to all courier shipments tendered to Purolator regardless of destination or selected mode of transportation"; set monthly, changes first Monday; 34.50% listed for Apr 6 to May 3, 2026 [SNIPPET, purolator.com]. Peak surcharges ~$6/piece additional handling [3RD, ShipTime/ClickShip] |
+| UPS Canada | UPS Standard, Express family, Expedited | Y. Rating API (developer.ups.com). I could not fetch it | UPS account via aggregators. UPS own small-biz pricing: COULD NOT VERIFY | 5,000 cm3/kg (139 in3/lb) for all except domestic Air which is 4,100 (115). Quote: "If measuring in centimeters, the divisor is 4,100 for domestic Air shipments and 5,000 for all other shipments." https://www.ups.com/ca/en/support/shipping-support/shipping-dimensions-weight [SNIPPET; page 403'd on direct fetch] | COULD NOT VERIFY (no glass-specific text read) | Tobacco: "Shipments containing Tobacco Products are accepted for transportation only from Shippers who are licensed and authorized to ship Tobacco Products pursuant to applicable laws" and need signed UPS agreement [SNIPPET of UPS global tobacco page, US/other country versions; UPS CA page 403'd] |
+| FedEx Canada | Ground (intra-Canada), Express | Y. Rates and Transit Times API (developer.fedex.com), not fetched | FedEx account via aggregators; FedEx own small-biz route COULD NOT VERIFY | 5,000 cm3/kg (139 in3/lb). Quote: "Dimensional weight for intra-Canada and U.S.-bound packages is calculated by multiplying the length by width by height of each package in inches and dividing by 139 cubic inches per pound (if multiplied in centimetres, divide by 5,000 cubic centimetres per kilogram)." https://fedex.com/content/dam/fedex/ca-canada/MVP/downloads/2025/CA_EN_2025_Rate_Guide_Ground.pdf [FETCHED, eff. Jan 6 2025] | No glass rule found. Packaging surcharge ($22.70) if package "is not fully encased in an outer shipping container" or is non-corrugated, shrink-wrapped, round/cylindrical etc. [FETCHED] | 2025 guide (may be superseded by 2026 guide, not found): Additional Handling $24.90 dimension (longest side >48in/121cm; 2nd side >30in/76cm; L+girth >105in) with 40 lb min billable; $28.90 weight (>70 lb); Oversize $109.50 (>96 in length); Residential Delivery Surcharge $4.65/pkg; Delivery Area Surcharge $2 commercial/residential; remote rural surcharge by postal code, extra $40.50 over 100 lb; Address Correction Fee $16.95/pkg; fuel surcharge variable (fedex.ca/fuel) [all FETCHED]. FedEx tobacco: other-country FedEx pages say tobacco shipping "is prohibited" [SNIPPET]; FedEx Canada page 404'd |
+| Canpar (Loomis family) | Canpar Ground, Select, Express | Y. Shows in ShipStation, EasyPost "Canpar is live-rated" https://docs.easypost.com/carriers/canpar-guide [SNIPPET]. Native Canpar API exists per Canpar site topic list; not readable | Via aggregators | 139.4 in3/lb (about 5,000 cm3/kg); Canpar Select 115.2 [3RD, ShipTime blog snippet]. Official: COULD NOT VERIFY | Loomis/Canpar notice: packages "up to 108 inches in length" [3RD snippet]. Glass policy: COULD NOT VERIFY (Canpar site lists a "fragile-items policy" page I could not read) | EasyPost: surcharges visible via API once account linked; label void not supported [SNIPPET] |
+| Loomis Express / GLS Canada | Loomis Ground/Express; GLS Canada parcel | Native API: COULD NOT VERIFY | Via account or aggregators | 139.4 per a single 3rd-party source; COULD NOT VERIFY officially | Loomis reserves right to refuse articles "unsuitable for the courier's sorting facilities (e.g. ... liquids)"; GLS Canada tariff applies additional handling to articles "not fully encased in corrugated cardboard or in GLS Canada-approved packaging" [SNIPPET, GLS T100 tariff] | Max weight conflicting sources (70 lb vs 150 lb) |
+| Nationex | Regional ground, Quebec and Ontario focus | Y per integration docs: needs account with API access, customer ID, API key (apidev.nationex.com) [3RD, commercebuild changelog] | Direct account only | COULD NOT VERIFY | COULD NOT VERIFY | "Canadian regional shipping carrier ... primarily in Quebec and Ontario" [3RD]. Not national, so not a sole carrier for this store. ShipEngine lists it domestic-only [SNIPPET] |
+| Chit Chats | Domestic Canada "2-5 business day" economy | Y. Public API docs linked (/docs/api/v1) https://chitchats.com/ [FETCHED footer only] | Own discounted pricing, no account tier needed | COULD NOT VERIFY | Prohibited-items page exists (/prohibited-items); contents not read | Built for light parcels (envelopes, small parcels); size/weight limits not stated on page I read. Likely poor fit for tall hookahs (COULD NOT VERIFY limits) |
+| Stallion Express | Intelcom Standard, Canada Post Expedited/ZoneSkip, FleetOptics, Whiz, ICS, sometimes Rivo/Canpar/Apple Express | API: COULD NOT VERIFY (docs not found) | Reseller pricing with its own discounts | Not covered on its help page | Not a licensed carrier for dangerous goods [SNIPPET]. Max: Intelcom 50 lb / 70 in total; CP Expedited 50 lb / 100 in (L+W+H); ZoneSkip 50 lb / 70 in https://help.stallion.ca/article/domestic-carriers-guide [FETCHED] | "Maximum package weight and dimensions are carrier-service limits" and "rates page is the current source of truth" [FETCHED]. 70 in total cap rules out most boxed hookahs on Intelcom/ZoneSkip |
+
+## 2. MULTI-CARRIER AGGREGATORS / RATE APIs
+
+| Service | Canadian carriers supported | Live rate API at checkout (Y/N) | Pricing | Works with Shopify / custom / GoDaddy | Notes |
+|---|---|---|---|---|---|
+| Freightcom / ClickShip | Canada Post, UPS, Day & Ross, TST, others (Shopify listing) https://apps.shopify.com/freightcom-delivery [FETCHED]. Parcel and LTL | Y. "Real-time shipping rates at checkout for parcel and LTL" (Shopify app). ClickShip FAQ: real-time rates for Shopify, WooCommerce, Magento 2 [SNIPPET]. Freightcom Customer API (developer.freightcom.com) with API key, access by request [3RD snippet] | ClickShip Shopify (CAD): Free (includes real-time checkout rates), Custom Branding $14.25/mo, Shipping Rules $42.78/mo, Canada Post Add-On $42.79/mo for your own Canada Post account [FETCHED]. API pricing not public | Shopify yes; WooCommerce yes; custom via API (gated); GoDaddy no evidence | Reviews on listing mention extra charges for postal code errors and delayed insurance claims [FETCHED] |
+| ShipStation | Canada Post, Canpar, Purolator, DHL Express, UPS, FedEx, GlobalPost https://www.shipstation.com/en-ca/ [FETCHED] | Via API: ShipEngine docs say Purolator Canada supports rate shopping [SNIPPET]. Dedicated checkout-rates plugin: COULD NOT VERIFY | USD: Starter $14.99/mo (50 shipments), Standard $29.99/mo (50 shipments, includes Shipping API), Premium $349.99/mo; "+$0.000 per label" https://www.shipstation.com/pricing/ [FETCHED]. "API access: Not included in Starter" [FETCHED]. CAD pricing not shown | Shopify yes (label side). Custom via ShipEngine API. GoDaddy: older GoDaddy help says label purchasing runs through ShipEngine [SNIPPET, godaddy.com/help/fulfill-and-ship-my-orders-20058] | Claims "up to 58% off Canada Post retail" (marketing) |
+| Shippo | Canada Post (master account rates, no CP contract needed), Purolator (Express services listed), others https://goshippo.com/carriers/canada-post-api [SNIPPET] | Y via Rates API (rating calls billed separately at "API Starter rates", not listed) | Starter free up to 30 labels/mo (5c/label own account), Pro $17/mo (structured data says $19) up to 200 labels, Premier contact sales https://goshippo.com/pricing [FETCHED]. "The page does not mention Canada." | Custom via API; Shopify/Woo apps exist; GoDaddy previously integrated (Shippo blog) but GoDaddy page says Shippo "no longer supported" [SNIPPET] | Pricing page discrepancy flagged above |
+| EasyPost | Canada Post (default wallet account in USD, or BYOCA in CAD), Purolator, Canpar https://docs.easypost.com/carriers/canada-post-guide [SNIPPET] | Y (Rates API) | Wallet carriers: "No platform fee, and unlimited labels"; BYOCA $20/mo plus per-label fee (amount not listed) https://www.easypost.com/pricing [FETCHED]. Canada rate-only call cost: COULD NOT VERIFY | Custom/code only | Developer-first, no checkout plugin. Wallet CP labels paid in USD [SNIPPET] |
+| ShipTime | Multiple Canadian couriers (list COULD NOT VERIFY) | Y per WooCommerce plugin ("real-time discounted rates at checkout") | Free install on Shopify, "additional charges may apply" https://apps.shopify.com/shiptime-discounted-shipping [SNIPPET] | Shopify app, WooCommerce plugin | WP.org plugin warns "not tested with the latest three major WordPress releases"; 1-star rating, one reviewer reports connection error [SNIPPET]. Treat as risky |
+| Shopify Shipping (Canada) | Canada Post and Purolator (built-in rates). "Built-in carrier rates ... are available on all plans" https://help.shopify.com/en/manual/fulfillment/setup/shipping-rates/carrier-calculated-shipping-rates [FETCHED] | Y (Shopify only) | Included in plan; handling-fee markup you set | Shopify only | Third-party Canada Post using your own account needs Advanced/Plus (section 5) |
+| Stallion Express | See section 1 | Public API: COULD NOT VERIFY | Per-label markup rates | Not verified | No checkout rate plugin found |
+| Postage.ca / Canada Post EST | Canada Post only | Postage.ca EST/API: COULD NOT VERIFY (nothing found). Canada Post Rating API is the official route (section 1) | Free API, but needs Canada Post developer account | Custom, WooCommerce plugins (see section 5) | EST = Canada Post Electronic Shipping Tools, the tool that unlocks SfSB business prices at the counter-less route |
+| PluginHive / Octolize / Sure As Ship (plugins) | Canada Post, FedEx, UPS, Purolator | Y at checkout | Octolize Canada Post Live Rates PRO listed $79; woocommerce.com Canada Post Shipping Method $109 (20% discount noted) [SNIPPET]; Sure As Ship "free plugin" with live commercial rates (Canada Post, FedEx, UPS, Purolator) https://wordpress.org/plugins/?p=369221 [SNIPPET] | WooCommerce, Shopify (Sure As Ship, PluginHive apps) | Prices from search snippets only, confirm on vendor pages |
+
+## 3. REGULATED GOODS
+
+### (a) Shisha / hookah tobacco
+- Federal definition: "tobacco product" means "a product made in whole or in part of tobacco, including tobacco leaves." Shisha with tobacco is therefore a tobacco product. https://laws-lois.justice.gc.ca/eng/acts/T-11.5/FullText.html [FETCHED, TVPA s.2]
+- Interprovincial ban. TVPA s.9.1(1): "No person shall, for consideration, send or deliver a tobacco product from one province to another." Exception for transfers between manufacturers or retailers or regulation exemptions. s.9.1(2): "No person shall advertise an offer to send or deliver a tobacco product from one province to another." [FETCHED] Consequence: a retailer cannot sell tobacco shisha to consumers outside its own province. Within Ontario only.
+- Canada Post: "Tobacco products are non-mailable from one province or territory to another unless the:" shipment is between manufacturers or retailers, or between two consumers. "Proof of Age is required for all tobacco product shipments unless the shipment is between:" manufacturers/retailers or two consumers. https://www.canadapost-postescanada.ca/cpc/en/support/articles/non-mailable-matter/tobacco-and-vaping-products.page [FETCHED]
+- Age: Ontario SFOA, 2017: "online retailers operating in Ontario are required to ensure that there is a process for verifying the age of any potential customer and that the recipient is at least 19 years of age. Sellers are also advised to ensure that delivery agents (e.g., couriers) are aware of this requirement" (Ministry of Health fact sheet, 2026) https://eohu.ca/files/resources/online-sales-fact-sheet-for-retailers-2026-final-en.pdf [FETCHED, PDF text read]. Federal minimum is 18 (TVPA s.8, s.9: "No person shall send or deliver a tobacco product or vaping product to a young person") [FETCHED].
+- Flavoured shisha in Ontario: "The exemption described above for 'flavoured pipe tobacco' does not extend to flavoured shisha tobacco used in waterpipes or hookahs." and "As a result, the sale of flavoured waterpipe tobacco is prohibited in Ontario." Fines individuals $4,000 to $100,000, corporations $200,000 to $600,000. https://www.toronto.ca/community-people/health-wellness-care/health-inspections-monitoring/smoking-legislation-enforcement/smoke-free-ontario-act-2017/smoke-free-ontario-act-2017-fact-sheets/flavoured-tobacco-products/ [FETCHED]. Net: tobacco shisha is effectively unsaleable in Ontario in flavours, and unshippable out of province.
+- Excise stamps: Excise Act, 2001 stamping regime limits stamp production to a CRA-authorized provider and distribution "to tobacco licensees, and prescribed persons who import tobacco products"; stamp types Tobacco 100, 200, Cigars, Raw leaf https://www.canada.ca/en/revenue-agency/services/forms-publications/publications/edn29/tobacco-stamping-regime-excise-stamp-order-process.html [SNIPPET]. Whether and how shisha is stamped: COULD NOT VERIFY. A retailer buying from a licensed wholesaler should receive stamped goods, confirm with supplier.
+- Carriers: UPS only from licensed shippers with signed agreement [SNIPPET, global page]. FedEx: tobacco "prohibited" per other-country pages [SNIPPET]. Purolator: COULD NOT VERIFY. Canada Post: above.
+- Provincial retail licensing/registration beyond Ontario and Health Unit tobacconist registration: only summarized from [SNIPPET]; COULD NOT VERIFY.
+
+### (b) Herbal (tobacco-free) shisha
+- TVPA "tobacco product" is "made in whole or in part of tobacco", so a genuinely tobacco-free product is outside that definition. The TVPA has no "herbal products for smoking" part in the text I read (first 100,000 of 130,270 characters only) [FETCHED, partial].
+- Ontario: Ministry-based fact sheets say smoking herbal shisha is outside the Smoke-Free Ontario Act, 2017; inspectors may sample shisha to test for tobacco https://wdgpublichealth.ca/sites/default/files/file-attachments/basic-page/waterpipe_2018_10_09_english.pdf [SNIPPET, 2018 vintage]. Not verified against current statute.
+- Nicotine-free is not the same as tobacco-free. Product must contain no tobacco leaf. Retailer risk: a product tested positive is a tobacco product and then the flavour ban and s.9.1 apply.
+- Carrier treatment for herbal shisha: COULD NOT VERIFY (none of the carriers I read name it). Some carriers (DHL eCommerce, per snippet) list "hookah or shisha" among tobacco prohibited items, so a carrier may treat it as tobacco regardless [SNIPPET, DHL ca-en]. Ask each carrier in writing.
+
+### (c) Hookah charcoal
+- Natural/coconut-shell shisha charcoal discs are classified UN 1361, Class 4.2 (self-heating) in maritime IMDG, with a recent change from Special Provision 925 to 978 [3RD, vendor charcoal.pro and JensenHughes, SNIPPET]. How Canada's TDG Regulations treat it for ground courier: COULD NOT VERIFY.
+- Canada Post lists charcoal under "Class 4 – Flammable substances" in its dangerous goods index; index "is not an exhaustive list" and CANUTEC 1-613-992-4624 is the contact https://www.canadapost-postescanada.ca/cpc/en/support/articles/non-mailable-matter/transportation-of-dangerous-goods-classes-and-index.page [FETCHED]. Dangerous goods are non-mailable via Canada Post per its non-mailable guide (section 6 "Dangerous goods") [FETCHED, table of contents only].
+- Quick-light (self-lighting) coals contain accelerants/oxidizers: COULD NOT VERIFY classification. Treat as dangerous goods until a supplier SDS says otherwise.
+- Stallion "is not a licensed carrier for transporting dangerous goods" [SNIPPET]. Practical rule: do not put coal in checkout via carriers until you hold a written carrier OK and the supplier's SDS/TDG classification.
+
+### (d) E-liquids / vapes
+- Canada Post: "Vaping products, as defined by the Tobacco and Vaping Products Act are non-mailable unless the:" lithium battery meets ABCs-of-mailing ground requirements and "Product is shipped using a ground service (for example, Expedited Parcel or Regular Parcel)"; "you can't ship vaping products to air stage offices." "Proof of Age is required for all vaping product shipments unless the shipment is:" B2B, consumer-to-consumer or under a prescription. [FETCHED]
+- TVPA s.9.1 covers "tobacco product" only, so interprovincial ban text read does not name vaping products [FETCHED]. Provincial vape-specific shipping rules (flavour bans, e.g. Quebec, Nova Scotia, others): COULD NOT VERIFY.
+- UPS: global addendum "does not accept any Vaping Products" under US policy effective May 1, 2023 [SNIPPET]. eShipper says UPS Canada accepts vape for domestic ground only [3RD, conflicting]. COULD NOT VERIFY.
+- Ontario: age 19 and online age verification apply to vapour products too [FETCHED, fact sheet].
+- Recommendation not to include vapes: out of scope for the stated product list.
+
+## 4. WHAT MAKES A CALCULATOR "NEVER WRONG"
+
+Failure modes, with evidence:
+1. Dimensional/volumetric weight. Billable = greater of actual and dim weight. FedEx and UPS: L x W x H cm / 5,000 (UPS domestic Air 4,100) [FETCHED FedEx; SNIPPET UPS]. Canada Post uses VE and a cubing adjustment "if the dimensions you declared differ from those detected" [FETCHED]. Purolator rounds each dimension up to whole cm/in from July 19, 2026 [SNIPPET]. Fix: send real packed-box dims, round each side up yourself first.
+   Worked example for a hookah: 90 x 25 x 25 cm box = 56,250 cm3 / 5,000 = 11.25 kg dim weight even if it weighs 4 kg. Tall box also trips FedEx "longest side >121 cm" only above 121 cm, but trips second-side/other rules at 76 cm; Canada Post oversize at 1 m or 76 cm second side; Stallion Intelcom/ZoneSkip cap of 70 in total [FETCHED].
+2. Oversize, additional handling, unpackaged. FedEx: $24.90 additional handling (dimension) with 40 lb minimum billable weight, $22.70 packaging surcharge if not "fully encased in an outer shipping container" or covered in shrink wrap [FETCHED]. Canada Post: unpackaged/oversize surcharges; out-of-spec $300+ [FETCHED]. Any API only prices these if dimensions and a package-type flag are sent. Glass items: must be fully boxed in plain corrugated, no stretch wrap.
+3. Fuel surcharge. Changes monthly (Purolator, first Monday; 34.50% in Apr-May 2026 [SNIPPET]); FedEx "Visit fedex.ca/fuel for updates"; Canada Post returns FUELSC in API [FETCHED]. Canada Post promo: 15% discount on fuel surcharge until Jan 3, 2027 [SNIPPET]. Fix: never hardcode; take from live rate response.
+4. Residential, delivery-area, remote/rural. FedEx residential $4.65, delivery area $2, remote rural by postal code with extra $40.50 over 100 lb [FETCHED]. Depends on postal code, so only a live call (or the carrier's postal-code list) is correct. Canada Post has rural/remote tiers in its price sheet [FETCHED, PDF].
+5. Multi-box orders. A hookah plus accessories may be 2 to 3 boxes; each box is rated separately, each can trigger surcharges. Calculator must do cartonization (pack items into boxes) before rating. GoDaddy warns "If you offer several products in the same box, you need dimensions and weights for all of them" [SNIPPET, godaddy.com help]. Shippo/EasyPost sell Cartonization only by sales contact [FETCHED EasyPost].
+6. Address correction. FedEx $16.95/pkg ("A fee will apply when an attempt is made to find the correct address") [FETCHED]; Canada Post barcode label and address correction fee in price sheet [FETCHED]. Fix: address validation at checkout (Canada Post AddressComplete is separate, COULD NOT VERIFY); not something a rate API prevents.
+7. Packaging weight. Rate on box + dunnage + product, not product weight. Add a per-SKU packaging allowance or store packed-box weight.
+8. Rate source mismatch. Counter/retail rates vs commercial rates: Canada Post API returns different prices depending on whether `customer-number` is sent [FETCHED]. Shopify's Canada Post integration needs your own CP account, stores quote at "up to 20 rates per minute" by default (400 if approved) [FETCHED]. One Shopify forum post says labels bought via Shopify's account do not count toward your own CP volume tiers [3RD, SNIPPET].
+9. Taxes and rounding. Canada Post returns taxes block and a final "due" amount [FETCHED]; GST/HST/PST/QST on shipping by destination province, charge consistently.
+10. Peak surcharges (Oct/Nov to Jan) appear and expire; peak lists 2025-26 on ShipTime/ClickShip [SNIPPET]. Live API reflects them, static tables do not.
+11. Price changes after label: carriers can re-bill on re-measure ("If the dimensions change during transit, FedEx may make appropriate adjustments" [FETCHED]). A calculator cannot be "never wrong" if the box is measured differently. Control: ship with the exact declared box.
+
+Per-SKU data required: product weight (kg, 0.01 resolution), product L/W/H (cm), packed-box dimensions and packed weight (own box profile, incl. dunnage), box type (corrugated, fully encased, no wrap), fragile flag, max items per box / stacking rule, hazmat/regulated flag (coal, tobacco, herbal), ships-from postal code, declared value for insurance. Without cartonization rules, multi-item orders will be wrong.
+
+## 5. PLATFORM
+
+### GoDaddy Websites + Marketing, Online Store
+- Carrier-calculated shipping exists: GoDaddy help says carrier-based methods follow business and regional info, not ship-from address: "You may need to update your shipping location, region and currency to match where you're shipping from." Canada Post method needs a Canada Post customer number connected via GoDaddy [SNIPPET, https://www.godaddy.com/en-ca/help/change-my-shipping-methods-23917, 403 on direct fetch]. GoDaddy Online Store page lists shipping via "Canada Post and United Parcel Service (UPS)" [SNIPPET, https://www.godaddy.com/websites/online-store].
+- Label purchasing: "label purchasing runs through ShipEngine ... Shippo is no longer supported" [SNIPPET, https://www.godaddy.com/help/fulfill-and-ship-my-orders-20058].
+- Plans and CAD prices: official en-ca page shows a Basic plan C$13.99/mo; higher tiers and which tier unlocks calculated shipping NOT confirmed. Third parties disagree (ecommerceguide.com USD Starter $9.99 / Professional $24.99 / Ultimate $99.99; ExpertMarket CA top tier C$27.99 renewing $39.99). Do not rely. COULD NOT VERIFY.
+- No evidence of per-SKU box packing, multi-box cartonization, hazmat flags or age verification.
+- Fit for this job: weak. Unknown if UPS rates work in Canada, no cartonization.
+
+### Shopify (Canada)
+- Pricing CAD: Basic $37 yearly / $49 monthly (3rd-party calculated shipping "Not included"), Grow $99 / $132 ("Add-on"), Advanced $389 / $517 ("Included"), Plus from $3,400/mo (Included) https://www.shopify.com/ca/pricing [FETCHED].
+- Built-in Canada Post and Purolator rates "available on all plans" [FETCHED].
+- Using your own Canada Post account at checkout: "Your store needs to be on the Advanced or Plus plan." Grow can add the feature "for a monthly fee or by switching to yearly billing"; fee amount not stated https://help.shopify.com/en/manual/fulfillment/setup/shipping-rates/third-party-carrier-calculated-shipping/canada-post [FETCHED]. UPS/FedEx via own account also needs the third-party feature [FETCHED].
+- Multi-box packing: Shopify "packages" with weights/dimensions in shipping settings; per-variant weight only, no per-SKU box profile natively: COULD NOT VERIFY. Needs app (ClickShip/PluginHive/Sure As Ship).
+- Age verification for tobacco: not native; COULD NOT VERIFY.
+
+### WooCommerce plugins
+- Canada Post live rates: Octolize PRO $79, woocommerce.com Canada Post Shipping Method $109 [SNIPPET]. Sure As Ship free [SNIPPET]. PluginHive multi-carrier (price COULD NOT VERIFY). ClickShip WooCommerce price COULD NOT VERIFY. ShipTime plugin flagged unmaintained [SNIPPET].
+- WP hosting and plugin cost not researched.
+
+### Custom checkout calling a rate API
+- Canada Post Rating API directly (OAuth, SfSB or commercial). EasyPost/Shippo/ShipEngine for multi-carrier. Costs: EasyPost wallet "No platform fee" [FETCHED]; ShipStation API needs Standard $29.99/mo+ [FETCHED]; Shippo API rate-call fees COULD NOT VERIFY.
+- You own cartonization, validation, taxes, caching, age verification, plus rate limits (Canada Post default 20/min through Shopify [FETCHED]; direct API limits in Canada Post developer guide, not read).
+
+## 6. RECOMMENDATION
+
+Stack A (most defensible for "never wrong"): Shopify Grow or Advanced + Canada Post (own SfSB/commercial account) + Purolator built-in + a cartonization/packing app, with every hookah on a fixed packed-box profile.
+- Why: carrier-calculated quote is the exact number the carrier will bill (Canada Post returns FUELSC, taxes, due) [FETCHED]; built-in Canada Post and Purolator on all plans [FETCHED]; Grow needs a third-party add-on only if you want your own CP discount.
+- Rough monthly cost: Grow $99 CAD yearly or $132 monthly + third-party calc fee (amount COULD NOT VERIFY) or Advanced $389/$517; packing app cost not verified. Estimate CAD $130 to $520/mo before app and payment fees.
+- Risk: Shopify's built-in rates may use Shopify's account not yours (forum report, not official) [3RD].
+
+Stack B (cheapest, most control): WooCommerce (or custom) + Canada Post Live Rates plugin ($79 once, snippet) + ClickShip/ShipStation for labels, hookahs on fixed box profiles, flat-rate fallback for regulated items.
+- Why: lowest recurring cost; Canada Post API gives SfSB business prices [FETCHED].
+- Rough monthly cost: hosting + plugin ($79 one-off) + optional ShipStation Standard USD $29.99/mo. Hosting not researched.
+- Risk: you maintain it; Canada Post OAuth and rate limits; need a developer.
+
+Both stacks: do not let shisha tobacco, vapes, or coal into the cart for out-of-province addresses (see section 3). Disable them or restrict to Ontario pickup/local delivery until legal confirmed. Sell hookahs, hoses, bowls, herbal shisha (verified tobacco-free) only after carrier confirmation.
+
+## 7. COULD NOT VERIFY (and what would confirm it)
+
+- GoDaddy: which plan and CAD price unlocks carrier-calculated shipping, which carriers work in Canada. Confirm: GoDaddy Canada pricing page in a browser, or support chat. (All GoDaddy pages 403'd.)
+- Purolator courier dim-weight divisor, tobacco/prohibited policy, E-Ship API docs. Confirm: Purolator rate guide and Terms (purolator.com 403'd), account rep.
+- UPS Canada divisor on the official page (only seen via search snippet), UPS Canada tobacco policy (403/Access Denied), UPS residential/address correction fees. Confirm: UPS Canada Rate and Service Guide 2026.
+- FedEx Canada tobacco policy (Canada page 404), 2026 rate guide (I read 2025 edition, effective Jan 6 2025), FedEx developer API docs.
+- Canpar, Loomis/GLS, Nationex official divisors, API docs, glass policies. Confirm: each carrier's service guide.
+- Canada Post volumetric divisor numbers and Regular Parcel vs Xpresspost difference. Confirm: Parcel Services Customer Guide (canadapost.ca/postalguide).
+- Canada Post developer rate limits and SfSB-specific quote behavior beyond the getrates doc. Confirm: Developer guide.
+- Whether Canada Post accepts hookah charcoal or self-lighting coals by mail or any ground carrier in Canada; TDG classification. Confirm: supplier SDS plus CANUTEC 1-613-992-4624 and written carrier confirmation.
+- Whether shisha is stamped under the Excise Act, 2001, and Ontario Tobacco Tax requirements; retailer licensing. Confirm: CRA excise stamp guidance, Ontario Ministry of Finance, your wholesaler.
+- Whether herbal shisha is a regulated product federally or provincially outside Ontario and how each carrier classifies it. Confirm: Health Canada, provincial ministries, carrier written reply. I read only the first 100,000 characters of the TVPA.
+- Provincial tobacco/vape age and online-sale rules outside Ontario (only Ontario read).
+- Shopify third-party calculated shipping add-on fee for Grow (no amount published on pages read). Confirm: Shopify Support / billing page.
+- Whether Shopify's built-in Canada Post rates use your own commercial pricing (forum claim only).
+- ShipStation CAD pricing, checkout live-rates plugin existence, Shippo/EasyPost rate-call fees and Canada coverage on pricing pages, Freightcom API pricing and developer docs, Stallion API, Chit Chats size limits, Postage.ca EST/API existence.
+- WooCommerce plugin prices (snippets only), ClickShip WooCommerce price, PluginHive pricing.
+- Frames: not researched beyond a note; eyeglass frames are light and boxable (low risk), picture frames with glass are fragile and flat, may trigger oversize at 76 cm second side (Canada Post, FedEx) [FETCHED thresholds]. No sourced policy on glass at any carrier.
+- ShipTime Canada courier list and pricing.

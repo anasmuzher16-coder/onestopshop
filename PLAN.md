@@ -1,7 +1,8 @@
 # PLAN - One Stop Shop mockup (due to Angel 2026-11-14)
 - [x] 1. Tokens: color, type, spacing as CSS custom properties (site/tokens.css). Verify: contrast script AA PASS.
   PASS: node tools/contrast.mjs -> "ALL PASS (computed)", 13 pairs, lowest 4.69:1 muted on surface.
-- [ ] 2. Rate engine: site/rates.js, quote(dest postal, parcels) -> carrier options, zone + dim-weight + surcharges from docs/SHIPPING.md. Verify: node tools/test-rates.mjs.
+- [x] 2. Rate engine: site/rates.js, quote(dest postal, parcels) -> carrier options, zone + dim-weight + surcharges from docs/SHIPPING.md. Verify: node tools/test-rates.mjs.
+  PASS: node tools/test-rates.mjs -> "PASS 450/450"; calibrated to Canada Post SfSB level 4 sheet (docs/SHIPPING.md s.2).
 - [x] 3. Catalog data: 24 realistic sample products (hookahs, accessories, frames) with weight + box. Verify: schema check.
   PASS: node tools/check-catalog.mjs -> "PASS 24 products, 4 categories, all fit their box" (first run caught 5 assembled-height misfits; model now ships disassembled).
 - [ ] 4. Header + Door Tag (postal code entry, persists). Verify: 390/1440 screenshots.
