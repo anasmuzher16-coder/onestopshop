@@ -20,7 +20,9 @@ t("actual beats dim", billableKg({ l: 23, w: 16, h: 8, kg: 2.1 }) === 2.5);
 // packing
 const hk = PRODUCTS.find(p => p.sku === "OSS-0101"), tips = PRODUCTS.find(p => p.sku === "OSS-0305"), hose = PRODUCTS.find(p => p.sku === "OSS-0301");
 const pk = pack([{ product: hk, qty: 2 }, { product: tips, qty: 1 }, { product: hose, qty: 1 }]);
-t("two hookahs = two cartons + one consolidated", pk.length === 3);
+t("two hookahs = two cartons, accessories ride along", pk.length === 2);
+const acc = pack([{ product: tips, qty: 2 }, { product: hose, qty: 1 }]);
+t("accessories alone = one small box", acc.length === 1 && ["XS", "S"].includes(acc[0].box));
 t("all items packed", pk.flatMap(p => p.items).length === 4);
 t("packed weight includes tare", pk[0].kg > hk.kg);
 // quotes: every product, every zone: finite, positive, itemised, farther never cheaper

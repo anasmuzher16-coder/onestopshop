@@ -33,7 +33,9 @@ Delivery days per zone: ESTIMATES, COULD NOT VERIFY (Canada Post delivery standa
 ## 3. What the mockup taught us (tell Angel)
 - Box size decides the price more than weight: OSS-0101 (6.5 kg packed) bills at 17.5 kg in a
   66x36x36 box. Right-sized hookah boxes are the single biggest shipping saving.
-  (node tools/test-rates.mjs: "OSS-0101 to Halifax: Canada Post Expedited Parcel $65.78 (billed 17.5 kg)")
+  Measured 2026-11-13, OSS-0102 (84 cm brass hookah, 6.8 kg) Windsor to Halifax, Expedited:
+  generic 91x41x41 extra-tall box = $103.08 (billed 31 kg); 76x30x30 tall slim box = $56.11
+  (billed 14 kg). Same hookah, 46% less, only the box changed. All tall hookahs now use the slim box.
 
 ## 4. Data we need per item
 Packed weight (0.01 kg), packed box L/W/H (cm), glass yes/no, ships-disassembled yes/no, regulated

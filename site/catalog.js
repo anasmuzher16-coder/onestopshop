@@ -7,6 +7,7 @@ export const BOXES = {
   S:  { l: 30, w: 23, h: 15, tare: 0.30, label: "Small box" },
   M:  { l: 46, w: 30, h: 30, tare: 0.70, label: "Medium box, double wall" },
   L:  { l: 66, w: 36, h: 36, tare: 1.10, label: "Tall box, double wall" },
+  T:  { l: 76, w: 30, h: 30, tare: 1.20, label: "Tall slim box, double wall" },
   XL: { l: 91, w: 41, h: 41, tare: 1.60, label: "Extra tall, double wall" },
 };
 export const CATEGORIES = [
@@ -17,14 +18,14 @@ export const CATEGORIES = [
 ];
 const p = (sku, name, cat, price, kg, box, glass, height, note) => ({ sku, name, cat, price, kg, box, glass, height, note });
 export const PRODUCTS = [
-  p("OSS-0101","Stainless single-hose hookah, 72 cm","hookahs",289,5.4,"L",true,72,"Hand-blown base"),
-  p("OSS-0102","Brass traditional hookah, 84 cm","hookahs",449,6.8,"XL",true,84,"Brass stem, engraved"),
+  p("OSS-0101","Stainless single-hose hookah, 72 cm","hookahs",289,5.4,"T",true,72,"Hand-blown base"),
+  p("OSS-0102","Brass traditional hookah, 84 cm","hookahs",449,6.8,"T",true,84,"Brass stem, engraved"),
   p("OSS-0103","Travel hookah, 38 cm","hookahs",69,1.6,"M",false,38,"Acrylic base"),
-  p("OSS-0104","Crystal-cut base hookah, 66 cm","hookahs",329,5.9,"L",true,66,"Heavy cut glass"),
-  p("OSS-0105","Carbon stem hookah, 58 cm","hookahs",219,3.9,"L",true,58,"Matte black"),
-  p("OSS-0106","Four-hose lounge hookah, 90 cm","hookahs",599,9.2,"XL",true,90,"Four ports"),
+  p("OSS-0104","Crystal-cut base hookah, 66 cm","hookahs",329,5.9,"T",true,66,"Heavy cut glass"),
+  p("OSS-0105","Carbon stem hookah, 58 cm","hookahs",219,3.9,"T",true,58,"Matte black"),
+  p("OSS-0106","Four-hose lounge hookah, 90 cm","hookahs",599,9.2,"T",true,90,"Four ports"),
   p("OSS-0107","Mini table hookah, 30 cm","hookahs",45,1.1,"S",true,30,"Glass, gift boxed"),
-  p("OSS-0108","Aluminium modern hookah, 62 cm","hookahs",179,3.4,"L",true,62,"Click-lock base"),
+  p("OSS-0108","Aluminium modern hookah, 62 cm","hookahs",179,3.4,"T",true,62,"Click-lock base"),
   p("OSS-0201","Phunnel clay bowl","bowls",22,0.45,"S",false,null,"Glazed clay"),
   p("OSS-0202","Silicone bowl","bowls",15,0.2,"XS",false,null,"Unbreakable"),
   p("OSS-0203","Heat management device","bowls",39,0.4,"S",false,null,"Zinc alloy"),

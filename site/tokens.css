@@ -47,7 +47,7 @@
   --font-mono: "Martian Mono","Mono Fallback",ui-monospace,monospace;
   --t-12: 0.75rem; --t-14: 0.875rem; --t-16: 1rem; --t-18: 1.125rem; --t-24: 1.5rem;
   --t-display-s: clamp(2rem, 1.2rem + 3.6vw, 3.5rem);
-  --t-display-l: clamp(3rem, 1rem + 9vw, 8.5rem);
+  --t-display-l: clamp(2.75rem, 1rem + 6.2vw, 6.25rem);
 
   /* space: 4px base, whole multiples */
   --s-1:4px; --s-2:8px; --s-3:12px; --s-4:16px; --s-6:24px; --s-8:32px; --s-12:48px; --s-16:64px; --s-24:96px;

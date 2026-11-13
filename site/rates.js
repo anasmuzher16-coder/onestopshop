@@ -47,18 +47,25 @@ export function pack(lines) {
   const parcels = [], loose = [];
   for (const { product, qty } of lines) {
     for (let i = 0; i < qty; i++) {
-      if (["M", "L", "XL"].includes(product.box) || product.glass && product.box !== "XS") {
+      if (["M", "L", "T", "XL"].includes(product.box) || product.glass && product.box !== "XS") {
         const b = BOXES[product.box];
         parcels.push({ box: product.box, ...b, kg: round(product.kg + b.tare, 2), items: [product.sku] });
       } else loose.push(product);
     }
   }
   if (loose.length) {
-    const vol = loose.reduce((v, p) => v + boxVol(BOXES[p.box]) * 0.55, 0);
+    // Loose items occupy ~35% of their own nominal box (soft goods, cases nest).
+    const vol = loose.reduce((v, p) => v + boxVol(BOXES[p.box]) * 0.35, 0);
     const kg = loose.reduce((k, p) => k + p.kg, 0);
-    const key = ["XS", "S", "M", "L"].find(k => boxVol(BOXES[k]) * 0.7 >= vol) || "L";
-    const b = BOXES[key];
-    parcels.push({ box: key, ...b, kg: round(kg + b.tare, 2), items: loose.map(p => p.sku) });
+    // Small accessories ride in a hookah carton when they fit in its spare space (<=15% of it).
+    const host = parcels.filter(p => p.box !== "XS" && p.box !== "S").sort((a, b) => boxVol(b) - boxVol(a))[0];
+    if (host && vol <= boxVol(host) * 0.15) {
+      host.kg = round(host.kg + kg, 2); host.items.push(...loose.map(p => p.sku));
+    } else {
+      const key = ["XS", "S", "M", "L"].find(k => boxVol(BOXES[k]) * 0.7 >= vol) || "L";
+      const b = BOXES[key];
+      parcels.push({ box: key, ...b, kg: round(kg + b.tare, 2), items: loose.map(p => p.sku) });
+    }
   }
   return parcels;
 }
