@@ -15,7 +15,8 @@
   PASS: 1440 shows delivered price under item price, Spec Stamp, carrier ledger; 390 no overflow (scrollWidth 390).
 - [x] 8. Cart with multi-box packing + live shipping choice. Verify: 390/1440 + rate test.
   PASS: cart packs accessories into hookah carton (1 box, delivery $97.04 -> $56.11 Halifax); tests 451/451.
-- [ ] 9. Shipping/returns page + regulated-goods note. Verify: 390/1440.
+- [x] 9. Shipping/returns page + regulated-goods note. Verify: 390/1440.
+  PASS: 390 screenshot reads cleanly; copy names only what ships (TVPA s.9.1(2) advertising ban respected). Return promise "48 hours" is placeholder copy: ask Angel.
 - [ ] 10. Impeccable pass + atelier:critique + design-reviewer agent; fix list applied.
 - [ ] 11. Adversarial pass on the calculator (agent briefed to break it).
 - [ ] 12. Angel handout: one-page summary of platform + carrier recommendation + questions.
