@@ -1,60 +1,69 @@
-/* One Stop Shop tokens. Idea: THE PRICE AT YOUR DOOR. Device: Door Tag + Spec Stamp.
-   Faces: Archivo (variable width: condensed for the wordmark/display, normal for text;
-   19th-c. American gothic roots, reads like stencil on a shipping carton) and Martian Mono
-   (tabular, wide: every number reads like a carrier label). */
-@font-face{font-family:"Archivo";src:url(fonts/archivo.woff2) format("woff2");font-weight:100 900;font-stretch:62% 125%;font-display:swap}
-@font-face{font-family:"Martian Mono";src:url(fonts/martian.woff2) format("woff2");font-weight:100 800;font-stretch:75% 112.5%;font-display:swap}
-@font-face{font-family:"Archivo Fallback";src:local("Arial");size-adjust:101%;ascent-override:88%;descent-override:22%}
-@font-face{font-family:"Mono Fallback";src:local("Courier New");size-adjust:118%;ascent-override:78%;descent-override:20%}
+/* One Stop Shop tokens, direction 2 (2026-11-13). Research: docs/DESIGN.md.
+   Idea: THE PRICE LANDS AT YOUR DOOR. Device: THE STICKER (a counter price sticker carrying the delivered price).
+   Colour: coal chassis; each category owns ONE jewel, used flat (Bohemian glass / Iznik); ember is reserved
+   for the sticker and the primary action. Type: Lalezar (Arabic + Latin poster display) + Readex Pro (UI). */
+@font-face{font-family:"Lalezar";src:url(fonts/lalezar-latin.woff2) format("woff2");font-weight:400;font-display:swap;unicode-range:U+0000-00FF,U+2010-2027,U+20AC}
+@font-face{font-family:"Lalezar";src:url(fonts/lalezar-arabic.woff2) format("woff2");font-weight:400;font-display:swap;unicode-range:U+0600-06FF,U+0750-077F,U+FB50-FDFF,U+FE70-FEFF}
+@font-face{font-family:"Readex Pro";src:url(fonts/readex-latin.woff2) format("woff2");font-weight:160 700;font-display:swap;unicode-range:U+0000-00FF,U+2010-2027,U+20AC}
+@font-face{font-family:"Readex Pro";src:url(fonts/readex-arabic.woff2) format("woff2");font-weight:160 700;font-display:swap;unicode-range:U+0600-06FF,U+0750-077F,U+FB50-FDFF,U+FE70-FEFF}
+@font-face{font-family:"Lalezar Fallback";src:local("Impact"),local("Arial Black");size-adjust:92%;ascent-override:96%;descent-override:30%}
+@font-face{font-family:"Readex Fallback";src:local("Arial");size-adjust:106%;ascent-override:92%;descent-override:24%}
 
 :root{
-  /* raw: warm paper ramp, hue 80 (kraft-leaning), chroma tapers to the poles */
-  --n-0: oklch(0.975 0.012 82);
-  --n-1: oklch(0.945 0.016 80);
-  --n-2: oklch(0.885 0.018 78);
-  --n-3: oklch(0.74 0.014 76);
-  --n-4: oklch(0.52 0.010 74);
-  --n-5: oklch(0.38 0.008 72);
-  --n-6: oklch(0.22 0.006 70);
-  /* raw: one accent, label red. Jobs: (1) the delivered price, (2) the primary action. */
-  --red:       oklch(0.53 0.19 29);
-  --red-press: oklch(0.48 0.18 29);
-  /* raw: semantics, desaturated */
-  --ok:   oklch(0.52 0.11 150);
-  --warn: oklch(0.53 0.12 70);
+  /* raw: coal ramp (warm off-black, hue 50) */
+  --coal-0: oklch(0.155 0.012 50);
+  --coal-1: oklch(0.205 0.014 50);
+  --coal-2: oklch(0.275 0.014 52);
+  --coal-3: oklch(0.56 0.016 60);
+  --ash:    oklch(0.72 0.018 70);
+  --bone:   oklch(0.925 0.022 80);
+  --white:  oklch(0.985 0.006 85);
+  /* raw: jewels, one per category tile. Light enough for packshots to multiply onto. */
+  --ruby:    oklch(0.72 0.15 18);
+  --teal:    oklch(0.78 0.105 190);
+  --cobalt:  oklch(0.72 0.12 265);
+  --emberlt: oklch(0.77 0.14 55);
+  --emerald: oklch(0.78 0.13 155);
+  --gilt:    oklch(0.83 0.12 88);
+  --bonelt:  oklch(0.90 0.03 80);
+  /* raw: ember, the one accent. Jobs: the sticker (delivered price) and the primary action. */
+  --ember:       oklch(0.58 0.215 29);
+  --ember-press: oklch(0.51 0.20 29);
+  --ink:         oklch(0.16 0.012 50);
 
   /* purpose */
-  --color-bg: var(--n-0);
-  --color-surface: var(--n-1);
-  --tag: oklch(0.99 0.004 82);
-  --color-tag: var(--tag);
-  --color-border: var(--n-2);
-  --color-rule: var(--n-3);        /* decorative hairline only */
-  --color-field: var(--n-4);       /* input + control boundaries (3:1) */
-  --color-muted: var(--n-4);
-  --color-ink-2: var(--n-5);
-  --color-ink: var(--n-6);
-  --color-price: var(--red);
-  --color-action: var(--red);
-  --color-action-press: var(--red-press);
-  --color-on-action: var(--n-0);
-  --color-focus: var(--n-6);
-  --color-ok: var(--ok);
-  --color-warn: var(--warn);
+  --color-bg: var(--coal-0);
+  --color-raised: var(--coal-1);
+  --color-line: var(--coal-2);
+  --color-field: var(--coal-3);
+  --color-muted: var(--ash);
+  --color-text: var(--bone);
+  --color-strong: var(--white);
+  --color-sticker: var(--ember);
+  --color-on-sticker: var(--white);
+  --color-action: var(--ember);
+  --color-action-press: var(--ember-press);
+  --color-on-action: var(--white);
+  --color-on-tile: var(--ink);
+  --color-focus: var(--white);
 
-  /* type */
-  --font-sans: "Archivo","Archivo Fallback",system-ui,sans-serif;
-  --font-mono: "Martian Mono","Mono Fallback",ui-monospace,monospace;
-  --t-12: 0.75rem; --t-14: 0.875rem; --t-16: 1rem; --t-18: 1.125rem; --t-24: 1.5rem;
-  --t-display-s: clamp(2rem, 1.2rem + 3.6vw, 3.5rem);
-  --t-display-l: clamp(2.75rem, 1rem + 6.2vw, 6.25rem);
+  --font-display: "Lalezar","Lalezar Fallback",Impact,sans-serif;
+  --font-ui: "Readex Pro","Readex Fallback",system-ui,sans-serif;
+  --t-12: .75rem; --t-14: .875rem; --t-16: 1rem; --t-18: 1.125rem; --t-22: 1.375rem;
+  --t-d1: clamp(1.75rem, 1.2rem + 2.4vw, 2.75rem);
+  --t-d2: clamp(2.5rem, 1.4rem + 5.2vw, 5rem);
+  --t-d3: clamp(3.4rem, 1.2rem + 10.5vw, 9.5rem);
 
-  /* space: 4px base, whole multiples */
-  --s-1:4px; --s-2:8px; --s-3:12px; --s-4:16px; --s-6:24px; --s-8:32px; --s-12:48px; --s-16:64px; --s-24:96px;
+  --s-1:4px; --s-2:8px; --s-3:12px; --s-4:16px; --s-5:20px; --s-6:24px; --s-8:32px; --s-12:48px; --s-16:64px; --s-24:96px;
   --gutter: clamp(16px, 4vw, 48px);
-  --radius: 2px;
+  --radius: 4px;
+  --bar-h: 64px;
 
-  /* motion */
-  --ease-out: cubic-bezier(.2,.7,.2,1);
-  --dur-micro: 120ms; --dur-state: 220ms;
+  --ease-enter: cubic-bezier(.16,1,.3,1);
+  --ease-state: cubic-bezier(.4,0,.2,1);
+  --dur-micro: 140ms; --dur-state: 260ms; --dur-reveal: 480ms;
 }
+[data-tone="ruby"]{--tile:var(--ruby)} [data-tone="teal"]{--tile:var(--teal)} [data-tone="cobalt"]{--tile:var(--cobalt)}
+[data-tone="ember"]{--tile:var(--emberlt)} [data-tone="emerald"]{--tile:var(--emerald)} [data-tone="gilt"]{--tile:var(--gilt)}
+[data-tone="bone"]{--tile:var(--bonelt)}
+@media (prefers-reduced-motion:reduce){:root{--dur-micro:1ms;--dur-state:1ms;--dur-reveal:1ms}}

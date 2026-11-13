@@ -32,8 +32,9 @@ t("exp cheapest 1 kg = 9.09", sheetPrice("exp", 0, 1) === 9.09);
 t("exp dearest 5 kg = 48.10", sheetPrice("exp", 5, 5) === 48.1);
 t("exp dearest 10 kg = 82.43", sheetPrice("exp", 5, 10) === 82.43);
 // packing
-const hk = PRODUCTS.find(p => p.sku === "OSS-0101"), tips = PRODUCTS.find(p => p.sku === "OSS-0305"), hose = PRODUCTS.find(p => p.sku === "OSS-0301");
-const fr = PRODUCTS.find(p => p.sku === "OSS-0401"), lh = PRODUCTS.find(p => p.sku === "OSS-0302");
+const byName = n => PRODUCTS.find(p => p.name === n);
+const hk = byName("Mamoun Kamanja Gold"), tips = byName("Jumbo mouth tips, 50"), hose = byName("Soft-touch hose");
+const fr = byName("Tortoise round frame"), lh = byName("Hand-stitched leather hose");
 const pk = pack([{ product: hk, qty: 2 }, { product: tips, qty: 1 }, { product: hose, qty: 1 }]);
 t("two hookahs = two cartons, accessories ride along", pk.length === 2);
 t("all items packed", pk.flatMap(p => p.items).length === 4);
@@ -51,7 +52,7 @@ t("50 hoses need more than one box", pack([{ product: hose, qty: 50 }]).length >
 t("qty capped at 99", pack([{ product: fr, qty: 1e8 }]).flatMap(p => p.items).length === 99);
 t("bad qty ignored", pack([{ product: fr, qty: -3 }]).length === 0 && pack([{ product: fr, qty: "x" }]).length === 0);
 t("over 30 kg parcel refuses to quote", quote(parsePostal("B3H4R2"), [{ l: 30, w: 30, h: 30, kg: 31, value: 0, glass: false, items: [] }]).length === 0);
-t("glass over $100 carries cover + signature", quote(parsePostal("B3H4R2"), pack([{ product: hk, qty: 1 }]))[0].cover === 2 * 2.75 + 2);
+t("glass over $100 carries cover + signature", quote(parsePostal("B3H4R2"), pack([{ product: hk, qty: 1 }]))[0].cover === Math.ceil((hk.price - 100) / 100) * 2.75 + 2);
 t("non-glass carries no cover", quote(parsePostal("B3H4R2"), pack([{ product: fr, qty: 1 }]))[0].cover === 0);
 // quotes: every product, every zone: finite, positive, itemised, farther never cheaper
 const codes = ["N9A1A1", "M5V2T6", "H2X1Y4", "B3H4R2", "V6B1A1", "X1A2P7"];
@@ -69,6 +70,6 @@ t("empty cart quotes nothing", quote(parsePostal("B3H4R2"), []).length === 0);
 t("no dest quotes nothing", quote(null, pk).length === 0);
 for (const c of ["B3H4R2", "X1A2P7"]) {
   const b = quote(parsePostal(c), pack([{ product: hk, qty: 1 }]))[0];
-  console.log("sample: OSS-0101 to " + c + ": " + b.service + " $" + b.total + " (freight " + b.freight + ", cover " + b.cover + ", fuel " + b.fuel + ", billed " + b.perParcel[0].billableKg + " kg)");
+  console.log("sample: " + hk.name + " ($" + hk.price + ") to " + c + ": " + b.service + " $" + b.total + " (freight " + b.freight + ", cover " + b.cover + ", fuel " + b.fuel + ", billed " + b.perParcel[0].billableKg + " kg)");
 }
 console.log(f ? "FAIL " + f + "/" + n : "PASS " + n + "/" + n); process.exit(f ? 1 : 0);

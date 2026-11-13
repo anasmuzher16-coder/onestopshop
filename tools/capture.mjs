@@ -4,9 +4,9 @@ import { createRequire } from "node:module";
 const require = createRequire("C:/dev/puckempire-arena/package.json");
 const { chromium } = require("playwright");
 const base = process.env.BASE || "http://localhost:4410/";
-const cart = [{ sku: "OSS-0101", qty: 1 }, { sku: "OSS-0301", qty: 1 }, { sku: "OSS-0305", qty: 2 }, { sku: "OSS-0401", qty: 1 }];
-const routes = [["home-empty", "", false], ["home", "", true], ["shop", "#/shop/hookahs", true], ["pdp", "#/p/OSS-0102", true],
-  ["pdp-empty", "#/p/OSS-0104", false], ["cart", "#/cart", true], ["shipping", "#/shipping", true]];
+const cart = [{ sku: "OSS-1021", qty: 1 }, { sku: "OSS-5006", qty: 1 }, { sku: "OSS-6007", qty: 2 }, { sku: "OSS-7001", qty: 1 }];
+const routes = [["home-empty", "", false], ["home", "", true], ["shop", "#/shop/hookahs", true], ["pdp", "#/p/OSS-1021", true], ["pdp-dark", "#/p/OSS-1006", true],
+  ["pdp-empty", "#/p/OSS-1012", false], ["cart", "#/cart", true], ["shipping", "#/shipping", true]];
 const browser = await chromium.launch();
 for (const w of [390, 1440]) {
   for (const [name, hash, withCode] of routes) {
@@ -18,6 +18,8 @@ for (const w of [390, 1440]) {
     const page = await ctx.newPage();
     await page.goto(base + hash, { waitUntil: "networkidle" });
     await page.evaluate(() => document.fonts.ready);
+    await page.evaluate(async () => { for (let y = 0; y < document.body.scrollHeight; y += 600) { scrollTo(0, y); await new Promise(r => setTimeout(r, 60)); } scrollTo(0, 0); });
+    await page.waitForLoadState("networkidle");
     const sw = await page.evaluate(() => document.documentElement.scrollWidth);
     await page.screenshot({ path: `shots/${name}-${w}.png`, fullPage: true });
     await page.screenshot({ path: `shots/${name}-${w}-fold.png` });

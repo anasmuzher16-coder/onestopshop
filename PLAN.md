@@ -1,22 +1,12 @@
 # PLAN - One Stop Shop mockup (due to Angel 2026-11-14)
-- [x] 1. Tokens: color, type, spacing as CSS custom properties (site/tokens.css). Verify: contrast script AA PASS.
-  PASS: node tools/contrast.mjs -> "ALL PASS (computed)", 13 pairs, lowest 4.69:1 muted on surface.
-- [x] 2. Rate engine: site/rates.js, quote(dest postal, parcels) -> carrier options, zone + dim-weight + surcharges from docs/SHIPPING.md. Verify: node tools/test-rates.mjs.
-  PASS: node tools/test-rates.mjs -> "PASS 450/450"; calibrated to Canada Post SfSB level 4 sheet (docs/SHIPPING.md s.2).
-- [x] 3. Catalog data: 24 realistic sample products (hookahs, accessories, frames) with weight + box. Verify: schema check.
-  PASS: node tools/check-catalog.mjs -> "PASS 24 products, 4 categories, all fit their box" (first run caught 5 assembled-height misfits; model now ships disassembled).
-- [x] 4. Header + Door Tag (postal code entry, persists). Verify: 390/1440 screenshots.
-  PASS: 390+1440 screenshots; tag persists via localStorage; invalid code shows inline error.
-- [x] 5. Home page fold enacting the idea. Verify: 390/1440.
-  PASS: 1440 fold holds headline + Door Tag + proof ledger; 390 fold shows delivered price within one entry ($505.11 Halifax).
-- [x] 6. Catalog grid with delivered price per card + filters. Verify: 390/1440.
-  PASS: grid 4/3/2 cols; each card shows item + at-your-door price; hookah art varies by type.
-- [x] 7. Product page: Spec Stamp, packing note, carrier options. Verify: 390/1440.
-  PASS: 1440 shows delivered price under item price, Spec Stamp, carrier ledger; 390 no overflow (scrollWidth 390).
-- [x] 8. Cart with multi-box packing + live shipping choice. Verify: 390/1440 + rate test.
-  PASS: cart packs accessories into hookah carton (1 box, delivery $97.04 -> $56.11 Halifax); tests 451/451.
-- [x] 9. Shipping/returns page + regulated-goods note. Verify: 390/1440.
-  PASS: 390 screenshot reads cleanly; copy names only what ships (TVPA s.9.1(2) advertising ban respected). Return promise "48 hours" is placeholder copy: ask Angel.
-- [ ] 10. Impeccable pass + atelier:critique + design-reviewer agent; fix list applied.
-- [ ] 11. Adversarial pass on the calculator (agent briefed to break it).
-- [ ] 12. Angel handout: one-page summary of platform + carrier recommendation + questions.
+Direction 1 was vetoed 2026-11-13 (basic, colourless, not researched). Plan restarted on direction 2 (docs/DESIGN.md).
+- [x] 1. Research: niche teardown (15 sites) + culture/palette/type research. Evidence: docs/DESIGN.md "Research it stands on".
+- [x] 2. Rate engine rebuilt from the correctly read Canada Post sheet. PASS: node tools/test-rates.mjs -> "PASS 2598/2598".
+- [x] 3. Fake catalog: 101 products, 7 categories, real price bands and weights. PASS: node tools/check-catalog.mjs.
+- [x] 4. Tokens v2 (coal, jewels, ember; Lalezar + Readex Pro). PASS: node tools/contrast.mjs -> "ALL PASS (computed, 17 pairs)".
+- [x] 5. Phone-first build: home, shop, product, cart, shipping, postal sheet, dock. PASS: node tools/capture.mjs -> 16 captures, 0 overflow; looked at 390 and 1440.
+- [ ] 6. atelier:critique + design-reviewer agent on direction 2; apply fix list.
+- [ ] 7. Impeccable detector + polish pass.
+- [ ] 8. Adversarial pass on the rebuilt UI (cart states, postal sheet, keyboard, reduced motion).
+- [ ] 9. Performance: image weights on mobile data, LCP image preload, no layout shift.
+- [ ] 10. Angel handout: platform + carrier recommendation, live-rate plan, questions, photo shoot spec.
