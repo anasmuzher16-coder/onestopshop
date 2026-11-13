@@ -731,20 +731,6 @@ export const PRODUCTS = [
   "lw": 1255
  },
  {
-  "sku": "OSS-3005",
-  "name": "Rook bowl, aurora glaze",
-  "cat": "bowls",
-  "price": 49,
-  "kg": 0.35,
-  "box": "S",
-  "glass": false,
-  "height": null,
-  "note": "Hand glazed, each one different",
-  "img": "bowl09",
-  "dark": false,
-  "lw": 1440
- },
- {
   "sku": "OSS-3006",
   "name": "Atlantis phunnel",
   "cat": "bowls",

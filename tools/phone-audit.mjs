@@ -5,7 +5,7 @@ import { createRequire } from "node:module";
 const { chromium } = createRequire("C:/dev/puckempire-arena/package.json")("playwright");
 const base = process.env.BASE || "http://localhost:4410/";
 const SIZES = [[360, 740], [375, 667], [390, 844], [412, 915], [844, 390]];
-const ROUTES = ["#/", "#/shop", "#/shop/hookahs", "#/shop/bowls", "#/p/OSS-1027", "#/p/OSS-1008", "#/p/OSS-3003", "#/cart", "#/shipping"];
+const ROUTES = ["#/", "#/shop", "#/shop/hookahs", "#/shop/bowls", "#/p/OSS-1027", "#/p/OSS-1008", "#/p/OSS-3003", "#/cart", "#/shipping", "#/set", "#/search", "#/gifts/under-50", "#/p/OSS-1008"];
 const cart = [{ sku: "OSS-1021", qty: 1 }, { sku: "OSS-5006", qty: 1 }, { sku: "OSS-6004", qty: 2 }];
 let n = 0, f = 0; const seen = new Set();
 const fail = (where, msg) => { f++; const k = msg.replace(/\d+(\.\d+)?/g, "#"); if (!seen.has(where.split(" ")[0] + k)) { seen.add(where.split(" ")[0] + k); console.log("FAIL", where, msg); } };
@@ -63,5 +63,5 @@ try {
     await ctx.close();
   }
 } finally { await b.close(); }
-console.log(f ? `FAIL ${f} problems (${seen.size} distinct) across ${n} page checks` : `PASS ${n} page checks: 9 routes x 5 phone sizes, no problems`);
+console.log(f ? `FAIL ${f} problems (${seen.size} distinct) across ${n} page checks` : `PASS ${n} page checks: ${ROUTES.length} routes x 5 phone sizes, no problems`);
 process.exit(f ? 1 : 0);

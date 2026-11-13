@@ -134,7 +134,7 @@ for pid, (name, note, height, glass) in N.items():
                 'height': height, 'note': note, 'img': pid, 'dark': pid in ('hookah11', 'hookah12', 'hookah14', 'hookah18'), 'lw': SZ[pid]['lw']})
 # Crisp rule: a product whose placeholder photo cannot fill a 720px tile (or a 1000px dark photo) is left out.
 # SKUs are assigned before this filter so they stay stable.
-dropped = [o['name'] for o in out if (SZ[o['img']]['maxW'] < (1000 if o['dark'] else 625)) or SZ[o['img']].get('boxed')]
+dropped = [o['name'] for o in out if (SZ[o['img']]['maxW'] < (1000 if o['dark'] else 625)) or SZ[o['img']].get('boxed') or o['img'] in ('bowl09',)]  # bowl09: shadow slab survives the cut-out
 out = [o for o in out if o['name'] not in dropped]
 print('dropped for soft photos:', dropped)
 # Frames removed from the site (his instruction 2026-11-13).

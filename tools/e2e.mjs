@@ -5,7 +5,7 @@ const base = process.env.BASE || "http://localhost:4410/";
 let n = 0, f = 0; const t = (name, ok, extra = "") => { n++; if (!ok) { f++; console.log("FAIL", name, extra); } };
 const b = await chromium.launch(); const ctx = await b.newContext({ ...devices["iPhone 13"] }); const p = await ctx.newPage();
 const errs = []; p.on("pageerror", e => errs.push(e.message)); p.on("console", m => m.type() === "error" && errs.push(m.text()));
-const cents = s => Math.round(parseFloat(s.replace(/[^0-9.]/g, "")) * 100);
+const cents = s => Math.round(parseFloat(s.replace(/[^0-9.]/g, "")) * 100); // strips $ and thousands commas
 await p.goto(base, { waitUntil: "networkidle" });
 t("home h1", (await p.locator("h1").count()) === 1);
 const cta = await p.locator(".hero__cta .btn").first().boundingBox(), vh = p.viewportSize().height;

@@ -157,4 +157,4 @@ export function quote(dest, parcels, fuelPct = FUEL.pct) {
 }
 
 export const days = n => n + (n === 1 ? " day" : " days");
-export const money = n => (n < 0 ? "-$" : "$") + Math.abs(n).toFixed(2);
+export const money = n => (n < 0 ? "-$" : "$") + Math.abs(n).toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
