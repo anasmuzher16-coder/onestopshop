@@ -1,7 +1,7 @@
 // Looks for white boxes: samples the corner pixels of every product image as actually rendered on the page.
 // A corner that renders near-white on a coloured tile means the photo's background is showing.
 import { createRequire } from "node:module";
-const { chromium } = createRequire("C:/dev/puckempire-arena/package.json")("playwright");
+const pw = createRequire("C:/dev/puckempire-arena/package.json")("playwright"), chromium = pw[process.env.ENGINE || "chromium"]; // ENGINE=webkit checks the Safari engine
 const sharp = createRequire("C:/dev/hm-barbershop/package.json")("sharp");
 const base = process.env.BASE || "http://localhost:4410/";
 const b = await chromium.launch(); let bad = 0, n = 0;
@@ -14,7 +14,7 @@ try {
       await p.evaluate(async () => { for (let y = 0; y < document.body.scrollHeight; y += 500) { scrollTo(0, y); await new Promise(r => setTimeout(r, 40)); } scrollTo(0, 0); });
       await p.waitForLoadState("networkidle");
       const shot = await p.screenshot({ fullPage: true }); const { data, info } = await sharp(shot).raw().toBuffer({ resolveWithObject: true });
-      const boxes = await p.evaluate(() => [...document.querySelectorAll("#main img.shot:not(.shot--photo), #main img.lu__img")].map(i => { const r = i.getBoundingClientRect(); return { x: r.left + scrollX, y: r.top + scrollY, w: r.width, h: r.height, src: i.currentSrc.split("/").pop() }; }).filter(r => r.w > 20));
+      const boxes = await p.evaluate(() => [...document.querySelectorAll("#main img.shot:not(.shot--photo):not(.piece img), #main img.lu__img")].map(i => { const r = i.getBoundingClientRect(); return { x: r.left + scrollX, y: r.top + scrollY, w: r.width, h: r.height, src: i.currentSrc.split("/").pop() }; }).filter(r => r.w > 20));
       for (const bx of boxes) { n++;
         const px = (x, y) => { x = Math.round(Math.min(info.width - 1, Math.max(0, x))); y = Math.round(Math.min(info.height - 1, Math.max(0, y))); const o = (y * info.width + x) * info.channels; return [data[o], data[o + 1], data[o + 2]]; };
         const corners = [[bx.x + 3, bx.y + 3], [bx.x + bx.w - 4, bx.y + 3], [bx.x + 3, bx.y + bx.h * .4], [bx.x + bx.w - 4, bx.y + bx.h * .4]].map(([x, y]) => px(x, y));

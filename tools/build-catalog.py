@@ -3,7 +3,7 @@
 # Names are invented. Photos are PLACEHOLDERS to be replaced by the shop's own.
 import json, math
 src = {x['id']: x for x in json.load(open('assets-src/picked.json', encoding='utf8'))}
-SZ = json.load(open('site/img/p/sizes.json', encoding='utf8'))  # written by tools/products.mjs
+SZ = json.load(open('site/img/pc/sizes.json', encoding='utf8'))  # written by tools/products.mjs
 N = {
  # id: (name, one-line note, height cm or None, glass)
  'hookah00': ('Sultan Gorgon', 'Cast steel sculpture stem, cut crystal base', 78, True),

@@ -35,13 +35,13 @@ function setQty(sku, qty) {
 const bestFor = p => state.dest ? quote(state.dest, pack([{ product: p, qty: 1 }]))[0] : null;
 
 // ---------- images ----------
-const imgSrc = (p, small) => p.photo ? `img/${p.img}.webp` : `img/p/${p.img}${small && !p.dark ? "-s" : ""}.webp`;
+const imgSrc = (p, small) => p.photo ? `img/${p.img}.webp` : `img/pc/${p.img}${small && !p.dark ? "-s" : ""}.webp`;
 const SIZES = { card: "(min-width:1500px) 18vw, (min-width:960px) 22vw, (min-width:640px) 30vw, 46vw", pdp: "(min-width:960px) 50vw, 100vw",
   thumb: "96px", slab: "(min-width:960px) 42vw, 80vw", lineup: "(min-width:960px) 370px, 240px", cat: "(min-width:960px) 24vw, 44vw", resin: "(min-width:960px) 28vw, (min-width:640px) 40vw, 72vw" };
 function srcset(p) {
   if (p.photo) return "";
-  if (p.dark) return `srcset="img/p/${p.img}.webp 800w${p.lw ? `, img/p/${p.img}-l.webp ${p.lw}w` : ""}"`;
-  return `srcset="img/p/${p.img}-s.webp 360w, img/p/${p.img}.webp 720w${p.lw ? `, img/p/${p.img}-l.webp ${p.lw}w` : ""}"`;
+  if (p.dark) return `srcset="img/pc/${p.img}.webp 800w${p.lw ? `, img/pc/${p.img}-l.webp ${p.lw}w` : ""}"`;
+  return `srcset="img/pc/${p.img}-s.webp 360w, img/pc/${p.img}-m.webp 540w, img/pc/${p.img}.webp 720w${p.lw ? `, img/pc/${p.img}-l.webp ${p.lw}w` : ""}"`;
 }
 function shot(p, { small = false, eager = false, use = small ? "card" : "pdp", cls = "", alt = "" } = {}) {
   const plain = p.dark || p.photo;
@@ -59,7 +59,7 @@ function card(p, i = 9) {
   return `
   <article class="card" data-tone="${tone}">
     <a class="card__a" href="#/p/${p.sku}" data-piece="${p.sku}">
-      <div class="tile ${p.dark || p.photo ? "tile--photo" : ""}">${shot(p, { small: true, eager: i < 4 })}${sticker(p)}</div>
+      <div class="tile ${p.dark || p.photo ? "tile--photo" : ""}">${shot(p, { small: true, eager: i < 2 })}${sticker(p)}</div>
       <h3 class="card__name">${esc(p.name)}</h3>
     </a>
     <p class="card__meta">${esc(p.note)}</p>
@@ -70,11 +70,12 @@ function card(p, i = 9) {
 function viewHome() {
   const picks = ["Sultan Totem", "Stuttgart Pure, Jade", "Regent Neon Blue", "Cairo Avatar", "Carbon Black", "Mamoun Moagza Copper", "Regent Neon Pink", "Orbit"].map(n => PRODUCTS.find(p => p.name === n)).filter(Boolean).slice(0, 8);
   const resin = PRODUCTS.filter(p => p.dark);
-  const stars = ["Mamoun Aten", "Regent Neon Blue", "Sultan Totem", "Stuttgart Pure, Jade", "Cairo Avatar"].map(n => PRODUCTS.find(p => p.name === n)).filter(Boolean);
+  const SLABS = ["gilt", "cobalt", "ruby", "emerald", "teal"];
+  const stars = ["Mamoun Hatshepsut", "Orbit", "Mamoun Cafe Chiller", "Lounge Six", "Mamoun Star"].map(n => PRODUCTS.find(p => p.name === n)).filter(Boolean);
   return `
   <section class="hero">
     <div class="hero__stage">
-      <div class="hero__slabs" aria-hidden="true">${stars.map(p => `<span data-tone="${toneOf(p)}"></span>`).join("")}</div>
+      <div class="hero__slabs" aria-hidden="true">${stars.map((p, i) => `<span data-tone="${SLABS[i]}"></span>`).join("")}</div>
       <p class="hero__word" aria-hidden="true">Hookahs,</p>
       <div class="hero__pieces">${stars.map((p, i) => `<a class="piece" href="#/p/${p.sku}" style="--cm:${p.height};--i:${i}" aria-label="${esc(p.name)}, ${whole(p.price)}">${shot(p, { eager: true, use: "slab" })}${sticker(p)}</a>`).join("")}</div>
     </div>
@@ -98,7 +99,7 @@ function viewHome() {
     <header class="lineup__head"><h2 class="h2 h2--xl" id="lu-h">Compare heights.</h2><p class="lineup__note">A dozen hookahs from the shelf, tallest to shortest.</p></header>
     <div class="lineup__row" tabindex="0" role="group" aria-label="Hookahs by height">
       ${PRODUCTS.filter(p => p.cat === "hookahs" && p.height && !p.dark).sort((a, b) => b.height - a.height).filter((p, i) => i % 3 === 0).map(p =>
-        `<a class="lu" href="#/p/${p.sku}" style="--cm:${p.height}"><img class="lu__img" src="img/p/${p.img}-s.webp" ${srcset(p)} sizes="${SIZES.lineup}" alt="" loading="lazy" width="360" height="450"><span class="lu__cm num">${p.height} cm</span><span class="lu__name">${esc(p.name)}</span></a>`).join("")}
+        `<a class="lu" href="#/p/${p.sku}" style="--cm:${p.height}"><img class="lu__img" src="img/pc/${p.img}-s.webp" ${srcset(p)} sizes="${SIZES.lineup}" alt="" loading="lazy" width="360" height="450"><span class="lu__cm num">${p.height} cm</span><span class="lu__name">${esc(p.name)}</span></a>`).join("")}
     </div>
   </section>
   <section class="resin">

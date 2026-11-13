@@ -107,11 +107,10 @@ body:not([data-route]) .foot{visibility:hidden}
 .hero__slabs span:nth-child(n+4),.hero__pieces .piece:nth-child(n+4){display:none}
 .hero__word{position:absolute;left:var(--gutter);bottom:-.07em;margin:0 0 0 -.045em;font:400 calc((100cqw - 2 * var(--gutter)) * .262)/.8 var(--font-display);letter-spacing:-.02em;color:var(--color-strong);white-space:nowrap}
 .piece{position:relative;display:flex;align-items:flex-end;justify-content:center;height:100%;text-decoration:none;min-width:0}
-.piece .shot{flex:none;height:calc(var(--cm) / 118 * 100%);margin-bottom:calc(100cqw * .2);width:auto;max-width:none;aspect-ratio:4/5;object-fit:contain;object-position:50% 100%;animation:rise var(--dur-reveal) var(--ease-enter) both;animation-delay:calc(var(--i) * 70ms)}
+.piece .shot{flex:none;height:calc(var(--cm) / 118 * 100%);margin-bottom:calc(100cqw * .2);width:auto;max-width:none;aspect-ratio:4/5;object-fit:contain;object-position:50% 100%}
 .piece .sticker{top:var(--s-3);right:var(--s-2);bottom:auto;width:54px;height:54px;animation:slap var(--dur-reveal) var(--ease-enter) both;animation-delay:calc(420ms + var(--i) * 70ms)}
 .piece .sticker__v{font-size:1.2rem}
 .piece:focus-visible{outline-offset:-4px}
-@keyframes rise{from{transform:translateY(28px);opacity:0}}
 .hero__in{display:grid;gap:var(--s-4);padding:var(--s-5) var(--gutter) 0}
 .hero__h{font:400 var(--t-d1)/1.02 var(--font-display);color:var(--color-strong);margin:0;max-width:15ch;text-wrap:balance}
 .hero__p{max-width:34ch;margin:0 0 var(--s-4);font-size:var(--t-16);color:var(--color-text)}
@@ -322,4 +321,4 @@ body:not([data-route]) .foot{visibility:hidden}
 ::view-transition-group(piece){animation-duration:.5s;animation-timing-function:var(--ease-enter)}
 ::view-transition-old(piece),::view-transition-new(piece){height:100%;object-fit:cover;animation-duration:.25s}
 ::view-transition-group(tag){animation-duration:.5s;animation-timing-function:var(--ease-enter)}
-@media (prefers-reduced-motion:reduce){.piece .shot,.piece .sticker{animation:none}}
+@media (prefers-reduced-motion:reduce){.piece .sticker{animation:none}}
