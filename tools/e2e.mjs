@@ -12,7 +12,7 @@ const cta = await p.locator(".hero__cta .btn").first().boundingBox(), vh = p.vie
 t("hero action inside first screen, above the dock", cta && cta.y + cta.height < vh - 64, JSON.stringify(cta));
 await p.locator('[data-piece]').first().tap(); await p.waitForURL(/#\/p\//);
 t("product h1", (await p.locator("h1").count()) === 1);
-const price = cents(await p.locator(".pdp__price").innerText());
+const price = cents(await p.locator("[data-stage] .sticker__v").innerText());
 await p.locator(".dock__buy").tap(); await p.waitForTimeout(100);
 t("dock shows in cart", (await p.locator(".dock__buy").innerText()).includes("View cart"));
 t("one unit after add", JSON.parse(await p.evaluate(() => localStorage.getItem("oss:cart")))[0].qty === 1);

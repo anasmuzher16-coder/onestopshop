@@ -1,5 +1,5 @@
 /* One Stop Shop tokens, direction 2 (2026-11-13). Research: docs/DESIGN.md.
-   Idea: THE PRICE LANDS AT YOUR DOOR. Device: THE STICKER (a counter price sticker carrying the delivered price).
+   Idea: THE COUNTER, ONLINE. Device: THE STICKER (the counter price sticker, set by hand on every piece).
    Colour: coal chassis; each category owns ONE jewel, used flat (Bohemian glass / Iznik); ember is reserved
    for the sticker and the primary action. Type: Lalezar (Arabic + Latin poster display) + Readex Pro (UI). */
 @font-face{font-family:"Lalezar";src:url(fonts/lalezar-latin.woff2) format("woff2");font-weight:400;font-display:swap;unicode-range:U+0000-00FF,U+2010-2027,U+20AC}

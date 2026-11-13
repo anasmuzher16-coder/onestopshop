@@ -14,8 +14,11 @@ const state = { whyOpen: false, dest: parsePostal(store.get("postal")), cart: cl
 const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const whole = n => "$" + Math.round(n).toLocaleString("en-CA");
-const TONES = ["ruby", "teal", "gilt", "cobalt", "ember", "emerald"];
-const toneOf = p => p.dark ? "" : p.photo ? "bone" : TONES[(parseInt(p.sku.slice(-3), 10) * 5 + parseInt(p.sku[4], 10)) % TONES.length];
+const TONES = ["ember", "teal", "ruby", "cobalt", "gilt", "emerald"];
+const SERIES = { Sultan: "ruby", Mamoun: "gilt", Cairo: "teal", Regent: "cobalt", Stuttgart: "emerald" };
+const seriesOf = p => p.name.split(" ")[0] in SERIES ? p.name.split(" ")[0] : "";
+// Colour is decided, not random: one jewel per series; everything else takes the next jewel along within its category.
+const toneOf = p => p.dark ? "" : p.photo ? "bone" : SERIES[seriesOf(p)] || TONES[PRODUCTS.filter(x => x.cat === p.cat && !seriesOf(x)).indexOf(p) % TONES.length];
 const place = d => d.city ? d.city : d.fsa;
 
 const cartLines = () => state.cart.map(l => ({ product: bySku[l.sku], qty: l.qty }));
@@ -34,15 +37,15 @@ const bestFor = p => state.dest ? quote(state.dest, pack([{ product: p, qty: 1 }
 // ---------- images ----------
 const imgSrc = (p, small) => p.photo ? `img/${p.img}.webp` : `img/p/${p.img}${small && !p.dark ? "-s" : ""}.webp`;
 const SIZES = { card: "(min-width:1500px) 18vw, (min-width:960px) 22vw, (min-width:640px) 30vw, 46vw", pdp: "(min-width:960px) 50vw, 100vw",
-  thumb: "96px", lineup: "(min-width:960px) 370px, 240px", cat: "(min-width:960px) 24vw, 44vw", resin: "(min-width:960px) 28vw, (min-width:640px) 40vw, 72vw" };
+  thumb: "96px", slab: "(min-width:960px) 42vw, 80vw", lineup: "(min-width:960px) 370px, 240px", cat: "(min-width:960px) 24vw, 44vw", resin: "(min-width:960px) 28vw, (min-width:640px) 40vw, 72vw" };
 function srcset(p) {
   if (p.photo) return "";
   if (p.dark) return `srcset="img/p/${p.img}.webp 800w${p.lw ? `, img/p/${p.img}-l.webp ${p.lw}w` : ""}"`;
   return `srcset="img/p/${p.img}-s.webp 360w, img/p/${p.img}.webp 720w${p.lw ? `, img/p/${p.img}-l.webp ${p.lw}w` : ""}"`;
 }
-function shot(p, { small = false, eager = false, use = small ? "card" : "pdp", cls = "" } = {}) {
+function shot(p, { small = false, eager = false, use = small ? "card" : "pdp", cls = "", alt = "" } = {}) {
   const plain = p.dark || p.photo;
-  return `<img class="${plain ? "shot shot--photo" : "shot"} ${cls}" src="${imgSrc(p, small)}" ${srcset(p)} ${p.photo ? "" : `sizes="${SIZES[use]}"`} alt="" width="${p.dark ? 1080 : 720}" height="${p.dark ? 1080 : 900}" ${eager ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async">`;
+  return `<img class="${plain ? "shot shot--photo" : "shot"} ${cls}" src="${imgSrc(p, small)}" ${srcset(p)} ${p.photo ? "" : `sizes="${SIZES[use]}"`} alt="${esc(alt)}" width="${p.dark ? 1080 : 720}" height="${p.dark ? 1080 : 900}" ${eager ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async">`;
 }
 
 // ---------- THE STICKER (device): the delivered price, slapped on the product ----------
@@ -67,13 +70,18 @@ function card(p, i = 9) {
 function viewHome() {
   const picks = ["Sultan Totem", "Stuttgart Pure, Jade", "Regent Neon Blue", "Cairo Avatar", "Carbon Black", "Mamoun Moagza Copper", "Regent Neon Pink", "Orbit"].map(n => PRODUCTS.find(p => p.name === n)).filter(Boolean).slice(0, 8);
   const resin = PRODUCTS.filter(p => p.dark);
+  const stars = ["Mamoun Aten", "Regent Neon Blue", "Sultan Totem", "Stuttgart Pure, Jade", "Cairo Avatar"].map(n => PRODUCTS.find(p => p.name === n)).filter(Boolean);
   return `
   <section class="hero">
-    <picture class="hero__bg"><source media="(max-width:700px)" srcset="img/wide-bar-phone-s.webp 780w, img/wide-bar-phone.webp 1180w" sizes="100vw"><img src="img/wide-bar.webp" srcset="img/wide-bar.webp 1600w, img/wide-bar-2400.webp 2400w" sizes="100vw" alt="" width="1600" height="1068" fetchpriority="high"></picture>
+    <div class="hero__stage">
+      <div class="hero__slabs" aria-hidden="true">${stars.map(p => `<span data-tone="${toneOf(p)}"></span>`).join("")}</div>
+      <p class="hero__word" aria-hidden="true">Hookahs,</p>
+      <div class="hero__pieces">${stars.map((p, i) => `<a class="piece" href="#/p/${p.sku}" style="--cm:${p.height};--i:${i}" aria-label="${esc(p.name)}, ${whole(p.price)}">${shot(p, { eager: true, use: "slab" })}${sticker(p)}</a>`).join("")}</div>
+    </div>
     <div class="hero__in">
-      <h1 class="hero__h"><span class="hero__big">Hookahs,</span> <span class="hero__rest">and everything that goes with them.</span></h1>
+      <h1 class="hero__h"><span class="sr">Hookahs, </span>and everything that goes with them.</h1>
       <div class="hero__side">
-        <p class="hero__p">Egyptian brass, German steel and hand-cut glass. In store in Windsor, shipped across Canada.</p>
+        <p class="hero__p">Egyptian brass, German steel and hand\u2011cut glass. In store in Windsor, shipped across Canada.</p>
         <div class="hero__cta"><a class="btn" href="#/shop/hookahs">Shop hookahs</a><a class="btn btn--ghost" href="#/shop">See everything</a></div>
       </div>
     </div>
@@ -87,7 +95,7 @@ function viewHome() {
     <div class="grid">${picks.map((p, i) => card(p, i + 8)).join("")}</div>
   </section>
   <section class="lineup" aria-labelledby="lu-h">
-    <header class="lineup__head"><h2 class="h2 h2--xl" id="lu-h">Compare heights.</h2><p class="lineup__note">A dozen hookahs from the shelf, drawn to scale.</p></header>
+    <header class="lineup__head"><h2 class="h2 h2--xl" id="lu-h">Compare heights.</h2><p class="lineup__note">A dozen hookahs from the shelf, tallest to shortest.</p></header>
     <div class="lineup__row" tabindex="0" role="group" aria-label="Hookahs by height">
       ${PRODUCTS.filter(p => p.cat === "hookahs" && p.height && !p.dark).sort((a, b) => b.height - a.height).filter((p, i) => i % 3 === 0).map(p =>
         `<a class="lu" href="#/p/${p.sku}" style="--cm:${p.height}"><img class="lu__img" src="img/p/${p.img}-s.webp" ${srcset(p)} sizes="${SIZES.lineup}" alt="" loading="lazy" width="360" height="450"><span class="lu__cm num">${p.height} cm</span><span class="lu__name">${esc(p.name)}</span></a>`).join("")}
@@ -118,14 +126,15 @@ function viewHome() {
 
 function viewShop(cat) {
   const c = catById[cat] || null, list = c ? PRODUCTS.filter(p => p.cat === c.id) : PRODUCTS;
+  const groups = cat === "hookahs" ? [...Object.keys(SERIES).map(k => [k, list.filter(p => seriesOf(p) === k)]), ["More from the shelf", list.filter(p => !seriesOf(p) && !p.dark)], ["One of one", list.filter(p => p.dark)]].filter(g => g[1].length) : [["", list]];
   return `
   <section class="shophead" data-tone="${c ? c.tone : "bone"}">
-    <p class="shophead__ar" lang="ar" dir="rtl" aria-hidden="true">${c ? c.ar : "&#x643;&#x644; &#x634;&#x64a;"}</p>
     <h1 class="shophead__h">${c ? c.name : "Everything"}</h1>
+    <p class="shophead__ar" lang="ar" dir="rtl" aria-hidden="true">${c ? c.ar : "&#x643;&#x644; &#x634;&#x64a;"}</p>
     <p class="shophead__n"><span class="num">${list.length}</span> items</p>
   </section>
   <nav class="chips" aria-label="Categories"><a href="#/shop" ${!c ? 'aria-current="page"' : ""}>All</a>${CATEGORIES.map(x => `<a href="#/shop/${x.id}" ${c && c.id === x.id ? 'aria-current="page"' : ""}>${x.name}</a>`).join("")}</nav>
-  <div class="grid grid--shop">${list.map(card).join("")}</div>`;
+  <div class="grid grid--shop">${groups.map(([name, items]) => (name ? `<h2 class="series">${name} <span class="num">${items.length}</span></h2>` : "") + items.map(card).join("")).join("")}</div>`;
 }
 
 function viewProduct(sku) {
@@ -136,12 +145,11 @@ function viewProduct(sku) {
   const more = PRODUCTS.filter(x => x.cat === p.cat && x.sku !== sku && !x.dark).slice(0, 4);
   return `
   <article class="pdp" data-tone="${toneOf(p)}">
-    <div data-stage="${p.sku}" class="pdp__tile tile ${p.dark || p.photo ? "tile--photo" : ""}">${shot(p, { eager: true })}</div>
+    <div data-stage="${p.sku}" class="pdp__tile tile ${p.dark || p.photo ? "tile--photo" : ""}">${shot(p, { eager: true, alt: p.name })}${sticker(p, { big: true })}${p.dark || p.photo ? "" : `<button class="truecolour" type="button" data-true aria-pressed="false">True colour</button>`}</div>
     <div class="pdp__info">
       <p class="crumb"><a href="#/shop/${p.cat}">${c.name}</a></p>
       <h1 class="pdp__name">${esc(p.name)}</h1>
       <p class="pdp__note">${esc(p.note)}${p.height ? `. Stands ${p.height} cm.` : "."}</p>
-      <p class="pdp__price num">${money(p.price)}</p>
       ${inCart ? `<a class="btn btn--wide" href="#/cart">In your cart. View cart</a>` : `<button class="btn btn--wide" type="button" data-add="${p.sku}">Add to cart</button>`}
       <section class="ways" aria-labelledby="ways-h">
         <h2 class="h3" id="ways-h">Shipping estimate</h2>
@@ -156,7 +164,7 @@ function viewProduct(sku) {
         <dl class="spec__list">
           <div><dt>Item</dt><dd class="num">${p.sku}</dd></div>
           <div><dt>Weight, packed</dt><dd class="num">${b.kg} kg</dd></div>
-          <div><dt>Box</dt><dd><span class="num">${b.l} x ${b.w} x ${b.h} cm</span>, ${esc(b.label.toLowerCase())}</dd></div>
+          <div><dt>Box</dt><dd><span class="num">${b.l} \u00d7 ${b.w} \u00d7 ${b.h} cm</span>, ${esc(b.label.toLowerCase())}</dd></div>
           ${opts.length ? `<div><dt>Billed as</dt><dd><span class="num">${opts[0].perParcel[0].billableKg} kg</span>, the larger of weight and box size</dd></div>` : ""}
           ${p.glass ? `<div><dt>Glass</dt><dd>Double boxed${p.price > 100 ? ", signature and coverage included" : ""}</dd></div>` : ""}
         </dl>
@@ -184,7 +192,7 @@ function viewCart() {
       </li>`).join("")}</ul>
     <section class="cartship">
       <h2 class="h3">How it ships</h2>
-      <ol class="boxes">${parcels.map(p => `<li><span class="num">${p.l} x ${p.w} x ${p.h} cm, ${p.kg} kg</span> ${esc(p.label.toLowerCase())}, ${p.items.length} ${p.items.length === 1 ? "item" : "items"}</li>`).join("")}</ol>
+      <ol class="boxes">${parcels.map(p => `<li><span class="num">${p.l} \u00d7 ${p.w} \u00d7 ${p.h} cm, ${p.kg} kg</span> ${esc(p.label.toLowerCase())}, ${p.items.length} ${p.items.length === 1 ? "item" : "items"}</li>`).join("")}</ol>
       ${!state.dest ? `<button class="btn btn--wide" type="button" data-open-postal>Add postal code to price shipping</button>` : ""}
       ${tooHeavy ? `<p class="note">One of these boxes is over the 30 kg carrier limit. Call the counter at 519-255-2222 and we will quote it by hand.</p>` : ""}
       ${opts.length ? `<fieldset class="opts"><legend>Shipping to ${esc(state.dest.full)} <button class="link" type="button" data-open-postal>Change</button></legend>
@@ -212,7 +220,7 @@ function viewShipping() {
     <h1 class="h2 h2--xl">Shipping</h1>
     <p class="lead">We pack every order at the counter in Windsor and ship to every province and territory.</p>
     <h2 class="h3">What it costs</h2>
-    <p>Shipping is worked out from the packed weight and box size of your order and the carrier's rate to your postal code. You see the cost on the product page and in the cart before you pay.</p>
+    <p>Shipping is worked out from the packed weight and box size of your order and the carrier\u2019s rate to your postal code. You see the cost on the product page and in the cart before you pay.</p>
     <p><button class="btn btn--ghost" type="button" data-open-postal>${state.dest ? "Estimating to " + esc(state.dest.full) + ". Change" : "Enter my postal code"}</button></p>
     <h2 class="h3">How glass is packed</h2>
     <p>Hookahs ship taken apart. The glass base is double boxed. If anything arrives broken, send a photo and we make it right.</p>
@@ -227,7 +235,7 @@ function viewShipping() {
 function syncChrome() {
   $$("[data-cart-count]").forEach(e => e.textContent = cartCount());
   const h = location.hash || "#/";
-  $("[data-nav]").innerHTML = CATEGORIES.slice(0, 6).map(c => `<a href="#/shop/${c.id}" ${h === "#/shop/" + c.id ? 'aria-current="page"' : ""}>${c.name}</a>`).join("") + `<a href="#/shipping" ${h === "#/shipping" ? 'aria-current="page"' : ""}>Shipping</a>`;
+  $("[data-nav]").innerHTML = CATEGORIES.map(c => `<a href="#/shop/${c.id}" ${h === "#/shop/" + c.id ? 'aria-current="page"' : ""}>${c.name}</a>`).join("") + `<a href="#/shipping" ${h === "#/shipping" ? 'aria-current="page"' : ""}>Shipping</a>`;
   const [ra, rb] = h.replace(/^#\/?/, "").split("/"), prod = ra === "p" ? bySku[rb] : null;
   const count = `<span data-cart-count>${cartCount()}</span>`, dock = $(".dock");
   dock.classList.toggle("dock--buy", !!prod);
@@ -246,6 +254,8 @@ function openSheet() { postalInput.value = state.dest ? state.dest.full : ""; po
 document.addEventListener("click", e => {
   if (e.target.closest("[data-open-postal]")) openSheet();
   else if (e.target.closest("[data-close-postal]") || e.target === sheet) sheet.close();
+  const tc = e.target.closest("[data-true]");
+  if (tc) { const on = tc.getAttribute("aria-pressed") !== "true"; tc.setAttribute("aria-pressed", on); tc.closest("[data-stage]").toggleAttribute("data-truecolour", on); }
   const add = e.target.closest("[data-add]"); if (add) { addToCart(add.dataset.add); render(); }
   const q = e.target.closest("[data-qty]"); if (q) setQty(q.dataset.qty, +q.dataset.n);
 });
@@ -278,13 +288,14 @@ document.addEventListener("click", e => {
   const a = e.target.closest("[data-piece]"); if (!a) return;
   $$(".tile").forEach(n => n.style.viewTransitionName = "");
   const n = $(".tile", a) || a; n.style.viewTransitionName = "piece";
+  $$(".sticker").forEach(x => x.style.viewTransitionName = ""); const st = $(".sticker", a); if (st) st.style.viewTransitionName = "tag";
 }, true);
 function go() {
   const from = last.match(/^#\/p\/(.+)$/); last = location.hash;
   render(); scrollTo(0, 0);
   const stage = $("[data-stage]");
-  if (stage) stage.style.viewTransitionName = "piece";
-  else if (from) { const back = $(`[data-piece="${from[1]}"]`), n = back && ($(".tile", back) || back); if (n) { n.style.viewTransitionName = "piece"; n.scrollIntoView({ block: "center" }); } }
+  if (stage) { stage.style.viewTransitionName = "piece"; const st = $(".sticker", stage); if (st) st.style.viewTransitionName = "tag"; }
+  else if (from) { const back = $(`[data-piece="${from[1]}"]`), n = back && ($(".tile", back) || back); if (n) { n.style.viewTransitionName = "piece"; const st = $(".sticker", back); if (st) st.style.viewTransitionName = "tag"; n.scrollIntoView({ block: "center" }); } }
   $("#main").focus({ preventScroll: true });
 }
 window.addEventListener("hashchange", () => {
