@@ -2,7 +2,8 @@
 - [x] 1. Tokens: color, type, spacing as CSS custom properties (site/tokens.css). Verify: contrast script AA PASS.
   PASS: node tools/contrast.mjs -> "ALL PASS (computed)", 13 pairs, lowest 4.69:1 muted on surface.
 - [ ] 2. Rate engine: site/rates.js, quote(dest postal, parcels) -> carrier options, zone + dim-weight + surcharges from docs/SHIPPING.md. Verify: node tools/test-rates.mjs.
-- [ ] 3. Catalog data: 24 realistic sample products (hookahs, accessories, frames) with weight + box. Verify: schema check.
+- [x] 3. Catalog data: 24 realistic sample products (hookahs, accessories, frames) with weight + box. Verify: schema check.
+  PASS: node tools/check-catalog.mjs -> "PASS 24 products, 4 categories, all fit their box" (first run caught 5 assembled-height misfits; model now ships disassembled).
 - [ ] 4. Header + Door Tag (postal code entry, persists). Verify: 390/1440 screenshots.
 - [ ] 5. Home page fold enacting the idea. Verify: 390/1440.
 - [ ] 6. Catalog grid with delivered price per card + filters. Verify: 390/1440.
