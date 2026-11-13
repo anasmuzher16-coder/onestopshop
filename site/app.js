@@ -40,54 +40,42 @@ function shot(p, { small = false, eager = false } = {}) {
 
 // ---------- THE STICKER (device): the delivered price, slapped on the product ----------
 function sticker(p, { big = false } = {}) {
-  const q = bestFor(p);
-  if (!q) return `<span class="sticker sticker--ask ${big ? "sticker--big" : ""}" aria-hidden="true"><span class="sticker__k">add postal code</span><span class="sticker__q">?</span></span>`;
-  return `<span class="sticker ${big ? "sticker--big" : ""}"><span class="sticker__k">${big ? "at your door" : "delivered"}</span><span class="sticker__v">${whole(p.price + q.total)}</span><span class="sticker__k">in ${days(q.days)}</span></span>`;
+  return `<span class="sticker ${big ? "sticker--big" : ""}"><span class="sticker__v">${whole(p.price)}</span></span>`;
 }
 
 function card(p, i = 9) {
-  const q = bestFor(p), tone = toneOf(p);
+  const tone = toneOf(p);
   return `
   <article class="card" data-tone="${tone}">
     <a class="card__a" href="#/p/${p.sku}">
       <div class="tile ${p.dark || p.photo ? "tile--photo" : ""}">${shot(p, { small: true, eager: i < 4 })}${sticker(p)}</div>
       <h3 class="card__name">${esc(p.name)}</h3>
     </a>
-    <p class="card__meta"><span class="num">${money(p.price)}</span> in store${q ? ` <span class="card__sep">/</span> <span class="num">${money(q.total)}</span> delivery` : ""}</p>
+    <p class="card__meta">${esc(p.note)}</p>
   </article>`;
 }
 
 // ---------- views ----------
-const TICKER = [["Toronto", "M5V2T6"], ["Montreal", "H2X1Y4"], ["Ottawa", "K1P1J1"], ["Halifax", "B3H4R2"], ["Winnipeg", "R3C4T3"], ["Calgary", "T2P1J9"],
-  ["Edmonton", "T5J2R7"], ["Vancouver", "V6B1A1"], ["Saskatoon", "S7K1J5"], ["St. John's", "A1C1A1"], ["Thunder Bay", "P7B1A1"], ["Whitehorse", "Y1A2C6"]];
-function ticker(p) {
-  const items = TICKER.map(([city, code]) => {
-    const q = quote(parsePostal(code), pack([{ product: p, qty: 1 }]))[0];
-    return `<span class="tick"><b>${city}</b> ${whole(p.price + q.total)}</span>`;
-  }).join("");
-  return `<div class="ticker" aria-label="${esc(p.name)} delivered, by city"><p class="ticker__lead">${esc(p.name)}, delivered</p><div class="ticker__run"><div class="ticker__track">${items}${items}</div></div></div>`;
+const WORDS = ["Egyptian brass", "Bohemian glass", "German steel", "Poured resin", "Hand-stitched leather", "Clay and stoneware", "Shipped across Canada", "Open seven days"];
+function ticker() {
+  const items = WORDS.map(w => `<span class="tick">${w}</span>`).join("");
+  return `<div class="ticker" aria-hidden="true"><div class="ticker__run"><div class="ticker__track">${items}${items}</div></div></div>`;
 }
 
 function viewHome() {
-  const hero = PRODUCTS.find(p => p.name === "Mamoun Kamanja Gold");
   const picks = ["Sultan Totem", "Stuttgart Pure, Jade", "Regent Neon Blue", "Cairo Avatar", "Woodline Sage", "Carbon Black", "Mamoun Moagza Copper", "Regent Neon Pink"].map(n => PRODUCTS.find(p => p.name === n));
   const resin = PRODUCTS.filter(p => p.dark);
   return `
   <section class="hero">
     <picture class="hero__bg"><source media="(max-width:700px)" srcset="img/wide-bar-800.webp"><img src="img/wide-bar.webp" alt="" width="1600" height="1068" fetchpriority="high"></picture>
     <div class="hero__in">
-      <p class="hero__ar" lang="ar" dir="rtl">&#x627;&#x644;&#x633;&#x639;&#x631; &#x648;&#x627;&#x635;&#x644; &#x644;&#x628;&#x627;&#x628; &#x628;&#x64a;&#x62a;&#x643;</p>
-      <h1 class="hero__h">Priced to <span class="hero__door">${state.dest ? esc(place(state.dest)) : "your door"}.</span></h1>
-      <p class="hero__p">${state.dest
-        ? `Every price in the shop now includes delivery to ${esc(state.dest.full)}. Packed in Windsor, tracked to you.`
-        : "Tell us your postal code once. Every hookah in the shop shows what it costs delivered to you, before checkout."}</p>
-      <div class="hero__cta">
-        ${state.dest ? `<a class="btn" href="#/shop/hookahs">Shop hookahs</a><button class="btn btn--ghost" type="button" data-open-postal>Change postal code</button>`
-                     : `<button class="btn" type="button" data-open-postal>Enter postal code</button><a class="btn btn--ghost" href="#/shop/hookahs">Shop hookahs</a>`}
-      </div>
+      <p class="hero__ar" lang="ar" dir="rtl">&#x623;&#x647;&#x644;&#x627; &#x648;&#x633;&#x647;&#x644;&#x627;</p>
+      <h1 class="hero__h">Hookahs worth <span class="hero__door">showing off.</span></h1>
+      <p class="hero__p">Egyptian brass, German steel and hand-cut glass. On the counter in Windsor, and shipped anywhere in Canada.</p>
+      <div class="hero__cta"><a class="btn" href="#/shop/hookahs">Shop hookahs</a><a class="btn btn--ghost" href="#/shop">See everything</a></div>
     </div>
   </section>
-  ${ticker(hero)}
+  ${ticker()}
   <section class="cats" aria-label="Shop by category">
     ${CATEGORIES.map(c => { const n = PRODUCTS.filter(p => p.cat === c.id).length; const lead = PRODUCTS.find(p => p.cat === c.id && !p.dark);
       return `<a class="cat" data-tone="${c.tone}" href="#/shop/${c.id}"><span class="cat__ar" lang="ar" dir="rtl" aria-hidden="true">${c.ar}</span><img class="shot cat__img" src="${imgSrc(lead, true)}" alt="" loading="lazy" width="360" height="450"><span class="cat__name">${c.name}</span><span class="cat__n num">${n}</span></a>`; }).join("")}
@@ -112,7 +100,7 @@ function viewHome() {
       <ul class="pack__list">
         <li><b>Taken apart.</b> Stem, base and tray are wrapped separately so nothing long carries the weight.</li>
         <li><b>Double boxed.</b> The base sits in its own box inside the shipping box.</li>
-        <li><b>Covered.</b> Glass orders over $100 ship with signature and full coverage. It is already in the price you see.</li>
+        <li><b>Covered.</b> Glass orders over $100 ship with signature and full coverage.</li>
       </ul>
       <a class="link" href="#/shipping">How shipping works</a>
     </div>
@@ -125,7 +113,7 @@ function viewShop(cat) {
   <section class="shophead" data-tone="${c ? c.tone : "bone"}">
     <p class="shophead__ar" lang="ar" dir="rtl" aria-hidden="true">${c ? c.ar : "&#x643;&#x644; &#x634;&#x64a;"}</p>
     <h1 class="shophead__h">${c ? c.name : "Everything"}</h1>
-    <p class="shophead__n"><span class="num">${list.length}</span> items${state.dest ? `, priced to ${esc(place(state.dest))}` : ""}</p>
+    <p class="shophead__n"><span class="num">${list.length}</span> items</p>
   </section>
   <nav class="chips" aria-label="Categories"><a href="#/shop" ${!c ? 'aria-current="page"' : ""}>All</a>${CATEGORIES.map(x => `<a href="#/shop/${x.id}" ${c && c.id === x.id ? 'aria-current="page"' : ""}>${x.name}</a>`).join("")}</nav>
   <div class="grid grid--shop">${list.map(card).join("")}</div>`;
@@ -139,25 +127,21 @@ function viewProduct(sku) {
   const more = PRODUCTS.filter(x => x.cat === p.cat && x.sku !== sku && !x.dark).slice(0, 4);
   return `
   <article class="pdp" data-tone="${toneOf(p)}">
-    <div class="pdp__tile tile ${p.dark || p.photo ? "tile--photo" : ""}">${shot(p, { eager: true })}${sticker(p, { big: true })}</div>
+    <div class="pdp__tile tile ${p.dark || p.photo ? "tile--photo" : ""}">${shot(p, { eager: true })}</div>
     <div class="pdp__info">
       <p class="crumb"><a href="#/shop/${p.cat}">${c.name}</a></p>
       <h1 class="pdp__name">${esc(p.name)}</h1>
       <p class="pdp__note">${esc(p.note)}${p.height ? `. Stands ${p.height} cm.` : "."}</p>
-      <dl class="price">
-        <div><dt>In store</dt><dd class="num">${money(p.price)}</dd></div>
-        ${opts.length ? `<div><dt>Delivery to ${esc(state.dest.full)}</dt><dd class="num">${money(opts[0].total)}</dd></div>
-        <div class="price__door"><dt>At your door</dt><dd class="num">${money(p.price + opts[0].total)}</dd></div>`
-        : `<div class="price__ask"><dt>At your door</dt><dd><button class="link" type="button" data-open-postal>Add postal code</button></dd></div>`}
-      </dl>
+      <p class="pdp__price num">${money(p.price)}</p>
       ${inCart ? `<a class="btn btn--wide" href="#/cart">In your cart. View cart</a>` : `<button class="btn btn--wide" type="button" data-add="${p.sku}">Add to cart</button>`}
-      ${opts.length ? `
       <section class="ways" aria-labelledby="ways-h">
-        <h2 class="h3" id="ways-h">Ways to get it</h2>
-        <table class="ledger"><thead><tr><th scope="col">Service</th><th scope="col">Arrives</th><th scope="col" class="r">Delivery</th></tr></thead>
+        <h2 class="h3" id="ways-h">Shipping estimate</h2>
+        ${opts.length ? `<p class="ways__to">To ${esc(state.dest.full)}${state.dest.city ? ", " + esc(state.dest.city) : ""}. <button class="link" type="button" data-open-postal>Change</button></p>
+        <table class="ledger"><thead><tr><th scope="col">Service</th><th scope="col">Arrives</th><th scope="col" class="r">Cost</th></tr></thead>
         <tbody>${opts.map(o => `<tr><td>${o.carrier} ${o.service}</td><td>${days(o.days)}</td><td class="r num">${money(o.total)}</td></tr>`).join("")}
-        <tr><td>Pick up at the Windsor counter</td><td>Today</td><td class="r num">$0.00</td></tr></tbody></table>
-      </section>` : ""}
+        <tr><td>Pick up at the Windsor counter</td><td>Today</td><td class="r num">Free</td></tr></tbody></table>`
+        : `<p class="ways__to">Ships anywhere in Canada, or pick up free at the Windsor counter.</p><button class="btn btn--ghost btn--wide" type="button" data-open-postal>Estimate shipping to my postal code</button>`}
+      </section>
       <section class="spec" aria-labelledby="spec-h">
         <h2 class="h3" id="spec-h">What ships</h2>
         <dl class="spec__list">
@@ -175,7 +159,7 @@ function viewProduct(sku) {
 
 function viewCart() {
   const lines = cartLines();
-  if (!lines.length) return `<section class="empty"><h1 class="h2 h2--xl">Nothing in the cart yet.</h1><p class="lead">Start with the <a class="link" href="#/shop/hookahs">hookahs</a>. Each one shows its price at your door.</p></section>`;
+  if (!lines.length) return `<section class="empty"><h1 class="h2 h2--xl">Nothing in the cart yet.</h1><p class="lead">Start with the <a class="link" href="#/shop/hookahs">hookahs</a>. Shipping is priced in the cart.</p></section>`;
   const parcels = pack(lines), opts = state.dest ? quote(state.dest, parcels) : [];
   const chosen = opts.find(o => o.id === state.ship) || opts[0], sub = lines.reduce((a, l) => a + l.product.price * l.qty, 0);
   const tooHeavy = state.dest && !opts.length;
@@ -192,9 +176,9 @@ function viewCart() {
     <section class="cartship">
       <h2 class="h3">How it ships</h2>
       <ol class="boxes">${parcels.map(p => `<li><span class="num">${p.l} x ${p.w} x ${p.h} cm, ${p.kg} kg</span> ${esc(p.label.toLowerCase())}, ${p.items.length} ${p.items.length === 1 ? "item" : "items"}</li>`).join("")}</ol>
-      ${!state.dest ? `<button class="btn btn--wide" type="button" data-open-postal>Add postal code to price delivery</button>` : ""}
+      ${!state.dest ? `<button class="btn btn--wide" type="button" data-open-postal>Add postal code to price shipping</button>` : ""}
       ${tooHeavy ? `<p class="note">One of these boxes is over the 30 kg carrier limit. Call the counter at 519-255-2222 and we will quote it by hand.</p>` : ""}
-      ${opts.length ? `<fieldset class="opts"><legend>Delivery to ${esc(state.dest.full)} <button class="link" type="button" data-open-postal>Change</button></legend>
+      ${opts.length ? `<fieldset class="opts"><legend>Shipping to ${esc(state.dest.full)} <button class="link" type="button" data-open-postal>Change</button></legend>
         ${opts.map(o => `<label class="opt"><input type="radio" name="ship" value="${o.id}" ${o.id === chosen.id ? "checked" : ""}><span class="opt__name">${o.carrier} ${o.service}<small>${days(o.days)}</small></span><span class="num">${money(o.total)}</span></label>`).join("")}
       </fieldset>
       <details class="why"><summary>What makes up ${money(chosen.total)}</summary><dl>
@@ -204,8 +188,8 @@ function viewCart() {
     </section>
     <dl class="totals">
       <div><dt>Items</dt><dd class="num">${money(sub)}</dd></div>
-      <div><dt>Delivery</dt><dd class="num">${chosen ? money(chosen.total) : "not priced yet"}</dd></div>
-      <div class="totals__door"><dt>At your door</dt><dd class="num">${chosen ? money(sub + chosen.total) : money(sub)}</dd></div>
+      <div><dt>Shipping</dt><dd class="num">${chosen ? money(chosen.total) : "add postal code"}</dd></div>
+      <div class="totals__door"><dt>Total before tax</dt><dd class="num">${chosen ? money(sub + chosen.total) : money(sub)}</dd></div>
     </dl>
     <button class="btn btn--wide" type="button" ${chosen ? "" : "disabled"}>Checkout</button>
     <p class="fine">Tax is added at checkout. Checkout is not connected in this mockup.</p>
@@ -218,8 +202,9 @@ function viewShipping() {
     <p class="shophead__ar" lang="ar" dir="rtl" aria-hidden="true">&#x627;&#x644;&#x62a;&#x648;&#x635;&#x64a;&#x644;</p>
     <h1 class="h2 h2--xl">Shipping</h1>
     <p class="lead">We pack every order at the counter in Windsor and ship to every province and territory.</p>
-    <h2 class="h3">What you pay</h2>
-    <p>Delivery is worked out from the real packed weight and box size of what you are buying, and the carrier's rate to your postal code. It includes the carrier's fuel charge. On glass orders over $100 it also includes signature and coverage.</p>
+    <h2 class="h3">What it costs</h2>
+    <p>Shipping is worked out from the packed weight and box size of your order and the carrier's rate to your postal code. You see the cost on the product page and in the cart before you pay.</p>
+    <p><button class="btn btn--ghost" type="button" data-open-postal>${state.dest ? "Estimating to " + esc(state.dest.full) + ". Change" : "Enter my postal code"}</button></p>
     <h2 class="h3">How glass is packed</h2>
     <p>Hookahs ship taken apart. The glass base is double boxed. If anything arrives broken, send a photo and we make it right.</p>
     <h2 class="h3">What we ship</h2>
@@ -232,11 +217,9 @@ function viewShipping() {
 // ---------- chrome, sheet, router ----------
 function syncChrome() {
   $$("[data-cart-count]").forEach(e => e.textContent = cartCount());
-  $("[data-shipto]").textContent = state.dest ? state.dest.full : "Add postal code";
-  $("[data-shipto-short]").textContent = state.dest ? state.dest.full : "Ship to";
   const h = location.hash || "#/";
-  $("[data-nav]").innerHTML = CATEGORIES.slice(0, 6).map(c => `<a href="#/shop/${c.id}" ${h === "#/shop/" + c.id ? 'aria-current="page"' : ""}>${c.name}</a>`).join("");
-  $$("[data-dock]").forEach(a => a.toggleAttribute("aria-current", a.dataset.dock === "cart" ? h === "#/cart" : h.startsWith("#/shop")));
+  $("[data-nav]").innerHTML = CATEGORIES.slice(0, 6).map(c => `<a href="#/shop/${c.id}" ${h === "#/shop/" + c.id ? 'aria-current="page"' : ""}>${c.name}</a>`).join("") + `<a href="#/shipping" ${h === "#/shipping" ? 'aria-current="page"' : ""}>Shipping</a>`;
+  $$("[data-dock]").forEach(a => a.toggleAttribute("aria-current", a.dataset.dock === "cart" ? h === "#/cart" : a.dataset.dock === "home" ? h === "#/" : h.startsWith("#/shop") || h.startsWith("#/p/")));
 }
 const sheet = $("[data-postal-sheet]"), postalInput = $("#postal"), postalErr = $("#postal-err");
 function openSheet() { postalInput.value = state.dest ? state.dest.full : ""; postalErr.hidden = true; postalInput.removeAttribute("aria-invalid"); sheet.showModal(); postalInput.focus(); postalInput.select(); }
@@ -252,7 +235,6 @@ $("[data-postal-form]").addEventListener("submit", e => {
   const d = parsePostal(postalInput.value);
   if (!d) { postalErr.hidden = false; postalInput.setAttribute("aria-invalid", "true"); postalInput.focus(); return; }
   state.dest = d; store.set("postal", d.full); sheet.close(); render();
-  document.body.classList.remove("slap"); void document.body.offsetWidth; document.body.classList.add("slap");
 });
 postalInput.addEventListener("input", () => { postalErr.hidden = true; postalInput.removeAttribute("aria-invalid"); });
 

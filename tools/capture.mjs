@@ -5,7 +5,7 @@ const require = createRequire("C:/dev/puckempire-arena/package.json");
 const { chromium } = require("playwright");
 const base = process.env.BASE || "http://localhost:4410/";
 const cart = [{ sku: "OSS-1021", qty: 1 }, { sku: "OSS-5006", qty: 1 }, { sku: "OSS-6007", qty: 2 }, { sku: "OSS-7001", qty: 1 }];
-const routes = [["home-empty", "", false], ["home", "", true], ["shop", "#/shop/hookahs", true], ["pdp", "#/p/OSS-1021", true], ["pdp-dark", "#/p/OSS-1006", true],
+const routes = [["home", "", false], ["shop", "#/shop/hookahs", false], ["pdp", "#/p/OSS-1021", true], ["pdp-dark", "#/p/OSS-1006", true],
   ["pdp-empty", "#/p/OSS-1012", false], ["cart", "#/cart", true], ["shipping", "#/shipping", true]];
 const browser = await chromium.launch();
 for (const w of [390, 1440]) {
@@ -13,7 +13,7 @@ for (const w of [390, 1440]) {
     const ctx = await browser.newContext({ viewport: { width: w, height: w === 390 ? 844 : 900 }, deviceScaleFactor: 1 });
     await ctx.addInitScript(([c, code]) => {
       localStorage.setItem("oss:cart", JSON.stringify(c));
-      if (code) localStorage.setItem("oss:postal", JSON.stringify("B3H 4R2")); else localStorage.removeItem("oss:postal");
+      if (code) localStorage.setItem("oss:postal", JSON.stringify("M5V 2T6")); else localStorage.removeItem("oss:postal");
     }, [cart, withCode]);
     const page = await ctx.newPage();
     await page.goto(base + hash, { waitUntil: "networkidle" });

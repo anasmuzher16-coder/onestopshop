@@ -36,3 +36,13 @@ outline asking for one, so the page visibly completes itself when the code goes 
   2026-11-13); they are replaced by the shop's own photos and must not go on a public URL as they are.
 - Motion: two moves. The ticker (one hookah priced to twelve cities, ambient, pauses on hover, static under
   reduced motion) and the sticker slap when a postal code is set (480ms, once).
+
+## Correction, same day (his words: "The shipping calculator isn't meant to be a focus for consumers, it's just a
+feature the owner of the shop really wanted"; "why do you keep focusing on Halifax?")
+I had made shipping the idea of the whole site and used my own test postal code (Halifax) in every capture.
+Changed: the site is about the products and the shop. Hero sells the hookahs. The sticker carries the shop's
+price only. The postal code is asked for only where shipping matters: a "Shipping estimate" block on the product
+page, the cart, and the shipping page. No postal button in the top bar or the dock. The ticker lists what is
+on the counter (materials), not delivered prices. Captures now run with no postal code except product/cart
+shots (Toronto, as an example only).
+Idea, restated: THE COUNTER, ONLINE. Device: the price sticker (the counter's price gun), unchanged in form.
