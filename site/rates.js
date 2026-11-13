@@ -69,61 +69,91 @@ export function pack(lines) {
     host.kg = round(host.kg + kg, 2); host.value += loose.reduce((v, p) => v + p.price, 0); host.items.push(...loose.map(p => p.sku));
     return parcels;
   }
-  // First-fit into L-sized bins by volume and weight, then shrink each bin to the smallest box that holds it.
-  const cap = boxVol(BOXES.L) * BOX_FILL, bins = [];
-  for (const p of [...loose].sort((a, b) => looseVol(b) - looseVol(a))) {
-    let bin = bins.find(b => b.vol + looseVol(p) <= cap && b.kg + p.kg + BOXES.L.tare <= MAX_KG);
-    if (!bin) bins.push(bin = { vol: 0, kg: 0, value: 0, glass: false, items: [] });
-    bin.vol += looseVol(p); bin.kg += p.kg; bin.value += p.price; bin.glass ||= !!p.glass; bin.items.push(p.sku);
-  }
-  for (const bin of bins) {
-    const key = ["XS", "S", "M", "L"].find(k => boxVol(BOXES[k]) * BOX_FILL >= bin.vol) || "L";
-    const b = BOXES[key];
-    parcels.push({ box: key, ...b, kg: round(bin.kg + b.tare, 2), value: bin.value, glass: bin.glass, fill: round(bin.vol / boxVol(b)), items: bin.items });
-  }
+  // Loose parts: first-fit into L-sized bins, shrink each bin to the smallest box that holds it, then
+  // rebalance. Tried in several orders; the packing that bills least wins.
+  const cap = boxVol(BOXES.L) * BOX_FILL;
+  const boxKey = bin => ["XS", "S", "M", "L"].find(k => boxVol(BOXES[k]) * BOX_FILL >= bin.vol) || "L";
+  const dimKg = b => boxVol(b) / RATE_CARD.divisor;
+  const move = (it, from, to) => {
+    from.list.splice(from.list.indexOf(it), 1); from.vol -= looseVol(it); from.kg -= it.kg; from.value -= it.price;
+    to.list.push(it); to.vol += looseVol(it); to.kg += it.kg; to.value += it.price;
+  };
+  const attempt = order => {
+    const bins = [];
+    for (const p of [...loose].sort(order)) {
+      let bin = bins.find(b => b.vol + looseVol(p) <= cap && b.kg + p.kg + BOXES.L.tare <= MAX_KG);
+      if (!bin) bins.push(bin = { vol: 0, kg: 0, value: 0, list: [] });
+      bin.vol += looseVol(p); bin.kg += p.kg; bin.value += p.price; bin.list.push(p);
+    }
+    // A box is billed on the larger of its weight and its size, so a light box has billed weight to spare:
+    // move items out of boxes billed on real weight into boxes with spare, heaviest first.
+    for (let pass = 0; pass < 3; pass++) for (const to of bins) for (const from of bins) {
+      if (from === to) continue;
+      const tb = BOXES[boxKey(to)], fb = BOXES[boxKey(from)];
+      if (from.kg + fb.tare <= dimKg(fb)) continue;
+      for (const it of [...from.list].sort((x, y) => y.kg - x.kg)) {
+        if (from.list.length > 1 && to.vol + looseVol(it) <= boxVol(tb) * BOX_FILL && to.kg + it.kg + tb.tare <= dimKg(tb)) move(it, from, to);
+      }
+    }
+    const out = bins.map(bin => { const key = boxKey(bin), bx = BOXES[key];
+      return { box: key, ...bx, kg: round(bin.kg + bx.tare, 2), value: bin.value, glass: bin.list.some(x => x.glass), fill: round(bin.vol / boxVol(bx)), items: bin.list.map(x => x.sku) }; });
+    const score = out.reduce((t, p) => t + (sheetPrice("exp", 3, billableKg(p)) ?? 1e6), 0);
+    return { out, score };
+  };
+  const orders = [(x, y) => looseVol(y) - looseVol(x) || y.kg - x.kg, (x, y) => y.kg - x.kg || looseVol(y) - looseVol(x), (x, y) => looseVol(x) - looseVol(y) || x.kg - y.kg, (x, y) => x.kg - y.kg];
+  const best = orders.map(attempt).sort((x, y) => x.score - y.score || x.out.length - y.out.length)[0];
+  parcels.push(...best.out);
   return parcels;
 }
 
 // --- Rating -------------------------------------------------------------------------------
+// FUEL: Canada Post's published domestic fuel surcharge, relief rate, for the week shown. It changes
+// weekly (canadapost.ca/fuelsurcharge), which is why production must read it from the Rating API.
+export const FUEL = { pct: 0.412, week: "Nov 9 to Nov 15, 2026", next: { pct: 0.399, from: "2026-11-16" } };
 export const RATE_CARD = {
-  divisor: 5000,        // cm3 per kg volumetric equivalent (Canada Post exact VE rule: to confirm)
-  fuelPct: 0.25,        // floor after the 15% relief discount, CP news release 2026-10-05
-  coveragePer100: 2.75, // "Additional Liability Coverage ... $2.75 per additional $100" (first $100 included)
+  divisor: 5000,        // cm3 per kg, Priority / Xpresspost / Expedited (Canada Post "How to cube an item")
+  coveragePer100: 2.75, // "Additional Liability Coverage ... $2.75 per additional $100"
   signature: 2.00,      // mandatory with additional coverage (guide footnote 1)
   carriers: [
-    { id: "cp-exp", sheet: "exp", carrier: "Canada Post", service: "Expedited Parcel", days: [1, 2, 3, 4, 6, 9] },
-    { id: "cp-xp", sheet: "xp", carrier: "Canada Post", service: "Xpresspost", days: [1, 1, 2, 2, 3, 5] },
+    // Regular Parcel: same price table as Expedited at this level, but cubed at 6000 and the first $100 of
+    // coverage is not free ($2.75). Cheaper for bulky boxes, slower, no delivery guarantee.
+    { id: "cp-reg", sheet: "exp", divisor: 6000, first100: 2.75, carrier: "Canada Post", service: "Regular Parcel", days: [2, 3, 5, 6, 8, 12] },
+    { id: "cp-exp", sheet: "exp", divisor: 5000, first100: 0, carrier: "Canada Post", service: "Expedited Parcel", days: [1, 2, 3, 4, 6, 9] },
+    { id: "cp-xp", sheet: "xp", divisor: 5000, first100: 0, carrier: "Canada Post", service: "Xpresspost", days: [1, 1, 2, 2, 3, 5] },
   ],
 };
+const cents = n => Math.round(n * 100);
 
 // Billable weight = the larger of real and volumetric weight, rounded UP to the next row on the sheet
-// (0.5, 0.75, 1.0, then every 0.5 kg). Past 30 kg (volumetric only) it continues in 0.5 kg steps.
+// (0.5, 0.75, 1.0, then every 0.5 kg to 30).
 export function billableKg(parcel, divisor = RATE_CARD.divisor) {
   const w = Math.max(parcel.kg, (parcel.l * parcel.w * parcel.h) / divisor);
   return KGS.find(k => k >= w - 1e-9) ?? Math.ceil(w * 2 - 1e-9) / 2;
 }
 export function sheetPrice(sheet, zoneIndex, kg) {
-  const t = SHEET[sheet], i = KGS.indexOf(kg);
-  if (i >= 0) return t.zones[zoneIndex][i];
-  return round(t.zones[zoneIndex][KGS.length - 1] + t.over30per05[zoneIndex] * Math.round((kg - 30) * 2));
+  const i = KGS.indexOf(kg);
+  return i >= 0 ? SHEET[sheet].zones[zoneIndex][i] : null; // nothing over 30 kg is priced
 }
 
-// Returns options sorted by price, each itemised. Returns [] if any parcel cannot ship (over 30 kg).
-export function quote(dest, parcels) {
+// Returns options sorted by price, each itemised, all money in whole cents internally.
+// Returns [] if any parcel cannot ship (real or billed weight over 30 kg): the counter quotes those by hand.
+export function quote(dest, parcels, fuelPct = FUEL.pct) {
   if (!dest || !parcels.length || parcels.some(p => p.kg > MAX_KG)) return [];
-  const z = dest.zone - 1;
-  return RATE_CARD.carriers.map(c => {
-    let freight = 0, cover = 0;
+  const z = dest.zone - 1, out = [];
+  for (const c of RATE_CARD.carriers) {
+    let freight = 0, cover = 0, ok = true;
     const perParcel = parcels.map(p => {
-      const kg = billableKg(p), f = sheetPrice(c.sheet, z, kg);
-      freight += f;
-      if (p.glass && p.value > 100) cover += Math.ceil((p.value - 100) / 100) * RATE_CARD.coveragePer100 + RATE_CARD.signature;
+      const kg = billableKg(p, c.divisor), f = sheetPrice(c.sheet, z, kg);
+      if (f === null) { ok = false; return null; }
+      freight += cents(f);
+      if (p.glass && p.value > 100) cover += cents(c.first100) + Math.ceil((p.value - 100) / 100) * cents(RATE_CARD.coveragePer100) + cents(RATE_CARD.signature);
       return { box: p.box, actualKg: p.kg, billableKg: kg, freight: f };
     });
-    freight = round(freight); cover = round(cover);
-    const fuel = round(freight * RATE_CARD.fuelPct);
-    return { id: c.id, carrier: c.carrier, service: c.service, days: c.days[z], perParcel, freight, cover, fuel, total: round(freight + cover + fuel) };
-  }).sort((a, b) => a.total - b.total);
+    if (!ok) continue;
+    const fuel = Math.round(freight * fuelPct);
+    out.push({ id: c.id, carrier: c.carrier, service: c.service, days: c.days[z], perParcel, freight: freight / 100, cover: cover / 100, fuel: fuel / 100, total: (freight + cover + fuel) / 100 });
+  }
+  return out.sort((a, b) => a.total - b.total || a.days - b.days);
 }
 
 export const days = n => n + (n === 1 ? " day" : " days");
