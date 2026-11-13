@@ -28,7 +28,8 @@ export const PRODUCTS = [
   "height": 78,
   "note": "Cast steel sculpture stem, cut crystal base",
   "img": "hookah00",
-  "dark": false
+  "dark": false,
+  "lw": 965
  },
  {
   "sku": "OSS-1002",
@@ -41,7 +42,8 @@ export const PRODUCTS = [
   "height": 76,
   "note": "Hand-finished stem with rose inlay",
   "img": "hookah04",
-  "dark": false
+  "dark": false,
+  "lw": 978
  },
  {
   "sku": "OSS-1003",
@@ -54,7 +56,8 @@ export const PRODUCTS = [
   "height": 78,
   "note": "Carved totem stem, crystal base",
   "img": "hookah06",
-  "dark": false
+  "dark": false,
+  "lw": 950
  },
  {
   "sku": "OSS-1004",
@@ -67,7 +70,8 @@ export const PRODUCTS = [
   "height": 74,
   "note": "Polished steel, cut crystal base",
   "img": "hookah09",
-  "dark": false
+  "dark": false,
+  "lw": 977
  },
  {
   "sku": "OSS-1005",
@@ -80,20 +84,8 @@ export const PRODUCTS = [
   "height": 74,
   "note": "Polished steel, cut crystal base",
   "img": "hookah10",
-  "dark": false
- },
- {
-  "sku": "OSS-1006",
-  "name": "Resin Rook, Blue Honeycomb",
-  "cat": "hookahs",
-  "price": 469,
-  "kg": 6.8,
-  "box": "T",
-  "glass": true,
-  "height": 70,
-  "note": "Poured resin stem, one of one",
-  "img": "hookah11",
-  "dark": true
+  "dark": false,
+  "lw": 996
  },
  {
   "sku": "OSS-1007",
@@ -106,7 +98,8 @@ export const PRODUCTS = [
   "height": 70,
   "note": "Poured resin and burl wood stem",
   "img": "hookah12",
-  "dark": true
+  "dark": true,
+  "lw": 1080
  },
  {
   "sku": "OSS-1008",
@@ -119,20 +112,8 @@ export const PRODUCTS = [
   "height": 72,
   "note": "Poured resin stem, one of one",
   "img": "hookah14",
-  "dark": true
- },
- {
-  "sku": "OSS-1009",
-  "name": "Resin Rook, Cream",
-  "cat": "hookahs",
-  "price": 429,
-  "kg": 6.8,
-  "box": "T",
-  "glass": true,
-  "height": 70,
-  "note": "Poured resin stem, one of one",
-  "img": "hookah18",
-  "dark": true
+  "dark": true,
+  "lw": 1080
  },
  {
   "sku": "OSS-1010",
@@ -145,20 +126,8 @@ export const PRODUCTS = [
   "height": 68,
   "note": "German stainless, closed chamber",
   "img": "hookah16",
-  "dark": false
- },
- {
-  "sku": "OSS-1011",
-  "name": "Woodline Sage",
-  "cat": "hookahs",
-  "price": 699,
-  "kg": 4.54,
-  "box": "T",
-  "glass": false,
-  "height": 60,
-  "note": "Lacquered wood stem, steel core",
-  "img": "hookah22",
-  "dark": false
+  "dark": false,
+  "lw": 0
  },
  {
   "sku": "OSS-1012",
@@ -171,7 +140,8 @@ export const PRODUCTS = [
   "height": 48,
   "note": "Brushed stainless, wide base",
   "img": "hookah25",
-  "dark": false
+  "dark": false,
+  "lw": 1440
  },
  {
   "sku": "OSS-1013",
@@ -184,7 +154,8 @@ export const PRODUCTS = [
   "height": 70,
   "note": "Laminated wood stem, gold-band base",
   "img": "hookah28",
-  "dark": false
+  "dark": false,
+  "lw": 0
  },
  {
   "sku": "OSS-1014",
@@ -197,7 +168,8 @@ export const PRODUCTS = [
   "height": 58,
   "note": "Turned pear wood, steel tray",
   "img": "hookah34",
-  "dark": false
+  "dark": false,
+  "lw": 0
  },
  {
   "sku": "OSS-1015",
@@ -210,7 +182,8 @@ export const PRODUCTS = [
   "height": 56,
   "note": "Stainless stem, jade glass base",
   "img": "hookah36",
-  "dark": false
+  "dark": false,
+  "lw": 0
  },
  {
   "sku": "OSS-1016",
@@ -223,7 +196,8 @@ export const PRODUCTS = [
   "height": 60,
   "note": "Stainless, click-lock clear base",
   "img": "hookah37",
-  "dark": false
+  "dark": false,
+  "lw": 1440
  },
  {
   "sku": "OSS-1017",
@@ -236,7 +210,8 @@ export const PRODUCTS = [
   "height": 68,
   "note": "Anodised blue stem, gold-band base",
   "img": "hookah40",
-  "dark": false
+  "dark": false,
+  "lw": 0
  },
  {
   "sku": "OSS-1018",
@@ -249,7 +224,8 @@ export const PRODUCTS = [
   "height": 68,
   "note": "Glow stem, gold-band base",
   "img": "hookah41",
-  "dark": false
+  "dark": false,
+  "lw": 0
  },
  {
   "sku": "OSS-1019",
@@ -262,7 +238,8 @@ export const PRODUCTS = [
   "height": 76,
   "note": "Egyptian brass, hand engraved",
   "img": "hookah45",
-  "dark": false
+  "dark": false,
+  "lw": 0
  },
  {
   "sku": "OSS-1020",
@@ -275,7 +252,8 @@ export const PRODUCTS = [
   "height": 38,
   "note": "Compact steel, cut glass base",
   "img": "hookah46",
-  "dark": false
+  "dark": false,
+  "lw": 1269
  },
  {
   "sku": "OSS-1021",
@@ -288,7 +266,8 @@ export const PRODUCTS = [
   "height": 62,
   "note": "Steel stem, prism cut base",
   "img": "hookah50",
-  "dark": false
+  "dark": false,
+  "lw": 1440
  },
  {
   "sku": "OSS-1022",
@@ -301,7 +280,8 @@ export const PRODUCTS = [
   "height": 58,
   "note": "Carbon fibre stem, smoke glass",
   "img": "hookah51",
-  "dark": false
+  "dark": false,
+  "lw": 926
  },
  {
   "sku": "OSS-1023",
@@ -314,7 +294,8 @@ export const PRODUCTS = [
   "height": 80,
   "note": "Egyptian brass and copper",
   "img": "hookah52",
-  "dark": false
+  "dark": false,
+  "lw": 0
  },
  {
   "sku": "OSS-1024",
@@ -327,7 +308,8 @@ export const PRODUCTS = [
   "height": 82,
   "note": "Egyptian brass, tall stem",
   "img": "hookah54",
-  "dark": false
+  "dark": false,
+  "lw": 0
  },
  {
   "sku": "OSS-1025",
@@ -340,7 +322,8 @@ export const PRODUCTS = [
   "height": 42,
   "note": "Stainless, compact travel size",
   "img": "hookah57",
-  "dark": false
+  "dark": false,
+  "lw": 1201
  },
  {
   "sku": "OSS-1026",
@@ -353,7 +336,8 @@ export const PRODUCTS = [
   "height": 86,
   "note": "Egyptian steel with ice chamber",
   "img": "hookah64",
-  "dark": false
+  "dark": false,
+  "lw": 1440
  },
  {
   "sku": "OSS-1027",
@@ -366,7 +350,8 @@ export const PRODUCTS = [
   "height": 74,
   "note": "Egyptian brass, single hose",
   "img": "hookah65",
-  "dark": false
+  "dark": false,
+  "lw": 967
  },
  {
   "sku": "OSS-1028",
@@ -379,7 +364,8 @@ export const PRODUCTS = [
   "height": 52,
   "note": "Slim steel, clear bell base",
   "img": "hookah67",
-  "dark": false
+  "dark": false,
+  "lw": 1209
  },
  {
   "sku": "OSS-1029",
@@ -392,7 +378,8 @@ export const PRODUCTS = [
   "height": 50,
   "note": "Stainless, straight stem",
   "img": "hookah71",
-  "dark": false
+  "dark": false,
+  "lw": 1008
  },
  {
   "sku": "OSS-1030",
@@ -405,7 +392,8 @@ export const PRODUCTS = [
   "height": 56,
   "note": "Aluminium stem, amber base",
   "img": "hookah76",
-  "dark": false
+  "dark": false,
+  "lw": 1032
  },
  {
   "sku": "OSS-1031",
@@ -418,7 +406,8 @@ export const PRODUCTS = [
   "height": 84,
   "note": "Egyptian brass, wide tray",
   "img": "hookah77",
-  "dark": false
+  "dark": false,
+  "lw": 1440
  },
  {
   "sku": "OSS-1032",
@@ -431,7 +420,8 @@ export const PRODUCTS = [
   "height": 88,
   "note": "Egyptian brass, tall stem",
   "img": "hookah78",
-  "dark": false
+  "dark": false,
+  "lw": 931
  },
  {
   "sku": "OSS-1033",
@@ -444,7 +434,8 @@ export const PRODUCTS = [
   "height": 66,
   "note": "Egyptian steel, painted base",
   "img": "hookah84",
-  "dark": false
+  "dark": false,
+  "lw": 1440
  },
  {
   "sku": "OSS-1034",
@@ -457,7 +448,8 @@ export const PRODUCTS = [
   "height": 46,
   "note": "Black oxide, compact",
   "img": "hookah88",
-  "dark": false
+  "dark": false,
+  "lw": 1406
  },
  {
   "sku": "OSS-1035",
@@ -470,7 +462,8 @@ export const PRODUCTS = [
   "height": 54,
   "note": "Oxidised copper, single hose",
   "img": "hookah89",
-  "dark": false
+  "dark": false,
+  "lw": 1440
  },
  {
   "sku": "OSS-1036",
@@ -483,7 +476,8 @@ export const PRODUCTS = [
   "height": 58,
   "note": "Egyptian steel, green glass",
   "img": "hookah90",
-  "dark": false
+  "dark": false,
+  "lw": 1237
  },
  {
   "sku": "OSS-1037",
@@ -496,7 +490,8 @@ export const PRODUCTS = [
   "height": 34,
   "note": "Compact, blue glass base",
   "img": "hookah91",
-  "dark": false
+  "dark": false,
+  "lw": 1440
  },
  {
   "sku": "OSS-1038",
@@ -509,7 +504,8 @@ export const PRODUCTS = [
   "height": 26,
   "note": "Acrylic base, travel ready",
   "img": "hookah92",
-  "dark": false
+  "dark": false,
+  "lw": 1440
  },
  {
   "sku": "OSS-1039",
@@ -522,7 +518,8 @@ export const PRODUCTS = [
   "height": 28,
   "note": "Compact, amber glass, leather hose",
   "img": "hookah93",
-  "dark": false
+  "dark": false,
+  "lw": 1440
  },
  {
   "sku": "OSS-2001",
@@ -535,7 +532,8 @@ export const PRODUCTS = [
   "height": null,
   "note": "Clear, click-lock collar",
   "img": "base00",
-  "dark": false
+  "dark": false,
+  "lw": 0
  },
  {
   "sku": "OSS-2002",
@@ -548,7 +546,8 @@ export const PRODUCTS = [
   "height": null,
   "note": "Diamond cut crystal",
   "img": "base01",
-  "dark": false
+  "dark": false,
+  "lw": 1395
  },
  {
   "sku": "OSS-2003",
@@ -561,7 +560,8 @@ export const PRODUCTS = [
   "height": null,
   "note": "Pressed glass, three colours",
   "img": "base02",
-  "dark": false
+  "dark": false,
+  "lw": 1440
  },
  {
   "sku": "OSS-2004",
@@ -574,7 +574,8 @@ export const PRODUCTS = [
   "height": null,
   "note": "Textured glass, black or red",
   "img": "base03",
-  "dark": false
+  "dark": false,
+  "lw": 1440
  },
  {
   "sku": "OSS-2005",
@@ -587,7 +588,8 @@ export const PRODUCTS = [
   "height": null,
   "note": "Cut glass, green, amber or blue",
   "img": "base04",
-  "dark": false
+  "dark": false,
+  "lw": 1440
  },
  {
   "sku": "OSS-2006",
@@ -600,7 +602,8 @@ export const PRODUCTS = [
   "height": null,
   "note": "Clear, teal or red",
   "img": "base06",
-  "dark": false
+  "dark": false,
+  "lw": 1440
  },
  {
   "sku": "OSS-2007",
@@ -613,7 +616,8 @@ export const PRODUCTS = [
   "height": null,
   "note": "Mixed glass, each one different",
   "img": "base07",
-  "dark": false
+  "dark": false,
+  "lw": 1440
  },
  {
   "sku": "OSS-2008",
@@ -626,7 +630,8 @@ export const PRODUCTS = [
   "height": null,
   "note": "Smoke grey glass",
   "img": "base12",
-  "dark": false
+  "dark": false,
+  "lw": 1440
  },
  {
   "sku": "OSS-2009",
@@ -639,7 +644,8 @@ export const PRODUCTS = [
   "height": null,
   "note": "Cut clear glass",
   "img": "base13",
-  "dark": false
+  "dark": false,
+  "lw": 1440
  },
  {
   "sku": "OSS-2010",
@@ -652,7 +658,8 @@ export const PRODUCTS = [
   "height": null,
   "note": "Cut glass with black fade",
   "img": "base15",
-  "dark": false
+  "dark": false,
+  "lw": 1440
  },
  {
   "sku": "OSS-2011",
@@ -665,7 +672,8 @@ export const PRODUCTS = [
   "height": null,
   "note": "Smoke grey, ribbed foot",
   "img": "base18",
-  "dark": false
+  "dark": false,
+  "lw": 1440
  },
  {
   "sku": "OSS-2012",
@@ -678,7 +686,8 @@ export const PRODUCTS = [
   "height": null,
   "note": "Smoke black glass",
   "img": "base21",
-  "dark": false
+  "dark": false,
+  "lw": 1440
  },
  {
   "sku": "OSS-3001",
@@ -691,7 +700,8 @@ export const PRODUCTS = [
   "height": null,
   "note": "Ceramic insert, silicone body",
   "img": "bowl01",
-  "dark": false
+  "dark": false,
+  "lw": 1036
  },
  {
   "sku": "OSS-3002",
@@ -704,7 +714,8 @@ export const PRODUCTS = [
   "height": null,
   "note": "Glazed stoneware",
   "img": "bowl03",
-  "dark": false
+  "dark": false,
+  "lw": 1440
  },
  {
   "sku": "OSS-3003",
@@ -717,7 +728,8 @@ export const PRODUCTS = [
   "height": null,
   "note": "Glazed red clay, classic holes",
   "img": "bowl05",
-  "dark": false
+  "dark": false,
+  "lw": 937
  },
  {
   "sku": "OSS-3004",
@@ -730,7 +742,8 @@ export const PRODUCTS = [
   "height": null,
   "note": "Glazed clay, pink marble",
   "img": "bowl06",
-  "dark": false
+  "dark": false,
+  "lw": 1255
  },
  {
   "sku": "OSS-3005",
@@ -743,7 +756,8 @@ export const PRODUCTS = [
   "height": null,
   "note": "Hand glazed, each one different",
   "img": "bowl09",
-  "dark": false
+  "dark": false,
+  "lw": 1440
  },
  {
   "sku": "OSS-3006",
@@ -756,7 +770,8 @@ export const PRODUCTS = [
   "height": null,
   "note": "Carved stoneware, drip glaze",
   "img": "bowl10",
-  "dark": false
+  "dark": false,
+  "lw": 1281
  },
  {
   "sku": "OSS-3007",
@@ -769,7 +784,8 @@ export const PRODUCTS = [
   "height": null,
   "note": "Matte black clay",
   "img": "bowl12",
-  "dark": false
+  "dark": false,
+  "lw": 1175
  },
  {
   "sku": "OSS-3008",
@@ -782,7 +798,8 @@ export const PRODUCTS = [
   "height": null,
   "note": "Red and gold glaze",
   "img": "bowl16",
-  "dark": false
+  "dark": false,
+  "lw": 0
  },
  {
   "sku": "OSS-3009",
@@ -795,7 +812,8 @@ export const PRODUCTS = [
   "height": null,
   "note": "Unglazed dark clay, fluted",
   "img": "bowl19",
-  "dark": false
+  "dark": false,
+  "lw": 981
  },
  {
   "sku": "OSS-3010",
@@ -808,7 +826,8 @@ export const PRODUCTS = [
   "height": null,
   "note": "Raw terracotta, classic holes",
   "img": "bowl20",
-  "dark": false
+  "dark": false,
+  "lw": 1040
  },
  {
   "sku": "OSS-3011",
@@ -821,7 +840,8 @@ export const PRODUCTS = [
   "height": null,
   "note": "Textured brown clay",
   "img": "bowl22",
-  "dark": false
+  "dark": false,
+  "lw": 1188
  },
  {
   "sku": "OSS-3012",
@@ -834,7 +854,8 @@ export const PRODUCTS = [
   "height": null,
   "note": "Pressed glass",
   "img": "bowl23",
-  "dark": false
+  "dark": false,
+  "lw": 1134
  },
  {
   "sku": "OSS-3013",
@@ -847,7 +868,8 @@ export const PRODUCTS = [
   "height": null,
   "note": "Unbreakable silicone",
   "img": "bowl29",
-  "dark": false
+  "dark": false,
+  "lw": 1243
  },
  {
   "sku": "OSS-4001",
@@ -860,7 +882,8 @@ export const PRODUCTS = [
   "height": null,
   "note": "Aluminium, with handle",
   "img": "bowl26",
-  "dark": false
+  "dark": false,
+  "lw": 0
  },
  {
   "sku": "OSS-4002",
@@ -873,7 +896,8 @@ export const PRODUCTS = [
   "height": null,
   "note": "Perforated steel",
   "img": "bowl30",
-  "dark": false
+  "dark": false,
+  "lw": 0
  },
  {
   "sku": "OSS-4003",
@@ -886,7 +910,8 @@ export const PRODUCTS = [
   "height": null,
   "note": "Stainless, low profile",
   "img": "hmd05",
-  "dark": false
+  "dark": false,
+  "lw": 0
  },
  {
   "sku": "OSS-4004",
@@ -899,7 +924,8 @@ export const PRODUCTS = [
   "height": null,
   "note": "Ceramic-coated dome",
   "img": "hmd06",
-  "dark": false
+  "dark": false,
+  "lw": 0
  },
  {
   "sku": "OSS-4005",
@@ -912,7 +938,8 @@ export const PRODUCTS = [
   "height": null,
   "note": "Stainless, adjustable vents",
   "img": "hmd07",
-  "dark": false
+  "dark": false,
+  "lw": 956
  },
  {
   "sku": "OSS-4006",
@@ -925,7 +952,8 @@ export const PRODUCTS = [
   "height": null,
   "note": "Stainless, two piece",
   "img": "hmd09",
-  "dark": false
+  "dark": false,
+  "lw": 1440
  },
  {
   "sku": "OSS-4007",
@@ -938,7 +966,8 @@ export const PRODUCTS = [
   "height": null,
   "note": "Brushed steel",
   "img": "hmd10",
-  "dark": false
+  "dark": false,
+  "lw": 1440
  },
  {
   "sku": "OSS-4008",
@@ -951,7 +980,8 @@ export const PRODUCTS = [
   "height": null,
   "note": "Borosilicate glass, silicone seat",
   "img": "hmd12",
-  "dark": false
+  "dark": false,
+  "lw": 0
  },
  {
   "sku": "OSS-4009",
@@ -964,7 +994,8 @@ export const PRODUCTS = [
   "height": null,
   "note": "Hammered copper and steel",
   "img": "hmd13",
-  "dark": false
+  "dark": false,
+  "lw": 0
  },
  {
   "sku": "OSS-5001",
@@ -977,7 +1008,8 @@ export const PRODUCTS = [
   "height": null,
   "note": "Soft-touch hose, steel handle",
   "img": "hose00",
-  "dark": false
+  "dark": false,
+  "lw": 1100
  },
  {
   "sku": "OSS-5002",
@@ -990,7 +1022,8 @@ export const PRODUCTS = [
   "height": null,
   "note": "Brushed stainless",
   "img": "hose01",
-  "dark": false
+  "dark": false,
+  "lw": 0
  },
  {
   "sku": "OSS-5003",
@@ -1003,20 +1036,8 @@ export const PRODUCTS = [
   "height": null,
   "note": "Leather wrap, 180 cm",
   "img": "hose04",
-  "dark": false
- },
- {
-  "sku": "OSS-5004",
-  "name": "Knurl handle",
-  "cat": "hoses",
-  "price": 54,
-  "kg": 0.9,
-  "box": "S",
-  "glass": false,
-  "height": null,
-  "note": "Silver, black or gold",
-  "img": "hose05",
-  "dark": false
+  "dark": false,
+  "lw": 1440
  },
  {
   "sku": "OSS-5005",
@@ -1029,7 +1050,8 @@ export const PRODUCTS = [
   "height": null,
   "note": "Slim aluminium, three colours",
   "img": "hose09",
-  "dark": false
+  "dark": false,
+  "lw": 0
  },
  {
   "sku": "OSS-5006",
@@ -1042,7 +1064,8 @@ export const PRODUCTS = [
   "height": null,
   "note": "Matte silicone, 150 cm",
   "img": "hose12",
-  "dark": false
+  "dark": false,
+  "lw": 0
  },
  {
   "sku": "OSS-5007",
@@ -1055,7 +1078,8 @@ export const PRODUCTS = [
   "height": null,
   "note": "Traditional woven wrap",
   "img": "hose13",
-  "dark": false
+  "dark": false,
+  "lw": 953
  },
  {
   "sku": "OSS-5008",
@@ -1068,7 +1092,8 @@ export const PRODUCTS = [
   "height": null,
   "note": "Silicone with colour handle",
   "img": "hose15",
-  "dark": false
+  "dark": false,
+  "lw": 1440
  },
  {
   "sku": "OSS-5009",
@@ -1081,20 +1106,8 @@ export const PRODUCTS = [
   "height": null,
   "note": "150 cm, washable",
   "img": "hose18",
-  "dark": false
- },
- {
-  "sku": "OSS-5010",
-  "name": "Soft-touch hose, three pack",
-  "cat": "hoses",
-  "price": 19,
-  "kg": 0.21,
-  "box": "S",
-  "glass": false,
-  "height": null,
-  "note": "Black, blue, red",
-  "img": "hose19",
-  "dark": false
+  "dark": false,
+  "lw": 1440
  },
  {
   "sku": "OSS-5011",
@@ -1107,7 +1120,8 @@ export const PRODUCTS = [
   "height": null,
   "note": "Freezable handle",
   "img": "hose21",
-  "dark": false
+  "dark": false,
+  "lw": 1084
  },
  {
   "sku": "OSS-5012",
@@ -1120,20 +1134,8 @@ export const PRODUCTS = [
   "height": null,
   "note": "Freezable handle",
   "img": "hose22",
-  "dark": false
- },
- {
-  "sku": "OSS-6001",
-  "name": "Hygienic mouthpiece",
-  "cat": "parts",
-  "price": 119,
-  "kg": 0.9,
-  "box": "XS",
-  "glass": false,
-  "height": null,
-  "note": "Brass and steel, personal tip",
-  "img": "acc01",
-  "dark": false
+  "dark": false,
+  "lw": 955
  },
  {
   "sku": "OSS-6002",
@@ -1146,7 +1148,8 @@ export const PRODUCTS = [
   "height": null,
   "note": "Stainless, removable diffuser",
   "img": "acc02",
-  "dark": false
+  "dark": false,
+  "lw": 0
  },
  {
   "sku": "OSS-6003",
@@ -1159,7 +1162,8 @@ export const PRODUCTS = [
   "height": null,
   "note": "Four steel adapters",
   "img": "acc03",
-  "dark": false
+  "dark": false,
+  "lw": 1374
  },
  {
   "sku": "OSS-6004",
@@ -1172,7 +1176,8 @@ export const PRODUCTS = [
   "height": null,
   "note": "Carbon and steel",
   "img": "acc06",
-  "dark": false
+  "dark": false,
+  "lw": 990
  },
  {
   "sku": "OSS-6005",
@@ -1185,7 +1190,8 @@ export const PRODUCTS = [
   "height": null,
   "note": "Twisted steel",
   "img": "acc13",
-  "dark": false
+  "dark": false,
+  "lw": 1054
  },
  {
   "sku": "OSS-6006",
@@ -1198,20 +1204,8 @@ export const PRODUCTS = [
   "height": null,
   "note": "Stainless mesh",
   "img": "acc19",
-  "dark": false
- },
- {
-  "sku": "OSS-6007",
-  "name": "Jumbo mouth tips, 50",
-  "cat": "parts",
-  "price": 19,
-  "kg": 0.45,
-  "box": "XS",
-  "glass": false,
-  "height": null,
-  "note": "Individually wrapped",
-  "img": "acc20",
-  "dark": false
+  "dark": false,
+  "lw": 1177
  },
  {
   "sku": "OSS-6008",
@@ -1224,7 +1218,8 @@ export const PRODUCTS = [
   "height": null,
   "note": "Two brushes",
   "img": "acc21",
-  "dark": false
+  "dark": false,
+  "lw": 1281
  },
  {
   "sku": "OSS-6009",
@@ -1237,7 +1232,8 @@ export const PRODUCTS = [
   "height": null,
   "note": "Nylon bristle",
   "img": "acc24",
-  "dark": false
+  "dark": false,
+  "lw": 1440
  },
  {
   "sku": "OSS-6010",
@@ -1250,33 +1246,8 @@ export const PRODUCTS = [
   "height": null,
   "note": "23 cm",
   "img": "acc25",
-  "dark": false
- },
- {
-  "sku": "OSS-6011",
-  "name": "Ball bearings, set of 3",
-  "cat": "parts",
-  "price": 6,
-  "kg": 0.01,
-  "box": "XS",
-  "glass": false,
-  "height": null,
-  "note": "For purge valves",
-  "img": "acc26",
-  "dark": false
- },
- {
-  "sku": "OSS-6012",
-  "name": "Bowl grommet",
-  "cat": "parts",
-  "price": 2,
-  "kg": 0.01,
-  "box": "XS",
-  "glass": false,
-  "height": null,
-  "note": "Silicone, universal",
-  "img": "acc30",
-  "dark": false
+  "dark": false,
+  "lw": 1419
  },
  {
   "sku": "OSS-7001",
@@ -1290,7 +1261,8 @@ export const PRODUCTS = [
   "note": "Acetate, with hard case",
   "img": "fr-tortoise",
   "photo": true,
-  "dark": false
+  "dark": false,
+  "lw": 0
  },
  {
   "sku": "OSS-7002",
@@ -1304,7 +1276,8 @@ export const PRODUCTS = [
   "note": "Acetate, with hard case",
   "img": "fr-red",
   "photo": true,
-  "dark": false
+  "dark": false,
+  "lw": 0
  },
  {
   "sku": "OSS-7003",
@@ -1318,7 +1291,8 @@ export const PRODUCTS = [
   "note": "Crystal acetate, with hard case",
   "img": "fr-clear",
   "photo": true,
-  "dark": false
+  "dark": false,
+  "lw": 0
  },
  {
   "sku": "OSS-7004",
@@ -1332,6 +1306,7 @@ export const PRODUCTS = [
   "note": "Acetate and steel, with hard case",
   "img": "fr-brown",
   "photo": true,
-  "dark": false
+  "dark": false,
+  "lw": 0
  }
 ];

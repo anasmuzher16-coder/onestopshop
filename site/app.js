@@ -10,7 +10,7 @@ const store = {
 };
 const cleanCart = x => Array.isArray(x)
   ? x.filter(l => l && bySku[l.sku] && Number.isInteger(l.qty) && l.qty > 0).map(l => ({ sku: l.sku, qty: Math.min(MAX_QTY, l.qty) })) : [];
-const state = { dest: parsePostal(store.get("postal")), cart: cleanCart(store.get("cart")), ship: typeof store.get("ship") === "string" ? store.get("ship") : null };
+const state = { whyOpen: false, dest: parsePostal(store.get("postal")), cart: cleanCart(store.get("cart")), ship: typeof store.get("ship") === "string" ? store.get("ship") : null };
 const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const whole = n => "$" + Math.round(n).toLocaleString("en-CA");
@@ -33,10 +33,16 @@ const bestFor = p => state.dest ? quote(state.dest, pack([{ product: p, qty: 1 }
 
 // ---------- images ----------
 const imgSrc = (p, small) => p.photo ? `img/${p.img}.webp` : `img/p/${p.img}${small && !p.dark ? "-s" : ""}.webp`;
-function shot(p, { small = false, eager = false } = {}) {
-  const plain = p.dark || p.photo, cls = plain ? "shot shot--photo" : "shot";
-  const set = plain ? "" : `srcset="img/p/${p.img}-s.webp 360w, img/p/${p.img}.webp 720w" sizes="${small ? "(min-width:1500px) 18vw, (min-width:960px) 22vw, (min-width:640px) 30vw, 46vw" : "(min-width:960px) 50vw, 100vw"}"`;
-  return `<img class="${cls}" src="${imgSrc(p, small)}" ${set} alt="" width="${p.dark ? 1200 : 720}" height="${p.dark ? 1200 : 900}" ${eager ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async">`;
+const SIZES = { card: "(min-width:1500px) 18vw, (min-width:960px) 22vw, (min-width:640px) 30vw, 46vw", pdp: "(min-width:960px) 50vw, 100vw",
+  thumb: "96px", lineup: "(min-width:960px) 370px, 240px", cat: "(min-width:960px) 24vw, 44vw", resin: "(min-width:960px) 28vw, (min-width:640px) 40vw, 72vw" };
+function srcset(p) {
+  if (p.photo) return "";
+  if (p.dark) return `srcset="img/p/${p.img}.webp 800w${p.lw ? `, img/p/${p.img}-l.webp ${p.lw}w` : ""}"`;
+  return `srcset="img/p/${p.img}-s.webp 360w, img/p/${p.img}.webp 720w${p.lw ? `, img/p/${p.img}-l.webp ${p.lw}w` : ""}"`;
+}
+function shot(p, { small = false, eager = false, use = small ? "card" : "pdp", cls = "" } = {}) {
+  const plain = p.dark || p.photo;
+  return `<img class="${plain ? "shot shot--photo" : "shot"} ${cls}" src="${imgSrc(p, small)}" ${srcset(p)} ${p.photo ? "" : `sizes="${SIZES[use]}"`} alt="" width="${p.dark ? 1080 : 720}" height="${p.dark ? 1080 : 900}" ${eager ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async">`;
 }
 
 // ---------- THE STICKER (device): the delivered price, slapped on the product ----------
@@ -59,11 +65,11 @@ function card(p, i = 9) {
 
 // ---------- views ----------
 function viewHome() {
-  const picks = ["Sultan Totem", "Stuttgart Pure, Jade", "Regent Neon Blue", "Cairo Avatar", "Woodline Sage", "Carbon Black", "Mamoun Moagza Copper", "Regent Neon Pink"].map(n => PRODUCTS.find(p => p.name === n));
+  const picks = ["Sultan Totem", "Stuttgart Pure, Jade", "Regent Neon Blue", "Cairo Avatar", "Carbon Black", "Mamoun Moagza Copper", "Regent Neon Pink"].map(n => PRODUCTS.find(p => p.name === n));
   const resin = PRODUCTS.filter(p => p.dark);
   return `
   <section class="hero">
-    <picture class="hero__bg"><source media="(max-width:700px)" srcset="img/wide-bar-800.webp"><img src="img/wide-bar.webp" alt="" width="1600" height="1068" fetchpriority="high"></picture>
+    <picture class="hero__bg"><img src="img/wide-bar.webp" srcset="img/wide-bar-800.webp 800w, img/wide-bar.webp 1600w, img/wide-bar-2400.webp 2400w" sizes="(max-width:700px) 230vw, 100vw" alt="" width="1600" height="1068" fetchpriority="high"></picture>
     <div class="hero__in">
       <h1 class="hero__h"><span class="hero__big">Hookahs,</span> <span class="hero__rest">and everything that goes with them.</span></h1>
       <div class="hero__side">
@@ -74,18 +80,18 @@ function viewHome() {
   </section>
   <section class="cats" aria-label="Shop by category">
     ${CATEGORIES.map(c => { const n = PRODUCTS.filter(p => p.cat === c.id).length; const lead = PRODUCTS.find(p => p.cat === c.id && !p.dark);
-      return `<a class="cat" data-tone="${c.tone}" href="#/shop/${c.id}"><span class="cat__ar" lang="ar" dir="rtl" aria-hidden="true">${c.ar}</span><img class="shot cat__img" src="${imgSrc(lead, true)}" alt="" loading="lazy" width="360" height="450"><span class="cat__name">${c.name}</span><span class="cat__n num">${n}</span></a>`; }).join("")}
+      return `<a class="cat" data-tone="${c.tone}" href="#/shop/${c.id}"><span class="cat__ar" lang="ar" dir="rtl" aria-hidden="true">${c.ar}</span>${shot(lead, { small: true, use: "cat", cls: "cat__img" })}<span class="cat__name">${c.name}</span><span class="cat__n num">${n}</span></a>`; }).join("")}
+  </section>
+  <section class="shelf">
+    <header class="shelf__head"><h2 class="h2">New this week</h2><a class="link" href="#/shop/hookahs">All ${PRODUCTS.filter(p => p.cat === "hookahs").length} hookahs</a></header>
+    <div class="grid">${picks.map((p, i) => card(p, i + 8)).join("")}</div>
   </section>
   <section class="lineup" aria-labelledby="lu-h">
     <header class="lineup__head"><h2 class="h2 h2--xl" id="lu-h">Compare heights.</h2><p class="lineup__note">A dozen hookahs from the shelf, drawn to scale.</p></header>
     <div class="lineup__row" tabindex="0" role="group" aria-label="Hookahs by height">
       ${PRODUCTS.filter(p => p.cat === "hookahs" && p.height && !p.dark).sort((a, b) => b.height - a.height).filter((p, i) => i % 3 === 0).map(p =>
-        `<a class="lu" href="#/p/${p.sku}" style="--cm:${p.height}"><img class="lu__img" src="img/p/${p.img}-s.webp" alt="" loading="lazy" width="360" height="450"><span class="lu__cm num">${p.height} cm</span><span class="lu__name">${esc(p.name)}</span></a>`).join("")}
+        `<a class="lu" href="#/p/${p.sku}" style="--cm:${p.height}"><img class="lu__img" src="img/p/${p.img}-s.webp" ${srcset(p)} sizes="${SIZES.lineup}" alt="" loading="lazy" width="360" height="450"><span class="lu__cm num">${p.height} cm</span><span class="lu__name">${esc(p.name)}</span></a>`).join("")}
     </div>
-  </section>
-  <section class="shelf">
-    <header class="shelf__head"><h2 class="h2">New this week</h2><a class="link" href="#/shop/hookahs">All 39 hookahs</a></header>
-    <div class="grid">${picks.map((p, i) => card(p, i + 8)).join("")}</div>
   </section>
   <section class="resin">
     <div class="resin__copy">
@@ -94,10 +100,10 @@ function viewHome() {
       <p class="lead">Poured resin stems. No two come out of the mould the same, so when one sells, that one is gone.</p>
       <a class="btn" href="#/p/${resin[0].sku}">See the resin stems</a>
     </div>
-    <div class="resin__row">${resin.map(p => `<a class="resin__item" href="#/p/${p.sku}" data-piece="${p.sku}">${shot(p)}<span class="resin__name">${esc(p.name)}</span>${sticker(p)}</a>`).join("")}</div>
+    <div class="resin__row">${resin.map(p => `<a class="resin__item" href="#/p/${p.sku}" data-piece="${p.sku}">${shot(p, { use: "resin" })}<span class="resin__name">${esc(p.name)}</span>${sticker(p)}</a>`).join("")}</div>
   </section>
   <section class="pack">
-    <img class="pack__img" src="img/wide-ember-800.webp" alt="" loading="lazy" width="800" height="533">
+    <img class="pack__img" src="img/wide-ember-800.webp" srcset="img/wide-ember-800.webp 800w, img/wide-ember.webp 1600w" sizes="(min-width:960px) 42vw, 100vw" alt="" loading="lazy" width="800" height="533">
     <div class="pack__copy">
       <h2 class="h2 h2--xl">How we ship glass.</h2>
       <ul class="pack__list">
@@ -171,7 +177,7 @@ function viewCart() {
     <h1 class="h2 h2--xl">Your cart</h1>
     <ul class="lines">${lines.map(({ product: p, qty }) => `
       <li class="line" data-tone="${toneOf(p)}">
-        <a class="line__tile tile ${p.dark || p.photo ? "tile--photo" : ""}" href="#/p/${p.sku}">${shot(p, { small: true })}</a>
+        <a class="line__tile tile ${p.dark || p.photo ? "tile--photo" : ""}" href="#/p/${p.sku}">${shot(p, { small: true, use: "thumb" })}</a>
         <div class="line__body"><a class="line__name" href="#/p/${p.sku}">${esc(p.name)}</a><p class="line__meta num">${p.sku} &middot; ${p.kg} kg</p>
           <div class="qty"><button type="button" aria-label="One less ${esc(p.name)}" data-qty="${p.sku}" data-n="${qty - 1}">&minus;</button><span class="num" aria-live="polite">${qty}</span><button type="button" aria-label="One more ${esc(p.name)}" data-qty="${p.sku}" data-n="${qty + 1}" ${qty >= MAX_QTY ? "disabled" : ""}>+</button></div></div>
         <p class="line__price num">${money(p.price * qty)}</p>
@@ -184,7 +190,7 @@ function viewCart() {
       ${opts.length ? `<fieldset class="opts"><legend>Shipping to ${esc(state.dest.full)} <button class="link" type="button" data-open-postal>Change</button></legend>
         ${opts.map(o => `<label class="opt"><input type="radio" name="ship" value="${o.id}" ${o.id === chosen.id ? "checked" : ""}><span class="opt__name">${o.carrier} ${o.service}<small>${days(o.days)}</small></span><span class="num">${money(o.total)}</span></label>`).join("")}
       </fieldset>
-      <details class="why"><summary>What makes up ${money(chosen.total)}</summary><dl>
+      <details class="why" ${state.whyOpen ? "open" : ""}><summary>What makes up ${money(chosen.total)}</summary><dl>
         ${chosen.perParcel.map((p, i) => `<div><dt>Box ${i + 1}, billed at ${p.billableKg} kg</dt><dd class="num">${money(p.freight)}</dd></div>`).join("")}
         ${chosen.cover ? `<div><dt>Glass coverage and signature</dt><dd class="num">${money(chosen.cover)}</dd></div>` : ""}
         <div><dt>Carrier fuel charge, ${(FUEL.pct * 100).toFixed(1)}% for ${FUEL.week}</dt><dd class="num">${money(chosen.fuel)}</dd></div></dl></details>` : ""}
@@ -225,9 +231,14 @@ function syncChrome() {
   const [ra, rb] = h.replace(/^#\/?/, "").split("/"), prod = ra === "p" ? bySku[rb] : null;
   const count = `<span data-cart-count>${cartCount()}</span>`, dock = $(".dock");
   dock.classList.toggle("dock--buy", !!prod);
+  const lines = cartLines(), sub = lines.reduce((a, l) => a + l.product.price * l.qty, 0);
+  const qs = ra === "cart" && state.dest && lines.length ? quote(state.dest, pack(lines)) : [], ship = qs.find(o => o.id === state.ship) || qs[0];
+  dock.classList.toggle("dock--buy", !!prod || (ra === "cart" && lines.length > 0));
   dock.innerHTML = prod
     ? `<a class="dock__side" href="#/shop/${prod.cat}">Back</a>${state.cart.some(l => l.sku === prod.sku)
         ? `<a class="dock__buy" href="#/cart">In cart. View cart</a>` : `<button class="dock__buy" type="button" data-add="${prod.sku}">Add to cart <span class="num">${whole(prod.price)}</span></button>`}<a class="dock__side" href="#/cart" aria-label="Cart">${count}</a>`
+    : ra === "cart" && lines.length
+    ? `<a class="dock__side" href="#/shop">Shop</a><button class="dock__buy" type="button" ${ship ? "" : "data-open-postal"}>${ship ? `Checkout <span class="num">${money(sub + ship.total)}</span>` : "Add postal code for shipping"}</button><span class="dock__side">${count}</span>`
     : `<a href="#/" ${h === "#/" ? 'aria-current="page"' : ""}>Home</a><a href="#/shop" ${h.startsWith("#/shop") ? 'aria-current="page"' : ""}>Shop</a><a href="#/cart" ${h === "#/cart" ? 'aria-current="page"' : ""}>Cart ${count}</a>`;
 }
 const sheet = $("[data-postal-sheet]"), postalInput = $("#postal"), postalErr = $("#postal-err");
@@ -247,11 +258,20 @@ $("[data-postal-form]").addEventListener("submit", e => {
 });
 postalInput.addEventListener("input", () => { postalErr.hidden = true; postalInput.removeAttribute("aria-invalid"); });
 
+document.addEventListener("toggle", e => { if (e.target.matches && e.target.matches(".why")) state.whyOpen = e.target.open; }, true);
+function focusKey(el) {
+  if (!el || el === document.body) return null;
+  for (const k of ["data-qty", "data-add"]) if (el.hasAttribute(k)) return `[${k}="${el.getAttribute(k)}"]` + (el.dataset.n ? `[aria-label="${el.getAttribute("aria-label")}"]` : "");
+  if (el.name === "ship") return `input[name="ship"][value="${el.value}"]`;
+  return null;
+}
 function render() {
+  const keep = focusKey(document.activeElement);
   const [a, b] = location.hash.replace(/^#\/?/, "").split("/");
   $("#main").innerHTML = a === "shop" ? viewShop(b) : a === "p" ? viewProduct(b) : a === "cart" ? viewCart() : a === "shipping" ? viewShipping() : viewHome();
   document.body.dataset.route = a || "home";
   syncChrome();
+  if (keep) { const el = document.querySelector(keep); if (el) el.focus({ preventScroll: true }); }
 }
 let last = location.hash;
 document.addEventListener("click", e => {
