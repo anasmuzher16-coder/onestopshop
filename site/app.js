@@ -65,9 +65,8 @@ function viewHome() {
   <section class="hero">
     <picture class="hero__bg"><source media="(max-width:700px)" srcset="img/wide-bar-800.webp"><img src="img/wide-bar.webp" alt="" width="1600" height="1068" fetchpriority="high"></picture>
     <div class="hero__in">
-      <p class="hero__ar" lang="ar" dir="rtl">&#x623;&#x647;&#x644;&#x627; &#x648;&#x633;&#x647;&#x644;&#x627;</p>
-      <h1 class="hero__h">Hookahs worth <span class="hero__door">showing off.</span></h1>
-      <p class="hero__p">Egyptian brass, German steel and hand-cut glass. On the counter in Windsor, and shipped anywhere in Canada.</p>
+      <h1 class="hero__h">Hookahs, and everything that goes with them.</h1>
+      <p class="hero__p">Egyptian brass, German steel and hand-cut glass. In store in Windsor, shipped across Canada.</p>
       <div class="hero__cta"><a class="btn" href="#/shop/hookahs">Shop hookahs</a><a class="btn btn--ghost" href="#/shop">See everything</a></div>
     </div>
   </section>
@@ -76,14 +75,14 @@ function viewHome() {
       return `<a class="cat" data-tone="${c.tone}" href="#/shop/${c.id}"><span class="cat__ar" lang="ar" dir="rtl" aria-hidden="true">${c.ar}</span><img class="shot cat__img" src="${imgSrc(lead, true)}" alt="" loading="lazy" width="360" height="450"><span class="cat__name">${c.name}</span><span class="cat__n num">${n}</span></a>`; }).join("")}
   </section>
   <section class="lineup" aria-labelledby="lu-h">
-    <header class="lineup__head"><h2 class="h2 h2--xl" id="lu-h">Size them up.</h2><p class="lineup__note">A dozen from the shelf, drawn to scale. Swipe along.</p></header>
+    <header class="lineup__head"><h2 class="h2 h2--xl" id="lu-h">Compare heights.</h2><p class="lineup__note">A dozen hookahs from the shelf, drawn to scale.</p></header>
     <div class="lineup__row" tabindex="0" role="group" aria-label="Hookahs by height">
       ${PRODUCTS.filter(p => p.cat === "hookahs" && p.height && !p.dark).sort((a, b) => b.height - a.height).filter((p, i) => i % 3 === 0).map(p =>
         `<a class="lu" href="#/p/${p.sku}" style="--cm:${p.height}"><img class="lu__img" src="img/p/${p.img}-s.webp" alt="" loading="lazy" width="360" height="450"><span class="lu__cm num">${p.height} cm</span><span class="lu__name">${esc(p.name)}</span></a>`).join("")}
     </div>
   </section>
   <section class="shelf">
-    <header class="shelf__head"><h2 class="h2">On the counter this week</h2><a class="link" href="#/shop/hookahs">All 39 hookahs</a></header>
+    <header class="shelf__head"><h2 class="h2">New this week</h2><a class="link" href="#/shop/hookahs">All 39 hookahs</a></header>
     <div class="grid">${picks.map((p, i) => card(p, i + 8)).join("")}</div>
   </section>
   <section class="resin">
@@ -98,7 +97,7 @@ function viewHome() {
   <section class="pack">
     <img class="pack__img" src="img/wide-ember-800.webp" alt="" loading="lazy" width="800" height="533">
     <div class="pack__copy">
-      <h2 class="h2 h2--xl">Glass that arrives as glass.</h2>
+      <h2 class="h2 h2--xl">How we ship glass.</h2>
       <ul class="pack__list">
         <li><b>Taken apart.</b> Stem, base and tray are wrapped separately so nothing long carries the weight.</li>
         <li><b>Double boxed.</b> The base sits in its own box inside the shipping box.</li>

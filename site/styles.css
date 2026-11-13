@@ -100,9 +100,7 @@ button{font:inherit;color:inherit}
 .hero__bg{position:absolute;inset:0;z-index:-1}
 .hero__bg img{width:100%;height:100%;object-fit:cover;object-position:50% 40%}
 .hero__bg::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,oklch(0.155 0.012 50 / .35) 0%,oklch(0.155 0.012 50 / .55) 45%,var(--color-bg) 100%)}
-.hero__ar{margin:0 0 var(--s-2);font-size:var(--t-d1);color:var(--gilt);text-align:left}
-.hero__h{font:400 var(--t-d3)/.86 var(--font-display);letter-spacing:-.005em;color:var(--color-strong);margin:0;text-wrap:balance}
-.hero__door{color:var(--ember);-webkit-text-stroke:0;display:inline-block;background:var(--color-strong);padding:.06em .14em 0;margin-left:-.06em;transform:rotate(-2deg);border-radius:var(--radius)}
+.hero__h{font:400 clamp(2.6rem,1.3rem + 5.6vw,6rem)/.95 var(--font-display);letter-spacing:-.005em;color:var(--color-strong);margin:0;max-width:13ch;text-wrap:balance}
 .hero__p{max-width:40ch;margin:var(--s-5) 0 var(--s-6);font-size:var(--t-16);color:var(--color-strong)}
 .hero__cta{display:grid;gap:var(--s-2)}
 
