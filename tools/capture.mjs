@@ -5,8 +5,7 @@ const require = createRequire("C:/dev/puckempire-arena/package.json");
 const { chromium } = require("playwright");
 const base = process.env.BASE || "http://localhost:4410/";
 const cart = [{ sku: "OSS-1021", qty: 1 }, { sku: "OSS-5006", qty: 1 }, { sku: "OSS-6007", qty: 2 }, { sku: "OSS-7001", qty: 1 }];
-const routes = [["home", "", false], ["shop", "#/shop/hookahs", false], ["pdp", "#/p/OSS-1021", true], ["pdp-dark", "#/p/OSS-1006", true],
-  ["pdp-empty", "#/p/OSS-1012", false], ["cart", "#/cart", true], ["shipping", "#/shipping", true]];
+const routes = [["home", "", false], ["shop", "#/shop/hookahs", false], ["pdp", "#/p/OSS-1021", true], ["pdp-empty", "#/p/OSS-1012", false], ["cart", "#/cart", true], ["shipping", "#/shipping", false]];
 const browser = await chromium.launch();
 for (const w of [390, 1440]) {
   for (const [name, hash, withCode] of routes) {

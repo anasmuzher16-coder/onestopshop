@@ -63,3 +63,17 @@ giant white display type over a full-bleed photo, hard rectangles, red accent. A
 - Layout: fewer pieces per row (2 on a phone, 3 on desktop), staggered picks, collections as a ledger list
   rather than colour blocks, a floating pill dock on phones.
 - Motion: one quiet move, niches rise into place once when first seen. Reduced motion shows them in place.
+
+## RULING 2026-11-13 late: direction 3 is dead, direction 2 stands
+His words: "Direction 3 is far worse ... By curated I meant that I wanted it to feel special. I liked the previous
+direction, it was way better, we just have to give it more flare ... the new one is trash."
+Do not reopen the arch/serif/green look. Direction 2 (coal, jewel tiles, Lalezar, price stickers) is the base;
+the work is flair, phone quality and technical craft on top of it.
+Added since: the line-up (a dozen hookahs on one shelf, drawn to scale, a thing none of the 15 competitor sites
+show); stickers set at their own angle per product; the tapped tile travels to the product page (View
+Transitions); the phone dock becomes a buy bar on product pages; responsive tile images; static grain texture
+instead of a live SVG filter (cheaper on phones).
+Calculator (heavy test, 200,000 random carts): price table matches the PDF in all 988 values; fuel is now the
+published weekly rate (41.2% for Nov 9-15, 2026), was wrongly the 25% floor; Regular Parcel added; money in
+whole cents. Known limit: in carts of 40+ loose parts, adding an item can repack and lower shipping (40 of
+200,000 carts, worst $7.31). Each quote is still the true price of the packing shown.

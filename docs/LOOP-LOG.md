@@ -6,3 +6,4 @@
 - T5 item 9 shipping page PASS
 - T6 direction 1 vetoed; rate card rebuilt (adversarial finding); direction 2 researched and built. PLAN items 1-5 PASS
 - T7 refocus on products (his correction): shipping is a feature on PDP/cart/shipping page only
+- T8 direction 3 vetoed, direction 2 restored; calculator fixes from heavy test; flair pass 1
