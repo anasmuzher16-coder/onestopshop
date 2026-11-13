@@ -34,7 +34,7 @@ t("exp dearest 10 kg = 82.43", sheetPrice("exp", 5, 10) === 82.43);
 // packing
 const byName = n => PRODUCTS.find(p => p.name === n);
 const hk = byName("Mamoun Kamanja Gold"), tips = byName("Stem brush, large"), hose = byName("Soft-touch hose");
-const fr = byName("Tortoise round frame"), lh = byName("Hand-stitched leather hose");
+const fr = byName("Stem brush, large"), lh = byName("Hand-stitched leather hose");
 const pk = pack([{ product: hk, qty: 2 }, { product: tips, qty: 1 }, { product: hose, qty: 1 }]);
 t("two hookahs = two cartons, accessories ride along", pk.length === 2);
 t("all items packed", pk.flatMap(p => p.items).length === 4);

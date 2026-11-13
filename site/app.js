@@ -227,7 +227,7 @@ function viewShipping() {
     <h2 class="h3">How glass is packed</h2>
     <p>Hookahs ship taken apart. The glass base is double boxed. If anything arrives broken, send a photo and we make it right.</p>
     <h2 class="h3">What we ship</h2>
-    <p>Hookahs, bases, bowls, heat keepers, hoses, parts and frames. Anything else in the shop is counter only.</p>
+    <p>Hookahs, bases, bowls, heat keepers, hoses and parts. Anything else in the shop is counter only.</p>
     <h2 class="h3">Pick up</h2>
     <p>Order online and pick up at the counter for free. Call <a class="link" href="tel:+15192552222">519-255-2222</a>.</p>
   </section>`;

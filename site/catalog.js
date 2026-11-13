@@ -14,7 +14,6 @@ export const CATEGORIES = [
   { id: "heat", name: "Heat", ar: "\u062d\u0631\u0627\u0631\u0629", tone: "ember" },
   { id: "hoses", name: "Hoses", ar: "\u062e\u0631\u0627\u0637\u064a\u0645", tone: "emerald" },
   { id: "parts", name: "Parts & care", ar: "\u0642\u0637\u0639", tone: "gilt" },
-  { id: "frames", name: "Frames", ar: "\u0646\u0638\u0627\u0631\u0627\u062a", tone: "bone" },
 ];
 export const PRODUCTS = [
  {
@@ -1234,65 +1233,5 @@ export const PRODUCTS = [
   "img": "acc25",
   "dark": false,
   "lw": 1419
- },
- {
-  "sku": "OSS-7001",
-  "name": "Tortoise round frame",
-  "cat": "frames",
-  "price": 69,
-  "kg": 0.18,
-  "box": "XS",
-  "glass": false,
-  "height": null,
-  "note": "Acetate, with hard case",
-  "img": "fr-tortoise",
-  "photo": true,
-  "dark": false,
-  "lw": 0
- },
- {
-  "sku": "OSS-7002",
-  "name": "Coral reader frame",
-  "cat": "frames",
-  "price": 59,
-  "kg": 0.18,
-  "box": "XS",
-  "glass": false,
-  "height": null,
-  "note": "Acetate, with hard case",
-  "img": "fr-red",
-  "photo": true,
-  "dark": false,
-  "lw": 0
- },
- {
-  "sku": "OSS-7003",
-  "name": "Clear square frame",
-  "cat": "frames",
-  "price": 64,
-  "kg": 0.18,
-  "box": "XS",
-  "glass": false,
-  "height": null,
-  "note": "Crystal acetate, with hard case",
-  "img": "fr-clear",
-  "photo": true,
-  "dark": false,
-  "lw": 0
- },
- {
-  "sku": "OSS-7004",
-  "name": "Havana half-rim frame",
-  "cat": "frames",
-  "price": 79,
-  "kg": 0.18,
-  "box": "XS",
-  "glass": false,
-  "height": null,
-  "note": "Acetate and steel, with hard case",
-  "img": "fr-brown",
-  "photo": true,
-  "dark": false,
-  "lw": 0
  }
 ];
