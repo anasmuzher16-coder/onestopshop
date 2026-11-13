@@ -86,8 +86,8 @@ body:not([data-route]) .foot{visibility:hidden}
 
 /* ---------- tile + THE STICKER ---------- */
 .tile{position:relative;isolation:isolate;aspect-ratio:4/5;background:var(--tile,var(--color-raised));overflow:hidden;border-radius:var(--radius)}
-.shot{width:100%;height:100%;object-fit:contain;mix-blend-mode:multiply}
-.shot--photo{mix-blend-mode:normal;object-fit:cover}
+.shot{width:100%;height:100%;object-fit:contain}
+.shot--photo{object-fit:cover}
 .sticker{position:absolute;right:var(--s-2);bottom:var(--s-2);display:grid;justify-items:center;align-content:center;gap:1px;width:76px;height:76px;padding:var(--s-2);
   border-radius:50%;background:radial-gradient(circle at 34% 28%,oklch(0.65 0.21 31),var(--color-sticker) 62%);color:var(--color-on-sticker);text-align:center;transform:rotate(var(--r,-8deg));transition:transform var(--dur-state) var(--ease-enter);
   box-shadow:0 1px 0 oklch(0.3 0.1 29),0 6px 14px oklch(0.1 0.02 50 / .35)}
@@ -101,23 +101,24 @@ body:not([data-route]) .foot{visibility:hidden}
 
 /* ---------- hero: the counter. Jewel slabs, hookahs standing on one line, the word under the packshots ---------- */
 .hero{padding:0 0 var(--s-8)}
-.hero__stage{position:relative;isolation:isolate;container-type:inline-size;height:max(280px,calc(100svh - 440px));overflow:hidden}
+.hero__stage{position:relative;container-type:inline-size;height:max(260px,calc(100svh - 500px));overflow:hidden}
 .hero__slabs,.hero__pieces{position:absolute;inset:0;display:grid;grid-template-columns:repeat(3,1fr)}
 .hero__slabs span{background:var(--tile)}
 .hero__slabs span:nth-child(n+4),.hero__pieces .piece:nth-child(n+4){display:none}
-.hero__word{position:absolute;left:var(--gutter);bottom:-.07em;margin:0 0 0 -.045em;font:400 calc((100cqw - 2 * var(--gutter)) * .262)/.8 var(--font-display);letter-spacing:-.02em;color:var(--color-strong);white-space:nowrap;text-shadow:.028em .028em 0 var(--ink)}
-/* The word is drawn twice (atelier:typography, type over image gets one legibility rule): white fill with a hard ink
-   drop UNDER the packshots, then the same letters as an ink outline OVER them, so the hookahs pass through the
-   letters but every letter keeps its full contour. */
-.hero__word--line{color:transparent;text-shadow:none;-webkit-text-stroke:max(2px,.013em) var(--ink);pointer-events:none}
+.hero__word{position:absolute;left:var(--gutter);bottom:-.07em;margin:0 0 0 -.045em;font:400 calc((100cqw - 2 * var(--gutter)) * .262)/.8 var(--font-display);letter-spacing:-.02em;color:var(--color-strong);white-space:nowrap;display:none}
 .piece{position:relative;display:flex;align-items:flex-end;justify-content:center;height:100%;text-decoration:none;min-width:0}
-.piece .shot{flex:none;height:calc(var(--cm) / 118 * 100%);margin-bottom:calc(100cqw * .2);width:auto;max-width:none;aspect-ratio:4/5;object-fit:contain;object-position:50% 100%}
+.piece .shot{flex:none;height:calc(var(--cm) / 92 * 100%);width:auto;max-width:none;aspect-ratio:4/5;object-fit:contain;object-position:50% 100%}
 .piece .sticker{top:var(--s-3);right:var(--s-2);bottom:auto;width:54px;height:54px;animation:slap var(--dur-reveal) var(--ease-enter) both;animation-delay:calc(420ms + var(--i) * 70ms)}
 .piece .sticker__v{font-size:1.2rem}
 .piece:focus-visible{outline-offset:-4px}
 .hero__in{display:grid;gap:var(--s-4);padding:var(--s-5) var(--gutter) 0}
-.hero__h{font:400 var(--t-d1)/1.02 var(--font-display);color:var(--color-strong);margin:0;max-width:15ch;text-wrap:balance}
-.hero__p{max-width:34ch;margin:0 0 var(--s-4);font-size:var(--t-16);color:var(--color-text)}
+.hero__in{container-type:inline-size}
+.hero__h{font:400 var(--t-d1)/1.02 var(--font-display);color:var(--color-strong);margin:0}
+.hero__rest{display:block;max-width:15ch;text-wrap:balance}
+.hero__side{display:grid}
+.hero__cta{order:-1;margin-bottom:var(--s-4)}
+.hero__lead{display:block;font-size:26.2cqw;line-height:.86;letter-spacing:-.02em;margin:0 0 .06em -.045em;white-space:nowrap}
+.hero__p{max-width:34ch;margin:0;font-size:var(--t-16);color:var(--color-text)}
 .hero__cta{display:grid;grid-template-columns:1fr 1fr;gap:var(--s-2)}
 .hero__cta .btn{padding:0 var(--s-3)}
 
@@ -128,7 +129,7 @@ body:not([data-route]) .foot{visibility:hidden}
 .cat:first-child{grid-column:1 / -1;min-height:220px}
 .cat__ar{grid-column:1;grid-row:1;align-self:start;justify-self:start;font-size:2.1rem;line-height:1.15;opacity:.6}
 .cat:first-child .cat__ar{font-size:4rem}
-.cat .cat__img{grid-column:2;grid-row:1 / 3;position:static;width:100%;height:100%;min-height:0;object-fit:contain;object-position:50% 100%;mix-blend-mode:multiply}
+.cat .cat__img{grid-column:2;grid-row:1 / 3;position:static;width:100%;height:100%;min-height:0;object-fit:contain;object-position:50% 100%}
 .cat__name{grid-column:1;grid-row:2;font:400 1.5rem/1 var(--font-display);padding-top:.12em}
 .cat:first-child .cat__name{font-size:2.6rem}
 .cat__n{position:absolute;top:var(--s-3);right:var(--s-3);font-size:var(--t-12);font-weight:600}
@@ -143,7 +144,7 @@ body:not([data-route]) .foot{visibility:hidden}
   background:repeating-linear-gradient(0deg,transparent 0 calc(var(--lu-h) / 92 * 30 - 1px),oklch(0.16 0.012 50 / .18) calc(var(--lu-h) / 92 * 30 - 1px) calc(var(--lu-h) / 92 * 30)) bottom / 100% calc(var(--lu-h) + 76px) no-repeat}
 .lineup__row::-webkit-scrollbar{display:none}
 .lu{flex:none;display:grid;justify-items:center;align-content:end;scroll-snap-align:start;text-decoration:none;color:inherit;min-width:calc(var(--lu-h) * .34);padding-inline:var(--s-1)}
-.lu__img{height:calc(var(--cm) / 92 * var(--lu-h));width:auto;max-width:none;justify-self:center;mix-blend-mode:multiply;transform-origin:50% 100%;transition:transform var(--dur-state) var(--ease-enter)}
+.lu__img{height:calc(var(--cm) / 92 * var(--lu-h));width:auto;max-width:none;justify-self:center;transform-origin:50% 100%;transition:transform var(--dur-state) var(--ease-enter)}
 .lu:hover .lu__img{transform:scale(1.04)}
 .lu__cm{width:100%;text-align:center;border-top:2px solid var(--ink);padding-top:var(--s-2);font:400 1.25rem/1 var(--font-display)}
 .lu__name{font-size:var(--t-12);font-weight:500;text-align:center;padding:2px var(--s-1) var(--s-5);min-height:56px;max-width:100%}
@@ -174,7 +175,7 @@ body:not([data-route]) .foot{visibility:hidden}
 .resin__row{display:flex;gap:var(--s-2);margin-top:var(--s-8);padding:0 var(--gutter);overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-inline:var(--gutter);scrollbar-width:none}
 .resin__row::-webkit-scrollbar{display:none}
 .resin__item{position:relative;flex:0 0 72%;scroll-snap-align:start;aspect-ratio:1;overflow:hidden;text-decoration:none;border-radius:var(--radius)}
-.resin__item .shot{object-fit:cover;mix-blend-mode:normal}
+.resin__item .shot{object-fit:cover}
 .resin__name{position:absolute;left:var(--s-3);top:var(--s-3);right:var(--s-3);font-size:var(--t-14);font-weight:500;color:var(--white)}
 
 /* ---------- packing ---------- */
@@ -198,10 +199,7 @@ body:not([data-route]) .foot{visibility:hidden}
 /* ---------- product page ---------- */
 .pdp{display:grid}
 .pdp__tile{border-radius:0;aspect-ratio:auto;height:min(105vw,52svh);background:var(--tile,var(--color-raised));transition:background-color var(--dur-state) var(--ease-state)}
-.pdp__tile[data-truecolour]{background:var(--white)}
 .pdp__tile .sticker{top:var(--s-4);right:var(--s-4);bottom:auto;width:92px;height:92px} .pdp__tile .sticker__v{font-size:2rem}
-.truecolour{position:absolute;left:var(--s-3);bottom:var(--s-3);min-height:44px;padding:0 var(--s-4);border:0;border-radius:var(--radius);background:var(--ink);color:var(--white);font-size:var(--t-14);font-weight:500;cursor:pointer}
-.truecolour[aria-pressed="true"]{background:var(--white);color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
 .pdp__tile.tile--photo{background:#000}
 .pdp__info{padding:var(--s-5) var(--gutter) var(--s-8)}
 .crumb{margin:0 0 var(--s-2);font-size:var(--t-14)} .crumb a{display:inline-block;min-width:44px;padding:13px 0;margin:-13px 0;color:var(--color-muted)}
@@ -288,10 +286,14 @@ body:not([data-route]) .foot{visibility:hidden}
   .hero__slabs,.hero__pieces{grid-template-columns:repeat(5,1fr)}
   .hero__slabs span:nth-child(n+4),.hero__pieces .piece:nth-child(n+4){display:block}
   .hero__pieces .piece:nth-child(n+4){display:grid}
-  .piece .shot{height:calc(var(--cm) / 86 * 100%);margin-bottom:0}
+  .piece .shot{height:calc(var(--cm) / 86 * 100%)}
+  .hero__word{display:block;text-shadow:.026em .026em 0 var(--ink)}
+  .hero__cta{order:0;margin-bottom:0}
+  .hero__lead{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+  .hero__in{container-type:normal}
   .piece .sticker{width:76px;height:76px;top:var(--s-5);right:var(--s-5)} .piece .sticker__v{font-size:1.6rem}
   .hero__in{grid-template-columns:1fr auto;align-items:end;column-gap:var(--s-16);padding-top:var(--s-8)}
-  .hero__h{font-size:var(--t-d2);line-height:.95;max-width:16ch}
+  .hero__h{font-size:var(--t-d2);line-height:.95;max-width:16ch;text-wrap:balance}
   .hero__side{max-width:380px}
   .hero__cta .btn{padding:0 var(--s-6)}
   .hero__p{font-size:var(--t-18)}
@@ -313,7 +315,6 @@ body:not([data-route]) .foot{visibility:hidden}
   .pdp__tile .shot:not(.shot--photo){padding:5% 12%}
   .pdp__info{padding:var(--s-12) var(--gutter) var(--s-16) var(--s-12);max-width:640px}
   .pdp__tile .sticker{width:150px;height:150px;top:var(--s-8);right:var(--s-8)} .pdp__tile .sticker__v{font-size:3.1rem}
-  .truecolour{left:var(--s-8);bottom:var(--s-8)}
   .line{grid-template-columns:96px 1fr auto}
   .foot{display:grid;grid-template-columns:1fr 1fr;column-gap:var(--s-16);padding-block:var(--s-16)}
   .foot__ar,.foot__en{grid-column:1} .foot__list{grid-column:2;grid-row:1 / span 2;align-content:center}
@@ -326,3 +327,21 @@ body:not([data-route]) .foot{visibility:hidden}
 ::view-transition-old(piece),::view-transition-new(piece){height:100%;object-fit:cover;animation-duration:.25s}
 ::view-transition-group(tag){animation-duration:.5s;animation-timing-function:var(--ease-enter)}
 @media (prefers-reduced-motion:reduce){.piece .sticker{animation:none}}
+
+/* ---------- price label, v2 (2026-11-13; his note: change how the price tags look) ----------
+   atelier:brand-systems: the device is the shop's own price-gun label, so it is drawn as one: white label stock,
+   an ember header band carrying the shop name, a perforation line, ink numerals, stuck on at a hand angle.
+   Everything is sized in em so one font-size sets the whole label. Overrides the round sticker rules above. */
+.sticker{width:auto !important;height:auto !important;min-width:3.1em;display:block;padding:1.06em .5em .12em;border-radius:.2em;font-size:1.3rem;
+  background:var(--white);color:var(--ink);text-align:center;overflow:hidden;
+  box-shadow:0 1px 0 oklch(0.16 0.012 50 / .55),0 .3em .7em oklch(0.1 0.02 50 / .32)}
+.sticker::before{content:"ONE STOP";position:absolute;inset:0 0 auto 0;height:3em;background:var(--ember);color:var(--white);
+  font:600 .3em/3 var(--font-ui);letter-spacing:.14em;text-indent:.14em;white-space:nowrap;overflow:hidden}
+.sticker::after{content:"";position:absolute;left:.3em;right:.3em;top:1.02em;border-top:1px dashed oklch(0.16 0.012 50 / .35)}
+.sticker__v{display:block;font:400 1em/1.05 var(--font-display);padding-top:.08em;color:var(--ink)}
+.sticker__v::first-letter{font-size:.6em;vertical-align:.45em;margin-right:.03em}
+.grid .sticker{font-size:1.15rem}
+.piece .sticker{font-size:1.1rem}
+.pdp__tile .sticker{font-size:2rem}
+@media (min-width:640px){.grid .sticker{font-size:1.45rem}}
+@media (min-width:960px){.piece .sticker{font-size:1.6rem} .pdp__tile .sticker{font-size:3rem}}

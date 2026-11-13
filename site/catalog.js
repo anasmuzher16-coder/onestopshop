@@ -704,20 +704,6 @@ export const PRODUCTS = [
   "lw": 1036
  },
  {
-  "sku": "OSS-3002",
-  "name": "Daily bowl, cobalt",
-  "cat": "bowls",
-  "price": 79,
-  "kg": 0.35,
-  "box": "S",
-  "glass": false,
-  "height": null,
-  "note": "Glazed stoneware",
-  "img": "bowl03",
-  "dark": false,
-  "lw": 1440
- },
- {
   "sku": "OSS-3003",
   "name": "Red clay bowl",
   "cat": "bowls",

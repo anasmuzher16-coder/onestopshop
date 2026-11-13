@@ -78,10 +78,9 @@ function viewHome() {
       <div class="hero__slabs" aria-hidden="true">${stars.map((p, i) => `<span data-tone="${SLABS[i]}"></span>`).join("")}</div>
       <p class="hero__word" aria-hidden="true">Hookahs,</p>
       <div class="hero__pieces">${stars.map((p, i) => `<a class="piece" href="#/p/${p.sku}" style="--cm:${p.height};--i:${i}" aria-label="${esc(p.name)}, ${whole(p.price)}">${shot(p, { eager: true, use: "slab" })}${sticker(p)}</a>`).join("")}</div>
-      <p class="hero__word hero__word--line" aria-hidden="true">Hookahs,</p>
     </div>
     <div class="hero__in">
-      <h1 class="hero__h"><span class="sr">Hookahs, </span>and everything that goes with them.</h1>
+      <h1 class="hero__h"><span class="hero__lead">Hookahs,</span> <span class="hero__rest">and everything that goes with them.</span></h1>
       <div class="hero__side">
         <p class="hero__p">Egyptian brass, German steel and hand\u2011cut glass. In store in Windsor, shipped across Canada.</p>
         <div class="hero__cta"><a class="btn" href="#/shop/hookahs">Shop hookahs</a><a class="btn btn--ghost" href="#/shop">See everything</a></div>
@@ -147,7 +146,7 @@ function viewProduct(sku) {
   const more = PRODUCTS.filter(x => x.cat === p.cat && x.sku !== sku && !x.dark).slice(0, 4);
   return `
   <article class="pdp" data-tone="${toneOf(p)}">
-    <div data-stage="${p.sku}" class="pdp__tile tile ${p.dark || p.photo ? "tile--photo" : ""}">${shot(p, { eager: true, alt: p.name })}${sticker(p, { big: true })}${p.dark || p.photo ? "" : `<button class="truecolour" type="button" data-true aria-pressed="false">True colour</button>`}</div>
+    <div data-stage="${p.sku}" class="pdp__tile tile ${p.dark || p.photo ? "tile--photo" : ""}">${shot(p, { eager: true, alt: p.name })}${sticker(p, { big: true })}</div>
     <div class="pdp__info">
       <p class="crumb"><a href="#/shop/${p.cat}">${c.name}</a></p>
       <h1 class="pdp__name">${esc(p.name)}</h1>
@@ -256,8 +255,6 @@ function openSheet() { postalInput.value = state.dest ? state.dest.full : ""; po
 document.addEventListener("click", e => {
   if (e.target.closest("[data-open-postal]")) openSheet();
   else if (e.target.closest("[data-close-postal]") || e.target === sheet) sheet.close();
-  const tc = e.target.closest("[data-true]");
-  if (tc) { const on = tc.getAttribute("aria-pressed") !== "true"; tc.setAttribute("aria-pressed", on); tc.closest("[data-stage]").toggleAttribute("data-truecolour", on); }
   const add = e.target.closest("[data-add]"); if (add) { addToCart(add.dataset.add); render(); }
   const q = e.target.closest("[data-qty]"); if (q) setQty(q.dataset.qty, +q.dataset.n);
 });

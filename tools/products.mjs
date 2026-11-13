@@ -18,6 +18,16 @@ async function cutout(buf, thr = 240) {
   for (let x = 0; x < w; x++) { push(x); push((h - 1) * w + x); }
   for (let y = 0; y < h; y++) { push(y * w); push(y * w + w - 1); }
   while (stack.length) { const i = stack.pop(), x = i % w; if (x > 0) push(i - 1); if (x < w - 1) push(i + 1); if (i >= w) push(i - w); if (i < N - w) push(i + w); }
+  // Enclosed paper white (inside a hose loop, between a stem and its hose): the flood from the border cannot
+  // reach it. Any connected patch of pure white (>= 248) bigger than a highlight is background too.
+  const seen = new Uint8Array(N), pure = i => !bg[i] && data[i * 4] >= 248 && data[i * 4 + 1] >= 248 && data[i * 4 + 2] >= 248, minArea = Math.max(250, N * 0.0005);
+  for (let s = 0; s < N; s++) {
+    if (seen[s] || !pure(s)) continue;
+    const comp = [s]; seen[s] = 1;
+    for (let k = 0; k < comp.length; k++) { const i = comp[k], x = i % w;
+      for (const j of [x > 0 ? i - 1 : -1, x < w - 1 ? i + 1 : -1, i >= w ? i - w : -1, i < N - w ? i + w : -1]) if (j >= 0 && !seen[j] && pure(j)) { seen[j] = 1; comp.push(j); } }
+    if (comp.length >= minArea) for (const i of comp) bg[i] = 1;
+  }
   for (let i = 0; i < N; i++) {
     if (bg[i]) { data[i * 4 + 3] = 0; continue; }
     const x = i % w, edge = (x > 0 && bg[i - 1]) || (x < w - 1 && bg[i + 1]) || (i >= w && bg[i - w]) || (i < N - w && bg[i + w]);
@@ -41,10 +51,15 @@ for (const f of readdirSync("assets-src/hi").filter(f => f.endsWith(".img"))) {
     const trimmed = await sharp("assets-src/hi/" + f).flatten({ background: "#ffffff" }).trim({ background: "#ffffff", threshold: 12 }).toBuffer();
     const flat = await cutout(trimmed); // real transparency: no white box can ever show, whatever the CSS does
     const m = await sharp(flat).metadata();
+    // A photo shot on a grey or coloured studio ground cannot be cut out this way: its frame stays opaque.
+    const raw = await sharp(flat).raw().toBuffer(); let edge = 0, solid = 0;
+    for (let x = 0; x < m.width; x++) for (const y of [0, m.height - 1]) { edge++; if (raw[(y * m.width + x) * 4 + 3] > 200) solid++; }
+    for (let y = 0; y < m.height; y++) for (const x of [0, m.width - 1]) { edge++; if (raw[(y * m.width + x) * 4 + 3] > 200) solid++; }
+    const boxed = solid / edge > 0.5;
     const need = (W, H) => Math.min((W * 0.86) / m.width, (H * 0.9) / m.height); // scale factor to fit the canvas
     const maxW = Math.floor(Math.max(m.width / 0.86, (m.height / 0.9) * 0.8));       // widest canvas with no upscaling
     const lw = maxW >= 900 ? Math.min(1440, maxW) : 0;
-    const out = { srcW: m.width, srcH: m.height, maxW, lw };
+    const out = { srcW: m.width, srcH: m.height, maxW, lw, boxed };
     for (const [W, suf, q] of [[360, "-s", 78], [540, "-m", 76], [720, "", 76], [lw, "-l", 74]]) {
       if (!W) continue;
       const H = Math.round(W * 1.25);
@@ -57,4 +72,4 @@ for (const f of readdirSync("assets-src/hi").filter(f => f.endsWith(".img"))) {
 }
 writeFileSync("site/img/pc/sizes.json", JSON.stringify(sizes));
 const v = Object.values(sizes);
-console.log("products", n, "| with large version", v.filter(x => x.lw).length, "| soft sources:", Object.entries(sizes).filter(([, x]) => x.soft).map(([k]) => k).join(" ") || "none");
+console.log("products", n, "| with large version", v.filter(x => x.lw).length, "| boxed (no clean cut-out):", Object.entries(sizes).filter(([, x]) => x.boxed).map(([k]) => k).join(" ") || "none", "| soft sources:", Object.entries(sizes).filter(([, x]) => x.soft).map(([k]) => k).join(" ") || "none");
