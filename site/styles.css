@@ -106,18 +106,6 @@ button{font:inherit;color:inherit}
 .hero__p{max-width:40ch;margin:var(--s-5) 0 var(--s-6);font-size:var(--t-16);color:var(--color-strong)}
 .hero__cta{display:grid;gap:var(--s-2)}
 
-/* ---------- ticker (the live pulse: one hookah, priced to twelve cities) ---------- */
-.ticker{display:grid;border-block:1px solid var(--color-line);background:var(--color-raised)}
-.ticker__lead{margin:0;padding:var(--s-3) var(--gutter) 0;font-size:var(--t-12);color:var(--color-muted)}
-.ticker__run{overflow:hidden;padding:var(--s-3) 0}
-.ticker__track{display:flex;width:max-content;animation:tick 48s linear infinite}
-.ticker:hover .ticker__track,.ticker:focus-within .ticker__track{animation-play-state:paused}
-.tick{font:400 var(--t-22)/1.2 var(--font-display);color:var(--color-strong);padding:0 var(--s-5);white-space:nowrap}
-.tick::after{content:"";display:inline-block;width:8px;height:8px;margin-left:calc(var(--s-5)*2);border-radius:50%;background:var(--ember);vertical-align:middle}
-.tick b{font:500 var(--t-14)/1 var(--font-ui);color:var(--color-muted);margin-right:var(--s-2)}
-@keyframes tick{to{transform:translateX(-50%)}}
-@media (prefers-reduced-motion:reduce){.ticker__track{animation:none}.ticker__run{overflow-x:auto}}
-
 /* ---------- category blocks ---------- */
 .cats{display:grid;grid-template-columns:1fr 1fr;gap:var(--s-2);padding:var(--s-8) var(--gutter) 0}
 .cat{position:relative;display:grid;grid-template-columns:1fr auto;align-items:end;min-height:156px;padding:var(--s-3);background:var(--tile);color:var(--color-on-tile);
@@ -274,8 +262,6 @@ button{font:inherit;color:inherit}
   .hero{min-height:min(84svh,820px);padding-bottom:var(--s-12)}
   .hero__bg::after{background:linear-gradient(90deg,oklch(0.155 0.012 50 / .9) 0%,oklch(0.155 0.012 50 / .55) 45%,oklch(0.155 0.012 50 / .1) 100%),linear-gradient(180deg,transparent 60%,var(--color-bg) 100%)}
   .hero__p{font-size:var(--t-18)}
-  .ticker__lead{padding:0 var(--s-6) 0 var(--gutter);font-size:var(--t-14);border-right:1px solid var(--color-line);align-self:stretch;display:flex;align-items:center}
-  .ticker__run{padding:var(--s-4) 0}
   .cats{grid-template-columns:repeat(12,1fr);gap:var(--s-3);padding-top:var(--s-12)}
   .cat{min-height:220px;grid-column:span 3} .cat:first-child{grid-column:span 6;grid-row:span 2;min-height:0}
   .cat:nth-child(2),.cat:nth-child(3){grid-column:span 6}

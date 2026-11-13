@@ -58,12 +58,6 @@ function card(p, i = 9) {
 }
 
 // ---------- views ----------
-const WORDS = ["Egyptian brass", "Bohemian glass", "German steel", "Poured resin", "Hand-stitched leather", "Clay and stoneware", "Shipped across Canada", "Open seven days"];
-function ticker() {
-  const items = WORDS.map(w => `<span class="tick">${w}</span>`).join("");
-  return `<div class="ticker" aria-hidden="true"><div class="ticker__run"><div class="ticker__track">${items}${items}</div></div></div>`;
-}
-
 function viewHome() {
   const picks = ["Sultan Totem", "Stuttgart Pure, Jade", "Regent Neon Blue", "Cairo Avatar", "Woodline Sage", "Carbon Black", "Mamoun Moagza Copper", "Regent Neon Pink"].map(n => PRODUCTS.find(p => p.name === n));
   const resin = PRODUCTS.filter(p => p.dark);
@@ -77,7 +71,6 @@ function viewHome() {
       <div class="hero__cta"><a class="btn" href="#/shop/hookahs">Shop hookahs</a><a class="btn btn--ghost" href="#/shop">See everything</a></div>
     </div>
   </section>
-  ${ticker()}
   <section class="cats" aria-label="Shop by category">
     ${CATEGORIES.map(c => { const n = PRODUCTS.filter(p => p.cat === c.id).length; const lead = PRODUCTS.find(p => p.cat === c.id && !p.dark);
       return `<a class="cat" data-tone="${c.tone}" href="#/shop/${c.id}"><span class="cat__ar" lang="ar" dir="rtl" aria-hidden="true">${c.ar}</span><img class="shot cat__img" src="${imgSrc(lead, true)}" alt="" loading="lazy" width="360" height="450"><span class="cat__name">${c.name}</span><span class="cat__n num">${n}</span></a>`; }).join("")}
