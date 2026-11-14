@@ -51,7 +51,7 @@ function setQty(sku, qty) {
 const bestFor = p => state.dest ? quote(state.dest, pack([{ product: p, qty: 1 }]))[0] : null;
 
 // ---------- images ----------
-const V = "?v=1794600800"; // bumped on every photo rebuild so no phone keeps an old copy
+const V = "?v=1794615693"; // bumped on every photo rebuild so no phone keeps an old copy
 const imgSrc = (p, small) => p.photo ? `img/${p.img}.webp` : `img/pc/${p.img}${small && !p.dark ? "-s" : ""}.webp${V}`;
 const SIZES = { card: "(min-width:1500px) 18vw, (min-width:960px) 22vw, (min-width:640px) 30vw, 46vw", pdp: "(min-width:960px) 50vw, 100vw",
   thumb: "96px", slab: "(min-width:960px) 42vw, 58vw", lineup: "(min-width:960px) 370px, 240px", cat: "(min-width:960px) 24vw, 44vw", resin: "(min-width:960px) 28vw, (min-width:640px) 40vw, 72vw" };

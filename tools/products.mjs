@@ -10,7 +10,13 @@ const DARK = new Set(["hookah11", "hookah12", "hookah14", "hookah18"]);
 // Background removal: flood-fill from the image border through near-white pixels and make that region
 // transparent. White that is enclosed by the object (glass, chrome highlights) is kept. The alpha edge is
 // softened by one pixel, and edge pixels are un-mixed from white so no pale fringe is left on dark grounds.
-async function cutout(buf, thr = 240) {
+// Per-photo exceptions, found by eye on tools/usedsheet.mjs. off: polished chrome or pale glass the shadow pass
+// would eat. below: only clean under this fraction of the height (a floor reflection under clear glass).
+// sat/step: a tinted or noisy shadow needs a looser match.
+const SOFT = { hmd07: { off: 1 }, hmd10: { off: 1 }, base06: { off: 1 }, acc03: { off: 1 },
+  base00: { below: 0.84, max: 1 }, hookah50: { below: 0.965, max: 1 }, bowl30: { below: 0.8, max: 1 }, bowl20: { sat: 60, step: 14, min: 170 } };
+async function cutout(buf, cfg = {}, thr = 240) {
+  const softOk = !cfg.off, SAT = cfg.sat || 14, STEP = cfg.step || 6, MINL = cfg.min || 150;
   const { data, info } = await sharp(buf).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
   const { width: w, height: h } = info, N = w * h, bg = new Uint8Array(N), stack = [];
   const white = i => data[i * 4] >= thr && data[i * 4 + 1] >= thr && data[i * 4 + 2] >= thr;
@@ -28,8 +34,25 @@ async function cutout(buf, thr = 240) {
       for (const j of [x > 0 ? i - 1 : -1, x < w - 1 ? i + 1 : -1, i >= w ? i - w : -1, i < N - w ? i + w : -1]) if (j >= 0 && !seen[j] && pure(j)) { seen[j] = 1; comp.push(j); } }
     if (comp.length >= minArea) for (const i of comp) bg[i] = 1;
   }
+  // Soft shadow pass. A pixel joins when it is neutral, light enough, and within 6 levels of the pixel it was
+  // reached from: blurred shadows qualify, object edges (a sharp step) do not. Skipped when it would eat more
+  // than a third of the piece (white glass with a soft edge) or when the id is in NOSOFT.
+  const soft = new Uint8Array(N);
+  if (softOk) {
+    const mn = i => Math.min(data[i * 4], data[i * 4 + 1], data[i * 4 + 2]), mx = i => Math.max(data[i * 4], data[i * 4 + 1], data[i * 4 + 2]);
+    const q = []; let kept = 0;
+    const tryPush = (j, from) => { if (bg[j] || soft[j]) return; const m = mn(j); if (m < MINL || mx(j) - m > SAT || Math.abs(m - from) > STEP || (cfg.below && j / w < h * cfg.below)) return; soft[j] = 1; q.push(j); };
+    for (let i = 0; i < N; i++) { if (!bg[i]) { kept++; continue; } const x = i % w;
+      if (x > 0 && !bg[i - 1]) tryPush(i - 1, Math.min(246, mn(i))); if (x < w - 1 && !bg[i + 1]) tryPush(i + 1, Math.min(246, mn(i))); if (i >= w && !bg[i - w]) tryPush(i - w, Math.min(246, mn(i))); if (i < N - w && !bg[i + w]) tryPush(i + w, Math.min(246, mn(i))); }
+    while (q.length) { const i = q.pop(), x = i % w, m = mn(i); if (x > 0) tryPush(i - 1, m); if (x < w - 1) tryPush(i + 1, m); if (i >= w) tryPush(i - w, m); if (i < N - w) tryPush(i + w, m); }
+    let ns = 0; for (let i = 0; i < N; i++) ns += soft[i];
+    cutout.last = ns / kept; if (ns > kept * (cfg.max || 0.33)) { soft.fill(0); cutout.last = -cutout.last; }
+  }
   for (let i = 0; i < N; i++) {
     if (bg[i]) { data[i * 4 + 3] = 0; continue; }
+    if (soft[i]) { const m = Math.min(data[i * 4], data[i * 4 + 1], data[i * 4 + 2]), al = 1 - m / 255;
+      for (let c = 0; c < 3; c++) data[i * 4 + c] = al < 0.02 ? 0 : Math.max(0, Math.min(255, Math.round((data[i * 4 + c] - 255 * (1 - al)) / al)));
+      data[i * 4 + 3] = Math.round(al * 255); continue; }
     const x = i % w, edge = (x > 0 && bg[i - 1]) || (x < w - 1 && bg[i + 1]) || (i >= w && bg[i - w]) || (i < N - w && bg[i + w]);
     if (!edge) continue;
     const m = Math.min(data[i * 4], data[i * 4 + 1], data[i * 4 + 2]), a = Math.max(0.15, 1 - m / 255); // how far from white
@@ -39,8 +62,8 @@ async function cutout(buf, thr = 240) {
   }
   return sharp(data, { raw: { width: w, height: h, channels: 4 } }).png().toBuffer();
 }
-const sizes = {}; let n = 0;
-for (const f of readdirSync("assets-src/hi").filter(f => f.endsWith(".img"))) {
+const sizes = {}; let n = 0; const ONLY = (process.env.ONLY || "").split(",").filter(Boolean);
+for (const f of readdirSync("assets-src/hi").filter(f => f.endsWith(".img") && (!ONLY.length || ONLY.includes(f.replace(".img", ""))))) {
   const id = f.replace(".img", "");
   try {
     if (DARK.has(id)) {
@@ -49,7 +72,7 @@ for (const f of readdirSync("assets-src/hi").filter(f => f.endsWith(".img"))) {
       sizes[id] = { srcW: m.width, srcH: m.height, dark: true, maxW: m.width, lw: m.width >= 1000 ? Math.min(1600, m.width) : 0 }; n++; continue;
     }
     const trimmed = await sharp("assets-src/hi/" + f).flatten({ background: "#ffffff" }).trim({ background: "#ffffff", threshold: 12 }).toBuffer();
-    const flat = await cutout(trimmed); // real transparency: no white box can ever show, whatever the CSS does
+    const flat = await cutout(trimmed, SOFT[id] || {}); // real transparency: no white box can ever show, whatever the CSS does
     const m = await sharp(flat).metadata();
     // A photo shot on a grey or coloured studio ground cannot be cut out this way: its frame stays opaque.
     const raw = await sharp(flat).raw().toBuffer(); let edge = 0, solid = 0;
@@ -66,10 +89,12 @@ for (const f of readdirSync("assets-src/hi").filter(f => f.endsWith(".img"))) {
       const b = await sharp(flat).resize(Math.round(W * 0.86), Math.round(H * 0.9), { fit: "inside", kernel: "lanczos3" }).toBuffer();
       await sharp({ create: { width: W, height: H, channels: 4, background: { r: 255, g: 255, b: 255, alpha: 0 } } }).composite([{ input: b, gravity: "centre" }]).webp({ quality: q, alphaQuality: 82, effort: 5, smartSubsample: true }).toFile(`site/img/pc/${id}${suf}.webp`);
     }
+    out.shadow = +(cutout.last || 0).toFixed(3);
     out.soft = maxW < 625; // source cannot fill even the 720 tile
     sizes[id] = out; n++;
   } catch (e) { console.log("bad", id, e.message); }
 }
+if (ONLY.length) { console.log(JSON.stringify(sizes)); process.exit(0); }
 writeFileSync("site/img/pc/sizes.json", JSON.stringify(sizes));
 const v = Object.values(sizes);
 console.log("products", n, "| with large version", v.filter(x => x.lw).length, "| boxed (no clean cut-out):", Object.entries(sizes).filter(([, x]) => x.boxed).map(([k]) => k).join(" ") || "none", "| soft sources:", Object.entries(sizes).filter(([, x]) => x.soft).map(([k]) => k).join(" ") || "none");
