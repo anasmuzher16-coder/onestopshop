@@ -1,0 +1,275 @@
+<title>One Stop Shop Roadmap</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lalezar&family=Readex+Pro:wght@300;400;500;600&display=swap">
+<style>
+/* Layout: one column of nine phase rows read top to bottom, each with a price-label number; a week chart above them shows what overlaps. */
+:root{
+  color-scheme:dark;
+  --bg:#141210; --surface:#1d1a17; --line:#35302a; --ink:#f1ece3; --muted:#a79f92;
+  --label:#fbf7ee; --label-ink:#17130f; --red:#d6452f;
+  --teal:#2f9c95; --amber:#e0a133; --plum:#a35aa0; --wait:#6d655a;
+  --display:"Lalezar","Arial Black",Impact,sans-serif;
+  --body:"Readex Pro","Segoe UI",system-ui,Arial,sans-serif;
+}
+@media (prefers-color-scheme: light){ :root:not([data-theme="dark"]){
+  color-scheme:light;
+  --bg:#f6f2ea; --surface:#ffffff; --line:#d8d0c2; --ink:#1b1713; --muted:#655d51;
+  --label:#1b1713; --label-ink:#fbf7ee; --red:#b8361f;
+  --teal:#1f7d77; --amber:#a86f0a; --plum:#84407f; --wait:#8d8577;
+}}
+:root[data-theme="light"]{
+  color-scheme:light;
+  --bg:#f6f2ea; --surface:#ffffff; --line:#d8d0c2; --ink:#1b1713; --muted:#655d51;
+  --label:#1b1713; --label-ink:#fbf7ee; --red:#b8361f;
+  --teal:#1f7d77; --amber:#a86f0a; --plum:#84407f; --wait:#8d8577;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:400 15px/1.55 var(--body)}
+.wrap{max-width:980px;margin:0 auto;padding-block:36px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:44px}
+h1{font:400 clamp(2.6rem,8vw,4.4rem)/.95 var(--display);margin:0;letter-spacing:.005em;text-wrap:balance}
+h1 span{color:var(--amber)}
+h2{font:400 1.75rem/1.05 var(--display);margin:0 0 14px;text-wrap:balance}
+p{margin:0}
+.lede{max-width:62ch;color:var(--muted);margin-top:14px}
+.meta{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.note{font-size:13px;color:var(--muted);max-width:70ch;margin-top:10px}
+
+/* who is holding what */
+.now{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:1px;background:var(--line);border:1px solid var(--line)}
+.now>div{background:var(--surface);padding:16px 16px 18px;min-width:0}
+.now h3{font:600 12px/1.2 var(--body);letter-spacing:.09em;text-transform:uppercase;margin:0 0 8px;color:var(--amber)}
+.now ul{margin:0;padding-left:17px;display:flex;flex-direction:column;gap:5px;font-size:14px}
+
+/* week chart */
+.chartbox{overflow-x:auto;border:1px solid var(--line);background:var(--surface)}
+.chart{min-width:720px;padding:14px 16px 16px;display:grid;grid-template-columns:150px repeat(14,1fr);row-gap:7px;align-items:center;font-size:12.5px}
+.chart .wk{color:var(--muted);text-align:center;font-variant-numeric:tabular-nums;border-left:1px solid var(--line);padding-bottom:4px}
+.chart .name{grid-column:1;padding-right:10px;white-space:nowrap}
+.bar{height:16px;border-radius:2px;background:var(--teal)}
+.bar.wait{background:repeating-linear-gradient(135deg,var(--wait) 0 5px,transparent 5px 9px);outline:1px solid var(--wait);outline-offset:-1px}
+.bar.shop{background:var(--amber)}
+.bar.look{background:var(--plum)}
+.bar.live{background:var(--red)}
+.key{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:12.5px;color:var(--muted);margin-top:10px}
+.key i{display:inline-block;width:22px;height:10px;border-radius:2px;margin-right:6px;vertical-align:baseline}
+
+/* phases */
+.phases{display:flex;flex-direction:column}
+.phase{display:grid;grid-template-columns:76px minmax(0,1fr);gap:18px;padding:22px 0;border-top:1px solid var(--line)}
+.phase:last-child{border-bottom:1px solid var(--line)}
+.tag{justify-self:start;align-self:start;background:var(--label);color:var(--label-ink);font:400 2rem/1 var(--display);padding:8px 12px 3px;border-bottom:5px solid var(--red);transform:rotate(-4deg);min-width:56px;text-align:center;font-variant-numeric:tabular-nums}
+.phase h3{font:600 1.08rem/1.25 var(--body);margin:0 0 4px}
+.phase .when{font-size:12.5px;color:var(--muted);letter-spacing:.04em;margin-bottom:10px}
+.phase ul{margin:0 0 12px;padding-left:18px;display:flex;flex-direction:column;gap:4px;max-width:68ch}
+.gate{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:baseline;font-size:14px;max-width:68ch}
+.gate b{font:600 11.5px/1 var(--body);letter-spacing:.1em;text-transform:uppercase;color:var(--amber)}
+.hold{margin-top:8px;font-size:13.5px;color:var(--muted);max-width:68ch}
+.hold b{color:var(--ink);font-weight:500}
+
+/* decisions and risks */
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:36px}
+.two>div{min-width:0}
+ol.plain{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px}
+ol.plain b{font-weight:600}
+.tablebox{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th{font:600 11.5px/1.2 var(--body);letter-spacing:.09em;text-transform:uppercase;color:var(--muted);text-align:left;padding:0 12px 8px 0}
+td{border-top:1px solid var(--line);padding:9px 12px 9px 0;vertical-align:top}
+footer{font-size:12.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:14px}
+@media (max-width:520px){ .phase{grid-template-columns:1fr;gap:10px} .tag{font-size:1.6rem} }
+</style>
+
+<div class="wrap">
+  <header>
+    <p class="meta">Dijji Softworks &middot; written 14 November 2026</p>
+    <h1>From mockup to a <span>working store</span></h1>
+    <p class="lede">Nine steps take the approved One Stop Shop mockup to a real store that takes payment, prices shipping live, and lets the shop run its own stock. The preview the shop has seen stays as it is. The real store is built beside it.</p>
+  </header>
+
+  <section>
+    <h2>Who is holding what, right now</h2>
+    <div class="now">
+      <div><h3>Us</h3><ul><li>Pick which payment company to ask first</li><li>Write the approval request</li><li>Start the new site beside the preview</li></ul></div>
+      <div><h3>The shop</h3><ul><li>Which till it uses at the counter</li><li>Canada Post business account number</li><li>Who holds the website login</li><li>Product list, photos, box sizes</li></ul></div>
+      <div><h3>Payment company</h3><ul><li>A written yes to taking the shop, before checkout is built</li></ul></div>
+      <div><h3>Canada Post</h3><ul><li>Terms for shipping cologne by ground, given by phone</li><li>Access to its new connection for stores</li></ul></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>The weeks</h2>
+    <div class="chartbox">
+      <div class="chart">
+        <div></div>
+        <div class="wk">1</div><div class="wk">2</div><div class="wk">3</div><div class="wk">4</div><div class="wk">5</div><div class="wk">6</div><div class="wk">7</div><div class="wk">8</div><div class="wk">9</div><div class="wk">10</div><div class="wk">11</div><div class="wk">12</div><div class="wk">13</div><div class="wk">14</div>
+        <div class="name">0 Answers</div><div class="bar wait" style="grid-column:2 / span 3"></div>
+        <div class="name">1 Foundation</div><div class="bar" style="grid-column:2 / span 2"></div>
+        <div class="name">Smoke test on phone</div><div class="bar look" style="grid-column:3 / span 1"></div>
+        <div class="name">2 The shop's admin</div><div class="bar shop" style="grid-column:4 / span 3"></div>
+        <div class="name">3 Checkout</div><div class="bar" style="grid-column:7 / span 2"></div>
+        <div class="name">4 Canada Post live</div><div class="bar" style="grid-column:9 / span 2"></div>
+        <div class="name">5 Cologne and misc</div><div class="bar shop" style="grid-column:11 / span 1"></div>
+        <div class="name">6 Motion and smoke</div><div class="bar look" style="grid-column:12 / span 2"></div>
+        <div class="name">7 Launch</div><div class="bar live" style="grid-column:14 / span 1"></div>
+        <div class="name">8 First 30 days</div><div class="bar live" style="grid-column:15 / span 1"></div>
+      </div>
+    </div>
+    <div class="key">
+      <span><i style="background:var(--teal)"></i>Building the engine</span>
+      <span><i style="background:var(--amber)"></i>What the shop uses</span>
+      <span><i style="background:var(--plum)"></i>Look and motion</span>
+      <span><i style="background:var(--red)"></i>Going live</span>
+      <span><i style="background:repeating-linear-gradient(135deg,var(--wait) 0 5px,transparent 5px 9px);outline:1px solid var(--wait)"></i>Waiting on other people</span>
+    </div>
+    <p class="note">The weeks are our estimate for evening work, about 14 in total, and not a promise. Step 0 is the part we do not control: checkout cannot start until a payment company says yes, so a slow answer pushes everything after week 6. We re-estimate at the end of step 1.</p>
+  </section>
+
+  <section>
+    <h2>The nine steps</h2>
+    <div class="phases">
+
+      <div class="phase"><div class="tag">0</div><div>
+        <h3>Answers before code</h3>
+        <p class="when">Weeks 1 to 3, alongside step 1</p>
+        <ul>
+          <li>Ask a payment company, in writing, whether it will take the shop.</li>
+          <li>Confirm the shop's Canada Post small business account and sign up for Canada Post's new connection.</li>
+          <li>Phone Canada Post for the cologne terms.</li>
+          <li>Find out who holds the website login and which till the shop uses.</li>
+        </ul>
+        <div class="gate"><b>Done when</b><span>One payment company has said yes in writing.</span></div>
+        <p class="hold"><b>Waiting on:</b> the payment company, Canada Post and the shop.</p>
+      </div></div>
+
+      <div class="phase"><div class="tag">1</div><div>
+        <h3>Foundation</h3>
+        <p class="when">Weeks 1 to 2</p>
+        <ul>
+          <li>A new site beside the preview, with a test copy and a live copy.</li>
+          <li>Products move from a hand-written file into a database.</li>
+          <li>Every product gets its own real web address, so Google can find it.</li>
+          <li>A sign-in for the shop that emails a one-time code. No passwords stored.</li>
+          <li>A one-day smoke test on a real iPhone, with Low Power Mode on and off.</li>
+        </ul>
+        <div class="gate"><b>Done when</b><span>All 36 walkthrough checks and 2,328 shipping checks pass on the new site.</span></div>
+      </div></div>
+
+      <div class="phase"><div class="tag">2</div><div>
+        <h3>The shop's admin</h3>
+        <p class="when">Weeks 3 to 5</p>
+        <ul>
+          <li>Add, edit and remove products from a phone, photo included.</li>
+          <li>Stock counts with a low-stock list and a record of every change.</li>
+          <li>Orders in one list.</li>
+          <li>A home screen with a handful of numbers: sales, orders, average sale, best sellers, slow movers.</li>
+        </ul>
+        <div class="gate"><b>Done when</b><span>The owner adds a product from his own phone with nobody helping.</span></div>
+        <p class="hold"><b>Needs from the shop:</b> the product list, prices, photos, and one of each kind of product weighed and measured in its box.</p>
+      </div></div>
+
+      <div class="phase"><div class="tag">3</div><div>
+        <h3>Checkout</h3>
+        <p class="when">Weeks 6 to 7, only after step 0 is done</p>
+        <ul>
+          <li>The store, not the shopper's phone, works out the final price.</li>
+          <li>Card payment on the payment company's own secure form.</li>
+          <li>Tax by the province the parcel goes to.</li>
+          <li>Emails for order placed, shipped, ready for pickup, refunded, and low stock.</li>
+          <li>No forced account. Shoppers check out as guests.</li>
+          <li>Shipping, returns, privacy and terms pages.</li>
+        </ul>
+        <div class="gate"><b>Done when</b><span>Test orders succeed in every tax zone, plus one refund and one declined card.</span></div>
+      </div></div>
+
+      <div class="phase"><div class="tag">4</div><div>
+        <h3>Canada Post live</h3>
+        <p class="when">Weeks 8 to 9</p>
+        <ul>
+          <li>The shipping price comes from Canada Post at checkout.</li>
+          <li>The saved price table takes over when Canada Post is down, which it is every Saturday 9 pm to Sunday 7 am.</li>
+          <li>Labels bought and printed from the admin, tracking sent to the customer.</li>
+          <li>Pickup orders, pick lists and packing slips that name the box to use.</li>
+        </ul>
+        <div class="gate"><b>Done when</b><span>The price quoted to the shopper equals the price on the label, on real test parcels.</span></div>
+      </div></div>
+
+      <div class="phase"><div class="tag">5</div><div>
+        <h3>Cologne and misc</h3>
+        <p class="when">Week 10</p>
+        <ul>
+          <li>Two new sections in the store and in the admin.</li>
+          <li>Cologne listings show size and strength, and carry a ground-only flag.</li>
+          <li>With cologne in the cart, only the ground services are offered.</li>
+          <li>Every misc item gets a shipping type when it is added.</li>
+        </ul>
+        <div class="gate"><b>Done when</b><span>Canada Post's cologne terms are in hand and the supplier's label paperwork is on file.</span></div>
+        <p class="hold"><b>If Canada Post says no:</b> cologne launches as pickup only, or ships by Purolator ground.</p>
+      </div></div>
+
+      <div class="phase"><div class="tag">6</div><div>
+        <h3>Motion and smoke</h3>
+        <p class="when">Weeks 11 to 12</p>
+        <ul>
+          <li>A thin wisp behind the selected product, lit from behind and tinted to its tile.</li>
+          <li>A short puff when something lands in the cart.</li>
+          <li>The product tile grows into its page in one move.</li>
+          <li>Three levels: live smoke, a slow drift when the phone is saving battery, a still image when motion is turned off.</li>
+        </ul>
+        <div class="gate"><b>Done when</b><span>It runs smoothly on an iPhone 16 Plus, Low Power Mode on and off, and never sits over text or price labels.</span></div>
+      </div></div>
+
+      <div class="phase"><div class="tag">7</div><div>
+        <h3>Launch</h3>
+        <p class="when">Week 13</p>
+        <ul>
+          <li>Security pass on the admin and the checkout.</li>
+          <li>Nightly backups, and one practice restore.</li>
+          <li>Move the web address off GoDaddy without breaking the shop's email.</li>
+          <li>Old links pointed at the new pages. Google Business Profile updated.</li>
+        </ul>
+        <div class="gate"><b>Done when</b><span>The launch checklist is complete and a real order has gone end to end.</span></div>
+      </div></div>
+
+      <div class="phase"><div class="tag">8</div><div>
+        <h3>First 30 days</h3>
+        <p class="when">Week 14 onward</p>
+        <ul>
+          <li>Watch the first orders, quotes against labels, and any failed payments.</li>
+          <li>A second practice restore.</li>
+          <li>A sit-down with the owner on what he uses and what he ignores.</li>
+          <li>The care plan starts.</li>
+        </ul>
+        <div class="gate"><b>Done when</b><span>The shop has run a full month without us stepping in.</span></div>
+      </div></div>
+
+    </div>
+  </section>
+
+  <section class="two">
+    <div>
+      <h2>Decisions that move the dates</h2>
+      <ol class="plain">
+        <li><b>Which payment company to ask first.</b> We recommend Stripe, with Square as the second application.</li>
+        <li><b>Whose accounts.</b> We recommend the shop owns the Cloudflare, payment and Canada Post accounts, with us added as a member.</li>
+        <li><b>Cologne at launch or after.</b> After is safer. It waits on a phone call we do not control.</li>
+        <li><b>Which smoke moments ship.</b> Our shortlist is the wisp behind the product and the cart puff.</li>
+        <li><b>Till sync and barcode scanning.</b> First version or later. Later keeps step 2 at three weeks.</li>
+      </ol>
+    </div>
+    <div>
+      <h2>What could slow it down</h2>
+      <div class="tablebox">
+        <table>
+          <tr><th>Risk</th><th>What we do</th></tr>
+          <tr><td>The payment company says no or stalls</td><td>Apply to a second one at the same time</td></tr>
+          <tr><td>Nobody has the website login</td><td>Start GoDaddy's recovery in week 1</td></tr>
+          <tr><td>Product list and box sizes arrive late</td><td>Step 2 runs on sample products until they do</td></tr>
+          <tr><td>Smoke stutters on the phone</td><td>Test it in week 2, so week 11 is polish</td></tr>
+          <tr><td>Glass arrives broken and the carrier will not pay</td><td>The shop sets its own breakage policy before launch</td></tr>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <footer>The full plan, with sources for every number, is in the report "Turning the approved mockup into a working store". Week estimates are ours and change with the answers in step 0.</footer>
+</div>
