@@ -1,0 +1,19 @@
+{
+  // One Stop Shop, the real store. Separate from the mockup preview (../wrangler.jsonc), which stays as it is.
+  // Not launched: every page carries noindex until LIVE is set to "1".
+  "name": "onestopshop-store",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-08-22",
+  "workers_dev": true,
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    // The Worker answers every page and data route (own title per page, a real 404 for anything unknown).
+    // Images, fonts, scripts and styles go straight out without waking it.
+    "run_worker_first": ["/*", "!/img/*", "!/fonts/*", "!/*.js", "!/*.css"]
+  },
+  "d1_databases": [
+    { "binding": "DB", "database_name": "onestopshop", "database_id": "00000000-0000-0000-0000-000000000000", "migrations_dir": "migrations" }
+  ],
+  "vars": { "LIVE": "0", "SITE_NAME": "One Stop Shop" }
+}

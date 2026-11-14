@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en-CA">
+<head>
+<meta charset="utf-8">
+<base href="/">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="theme-color" content="#140c08">
+<meta name="robots" content="noindex, nofollow">
+<title>One Stop Shop | Hookahs and accessories, Windsor, shipped across Canada</title>
+<meta name="description" content="Hookahs, bases, bowls and hoses from our Windsor counter. Shipped anywhere in Canada.">
+<link rel="preload" href="fonts/lalezar-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/readex-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="modulepreload" href="/api/catalog-module">
+<link rel="modulepreload" href="route.js">
+<link rel="modulepreload" href="rates.js">
+<link rel="modulepreload" href="cp-sheet.js">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cg transform='rotate(-6 32 32)'%3E%3Crect x='6' y='10' width='52' height='44' rx='7' fill='%23fff'/%3E%3Cpath d='M6 17a7 7 0 0 1 7-7h38a7 7 0 0 1 7 7v7H6z' fill='%23d9291c'/%3E%3Cpath d='M12 29h40' stroke='%2314110f' stroke-width='1.5' stroke-dasharray='3 3'/%3E%3Cpath d='M32 32v19M38 37c-1-2-3-3-6-3-3 0-6 1.500-6 4 0 5 12 2.500 12 7.500 0 2.500-3 4-6 4-3 0-5-1-6-3' fill='none' stroke='%2314110f' stroke-width='3.600' stroke-linecap='round'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="styles.css">
+<script type="module" src="app.js"></script>
+<script type="module" src="boot.js"></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<p class="mock-ribbon" role="note">In build: sample products, placeholder photos, not open for orders</p>
+<header class="top">
+  <a class="wordmark" href="/" aria-label="One Stop Shop, home"><span>ONE STOP</span> <span class="wordmark__b">SHOP</span></a>
+  <nav class="top__nav" aria-label="Shop" data-nav></nav>
+  <a class="top__cart" href="/cart">Cart <span data-cart-count>0</span></a>
+</header>
+<main id="main" tabindex="-1"></main>
+<footer class="foot">
+  <p class="foot__en">From Windsor to all of Canada.</p>
+  <dl class="foot__list">
+    <div><dt>Call the counter</dt><dd><a href="tel:+15192552222">519-255-2222</a></dd></div>
+    <div><dt>Hours</dt><dd>Mon to Sat 10 to 9, Sun 11 to 7</dd></div>
+    <div><dt>Follow</dt><dd><a href="https://www.instagram.com/one1_stop_shop/">Instagram</a>, <a href="https://www.tiktok.com/@onestopshop6">TikTok</a></dd></div>
+    <div><dt>Help</dt><dd><a href="/shipping">Shipping and returns</a></dd></div>
+  </dl>
+</footer>
+<nav class="dock" aria-label="Quick links"><a href="/">Home</a><a href="/shop">Shop</a><a href="/search">Search</a><a href="/cart">Cart <span data-cart-count>0</span></a></nav>
+<dialog class="sheet" data-postal-sheet aria-labelledby="sheet-h">
+  <form class="sheet__form" data-postal-form novalidate>
+    <h2 class="sheet__h" id="sheet-h">Shipping estimate</h2>
+    <p class="sheet__p">Enter your postal code to see shipping options and cost.</p>
+    <label class="field__label" for="postal">Postal code</label>
+    <input class="field" id="postal" name="postal" autocomplete="postal-code" inputmode="text" spellcheck="false" maxlength="12" placeholder="A1A 1A1" aria-describedby="postal-err">
+    <p class="field__err" id="postal-err" role="alert" hidden>That is not a Canadian postal code. It looks like A1A 1A1.</p>
+    <div class="sheet__row">
+      <button class="btn" type="submit">Get estimate</button>
+      <button class="btn btn--ghost" type="button" data-close-postal>Not now</button>
+    </div>
+  </form>
+</dialog>
+</body>
+</html>
