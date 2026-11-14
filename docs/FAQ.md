@@ -1,6 +1,7 @@
 # One Stop Shop mockup: quick answers
 
 Preview: https://onestopshop-preview.anas-dev.workers.dev
+This page is for whoever presents the mockup. The other page, the notes, is the one to leave with the shop.
 
 ## Show it like this
 Open it on a phone. Tap a hookah, add it to the cart, type a postal code (M5V 2T6 is Toronto). The shipping price shows up, with free pickup beside it.
