@@ -54,7 +54,7 @@ const bestFor = p => state.dest ? quote(state.dest, pack([{ product: p, qty: 1 }
 const V = "?v=1794615693"; // bumped on every photo rebuild so no phone keeps an old copy
 const imgSrc = (p, small) => p.photo ? `img/${p.img}.webp` : `img/pc/${p.img}${small && !p.dark ? "-s" : ""}.webp${V}`;
 const SIZES = { card: "(min-width:1500px) 18vw, (min-width:960px) 22vw, (min-width:640px) 30vw, 46vw", pdp: "(min-width:960px) 50vw, 100vw",
-  thumb: "96px", slab: "(min-width:960px) 42vw, 58vw", lineup: "(min-width:960px) 370px, 240px", cat: "(min-width:960px) 24vw, 44vw", resin: "(min-width:960px) 28vw, (min-width:640px) 40vw, 72vw" };
+  thumb: "96px", slab: "(min-width:960px) 42vw, 58vw", lineup: "(min-width:960px) 370px, 240px", cat: "(min-width:960px) 24vw, 44vw", cat1: "(min-width:960px) 42vw, 44vw", resin: "(min-width:960px) 28vw, (min-width:640px) 40vw, 72vw" };
 function srcset(p) {
   if (p.photo) return "";
   if (p.dark) return `srcset="img/pc/${p.img}.webp${V} 800w${p.lw ? `, img/pc/${p.img}-l.webp${V} ${p.lw}w` : ""}"`;
@@ -105,8 +105,8 @@ function viewHome() {
     </div>
   </section>
   <section class="cats" aria-label="Shop by category">
-    ${CATEGORIES.map(c => { const n = PRODUCTS.filter(p => p.cat === c.id).length; const lead = PRODUCTS.find(p => p.cat === c.id && !p.dark);
-      return `<a class="cat" data-tone="${c.tone}" href="#/shop/${c.id}"><span class="cat__ar" lang="ar" dir="rtl" aria-hidden="true">${c.ar}</span>${shot(lead, { small: true, use: "cat", cls: "cat__img" })}<span class="cat__name">${c.name}</span><span class="cat__n num">${n}</span></a>`; }).join("")}
+    ${CATEGORIES.map((c, i) => { const n = PRODUCTS.filter(p => p.cat === c.id).length; const lead = PRODUCTS.find(p => p.cat === c.id && !p.dark);
+      return `<a class="cat" data-tone="${c.tone}" href="#/shop/${c.id}">${shot(lead, { small: i > 0, use: i ? "cat" : "cat1", cls: "cat__img" })}<span class="cat__name">${c.name}</span><span class="cat__n num">${n}</span></a>`; }).join("")}
   </section>
   <section class="shelf">
     <header class="shelf__head"><h2 class="h2">Counter picks</h2><a class="link" href="#/shop/hookahs">All ${PRODUCTS.filter(p => p.cat === "hookahs").length} hookahs</a></header>
@@ -128,7 +128,6 @@ function viewHome() {
   </section>
   <section class="resin">
     <div class="resin__copy">
-      <p class="resin__ar" lang="ar" dir="rtl" aria-hidden="true">&#x642;&#x637;&#x639;&#x629; &#x648;&#x627;&#x62d;&#x62f;&#x629;</p>
       <h2 class="h2 h2--xl">One of one.</h2>
       <p class="lead">Poured resin stems. No two come out of the mould the same, so when one sells, that one is gone.</p>
       <a class="btn" href="#/shop/hookahs">See what is left</a>
@@ -166,7 +165,6 @@ function viewShop(cat) {
   return `
   <section class="shophead" data-tone="${c ? c.tone : "bone"}">
     <h1 class="shophead__h">${c ? c.name : "Everything"}</h1>
-    <p class="shophead__ar" lang="ar" dir="rtl" aria-hidden="true">${c ? c.ar : "&#x643;&#x644; &#x634;&#x64a;"}</p>
     <p class="shophead__n"><span class="num">${list.length}</span> pieces</p>
   </section>
   <nav class="chips" aria-label="Categories"><a href="#/shop" ${!c ? 'aria-current="page"' : ""}>All</a>${CATEGORIES.map(x => `<a href="#/shop/${x.id}" ${c && c.id === x.id ? 'aria-current="page"' : ""}>${x.name}</a>`).join("")}</nav>
@@ -242,7 +240,6 @@ function viewGifts(kind) {
   return `
   <section class="shophead" data-tone="${under ? "emerald" : "cobalt"}">
     <h1 class="shophead__h">${under ? "Under $50" : "Under $150"}</h1>
-    <p class="shophead__ar" lang="ar" dir="rtl" aria-hidden="true">&#x647;&#x62f;&#x627;&#x64a;&#x627;</p>
     <p class="shophead__n"><span class="num">${list.length}</span> gifts, packed at the counter</p>
   </section>
   <nav class="chips chips--on" aria-label="Gifts"><a href="#/gifts/under-50" ${under ? 'aria-current="page"' : ""}>Under $50</a><a href="#/gifts/under-150" ${!under ? 'aria-current="page"' : ""}>Under $150</a><a href="#/set">The full setup</a></nav>
@@ -270,7 +267,6 @@ function viewSet() {
   return `
   <section class="shophead" data-tone="ruby">
     <h1 class="shophead__h">Build a set</h1>
-    <p class="shophead__ar" lang="ar" dir="rtl" aria-hidden="true">&#x637;&#x642;&#x645;</p>
     <p class="shophead__n">Four picks. One box where it fits.</p>
   </section>
   <div class="set">
@@ -345,7 +341,6 @@ function viewCart() {
 function viewShipping() {
   return `
   <section class="reading">
-    <p class="shophead__ar" lang="ar" dir="rtl" aria-hidden="true">&#x627;&#x644;&#x62a;&#x648;&#x635;&#x64a;&#x644;</p>
     <h1 class="h2 h2--xl">Shipping</h1>
     <p class="lead">We pack every order at the counter in Windsor and ship to every province and territory.</p>
     <h2 class="h3">What it costs</h2>
