@@ -40,7 +40,7 @@ Everything on it is a sample: the products, prices and photos are stand-ins unti
 5. Who packs the orders, and how many days a week parcels can go out.
 6. The web address you want, and who holds the login for the current GoDaddy site.
 7. A Canada Post business account number, or a yes for us to help set one up.
-8. Someone to read the Arabic on the site. Ours is a first draft.
+8. Whether you want Arabic on the site. If yes, we need someone to write or check it.
 
 ## What happens next
 - You tell us what to change on the mockup.
