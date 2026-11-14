@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en-CA">
+<head>
+<meta charset="utf-8">
+<base href="/">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#140c08">
+<meta name="robots" content="noindex, nofollow">
+<title>Back office | One Stop Shop</title>
+<link rel="preload" href="fonts/lalezar-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/readex-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="admin.css">
+<script type="module" src="admin.js"></script>
+</head>
+<body>
+<header class="bar">
+  <a class="bar__mark" href="/admin"><span>ONE STOP</span> <span class="bar__b">SHOP</span><span class="bar__sub">Back office</span></a>
+  <nav class="tabs" aria-label="Back office" data-tabs hidden>
+    <button type="button" data-tab="home">Today</button>
+    <button type="button" data-tab="stock">Stock</button>
+    <button type="button" data-tab="orders">Orders</button>
+  </nav>
+  <div class="bar__end" data-end hidden><a class="bar__link" href="/" target="_blank" rel="noopener">View store</a><button class="bar__link" type="button" data-logout>Sign out</button></div>
+</header>
+<main id="main" tabindex="-1"></main>
+<dialog class="sheet" data-sheet></dialog>
+<p class="toast" role="status" aria-live="polite" data-toast hidden></p>
+</body>
+</html>

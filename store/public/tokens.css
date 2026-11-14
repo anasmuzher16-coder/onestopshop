@@ -25,6 +25,7 @@
   --emberlt: oklch(0.77 0.14 55);
   --emerald: oklch(0.78 0.13 155);
   --gilt:    oklch(0.83 0.12 88);
+  --amethyst: oklch(0.76 0.105 312);
   --bonelt:  oklch(0.90 0.03 80);
   /* raw: ember, the one accent. Jobs: the sticker (delivered price) and the primary action. */
   --ember:       oklch(0.58 0.215 29);
@@ -65,5 +66,5 @@
 }
 [data-tone="ruby"]{--tile:var(--ruby)} [data-tone="teal"]{--tile:var(--teal)} [data-tone="cobalt"]{--tile:var(--cobalt)}
 [data-tone="ember"]{--tile:var(--emberlt)} [data-tone="emerald"]{--tile:var(--emerald)} [data-tone="gilt"]{--tile:var(--gilt)}
-[data-tone="bone"]{--tile:var(--bonelt)}
+[data-tone="bone"]{--tile:var(--bonelt)} [data-tone="amethyst"]{--tile:var(--amethyst)}
 @media (prefers-reduced-motion:reduce){:root{--dur-micro:1ms;--dur-state:1ms;--dur-reveal:1ms}}

@@ -1,6 +1,7 @@
 // One Stop Shop store Worker. Answers the page routes (each with its own title, description and a real 404),
 // serves the catalogue from the database, and passes every other request to the static files.
 import { loadCatalog, catalogModule } from "./catalog.js";
+import { admin, photo } from "./admin.js";
 
 const SECURITY = {
   "Content-Security-Policy": "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'",
@@ -79,8 +80,17 @@ export default {
         if (request.method !== "GET") return json({ error: "Method not allowed" }, 405);
         return json(await loadCatalog(env.DB));
       }
+      if (path.startsWith("/api/admin/")) return await admin(request, env, url);
+      const ph = path.match(/^\/api\/photo\/(OSS-\d{4,6})$/); if (ph && request.method === "GET") return await photo(env, ph[1]);
       if (path.startsWith("/api/")) return json({ error: "Not found" }, 404);
-      if (path === "/admin" || path.startsWith("/admin/")) return new Response("Not built yet", { status: 404, headers: { "X-Robots-Tag": "noindex" } });
+      if (path === "/admin" || path.startsWith("/admin/")) {
+        if (path !== "/admin") return Response.redirect(url.origin + "/admin", 302);
+        const shell = await env.ASSETS.fetch(new URL("/admin.html", url)), headers = new Headers(shell.headers);
+        for (const [k, v] of Object.entries(SECURITY)) headers.set(k, v);
+        headers.set("Content-Security-Policy", SECURITY["Content-Security-Policy"].replace("img-src 'self' data:", "img-src 'self' data: blob:"));
+        headers.set("X-Robots-Tag", "noindex, nofollow"); headers.set("Cache-Control", "no-cache");
+        return new Response(shell.body, { status: 200, headers });
+      }
       if (path === "/index.html") return Response.redirect(url.origin + "/", 301);
       if (/\.[a-z0-9]{2,5}$/i.test(path)) return env.ASSETS.fetch(request); // a file that is not there: plain 404
       if (request.method !== "GET" && request.method !== "HEAD") return new Response("Method not allowed", { status: 405 });

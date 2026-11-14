@@ -51,7 +51,13 @@ const boxVol = b => b.l * b.w * b.h;
 const round = (n, d = 2) => Math.round(n * 10 ** d) / 10 ** d;
 const looseVol = p => boxVol(BOXES[p.box]) * LOOSE_FILL;
 
+// Cologne and anything else marked ground_only may not fly: the cart is then limited to the ground services.
 export function pack(lines) {
+  const parcels = packAll(lines);
+  parcels.ground = lines.some(l => l.product.ship === "ground_only" && l.qty > 0);
+  return parcels;
+}
+function packAll(lines) {
   const parcels = [], loose = [];
   for (const { product, qty } of lines) {
     const n = Math.min(MAX_QTY, Math.max(0, Math.floor(Number(qty) || 0)));
@@ -141,6 +147,7 @@ export function quote(dest, parcels, fuelPct = FUEL.pct) {
   if (!dest || !parcels.length || parcels.some(p => p.kg > MAX_KG)) return [];
   const z = dest.zone - 1, out = [];
   for (const c of RATE_CARD.carriers) {
+    if (parcels.ground && c.id === "cp-xp") continue;
     let freight = 0, cover = 0, ok = true;
     const perParcel = parcels.map(p => {
       const kg = billableKg(p, c.divisor), f = sheetPrice(c.sheet, z, kg);
