@@ -12,6 +12,7 @@ function drawn(img) { // the rectangle the cut-out actually occupies (object-fit
   return { left: r.left + pl + (bw - w) / 2, top: r.top + pt + (bh - h) / 2, width: w, height: h };
 }
 function bump(n) {
+  const tg = target(); if (tg) dispatchEvent(new CustomEvent("cartlanded", { detail: { rect: tg[1] } }));
   for (const el of counts()) {
     el.textContent = n;
     if (!RM.matches && el.animate) el.animate([{ transform: "scale(1)" }, { transform: "scale(1.5)", background: "var(--color-action)", color: "var(--color-on-action)", offset: .3 }, { transform: "scale(1)" }],

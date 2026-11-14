@@ -26,14 +26,14 @@ const mod = await get("/api/catalog-module");
 ok((mod.r.headers.get("content-type") || "").startsWith("text/javascript"), "catalog.js content type");
 const m = await import("data:text/javascript;base64," + Buffer.from(mod.t).toString("base64"));
 const ref = await import("../../site/catalog.js");
-ok(m.PRODUCTS.length === ref.PRODUCTS.length && m.CATEGORIES.length === ref.CATEGORIES.length, `catalogue size ${m.PRODUCTS.length}/${ref.PRODUCTS.length}`);
+ok(m.PRODUCTS.length === ref.PRODUCTS.length + 13 && m.CATEGORIES.length === ref.CATEGORIES.length + 2, `catalogue size ${m.PRODUCTS.length}/${ref.PRODUCTS.length}`);
 let diff = 0;
 for (const a of ref.PRODUCTS) { const b = m.PRODUCTS.find(x => x.sku === a.sku); if (!b) { diff++; continue; }
   for (const k of ["name", "cat", "price", "kg", "box", "glass", "note", "img", "dark"]) if (a[k] !== b[k]) diff++;
   if ((a.height ?? null) !== (b.height ?? null) || (a.lw ?? null) !== (b.lw ?? null)) diff++; }
 ok(diff === 0, `${diff} product fields differ between the database and the sample file`);
 for (const [id, a] of Object.entries(ref.BOXES)) { const b = m.BOXES[id]; ok(b && a.l === b.l && a.w === b.w && a.h === b.h && Math.abs(a.tare - b.tare) < 1e-9, "box " + id); }
-ok(m.PRODUCTS.every(p => p.ship === "standard" && p.stock === 5), "ship class and stock come through");
+ok(m.PRODUCTS.every(p => (p.cat === "cologne" ? p.ship === "ground_only" : p.ship === "standard") && Number.isInteger(p.stock) && p.stock >= 0), "ship class and stock come through");
 
 const post = await fetch(B + "/api/catalog", { method: "POST" }); ok(post.status === 405, "POST /api/catalog gave " + post.status);
 console.log(f ? `FAIL ${f} of ${n} checks` : `PASS ${n} checks`);

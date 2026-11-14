@@ -516,3 +516,9 @@ html:not(.hero-seen) .piece .sticker{animation-timing-function:linear(0,.25 6%,.
 /* cologne: scent notes under the product line */
 .pdp__notes{margin:var(--s-2) 0 0;color:var(--color-text)}
 .pdp__notes span{font-size:var(--t-12);letter-spacing:.08em;text-transform:uppercase;color:var(--color-muted);margin-right:var(--s-2)}
+
+/* 05 smoke: sits between the colour tile and the cut-out, never over type or the price label */
+.smoke{position:absolute;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none;opacity:0;transition:opacity 1400ms var(--ease-state)}
+.smoke.on{opacity:1}
+.puff{position:fixed;z-index:70;pointer-events:none;border-radius:50%;background:radial-gradient(closest-side,oklch(0.985 0.006 85 / .85),oklch(0.985 0.006 85 / 0));will-change:transform,opacity}
+.smoke--hero{z-index:auto}
