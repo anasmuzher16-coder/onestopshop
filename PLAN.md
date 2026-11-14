@@ -10,6 +10,10 @@ Direction 1 was vetoed 2026-11-13 (basic, colourless, not researched). Plan rest
 - [x] 8. Flair pass 1: line-up, hand-set stickers, view transition, buy dock, responsive images.
 - [x] 9. Phone audit (4 device sizes, throttled) and fixes; crisp photos. PASS: node tools/vitals.mjs (live, Slow 4G) CLS 0.000-0.003 on 4 routes (was 0.50), home LCP 2828 ms (was 6936 with the 2400w hero); node tools/crisp.mjs (live) "PASS 265 images, all at 80%+ of needed pixels" at phone 3x, desktop 1x and 2x; node tools/e2e.mjs "PASS 36/36". 9 products with photos too small to be sharp were dropped (92 remain).
 - [x] 9b. Vetoes applied: scrolling ticker removed; hero headline replaced and re-set (two sizes, fit to frame).
-- [ ] 10. Technical signature move (hero) from the technical seat's spec; 60 fps on phones.
-- [ ] 11. Design review of direction 2 with flair; fix list applied.
-- [ ] 12. Angel handout: platform + carrier recommendation, live-rate plan, questions, photo shoot spec.
+- [x] 10. Technical signature move (hero) from the technical seat's spec; 60 fps on phones.
+- [x] 11. Design review of direction 2 with flair; fix list applied.
+- [x] 12. Angel handout: platform + carrier recommendation, live-rate plan, questions, photo shoot spec.
+  Evidence 10-12 (2026-11-13): council round applied (commits 02e05df, 7918629), soft-shadow photo pass f59a337,
+  handout at docs/HANDOUT.md. Gates: e2e 36/36 live, phone-audit 65/65, crisp 312, whitebox 206.
+- [ ] 13. Leftovers: label carried into cart total, favicon as label, fill Hookahs category tile, hookahs page
+  slow-connection load (~6 s), small smears on bowl30/hookah50/acc03, DESIGN.md and SHIPPING.md brought up to date.
