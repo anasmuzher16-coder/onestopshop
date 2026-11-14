@@ -13,7 +13,7 @@
     "run_worker_first": ["/*", "!/img/*", "!/fonts/*", "!/*.js", "!/*.css"]
   },
   "d1_databases": [
-    { "binding": "DB", "database_name": "onestopshop", "database_id": "00000000-0000-0000-0000-000000000000", "migrations_dir": "migrations" }
+    { "binding": "DB", "database_name": "onestopshop", "database_id": "b7386cbb-2597-4060-838f-230e6b7c54e6", "migrations_dir": "migrations" }
   ],
   "vars": { "LIVE": "0", "SITE_NAME": "One Stop Shop" }
 }
