@@ -11,7 +11,7 @@ for (const [p, code] of Object.entries(want)) { const { r } = await get(p); ok(r
 
 const prod = await get("/p/OSS-1001"), h = prod.r.headers;
 ok(/<title>Sultan Gorgon \| One Stop Shop<\/title>/.test(prod.t), "product title: " + (prod.t.match(/<title>[^<]*/) || [""])[0]);
-ok(/<link rel="canonical" href="http:\/\/127\.0\.0\.1:4420\/p\/OSS-1001">/.test(prod.t), "canonical link missing");
+ok(prod.t.includes(`<link rel="canonical" href="${B}/p/OSS-1001">`), "canonical link missing");
 ok(/og:image" content="[^"]+\/img\/pc\/hookah00\.webp"/.test(prod.t), "og:image missing");
 ok(/application\/ld\+json">\{[^<]*"@type":"Product"[^<]*"price":"649\.00"/.test(prod.t), "product data block missing or wrong price");
 ok(/<meta name="robots" content="noindex, nofollow">/.test(prod.t) && h.get("x-robots-tag") === "noindex, nofollow", "noindex must be on until launch");
