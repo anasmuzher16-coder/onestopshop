@@ -8,9 +8,11 @@ const io = window.IntersectionObserver && new IntersectionObserver(es => {
   for (const e of es) if (e.isIntersecting) { io.unobserve(e.target); go(e.target, Math.min(k++, 4) * 55); }
 }, { threshold: 0.35 });
 const go = (t, d) => { t.style.setProperty("--stick-d", d + "ms"); t.dataset.stick = "go"; };
+let stuck = "";
 function scan() {
   if (!io) return; io.disconnect();
-  if (RM.matches) return;
+  const again = stuck === location.pathname; stuck = location.pathname;
+  if (again || RM.matches) return; // the same page re-drawn (add to cart, a quantity change): labels stay where they are
   const vh = innerHeight, gun = !!main.querySelector('.shophead[data-cat="misc"]'); let k = 0; // on misc the section entrance stamps the first screen
   for (const t of main.querySelectorAll(".card .tile")) {
     const s = t.querySelector(".sticker"); if (!s || s.style.viewTransitionName) continue; // the label travelling in the view transition is not re-stuck

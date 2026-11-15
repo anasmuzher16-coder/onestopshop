@@ -481,7 +481,8 @@ body:not([data-route]) .foot{visibility:hidden}
 /* ---------- 06 photo zoom ---------- */
 [data-stage] .shot{cursor:zoom-in}
 .zoom{position:fixed;inset:0;width:100%;height:100%;max-width:none;max-height:none;margin:0;padding:0;border:0;background:none;overflow:hidden;color:var(--color-on-tile);cursor:zoom-out;overscroll-behavior:contain}
-.zoom:not(:popover-open){display:none}
+.zoom{display:none}
+.zoom:popover-open{display:block}
 .zoom__bg{position:absolute;inset:0;background:var(--tile,var(--color-raised))} .zoom--photo .zoom__bg{background:#000}
 .zoom__img{position:absolute;max-width:none;object-fit:contain;transform-origin:0 0;will-change:transform}
 .zoom__h{position:absolute;width:12px;border-block:2px solid currentColor;transform-origin:50% 100%}
@@ -575,3 +576,5 @@ html:not(.hero-seen) .piece .sticker{animation-timing-function:linear(0,.25 6%,.
 .fx .turn{transform-box:view-box;transform-origin:50px 50px}
 .fx .head{transform-box:view-box}
 .fx-ember{position:absolute;border-radius:50%;background:radial-gradient(closest-side,oklch(0.97 0.1 95) 0 24%,var(--ember) 46% 70%,oklch(0.58 0.215 29 / 0));opacity:0}
+/* effect layers never print, and every price prints */
+@media print{.fx,.smoke,.puff,.fly,.zoom{display:none !important}.sticker{opacity:1 !important;scale:1 !important;animation:none !important}}

@@ -52,5 +52,12 @@ await p.goto(base + "#/p/OSS-1008", { waitUntil: "networkidle" });
 t("old #/ link is upgraded to a real address", new URL(p.url()).pathname === "/p/OSS-1008" && (await p.locator("h1").count()) === 1, p.url());
 await p.goto(base + "shop/bowls", { waitUntil: "networkidle" }); await p.locator("[data-piece]").first().tap(); await p.waitForURL(/\/p\//); await p.goBack(); await p.waitForTimeout(700);
 t("back button returns to the category", new URL(p.url()).pathname === "/shop/bowls" && (await p.locator("h1").count()) === 1, p.url());
+await p.goto(base + "shop/bowls", { waitUntil: "networkidle" }); await p.waitForTimeout(700); await p.locator("[data-piece]").first().tap(); await p.waitForURL(/\/p\//); await p.waitForTimeout(900);
+if (await p.evaluate(() => "popover" in HTMLElement.prototype)) {
+  await p.locator("[data-stage] .shot").tap(); await p.waitForTimeout(500);
+  t("photo opens full screen", await p.evaluate(() => !!document.querySelector(".zoom:popover-open")));
+  await p.goBack(); await p.waitForTimeout(900);
+  t("Back closes the full-screen photo", await p.evaluate(() => !document.querySelector(".zoom:popover-open")) && new URL(p.url()).pathname === "/shop/bowls", p.url());
+}
 t("no console errors", errs.length === 0, errs.slice(0, 3).join(" ; "));
 await b.close(); console.log(f ? "FAIL " + f + "/" + n : "PASS " + n + "/" + n); process.exit(f ? 1 : 0);
