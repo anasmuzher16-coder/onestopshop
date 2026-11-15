@@ -39,7 +39,7 @@ addEventListener("click", () => {
     document.body.append(fly);
     const s = Math.max(28 / a.height, 0.04), dx = b.left + b.width / 2 - (a.left + a.width / 2), dy = b.top + b.height / 2 - (a.top + a.height / 2);
     const lift = Math.min(160, Math.max(70, Math.abs(dx) * 0.35)) + Math.max(0, -dy) * 0.25; // arc height
-    const ease = u => 1 - Math.pow(1 - u, 2.2), frames = [];
+    const ease = u => 0.7 * u + 0.3 * u * u, frames = []; // leaves at 70% of its average speed and lands at 130%
     for (let i = 0; i <= 16; i++) {
       const u = i / 16, q = ease(u), x = dx * q, y = dy * q - 4 * lift * q * (1 - q), k = 1 + (s - 1) * Math.pow(q, 0.8);
       frames.push({ transform: `translate(${x}px,${y}px) rotate(${-14 * q}deg) scale(${k})`, opacity: u < .85 ? 1 : 1 - (u - .85) / .15 * .6 });

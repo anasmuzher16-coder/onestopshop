@@ -520,10 +520,7 @@ html:not(.hero-seen) .piece .sticker{animation-timing-function:linear(0,.25 6%,.
 .pdp__notes span{font-size:var(--t-12);letter-spacing:.08em;text-transform:uppercase;color:var(--color-muted);margin-right:var(--s-2)}
 
 /* 05 smoke: sits between the colour tile and the cut-out, never over type or the price label */
-.smoke{position:absolute;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none;opacity:0;transition:opacity 1400ms var(--ease-state)}
-.smoke.on{opacity:1}
 .puff{position:fixed;z-index:70;pointer-events:none;border-radius:50%;background:radial-gradient(closest-side,oklch(0.985 0.006 85 / .85),oklch(0.985 0.006 85 / 0));will-change:transform,opacity}
-.smoke--hero{z-index:auto}
 
 /* checkout and confirmation */
 .co{display:grid;gap:var(--s-6)}
@@ -547,10 +544,6 @@ html:not(.hero-seen) .piece .sticker{animation-timing-function:linear(0,.25 6%,.
 .doc p{margin:0 0 var(--s-3)}
 .doc .done__tag b{font:600 var(--t-12)/1.6 var(--font-ui);letter-spacing:.09em}
 /* 05 smoke, fallback: where the phone cannot draw it live, two soft stills drift instead */
-.smoke--still{background:none}
-.smoke--still i{position:absolute;inset:-6% 0 0;background:center / 100% 100% no-repeat;opacity:.9}
-.smoke--still i:first-child{background-image:url(img/smoke-a.webp)}
-.smoke--still i:last-child{background-image:url(img/smoke-b.webp);opacity:0}
 @media (prefers-reduced-motion:no-preference){
   .smoke--still i:first-child{animation:smoke-a 16s ease-in-out infinite alternate}
   .smoke--still i:last-child{animation:smoke-b 16s ease-in-out infinite alternate}
@@ -560,21 +553,38 @@ html:not(.hero-seen) .piece .sticker{animation-timing-function:linear(0,.25 6%,.
 
 /* 06 section entrances: one signature move per section, behind the type, inside the header band */
 .shophead{position:relative;isolation:isolate}
-.fx{position:absolute;inset:0;z-index:-1;overflow:hidden;pointer-events:none;color:var(--color-on-tile)}
-.fx-spritz{position:absolute;inset:0;width:100%;height:100%}
-.smoke--bank{transition:none}
 /* 06 the shared rule: one ink object per section, same line, same weight, on the right of the band */
-.fx{--ink-w:6px}
-@media (min-width:960px){.fx{--ink-w:9px}}
-.fx-obj{position:absolute;right:max(var(--gutter),5%);top:50%;height:94%;aspect-ratio:1;translate:0 -50%}
-.fx-obj svg,.fx-hose svg{display:block;width:100%;height:100%;overflow:visible}
-.fx .ink{fill:none;stroke:currentColor;stroke-width:var(--ink-w);vector-effect:non-scaling-stroke;stroke-linecap:round;stroke-linejoin:round;opacity:.22}
-.fx .inkfill{fill:currentColor;opacity:.22;font:400 44px/1 var(--font-display)}
-.fx .set{transform-box:view-box}
-.fx .lit{fill:none;stroke:oklch(0.99 0.01 90);stroke-width:calc(var(--ink-w) * .6);vector-effect:non-scaling-stroke;stroke-linecap:round;opacity:0;transform-box:view-box}
-.fx .lit-fill{fill:oklch(1 0 0 / .62)}
-.fx .turn{transform-box:view-box;transform-origin:50px 50px}
-.fx .head{transform-box:view-box}
-.fx-ember{position:absolute;border-radius:50%;background:radial-gradient(closest-side,oklch(0.97 0.1 95) 0 24%,var(--ember) 46% 70%,oklch(0.58 0.215 29 / 0));opacity:0}
 /* effect layers never print, and every price prints */
 @media print{.fx,.smoke,.puff,.fly,.zoom{display:none !important}.sticker{opacity:1 !important;scale:1 !important;animation:none !important}}
+/* 05 smoke: between the colour and the type or cut-out. The bank sits under the section's object. */
+.smoke{position:absolute;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none;opacity:0;transition:opacity 600ms var(--ease-state) 300ms}
+.smoke.on{opacity:1}
+.smoke--hero{z-index:auto;transition:opacity 600ms var(--ease-state) 500ms}
+.smoke--bank{z-index:-2;transition:none}
+.smoke--still{background:none}
+.smoke--still i{position:absolute;inset:-6% 0 0;background:center / 100% 100% no-repeat;opacity:.9}
+.smoke--still i:first-child{background-image:url(img/smoke-a.webp)}
+.smoke--still i:last-child{background-image:url(img/smoke-b.webp);opacity:0}
+.smoke--still.smoke--bank i{inset:0}
+.smoke--still.smoke--bank i:first-child{background-image:url(img/smoke-bank-a.webp)}
+.smoke--still.smoke--bank i:last-child{background-image:url(img/smoke-bank-b.webp)}
+/* 06 section entrances: one solid object per section, at the weight of the type, on the right of the band */
+.fx{position:absolute;inset:0;z-index:-1;overflow:hidden;pointer-events:none;color:var(--color-on-tile);--ink-w:6px}
+@media (min-width:960px){.fx{--ink-w:9px}}
+.fx-spritz{position:absolute;inset:0;width:100%;height:100%}
+.fx-obj{position:absolute;right:max(var(--gutter),5%);top:50%;height:94%;aspect-ratio:1;translate:0 -50%}
+.fx-obj.low{top:auto;bottom:4%;height:72%;translate:none}
+.fx-obj svg{display:block;width:100%;height:100%;overflow:visible}
+.fx .o{opacity:.22}
+.fx .sol{fill:currentColor}
+.fx .ink{fill:none;stroke:currentColor;stroke-width:5.5;stroke-linecap:round;stroke-linejoin:round}
+.fx .lit{fill:none;stroke:oklch(0.99 0.01 90);stroke-width:calc(var(--ink-w) * .6);vector-effect:non-scaling-stroke;stroke-linecap:round;opacity:0}
+.fx .glow{fill:var(--ember);opacity:.45}
+.fx .beam{opacity:0}
+.fx .hose{transform-box:view-box;transform-origin:45.5px 52px}
+.fx .recoil,.fx .rock,.fx .set{transform-box:view-box;transform-origin:50px 94px}
+.fx .keeper{transform-box:view-box;transform-origin:42px 74px}
+.fx .whip{transform-box:view-box;transform-origin:20px 64px}
+.fx .tip{transform-box:view-box;transform-origin:68px 38px}
+.fx .turn{transform-box:view-box;transform-origin:50px 50px}
+.fx .head{transform-box:view-box}
