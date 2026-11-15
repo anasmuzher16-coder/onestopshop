@@ -31,7 +31,7 @@ void main(){
     float body = smoothstep(0.34, 0.82, fbm(p + 2.4 * w));
     float strand = pow(1.0 - abs(2.0 * fbm(p * 1.6 + 3.0 * w) - 1.0), 3.0);
     float low = 1.0 - smoothstep(0.1, 1.0, uv.y);
-    float front = roll * 0.8 - 0.04 + (fbm(vec2(uv.y * 3.0, t * 0.5)) - 0.5) * 0.36;   // the billowing leading edge
+    float front = roll * 0.8 - 0.2 + (fbm(vec2(uv.y * 3.0, t * 0.5)) - 0.5) * 0.36;   // the billowing leading edge
     float reveal = 1.0 - smoothstep(front - 0.42, front + 0.04, uv.x);
     float surge = mix(1.0, 0.4, smoothstep(1.8, 4.0, roll));                            // thick on arrival, then it thins
     float lead = exp(-pow((uv.x - front) / 0.16, 2.0)) * (1.0 - smoothstep(1.6, 2.6, roll)) * 0.35;  // brighter where it is still arriving
@@ -74,7 +74,7 @@ function apply() { gl.uniform2f(U.src, conf.src[0], conf.src[1]); gl.uniform1f(U
 function draw(now) {
   raf = 0; if (lost || !cv.isConnected) return;
   // with motion turned off the bank is shown already settled; otherwise it rolls in from the moment it was placed
-  gl.uniform1f(U.roll, fixedRoll !== null ? fixedRoll : RM.matches ? 9 : (now - placedAt) / 1000);
+  gl.uniform1f(U.roll, fixedRoll !== null ? fixedRoll : RM.matches ? 9 : Math.max(0, (now - placedAt - 450) / 1000)); // starts once the page change has faded in
   gl.uniform1f(U.t, (now - t0) / 1000 + 40); gl.clear(gl.COLOR_BUFFER_BIT); gl.drawArrays(gl.TRIANGLES, 0, 3);
   if (!RM.matches && seen && !document.hidden) raf = requestAnimationFrame(draw);
 }

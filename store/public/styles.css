@@ -563,15 +563,15 @@ html:not(.hero-seen) .piece .sticker{animation-timing-function:linear(0,.25 6%,.
 .fx-spritz{position:absolute;inset:0;width:100%;height:100%}
 .smoke--bank{transition:none}
 /* 06 the shared rule: one ink object per section, same line, same weight, on the right of the band */
-.fx{--ink-w:3px}
-@media (min-width:960px){.fx{--ink-w:4px}}
-.fx-obj{position:absolute;right:max(var(--gutter),5%);top:50%;height:74%;aspect-ratio:1;translate:0 -50%}
+.fx{--ink-w:6px}
+@media (min-width:960px){.fx{--ink-w:9px}}
+.fx-obj{position:absolute;right:max(var(--gutter),5%);top:50%;height:94%;aspect-ratio:1;translate:0 -50%}
 .fx-obj svg,.fx-hose svg{display:block;width:100%;height:100%;overflow:visible}
-.fx .ink{fill:none;stroke:currentColor;stroke-width:var(--ink-w);vector-effect:non-scaling-stroke;stroke-linecap:round;stroke-linejoin:round;opacity:.3}
-.fx .lit{fill:none;stroke:oklch(0.99 0.01 90);stroke-width:var(--ink-w);vector-effect:non-scaling-stroke;opacity:0;transform-box:fill-box;transform-origin:center}
+.fx .ink{fill:none;stroke:currentColor;stroke-width:var(--ink-w);vector-effect:non-scaling-stroke;stroke-linecap:round;stroke-linejoin:round;opacity:.22}
+.fx .inkfill{fill:currentColor;opacity:.22;font:400 44px/1 var(--font-display)}
+.fx .set{transform-box:view-box}
+.fx .lit{fill:none;stroke:oklch(0.99 0.01 90);stroke-width:calc(var(--ink-w) * .6);vector-effect:non-scaling-stroke;stroke-linecap:round;opacity:0;transform-box:view-box}
 .fx .lit-fill{fill:oklch(1 0 0 / .62)}
 .fx .turn{transform-box:view-box;transform-origin:50px 50px}
 .fx .head{transform-box:view-box}
-.fx-hose{position:absolute;inset:0}
-.fx-hose .tip{stroke-width:calc(var(--ink-w) * 3)}
-.fx-ember{position:absolute;border-radius:50%;background:radial-gradient(closest-side,var(--ember) 0 58%,oklch(0.58 0.215 29 / 0));opacity:0}
+.fx-ember{position:absolute;border-radius:50%;background:radial-gradient(closest-side,oklch(0.97 0.1 95) 0 24%,var(--ember) 46% 70%,oklch(0.58 0.215 29 / 0));opacity:0}
