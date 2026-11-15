@@ -34,7 +34,7 @@ addEventListener("click", () => {
     if (RM.matches || !a || !a.width || !t || !document.body.animate) return bump(after);
     const b = t[1];
     counts().forEach(el => el.textContent = before);
-    const fly = new Image(); fly.src = url; fly.alt = ""; fly.className = "fly";
+    const fly = new Image(); fly.src = url; fly.alt = ""; fly.className = "fly"; fly.setAttribute("aria-hidden", "true");
     Object.assign(fly.style, { left: a.left + "px", top: a.top + "px", width: a.width + "px", height: a.height + "px" });
     document.body.append(fly);
     const s = Math.max(28 / a.height, 0.04), dx = b.left + b.width / 2 - (a.left + a.width / 2), dy = b.top + b.height / 2 - (a.top + a.height / 2);

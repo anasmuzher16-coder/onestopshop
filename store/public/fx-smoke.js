@@ -1,6 +1,6 @@
 // 05 smoke. One canvas, three placements:
-//   the hookah section's header: a low bank of smoke rolls in from the left the moment the page opens, carrying
-//     its texture with it, lit from behind, and settles into a thin bank gathered round the hookah;
+//   the hookah section's header: a wall of smoke rolls in from the left the moment the page opens, carrying
+//     its texture with it, lit from behind, and settles into a deep bank piled round the hookah;
 //   a product stage: one column rising behind the piece (heavier for hookahs, with smoke pooled along the floor;
 //     none for cologne and misc);
 //   the home hero: one column up the middle slab, behind the pieces, once the pieces have landed.
@@ -20,23 +20,22 @@ uniform vec2 r; uniform float t; uniform vec2 src; uniform float mode; uniform f
 float h(vec2 p){ p = mod(p, 256.0); p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
 float n(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f);
   return mix(mix(h(i), h(i+vec2(1.0,0.0)), f.x), mix(h(i+vec2(0.0,1.0)), h(i+vec2(1.0,1.0)), f.x), f.y); }
-float f2(vec2 p){ return 0.5 * n(p) + 0.25 * n(p * 2.03 + vec2(17.3, 9.1)); }            // two octaves
+float f2(vec2 p){ return 0.5 * n(p) + 0.25 * n(p * 2.03 + vec2(17.3, 9.1)); }            // two octaves, 0 .. 0.75
 float o3(vec2 p){ return 0.125 * n(p * 4.1209 + vec2(52.419, 27.573)); }                  // the third
 float o4(vec2 p){ return 0.0625 * n(p * 8.3654 + vec2(123.711, 65.073)); }                // the fourth
-// BANK: thickness of a low body of smoke. xf = where its front is (0..1 across the band), st = 0 arriving .. 1 settled.
-float bk(vec2 uv, float xf, float st, float fine){
-  // the smoke is carried with the front (0.8 of its travel), the top lagging the bottom a little so it rolls
-  vec2 p = vec2((uv.x - xf * 0.8) * asp + 0.5 * uv.y * (1.0 - exp(-roll * 0.8)) - t * 0.035, uv.y - t * 0.012) * 1.45;
-  vec2 w = vec2(f2(p * 0.7 + vec2(0.0, t * 0.045)), f2(p * 0.7 + vec2(5.2 - t * 0.035, 1.3)));   // slow swirl
-  vec2 q = p + 1.0 * w;
-  float d = f2(q); if (fine > 0.5) d += o3(q);
-  float s = (xf - uv.x) * asp + (d - 0.5) * 0.9 + (w.y - 0.5) - (1.0 - uv.y) * 0.25;   // band-heights behind the front, with lobes
-  float head = 0.95 * smoothstep(-0.12, 0.6, s) * mix(1.0, 0.653, smoothstep(0.6, 2.1, s));   // raised head, lower body behind it
-  float rest = (0.56 + (w.x - 0.5) * 0.5 + 0.16 * smoothstep(src.x - 0.36, src.x + 0.09, uv.x)) * smoothstep(-0.2, 0.4, s);   // settled: low, gathered round the hookah
-  float top = mix(head, rest, st) + (d - 0.5) * 0.55 + (w.x - 0.4) * 0.3;                                   // the billowing upper surface
-  float T = smoothstep(0.0, 0.6, top - uv.y) * mix(0.35, 1.0, smoothstep(0.2, 0.8, w.y + (d - 0.5) * 0.6));
-  T += 0.10 * smoothstep(0.3, 0.8, w.x) * smoothstep(-0.1, 0.5, s) * (1.0 - uv.y * 0.5);   // a thin veil above the body
-  return T * mix(1.0, 0.9 * mix(0.8, 1.0, smoothstep(0.15, 0.7, uv.x)), st);              // thins as it settles, a little more under the title
+// BANK: thickness of a wall of smoke that rolls in and settles into a deep bank.
+// q = warped noise position, w = the slow swirl (both centred on 0.5), xf = where the front is, st = 0 arriving .. 1 settled.
+// In bank mode src.x = centre of the hookah drawing, src.y = where the title ends, both as fractions of the band width.
+float bk(vec2 uv, vec2 q, vec2 w, float xf, float st, float fine){
+  float d = f2(q) * 1.3333; if (fine > 0.5) d = (d * 0.75 + o3(q)) * 1.1429;              // centred on 0.5 either way
+  float nose = 1.1 * (uv.y - 0.3) * (uv.y - 0.3);                                         // the front overhangs: it leads a third of the way up, the top swept back
+  float s = (xf - uv.x) * asp + (d - 0.5) * 1.1 + (w.y - 0.5) * 1.3 - nose;               // band-heights behind the front, with lobes
+  float head = 1.3 * smoothstep(-0.35, 0.75, s) * mix(1.0, 0.8, smoothstep(0.5, 2.2, s));  // a wall taller than the band, the body behind it filling the band
+  float rest = (0.74 + (w.x - 0.5) * 0.45 + 0.2 * smoothstep(src.x - 0.36, src.x + 0.09, uv.x)) * smoothstep(-0.2, 0.4, s);   // settled: three quarters deep, piled round the hookah
+  float top = mix(head, rest, st) + (d - 0.5) * 0.7 + (w.x - 0.5) * 0.45;                 // the billowing upper surface
+  float T = smoothstep(0.0, 0.75, top - uv.y) * mix(0.42, 1.0, smoothstep(0.25, 0.75, w.y + (d - 0.5) * 0.6));   // thick and thin, never a hole
+  T += 0.14 * smoothstep(0.35, 0.8, w.x) * smoothstep(-0.1, 0.5, s) * (1.0 - uv.y * 0.5); // a veil above the body
+  return T * mix(1.15, 0.9 * mix(0.85, 1.0, smoothstep(src.y - 0.25, src.y + 0.2, uv.x)), st);   // dense while it rolls; thinner once settled, a little more under the title
 }
 // PLUME: thickness of one column rising from src. Shape and texture are both functions of (height - rise), so they travel together.
 float pl(vec2 uv, float fine){
@@ -48,32 +47,40 @@ float pl(vec2 uv, float fine){
   vec2 w = vec2(f2(p * 0.8 + vec2(0.0, 3.0 + t * 0.03)), f2(p * 0.8 + vec2(5.2, 1.3 - t * 0.02)));
   vec2 g = p + w * turb;
   float d = f2(g); if (fine > 0.5) d += o3(g) + o4(g);
+  float hk = clamp((gain - 1.0) * 1.6, 0.0, 1.0);                       // above 0 on hookah pages only
   float sway = (n(vec2(ph * 2.6, 3.1)) - 0.5) * up * (0.3 + 0.7 * turb);
-  float width = mix(0.03, 0.2, pow(up, 1.3));
+  float width = mix(0.03, 0.2 + 0.12 * hk, pow(up, 1.3));        // a hookah's column opens wider
   float x = (q.x - sway - (w.x - 0.5) * 0.5 * turb * up) / width;
   float puff = mix(1.0, smoothstep(0.2, 0.75, n(vec2(ph * 1.5 + 7.0, 7.1))), 0.45 * turb);   // it leaves in slow breaths
   float body = mix(1.0, smoothstep(0.3, 0.7, d), 0.15 + 0.85 * turb);
   float thin = clamp(mix(1.0, 0.18 / width, 0.55), 0.0, 1.0);    // the same smoke over more width
-  float fade = smoothstep(0.0, 0.035, q.y) * (1.0 - smoothstep(0.6, 1.0, up)) * (1.0 - smoothstep(grow - 0.3, grow, up));
+  float fade = smoothstep(0.0, 0.035, q.y) * (1.0 - smoothstep(0.6 + 0.2 * hk, 1.0 + 0.2 * hk, up)) * (1.0 - smoothstep(grow - 0.3, grow, up));
   float T = exp(-x * x) * body * puff * thin * fade * gain;
-  // hookahs only (gain above 1): smoke pooled along the floor of the tile
-  T += 1.1 * clamp(gain - 1.0, 0.0, 1.0) * (1.0 - smoothstep(0.0, 0.2 + (w.x - 0.5) * 0.25, uv.y)) * smoothstep(0.25, 0.75, d + (w.y - 0.5) * 0.5 + 0.1);
+  // hookahs only: smoke pooled over the floor of the tile, spreading out from the piece as the page opens, and a haze through the tile
+  float cov = smoothstep(0.25, 0.75, d + (w.y - 0.5) * 0.5 + 0.12);
+  float reach = smoothstep(0.0, 0.35, grow * 0.6 - abs(uv.x - src.x));
+  T += hk * reach * (1.0 * (1.0 - smoothstep(0.0, 0.42 + (w.x - 0.4) * 0.6, uv.y)) * mix(0.3, 1.0, cov) + 0.16 * cov * (1.0 - uv.y));
   return T;
 }
 void main(){
   vec2 uv = gl_FragCoord.xy / r;
   float T, T2, k, amax;
   if (mode > 0.5) {
-    float xf = 1.32 * (1.0 - exp(-roll / (0.6 + 0.1 * asp))) - 0.08;   // fast in, slowing; a wider band takes a little longer (0.94 s time constant on a phone, 1.18 s on a desktop)
-    float st = smoothstep(2.0, 6.5, roll);
-    T = bk(uv, xf, st, 1.0) * gain; T2 = bk(uv + vec2(0.10 / asp, 0.14), xf, st, 0.0) * gain;   // second sample: a step toward the light, up and right
-    k = 2.4; amax = 0.9 * smoothstep(0.0, 0.05, uv.y + 0.03);
+    float xf = 1.4 * (1.0 - exp(-roll / (0.6 + 0.1 * asp))) + 0.03;   // already at the edge when the page opens; fast in, slowing; a wider band takes a little longer
+    float st = smoothstep(2.2, 6.5, roll);
+    float in1 = 1.0 - exp(-roll * 0.8);
+    // the smoke is carried with the front (0.8 of its travel); the top lags the bottom and the texture climbs as it comes, so the head rolls
+    vec2 p = vec2((uv.x - xf * 0.8) * asp + 0.45 * uv.y * in1 - t * 0.035, uv.y - t * 0.012 - 0.5 * in1) * 1.45;
+    vec2 w = vec2(f2(p * 0.7 + vec2(0.0, t * 0.045)), f2(p * 0.7 + vec2(5.2 - t * 0.035, 1.3))) * 1.3333;   // slow swirl, shared by both samples
+    vec2 q = p + 0.75 * w;
+    T = bk(uv, q, w, xf, st, 1.0) * gain; T2 = bk(uv + vec2(0.10 / asp, 0.14), q + vec2(0.145, 0.203), w, xf, st, 0.0) * gain;   // second sample: a step toward the light, up and right
+    k = 2.4; amax = 0.92 * smoothstep(0.0, 0.05, uv.y + 0.03);
   } else {
     T = pl(uv, 1.0); T2 = pl(uv + vec2(0.05 / asp, 0.08), 0.0);
     k = 2.2; amax = 0.8;
   }
   float a = 1.0 - exp(-k * T);                                   // thickness to opacity: never a flat white slab
-  float lit = clamp(0.5 + (T - T2) * 3.5, 0.0, 1.0);             // 1 where the smoke thins toward the light: a bright rim
+  float lit = clamp(0.5 + (T - T2) * 2.8, 0.0, 1.0);             // 1 where the smoke thins toward the light: a bright rim
   float kk = clamp(lit + (1.0 - smoothstep(0.3, 1.0, a)) * 0.25, 0.0, 1.0);
   vec3 c = mix(vec3(0.87, 0.80, 0.795), vec3(1.0, 0.985, 0.955), kk);   // shaded core .. warm white edge
   a = clamp(a * amax + (h(gl_FragCoord.xy) - 0.5) / 255.0, 0.0, 1.0) * step(0.004, a);   // one level of fixed grain so the upscale does not band
@@ -85,6 +92,7 @@ function setup() {
   if (new URLSearchParams(location.search).has("still")) return false; // lets us look at the fallback on any device
   const g = cv.getContext("webgl", { alpha: true, premultipliedAlpha: true, antialias: false, depth: false, stencil: false, powerPreference: "low-power" });
   if (!g) return false;
+  const hp = g.getShaderPrecisionFormat(g.FRAGMENT_SHADER, g.HIGH_FLOAT); if (!hp || hp.precision < 23) return false; // the noise needs real high precision
   const sh = (type, src) => { const s = g.createShader(type); g.shaderSource(s, src); g.compileShader(s); return g.getShaderParameter(s, g.COMPILE_STATUS) ? s : null; };
   // the fragment shader refuses to compile without high precision (the noise needs it), which sends that phone to the stills
   const vs = sh(g.VERTEX_SHADER, "attribute vec2 a; void main(){ gl_Position = vec4(a, 0.0, 1.0); }"), fs = sh(g.FRAGMENT_SHADER, FRAG);
@@ -114,7 +122,7 @@ function draw(now) {
   lastDraw = now;
   gl.uniform1f(U.roll, fixedRoll !== null ? fixedRoll : still ? 9 : s);
   gl.uniform1f(U.grow, still || conf.kind === "bank" ? 1.3 : 1.3 * (1 - Math.exp(-1.5 * s))); // the column climbs from its source
-  gl.uniform1f(U.t, ((now - t0) / 1000) % 3600 + 40); // the clock wraps each hour, so the noise never loses its footing
+  gl.uniform1f(U.t, still ? 40 : ((now - t0) / 1000) % 3600 + 40); // the clock wraps each hour, so the noise never loses its footing; with motion off it stands still
   gl.clear(gl.COLOR_BUFFER_BIT); gl.drawArrays(gl.TRIANGLES, 0, 3);
   if (!still && seen && !document.hidden) raf = requestAnimationFrame(draw);
 }
@@ -127,19 +135,29 @@ function toStills() { // the live canvas is not coming back: stand the stills in
   if (host) { key = ""; place(); }
 }
 let lostTimer = 0;
-cv.addEventListener("webglcontextlost", e => { e.preventDefault(); lost = true; clearTimeout(lostTimer); lostTimer = setTimeout(() => { if (lost) toStills(); }, 2000); });
-cv.addEventListener("webglcontextrestored", () => { clearTimeout(lostTimer); lost = false; gl = null; if (setup()) kick(); else toStills(); });
-const io = new IntersectionObserver(es => { seen = es.some(e => e.isIntersecting); if (seen) kick(); });
+const giveUp = () => { if (!lost) return; if (document.hidden) { lostTimer = setTimeout(giveUp, 2000); return; } toStills(); }; // never judged while the tab is in the background
+cv.addEventListener("webglcontextlost", e => { e.preventDefault(); lost = true; clearTimeout(lostTimer); lostTimer = setTimeout(giveUp, 2000); });
+cv.addEventListener("webglcontextrestored", () => {
+  clearTimeout(lostTimer); lost = false; gl = null;
+  if (!setup()) { if (layer === cv) toStills(); return; }
+  if (layer !== cv) { const was = layer; layer = cv; if (was.isConnected) { was.remove(); key = ""; place(); } } // the stills stood in: the live canvas takes its place back
+  kick();
+});
+const io = new IntersectionObserver(es => { seen = es[es.length - 1].isIntersecting; if (seen) kick(); });
 const ro = window.ResizeObserver ? new ResizeObserver(() => { if (!conf || !layer.isConnected) return; const tg = target(); if (tg && tg.el === conf.el) { conf.asp = tg.asp; conf.src = tg.src; if (gl) apply(); kick(); } }) : null;
-document.addEventListener("visibilitychange", kick); RM.addEventListener("change", kick);
+let unseen = false; // this page was opened in a background tab: its act waits to be seen
+document.addEventListener("visibilitychange", () => { if (!document.hidden && unseen) { unseen = false; placedAt = performance.now(); } kick(); });
+RM.addEventListener("change", kick);
+addEventListener("pageshow", e => { if (e.persisted) kick(); }); // back from the back/forward cache
 
 // Where the smoke belongs on the page that is showing, and how strong it is there.
-const SMOKY = { hookahs: 1.35, bases: 0.8, bowls: 0.8, heat: 0.95, hoses: 0.8, parts: 0.7 };
+const SMOKY = { hookahs: 1.6, bases: 0.8, bowls: 0.8, heat: 0.95, hoses: 0.8, parts: 0.7 };
 function target() {
   const shape = e => e.clientWidth / Math.max(1, e.clientHeight);
   const head = document.querySelector('.shophead[data-cat="hookahs"]');
-  if (head) { const o = head.querySelector(".fx-obj"), a = head.getBoundingClientRect(), b = o && o.getBoundingClientRect(); // the bank gathers round the hookah drawing
-    return { el: head, kind: "bank", mode: 1, gain: 1, wait: 250, src: [b ? (b.left + b.width / 2 - a.left) / a.width : 0.86, 0.2], asp: shape(head) }; }
+  if (head) { const o = head.querySelector(".fx-obj"), h1 = head.querySelector("h1"), a = head.getBoundingClientRect(), b = o && o.getBoundingClientRect(); let te = 0.5; // the bank gathers round the hookah drawing
+    if (h1) { const rg = document.createRange(); rg.selectNodeContents(h1); te = (rg.getBoundingClientRect().right - a.left) / Math.max(1, a.width); }   // where the title ends: the settled bank is a little thinner under it
+    return { el: head, kind: "bank", mode: 1, gain: 1, wait: 60, src: [b ? (b.left + b.width / 2 - a.left) / a.width : 0.86, te], asp: shape(head) }; }
   const stage = document.querySelector("[data-stage]:not(.tile--photo)"), cat = stage && stage.closest("[data-cat]")?.dataset.cat;
   if (stage && SMOKY[cat]) return { el: stage, kind: "stage", mode: 0, gain: SMOKY[cat], wait: 450, src: [0.5, 0.2], asp: shape(stage) };
   const hero = document.querySelector(".hero__stage");
@@ -158,9 +176,9 @@ function place() {
   if (fresh) layer.classList.remove("on");
   if (tg.before) tg.el.insertBefore(layer, tg.before); else tg.el.prepend(layer);
   if (gl) apply();
-  if (fresh) placedAt = performance.now(); // a new page: the bank rolls in, the column climbs
+  if (fresh) { placedAt = performance.now(); unseen = document.hidden; } // a new page: the bank rolls in, the column climbs
   seen = false; io.disconnect(); io.observe(layer); if (ro) { ro.disconnect(); ro.observe(tg.el); }
-  if (fresh) requestAnimationFrame(() => layer.classList.add("on")); else layer.classList.add("on");
+  if (fresh) requestAnimationFrame(() => requestAnimationFrame(() => layer.classList.add("on"))); else layer.classList.add("on"); // two frames, so the fade always has a starting value
   kick();
 }
 if (!setup()) still();
@@ -172,7 +190,7 @@ addEventListener("cartlanded", e => {
   if (RM.matches) return;
   const r = e.detail && e.detail.rect; if (!r) return;
   for (let i = 0; i < 7; i++) {
-    const d = document.createElement("span"); d.className = "puff"; const size = 16 + Math.random() * 26;
+    const d = document.createElement("span"); d.className = "puff"; d.setAttribute("aria-hidden", "true"); const size = 16 + Math.random() * 26;
     d.style.cssText = `left:${r.left + r.width / 2 - size / 2}px;top:${r.top + r.height / 2 - size / 2}px;width:${size}px;height:${size}px`;
     document.body.append(d);
     const a = -Math.PI / 2 + (i - 3) * 0.42 + (Math.random() - 0.5) * 0.3, out = 14 + Math.random() * 16; // a fan of about 145 degrees, centred straight up

@@ -1,6 +1,6 @@
 // One Stop Shop store Worker. Answers the page routes (each with its own title, description and a real 404),
 // serves the catalogue from the database, and passes every other request to the static files.
-import { loadCatalog, catalogModule } from "./catalog.js";
+import { loadCatalog, shopCatalog, dropCatalog, catalogModule } from "./catalog.js";
 import { admin, photo } from "./admin.js";
 import { placeOrder } from "./checkout.js";
 import { nightly } from "./backup.js";
@@ -37,8 +37,8 @@ function describe(path, cat, site) {
   return { ...base, title: `${fixed[a]} | ${site}`, index: ["shipping", "set", "privacy", "terms"].includes(a) };
 }
 
-async function page(request, env, url) {
-  const cat = await loadCatalog(env.DB);
+async function page(request, env, url, ctx) {
+  const cat = await shopCatalog(env, ctx);
   const site = env.SITE_NAME || "One Stop Shop";
   const d = describe(url.pathname, cat, site);
   const meta = d || { title: `Page not found | ${site}`, desc: "That page does not exist.", index: false };
@@ -73,20 +73,26 @@ const esc = s => String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replac
 export default {
   // every night: a full copy of the shop's records into the backup bucket
   async scheduled(event, env, ctx) { ctx.waitUntil(nightly(env)); },
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const path = url.pathname;
     try {
       if (path === "/api/catalog-module") {
         if (request.method !== "GET" && request.method !== "HEAD") return new Response("Method not allowed", { status: 405 });
-        return new Response(catalogModule(await loadCatalog(env.DB)), { headers: { "Content-Type": "text/javascript; charset=utf-8", "Cache-Control": "public, max-age=30, stale-while-revalidate=300", "X-Content-Type-Options": "nosniff" } });
+        // Always checked with the shop (so a back-office change shows on the next page), but the check is one small
+        // round trip answered from memory: an unchanged catalogue is "304, use the copy you have".
+        const body = catalogModule(await shopCatalog(env, ctx)); let h = 2166136261;
+        for (let k = 0; k < body.length; k++) h = Math.imul(h ^ body.charCodeAt(k), 16777619);
+        const tag = `"c${(h >>> 0).toString(36)}-${body.length}"`, head = { "Content-Type": "text/javascript; charset=utf-8", "Cache-Control": "no-cache", ETag: tag, "X-Content-Type-Options": "nosniff" };
+        if ((request.headers.get("If-None-Match") || "").replace(/^W\//, "") === tag) return new Response(null, { status: 304, headers: head });
+        return new Response(body, { headers: head });
       }
       if (path === "/api/catalog") {
         if (request.method !== "GET") return json({ error: "Method not allowed" }, 405);
         return json(await loadCatalog(env.DB));
       }
-      if (path.startsWith("/api/admin/")) return await admin(request, env, url);
-      if (path === "/api/orders") return request.method === "POST" ? await placeOrder(request, env, url) : json({ error: "Method not allowed" }, 405);
+      if (path.startsWith("/api/admin/")) { const r = await admin(request, env, url); if (request.method !== "GET" && r.ok) dropCatalog(ctx); return r; } // a change in the back office shows in the shop at once
+      if (path === "/api/orders") { if (request.method !== "POST") return json({ error: "Method not allowed" }, 405); const r = await placeOrder(request, env, url); if (r.ok) dropCatalog(ctx); return r; }
       const ph = path.match(/^\/api\/photo\/(OSS-\d{4,6})$/); if (ph && request.method === "GET") return await photo(env, ph[1]);
       if (path.startsWith("/api/")) return json({ error: "Not found" }, 404);
       if (path === "/admin" || path.startsWith("/admin/")) {
@@ -100,7 +106,7 @@ export default {
       if (path === "/index.html") return Response.redirect(url.origin + "/", 301);
       if (/\.[a-z0-9]{2,5}$/i.test(path)) return env.ASSETS.fetch(request); // a file that is not there: plain 404
       if (request.method !== "GET" && request.method !== "HEAD") return new Response("Method not allowed", { status: 405 });
-      return await page(request, env, url);
+      return await page(request, env, url, ctx);
     } catch (err) {
       console.error(JSON.stringify({ at: "fetch", path, message: String(err && err.message || err) }));
       return new Response("Something went wrong on our side. Please try again.", { status: 500, headers: { "Content-Type": "text/plain; charset=utf-8" } });

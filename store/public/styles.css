@@ -553,14 +553,18 @@ html:not(.hero-seen) .piece .sticker{animation-timing-function:linear(0,.25 6%,.
 
 /* 06 section entrances: one signature move per section, behind the type, inside the header band */
 .shophead{position:relative;isolation:isolate}
+/* a tap on a section band plays its act again; iOS Safari only makes a click out of a tap on something it counts as clickable */
+.shophead[data-cat]{cursor:pointer;-webkit-tap-highlight-color:transparent}
 /* 06 the shared rule: one ink object per section, same line, same weight, on the right of the band */
 /* effect layers never print, and every price prints */
-@media print{.fx,.smoke,.puff,.fly,.zoom{display:none !important}.sticker{opacity:1 !important;scale:1 !important;animation:none !important}}
+@media print{.fx,.smoke,.puff,.fly,.zoom{display:none !important}.sticker{opacity:1 !important;scale:1 !important;rotate:none !important;translate:none !important;animation:none !important}}
 /* 05 smoke: between the colour and the type or cut-out. The bank sits under the section's object. */
 .smoke{position:absolute;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none;opacity:0;transition:opacity 600ms var(--ease-state) 300ms}
 .smoke.on{opacity:1}
 .smoke--hero{z-index:auto;transition:opacity 600ms var(--ease-state) 500ms}
 .smoke--bank{z-index:-2;transition:none}
+/* the smoke parts round the letters: a soft shadow in the band's own colour, invisible on the bare band */
+.shophead[data-cat="hookahs"] .shophead__h,.shophead[data-cat="hookahs"] .shophead__n{text-shadow:0 0 .1em var(--tile),0 0 .3em var(--tile)}
 .smoke--still{background:none}
 .smoke--still i{position:absolute;inset:-6% 0 0;background:center / 100% 100% no-repeat;opacity:.9}
 .smoke--still i:first-child{background-image:url(img/smoke-a.webp)}
@@ -573,17 +577,19 @@ html:not(.hero-seen) .piece .sticker{animation-timing-function:linear(0,.25 6%,.
 @media (min-width:960px){.fx{--ink-w:9px}}
 .fx-spritz{position:absolute;inset:0;width:100%;height:100%}
 .fx-obj{position:absolute;right:max(var(--gutter),5%);top:50%;height:94%;aspect-ratio:1;translate:0 -50%}
-.fx-obj.low{top:auto;bottom:4%;height:72%;translate:none}
+.fx-obj.low{top:auto;bottom:4%;height:62%;translate:none}
 .fx-obj svg{display:block;width:100%;height:100%;overflow:visible}
-.fx .o{opacity:.22}
+.fx .o{opacity:.32}
 .fx .sol{fill:currentColor}
 .fx .ink{fill:none;stroke:currentColor;stroke-width:5.5;stroke-linecap:round;stroke-linejoin:round}
 .fx .lit{fill:none;stroke:oklch(0.99 0.01 90);stroke-width:calc(var(--ink-w) * .6);vector-effect:non-scaling-stroke;stroke-linecap:round;opacity:0}
 .fx .glow{fill:var(--ember);opacity:.45}
 .fx .beam{opacity:0}
-.fx .hose{transform-box:view-box;transform-origin:45.5px 52px}
+.fx .hose{transform-box:view-box;transform-origin:46px 57px}
+.fx .mouth{transform-box:view-box;transform-origin:87px 60px}
 .fx .recoil,.fx .rock,.fx .set{transform-box:view-box;transform-origin:50px 94px}
-.fx .keeper{transform-box:view-box;transform-origin:42px 74px}
+.fx .keeper{transform-box:view-box;transform-origin:42px 94px}
+.fx .lid{transform-box:view-box;transform-origin:42px 28px;transform:rotate(-6deg)}
 .fx .whip{transform-box:view-box;transform-origin:20px 64px}
 .fx .tip{transform-box:view-box;transform-origin:68px 38px}
 .fx .turn{transform-box:view-box;transform-origin:50px 50px}
@@ -593,3 +599,68 @@ html:not(.hero-seen) .piece .sticker{animation-timing-function:linear(0,.25 6%,.
 .shophead--page .shophead__n:has(a){margin-top:0}
 .shophead--page + .cart,.shophead--page + .reading,.shophead--page + .empty,.shophead--page + .search{padding-top:var(--s-6)}
 .shophead--page + .empty .lead{margin-top:0}
+/* 08 page objects (tools/council-pages.css) */
+/* 06 section entrances, the pages: paste after the ".fx .head" line in styles.css.
+   Every pivot is in the 100 x 100 box of the drawing (transform-box:view-box), as for the first eight. */
+
+/* two drawing tools: a knock-out that can move, and a solid part with a knock-out edge.
+   Both are the band's own colour, so they need the band to be flat var(--tile) behind the object. */
+.fx .cut{fill:var(--tile)}
+.fx .cutl{fill:none;stroke:var(--tile);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.fx .cutl.hair{stroke-width:1.6}
+.fx .halo{stroke:var(--tile);stroke-width:5;paint-order:stroke;stroke-linejoin:round}
+.fx .ink.thin{stroke-width:3}
+
+/* set: the carton. Pieces are in the box only when the page says so; shut is the taped state. */
+.fx .crate,.fx .bag,.fx .parcel{transform-box:view-box;transform-origin:50px 94px}
+.fx .flapl{transform-box:view-box;transform-origin:18px 52px}
+.fx .flapr{transform-box:view-box;transform-origin:82px 52px}
+.fx .crate .tape{transform-box:view-box;transform-origin:50px 45px;opacity:0}
+.fx .it,.fx .pk{opacity:0}
+.fx .it.in,.fx .pk.in{opacity:1}
+.fx-obj.shut .it.in{opacity:0}
+.fx-obj.shut .crate .tape{opacity:1}
+.fx-obj.shut .flapl{transform:rotate(118deg)}
+.fx-obj.shut .flapr{transform:rotate(-118deg)}
+
+/* cart: the bag's handle folds and swings from where it is glued */
+.fx .handle{transform-box:view-box;transform-origin:50px 37px}
+
+/* checkout: the paper tears from its left corner at the mouth of the printer; the loose end sways from the mouth */
+.fx .feed{transform-box:view-box;transform-origin:32px 62px}
+.fx .slot{transform-box:view-box;transform-origin:50px 65px}
+
+/* shipping: tape runs from the back edge of the lid; the label is slapped about its own middle */
+.fx .parcel .tape{transform-box:view-box;transform-origin:50px 27px}
+.fx .label{transform-box:view-box;transform-origin:72px 76px}
+
+/* gifts: everything in the bow turns and stretches about the knot */
+.fx .loopl,.fx .loopr,.fx .taill,.fx .tailr,.fx .knot{transform-box:view-box;transform-origin:50px 47px}
+
+/* terms and privacy: one sheet. Signed: the struck line is not there. Struck: no signature, and the pen lies at the end of the line. */
+.fx .pen{transform-box:view-box;transform-origin:63px 71.5px}
+.fx .redact{transform-box:view-box;transform-origin:27.5px 36.5px}
+.fx-obj.signed .redact{opacity:0}
+.fx-obj.struck .sign,.fx-obj.struck .rule{opacity:0}
+.fx-obj.struck .pen{transform:translate(3.5px,-35px)}
+
+/* 404: the string swings from the hook, the tag from the end of its string, the hook from the wall plate */
+.fx .swing{transform-box:view-box;transform-origin:56px 26px}
+.fx .tag{transform-box:view-box;transform-origin:56px 45px}
+.fx .prong{transform-box:view-box;transform-origin:23px 26px}
+
+/* everything: each piece rocks on the middle of its own foot */
+.fx .p0{transform-box:view-box;transform-origin:20px 68.4px}
+.fx .p1{transform-box:view-box;transform-origin:54px 68.5px}
+.fx .p2{transform-box:view-box;transform-origin:85.5px 68.5px}
+/* Parts on a phone: the long title leaves no room beside it, so the band gives the nut room under it, whole */
+/* On a phone a long title leaves no room beside it, so the object sits whole under the end of the title: those bands
+   keep room for it, and the line under the title stops short of it. Decided in CSS so nothing moves when effects load. */
+@media (max-width:520px){
+  .shophead[data-cat="parts"],.shophead[data-fx="set"],.shophead[data-fx="gifts"],.shophead[data-fx="docs"],.shophead[data-fx="missing"],.shophead[data-fx="all"],.shophead[data-fx="cart"]{padding-bottom:calc(var(--s-5) + 26px)}
+  .shophead[data-fx] .shophead__n,.shophead[data-cat="parts"] .shophead__n{max-width:calc(100% - 132px)}
+  .shophead[data-fx]{min-height:124px}
+  .shophead[data-fx="missing"]{padding-bottom:calc(var(--s-5) + 60px)}
+}
+/* with motion turned off the smoke is simply there: no fade */
+@media (prefers-reduced-motion:reduce){.smoke{transition:none}}

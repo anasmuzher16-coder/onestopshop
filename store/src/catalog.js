@@ -9,6 +9,29 @@ export async function loadCatalog(db) {
   return { categories: cats.results, boxes: boxes.results, products: prods.results };
 }
 
+// The storefront's copy of the catalogue. Reading the database costs a few tenths of a second on every page, so
+// pages and the catalogue module are served from a copy: this worker's memory (20 s), then the data centre's cache
+// (60 s), then the database. A stale copy up to ten minutes old is still served at once while a fresh one is fetched
+// behind it. Any change in the back office, and any order, drops the copy. Checkout never uses it: it reads the database.
+const KEY = "https://catalogue.internal/v1", FRESH = 20e3, USABLE = 600e3;
+let mem = null, refreshing = null;
+async function refill(env) {
+  const cat = await loadCatalog(env.DB); mem = { at: Date.now(), cat };
+  try { await caches.default.put(KEY, new Response(JSON.stringify(cat), { headers: { "Content-Type": "application/json", "Cache-Control": "max-age=60" } })); } catch {}
+  return cat;
+}
+export async function shopCatalog(env, ctx) {
+  const now = Date.now();
+  if (mem && now - mem.at < FRESH) return mem.cat;
+  if (mem && now - mem.at < USABLE) { // serve what we have, refresh behind it
+    if (!refreshing) { refreshing = refill(env).catch(() => {}).finally(() => { refreshing = null; }); if (ctx) ctx.waitUntil(refreshing); }
+    return mem.cat;
+  }
+  try { const hit = await caches.default.match(KEY); if (hit) { const cat = await hit.json(); mem = { at: now, cat }; return cat; } } catch {}
+  return refill(env);
+}
+export function dropCatalog(ctx) { mem = null; try { const d = caches.default.delete(KEY); if (ctx) ctx.waitUntil(d); } catch {} }
+
 export function toStorefront(cat) {
   const BOXES = {};
   for (const b of cat.boxes) BOXES[b.id] = { l: b.l_cm, w: b.w_cm, h: b.h_cm, tare: b.tare_g / 1000, label: b.label };

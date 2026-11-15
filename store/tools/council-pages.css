@@ -1,0 +1,53 @@
+/* 06 section entrances, the pages: paste after the ".fx .head" line in styles.css.
+   Every pivot is in the 100 x 100 box of the drawing (transform-box:view-box), as for the first eight. */
+
+/* two drawing tools: a knock-out that can move, and a solid part with a knock-out edge.
+   Both are the band's own colour, so they need the band to be flat var(--tile) behind the object. */
+.fx .cut{fill:var(--tile)}
+.fx .cutl{fill:none;stroke:var(--tile);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.fx .cutl.hair{stroke-width:1.6}
+.fx .halo{stroke:var(--tile);stroke-width:5;paint-order:stroke;stroke-linejoin:round}
+.fx .ink.thin{stroke-width:3}
+
+/* set: the carton. Pieces are in the box only when the page says so; shut is the taped state. */
+.fx .crate,.fx .bag,.fx .parcel{transform-box:view-box;transform-origin:50px 94px}
+.fx .flapl{transform-box:view-box;transform-origin:18px 52px}
+.fx .flapr{transform-box:view-box;transform-origin:82px 52px}
+.fx .crate .tape{transform-box:view-box;transform-origin:50px 45px;opacity:0}
+.fx .it,.fx .pk{opacity:0}
+.fx .it.in,.fx .pk.in{opacity:1}
+.fx-obj.shut .it.in{opacity:0}
+.fx-obj.shut .crate .tape{opacity:1}
+.fx-obj.shut .flapl{transform:rotate(118deg)}
+.fx-obj.shut .flapr{transform:rotate(-118deg)}
+
+/* cart: the bag's handle folds and swings from where it is glued */
+.fx .handle{transform-box:view-box;transform-origin:50px 37px}
+
+/* checkout: the paper tears from its left corner at the mouth of the printer; the loose end sways from the mouth */
+.fx .feed{transform-box:view-box;transform-origin:32px 62px}
+.fx .slot{transform-box:view-box;transform-origin:50px 65px}
+
+/* shipping: tape runs from the back edge of the lid; the label is slapped about its own middle */
+.fx .parcel .tape{transform-box:view-box;transform-origin:50px 27px}
+.fx .label{transform-box:view-box;transform-origin:72px 76px}
+
+/* gifts: everything in the bow turns and stretches about the knot */
+.fx .loopl,.fx .loopr,.fx .taill,.fx .tailr,.fx .knot{transform-box:view-box;transform-origin:50px 47px}
+
+/* terms and privacy: one sheet. Signed: the struck line is not there. Struck: no signature, and the pen lies at the end of the line. */
+.fx .pen{transform-box:view-box;transform-origin:63px 71.5px}
+.fx .redact{transform-box:view-box;transform-origin:27.5px 36.5px}
+.fx-obj.signed .redact{opacity:0}
+.fx-obj.struck .sign,.fx-obj.struck .rule{opacity:0}
+.fx-obj.struck .pen{transform:translate(3.5px,-35px)}
+
+/* 404: the string swings from the hook, the tag from the end of its string, the hook from the wall plate */
+.fx .swing{transform-box:view-box;transform-origin:56px 26px}
+.fx .tag{transform-box:view-box;transform-origin:56px 45px}
+.fx .prong{transform-box:view-box;transform-origin:23px 26px}
+
+/* everything: each piece rocks on the middle of its own foot */
+.fx .p0{transform-box:view-box;transform-origin:20px 68.4px}
+.fx .p1{transform-box:view-box;transform-origin:54px 68.5px}
+.fx .p2{transform-box:view-box;transform-origin:85.5px 68.5px}
