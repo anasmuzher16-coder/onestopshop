@@ -104,9 +104,9 @@ const edge = (y, rad, h) => Math.max(0, Math.min(1, (Math.min(y, h - y) - rad) /
 
 // ---- mist: a pump atomiser. Two presses; each sends a cone of droplets that streak while fast, are stopped by the air
 // within one "reach", and leave a cloud that swells, drifts on, sinks a little and thins out.
-function spritz(layer, ox, oy, angle, power = 1) {
+function spritz(layer, ox, oy, angle, power = 1, reach = 0, fat = 1) {
   const w = layer.clientWidth, h = layer.clientHeight;
-  const R = Math.min(Math.max(w * 0.42, Math.min(w * 0.6, 240)), h * 2.4) * power;   // reach in px: 234 on a 390 band, 602 on a 1440 band
+  const R = reach || Math.min(Math.max(w * 0.42, Math.min(w * 0.6, 240)), h * 2.4) * power;   // reach in px: 234 on a 390 band, 602 on a 1440 band
   const near = Math.max(0, Math.min(1, (520 - R) / 260));   // 1 on a phone band, 0 on a desktop band: a small spray is drawn heavier
   const S = Math.max(1 + 0.35 * near, Math.min(1.5, R / 220));                        // droplet scale: 1.35 on a phone band, 1.5 on a desktop band
   const X = ox * w, Y = oy * h, drops = [], puffs = [], img = soft("255,252,246");
@@ -120,7 +120,7 @@ function spritz(layer, ox, oy, angle, power = 1) {
     }
     for (let i = 0; i < Math.round(n / (11 - 2 * near)); i++) {
       const a = angle + bell() * 0.3, v = R * 2.4 * rnd(0.3, 0.8) * force, off = rnd(0.04, 0.22) * R;   // the cloud starts out along the spray, never as a blob on the nozzle
-      puffs.push({ x: X + Math.cos(a) * off, y: Y + Math.sin(a) * off, vx: Math.cos(a) * v, vy: Math.sin(a) * v, r: R * rnd(0.1, 0.3), life: rnd(1.4, 2.4) * (1 + 0.4 * near), age: -at - rnd(0, 0.12) });
+      puffs.push({ x: X + Math.cos(a) * off, y: Y + Math.sin(a) * off, vx: Math.cos(a) * v, vy: Math.sin(a) * v, r: R * rnd(0.1, 0.3) * fat, life: rnd(1.4, 2.4) * (1 + 0.4 * near), age: -at - rnd(0, 0.12) });
     }
   };
   burst(240, 1, 0); burst(160, 0.85, 0.38);   // the second press lands 380 ms after the first
@@ -749,42 +749,217 @@ export function onSight(host, name) {
   const io = new IntersectionObserver(es => { if (es.some(x => x.isIntersecting)) { io.disconnect(); if (host.isConnected) run(true); } }, { threshold: .4 });
   io.observe(host);
 }
-const PIECE = {
-  // someone spritzes the bottle: two sprays from the left hang in the air beside the cap, above the shoulders, where they can be seen; the front goes behind the cap
-  cologne(layer, go) { if (go) when(layer, T0, () => spritz(layer, 0.03, 0.17, 0.06, 0.75)); },
-  // the price gun again: the one label on the page lands with a thump, and the piece hops as anything does
-  misc(layer, go, host) {
-    const s = host.querySelector(".sticker"); if (!go || !s || !arrivals) return; // a first load has already shown the price: nothing already seen is hidden
-    // where the page change carries this label across (app.js names it "tag") it lands at 500 and is pressed home; elsewhere it is new and is stamped on
-    const flew = !!document.startViewTransition, hit = flew ? 520 : T0;
-    if (flew) press(s, hit); else stamp(s, hit, 1.35, 7, inward(s.getBoundingClientRect(), host.getBoundingClientRect(), 1.35, 7));
-    give(host, hit, .985);
-    const shot = host.querySelector(".shot");
-    if (shot) play(shot, [
-      { translate: "0 0", easing: ENTER },
-      { translate: "0 -7px", offset: .3077, easing: STRIKE },
-      { translate: "0 0", offset: .7308, easing: ENTER },
-      { translate: "0 -1.5px", offset: .8654, easing: STRIKE },
-      { translate: "0 0" }], 260, hit + 20);
+// ================= product pages: the piece itself does its section's act, once, where the photo is =================
+// The act is read off the photo: a cut-out's alpha is sampled once at 48 x 60, so the mist leaves this bottle's own
+// cap, the heat lifts off this bowl's own rim and a hose swings from its own top, whatever photo the shop puts in.
+// A full photo (no cut-out) has nothing to read, so it only ever gets the label. Hookahs: the smoke is the act (fx-smoke.js).
+const INK = new Map();
+function ink(img) {
+  const k = img.currentSrc || img.src; if (INK.has(k)) return INK.get(k);
+  let out = null;
+  try {
+    const W = 48, H = 60, c = document.createElement("canvas"); c.width = W; c.height = H;
+    const g = c.getContext("2d", { willReadFrequently: true }); g.drawImage(img, 0, 0, W, H);
+    const d = g.getImageData(0, 0, W, H).data, rows = []; let l = W, r = -1, t = -1, b = -1, n = 0;
+    for (let y = 0; y < H; y++) {
+      let a = W, z = -1; for (let x = 0; x < W; x++) if (d[(y * W + x) * 4 + 3] > 48) { if (x < a) a = x; z = x; n++; }
+      rows.push(z < 0 ? null : [a / W, (z + 1) / W]); if (z >= 0) { if (t < 0) t = y; b = y; if (a < l) l = a; if (z > r) r = z; }
+    }
+    if (r >= 0 && n < W * H * .92) out = { l: l / W, r: (r + 1) / W, t: t / H, b: (b + 1) / H, rows, row: f => rows[Math.max(t, Math.min(b, Math.round(f * H)))] };
+    c.width = c.height = 0;
+  } catch (e) { /* a photo that cannot be read simply has no act */ }
+  INK.set(k, out); return out;
+}
+// where the picture is drawn inside the stage (object-fit: contain, centred, inside the photo's own padding), in stage px
+function seat(stage, img) {
+  const S = stage.getBoundingClientRect(), B = img.getBoundingClientRect(), cs = getComputedStyle(img), n = v => parseFloat(v) || 0;
+  const pl = n(cs.paddingLeft), pt = n(cs.paddingTop), cw = B.width - pl - n(cs.paddingRight), ch = B.height - pt - n(cs.paddingBottom);
+  const k = Math.min(cw / img.naturalWidth, ch / img.naturalHeight), w = img.naturalWidth * k, h = img.naturalHeight * k;
+  return { x: B.left - S.left + pl + (cw - w) / 2, y: B.top - S.top + pt + (ch - h) / 2, w, h, ox: B.left - S.left, oy: B.top - S.top };
+}
+// a stand-in for a drawn object, so the band effects (steam, embers) can be aimed at a part of the photo
+const box = (layer, x, y, w, h) => { const L = layer.getBoundingClientRect(); return { getBoundingClientRect: () => ({ left: L.left + x, top: L.top + y, width: w, height: h }) }; };
+const turn = (v, y = 0) => `translateY(${y}px) rotate(${v}deg)`;
+
+// ---- a landing: whatever is set down with weight pushes a low puff out along the counter, left and right of its foot
+function kick(layer, x0, x1, y) {
+  const img = soft("255,252,246"), w = layer.clientWidth, big = Math.max(1, Math.min(1.7, w / 420)), ps = [];
+  for (let i = 0; i < 16; i++) { const left = i % 2 === 0, v = rnd(170, 400) * big;
+    ps.push({ x: left ? x0 + rnd(0, 10) : x1 - rnd(0, 10), y: y - rnd(5, 11) * big, vx: left ? -v : v, vy: -rnd(2, 14) * big, r: rnd(8, 15) * big, life: rnd(.6, 1.1), age: -rnd(0, .05) }); }
+  fxCanvas(layer, (g, dt) => {
+    let alive = 0;
+    for (const p of ps) {
+      p.age += dt; if (p.age >= p.life) continue; alive++; if (p.age < 0) continue;
+      const d = Math.exp(-3.6 * dt); p.vx *= d; p.vy *= d; p.x += p.vx * dt; p.y += p.vy * dt;
+      const q = p.age / p.life, rad = p.r * (0.45 + 1.1 * (1 - Math.exp(-p.age * 5)));
+      g.globalAlpha = 0.26 * Math.min(1, p.age / 0.05) * Math.pow(1 - q, 1.6) * Math.max(0, Math.min(1, Math.min(p.x, w - p.x) / 24));   // thins out before the side of the tile
+      g.drawImage(img, p.x - rad * 1.9, p.y - rad * .8, rad * 3.8, rad * 1.6);   // low and wide: it hugs the counter
+    }
+    return alive > 0;
+  });
+}
+
+// ---- light across the piece: one bright band crosses it, cut to the piece by its own photo, so it fits any shape with no setting up
+function glint(layer, img, P, at, ms) {
+  const g = el("span", "fx-glint", layer), band = el("i", "", g), src = `url("${img.currentSrc || img.src}")`;
+  g.style.cssText = `left:${P.x}px;top:${P.y}px;width:${P.w}px;height:${P.h}px`; g.style.webkitMaskImage = src; g.style.maskImage = src;
+  play(band, [{ transform: "translateX(-46%)", opacity: 0, easing: STATE }, { opacity: 1, offset: .15 }, { opacity: 1, offset: .8 }, { transform: "translateX(46%)", opacity: 0 }], ms, at, "none")
+    .finished.then(() => g.remove(), () => g.remove());
+  return g;
+}
+// ---- mist in the air: fine droplets and soft cloud appear across the upper part of the tile, drift down and across, and thin out.
+// It belongs to the tile, not to a point on the photo.
+function veil(layer) {
+  const w = layer.clientWidth, h = layer.clientHeight, big = Math.max(1, Math.min(1.8, w / 400)), img = soft("255,252,246"), drops = [], puffs = [];
+  for (let i = 0; i < 110; i++) { const u = Math.random();
+    drops.push({ x: rnd(-.05, .95) * w, y: rnd(.04, .5) * h, vx: rnd(14, 46) * big, vy: rnd(10, 34) * big + 26 * u * big, r: big * (.5 + 1.2 * u * u), life: rnd(1.3, 2.6), age: -rnd(0, .7), ph: rnd(0, 6.28) }); }
+  for (let i = 0; i < 30; i++) puffs.push({ x: rnd(-.05, .85) * w, y: rnd(.06, .5) * h, vx: rnd(16, 44) * big, vy: rnd(8, 22) * big, r: rnd(46, 96) * big, life: rnd(2, 3.2), age: -rnd(0, .7) });
+  const side = x => Math.max(0, Math.min(1, Math.min(x, w - x) / 26));   // nothing is sliced by the side of the tile either
+  fxCanvas(layer, (g, dt) => {
+    let alive = 0;
+    for (const p of puffs) {
+      p.age += dt; if (p.age >= p.life) continue; alive++; if (p.age < 0) continue;
+      p.x += p.vx * dt; p.y += p.vy * dt; const q = p.age / p.life, rad = p.r * (.7 + .6 * q);
+      g.globalAlpha = .2 * Math.min(1, p.age / .35) * Math.pow(1 - q, 1.4) * edge(p.y, rad * .4, h) * side(p.x);
+      g.drawImage(img, p.x - rad, p.y - rad, rad * 2, rad * 2);
+    }
+    g.fillStyle = "rgb(255,252,246)";
+    for (const p of drops) {
+      p.age += dt; if (p.age >= p.life) continue; alive++; if (p.age < 0) continue;
+      p.x += (p.vx + Math.sin(p.ph + p.age * 5) * 9) * dt; p.y += p.vy * dt; const q = p.age / p.life;
+      g.globalAlpha = .8 * Math.min(1, p.age / .15) * Math.pow(1 - q, 1.2) * edge(p.y, p.r, h) * side(p.x); if (g.globalAlpha <= 0) continue;
+      g.beginPath(); g.arc(p.x, p.y, p.r, 0, 6.283); g.fill();
+    }
+    return alive > 0;
+  });
+}
+
+const ACT = {
+  // scent in the air: a fine mist drifts down through the whole tile and thins out, and the light runs once across the bottle.
+  // Nothing here is aimed at a cap or a nozzle, so it is right for any bottle, any shape, any photo.
+  cologne({ layer, img, K, P, pin }) {
+    pin((K.l + K.r) / 2, K.b);
+    play(img, [{ transform: turn(0, 0), easing: ENTER }, { transform: turn(0, -7), offset: .3, easing: SINE }, { transform: turn(0, 0), offset: .75, easing: SINE }, { transform: turn(0, -1.5), offset: .88, easing: SINE }, { transform: turn(0, 0) }], 900, T0 - 120, "none");
+    when(layer, T0 - 60, () => veil(layer));
+    glint(layer, img, P, T0 + 260, 900);
+  },
+  // glass is held up to the light: tipped, a glint runs across it (cut to the glass by its own photo), let go, it rocks home
+  bases({ layer, img, K, P, pin }) {
+    const g = glint(layer, img, P, T0 - 40, 760);
+    const cx = (K.l + K.r) / 2; pin(cx, K.b); g.style.transformOrigin = `${cx * P.w}px ${K.b * P.h}px`;
+    const rock = [
+      { transform: turn(0), easing: ENTER },
+      { transform: turn(-4.5), offset: .16 },                     // T0: tipped to the light
+      { transform: turn(-4.5), offset: .5, easing: STATE },       // held while the glint crosses
+      { transform: turn(2.2), offset: .64, easing: SINE },
+      { transform: turn(-1.2), offset: .77, easing: SINE },
+      { transform: turn(.5), offset: .89, easing: SINE },
+      { transform: turn(0) }];
+    play(img, rock, 1700, T0 - 270, "none"); play(g, rock, 1700, T0 - 270, "none");
+  },
+  // dropped the last inch onto the counter: it knocks and rocks, and the heat lifts off its rim
+  bowls({ layer, img, K, P, pin }) {
+    pin((K.l + K.r) / 2, K.b);
+    play(img, [
+      { transform: turn(0, -30), easing: STRIKE },
+      { transform: turn(0, 0), offset: .1, easing: ENTER },       // T0: lands
+      { transform: turn(-2.2, 0), offset: .26, easing: SINE },
+      { transform: turn(1.4, 0), offset: .46, easing: SINE },
+      { transform: turn(-.7, 0), offset: .66, easing: SINE },
+      { transform: turn(.3, 0), offset: .84, easing: SINE },
+      { transform: turn(0, 0) }], 1100, T0 - 110);
+    const iw = (K.r - K.l) * P.w, rim = P.y + (K.t + (K.b - K.t) * .2) * P.h;
+    when(layer, T0 + 90, () => steam(layer, box(layer, P.x + K.l * P.w, rim - 19, iw, 100)));
+    const foot = K.row(K.b - .02) || [K.l, K.r];
+    when(layer, T0, () => kick(layer, P.x + foot[0] * P.w, P.x + foot[1] * P.w, P.y + K.b * P.h));
+  },
+  // the coals catch: three cracks, sparks off the top, and the piece hops on each one
+  heat({ layer, img, K, P }) {
+    const iw = (K.r - K.l) * P.w, bw = iw * 1.316, hot = P.y + (K.t + (K.b - K.t) * .22) * P.h;
+    when(layer, T0, () => embers(layer, box(layer, P.x + K.l * P.w + .25 * iw - .23 * bw, hot - 44, bw, 100)));
+    const hop = a => [{ transform: "translateY(0px)", easing: ENTER }, { transform: `translateY(${-a}px)`, offset: .35, easing: STRIKE }, { transform: "translateY(0px)", offset: .8, easing: ENTER },
+      { transform: `translateY(${-a * .2}px)`, offset: .9, easing: STRIKE }, { transform: "translateY(0px)" }];
+    [5, 4, 3].forEach((a, i) => play(img, hop(a), 200, T0 + 30 + i * 260, "none"));
+  },
+  // hung back on its hook and let go: it swings from the top and settles
+  hoses({ img, K, pin }) {
+    pin((K.row(K.t)[0] + K.row(K.t)[1]) / 2, K.t);
+    play(img, [
+      { transform: turn(0), easing: ENTER },
+      { transform: turn(6.5), offset: .1, easing: SINE },         // T0: let go
+      { transform: turn(-4.4), offset: .3, easing: SINE },
+      { transform: turn(2.9), offset: .48, easing: SINE },
+      { transform: turn(-1.8), offset: .64, easing: SINE },
+      { transform: turn(1), offset: .78, easing: SINE },
+      { transform: turn(-.4), offset: .9, easing: SINE },
+      { transform: turn(0) }], 2300, T0 - 230, "none");
+  },
+  // wrenched on: two clicks of the ratchet, and it seats
+  parts({ img, K, pin, host }) {
+    pin((K.l + K.r) / 2, (K.t + K.b) / 2);
+    play(img, [
+      { transform: "rotate(-22deg) scale(1.04)", easing: STRIKE },
+      { transform: "rotate(-11deg) scale(1.04)", offset: .22 },   // click
+      { transform: "rotate(-11deg) scale(1.04)", offset: .48, easing: STRIKE },
+      { transform: "rotate(0deg) scale(1.04)", offset: .7, easing: ENTER },   // T0 + 230: click, tight
+      { transform: "rotate(.8deg) scale(.985)", offset: .82, easing: STATE },
+      { transform: "rotate(0deg) scale(1)" }], 520, T0 - 135);
+    give(host, T0 + 230, .988);
+  },
+  // picked up off the counter, turned over once, put back
+  misc({ img, K, pin, hit }) {
+    pin((K.l + K.r) / 2, K.b);
+    play(img, [
+      { transform: turn(0, 0), easing: ENTER },
+      { transform: turn(-4, -12), offset: .3, easing: SINE },
+      { transform: turn(3, -10), offset: .58, easing: STRIKE },
+      { transform: turn(0, 0), offset: .78, easing: ENTER },      // set down
+      { transform: turn(0, -2), offset: .89, easing: STRIKE },
+      { transform: turn(0, 0) }], 760, hit + 40, "none");
   },
 };
+function piece(layer, go, host, cat) {
+  if (!go) return;
+  let hit = T0; const born = performance.now();
+  if (cat === "misc") { // the price gun: the one label on the page lands with a thump
+    const s = host.querySelector(".sticker");
+    if (s && arrivals) { // a first load has already shown the price: nothing already seen is hidden
+      // where the page change carries this label across (app.js names it "tag") it lands at 500 and is pressed home; elsewhere it is new and is stamped on
+      const flew = !!document.startViewTransition; hit = flew ? 520 : T0;
+      if (flew) press(s, hit); else stamp(s, hit, 1.35, 7, inward(s.getBoundingClientRect(), host.getBoundingClientRect(), 1.35, 7));
+      give(host, hit, .985);
+    }
+  }
+  const img = host.querySelector(":scope > img.shot"); if (!img || host.classList.contains("tile--photo") || !ACT[cat]) return;
+  const start = late => {
+    if (!layer.isConnected || !img.isConnected) return;
+    if (late) { T0 = Math.max(140, 450 - (performance.now() - born)); WIND = T0 - 140; hit = T0; }   // the photo came in after the page was drawn: the act still waits for the page change to land
+    const K = ink(img); if (!K) return;
+    const P = seat(host, img), pin = (fx, fy) => { img.style.transformOrigin = `${(P.x - P.ox + fx * P.w).toFixed(1)}px ${(P.y - P.oy + fy * P.h).toFixed(1)}px`; };
+    ACT[cat]({ layer, img, K, P, pin, host, hit });
+  };
+  if (img.complete && img.naturalWidth) start(false); else img.addEventListener("load", () => start(true), { once: true });
+}
+const PIECES = new Set(Object.keys(ACT));
 
 // One layer per page. A re-draw of the same page (add to cart, a quantity change) moves the live layer into the
 // new markup, so an act in mid-air carries on and nothing replays.
 let live = null, playedKey = "", lastPath = location.pathname, again = false;
 function place() {
   if (document.hidden) { document.addEventListener("visibilitychange", place, { once: true }); return; } // opened in the background: the act waits to be seen
-  const head = document.querySelector(".shophead[data-cat], .shophead[data-fx]"), stage = document.querySelector('[data-cat="cologne"] [data-stage]:not(.tile--photo), [data-cat="misc"] [data-stage]');
+  const head = document.querySelector(".shophead[data-cat], .shophead[data-fx]"), stage = document.querySelector("[data-stage]");
   const host = head || stage; if (!host || host.querySelector(":scope > .fx")) return;
-  const cat = head ? head.dataset.cat || head.dataset.fx : stage.closest("[data-cat]").dataset.cat, run = head ? FX[cat] : PIECE[cat];
+  const cat = head ? head.dataset.cat || head.dataset.fx : stage.closest("[data-cat]").dataset.cat, run = head ? FX[cat] : PIECES.has(cat) && piece;
   if (!run) return;
+  // a band's layer sits behind its type; a product's sits over the photo and under the price label
+  const mount = l => { const shot = !head && host.querySelector(":scope > .shot"); if (shot) shot.after(l); else host.prepend(l); };
   const key = (head ? "head|" : "piece|") + location.pathname;
-  if (live && live.key === key && !live.layer.isConnected) { host.prepend(live.layer); live.layer.fxAgain && live.layer.fxAgain(host); return; }
+  if (live && live.key === key && !live.layer.isConnected) { mount(live.layer); live.layer.fxAgain && live.layer.fxAgain(host); return; }
   const fresh = key !== playedKey; playedKey = key;
-  const layer = el("span", "fx"); layer.setAttribute("aria-hidden", "true"); host.prepend(layer);
+  const layer = el("span", head ? "fx" : "fx fx--over"); layer.setAttribute("aria-hidden", "true"); mount(layer);
   live = { key, layer };
   clock(again);
-  try { run(layer, fresh && !RM.matches, host, again); } catch (e) { console.error("fx " + key + ": " + (e && e.stack || e)); layer.remove(); live = null; } // an effect that fails is simply absent, and says why
+  try { run(layer, fresh && !RM.matches, host, head ? again : cat); } catch (e) { console.error("fx " + key + ": " + (e && e.stack || e)); layer.remove(); live = null; } // an effect that fails is simply absent, and says why
 }
 new MutationObserver(place).observe(document.getElementById("main"), { childList: true });
 addEventListener("routechange", () => { if (location.pathname !== lastPath) { lastPath = location.pathname; arrivals++; playedKey = ""; live = null; } }); // arriving again plays it again

@@ -34,7 +34,7 @@ const end = () => { console.log((f ? "FAIL " + f + "/" + n : "PASS " + n + "/" +
     t("source: every linear() easing in script sits behind the support test", loose.length === 0, loose.join(" | ").slice(0, 160));
     t("source: smoke takes the LAST observer entry, not any entry (B14)", !/es\.some\(/.test(smk));
     t("source: a mist canvas is zeroed on both exits (B15)", (sec.match(/cv\.width = cv\.height = 0/g) || []).length >= 2);
-    t("source: the cologne stage skips photo tiles (B16)", /\[data-cat="cologne"\] \[data-stage\]:not\(\.tile--photo\)/.test(sec));
+    t("source: a product act skips photo tiles (B16)", /host\.classList\.contains\("tile--photo"\)/.test(sec));
   }
   if (process.env.STATIC) end();
 }
@@ -112,7 +112,7 @@ await load(p, "");
 const shop = await p.evaluate(async () => { const m = await import("/api/catalog-module"); return { cats: m.CATEGORIES.map(c => c.id), prods: m.PRODUCTS.map(x => ({ sku: x.sku, cat: x.cat, photo: !!(x.dark || x.photo) })) }; });
 const only = (process.env.ONLY || "").split(",").filter(Boolean);
 const SECS = ["hookahs", "bases", "bowls", "heat", "hoses", "parts", "cologne", "misc"].filter(c => shop.cats.includes(c) && (!only.length || only.includes(c)));
-const CANVAS = new Set(["cologne", "heat", "bowls"]), LONG = new Set(["hookahs", "hoses"]), SMOKY = new Set(["hookahs", "bases", "bowls", "heat", "hoses", "parts"]);
+const CANVAS = new Set(["cologne", "heat", "bowls"]), LONG = new Set(["hookahs", "hoses"]), SMOKY = new Set(["hookahs"]);
 const pick = c => shop.prods.find(x => x.cat === c && !x.photo) || shop.prods.find(x => x.cat === c);
 t("the shop has the eight sections", SECS.length === 8 || only.length > 0, SECS.join(","));
 
@@ -164,7 +164,7 @@ for (const c of SECS) {
 // ---------- 3. one product page per category ----------
 for (const c of shop.cats) {
   const pr = pick(c); if (!pr) { skip(c + " product page", "no product in this category"); continue; }
-  const wants = (c === "cologne" || c === "misc") ? 1 : 0, smoky = SMOKY.has(c) && !pr.photo;
+  const wants = c === "hookahs" ? 0 : 1, smoky = SMOKY.has(c) && !pr.photo;
   if (c === "misc") { // the label has been on screen since first paint; the effects arrive after the load event
     await p.goto(base + "p/" + pr.sku, { waitUntil: "load" });
     t("misc product: a direct load never hides the price already on screen", (await lowest(p, "[data-stage] .sticker", 1800)) === 1);

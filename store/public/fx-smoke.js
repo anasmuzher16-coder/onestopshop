@@ -151,7 +151,7 @@ RM.addEventListener("change", kick);
 addEventListener("pageshow", e => { if (e.persisted) kick(); }); // back from the back/forward cache
 
 // Where the smoke belongs on the page that is showing, and how strong it is there.
-const SMOKY = { hookahs: 1.6, bases: 0.8, bowls: 0.8, heat: 0.95, hoses: 0.8, parts: 0.7 };
+const SMOKY = { hookahs: 1.6 };   // every other section's piece has its own act (fx-sections.js, ACT)
 function target() {
   const shape = e => e.clientWidth / Math.max(1, e.clientHeight);
   const head = document.querySelector('.shophead[data-cat="hookahs"]');
