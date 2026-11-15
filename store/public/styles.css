@@ -639,7 +639,9 @@ html:not(.hero-seen) .piece .sticker{animation-timing-function:linear(0,.25 6%,.
 .fx .label{transform-box:view-box;transform-origin:72px 76px}
 
 /* gifts: everything in the bow turns and stretches about the knot */
-.fx .loopl,.fx .loopr,.fx .taill,.fx .tailr,.fx .knot{transform-box:view-box;transform-origin:50px 47px}
+.fx .loopl,.fx .loopr,.fx .knot{transform-box:view-box;transform-origin:50px 36px}
+.fx .top{transform-box:view-box;transform-origin:50px 52px}
+.fx .body{transform-box:view-box;transform-origin:50px 95px}
 
 /* terms and privacy: one sheet. Signed: the struck line is not there. Struck: no signature, and the pen lies at the end of the line. */
 .fx .pen{transform-box:view-box;transform-origin:63px 71.5px}

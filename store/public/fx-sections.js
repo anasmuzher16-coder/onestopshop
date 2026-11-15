@@ -545,20 +545,25 @@ Object.assign(FX, {
   gifts(layer, go) {
     const o = obj(layer, OBJ.gifts), q = c => o.querySelector(c);
     if (!go) return;
-    // slack to start; the hands take the loops (they dip), pull them out and the knot bites at T0; then everything springs
-    const D = 700, at = T0 - 200, loop = s => [
-      { transform: `rotate(${-16 * s}deg) scale(.74,.8)`, easing: STATE }, { transform: `rotate(${-18 * s}deg) scale(.7,.78)`, offset: .1, easing: STRIKE },
-      { transform: `rotate(${4 * s}deg) scale(1.12,.9)`, offset: .2857, easing: ENTER }, { transform: `rotate(${-2 * s}deg) scale(.97,1.03)`, offset: .5, easing: STATE },
-      { transform: `rotate(${.8 * s}deg) scale(1.01,.995)`, offset: .75, easing: STATE }, { transform: "rotate(0deg) scale(1,1)" }];
-    const tail = s => [
-      { transform: `rotate(${6 * s}deg) scale(1.12)`, easing: STATE }, { transform: `rotate(${6 * s}deg) scale(1.12)`, offset: .1, easing: STRIKE },
-      { transform: `rotate(${-7 * s}deg) scale(1)`, offset: .2857, easing: ENTER }, { transform: `rotate(${3 * s}deg) scale(1)`, offset: .5, easing: STATE },
-      { transform: `rotate(${-1.2 * s}deg) scale(1)`, offset: .75, easing: STATE }, { transform: "rotate(0deg) scale(1)" }];
-    play(q(".loopl"), loop(1), D, at); play(q(".loopr"), loop(-1), D, at);
-    play(q(".taill"), tail(-1), D, at); play(q(".tailr"), tail(1), D, at);
-    play(q(".knot"), [{ transform: "scale(1.25,1.2)", easing: STATE }, { transform: "scale(1.25,1.2)", offset: .1, easing: STRIKE }, { transform: "scale(.8,.86)", offset: .2857, easing: ENTER },
-      { transform: "scale(1.05,1.05)", offset: .5, easing: STATE }, { transform: "scale(1,1)" }], D, at);
-    play(q(".lid"), [{ transform: "translateY(0px)", easing: ENTER }, { transform: "translateY(1.2px)", offset: .25, easing: STATE }, { transform: "translateY(0px)" }], 240, T0, "none");
+    // packed at the counter: the lid is held open over the box, comes down and seats at T0 (the box takes the knock),
+    // then the bow is pulled tight and its loops spring out
+    lift(o, WIND, T0 + 900);
+    play(q(".top"), [
+      { transform: "translateY(-17px) rotate(-9deg)", easing: STATE },
+      { transform: "translateY(-19px) rotate(-10deg)", offset: .22, easing: STRIKE },   // a breath up before it comes down
+      { transform: "translateY(0px) rotate(0deg)", offset: .5, easing: ENTER },         // T0: seats
+      { transform: "translateY(-2.4px) rotate(.8deg)", offset: .68, easing: STRIKE },
+      { transform: "translateY(0px) rotate(0deg)", offset: .84 },
+      { transform: "translateY(0px) rotate(0deg)" }], 520, T0 - 260);
+    play(q(".body"), [{ transform: "scale(1,1)", easing: ENTER }, { transform: "scale(1.035,.94)", offset: .28, easing: STATE }, { transform: "scale(.99,1.02)", offset: .62, easing: STATE }, { transform: "scale(1,1)" }], 300, T0, "none");
+    const TIE = T0 + 170, loop = s => [
+      { transform: `rotate(${-14 * s}deg) scale(.5,.62)`, easing: STRIKE },
+      { transform: `rotate(${5 * s}deg) scale(1.14,.9)`, offset: .3, easing: ENTER },   // pulled tight
+      { transform: `rotate(${-2.5 * s}deg) scale(.96,1.04)`, offset: .55, easing: STATE },
+      { transform: `rotate(${1 * s}deg) scale(1.01,.99)`, offset: .78, easing: STATE },
+      { transform: "rotate(0deg) scale(1,1)" }];
+    play(q(".loopl"), loop(1), 560, TIE); play(q(".loopr"), loop(-1), 560, TIE);
+    play(q(".knot"), [{ transform: "scale(1.3,1.2)", easing: STRIKE }, { transform: "scale(.82,.88)", offset: .3, easing: ENTER }, { transform: "scale(1.05,1.04)", offset: .6, easing: STATE }, { transform: "scale(1,1)" }], 560, TIE);
   },
   terms(layer, go) {
     const o = obj(layer, OBJ.terms, "signed");

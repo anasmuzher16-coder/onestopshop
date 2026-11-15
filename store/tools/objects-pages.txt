@@ -25,7 +25,7 @@
 
 ### gifts
 ```html
-<g class="o"><g class="bow"><g class="taill"><path class="sol" d="M48 48 L41.5 46.5 L27 59 L33 59.8 L34.2 65.5 Z"/></g><g class="tailr"><path class="sol" d="M52 48 L58.5 46.5 L73 59 L67 59.8 L65.8 65.5 Z"/></g><g class="loopl"><path class="sol" fill-rule="evenodd" d="M46 45 C38 26 20 12 12 20 C4 29 20 48 46 49 Z M37 42 C32 32 22 24.5 18 27 C15 30.5 24 40 37 42 Z"/></g><g class="loopr"><path class="sol" fill-rule="evenodd" d="M54 45 C62 26 80 12 88 20 C96 29 80 48 54 49 Z M63 42 C68 32 78 24.5 82 27 C85 30.5 76 40 63 42 Z"/></g><g class="knot"><path class="sol" d="M45 40 H55 C57 40 58 41.5 58 43 V51 C58 52.5 57 54 55 54 H45 C43 54 42 52.5 42 51 V43 C42 41.5 43 40 45 40 Z"/></g></g><g class="lid"><path class="sol" fill-rule="evenodd" d="M6 69 H94 V80 H89 V94 H11 V80 H6 Z M42.5 69 H44.5 V94 H42.5 Z M55.5 69 H57.5 V94 H55.5 Z"/></g></g>
+<g class="o"><g class="top"><g class="bow"><g class="loopl"><path class="sol" fill-rule="evenodd" d="M47 34 C41 17 27 6 19.5 13 C12 21 26 35 47 36.5 Z M40.5 30.5 C36 21.5 28 15 24.5 17.6 C22 21 29.5 29 40.5 30.5 Z"/></g><g class="loopr"><path class="sol" fill-rule="evenodd" d="M53 34 C59 17 73 6 80.5 13 C88 21 74 35 53 36.5 Z M59.5 30.5 C64 21.5 72 15 75.5 17.6 C78 21 70.5 29 59.5 30.5 Z"/></g><g class="knot"><path class="sol" d="M46 29 H54 C56 29 57 30.2 57 32 V39 H43 V32 C43 30.2 44 29 46 29 Z"/></g></g><path class="sol" fill-rule="evenodd" d="M9 38 H91 V52 H9 Z M42.4 38 H44.8 V52 H42.4 Z M55.2 38 H57.6 V52 H55.2 Z"/></g><g class="body"><path class="sol" fill-rule="evenodd" d="M15 54.4 H85 V95 H15 Z M42.4 54.4 H44.8 V95 H42.4 Z M55.2 54.4 H57.6 V95 H55.2 Z"/></g></g>
 ```
 
 ### terms
