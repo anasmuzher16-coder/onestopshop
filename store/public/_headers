@@ -1,6 +1,13 @@
 /*
   X-Robots-Tag: noindex, nofollow
+/*.js
+  Cache-Control: public, max-age=300, stale-while-revalidate=604800
+/*.css
+  Cache-Control: public, max-age=300, stale-while-revalidate=604800
 /img/*
-  Cache-Control: public, max-age=300
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+/img/pc/*
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
 /fonts/*
   Cache-Control: public, max-age=31536000, immutable

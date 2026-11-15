@@ -295,9 +295,9 @@ const PIECE = {
 // new markup, so an act in mid-air carries on and nothing replays.
 let live = null, playedKey = "", lastPath = location.pathname;
 function place() {
-  const head = document.querySelector(".shophead[data-cat]"), stage = document.querySelector('[data-cat="cologne"] [data-stage], [data-cat="misc"] [data-stage]');
+  const head = document.querySelector(".shophead[data-cat], .shophead[data-fx]"), stage = document.querySelector('[data-cat="cologne"] [data-stage], [data-cat="misc"] [data-stage]');
   const host = head || stage; if (!host || host.querySelector(":scope > .fx")) return;
-  const cat = (head || stage.closest("[data-cat]")).dataset.cat, run = head ? FX[cat] : PIECE[cat];
+  const cat = head ? head.dataset.cat || head.dataset.fx : stage.closest("[data-cat]").dataset.cat, run = head ? FX[cat] : PIECE[cat];
   if (!run) return;
   const key = (head ? "head|" : "piece|") + location.pathname;
   if (live && live.key === key && !live.layer.isConnected) { host.prepend(live.layer); return; }
@@ -314,7 +314,7 @@ let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(ref
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(refit);
 // a tap on the band plays its act again
 document.addEventListener("click", e => {
-  const band = e.target.closest(".shophead[data-cat]"); if (!band || RM.matches || e.target.closest("a,button")) return;
+  const band = e.target.closest(".shophead[data-cat], .shophead[data-fx]"); if (!band || RM.matches || e.target.closest("a,button")) return;
   const old = band.querySelector(":scope > .fx"); if (old) old.remove();
   live = null; playedKey = ""; place();
 });

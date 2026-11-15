@@ -588,3 +588,8 @@ html:not(.hero-seen) .piece .sticker{animation-timing-function:linear(0,.25 6%,.
 .fx .tip{transform-box:view-box;transform-origin:68px 38px}
 .fx .turn{transform-box:view-box;transform-origin:50px 50px}
 .fx .head{transform-box:view-box}
+/* 07 page bands: the pages that are not shop sections open with the same band */
+.shophead--page .shophead__n a{display:inline-flex;align-items:center;min-height:44px;color:inherit;text-underline-offset:.2em}
+.shophead--page .shophead__n:has(a){margin-top:0}
+.shophead--page + .cart,.shophead--page + .reading,.shophead--page + .empty,.shophead--page + .search{padding-top:var(--s-6)}
+.shophead--page + .empty .lead{margin-top:0}

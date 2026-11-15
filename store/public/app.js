@@ -86,6 +86,8 @@ function card(p, i = 9) {
 }
 
 // ---------- views ----------
+// Every page opens with the same band the shop sections have: a flat jewel colour, the title, and room for the page's object.
+const band = (fx, tone, title, note = "") => `<section class="shophead shophead--page" data-tone="${tone}" data-fx="${fx}"><h1 class="shophead__h">${title}</h1>${note ? `<p class="shophead__n">${note}</p>` : ""}</section>`;
 function viewHome() {
   const picks = ["Sultan Totem", "Stuttgart Pure, Jade", "Regent Neon Blue", "Cairo Avatar", "Carbon Black", "Mamoun Moagza Copper", "Regent Neon Pink", "Orbit"].map(n => PRODUCTS.find(p => p.name === n)).filter(Boolean).slice(0, 8);
   const resin = PRODUCTS.filter(p => p.dark);
@@ -165,7 +167,7 @@ function viewShop(cat) {
   const c = catById[cat] || null, list = c ? PRODUCTS.filter(p => p.cat === c.id) : PRODUCTS;
   const groups = cat === "hookahs" ? [...Object.keys(SERIES).map(k => [k, list.filter(p => seriesOf(p) === k)]), ["More from the shelf", list.filter(p => !seriesOf(p) && !p.dark)], ["One of one", list.filter(p => p.dark)]].filter(g => g[1].length) : [["", list]];
   return `
-  <section class="shophead" data-tone="${c ? c.tone : "bone"}" ${c ? `data-cat="${c.id}"` : ""}>
+  <section class="shophead" data-tone="${c ? c.tone : "bone"}" ${c ? `data-cat="${c.id}"` : `data-fx="all"`}>
     <h1 class="shophead__h">${c ? c.name : "Everything"}</h1>
     <p class="shophead__n"><span class="num">${list.length}</span> pieces</p>
   </section>
@@ -175,7 +177,7 @@ function viewShop(cat) {
 
 function viewProduct(sku) {
   const p = bySku[sku];
-  if (!p) return `<section class="empty"><h1 class="h2 h2--xl">That one is gone.</h1><p class="lead">It may have sold. <a class="link" href="/shop">See what is on the counter</a>.</p></section>`;
+  if (!p) return `${band("missing", "ruby", "That one is gone.")}<section class="empty"><p class="lead">It may have sold. <a class="link" href="/shop">See what is on the counter</a>.</p></section>`;
   const c = catById[p.cat], parcels = pack([{ product: p, qty: 1 }]), opts = state.dest ? quote(state.dest, parcels) : [], b = parcels[0];
   const inCart = state.cart.some(l => l.sku === sku);
   const more = PRODUCTS.filter(x => x.cat === p.cat && x.sku !== sku && !x.dark).sort((a, b) => (seriesOf(b) === seriesOf(p)) - (seriesOf(a) === seriesOf(p))).slice(0, 4);
@@ -241,7 +243,7 @@ function viewProduct(sku) {
 function viewGifts(kind) {
   const under = kind === "under-50", list = PRODUCTS.filter(p => !p.dark && (under ? p.price < 50 : p.price >= 50 && p.price <= 150)).sort((a, b) => b.price - a.price);
   return `
-  <section class="shophead" data-tone="${under ? "emerald" : "cobalt"}">
+  <section class="shophead" data-tone="${under ? "emerald" : "cobalt"}" data-fx="gifts">
     <h1 class="shophead__h">${under ? "Under $50" : "Under $150"}</h1>
     <p class="shophead__n"><span class="num">${list.length}</span> gifts, packed at the counter</p>
   </section>
@@ -268,7 +270,7 @@ function setSummary() {
 function viewSet() {
   const picks = setPicks();
   return `
-  <section class="shophead" data-tone="ruby">
+  <section class="shophead" data-tone="ruby" data-fx="set">
     <h1 class="shophead__h">Build a set</h1>
     <p class="shophead__n">Four picks. One box where it fits.</p>
   </section>
@@ -292,8 +294,8 @@ function searchResults() {
 }
 function viewSearch() {
   return `
+  ${band("search", "teal", "Search")}
   <section class="search">
-    <h1 class="h2 h2--xl">Search</h1>
     <label class="field__label" for="q">Search all ${PRODUCTS.length} pieces</label>
     <input class="field field--text" id="q" type="search" autocomplete="off" enterkeyhint="search" placeholder="Brass, bowl, Sultan" value="${esc(state.q)}">
     <div class="search__out" data-search-out aria-live="polite">${searchResults()}</div>
@@ -302,14 +304,14 @@ function viewSearch() {
 
 function viewCart() {
   const lines = cartLines();
-  if (!lines.length) return `<section class="empty"><h1 class="h2 h2--xl">Your cart is empty.</h1><p class="lead">Start with the <a class="link" href="/shop/hookahs">hookahs</a>, the <a class="link" href="/shop/bowls">bowls</a>, or <a class="link" href="/set">build a set</a>.</p></section>`;
+  if (!lines.length) return `${band("cart", "gilt", "Your cart", "Nothing in it yet.")}<section class="empty"><p class="lead">Start with the <a class="link" href="/shop/hookahs">hookahs</a>, the <a class="link" href="/shop/bowls">bowls</a>, or <a class="link" href="/set">build a set</a>.</p></section>`;
   const parcels = pack(lines), opts = state.dest ? quote(state.dest, parcels) : [];
   const pickup = state.ship === "pickup", chosen = pickup ? null : opts.find(o => o.id === state.ship) || opts[0], sub = lines.reduce((a, l) => a + l.product.price * l.qty, 0);
   const ready = pickup || !!chosen;
   const tooHeavy = state.dest && !opts.length;
   return `
+  ${band("cart", "gilt", "Your cart", `<span class="num">${lines.reduce((a, l) => a + l.qty, 0)}</span> ${lines.reduce((a, l) => a + l.qty, 0) === 1 ? "piece" : "pieces"}, packed at the counter`)}
   <section class="cart">
-    <h1 class="h2 h2--xl">Your cart</h1>
     <ul class="lines">${lines.map(({ product: p, qty }) => `
       <li class="line" data-tone="${toneOf(p)}">
         <a class="line__tile tile ${p.dark || p.photo ? "tile--photo" : ""}" href="/p/${p.sku}">${shot(p, { small: true, use: "thumb" })}</a>
@@ -345,8 +347,8 @@ function viewCart() {
 
 function viewShipping() {
   return `
+  ${band("shipping", "cobalt", "Shipping", "From Windsor to every province and territory.")}
   <section class="reading">
-    <h1 class="h2 h2--xl">Shipping</h1>
     <p class="lead">We pack every order at the counter in Windsor and ship to every province and territory.</p>
     <h2 class="h3">What it costs</h2>
     <p>Shipping is worked out from the packed weight and box size of your order and the carrier\u2019s rate to your postal code. You see the cost on the product page and in the cart before you pay.</p>
@@ -417,14 +419,13 @@ function viewCheckout() {
   const lines = cartLines();
   if (!lines.length) return viewCart();
   const pickup = state.ship === "pickup", parcels = pack(lines), opts = !pickup && state.dest ? quote(state.dest, parcels) : [], chosen = opts.find(o => o.id === state.ship) || opts[0];
-  if (!pickup && !chosen) return `<section class="empty"><h1 class="h2 h2--xl">One step back.</h1><p class="lead">Choose shipping or pickup in <a class="link" href="/cart">your cart</a> first.</p></section>`;
+  if (!pickup && !chosen) return `${band("checkout", "emerald", "One step back.")}<section class="empty"><p class="lead">Choose shipping or pickup in <a class="link" href="/cart">your cart</a> first.</p></section>`;
   const sub = lines.reduce((a, l) => a + l.product.price * l.qty, 0), ship = pickup ? 0 : chosen.total, prov = pickup ? "ON" : state.dest.prov;
   const tax = Math.round((sub + ship) * taxRate(prov) * 100) / 100, units = lines.reduce((a, l) => a + l.qty, 0), f = state.form || {};
   const field = (id, label, attrs, hint = "") => `<label class="field__label" for="co-${id}">${label}${hint ? ` <span class="fine">${hint}</span>` : ""}</label><input class="field" id="co-${id}" name="${id}" value="${esc(f[id] || "")}" ${attrs}>`;
   return `
+  ${band("checkout", "emerald", "Checkout", `<a href="/cart">Back to the cart</a>`)}
   <section class="cart checkout">
-    <p class="crumb"><a href="/cart">Cart</a></p>
-    <h1 class="h2 h2--xl">Checkout</h1>
     <form class="co" data-checkout novalidate>
       <fieldset class="co__set"><legend class="h3">Who it is for</legend>
         ${field("name", "Full name", 'autocomplete="name" maxlength="80" required')}
@@ -496,7 +497,7 @@ document.addEventListener("submit", async e => {
 });
 // ---------- the small print ----------
 const DRAFT = `<p class="done__tag"><span>Draft</span> <b>for the shop to review</b></p>`;
-const doc = (title, lead, parts) => `<section class="cart doc">${DRAFT}<h1 class="h2 h2--xl">${title}</h1><p class="lead">${lead}</p>${parts.map(([h, body]) => `<h2 class="h3">${h}</h2>${body.map(t => `<p>${t}</p>`).join("")}`).join("")}</section>`;
+const doc = (title, lead, parts) => `${band("docs", "bone", title, lead)}<section class="cart doc">${DRAFT}${parts.map(([h, body]) => `<h2 class="h3">${h}</h2>${body.map(t => `<p>${t}</p>`).join("")}`).join("")}</section>`;
 const viewPrivacy = () => doc("Privacy", "What we collect when you order, why, and how to ask about it.", [
   ["What we collect", ["Your name, email, phone number if you give it, and delivery address, so we can send your order and answer questions about it.", "Your card details go straight to the payment company. We never see or store the card number."]],
   ["What we do not do", ["We do not sell or rent your details. We do not use advertising trackers. Visit counts on this site use no cookies and do not identify you."]],
@@ -513,7 +514,7 @@ const viewTerms = () => doc("Terms of sale", "The plain rules for buying from us
   ["Damage in transit", ["If something arrives broken, keep the packaging, take a photo and tell us within 3 days. We will replace it or refund it."]],
   ["If something is wrong with the order", ["If we cannot ship within 30 days of the date promised, you can cancel for a full refund."]],
 ]);
-const viewMissing = () => `<section class="empty"><h1 class="h2 h2--xl">Nothing at this address.</h1><p class="lead">The link may be old. <a class="link" href="/shop">See what is on the counter</a>.</p></section>`;
+const viewMissing = () => `${band("missing", "ruby", "Nothing at this address.")}<section class="empty"><p class="lead">The link may be old. <a class="link" href="/shop">See what is on the counter</a>.</p></section>`;
 function render() {
   const keep = focusKey(document.activeElement);
   const [a, b] = route().replace(/^#\/?/, "").split("/");

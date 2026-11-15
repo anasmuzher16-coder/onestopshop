@@ -79,7 +79,7 @@ export default {
     try {
       if (path === "/api/catalog-module") {
         if (request.method !== "GET" && request.method !== "HEAD") return new Response("Method not allowed", { status: 405 });
-        return new Response(catalogModule(await loadCatalog(env.DB)), { headers: { "Content-Type": "text/javascript; charset=utf-8", "Cache-Control": "no-cache", "X-Content-Type-Options": "nosniff" } });
+        return new Response(catalogModule(await loadCatalog(env.DB)), { headers: { "Content-Type": "text/javascript; charset=utf-8", "Cache-Control": "public, max-age=30, stale-while-revalidate=300", "X-Content-Type-Options": "nosniff" } });
       }
       if (path === "/api/catalog") {
         if (request.method !== "GET") return json({ error: "Method not allowed" }, 405);

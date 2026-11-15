@@ -109,8 +109,8 @@ function apply() {
 function draw(now) {
   raf = 0; if (!gl || lost || !cv.isConnected) return;
   const still = RM.matches, s = Math.max(0, (now - placedAt - conf.wait) / 1000); // seconds since this placement's act began
-  // once the bank has settled it only drifts: half the frames are enough, and it costs half as much
-  if (!still && conf.kind === "bank" && s > 7 && now - lastDraw < 30) { raf = requestAnimationFrame(draw); return; }
+  // once the smoke has arrived it only drifts: half the frames are enough, and it costs half as much
+  if (!still && s > (conf.kind === "bank" ? 7 : 5) && now - lastDraw < 30) { raf = requestAnimationFrame(draw); return; }
   lastDraw = now;
   gl.uniform1f(U.roll, fixedRoll !== null ? fixedRoll : still ? 9 : s);
   gl.uniform1f(U.grow, still || conf.kind === "bank" ? 1.3 : 1.3 * (1 - Math.exp(-1.5 * s))); // the column climbs from its source
