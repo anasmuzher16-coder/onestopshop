@@ -49,7 +49,7 @@ try {
   t("both new orders are waiting in the back office", await p.locator(`[data-order="${id1}"]`).count() === 1 && await p.locator(`[data-order="${id2}"]`).count() === 1);
   await p.locator(`[data-order="${id1}"]`).tap(); await p.waitForSelector("dialog[open] [data-next]"); await snap("flow-admin-order");
   await p.locator("[data-next]").tap(); await p.waitForFunction(() => /Mark shipped/.test(document.querySelector("dialog[open] [data-next]")?.textContent || ""), null, { timeout: 8000 });
-  t("order moves from To pack to Packed", /packed/i.test(await p.locator("dialog[open] .state").innerText()));
+  t("order moves from To pack to Packed", /packed/i.test(await p.locator("dialog[open] .sheet__top .state").innerText()));
   await p.locator("dialog[open] .sheet__act [data-close]").tap();
   await p.locator('[data-tab="stock"]').tap(); await p.waitForSelector(".row[data-sku]"); await p.fill("#q", "Olive snapback"); await p.waitForTimeout(300);
   const row = p.locator('.row[data-sku="OSS-8003"]'), was = +(await row.locator("output").innerText());

@@ -3,6 +3,7 @@
 import { loadCatalog, catalogModule } from "./catalog.js";
 import { admin, photo } from "./admin.js";
 import { placeOrder } from "./checkout.js";
+import { nightly } from "./backup.js";
 
 const SECURITY = {
   "Content-Security-Policy": "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'",
@@ -31,9 +32,9 @@ function describe(path, cat, site) {
   }
   if (a === "order") return b && /^W[A-Z0-9]{6}$/.test(b) ? { ...base, title: `Order ${b} | ${site}`, index: false } : null;
   if (b && a !== "gifts") return null;
-  const fixed = { checkout: "Checkout", cart: "Cart", shipping: "Shipping and returns", set: "Build a set", search: "Search", gifts: "Gifts" };
+  const fixed = { privacy: "Privacy", terms: "Terms of sale", checkout: "Checkout", cart: "Cart", shipping: "Shipping and returns", set: "Build a set", search: "Search", gifts: "Gifts" };
   if (!fixed[a]) return null;
-  return { ...base, title: `${fixed[a]} | ${site}`, index: a === "shipping" || a === "set" };
+  return { ...base, title: `${fixed[a]} | ${site}`, index: ["shipping", "set", "privacy", "terms"].includes(a) };
 }
 
 async function page(request, env, url) {
@@ -70,6 +71,8 @@ async function page(request, env, url) {
 const esc = s => String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
 
 export default {
+  // every night: a full copy of the shop's records into the backup bucket
+  async scheduled(event, env, ctx) { ctx.waitUntil(nightly(env)); },
   async fetch(request, env) {
     const url = new URL(request.url);
     const path = url.pathname;

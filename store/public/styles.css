@@ -539,3 +539,20 @@ html:not(.hero-seen) .piece .sticker{animation-timing-function:linear(0,.25 6%,.
 .cart.done>.btn--wide{display:inline-flex}
 .shot--none{display:grid;place-items:center;font-size:var(--t-12);letter-spacing:.08em;text-transform:uppercase;color:var(--color-on-tile);opacity:.55;text-align:center;padding:var(--s-3)}
 .checkout .h2--xl{margin-bottom:var(--s-6)}
+
+/* privacy and terms */
+.doc{max-width:68ch}
+.doc .h3{margin:var(--s-8) 0 var(--s-2)}
+.doc p{margin:0 0 var(--s-3)}
+.doc .done__tag b{font:600 var(--t-12)/1.6 var(--font-ui);letter-spacing:.09em}
+/* 05 smoke, fallback: where the phone cannot draw it live, two soft stills drift instead */
+.smoke--still{background:none}
+.smoke--still i{position:absolute;inset:-6% 0 0;background:center / 100% 100% no-repeat;opacity:.9}
+.smoke--still i:first-child{background-image:url(img/smoke-a.webp)}
+.smoke--still i:last-child{background-image:url(img/smoke-b.webp);opacity:0}
+@media (prefers-reduced-motion:no-preference){
+  .smoke--still i:first-child{animation:smoke-a 16s ease-in-out infinite alternate}
+  .smoke--still i:last-child{animation:smoke-b 16s ease-in-out infinite alternate}
+  @keyframes smoke-a{from{transform:translateY(3%) scale(1);opacity:.9}to{transform:translateY(-5%) scale(1.06);opacity:.15}}
+  @keyframes smoke-b{from{transform:translateY(5%) scale(1.05);opacity:0}to{transform:translateY(-3%) scale(1);opacity:.9}}
+}

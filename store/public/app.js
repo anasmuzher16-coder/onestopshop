@@ -494,11 +494,30 @@ document.addEventListener("submit", async e => {
     navigate("/order/" + data.order.id, true);
   } catch { btn.disabled = false; btn.textContent = "Place order"; fail("We could not reach the shop. Check your connection and try again."); }
 });
+// ---------- the small print ----------
+const DRAFT = `<p class="done__tag"><span>Draft</span> <b>for the shop to review</b></p>`;
+const doc = (title, lead, parts) => `<section class="cart doc">${DRAFT}<h1 class="h2 h2--xl">${title}</h1><p class="lead">${lead}</p>${parts.map(([h, body]) => `<h2 class="h3">${h}</h2>${body.map(t => `<p>${t}</p>`).join("")}`).join("")}</section>`;
+const viewPrivacy = () => doc("Privacy", "What we collect when you order, why, and how to ask about it.", [
+  ["What we collect", ["Your name, email, phone number if you give it, and delivery address, so we can send your order and answer questions about it.", "Your card details go straight to the payment company. We never see or store the card number."]],
+  ["What we do not do", ["We do not sell or rent your details. We do not use advertising trackers. Visit counts on this site use no cookies and do not identify you."]],
+  ["Who else sees it", ["The carrier gets your name and address to deliver the parcel. The payment company gets what it needs to take the payment. Our hosting company stores the order on our behalf."]],
+  ["How long we keep it", ["Order records are kept for six years, because tax law requires it. After that they are deleted."]],
+  ["Your choices", ["You can ask to see what we hold about you, to correct it, or to have it deleted where the law allows. Email or call the counter and we will answer within 30 days.", "Marketing emails are only sent if you ask for them, and every one has an unsubscribe link."]],
+  ["Who to ask", ["The person responsible for privacy at the shop is the manager. Call 519-255-2222."]],
+]);
+const viewTerms = () => doc("Terms of sale", "The plain rules for buying from us online.", [
+  ["Prices and tax", ["Prices are in Canadian dollars. Tax is added at checkout, based on the province the order ships to."]],
+  ["Shipping", ["We ship within Canada. The price at checkout is the price you pay for shipping. Delivery times are the carrier's estimates. Cologne ships by ground only."]],
+  ["Pickup", ["Pickup at the Windsor counter is free. We email you when the order is ready and hold it for 14 days."]],
+  ["Returns", ["Unused items in their original packaging can be returned within 14 days for a refund to the original payment method. Opened cologne cannot be returned."]],
+  ["Damage in transit", ["If something arrives broken, keep the packaging, take a photo and tell us within 3 days. We will replace it or refund it."]],
+  ["If something is wrong with the order", ["If we cannot ship within 30 days of the date promised, you can cancel for a full refund."]],
+]);
 const viewMissing = () => `<section class="empty"><h1 class="h2 h2--xl">Nothing at this address.</h1><p class="lead">The link may be old. <a class="link" href="/shop">See what is on the counter</a>.</p></section>`;
 function render() {
   const keep = focusKey(document.activeElement);
   const [a, b] = route().replace(/^#\/?/, "").split("/");
-  $("#main").innerHTML = a === "shop" ? (b && !catById[b] ? viewMissing() : viewShop(b)) : a === "p" ? viewProduct(b) : a === "cart" ? viewCart() : a === "shipping" ? viewShipping() : a === "gifts" ? viewGifts(b) : a === "set" ? viewSet() : a === "search" ? viewSearch() : a === "checkout" ? viewCheckout() : a === "order" ? viewOrder(b) : !a ? viewHome() : viewMissing();
+  $("#main").innerHTML = a === "shop" ? (b && !catById[b] ? viewMissing() : viewShop(b)) : a === "p" ? viewProduct(b) : a === "cart" ? viewCart() : a === "shipping" ? viewShipping() : a === "gifts" ? viewGifts(b) : a === "set" ? viewSet() : a === "search" ? viewSearch() : a === "privacy" ? viewPrivacy() : a === "terms" ? viewTerms() : a === "checkout" ? viewCheckout() : a === "order" ? viewOrder(b) : !a ? viewHome() : viewMissing();
   document.body.dataset.route = a || "home";
   syncChrome();
   if (keep) { const el = document.querySelector(keep); if (el) el.focus({ preventScroll: true }); }

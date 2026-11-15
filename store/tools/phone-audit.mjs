@@ -5,7 +5,7 @@ import { createRequire } from "node:module";
 const { chromium } = createRequire("C:/dev/puckempire-arena/package.json")("playwright");
 const base = process.env.BASE || "http://127.0.0.1:4420/";
 const SIZES = [[360, 740], [375, 667], [390, 844], [412, 915], [844, 390]];
-const ROUTES = ["", "shop", "shop/hookahs", "shop/bowls", "p/OSS-1027", "p/OSS-1008", "p/OSS-3003", "cart", "shipping", "set", "search", "gifts/under-50", "shop/cologne", "shop/misc", "p/OSS-7003", "p/OSS-8001", "checkout"];
+const ROUTES = ["", "shop", "shop/hookahs", "shop/bowls", "p/OSS-1027", "p/OSS-1008", "p/OSS-3003", "cart", "shipping", "set", "search", "gifts/under-50", "shop/cologne", "shop/misc", "p/OSS-7003", "p/OSS-8001", "checkout", "privacy", "terms"];
 const cart = [{ sku: "OSS-1021", qty: 1 }, { sku: "OSS-5006", qty: 1 }, { sku: "OSS-6004", qty: 2 }];
 let n = 0, f = 0; const seen = new Set();
 const fail = (where, msg) => { f++; const k = msg.replace(/\d+(\.\d+)?/g, "#"); if (!seen.has(where.split(" ")[0] + k)) { seen.add(where.split(" ")[0] + k); console.log("FAIL", where, msg); } };

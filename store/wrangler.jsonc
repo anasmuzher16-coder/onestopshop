@@ -15,5 +15,10 @@
   "d1_databases": [
     { "binding": "DB", "database_name": "onestopshop", "database_id": "b7386cbb-2597-4060-838f-230e6b7c54e6", "migrations_dir": "migrations" }
   ],
+  // Nightly backup at 3 am Windsor time. It saves to the BACKUPS bucket once that is connected:
+  //   npx wrangler r2 bucket create onestopshop-backups   then un-comment the next line.
+  // "r2_buckets": [{ "binding": "BACKUPS", "bucket_name": "onestopshop-backups" }],
+  "triggers": { "crons": ["0 8 * * *"] },
+  // Order emails send once RESEND_API_KEY (a secret) and EMAIL_FROM are set. Until then they are written and held.
   "vars": { "LIVE": "0", "SITE_NAME": "One Stop Shop" }
 }

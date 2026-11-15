@@ -3,6 +3,7 @@
 // never go below zero. Payment is not connected yet: orders are marked as demo orders and no card is taken.
 import * as rates from "../public/rates-core.js";
 import { loadCatalog, toStorefront } from "./catalog.js";
+import { orderPlaced, lowStock, writeEmail } from "./email.js";
 
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" } });
 const text = (v, max) => typeof v === "string" && v.trim().length > 0 && v.trim().length <= max ? v.trim() : null;
@@ -15,7 +16,7 @@ export async function placeOrder(request, env, url) {
   const body = await request.json().catch(() => null); if (!body || typeof body !== "object") return json({ error: "That order could not be read." }, 400);
   const db = env.DB;
   // a brake, so nobody can flood the shop with orders
-  const recent = await db.prepare("SELECT COUNT(*) AS n FROM orders WHERE created_at >= datetime('now','-1 minute')").first("n");
+  const recent = await db.prepare("SELECT COUNT(*) AS n FROM orders WHERE created_at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 minute')").first("n");
   if (recent >= 12) return json({ error: "The shop is busy. Try again in a minute." }, 429);
 
   const name = text(body.name, 80), email = text(body.email, 120), phone = body.phone ? text(String(body.phone), 30) : null, note = body.note ? text(String(body.note), 240) : null;
@@ -80,6 +81,11 @@ export async function placeOrder(request, env, url) {
     return json({ error: `${failed[0].product.name} sold out while you were checking out.`, sku: failed[0].product.sku }, 409);
   }
   await db.prepare("UPDATE orders SET status = 'paid', updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = ?").bind(id).run();
+  // the receipt to the shopper, and a note to the shop if this order took anything down to its warning level
+  const site = env.SITE_NAME || "One Stop Shop", sold = lines.map(l => ({ name: l.product.name, qty: l.qty, unit_cents: cents(l.product.price) }));
+  await writeEmail(env, id, email, orderPlaced(site, { id, name, method, ship_service: service, subtotal_cents: subtotal, shipping_cents: shipping, tax_cents: tax, total_cents: total, tax_province: province }, sold));
+  const low = await db.prepare(`SELECT name, stock FROM products WHERE active = 1 AND stock <= low_stock_at AND sku IN (${lines.map(() => "?").join(",")}) ORDER BY stock, name`).bind(...lines.map(l => l.product.sku)).all();
+  if (low.results.length) await writeEmail(env, id, env.OWNER_EMAIL || "the shop", lowStock(site, low.results));
   return json({ ok: true, order: { id, method, name, email, service, province, subtotal_cents: subtotal, shipping_cents: shipping, tax_cents: tax, total_cents: total,
     tax_label: rates.taxLabel(province), days: quote.days ?? null, address: method === "ship" ? address : null,
     items: lines.map(l => ({ sku: l.product.sku, name: l.product.name, qty: l.qty, unit_cents: cents(l.product.price) })) } }, 201);

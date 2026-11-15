@@ -1,14 +1,17 @@
+import { orderShipped, pickupReady, writeEmail } from "./email.js";
+import { snapshot } from "./backup.js";
 // The shop's back office: sign-in, shop numbers, stock and orders. Every route here needs the admin cookie,
 // and every write also needs a same-site JSON request, so another website cannot trigger one.
 const json = (body, status = 200, headers = {}) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", ...headers } });
 const COOKIE = "oss_admin";
 const hex = buf => [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, "0")).join("");
-async function token(env) { return hex(await crypto.subtle.digest("SHA-256", new TextEncoder().encode("oss-admin-v1|" + env.ADMIN_KEY))); }
+const sha = async s => hex(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)));
+const cookieToken = request => ((request.headers.get("Cookie") || "").match(/(?:^|;\s*)oss_admin=([a-f0-9]{64})/) || [])[1];
 function same(a, b) { if (a.length !== b.length) return false; let d = 0; for (let i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i); return d === 0; }
 async function signedIn(request, env) {
-  if (!env.ADMIN_KEY) return false;
-  const m = (request.headers.get("Cookie") || "").match(/(?:^|;\s*)oss_admin=([a-f0-9]{64})/);
-  return !!m && same(m[1], await token(env));
+  // each sign-in is its own random token, kept only as a hash, and it expires by itself
+  const t = cookieToken(request); if (!t) return false;
+  return !!(await env.DB.prepare("SELECT 1 AS ok FROM sessions WHERE token_hash = ? AND expires_at > strftime('%Y-%m-%dT%H:%M:%SZ','now')").bind(await sha(t)).first("ok"));
 }
 const SOLD = "('paid','packed','shipped','ready','collected')";
 const LOCAL = "'-5 hours'"; // the shop's clock (Windsor), close enough for day totals
@@ -20,11 +23,22 @@ export async function admin(request, env, url) {
   if (path === "/login" && method === "POST") {
     if (!env.ADMIN_KEY) return json({ error: "The admin passcode has not been set up yet." }, 503);
     const body = await request.json().catch(() => ({}));
-    if (typeof body.passcode !== "string" || !same(hex(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(body.passcode))), hex(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(env.ADMIN_KEY)))))
-      return json({ error: "That passcode is not right." }, 401);
+    // five wrong tries from one place, or forty from anywhere, locks sign-in for fifteen minutes
+    const who = await sha("who|" + (request.headers.get("CF-Connecting-IP") || "local"));
+    const tries = await db.prepare("SELECT COALESCE(SUM(who = ?1 AND ok = 0),0) AS mine, COALESCE(SUM(ok = 0),0) AS everyone FROM login_attempts WHERE at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-15 minutes')").bind(who).first();
+    if (tries.mine >= 5 || tries.everyone >= 40) return json({ error: "Too many wrong tries. Wait 15 minutes and try again." }, 429);
+    const right = typeof body.passcode === "string" && same(await sha(body.passcode), await sha(env.ADMIN_KEY));
+    await db.prepare("INSERT INTO login_attempts (who, ok) VALUES (?, ?)").bind(who, right ? 1 : 0).run();
+    if (!right) return json({ error: "That passcode is not right." }, 401);
+    const t = hex(crypto.getRandomValues(new Uint8Array(32)));
+    await db.batch([
+      db.prepare("INSERT INTO sessions (token_hash, expires_at) VALUES (?, strftime('%Y-%m-%dT%H:%M:%SZ','now','+12 hours'))").bind(await sha(t)),
+      db.prepare("DELETE FROM sessions WHERE expires_at <= strftime('%Y-%m-%dT%H:%M:%SZ','now')"), db.prepare("DELETE FROM login_attempts WHERE at < strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 day')"),
+    ]);
     const secure = url.protocol === "https:" ? " Secure;" : "";
-    return json({ ok: true }, 200, { "Set-Cookie": `${COOKIE}=${await token(env)}; Path=/; HttpOnly;${secure} SameSite=Strict; Max-Age=${60 * 60 * 12}` });
+    return json({ ok: true }, 200, { "Set-Cookie": `${COOKIE}=${t}; Path=/; HttpOnly;${secure} SameSite=Strict; Max-Age=${60 * 60 * 12}` });
   }
+  if (path === "/logout" && method === "POST") { const t = cookieToken(request); if (t) await db.prepare("DELETE FROM sessions WHERE token_hash = ?").bind(await sha(t)).run(); }
   if (path === "/logout" && method === "POST") return json({ ok: true }, 200, { "Set-Cookie": `${COOKIE}=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0` });
   if (!(await signedIn(request, env))) return json({ error: "Sign in first." }, 401);
   if (method !== "GET") {
@@ -39,18 +53,18 @@ export async function admin(request, env, url) {
       db.prepare(`SELECT
         COALESCE(SUM(CASE WHEN date(created_at,${LOCAL}) = date('now',${LOCAL}) THEN total_cents END),0) AS today_cents,
         COUNT(CASE WHEN date(created_at,${LOCAL}) = date('now',${LOCAL}) THEN 1 END) AS today_orders,
-        COALESCE(SUM(CASE WHEN created_at >= datetime('now','-7 days') THEN total_cents END),0) AS week_cents,
-        COUNT(CASE WHEN created_at >= datetime('now','-7 days') THEN 1 END) AS week_orders,
-        COALESCE(SUM(CASE WHEN created_at < datetime('now','-7 days') AND created_at >= datetime('now','-14 days') THEN total_cents END),0) AS prev_week_cents,
-        COALESCE(SUM(CASE WHEN created_at >= datetime('now','-30 days') THEN total_cents END),0) AS month_cents,
-        COUNT(CASE WHEN created_at >= datetime('now','-30 days') THEN 1 END) AS month_orders
+        COALESCE(SUM(CASE WHEN created_at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-7 days') THEN total_cents END),0) AS week_cents,
+        COUNT(CASE WHEN created_at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-7 days') THEN 1 END) AS week_orders,
+        COALESCE(SUM(CASE WHEN created_at < strftime('%Y-%m-%dT%H:%M:%SZ','now','-7 days') AND created_at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-14 days') THEN total_cents END),0) AS prev_week_cents,
+        COALESCE(SUM(CASE WHEN created_at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-30 days') THEN total_cents END),0) AS month_cents,
+        COUNT(CASE WHEN created_at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-30 days') THEN 1 END) AS month_orders
         FROM orders WHERE status IN ${SOLD}`),
-      db.prepare(`SELECT date(created_at,${LOCAL}) AS day, SUM(total_cents) AS cents, COUNT(*) AS orders FROM orders WHERE status IN ${SOLD} AND created_at >= datetime('now','-30 days') GROUP BY day ORDER BY day`),
-      db.prepare(`SELECT i.sku, i.name, SUM(i.qty) AS qty, SUM(i.qty * i.unit_cents) AS cents FROM order_items i JOIN orders o ON o.id = i.order_id WHERE o.status IN ${SOLD} AND o.created_at >= datetime('now','-30 days') GROUP BY i.sku ORDER BY cents DESC LIMIT 6`),
-      db.prepare(`SELECT p.sku, p.name, p.stock, p.price_cents FROM products p WHERE p.active = 1 AND p.stock > 0 AND NOT EXISTS (SELECT 1 FROM order_items i JOIN orders o ON o.id = i.order_id WHERE i.sku = p.sku AND o.created_at >= datetime('now','-30 days')) ORDER BY p.stock * p.price_cents DESC LIMIT 6`),
+      db.prepare(`SELECT date(created_at,${LOCAL}) AS day, SUM(total_cents) AS cents, COUNT(*) AS orders FROM orders WHERE status IN ${SOLD} AND created_at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-30 days') GROUP BY day ORDER BY day`),
+      db.prepare(`SELECT i.sku, i.name, SUM(i.qty) AS qty, SUM(i.qty * i.unit_cents) AS cents FROM order_items i JOIN orders o ON o.id = i.order_id WHERE o.status IN ${SOLD} AND o.created_at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-30 days') GROUP BY i.sku ORDER BY cents DESC LIMIT 6`),
+      db.prepare(`SELECT p.sku, p.name, p.stock, p.price_cents FROM products p WHERE p.active = 1 AND p.stock > 0 AND NOT EXISTS (SELECT 1 FROM order_items i JOIN orders o ON o.id = i.order_id WHERE i.sku = p.sku AND o.created_at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-30 days')) ORDER BY p.stock * p.price_cents DESC LIMIT 6`),
       db.prepare("SELECT sku, name, stock, low_stock_at FROM products WHERE active = 1 AND stock <= low_stock_at ORDER BY stock, name LIMIT 40"),
-      db.prepare(`SELECT tax_province AS province, COUNT(*) AS orders, SUM(total_cents) AS cents FROM orders WHERE status IN ${SOLD} AND created_at >= datetime('now','-30 days') GROUP BY tax_province ORDER BY orders DESC`),
-      db.prepare(`SELECT COALESCE(SUM(shipping_cents),0) AS collected, COALESCE(SUM(label_cents),0) AS paid, COUNT(*) AS parcels FROM orders WHERE method = 'ship' AND label_cents IS NOT NULL AND status IN ${SOLD} AND created_at >= datetime('now','-30 days')`),
+      db.prepare(`SELECT tax_province AS province, COUNT(*) AS orders, SUM(total_cents) AS cents FROM orders WHERE status IN ${SOLD} AND created_at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-30 days') GROUP BY tax_province ORDER BY orders DESC`),
+      db.prepare(`SELECT COALESCE(SUM(shipping_cents),0) AS collected, COALESCE(SUM(label_cents),0) AS paid, COUNT(*) AS parcels FROM orders WHERE method = 'ship' AND label_cents IS NOT NULL AND status IN ${SOLD} AND created_at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-30 days')`),
       db.prepare("SELECT COALESCE(SUM(stock * COALESCE(cost_cents, 0)),0) AS cost_cents, COALESCE(SUM(stock * price_cents),0) AS retail_cents, COALESCE(SUM(stock),0) AS units, COUNT(*) AS products FROM products WHERE active = 1"),
       db.prepare("SELECT SUM(status = 'paid') AS to_pack, SUM(status = 'packed') AS to_ship, SUM(status = 'ready') AS waiting_pickup FROM orders"),
     ]);
@@ -150,7 +164,8 @@ export async function admin(request, env, url) {
   if ((m = path.match(/^\/orders\/([A-Z0-9]{3,12})$/)) && method === "GET") {
     const [o, i] = await db.batch([db.prepare("SELECT * FROM orders WHERE id = ?").bind(m[1]), db.prepare("SELECT i.sku, i.name, i.qty, i.unit_cents, p.img, p.img_dark, p.photo_ver, p.box_id FROM order_items i LEFT JOIN products p ON p.sku = i.sku WHERE i.order_id = ?").bind(m[1])]);
     if (!o.results.length) return json({ error: "No such order." }, 404);
-    return json({ order: o.results[0], items: i.results });
+    const mail = await db.prepare("SELECT id, kind, recipient, subject, status, at FROM emails WHERE order_id = ? ORDER BY id").bind(m[1]).all();
+    return json({ order: o.results[0], items: i.results, emails: mail.results });
   }
   if ((m = path.match(/^\/orders\/([A-Z0-9]{3,12})\/status$/)) && method === "POST") {
     const body = await request.json().catch(() => ({})), o = await db.prepare("SELECT status, method FROM orders WHERE id = ?").bind(m[1]).first();
@@ -158,7 +173,20 @@ export async function admin(request, env, url) {
     const next = { paid: o.method === "pickup" ? ["ready"] : ["packed"], packed: ["shipped"], ready: ["collected"] }[o.status] || [];
     if (!next.includes(body.status)) return json({ error: "That step is not available for this order." }, 409);
     await db.batch([db.prepare("UPDATE orders SET status = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = ? AND status = ?").bind(body.status, m[1], o.status), audit("order.status", m[1], { status: o.status }, { status: body.status })]);
+    if (body.status === "shipped" || body.status === "ready") {
+      const [full, items] = await db.batch([db.prepare("SELECT * FROM orders WHERE id = ?").bind(m[1]), db.prepare("SELECT name, qty, unit_cents FROM order_items WHERE order_id = ?").bind(m[1])]);
+      const site = env.SITE_NAME || "One Stop Shop", ord = full.results[0];
+      await writeEmail(env, m[1], ord.email, (body.status === "shipped" ? orderShipped : pickupReady)(site, ord, items.results));
+    }
     return json({ ok: true, status: body.status });
+  }
+  if ((m = path.match(/^\/emails\/(\d{1,9})$/)) && method === "GET") {
+    const e = await db.prepare("SELECT id, kind, recipient, subject, html, status, detail, at FROM emails WHERE id = ?").bind(+m[1]).first();
+    return e ? json({ email: e }) : json({ error: "No such email." }, 404);
+  }
+  if (path === "/backup" && method === "GET") {
+    const snap = await snapshot(db);
+    return new Response(JSON.stringify(snap, null, 1), { headers: { "Content-Type": "application/json; charset=utf-8", "Content-Disposition": `attachment; filename="one-stop-shop-backup-${snap.taken_at.slice(0, 10)}.json"`, "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" } });
   }
   return json({ error: "Not found" }, 404);
 }

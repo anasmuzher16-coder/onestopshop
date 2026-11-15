@@ -34,6 +34,7 @@ void main(){
 const cv = document.createElement("canvas"); cv.width = W; cv.height = H; cv.className = "smoke"; cv.setAttribute("aria-hidden", "true");
 let gl, prog, uT, uSrc, raf = 0, t0 = performance.now(), seen = false, lost = false;
 function setup() {
+  if (new URLSearchParams(location.search).has("still")) return false; // lets us look at the fallback on any device
   gl = cv.getContext("webgl", { alpha: true, premultipliedAlpha: true, antialias: false, depth: false, stencil: false, powerPreference: "low-power" });
   if (!gl) return false;
   const sh = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return gl.getShaderParameter(s, gl.COMPILE_STATUS) ? s : null; };
@@ -55,6 +56,9 @@ function draw(now) {
   if (!RM.matches && seen && !document.hidden) raf = requestAnimationFrame(draw);
 }
 const kick = () => { if (!raf && gl && !lost && cv.isConnected) raf = requestAnimationFrame(draw); };
+// The layer that goes behind the piece: the live canvas, or two drifting stills where the phone cannot draw it.
+let layer = cv;
+function still() { layer = document.createElement("span"); layer.className = "smoke smoke--still"; layer.setAttribute("aria-hidden", "true"); layer.append(document.createElement("i"), document.createElement("i")); }
 cv.addEventListener("webglcontextlost", e => { e.preventDefault(); lost = true; });
 cv.addEventListener("webglcontextrestored", () => { lost = false; if (setup()) kick(); });
 const io = new IntersectionObserver(es => { seen = es.some(e => e.isIntersecting); if (seen) kick(); });
@@ -63,15 +67,17 @@ document.addEventListener("visibilitychange", kick); RM.addEventListener("change
 // The page re-draws itself on every change, so the one canvas is moved into whichever product stage is on screen.
 function place() {
   const hero = document.querySelector(".hero__stage"), stage = document.querySelector("[data-stage]:not(.tile--photo)") || hero;
-  if (!stage) { if (cv.isConnected) { cv.remove(); cv.classList.remove("on"); } return; }
-  if (cv.parentNode === stage) return;
-  cv.classList.remove("on"); cv.classList.toggle("smoke--hero", stage === hero);
-  if (stage === hero) { stage.insertBefore(cv, stage.querySelector(".hero__pieces")); gl.uniform2f(uSrc, 0.5, 0.04); } // one wisp up the middle slab, behind the pieces
-  else { stage.prepend(cv); gl.uniform2f(uSrc, 0.5, 0.2); }
-  io.disconnect(); io.observe(cv);
-  requestAnimationFrame(() => cv.classList.add("on")); kick();
+  if (!stage) { if (layer.isConnected) { layer.remove(); layer.classList.remove("on"); } return; }
+  if (layer.parentNode === stage) return;
+  layer.classList.remove("on"); layer.classList.toggle("smoke--hero", stage === hero);
+  if (stage === hero) { stage.insertBefore(layer, stage.querySelector(".hero__pieces")); if (gl) gl.uniform2f(uSrc, 0.5, 0.04); } // one wisp up the middle slab, behind the pieces
+  else { stage.prepend(layer); if (gl) gl.uniform2f(uSrc, 0.5, 0.2); }
+  io.disconnect(); io.observe(layer);
+  requestAnimationFrame(() => layer.classList.add("on")); kick();
 }
-if (setup()) { new MutationObserver(place).observe(document.getElementById("main"), { childList: true }); place(); window.__smoke = { canvas: cv, at: s => { t0 = performance.now() - (s - 40) * 1000; } }; }
+const live = setup(); if (!live) still();
+new MutationObserver(place).observe(document.getElementById("main"), { childList: true }); place();
+if (live) window.__smoke = { canvas: cv, at: s => { t0 = performance.now() - (s - 40) * 1000; }, frame: s => { gl.uniform1f(uT, s); gl.clear(gl.COLOR_BUFFER_BIT); gl.drawArrays(gl.TRIANGLES, 0, 3); return cv.toDataURL("image/png"); } };
 
 // Cart puff: a few soft blobs lift off the cart count when a piece lands. Transform and opacity only.
 addEventListener("cartlanded", e => {
