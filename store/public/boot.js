@@ -1,2 +1,2 @@
 // Effects load after the page is up, so they never hold back the first paint.
-addEventListener("load", () => { for (const f of ["hero", "routes", "zoom", "stick", "cartfly", "lineup", "smoke", "sections"]) import(`./fx-${f}.js`); }, { once: true });
+addEventListener("load", () => { for (const f of ["hero", "routes", "zoom", "stick", "cartfly", "lineup", "smoke", "sections", "till"]) import(`./fx-${f}.js`); }, { once: true });
