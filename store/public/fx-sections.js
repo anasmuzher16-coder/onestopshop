@@ -753,6 +753,8 @@ export function onSight(host, name) {
 // The act is read off the photo: a cut-out's alpha is sampled once at 48 x 60, so the mist leaves this bottle's own
 // cap, the heat lifts off this bowl's own rim and a hose swings from its own top, whatever photo the shop puts in.
 // A full photo (no cut-out) has nothing to read, so it only ever gets the label. Hookahs: the smoke is the act (fx-smoke.js).
+// RULE: no act is aimed at a feature of the piece (a cap, a rim, a nozzle, a thread). An act may use only the box the
+// piece fills, the piece's own outline as a mask, and the tile. That is what lets any photo of any shape go in untouched.
 const INK = new Map();
 function ink(img) {
   const k = img.currentSrc || img.src; if (INK.has(k)) return INK.get(k);
@@ -784,7 +786,7 @@ const turn = (v, y = 0) => `translateY(${y}px) rotate(${v}deg)`;
 // ---- a landing: whatever is set down with weight pushes a low puff out along the counter, left and right of its foot
 function kick(layer, x0, x1, y) {
   const img = soft("255,252,246"), w = layer.clientWidth, big = Math.max(1, Math.min(1.7, w / 420)), ps = [];
-  for (let i = 0; i < 16; i++) { const left = i % 2 === 0, v = rnd(170, 400) * big;
+  for (let i = 0; i < 30; i++) { const left = i % 2 === 0, v = rnd(60, 520) * big;
     ps.push({ x: left ? x0 + rnd(0, 10) : x1 - rnd(0, 10), y: y - rnd(5, 11) * big, vx: left ? -v : v, vy: -rnd(2, 14) * big, r: rnd(8, 15) * big, life: rnd(.6, 1.1), age: -rnd(0, .05) }); }
   fxCanvas(layer, (g, dt) => {
     let alive = 0;
@@ -792,7 +794,7 @@ function kick(layer, x0, x1, y) {
       p.age += dt; if (p.age >= p.life) continue; alive++; if (p.age < 0) continue;
       const d = Math.exp(-3.6 * dt); p.vx *= d; p.vy *= d; p.x += p.vx * dt; p.y += p.vy * dt;
       const q = p.age / p.life, rad = p.r * (0.45 + 1.1 * (1 - Math.exp(-p.age * 5)));
-      g.globalAlpha = 0.26 * Math.min(1, p.age / 0.05) * Math.pow(1 - q, 1.6) * Math.max(0, Math.min(1, Math.min(p.x, w - p.x) / 24));   // thins out before the side of the tile
+      g.globalAlpha = 0.2 * Math.min(1, p.age / 0.05) * Math.pow(1 - q, 1.6) * Math.max(0, Math.min(1, Math.min(p.x, w - p.x) / 24));   // thins out before the side of the tile
       g.drawImage(img, p.x - rad * 1.9, p.y - rad * .8, rad * 3.8, rad * 1.6);   // low and wide: it hugs the counter
     }
     return alive > 0;
@@ -800,18 +802,20 @@ function kick(layer, x0, x1, y) {
 }
 
 // ---- light across the piece: one bright band crosses it, cut to the piece by its own photo, so it fits any shape with no setting up
-function glint(layer, img, P, at, ms) {
-  const g = el("span", "fx-glint", layer), band = el("i", "", g), src = `url("${img.currentSrc || img.src}")`;
+function glint(layer, img, P, at, ms, hot) {
+  const g = el("span", "fx-glint", layer), band = el("i", hot ? "hot" : "", g), src = `url("${img.currentSrc || img.src}")`;
   g.style.cssText = `left:${P.x}px;top:${P.y}px;width:${P.w}px;height:${P.h}px`; g.style.webkitMaskImage = src; g.style.maskImage = src;
-  play(band, [{ transform: "translateX(-46%)", opacity: 0, easing: STATE }, { opacity: 1, offset: .15 }, { opacity: 1, offset: .8 }, { transform: "translateX(46%)", opacity: 0 }], ms, at, "none")
-    .finished.then(() => g.remove(), () => g.remove());
+  const frames = hot ? [{ opacity: 0, easing: STRIKE }, { opacity: .62, offset: .06, easing: STATE }, { opacity: .16, offset: .26, easing: STRIKE }, { opacity: .55, offset: .32, easing: STATE },
+      { opacity: .14, offset: .52, easing: STRIKE }, { opacity: .48, offset: .58, easing: STATE }, { opacity: 0 }]   // three cracks, each a flare that cools
+    : [{ transform: "translateX(-46%)", opacity: 0, easing: STATE }, { opacity: 1, offset: .15 }, { opacity: 1, offset: .8 }, { transform: "translateX(46%)", opacity: 0 }];
+  play(band, frames, ms, at, "none").finished.then(() => g.remove(), () => g.remove());
   return g;
 }
 // ---- mist in the air: fine droplets and soft cloud appear across the upper part of the tile, drift down and across, and thin out.
 // It belongs to the tile, not to a point on the photo.
 function veil(layer) {
   const w = layer.clientWidth, h = layer.clientHeight, big = Math.max(1, Math.min(1.8, w / 400)), img = soft("255,252,246"), drops = [], puffs = [];
-  for (let i = 0; i < 110; i++) { const u = Math.random();
+  for (let i = 0; i < 150; i++) { const u = Math.random();
     drops.push({ x: rnd(-.05, .95) * w, y: rnd(.04, .5) * h, vx: rnd(14, 46) * big, vy: rnd(10, 34) * big + 26 * u * big, r: big * (.5 + 1.2 * u * u), life: rnd(1.3, 2.6), age: -rnd(0, .7), ph: rnd(0, 6.28) }); }
   for (let i = 0; i < 30; i++) puffs.push({ x: rnd(-.05, .85) * w, y: rnd(.06, .5) * h, vx: rnd(16, 44) * big, vy: rnd(8, 22) * big, r: rnd(46, 96) * big, life: rnd(2, 3.2), age: -rnd(0, .7) });
   const side = x => Math.max(0, Math.min(1, Math.min(x, w - x) / 26));   // nothing is sliced by the side of the tile either
@@ -820,7 +824,7 @@ function veil(layer) {
     for (const p of puffs) {
       p.age += dt; if (p.age >= p.life) continue; alive++; if (p.age < 0) continue;
       p.x += p.vx * dt; p.y += p.vy * dt; const q = p.age / p.life, rad = p.r * (.7 + .6 * q);
-      g.globalAlpha = .2 * Math.min(1, p.age / .35) * Math.pow(1 - q, 1.4) * edge(p.y, rad * .4, h) * side(p.x);
+      g.globalAlpha = .27 * Math.min(1, p.age / .35) * Math.pow(1 - q, 1.4) * edge(p.y, rad * .4, h) * side(p.x);
       g.drawImage(img, p.x - rad, p.y - rad, rad * 2, rad * 2);
     }
     g.fillStyle = "rgb(255,252,246)";
@@ -857,7 +861,7 @@ const ACT = {
       { transform: turn(0) }];
     play(img, rock, 1700, T0 - 270, "none"); play(g, rock, 1700, T0 - 270, "none");
   },
-  // dropped the last inch onto the counter: it knocks and rocks, and the heat lifts off its rim
+  // dropped the last inch onto the counter: it knocks and rocks, a puff runs out along the counter, and heat lifts off the piece
   bowls({ layer, img, K, P, pin }) {
     pin((K.l + K.r) / 2, K.b);
     play(img, [
@@ -868,22 +872,22 @@ const ACT = {
       { transform: turn(-.7, 0), offset: .66, easing: SINE },
       { transform: turn(.3, 0), offset: .84, easing: SINE },
       { transform: turn(0, 0) }], 1100, T0 - 110);
-    const iw = (K.r - K.l) * P.w, rim = P.y + (K.t + (K.b - K.t) * .2) * P.h;
+    const iw = (K.r - K.l) * P.w, rim = P.y + (K.t + K.b) / 2 * P.h;
     when(layer, T0 + 90, () => steam(layer, box(layer, P.x + K.l * P.w, rim - 19, iw, 100)));
-    const foot = K.row(K.b - .02) || [K.l, K.r];
-    when(layer, T0, () => kick(layer, P.x + foot[0] * P.w, P.x + foot[1] * P.w, P.y + K.b * P.h));
+    when(layer, T0, () => kick(layer, P.x + (K.l + K.r) / 2 * P.w, P.x + (K.l + K.r) / 2 * P.w, P.y + K.b * P.h));
   },
-  // the coals catch: three cracks, sparks off the top, and the piece hops on each one
+  // the coals catch: three cracks. Each one flares the whole piece warm, throws sparks up from under it, and makes it hop
   heat({ layer, img, K, P }) {
-    const iw = (K.r - K.l) * P.w, bw = iw * 1.316, hot = P.y + (K.t + (K.b - K.t) * .22) * P.h;
-    when(layer, T0, () => embers(layer, box(layer, P.x + K.l * P.w + .25 * iw - .23 * bw, hot - 44, bw, 100)));
+    const iw = (K.r - K.l) * P.w, bw = iw * 1.9, hot = P.y + K.b * P.h - 8;
+    when(layer, T0, () => embers(layer, box(layer, P.x + (K.l + K.r) / 2 * P.w - .42 * bw, hot - 44, bw, 100)));
+    glint(layer, img, P, T0, 1150, true);
     const hop = a => [{ transform: "translateY(0px)", easing: ENTER }, { transform: `translateY(${-a}px)`, offset: .35, easing: STRIKE }, { transform: "translateY(0px)", offset: .8, easing: ENTER },
       { transform: `translateY(${-a * .2}px)`, offset: .9, easing: STRIKE }, { transform: "translateY(0px)" }];
     [5, 4, 3].forEach((a, i) => play(img, hop(a), 200, T0 + 30 + i * 260, "none"));
   },
   // hung back on its hook and let go: it swings from the top and settles
   hoses({ img, K, pin }) {
-    pin((K.row(K.t)[0] + K.row(K.t)[1]) / 2, K.t);
+    pin((K.l + K.r) / 2, K.t);
     play(img, [
       { transform: turn(0), easing: ENTER },
       { transform: turn(6.5), offset: .1, easing: SINE },         // T0: let go
@@ -895,7 +899,7 @@ const ACT = {
       { transform: turn(0) }], 2300, T0 - 230, "none");
   },
   // wrenched on: two clicks of the ratchet, and it seats
-  parts({ img, K, pin, host }) {
+  parts({ layer, img, K, P, pin, host }) {
     pin((K.l + K.r) / 2, (K.t + K.b) / 2);
     play(img, [
       { transform: "rotate(-22deg) scale(1.04)", easing: STRIKE },
@@ -905,6 +909,7 @@ const ACT = {
       { transform: "rotate(.8deg) scale(.985)", offset: .82, easing: STATE },
       { transform: "rotate(0deg) scale(1)" }], 520, T0 - 135);
     give(host, T0 + 230, .988);
+    glint(layer, img, P, T0 + 260, 720);                          // tight: the light runs along it
   },
   // picked up off the counter, turned over once, put back
   misc({ img, K, pin, hit }) {
