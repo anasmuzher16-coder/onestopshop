@@ -9,7 +9,7 @@ export async function loadCatalog(db) {
   return { categories: cats.results, boxes: boxes.results, products: prods.results };
 }
 
-export function catalogModule(cat) {
+export function toStorefront(cat) {
   const BOXES = {};
   for (const b of cat.boxes) BOXES[b.id] = { l: b.l_cm, w: b.w_cm, h: b.h_cm, tare: b.tare_g / 1000, label: b.label };
   const CATEGORIES = cat.categories.map(c => ({ id: c.id, name: c.name, tone: c.tone }));
@@ -18,6 +18,11 @@ export function catalogModule(cat) {
     return { sku: p.sku, name: p.name, cat: p.category_id, price: p.price_cents / 100, kg: p.weight_g / 1000, box: p.box_id, glass: !!p.glass,
       height: p.height_cm, note: p.note, ...(p.photo_ver ? { img: `/api/photo/${p.sku}?v=${p.photo_ver}`, photo: true, dark: false } : { img: p.img, dark: !!p.img_dark, lw: p.img_lw ?? undefined }), ship: p.ship_class, stock: p.stock, details };
   });
+  return { BOXES, CATEGORIES, PRODUCTS };
+}
+
+export function catalogModule(cat) {
+  const { BOXES, CATEGORIES, PRODUCTS } = toStorefront(cat);
   // JSON is valid JavaScript; U+2028/2029 are escaped so no product text can break the module.
   const lit = v => JSON.stringify(v).split(String.fromCharCode(0x2028)).join("\\u2028").split(String.fromCharCode(0x2029)).join("\\u2029");
   return `// Served from the store database.\nexport const BOXES = ${lit(BOXES)};\nexport const CATEGORIES = ${lit(CATEGORIES)};\nexport const PRODUCTS = ${lit(PRODUCTS)};\n`;

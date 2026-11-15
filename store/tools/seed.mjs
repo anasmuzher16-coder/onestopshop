@@ -12,27 +12,27 @@ PRODUCTS.forEach((p, i) => {
 });
 
 // Two new sections. Names are made up; photos are placeholders. Cologne travels by ground only.
+// Misc is a real grab-bag: whatever else the shop carries that is not hookah gear.
 out.push(`INSERT INTO categories (id,name,tone,sort) VALUES ('cologne','Cologne','amethyst',6),('misc','Misc','bone',7);`);
 const COLOGNE = [
   ["OSS-7001", "Qasr Ivory", 8900, "cologne00", 100, "Eau de parfum", "White musk, cedar, soft amber"],
   ["OSS-7002", "Ruby Majlis", 7900, "cologne01", 100, "Eau de parfum", "Saffron, rose, oud"],
   ["OSS-7003", "Ember Night", 9500, "cologne02", 105, "Eau de parfum", "Blood orange, leather, vanilla"],
   ["OSS-7004", "Gold Souk", 2900, "cologne03", 240, "All over spray", "Honey, sandalwood, warm spice"],
-  ["OSS-7005", "Amber Hour", 2900, "cologne04", 240, "All over spray", "Amber, citrus peel, white tea"],
   ["OSS-7006", "Midnight Coal", 2900, "cologne05", 240, "All over spray", "Black pepper, vetiver, dark woods"],
-  ["OSS-7007", "Rosewater Lattice", 6900, "cologne06", 100, "Eau de parfum", "Rosewater, pistachio, musk"],
   ["OSS-7008", "Canyon Road", 6500, "cologne07", 55, "Eau de parfum", "Sage, dry woods, amber"],
-  ["OSS-7009", "Glacier Mint", 6500, "cologne08", 55, "Eau de parfum", "Mint, sea salt, white woods"],
 ];
 const MISC = [
-  ["OSS-8001", "Glow ring LED base", 5999, "misc00", 600, "S", "Lights a glass base from underneath, 16 colours"],
-  ["OSS-8002", "Tripod stand", 5499, "misc01", 900, "M", "Steel tripod that holds a hookah steady outdoors"],
-  ["OSS-8003", "Gold tongs", 2499, "misc04", 150, "XS", "Brushed gold tongs with a carry sleeve"],
-  ["OSS-8004", "Hose holder, bicycle", 499, "misc05", 40, "XS", "Clips to the stem and keeps the hose off the floor"],
+  ["OSS-8001", "Sunset shades", 3000, "misc10", 60, "XS", "Polarized sunglasses, pink check frame"],
+  ["OSS-8002", "Pocket earbuds", 7999, "misc11", 120, "XS", "Wireless earbuds with a clip-on charging case"],
+  ["OSS-8003", "Olive snapback", 2195, "misc14", 110, "S", "Snapback cap, olive with a leather patch"],
+  ["OSS-8004", "Checkered candle", 5400, "misc12", 700, "S", "Soy candle, salted caramel, 50 hour burn"],
+  ["OSS-8005", "Green dial watch", 24900, "misc13", 200, "XS", "Automatic watch, emerald dial, gold bracelet"],
+  ["OSS-8006", "Twin mini speakers", 9900, "misc17", 600, "S", "Two pocket speakers that pair for stereo"],
 ];
 const extra = [];
-COLOGNE.forEach(([sku, name, cents, img, ml, kind, notes], i) => extra.push({ sku, name, cat: "cologne", cents, g: 250 + ml * 2, box: "XS", ship: "ground_only", note: `${kind}, ${ml} mL`, img, details: { ml, kind, notes }, stock: [6, 4, 3, 12, 9, 1, 5, 0, 7][i], sort: 200 + i }));
-MISC.forEach(([sku, name, cents, img, g, box, note], i) => extra.push({ sku, name, cat: "misc", cents, g, box, ship: "standard", note, img, details: {}, stock: [4, 2, 8, 20][i], sort: 300 + i }));
+COLOGNE.forEach(([sku, name, cents, img, ml, kind, notes], i) => extra.push({ sku, name, cat: "cologne", cents, g: 250 + ml * 2, box: "XS", ship: "ground_only", note: `${kind}, ${ml} mL`, img, details: { ml, kind, notes }, stock: [6, 4, 3, 12, 1, 0][i], sort: 200 + i }));
+MISC.forEach(([sku, name, cents, img, g, box, note], i) => extra.push({ sku, name, cat: "misc", cents, g, box, ship: "standard", note, img, details: {}, stock: [8, 5, 12, 20, 2, 4][i], sort: 300 + i }));
 for (const e of extra) {
   out.push(`INSERT INTO products (sku,name,category_id,price_cents,weight_g,box_id,glass,ship_class,note,img,img_dark,img_lw,details,stock,low_stock_at,sort) VALUES (${[e.sku, e.name, e.cat, e.cents, e.g, e.box, 0, e.ship, e.note, e.img, 0, null, JSON.stringify(e.details), e.stock, 2, e.sort].map(q).join(",")});`);
   if (e.stock) out.push(`INSERT INTO stock_moves (sku,delta,reason,actor) VALUES (${q(e.sku)},${e.stock},'count','seed');`);
@@ -65,6 +65,8 @@ for (let d = 34; d >= 0; d--) {
     for (const { p, qty } of items.values()) out.push(`INSERT INTO order_items (order_id,sku,name,qty,unit_cents) VALUES (${[id, p.sku, p.name, qty, p.cents].map(q).join(",")});`);
   }
 }
+// Photos with a flaw in the cut-out stay off the shelf until the real photos arrive.
+out.push("UPDATE products SET active = 0 WHERE img IN ('hookah50','bowl30','acc03');");
 console.log("sample orders:", k);
 writeFileSync(new URL("../seed/seed.sql", import.meta.url), out.join("\n") + "\n");
 console.log(`seed.sql: ${CATEGORIES.length} categories, ${Object.keys(BOXES).length} boxes, ${PRODUCTS.length} products`);

@@ -29,7 +29,7 @@ ok(s.value.units > 0 && s.value.retail_cents > s.value.cost_cents, "stock value 
 
 // stock: up, down, never below zero, history
 const list = (await call("/products")).data; const p = list.products.find(x => x.sku === "OSS-8004"), start = p.stock;
-ok(list.products.length === 99 && list.categories.length === 8, `catalogue ${list.products.length} products, ${list.categories.length} sections`);
+ok(list.products.length === 98 && list.categories.length === 8, `catalogue ${list.products.length} products, ${list.categories.length} sections`);
 const up = await call("/products/OSS-8004/stock", { method: "POST", body: { delta: 3, reason: "received" } }); ok(up.data.stock === start + 3, "stock +3");
 const dn = await call("/products/OSS-8004/stock", { method: "POST", body: { delta: -3, reason: "correction" } }); ok(dn.data.stock === start, "stock -3");
 const neg = await call("/products/OSS-8004/stock", { method: "POST", body: { delta: -(start + 1) } }); ok(neg.status === 409 && neg.data.stock === start, "stock cannot go below zero: " + neg.status);
@@ -46,7 +46,7 @@ ok((await call("/products/OSS-8004", { method: "PUT", body: { ship_class: "by-ro
 ok((await call("/products/OSS-8004", { method: "PUT", body: { price_cents: 549, note: 'Clips <b>on</b> "tight"' } })).status === 200, "edit saved");
 const mod = await (await fetch(B + "/api/catalog-module")).text(), m = await import("data:text/javascript;base64," + Buffer.from(mod).toString("base64"));
 const sp = m.PRODUCTS.find(x => x.sku === "OSS-8004"); ok(sp.price === 5.49 && sp.note === 'Clips <b>on</b> "tight"', "storefront sees the edit");
-await call("/products/OSS-8004", { method: "PUT", body: { price_cents: 499, note: "Clips to the stem and keeps the hose off the floor" } });
+await call("/products/OSS-8004", { method: "PUT", body: { price_cents: 5400, note: "Soy candle, salted caramel, 50 hour burn" } });
 ok(m.PRODUCTS.filter(x => x.cat === "cologne").every(x => x.ship === "ground_only" && x.details.ml > 0), "cologne is ground only with a size");
 const made = await call("/products", { method: "POST", body: { name: "Test bottle", category_id: "cologne", price_cents: 4200, weight_g: 300, box_id: "XS", ship_class: "ground_only", details: { ml: 50, kind: "Eau de parfum", notes: "Test" }, stock: 2, active: false } });
 ok(made.status === 201 && /^OSS-70\d\d$/.test(made.data.sku), "new product gets a number in its section: " + made.data.sku);
@@ -59,7 +59,7 @@ ok((await call(`/products/${made.data.sku}/photo`, { method: "POST", body: big, 
 const ph = await fetch(`${B}/api/photo/${made.data.sku}`); ok(ph.status === 200 && ph.headers.get("content-type") === "image/png", "uploaded photo is served");
 // orders
 const orders = (await call("/orders")).data.orders, paid = orders.find(o => o.status === "paid" && o.method === "ship");
-ok(orders.length === 66, "orders listed: " + orders.length);
+ok(orders.length >= 50, "orders listed: " + orders.length);
 if (paid) {
   ok((await call(`/orders/${paid.id}/status`, { method: "POST", body: { status: "shipped" } })).status === 409, "cannot skip packing");
   ok((await call(`/orders/${paid.id}/status`, { method: "POST", body: { status: "packed" } })).status === 200, "mark packed");

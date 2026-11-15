@@ -2,6 +2,7 @@
 // serves the catalogue from the database, and passes every other request to the static files.
 import { loadCatalog, catalogModule } from "./catalog.js";
 import { admin, photo } from "./admin.js";
+import { placeOrder } from "./checkout.js";
 
 const SECURITY = {
   "Content-Security-Policy": "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'",
@@ -28,8 +29,9 @@ function describe(path, cat, site) {
     const p = cat.products.find(x => x.sku === b); if (!p) return null;
     return { title: `${p.name} | ${site}`, desc: `${p.note}. ${money(p.price_cents)}. Shipped across Canada or free pickup in Windsor.`, index: true, product: p };
   }
+  if (a === "order") return b && /^W[A-Z0-9]{6}$/.test(b) ? { ...base, title: `Order ${b} | ${site}`, index: false } : null;
   if (b && a !== "gifts") return null;
-  const fixed = { cart: "Cart", shipping: "Shipping and returns", set: "Build a set", search: "Search", gifts: "Gifts" };
+  const fixed = { checkout: "Checkout", cart: "Cart", shipping: "Shipping and returns", set: "Build a set", search: "Search", gifts: "Gifts" };
   if (!fixed[a]) return null;
   return { ...base, title: `${fixed[a]} | ${site}`, index: a === "shipping" || a === "set" };
 }
@@ -81,6 +83,7 @@ export default {
         return json(await loadCatalog(env.DB));
       }
       if (path.startsWith("/api/admin/")) return await admin(request, env, url);
+      if (path === "/api/orders") return request.method === "POST" ? await placeOrder(request, env, url) : json({ error: "Method not allowed" }, 405);
       const ph = path.match(/^\/api\/photo\/(OSS-\d{4,6})$/); if (ph && request.method === "GET") return await photo(env, ph[1]);
       if (path.startsWith("/api/")) return json({ error: "Not found" }, 404);
       if (path === "/admin" || path.startsWith("/admin/")) {

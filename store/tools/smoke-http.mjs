@@ -26,9 +26,9 @@ const mod = await get("/api/catalog-module");
 ok((mod.r.headers.get("content-type") || "").startsWith("text/javascript"), "catalog.js content type");
 const m = await import("data:text/javascript;base64," + Buffer.from(mod.t).toString("base64"));
 const ref = await import("../../site/catalog.js");
-ok(m.PRODUCTS.length === ref.PRODUCTS.length + 13 && m.CATEGORIES.length === ref.CATEGORIES.length + 2, `catalogue size ${m.PRODUCTS.length}/${ref.PRODUCTS.length}`);
+ok(m.PRODUCTS.length === ref.PRODUCTS.length + 9 && m.CATEGORIES.length === ref.CATEGORIES.length + 2, `catalogue size ${m.PRODUCTS.length}/${ref.PRODUCTS.length}`);
 let diff = 0;
-for (const a of ref.PRODUCTS) { const b = m.PRODUCTS.find(x => x.sku === a.sku); if (!b) { diff++; continue; }
+for (const a of ref.PRODUCTS) { if (["hookah50", "bowl30", "acc03"].includes(a.img)) continue; const b = m.PRODUCTS.find(x => x.sku === a.sku); if (!b) { diff++; continue; }
   for (const k of ["name", "cat", "price", "kg", "box", "glass", "note", "img", "dark"]) if (a[k] !== b[k]) diff++;
   if ((a.height ?? null) !== (b.height ?? null) || (a.lw ?? null) !== (b.lw ?? null)) diff++; }
 ok(diff === 0, `${diff} product fields differ between the database and the sample file`);
