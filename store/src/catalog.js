@@ -11,13 +11,12 @@ export async function loadCatalog(db) {
 
 // The storefront's copy of the catalogue. Reading the database costs a few tenths of a second on every page, so
 // pages and the catalogue module are served from a copy: this worker's memory (20 s), then the data centre's cache
-// (60 s), then the database. A stale copy up to ten minutes old is still served at once while a fresh one is fetched
-// behind it. Any change in the back office, and any order, drops the copy. Checkout never uses it: it reads the database.
+// (a day), then the database. A stale copy is still served at once while a fresh one is fetched behind it. Any change in the back office, and any order, drops the copy. Checkout never uses it: it reads the database.
 const KEY = "https://catalogue.internal/v1", FRESH = 20e3, USABLE = 600e3;
 let mem = null, refreshing = null;
 async function refill(env) {
   const cat = await loadCatalog(env.DB); mem = { at: Date.now(), cat };
-  try { await caches.default.put(KEY, new Response(JSON.stringify(cat), { headers: { "Content-Type": "application/json", "Cache-Control": "max-age=60" } })); } catch {}
+  try { await caches.default.put(KEY, new Response(JSON.stringify(cat), { headers: { "Content-Type": "application/json", "Cache-Control": "max-age=86400", "X-At": String(mem.at) } })); } catch {}
   return cat;
 }
 export async function shopCatalog(env, ctx) {
@@ -27,7 +26,16 @@ export async function shopCatalog(env, ctx) {
     if (!refreshing) { refreshing = refill(env).catch(() => {}).finally(() => { refreshing = null; }); if (ctx) ctx.waitUntil(refreshing); }
     return mem.cat;
   }
-  try { const hit = await caches.default.match(KEY); if (hit) { const cat = await hit.json(); mem = { at: now, cat }; return cat; } } catch {}
+  // a worker that has just started: the data centre's copy (kept a day) answers at once, however old, and a fresh one
+  // is fetched behind it. Only the very first visitor to a data centre ever waits on the database.
+  try {
+    const hit = await caches.default.match(KEY);
+    if (hit) {
+      const cat = await hit.json(), at = +hit.headers.get("X-At") || 0; mem = { at, cat };
+      if (now - at >= FRESH && !refreshing) { refreshing = refill(env).catch(() => {}).finally(() => { refreshing = null; }); if (ctx) ctx.waitUntil(refreshing); }
+      return cat;
+    }
+  } catch {}
   return refill(env);
 }
 export function dropCatalog(ctx) { mem = null; try { const d = caches.default.delete(KEY); if (ctx) ctx.waitUntil(d); } catch {} }

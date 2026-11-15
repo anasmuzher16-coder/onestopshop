@@ -66,7 +66,7 @@ for (let d = 34; d >= 0; d--) {
   }
 }
 // Photos with a flaw in the cut-out stay off the shelf until the real photos arrive.
-out.push("UPDATE products SET active = 0 WHERE img IN ('hookah50','bowl30','acc03');");
+out.push("UPDATE products SET active = 0 WHERE img IN ('hookah50','bowl30','acc03','bowl26','hmd12','acc06','hose09','bowl06'); -- cut-outs with holes eaten into them: off the shelf until the shop's own photos replace them");
 console.log("sample orders:", k);
 writeFileSync(new URL("../seed/seed.sql", import.meta.url), out.join("\n") + "\n");
 console.log(`seed.sql: ${CATEGORIES.length} categories, ${Object.keys(BOXES).length} boxes, ${PRODUCTS.length} products`);
