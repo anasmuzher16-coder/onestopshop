@@ -11,11 +11,11 @@ const go = (t, d) => { t.style.setProperty("--stick-d", d + "ms"); t.dataset.sti
 function scan() {
   if (!io) return; io.disconnect();
   if (RM.matches) return;
-  const vh = innerHeight; let k = 0;
+  const vh = innerHeight, gun = !!main.querySelector('.shophead[data-cat="misc"]'); let k = 0; // on misc the section entrance stamps the first screen
   for (const t of main.querySelectorAll(".card .tile")) {
     const s = t.querySelector(".sticker"); if (!s || s.style.viewTransitionName) continue; // the label travelling in the view transition is not re-stuck
     const r = t.getBoundingClientRect();
-    if (r.bottom > 0 && r.top < vh) { if (painted) go(t, 140 + Math.min(k++, 6) * 55); }
+    if (r.bottom > 0 && r.top < vh) { if (painted && !gun) go(t, 140 + Math.min(k++, 6) * 55); }
     else { t.dataset.stick = "wait"; io.observe(t); }
   }
 }

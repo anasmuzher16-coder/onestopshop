@@ -26,16 +26,16 @@ void main(){
   float a;
   if (mode > 0.5) {
     // a bank of smoke filling a wide band: rolls in from the left, heavier along the bottom, then settles
-    vec2 p = vec2(uv.x * asp, uv.y) * 1.9; p.x -= t * 0.06; p.y -= t * 0.022;
+    vec2 p = vec2(uv.x * asp, uv.y) * 1.9; p.x -= t * 0.06 + 1.2 * (1.0 - exp(-roll * 1.1)); p.y -= t * 0.022;   // the body is carried in with the front, not uncovered by it
     vec2 w = vec2(fbm(p + vec2(0.0, t * 0.03)), fbm(p + vec2(5.2, 1.3) - vec2(t * 0.025, 0.0)));
     float body = smoothstep(0.34, 0.82, fbm(p + 2.4 * w));
-    float strand = pow(1.0 - abs(2.0 * fbm(p * 1.6 + 3.0 * w) - 1.0), 5.0);
+    float strand = pow(1.0 - abs(2.0 * fbm(p * 1.6 + 3.0 * w) - 1.0), 3.0);
     float low = 1.0 - smoothstep(0.1, 1.0, uv.y);
     float front = roll * 0.8 - 0.04 + (fbm(vec2(uv.y * 3.0, t * 0.5)) - 0.5) * 0.36;   // the billowing leading edge
     float reveal = 1.0 - smoothstep(front - 0.42, front + 0.04, uv.x);
-    float surge = mix(1.0, 0.55, smoothstep(2.6, 7.0, roll));                            // thick on arrival, then it thins
+    float surge = mix(1.0, 0.4, smoothstep(1.8, 4.0, roll));                            // thick on arrival, then it thins
     float lead = exp(-pow((uv.x - front) / 0.16, 2.0)) * (1.0 - smoothstep(1.6, 2.6, roll)) * 0.35;  // brighter where it is still arriving
-    a = clamp(((body * 0.8 + strand * 0.42) * mix(0.5, 1.0, low) + lead) * reveal, 0.0, 1.0) * surge * 0.9;
+    a = clamp(((body * 0.88 + strand * 0.15) * mix(0.5, 1.0, low) + lead) * reveal, 0.0, 1.0) * surge * 0.9 * smoothstep(0.0, 0.12, uv.y);
   } else {
     vec2 q = vec2((uv.x - src.x) * r.x / r.y, uv.y - src.y);      // centred on where the smoke starts
     float up = clamp(q.y / (1.0 - src.y), 0.0, 1.0);               // 0 at the source, 1 at the top edge
