@@ -165,7 +165,7 @@ function viewShop(cat) {
   const c = catById[cat] || null, list = c ? PRODUCTS.filter(p => p.cat === c.id) : PRODUCTS;
   const groups = cat === "hookahs" ? [...Object.keys(SERIES).map(k => [k, list.filter(p => seriesOf(p) === k)]), ["More from the shelf", list.filter(p => !seriesOf(p) && !p.dark)], ["One of one", list.filter(p => p.dark)]].filter(g => g[1].length) : [["", list]];
   return `
-  <section class="shophead" data-tone="${c ? c.tone : "bone"}">
+  <section class="shophead" data-tone="${c ? c.tone : "bone"}" ${c ? `data-cat="${c.id}"` : ""}>
     <h1 class="shophead__h">${c ? c.name : "Everything"}</h1>
     <p class="shophead__n"><span class="num">${list.length}</span> pieces</p>
   </section>
@@ -183,7 +183,7 @@ function viewProduct(sku) {
   const goes = p.cat === "hookahs" ? [nth("bowls", 0), nth("heat", 1), nth("hoses", 2), nth("parts", 3)] : [];
   const sold = isSold(p);
   return `
-  <article class="pdp" data-tone="${toneOf(p)}">
+  <article class="pdp" data-tone="${toneOf(p)}" data-cat="${p.cat}">
     <div data-stage="${p.sku}" class="pdp__tile tile ${p.dark || p.photo ? "tile--photo" : ""}">${shot(p, { eager: true, alt: p.name })}${sticker(p, { big: true })}</div>
     <div class="pdp__info">
       <p class="crumb"><a href="/shop/${p.cat}">${c.name}</a></p>

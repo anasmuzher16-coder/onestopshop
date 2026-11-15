@@ -3,7 +3,7 @@ import { createRequire } from "node:module";
 const { chromium } = createRequire("C:/dev/puckempire-arena/package.json")("playwright");
 const sharp = createRequire("C:/dev/hm-barbershop/package.json")("sharp");
 const [out, path = "/p/OSS-1001", width = "390"] = process.argv.slice(2), B = process.env.BASE || "http://127.0.0.1:4420";
-const b = await chromium.launch({ args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"] }); const errs = [];
+const b = await chromium.launch(); const errs = [];
 try {
   const p = await b.newPage({ viewport: { width: +width, height: +width < 500 ? 844 : 900 }, deviceScaleFactor: 1 });
   p.on("pageerror", e => errs.push(e.message)); p.on("console", m => m.type() === "error" && errs.push(m.text()));

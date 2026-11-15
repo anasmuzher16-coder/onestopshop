@@ -3,7 +3,7 @@ import { createRequire } from "node:module";
 const { chromium } = createRequire("C:/dev/puckempire-arena/package.json")("playwright");
 const sharp = createRequire("C:/dev/hm-barbershop/package.json")("sharp");
 const B = process.env.BASE || "http://127.0.0.1:4420";
-const b = await chromium.launch({ args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"] });
+const b = await chromium.launch();
 try {
   const p = await b.newPage({ viewport: { width: 390, height: 844 } });
   await p.goto(B + "/p/OSS-1001", { waitUntil: "networkidle" }); await p.waitForFunction(() => window.__smoke, null, { timeout: 15000 });
