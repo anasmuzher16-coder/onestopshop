@@ -10,6 +10,9 @@ export async function snapshot(db) {
 // Nightly: one file per day in the BACKUPS bucket, the last 30 kept. Does nothing until the bucket is connected.
 export async function nightly(env) {
   if (!env.BACKUPS) { console.log(JSON.stringify({ at: "backup", skipped: "no bucket connected" })); return; }
+  try { await save(env); } catch (e) { console.error(JSON.stringify({ at: "backup", failed: String(e && e.message || e) })); throw e; }   // a failed night shows red in the Worker's logs
+}
+async function save(env) {
   const snap = await snapshot(env.DB), key = `backups/${snap.taken_at.slice(0, 10)}.json`;
   await env.BACKUPS.put(key, JSON.stringify(snap), { httpMetadata: { contentType: "application/json" } });
   const all = (await env.BACKUPS.list({ prefix: "backups/" })).objects.map(o => o.key).sort();

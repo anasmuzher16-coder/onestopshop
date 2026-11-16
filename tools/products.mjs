@@ -3,7 +3,7 @@
 // White is flattened and trimmed, then the piece is centred on a 4:5 white canvas so CSS multiply drops the
 // white onto a colour tile. Never upscales: a soft source stays at its real size. Writes site/img/pc/sizes.json.
 import { createRequire } from "node:module"; import { readdirSync, mkdirSync, writeFileSync } from "node:fs";
-const sharp = createRequire("C:/dev/hm-barbershop/package.json")("sharp");
+const sharp = createRequire("C:/dev/dijji-crm/package.json")("sharp");
 sharp.concurrency(2); // keep the laptop responsive
 mkdirSync("site/img/pc", { recursive: true });
 const DARK = new Set(["hookah11", "hookah12", "hookah14", "hookah18"]);

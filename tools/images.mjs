@@ -2,7 +2,7 @@
 // Sources and licences: docs/IMAGES.md.
 import { createRequire } from "node:module";
 import { mkdirSync } from "node:fs";
-const sharp = createRequire("C:/dev/hm-barbershop/package.json")("sharp");
+const sharp = createRequire("C:/dev/dijji-crm/package.json")("sharp");
 mkdirSync("site/img", { recursive: true });
 // name: [file, left, top, width, height]  (coordinates on the 1600px-wide source)
 // Tall 2:3 tiles. [file, centreX, top, height] cuts a 2:3 box around one hookah; [file] = whole photo, centred.

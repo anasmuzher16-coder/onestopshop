@@ -1,5 +1,19 @@
-# SHIPPING - sources for every number in site/rates.js
-Updated 2026-11-13.
+# SHIPPING - sources for every number in the rate engine
+Updated 2026-11-15. The engine now lives in store/public/rates-core.js and cp-sheet.js (the mockup's
+site/rates.js was its first version).
+
+## 0. Where this stands (2026-11-15)
+- The store's shipping prices are estimates from Canada Post's published price sheet, not live quotes. Live
+  rates need the shop's own Canada Post account and its Rating API key. Until then the true price can differ
+  because the origin-to-destination rate code is not mapped (section 2).
+- The fuel charge is a dated list (FUEL_WEEKS in rates-core.js) and the store picks the week in force by
+  itself. Both rows were read from canadapost.ca on 2026-11-15 (41.2% to Nov 15, 39.9% Nov 16 to 22). Someone
+  must add each new week's row, or connect the live API; past the last row the store keeps using it.
+- Cologne: alcohol-based fragrance is a flammable liquid. Canada Post carries it by ground only, inside
+  Canada, under an acceptance program whose terms are given by phone. The shop must make that call before
+  cologne is offered for shipping. Notes: research_notes/.
+- Checkout takes no payment and the store is not launched (LIVE = "0", every page noindex).
+- Still needed from the shop per item: packed weight and box size (section 4).
 
 ## 1. Decisions taken for the mockup
 - Carrier in the mockup: Canada Post only (the one carrier with a price sheet we actually read).

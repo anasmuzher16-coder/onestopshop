@@ -2,7 +2,7 @@
 // One row per section, six moments left to right. node store/tools/fx-sheet.mjs <out.png> [width]
 import { createRequire } from "node:module";
 const { chromium } = createRequire("C:/dev/puckempire-arena/package.json")("playwright");
-const sharp = createRequire("C:/dev/hm-barbershop/package.json")("sharp");
+const sharp = createRequire("C:/dev/dijji-crm/package.json")("sharp");
 const [out, width = "390"] = process.argv.slice(2), B = process.env.BASE || "http://127.0.0.1:4420", W = +width;
 const PDP = (process.env.PDP || "").split(",").filter(Boolean); // product pages instead: PDP=OSS-7003,OSS-1001
 const ROWS = PDP.length ? PDP.map(sku => [sku, "[data-stage]"]) : [["hookahs", ".shophead"], ["cologne", ".shophead"], ["bases", ".shophead"], ["bowls", ".shophead"], ["heat", ".shophead"], ["hoses", ".shophead"], ["parts", ".shophead"], ["misc", "#main"]];

@@ -179,11 +179,17 @@ for (const c of shop.cats) {
     if (smoky) t(`${c} product: the smoke does not blink on re-draw ${i + 1}`, low >= 0.95 && q.smoke === 1, "lowest opacity " + low);
   }
   if (wants) { // arriving from the section, the way a shopper does
-    await nav(p, "/shop/" + c); await wait(p, 700); await nav(p, "/p/" + pr.sku); await wait(p, 1100); q = await probe(p);
+    const moving = () => p.evaluate(() => { const i = document.querySelector("[data-stage] > img.shot"); return i ? i.getAnimations().filter(a => a.playState === "running").length : -1; });
+    await nav(p, "/shop/" + c); await wait(p, 700); await nav(p, "/p/" + pr.sku); await wait(p, 600);
+    if (!pr.photo) t(`${c} product: the photo itself is doing its act`, (await moving()) > 0, "running moves on the photo: " + await moving());
+    if (!pr.photo && (c === "hoses" || c === "bases")) { const did = await redraw(p, CODES[0]); await wait(p, 80); t(`${c} product: a re-draw in mid-act hands the move to the new photo`, did && (await moving()) > 0, "running moves on the new photo: " + await moving()); }
+    await wait(p, 500); q = await probe(p);
     t(`${c} product: one layer on an in-site arrival`, q.layers === 1 && q.allLayers === 1, J(q));
     if (c === "cologne" && !pr.photo) t("cologne product: the mist is in the air", q.fxCanvas === 1, J(q));
     await wait(p, 7400); q = await probe(p); // the product-page mist hangs in the air for about six seconds
     t(`${c} product: no canvas 8 s on, price showing`, q.fxCanvas === 0 && q.stray === 0 && q.hidden === 0, J(q));
+    const rest = await p.evaluate(() => { const i = document.querySelector("[data-stage] > img.shot"); return i ? getComputedStyle(i).transform + " | " + i.getAnimations().length : "no photo"; });
+    t(`${c} product: the photo is back at rest, holding nothing`, rest === "none | 0", rest);
   }
 }
 

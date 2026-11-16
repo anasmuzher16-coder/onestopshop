@@ -73,8 +73,8 @@ function idle(layer, beat) {
 }
 
 // ---- one small 2D canvas over a layer; runs until tick() says its matter is spent, then removes itself
-function fxCanvas(layer, tick) {
-  const cv = el("canvas", "fx-spritz", layer), w = layer.clientWidth, h = layer.clientHeight;
+function fxCanvas(layer, tick, top) {
+  const cv = el("canvas", top ? "fx-spritz fx-top" : "fx-spritz", layer), w = layer.clientWidth, h = layer.clientHeight;
   const dpr = Math.min(w * h > 250000 ? 1.5 : 2, devicePixelRatio || 1);   // a 1440 band at 2x is 1.4 M pixels to clear per frame; 1.5x is 0.8 M
   cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
   const g = cv.getContext("2d"); if (!g) { cv.remove(); return; }
@@ -82,7 +82,7 @@ function fxCanvas(layer, tick) {
   let last = performance.now();
   const frame = now => {
     if (!cv.isConnected) { cv.width = cv.height = 0; return; }   // cut off in mid-air (a tap, a page change): hand the memory back
-    const dt = Math.max(0, Math.min(0.05, (now - last) / 1000)); last = now;   // clock-timed: a 30 fps phone shows the same motion
+    const dt = Math.max(0, Math.min(0.1, (now - last) / 1000)); last = now;   // clock-timed: a slow phone shows the same motion and ends on time down to 10 fps
     g.globalAlpha = 1; g.clearRect(0, 0, w, h);
     if (tick(g, dt)) requestAnimationFrame(frame); else { cv.width = cv.height = 0; cv.remove(); } // hand the memory back
   };
@@ -547,23 +547,26 @@ Object.assign(FX, {
     if (!go) return;
     // packed at the counter: the lid is held open over the box, comes down and seats at T0 (the box takes the knock),
     // then the bow is pulled tight and its loops spring out
-    lift(o, WIND, T0 + 900);
+    const C = Math.max(T0, 270);   // contact; on a tap T0 is too soon for the lid's fall, so it waits for it
+    lift(o, C - 140, C + 900);
     play(q(".top"), [
-      { transform: "translateY(-17px) rotate(-9deg)", easing: STATE },
-      { transform: "translateY(-19px) rotate(-10deg)", offset: .22, easing: STRIKE },   // a breath up before it comes down
-      { transform: "translateY(0px) rotate(0deg)", offset: .5, easing: ENTER },         // T0: seats
-      { transform: "translateY(-2.4px) rotate(.8deg)", offset: .68, easing: STRIKE },
-      { transform: "translateY(0px) rotate(0deg)", offset: .84 },
-      { transform: "translateY(0px) rotate(0deg)" }], 520, T0 - 260);
-    play(q(".body"), [{ transform: "scale(1,1)", easing: ENTER }, { transform: "scale(1.035,.94)", offset: .28, easing: STATE }, { transform: "scale(.99,1.02)", offset: .62, easing: STATE }, { transform: "scale(1,1)" }], 300, T0, "none");
-    const TIE = T0 + 170, loop = s => [
-      { transform: `rotate(${-14 * s}deg) scale(.5,.62)`, easing: STRIKE },
-      { transform: `rotate(${5 * s}deg) scale(1.14,.9)`, offset: .3, easing: ENTER },   // pulled tight
-      { transform: `rotate(${-2.5 * s}deg) scale(.96,1.04)`, offset: .55, easing: STATE },
-      { transform: `rotate(${1 * s}deg) scale(1.01,.99)`, offset: .78, easing: STATE },
+      { transform: "translateY(0px) rotate(0deg)", easing: ENTER },                     // from rest: lifted off first, never found open
+      { transform: "translateY(-8px) rotate(-6deg)", offset: .3, easing: STATE },
+      { transform: "translateY(-9.5px) rotate(-7deg)", offset: .44, easing: STRIKE },  // a breath up before it comes down
+      { transform: "translateY(0px) rotate(0deg)", offset: .64, easing: ENTER },        // C: seats
+      { transform: "translateY(-2.2px) rotate(.8deg)", offset: .78, easing: STRIKE },
+      { transform: "translateY(0px) rotate(0deg)", offset: .9 },
+      { transform: "translateY(0px) rotate(0deg)" }], 420, C - 269, "none");
+    play(q(".body"), [{ transform: "scale(1,1)", easing: ENTER }, { transform: "scale(1.05,.92)", offset: .28, easing: STATE }, { transform: "scale(.985,1.025)", offset: .62, easing: STATE }, { transform: "scale(1,1)" }], 320, C, "none");
+    const TIE = C + 170, loop = s => [
+      { transform: "rotate(0deg) scale(1,1)", easing: STATE },
+      { transform: `rotate(${-8 * s}deg) scale(.8,.84)`, offset: .24, easing: STRIKE },  // drawn in
+      { transform: `rotate(${5 * s}deg) scale(1.1,.93)`, offset: .46, easing: ENTER },   // pulled tight: the loops spring out
+      { transform: `rotate(${-2.5 * s}deg) scale(.97,1.03)`, offset: .66, easing: STATE },
+      { transform: `rotate(${1 * s}deg) scale(1.01,.99)`, offset: .84, easing: STATE },
       { transform: "rotate(0deg) scale(1,1)" }];
-    play(q(".loopl"), loop(1), 560, TIE); play(q(".loopr"), loop(-1), 560, TIE);
-    play(q(".knot"), [{ transform: "scale(1.3,1.2)", easing: STRIKE }, { transform: "scale(.82,.88)", offset: .3, easing: ENTER }, { transform: "scale(1.05,1.04)", offset: .6, easing: STATE }, { transform: "scale(1,1)" }], 560, TIE);
+    play(q(".loopl"), loop(1), 700, TIE - 150, "none"); play(q(".loopr"), loop(-1), 700, TIE - 150, "none");
+    play(q(".knot"), [{ transform: "scale(1,1)", easing: STATE }, { transform: "scale(1.16,1.12)", offset: .24, easing: STRIKE }, { transform: "scale(.84,.88)", offset: .46, easing: ENTER }, { transform: "scale(1.05,1.04)", offset: .7, easing: STATE }, { transform: "scale(1,1)" }], 700, TIE - 150, "none");
   },
   terms(layer, go) {
     const o = obj(layer, OBJ.terms, "signed");
@@ -755,9 +758,10 @@ export function onSight(host, name) {
   io.observe(host);
 }
 // ================= product pages: the piece itself does its section's act, once, where the photo is =================
-// The act is read off the photo: a cut-out's alpha is sampled once at 48 x 60, so the mist leaves this bottle's own
-// cap, the heat lifts off this bowl's own rim and a hose swings from its own top, whatever photo the shop puts in.
-// A full photo (no cut-out) has nothing to read, so it only ever gets the label. Hookahs: the smoke is the act (fx-smoke.js).
+// A cut-out's alpha is sampled once at 48 x 60 to find the box the piece fills. A full photo (no cut-out) has nothing to
+// read, so it only ever gets the label. Hookahs: the smoke is the act (fx-smoke.js).
+// Depth: the photo is raised one step, so anything in the layer sits BEHIND the piece unless it is marked fx-top
+// (sparks and heat rise from behind it; light, mist and dust pass in front).
 // RULE: no act is aimed at a feature of the piece (a cap, a rim, a nozzle, a thread). An act may use only the box the
 // piece fills, the piece's own outline as a mask, and the tile. That is what lets any photo of any shape go in untouched.
 const INK = new Map();
@@ -767,12 +771,12 @@ function ink(img) {
   try {
     const W = 48, H = 60, c = document.createElement("canvas"); c.width = W; c.height = H;
     const g = c.getContext("2d", { willReadFrequently: true }); g.drawImage(img, 0, 0, W, H);
-    const d = g.getImageData(0, 0, W, H).data, rows = []; let l = W, r = -1, t = -1, b = -1, n = 0;
+    const d = g.getImageData(0, 0, W, H).data; let l = W, r = -1, t = -1, b = -1, n = 0;
     for (let y = 0; y < H; y++) {
       let a = W, z = -1; for (let x = 0; x < W; x++) if (d[(y * W + x) * 4 + 3] > 48) { if (x < a) a = x; z = x; n++; }
-      rows.push(z < 0 ? null : [a / W, (z + 1) / W]); if (z >= 0) { if (t < 0) t = y; b = y; if (a < l) l = a; if (z > r) r = z; }
+      if (z >= 0) { if (t < 0) t = y; b = y; if (a < l) l = a; if (z > r) r = z; }
     }
-    if (r >= 0 && n < W * H * .92) out = { l: l / W, r: (r + 1) / W, t: t / H, b: (b + 1) / H, rows, row: f => rows[Math.max(t, Math.min(b, Math.round(f * H)))] };
+    if (r >= 0 && n < W * H * .92) out = { l: l / W, r: (r + 1) / W, t: t / H, b: (b + 1) / H };
     c.width = c.height = 0;
   } catch (e) { /* a photo that cannot be read simply has no act */ }
   INK.set(k, out); return out;
@@ -784,7 +788,7 @@ function seat(stage, img) {
   const k = Math.min(cw / img.naturalWidth, ch / img.naturalHeight), w = img.naturalWidth * k, h = img.naturalHeight * k;
   return { x: B.left - S.left + pl + (cw - w) / 2, y: B.top - S.top + pt + (ch - h) / 2, w, h, ox: B.left - S.left, oy: B.top - S.top };
 }
-// a stand-in for a drawn object, so the band effects (steam, embers) can be aimed at a part of the photo
+// a stand-in for a drawn object, so the band effects (steam, embers) can be given a box inside the tile
 const box = (layer, x, y, w, h) => { const L = layer.getBoundingClientRect(); return { getBoundingClientRect: () => ({ left: L.left + x, top: L.top + y, width: w, height: h }) }; };
 const turn = (v, y = 0) => `translateY(${y}px) rotate(${v}deg)`;
 
@@ -792,26 +796,26 @@ const turn = (v, y = 0) => `translateY(${y}px) rotate(${v}deg)`;
 function kick(layer, x0, x1, y) {
   const img = soft("255,252,246"), w = layer.clientWidth, big = Math.max(1, Math.min(1.7, w / 420)), ps = [];
   for (let i = 0; i < 30; i++) { const left = i % 2 === 0, v = rnd(60, 520) * big;
-    ps.push({ x: left ? x0 + rnd(0, 10) : x1 - rnd(0, 10), y: y - rnd(5, 11) * big, vx: left ? -v : v, vy: -rnd(2, 14) * big, r: rnd(8, 15) * big, life: rnd(.6, 1.1), age: -rnd(0, .05) }); }
+    ps.push({ x: left ? x0 + rnd(0, 10) : x1 - rnd(0, 10), y: y - rnd(3, 18) * big, vx: left ? -v : v, vy: -rnd(10, 64) * big, r: rnd(10, 19) * big, life: rnd(.6, 1.1), age: -rnd(0, .05) }); }
   fxCanvas(layer, (g, dt) => {
     let alive = 0;
     for (const p of ps) {
       p.age += dt; if (p.age >= p.life) continue; alive++; if (p.age < 0) continue;
       const d = Math.exp(-3.6 * dt); p.vx *= d; p.vy *= d; p.x += p.vx * dt; p.y += p.vy * dt;
       const q = p.age / p.life, rad = p.r * (0.45 + 1.1 * (1 - Math.exp(-p.age * 5)));
-      g.globalAlpha = 0.2 * Math.min(1, p.age / 0.05) * Math.pow(1 - q, 1.6) * Math.max(0, Math.min(1, Math.min(p.x, w - p.x) / 24));   // thins out before the side of the tile
-      g.drawImage(img, p.x - rad * 1.9, p.y - rad * .8, rad * 3.8, rad * 1.6);   // low and wide: it hugs the counter
+      g.globalAlpha = 0.2 * Math.min(1, p.age / 0.08) * Math.pow(1 - q, 1.6) * Math.max(0, Math.min(1, Math.min(p.x, w - p.x) / 24));   // thins out before the side of the tile
+      g.drawImage(img, p.x - rad * 1.5, p.y - rad * 1.1, rad * 3, rad * 2.2);   // low and wide: it hugs the counter
     }
     return alive > 0;
-  });
+  }, true);
 }
 
 // ---- light across the piece: one bright band crosses it, cut to the piece by its own photo, so it fits any shape with no setting up
 function glint(layer, img, P, at, ms, hot) {
   const g = el("span", "fx-glint", layer), band = el("i", hot ? "hot" : "", g), src = `url("${img.currentSrc || img.src}")`;
   g.style.cssText = `left:${P.x}px;top:${P.y}px;width:${P.w}px;height:${P.h}px`; g.style.webkitMaskImage = src; g.style.maskImage = src;
-  const frames = hot ? [{ opacity: 0, easing: STRIKE }, { opacity: .62, offset: .06, easing: STATE }, { opacity: .16, offset: .26, easing: STRIKE }, { opacity: .55, offset: .32, easing: STATE },
-      { opacity: .14, offset: .52, easing: STRIKE }, { opacity: .48, offset: .58, easing: STATE }, { opacity: 0 }]   // three cracks, each a flare that cools
+  const frames = hot ? [{ opacity: 0, easing: STRIKE }, { opacity: .5, offset: .06, easing: STATE }, { opacity: .2, offset: .26, easing: STRIKE }, { opacity: .44, offset: .32, easing: STATE },
+      { opacity: .18, offset: .52, easing: STRIKE }, { opacity: .38, offset: .58, easing: STATE }, { opacity: 0 }]   // three cracks, each a flare that cools
     : [{ transform: "translateX(-46%)", opacity: 0, easing: STATE }, { opacity: 1, offset: .15 }, { opacity: 1, offset: .8 }, { transform: "translateX(46%)", opacity: 0 }];
   play(band, frames, ms, at, "none").finished.then(() => g.remove(), () => g.remove());
   return g;
@@ -840,92 +844,96 @@ function veil(layer) {
       g.beginPath(); g.arc(p.x, p.y, p.r, 0, 6.283); g.fill();
     }
     return alive > 0;
-  });
+  }, true);
 }
 
 const ACT = {
   // scent in the air: a fine mist drifts down through the whole tile and thins out, and the light runs once across the bottle.
-  // Nothing here is aimed at a cap or a nozzle, so it is right for any bottle, any shape, any photo.
-  cologne({ layer, img, K, P, pin }) {
+  cologne({ layer, img, K, P, pin, move }) {
     pin((K.l + K.r) / 2, K.b);
-    play(img, [{ transform: turn(0, 0), easing: ENTER }, { transform: turn(0, -7), offset: .3, easing: SINE }, { transform: turn(0, 0), offset: .75, easing: SINE }, { transform: turn(0, -1.5), offset: .88, easing: SINE }, { transform: turn(0, 0) }], 900, T0 - 120, "none");
+    const up = [{ transform: turn(0, 0), easing: ENTER }, { transform: turn(0, -7), offset: .3, easing: SINE }, { transform: turn(0, 0), offset: .75, easing: SINE }, { transform: turn(0, -1.5), offset: .88, easing: SINE }, { transform: turn(0, 0) }];
+    move(up, 900, T0 - 120);
     when(layer, T0 - 60, () => veil(layer));
-    glint(layer, img, P, T0 + 260, 900);
+    play(glint(layer, img, P, T0 + 260, 900), up, 900, T0 - 120, "none");   // the light is cut to the bottle, so it rides with the bottle
   },
   // glass is held up to the light: tipped, a glint runs across it (cut to the glass by its own photo), let go, it rocks home
-  bases({ layer, img, K, P, pin }) {
-    const g = glint(layer, img, P, T0 - 40, 760);
+  bases({ layer, img, K, P, pin, move }) {
+    const g = glint(layer, img, P, T0 - 40, 1000);
     const cx = (K.l + K.r) / 2; pin(cx, K.b); g.style.transformOrigin = `${cx * P.w}px ${K.b * P.h}px`;
     const rock = [
       { transform: turn(0), easing: ENTER },
-      { transform: turn(-4.5), offset: .16 },                     // T0: tipped to the light
-      { transform: turn(-4.5), offset: .5, easing: STATE },       // held while the glint crosses
-      { transform: turn(2.2), offset: .64, easing: SINE },
-      { transform: turn(-1.2), offset: .77, easing: SINE },
-      { transform: turn(.5), offset: .89, easing: SINE },
+      { transform: turn(-4.5), offset: .14 },                     // T0: tipped to the light
+      { transform: turn(-4.5), offset: .6, easing: STATE },       // held while the glint crosses
+      { transform: turn(2.2), offset: .72, easing: SINE },
+      { transform: turn(-1.2), offset: .82, easing: SINE },
+      { transform: turn(.5), offset: .91, easing: SINE },
       { transform: turn(0) }];
-    play(img, rock, 1700, T0 - 270, "none"); play(g, rock, 1700, T0 - 270, "none");
+    move(rock, 1900, T0 - 266); play(g, rock, 1900, T0 - 266, "none");
   },
-  // dropped the last inch onto the counter: it knocks and rocks, a puff runs out along the counter, and heat lifts off the piece
-  bowls({ layer, img, K, P, pin }) {
+  // picked up an inch and dropped onto the counter: it knocks and rocks, dust runs out along the counter, and heat lifts off from behind it
+  bowls({ layer, img, K, P, pin, move }) {
     pin((K.l + K.r) / 2, K.b);
-    play(img, [
-      { transform: turn(0, -30), easing: STRIKE },
-      { transform: turn(0, 0), offset: .1, easing: ENTER },       // T0: lands
-      { transform: turn(-2.2, 0), offset: .26, easing: SINE },
-      { transform: turn(1.4, 0), offset: .46, easing: SINE },
-      { transform: turn(-.7, 0), offset: .66, easing: SINE },
-      { transform: turn(.3, 0), offset: .84, easing: SINE },
-      { transform: turn(0, 0) }], 1100, T0 - 110);
-    const iw = (K.r - K.l) * P.w, rim = P.y + (K.t + K.b) / 2 * P.h;
-    when(layer, T0 + 90, () => steam(layer, box(layer, P.x + K.l * P.w, rim - 19, iw, 100)));
-    when(layer, T0, () => kick(layer, P.x + (K.l + K.r) / 2 * P.w, P.x + (K.l + K.r) / 2 * P.w, P.y + K.b * P.h));
+    move([
+      { transform: turn(0, 0), easing: ENTER },
+      { transform: turn(0, -30), offset: .16, easing: STRIKE },   // from rest, so a page that was already showing never jumps
+      { transform: turn(0, 0), offset: .26, easing: ENTER },      // T0: lands
+      { transform: turn(-2.2, 0), offset: .4, easing: SINE },
+      { transform: turn(1.4, 0), offset: .56, easing: SINE },
+      { transform: turn(-.7, 0), offset: .72, easing: SINE },
+      { transform: turn(.3, 0), offset: .87, easing: SINE },
+      { transform: turn(0, 0) }], 1300, T0 - 338);
+    const iw = (K.r - K.l) * P.w, cx = P.x + (K.l + K.r) / 2 * P.w, top = P.y + K.t * P.h, tall = (K.b - K.t) * P.h;
+    when(layer, T0 + 90, () => steam(layer, box(layer, cx - iw * .35, top + tall * .08 - 19, iw * .7, 100)));   // starts behind the piece, shows above it
+    when(layer, T0, () => kick(layer, cx, cx, P.y + K.b * P.h));
   },
-  // the coals catch: three cracks. Each one flares the whole piece warm, throws sparks up from under it, and makes it hop
-  heat({ layer, img, K, P }) {
-    const iw = (K.r - K.l) * P.w, bw = iw * 1.9, hot = P.y + K.b * P.h - 8;
-    when(layer, T0, () => embers(layer, box(layer, P.x + (K.l + K.r) / 2 * P.w - .42 * bw, hot - 44, bw, 100)));
-    glint(layer, img, P, T0, 1150, true);
+  // the coals catch: three cracks. Each one warms the piece from below, throws sparks up from behind it, and makes it hop
+  heat({ layer, img, K, P, move }) {
+    const iw = (K.r - K.l) * P.w, bw = iw * 1.6, mid = P.y + (K.t + K.b) / 2 * P.h;
+    when(layer, T0, () => embers(layer, box(layer, P.x + (K.l + K.r) / 2 * P.w - .42 * bw, mid - 44, bw, 100)));
+    const g = glint(layer, img, P, T0, 1150, true);
     const hop = a => [{ transform: "translateY(0px)", easing: ENTER }, { transform: `translateY(${-a}px)`, offset: .35, easing: STRIKE }, { transform: "translateY(0px)", offset: .8, easing: ENTER },
       { transform: `translateY(${-a * .2}px)`, offset: .9, easing: STRIKE }, { transform: "translateY(0px)" }];
-    [5, 4, 3].forEach((a, i) => play(img, hop(a), 200, T0 + 30 + i * 260, "none"));
+    [6, 5, 3.5].forEach((a, i) => { move(hop(a), 200, T0 + 30 + i * 260); play(g, hop(a), 200, T0 + 30 + i * 260, "none"); });
   },
-  // hung back on its hook and let go: it swings from the top and settles
-  hoses({ img, K, pin }) {
+  // hung back on its hook and let go: it swings from the top and settles. The swing is sized to the room beside the piece.
+  hoses({ K, P, pin, move, host }) {
     pin((K.l + K.r) / 2, K.t);
-    play(img, [
+    const room = Math.min(P.x + K.l * P.w, host.clientWidth - (P.x + K.r * P.w)), len = Math.max(1, (K.b - K.t) * P.h);
+    const k = Math.max(2.2, Math.min(6.5, Math.atan(Math.max(0, room - 4) / len) * 57.3)) / 6.5;
+    move([
       { transform: turn(0), easing: ENTER },
-      { transform: turn(6.5), offset: .1, easing: SINE },         // T0: let go
-      { transform: turn(-4.4), offset: .3, easing: SINE },
-      { transform: turn(2.9), offset: .48, easing: SINE },
-      { transform: turn(-1.8), offset: .64, easing: SINE },
-      { transform: turn(1), offset: .78, easing: SINE },
-      { transform: turn(-.4), offset: .9, easing: SINE },
-      { transform: turn(0) }], 2300, T0 - 230, "none");
+      { transform: turn(6.5 * k), offset: .1, easing: SINE },     // T0: let go
+      { transform: turn(-4.4 * k), offset: .3, easing: SINE },
+      { transform: turn(2.9 * k), offset: .48, easing: SINE },
+      { transform: turn(-1.8 * k), offset: .64, easing: SINE },
+      { transform: turn(1 * k), offset: .78, easing: SINE },
+      { transform: turn(-.4 * k), offset: .9, easing: SINE },
+      { transform: turn(0) }], 2300, T0 - 230);
   },
-  // wrenched on: two clicks of the ratchet, and it seats
-  parts({ layer, img, K, P, pin, host }) {
+  // wrenched on: backed off, two clicks of the ratchet, and it seats
+  parts({ layer, img, K, P, pin, move, host }) {
     pin((K.l + K.r) / 2, (K.t + K.b) / 2);
-    play(img, [
-      { transform: "rotate(-22deg) scale(1.04)", easing: STRIKE },
-      { transform: "rotate(-11deg) scale(1.04)", offset: .22 },   // click
-      { transform: "rotate(-11deg) scale(1.04)", offset: .48, easing: STRIKE },
-      { transform: "rotate(0deg) scale(1.04)", offset: .7, easing: ENTER },   // T0 + 230: click, tight
-      { transform: "rotate(.8deg) scale(.985)", offset: .82, easing: STATE },
-      { transform: "rotate(0deg) scale(1)" }], 520, T0 - 135);
+    move([
+      { transform: "rotate(0deg) scale(1)", easing: ENTER },
+      { transform: "rotate(-22deg) scale(1.04)", offset: .2, easing: STRIKE },   // from rest
+      { transform: "rotate(-11deg) scale(1.04)", offset: .4 },    // click
+      { transform: "rotate(-11deg) scale(1.04)", offset: .58, easing: STRIKE },
+      { transform: "rotate(0deg) scale(1.04)", offset: .76, easing: ENTER },     // T0 + 230: click, tight
+      { transform: "rotate(.8deg) scale(.985)", offset: .87, easing: STATE },
+      { transform: "rotate(0deg) scale(1)" }], 700, T0 - 302);
     give(host, T0 + 230, .988);
-    glint(layer, img, P, T0 + 260, 720);                          // tight: the light runs along it
+    glint(layer, img, P, T0 + 330, 720);                          // tight and still: the light runs along it
   },
   // picked up off the counter, turned over once, put back
-  misc({ img, K, pin, hit }) {
+  misc({ K, pin, move, hit }) {
     pin((K.l + K.r) / 2, K.b);
-    play(img, [
-      { transform: turn(0, 0), easing: ENTER },
-      { transform: turn(-4, -12), offset: .3, easing: SINE },
-      { transform: turn(3, -10), offset: .58, easing: STRIKE },
-      { transform: turn(0, 0), offset: .78, easing: ENTER },      // set down
-      { transform: turn(0, -2), offset: .89, easing: STRIKE },
-      { transform: turn(0, 0) }], 760, hit + 40, "none");
+    move([
+      { transform: turn(0, 0) + " scale(1)", easing: ENTER },
+      { transform: turn(-8, -24) + " scale(1.05)", offset: .3, easing: SINE },
+      { transform: turn(6, -20) + " scale(1.05)", offset: .58, easing: STRIKE },
+      { transform: turn(0, 0) + " scale(1)", offset: .78, easing: ENTER },      // set down
+      { transform: turn(0, -3) + " scale(1)", offset: .89, easing: STRIKE },
+      { transform: turn(0, 0) + " scale(1)" }], 900, hit + 40);
   },
 };
 function piece(layer, go, host, cat) {
@@ -940,20 +948,34 @@ function piece(layer, go, host, cat) {
       give(host, hit, .985);
     }
   }
-  const img = host.querySelector(":scope > img.shot"); if (!img || host.classList.contains("tile--photo") || !ACT[cat]) return;
+  let img = host.querySelector(":scope > img.shot"); if (!img || host.classList.contains("tile--photo") || !ACT[cat]) return;
+  const moves = [], raise = i => { i.classList.add("shot--act"); };   // one step up: the layer's sparks and heat sit behind the piece
   const start = late => {
     if (!layer.isConnected || !img.isConnected) return;
     if (late) { T0 = Math.max(140, 450 - (performance.now() - born)); WIND = T0 - 140; hit = T0; }   // the photo came in after the page was drawn: the act still waits for the page change to land
     const K = ink(img); if (!K) return;
+    raise(img);
     const P = seat(host, img), pin = (fx, fy) => { img.style.transformOrigin = `${(P.x - P.ox + fx * P.w).toFixed(1)}px ${(P.y - P.oy + fy * P.h).toFixed(1)}px`; };
-    ACT[cat]({ layer, img, K, P, pin, host, hit });
+    // every move of the photo starts and ends at rest and holds nothing, and is remembered so a re-draw can carry it over
+    const move = (frames, duration, delay = 0) => { const m = { a: play(img, frames, duration, delay, "none"), frames, duration, delay }; moves.push(m); return m.a; };
+    ACT[cat]({ layer, img, K, P, pin, move, host, hit });
+    // the page was re-drawn in mid-act (add to cart, a postal code): the new photo takes over each move where the old one was
+    layer.fxAgain = h => {
+      const n = h.querySelector(":scope > img.shot"); if (!n || n === img) return;
+      raise(n); n.style.transformOrigin = img.style.transformOrigin;
+      for (const m of moves) {
+        const at = m.a.currentTime; if (at == null || at >= m.delay + m.duration) continue;
+        m.a = play(n, m.frames, m.duration, m.delay, "none"); m.a.currentTime = at;
+      }
+      img = n;
+    };
   };
   if (img.complete && img.naturalWidth) start(false); else img.addEventListener("load", () => start(true), { once: true });
 }
 const PIECES = new Set(Object.keys(ACT));
 
 // One layer per page. A re-draw of the same page (add to cart, a quantity change) moves the live layer into the
-// new markup, so an act in mid-air carries on and nothing replays.
+// new markup, so an act in mid-air carries on and nothing replays (a product's photo is handed its moves by fxAgain).
 let live = null, playedKey = "", lastPath = location.pathname, again = false;
 function place() {
   if (document.hidden) { document.addEventListener("visibilitychange", place, { once: true }); return; } // opened in the background: the act waits to be seen

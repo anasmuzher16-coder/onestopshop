@@ -77,3 +77,24 @@ Calculator (heavy test, 200,000 random carts): price table matches the PDF in al
 published weekly rate (41.2% for Nov 9-15, 2026), was wrongly the 25% floor; Regular Parcel added; money in
 whole cents. Known limit: in carts of 40+ loose parts, adding an item can repack and lower shipping (40 of
 200,000 carts, worst $7.31). Each quote is still the true price of the packing shown.
+
+## AS BUILT 2026-11-15 (the store, store/public). Where this file and the store disagree, this section wins.
+Live: https://onestopshop-store.anas-dev.workers.dev (the old mockup address redirects to it). The mockup in
+site/ is frozen history; everything above describes how the look was reached, not what ships.
+- Base: direction 2, unchanged. Coal ground, flat jewel tiles, Lalezar + Readex Pro, price-gun labels.
+- Dropped by his rulings since: the scrolling ticker (no tickers), Arabic lettering ("pull the arabic for
+  now"), multiply or any blend mode over photos, white grounds behind photos.
+- Photos: cut-outs sit straight on the jewel tile. Opaque photos get the plain tile (.tile--photo). All
+  photos are still stand-ins; five products are hidden until the shop supplies its own.
+- Motion, three layers, each with a reduced-motion still:
+  1. Smoke (fx-smoke.js): strongest in the hookah section, his ruling.
+  2. Page bands (fx-sections.js FX): every page opens with a header band holding one drawn object that does
+     one act (bowl, hose, gift box and so on). Drawings live in tools/objects-r5.txt and objects-pages.txt
+     and are built into fx-objects.js by tools/build-objects.mjs. Never edit fx-objects.js by hand.
+  3. Product acts (fx-sections.js ACT): one act per section on the product photo. RULE: no act is aimed at
+     a feature of the piece. An act may use only the box the piece fills, its outline as a mask, and the
+     tile, so any photo the shop uploads later works with no tuning. Hookahs get smoke only.
+- Phone and desktop ship together and are checked in Safari's engine with an iPhone profile as well as
+  Chrome at 390 and 1440 (tools/webkit-check.mjs, ENGINE=webkit on the fx tools).
+- Checks: tools/fx-robust.mjs, e2e.mjs, phone-audit.mjs, smoke-http.mjs. Frame sheets for judging motion:
+  tools/fx-sheet.mjs (section bands), fx-pages-sheet.mjs (page bands), fx-piece-sheet.mjs (product acts).

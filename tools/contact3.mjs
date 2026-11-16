@@ -1,6 +1,6 @@
 // node tools/contact3.mjs <prefix> <out> : labelled sheet of cand/<prefix>*.jpg
 import { createRequire } from "node:module"; import { readdirSync } from "node:fs";
-const sharp = createRequire("C:/dev/hm-barbershop/package.json")("sharp");
+const sharp = createRequire("C:/dev/dijji-crm/package.json")("sharp");
 const [prefix, out] = process.argv.slice(2);
 const files = readdirSync("cand").filter(f => f.startsWith(prefix) && /\.(jpg|png|webp)$/.test(f)).sort();
 const W = 150, H = 190, cols = 12, rows = Math.ceil(files.length / cols);

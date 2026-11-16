@@ -1,6 +1,6 @@
 // Contact sheet of every cut-out on a strong colour, to eyeball leftover white. node tools/cutsheet.mjs <prefix> <out>
 import { createRequire } from "node:module"; import { readdirSync } from "node:fs";
-const sharp = createRequire("C:/dev/hm-barbershop/package.json")("sharp");
+const sharp = createRequire("C:/dev/dijji-crm/package.json")("sharp");
 const [prefix, out] = process.argv.slice(2);
 const files = readdirSync("site/img/pc").filter(f => f.startsWith(prefix) && f.endsWith("-m.webp")).sort();
 const W = 180, H = 225, cols = 10, rows = Math.ceil(files.length / cols), tiles = [];

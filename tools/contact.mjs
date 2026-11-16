@@ -1,6 +1,6 @@
 // Contact sheet of assets-src for review. node tools/contact.mjs <out.jpg> <files...>
 import { createRequire } from "node:module";
-const require = createRequire("C:/dev/hm-barbershop/package.json");
+const require = createRequire("C:/dev/dijji-crm/package.json");
 const sharp = require("sharp");
 const [out, ...files] = process.argv.slice(2);
 const W = 360, H = 270, cols = 5, rows = Math.ceil(files.length / cols);

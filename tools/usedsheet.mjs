@@ -1,6 +1,6 @@
 // Labelled contact sheet of the cut-outs the catalogue actually uses. node tools/usedsheet.mjs <out> [cat,cat]
 import { createRequire } from "node:module";
-const sharp = createRequire("C:/dev/hm-barbershop/package.json")("sharp");
+const sharp = createRequire("C:/dev/dijji-crm/package.json")("sharp");
 const { PRODUCTS } = await import("../site/catalog.js");
 const [out, cats] = process.argv.slice(2);
 const ps = PRODUCTS.filter(p => !cats || cats.split(",").includes(p.cat));

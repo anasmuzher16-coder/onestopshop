@@ -1,6 +1,6 @@
 // Close-up sheet of named cut-outs on dark coal and on a jewel, to judge fringes. node tools/edgesheet.mjs <out> <img ids...>
 import { createRequire } from "node:module"; import { existsSync } from "node:fs";
-const sharp = createRequire("C:/dev/hm-barbershop/package.json")("sharp");
+const sharp = createRequire("C:/dev/dijji-crm/package.json")("sharp");
 const [out, ...ids] = process.argv.slice(2);
 const W = 432, H = 540, tiles = [];
 for (const [i, id] of ids.entries()) {

@@ -117,7 +117,15 @@ function packAll(lines) {
 // --- Rating -------------------------------------------------------------------------------
 // FUEL: Canada Post's published domestic fuel surcharge, relief rate, for the week shown. It changes
 // weekly (canadapost.ca/fuelsurcharge), which is why production must read it from the Rating API.
-export const FUEL = { pct: 0.412, week: "Nov 9 to Nov 15, 2026", next: { pct: 0.399, from: "2026-11-16" } };
+// Each row is one published week; the newest row that has started is the one in force. Add next week's
+// row when Canada Post posts it. Source read 2026-11-15: both rows below.
+const FUEL_WEEKS = [
+  { from: "2026-11-09", pct: 0.412, week: "Nov 9 to Nov 15, 2026" },
+  { from: "2026-11-16", pct: 0.399, week: "Nov 16 to Nov 22, 2026" },
+];
+export const fuelOn = (day = new Date().toLocaleDateString("en-CA", { timeZone: "America/Toronto" })) =>
+  FUEL_WEEKS.filter(w => w.from <= day).pop() || FUEL_WEEKS[0];
+export const FUEL = fuelOn();
 export const RATE_CARD = {
   divisor: 5000,        // cm3 per kg, Priority / Xpresspost / Expedited (Canada Post "How to cube an item")
   coveragePer100: 2.75, // "Additional Liability Coverage ... $2.75 per additional $100"
@@ -145,7 +153,7 @@ export function sheetPrice(sheet, zoneIndex, kg) {
 
 // Returns options sorted by price, each itemised, all money in whole cents internally.
 // Returns [] if any parcel cannot ship (real or billed weight over 30 kg): the counter quotes those by hand.
-export function quote(dest, parcels, fuelPct = FUEL.pct) {
+export function quote(dest, parcels, fuelPct = fuelOn().pct) {   // read at call time: a Worker has no clock at load
   if (!dest || !parcels.length || parcels.some(p => p.kg > MAX_KG)) return [];
   const z = dest.zone - 1, out = [];
   for (const c of RATE_CARD.carriers) {

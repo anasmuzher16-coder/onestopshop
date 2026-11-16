@@ -1,7 +1,7 @@
 // Contact sheet of the smoke at fixed moments, so motion can be judged from stills. node store/tools/smoke-sheet.mjs <out.png> [path] [width]
 import { createRequire } from "node:module";
 const { chromium } = createRequire("C:/dev/puckempire-arena/package.json")("playwright");
-const sharp = createRequire("C:/dev/hm-barbershop/package.json")("sharp");
+const sharp = createRequire("C:/dev/dijji-crm/package.json")("sharp");
 const [out, path = "/p/OSS-1001", width = "390"] = process.argv.slice(2), B = process.env.BASE || "http://127.0.0.1:4420";
 const b = await chromium.launch(); const errs = [];
 try {

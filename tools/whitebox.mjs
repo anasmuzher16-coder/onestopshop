@@ -2,7 +2,7 @@
 // A corner that renders near-white on a coloured tile means the photo's background is showing.
 import { createRequire } from "node:module";
 const pw = createRequire("C:/dev/puckempire-arena/package.json")("playwright"), chromium = pw[process.env.ENGINE || "chromium"]; // ENGINE=webkit checks the Safari engine
-const sharp = createRequire("C:/dev/hm-barbershop/package.json")("sharp");
+const sharp = createRequire("C:/dev/dijji-crm/package.json")("sharp");
 const base = process.env.BASE || "http://localhost:4410/";
 const b = await chromium.launch(); let bad = 0, n = 0;
 try {

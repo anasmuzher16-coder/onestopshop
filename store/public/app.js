@@ -1,6 +1,6 @@
 import { PRODUCTS, CATEGORIES, BOXES } from "/api/catalog-module";
 import { route, navigate } from "./route.js";
-import { parsePostal, pack, quote, money, days, MAX_QTY, FUEL, taxRate, taxLabel } from "./rates.js";
+import { parsePostal, pack, quote, money, days, MAX_QTY, fuelOn, taxRate, taxLabel } from "./rates.js";
 
 // ---------- state (everything read from storage is validated) ----------
 const bySku = Object.fromEntries(PRODUCTS.map(p => [p.sku, p]));
@@ -331,7 +331,7 @@ function viewCart() {
       ${chosen ? `<details class="why" ${state.whyOpen ? "open" : ""}><summary>What makes up ${money(chosen.total)}</summary><dl>
         ${chosen.perParcel.map((p, i) => `<div><dt>Box ${i + 1}, billed at ${p.billableKg} kg</dt><dd class="num">${money(p.freight)}</dd></div>`).join("")}
         ${chosen.cover ? `<div><dt>Glass coverage and signature</dt><dd class="num">${money(chosen.cover)}</dd></div>` : ""}
-        <div><dt>Carrier fuel charge, ${(FUEL.pct * 100).toFixed(1)}% for ${FUEL.week}</dt><dd class="num">${money(chosen.fuel)}</dd></div></dl></details>` : ""}` : `<fieldset class="opts"><legend>Or skip shipping</legend><label class="opt"><input type="radio" name="ship" value="pickup" ${pickup ? "checked" : ""}><span class="opt__name">Pick up at the Windsor counter<small>Ready the same day</small></span><span class="num">Free</span></label></fieldset>`}
+        <div><dt>Carrier fuel charge, ${(fuelOn().pct * 100).toFixed(1)}%, the rate posted for ${fuelOn().week}</dt><dd class="num">${money(chosen.fuel)}</dd></div></dl></details>` : ""}` : `<fieldset class="opts"><legend>Or skip shipping</legend><label class="opt"><input type="radio" name="ship" value="pickup" ${pickup ? "checked" : ""}><span class="opt__name">Pick up at the Windsor counter<small>Ready the same day</small></span><span class="num">Free</span></label></fieldset>`}
     </section>
     <div class="giftnote"><label class="field__label" for="note">Gift note <span class="fine">optional, written on a card in the box</span></label>
       <textarea class="field field--text field--area" id="note" data-note maxlength="240" rows="2" placeholder="Happy birthday, from all of us">${esc(state.note)}</textarea></div>
