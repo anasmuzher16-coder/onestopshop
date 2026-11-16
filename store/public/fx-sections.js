@@ -3,7 +3,7 @@
 //   the right; when the page opens, a hand does the one thing you do to that object at the counter, once, and the
 //   object reacts to it.
 //   hookahs  smoke rolls in and pushes the hose (fx-smoke.js)   cologne  the pump is pressed twice; the bottle kicks
-//   bases    the glass is tipped to the light, let go, rocks    bowls    dropped the last inch; knocks, rocks, heat lifts
+//   bases    the glass is tipped to the light, let go, rocks    bowls    the tongs set a coal and push it home; it flares 
 //   heat     the coals light, the lid hops on each crackle      hoses    thrown out; the mouthpiece whips
 //   parts    spun down the thread, wrenched tight; it seats     misc     the price gun: one hit alone, then faster
 // Timing: every act makes contact at T0, after the page change has landed; a wind-up may start at WIND. A tap on
@@ -326,25 +326,45 @@ const FX = {
       q(".sh").animate([{ opacity: 0 }, { opacity: 0, offset: .6 }, { opacity: .5 }], run)]; // and the glass keeps a highlight
     lights[4].onfinish = () => { rest(); lights.forEach(x => x.cancel()); }; // the resting look is handed to plain styles: nothing stays alive
   },
-  bowls(layer, go, host, re) {
-    const o = obj(layer, OBJ.bowls, "low");
+  bowls(layer, go) {
+    // coals are being set on the bowl: one sits on top of the other two. The tongs come down, take it, carry it over and
+    // set it down beside them, let go, then push it in until it knocks against its neighbour. Every coal flares when it is touched.
+    const o = obj(layer, OBJ.bowls), q = c => o.querySelector(c), glows = [...o.querySelectorAll(".glow")];
+    idle(layer, () => glows.forEach((gl, i) => play(gl, [ // the coals breathe
+      { opacity: .62, easing: STATE }, { opacity: .85, offset: .3, easing: STATE }, { opacity: .55, offset: .55, easing: STATE }, { opacity: .75, offset: .8, easing: STATE }, { opacity: .62 }], 900, i * 110, "none")));
     if (!go) return;
-    const set = o.querySelector(".set"), hit = re ? 300 : T0;
-    const tail = (t, dur) => [   // from contact at t ms into an animation dur ms long: knocks up, comes down, the rock dies
-      { transform: "translateY(0px) rotate(3deg)", offset: t / dur, easing: ENTER },
-      { transform: "translateY(-6px) rotate(-2deg)", offset: (t + 100) / dur, easing: STRIKE },
-      { transform: "translateY(0px) rotate(1.2deg)", offset: (t + 200) / dur, easing: STATE },
-      { transform: "translateY(0px) rotate(-0.5deg)", offset: (t + 300) / dur, easing: STATE },
-      { transform: "translateY(0px) rotate(0deg)" }];
-    if (re) { // a tap: picked up and dropped again; it is never taken off the counter
-      lift(o, 0, 720);
-      play(set, [{ transform: "translateY(0px) rotate(0deg)", easing: ENTER }, { transform: "translateY(-18px) rotate(-3deg)", offset: 160 / 720, easing: STRIKE }, ...tail(300, 720)], 720, 0);
-    } else {
-      lift(o, T0 - 180, T0 + 420);
-      play(set, [{ opacity: 0 }, { opacity: 1 }], 60, T0 - 180); // it is not on the counter until it is put there
-      play(set, [{ transform: "translateY(-40px) rotate(-5deg)", easing: STRIKE }, ...tail(180, 600)], 600, T0 - 180);
-    }
-    when(layer, hit + 250, () => steam(layer, o)); // heat lifts off the top once it has settled
+    const S = Math.max(0, T0 - 200), D = 1300, f = ms => ms / D;   // S: the tongs start down. S + 200: they close on the coal
+    lift(o, S, S + D);
+    // the tongs: where the hinge is; the tips are 36 units down the arms, which point down and left at 143 degrees
+    const at = (x, y) => `translate(${x}px,${y}px) rotate(143deg)`, tr = (x, y, r = 0) => `translate(${x}px,${y}px) rotate(${r}deg)`;
+    play(q(".tongs"), [
+      { transform: at(92.75, 4.73), easing: ENTER },
+      { transform: at(73.25, 6.23), offset: f(200), easing: STATE },      // on the top coal
+      { transform: at(76.75, 1.73), offset: f(320), easing: SINE },        // lifted clear
+      { transform: at(85.75, 2.73), offset: f(520), easing: STRIKE },     // carried over
+      { transform: at(92.75, 15.23), offset: f(640), easing: ENTER },     // set down
+      { transform: at(95.75, 7.73), offset: f(760), easing: STATE },      // let go, up and round behind it
+      { transform: at(99.25, 15.23), offset: f(900), easing: STRIKE },
+      { transform: at(96.25, 15.23), offset: f(1000), easing: ENTER },    // pushed in
+      { transform: at(92.75, 4.73) }], D, S, "none");
+    const jaw = s => [10, 10, 8, 8, 11, 11, 2.2, 2.2, 10].map((d, i) => ({ transform: `rotate(${d * s}deg)`, offset: [0, f(140), f(200), f(640), f(700), f(760), f(860), f(1040), 1][i], easing: STATE }));
+    play(q(".arm.a"), jaw(-1), D, S, "none"); play(q(".arm.b"), jaw(1), D, S, "none");
+    play(q(".c2"), [ // the coal that is moved: it starts on top of the other two
+      { transform: tr(-16.5, -9), easing: ENTER },
+      { transform: tr(-16.5, -9), offset: f(200), easing: STATE },
+      { transform: tr(-13, -13.5, -6), offset: f(320), easing: SINE },
+      { transform: tr(-4, -12.5, 5), offset: f(520), easing: STRIKE },
+      { transform: tr(3, 0), offset: f(640), easing: ENTER },
+      { transform: tr(3, 0), offset: f(900), easing: STRIKE },
+      { transform: tr(-.7, 0), offset: f(1000), easing: ENTER },          // knocks into its neighbour
+      { transform: tr(0, 0), offset: f(1070) },
+      { transform: tr(0, 0) }], D, S);
+    const bump = (x, t) => [{ transform: "translateX(0px)" }, { transform: "translateX(0px)", offset: f(t), easing: ENTER }, { transform: `translateX(${x}px)`, offset: f(t + 50), easing: STATE }, { transform: "translateX(0px)", offset: f(t + 170) }, { transform: "translateX(0px)" }];
+    play(q(".c3"), bump(-.9, 990), D, S, "none"); play(q(".c1"), bump(-.45, 1030), D, S, "none");
+    play(q(".set"), [{ transform: "translateY(0px)", easing: ENTER }, { transform: "translateY(1.3px)", offset: .3, easing: STATE }, { transform: "translateY(0px)" }], 220, S + 640, "none");   // the bowl takes the weight
+    glows.forEach(gl => play(gl, [{ opacity: .62, easing: STATE }, { opacity: .62, offset: f(630), easing: ENTER }, { opacity: 1, offset: f(670), easing: STATE }, { opacity: .66, offset: f(900), easing: STRIKE },
+      { opacity: 1, offset: f(1010), easing: STATE }, { opacity: .62 }], D, S, "none"));
+    when(layer, S + 640, () => { const L = layer.getBoundingClientRect(), B = o.getBoundingClientRect(); embers(layer, box(layer, B.left - L.left + .08 * B.width, B.top - L.top - .115 * B.height, B.width, B.height), 9, false, true); });   // a few sparks when it is set down and when it knocks
   },
   heat(layer, go, host, re) {
     const o = obj(layer, `<g class="keeper">${COALS}${OBJ.heat}</g>`), glows = [...o.querySelectorAll(".glow")];

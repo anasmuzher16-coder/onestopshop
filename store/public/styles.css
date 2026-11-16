@@ -594,6 +594,7 @@ html:not(.hero-seen) .piece .sticker{animation-timing-function:linear(0,.25 6%,.
 .fx .mouth{transform-box:view-box;transform-origin:87px 60px}
 .fx .recoil,.fx .rock,.fx .set{transform-box:view-box;transform-origin:50px 94px}
 .fx .keeper{transform-box:view-box;transform-origin:42px 94px}
+.fx .tongs{transform:translate(92.75px,4.73px) rotate(143deg)} .fx .coal .glow{opacity:.62} .fx .arm.a{transform:rotate(-10deg)} .fx .arm.b{transform:rotate(10deg)} .fx .coal{transform-box:fill-box;transform-origin:center}
 .fx .lid{transform-box:view-box;transform-origin:42px 28px;transform:rotate(-6deg)}
 .fx .whip{transform-box:view-box;transform-origin:20px 64px}
 .fx .tip{transform-box:view-box;transform-origin:68px 38px}
