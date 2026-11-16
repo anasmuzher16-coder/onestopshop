@@ -155,15 +155,15 @@ function spritz(layer, ox, oy, angle, power = 1, reach = 0, fat = 1) {
 
 // ---- sparks: the coal cracks three times. Each crack is a flash over the coals and a handful of embers: most are lofted and
 // zigzag in the hot air, every fifth is spat out sideways and falls in an arc. They cool from pale yellow through orange to red.
-function embers(layer, o) {
+function embers(layer, o, n = 30, top = false, fine = false) {
   const L = layer.getBoundingClientRect(), b = o.getBoundingClientRect(), bx = b.left - L.left, by = b.top - L.top, big = Math.max(1, Math.min(1.8, L.height / 120));
   const tops = [[0.23, 0.44], [0.42, 0.44], [0.61, 0.44], [0.42, 0.40]], ps = [], glow = soft("214,51,38"), flash = soft("255,222,150");   // the tops of the three coals
   const cx = bx + 0.42 * b.width, cy = by + 0.5 * b.height, h = L.height;
-  for (let i = 0; i < 30; i++) {
+  for (let i = 0; i < n; i++) {
     const v = tops[i % 4], x = bx + (v[0] + rnd(-0.07, 0.07)) * b.width, y = by + v[1] * b.height, k = rnd(0.9, 1.6), far = i % 5 === 0;
     const rise = rnd(0.45, 0.95) * Math.max(24, y - 4);                               // never past the top edge of the band
     ps.push({ x, y, vx: (far ? rnd(90, 190) * (Math.random() < 0.6 ? -1 : 1) : rnd(-45, 45)) * big, vy: -rise * k, k, grav: (far ? 150 : 30) * big, r: rnd(1.7, 3.3) * big, life: rnd(1.0, 2.1),
-      age: -(Math.floor(i / 10) * 0.26 + rnd(0, 0.16)), w: rnd(6, 9), ph: rnd(0, 6.28), amp: (far ? 0 : rnd(350, 800)) * big });
+      age: -(Math.floor(i / (n / 3)) * 0.26 + rnd(0, 0.16)), w: rnd(6, 9), ph: rnd(0, 6.28), amp: (far ? 0 : rnd(350, 800)) * big });
   }
   let T = 0;
   fxCanvas(layer, (g, dt) => {
@@ -175,13 +175,13 @@ function embers(layer, o) {
       const d = Math.exp(-p.k * dt); p.vx = p.vx * d + Math.sin(p.ph + p.age * p.w) * p.amp * dt; p.vy = p.vy * d + p.grav * dt; p.x += p.vx * dt; p.y += p.vy * dt;
       const heat = 1 - p.age / p.life, fl = 0.8 + 0.2 * Math.sin(p.age * 38 + p.ph), sp = Math.hypot(p.vx, p.vy), len = Math.min(sp * 0.06, 22 * big);
       const hr = p.r * (2.4 + 3 * heat), ed = edge(p.y, p.r, h); if (ed <= 0) continue;   // one that falls to the floor of the band goes out there
-      g.globalAlpha = 0.7 * heat * fl * ed; g.drawImage(glow, p.x - hr, p.y - hr, hr * 2, hr * 2);            // red glow
+      g.globalAlpha = (fine ? 0.6 * heat : 0.7) * heat * fl * ed; g.drawImage(glow, p.x - hr, p.y - hr, hr * 2, hr * 2);            // red glow
       if (len > 1) { g.globalAlpha = 0.85 * heat * ed; g.strokeStyle = heat > 0.55 ? "rgb(255,186,84)" : "rgb(214,51,38)"; g.lineWidth = 1.5 * p.r; g.beginPath(); g.moveTo(p.x, p.y); g.lineTo(p.x - p.vx / sp * len, p.y - p.vy / sp * len); g.stroke(); }
-      g.globalAlpha = Math.min(1, heat * 2.2) * fl * ed; g.fillStyle = heat > 0.6 ? "rgb(255,244,186)" : heat > 0.3 ? "rgb(255,186,84)" : "rgb(214,51,38)";
+      g.globalAlpha = (fine ? Math.min(1, heat * heat * 2.6) : Math.min(1, heat * 2.2)) * fl * ed; g.fillStyle = heat > 0.6 ? "rgb(255,244,186)" : heat > 0.3 ? "rgb(255,186,84)" : "rgb(214,51,38)";
       g.beginPath(); g.arc(p.x, p.y, p.r * (0.55 + 0.45 * heat), 0, 6.283); g.fill();                     // the hot centre
     }
     return alive > 0 || T < 0.8;
-  });
+  }, top);
 }
 
 // ---- steam: heat coming off a bowl. Six ribbons across the whole rim that rise fast and slow down, widen and waver more the
@@ -792,22 +792,41 @@ function seat(stage, img) {
 const box = (layer, x, y, w, h) => { const L = layer.getBoundingClientRect(); return { getBoundingClientRect: () => ({ left: L.left + x, top: L.top + y, width: w, height: h }) }; };
 const turn = (v, y = 0) => `translateY(${y}px) rotate(${v}deg)`;
 
-// ---- a landing: whatever is set down with weight pushes a low puff out along the counter, left and right of its foot
-function kick(layer, x0, x1, y) {
-  const img = soft("255,252,246"), w = layer.clientWidth, big = Math.max(1, Math.min(1.7, w / 420)), ps = [];
-  for (let i = 0; i < 30; i++) { const left = i % 2 === 0, v = rnd(60, 520) * big;
-    ps.push({ x: left ? x0 + rnd(0, 10) : x1 - rnd(0, 10), y: y - rnd(3, 18) * big, vx: left ? -v : v, vy: -rnd(10, 64) * big, r: rnd(10, 19) * big, life: rnd(.6, 1.1), age: -rnd(0, .05) }); }
+// ---- a landing: whatever is set down with weight throws dust out along the counter from under it. A fast low skirt
+// that hugs the counter, and slower puffs that lift, swell and curl away. Called once behind the piece and once in front.
+function kick(layer, cx, half, y, n = 22, top = false, power = 1) {
+  const img = soft("255,250,240"), w = layer.clientWidth, big = Math.max(1, Math.min(1.7, w / 420)), ps = [];
+  for (let i = 0; i < n; i++) { const left = i % 2 === 0, low = i % 5 < 3, v = (low ? rnd(150, 520) : rnd(40, 170)) * big * power;
+    ps.push({ x: cx + (left ? -1 : 1) * half * rnd(.5, 1), y: y - rnd(2, low ? 8 : 16) * big, vx: left ? -v : v, vy: -(low ? rnd(4, 26) : rnd(46, 130)) * big * power,
+      r: (low ? rnd(9, 15) : rnd(15, 28)) * big * (.7 + .3 * power), life: low ? rnd(.5, .95) : rnd(1.1, 1.9), age: -rnd(0, low ? .04 : .12), low, drag: low ? 4.2 : 2.3, ph: rnd(0, 6.28) }); }
   fxCanvas(layer, (g, dt) => {
     let alive = 0;
     for (const p of ps) {
       p.age += dt; if (p.age >= p.life) continue; alive++; if (p.age < 0) continue;
-      const d = Math.exp(-3.6 * dt); p.vx *= d; p.vy *= d; p.x += p.vx * dt; p.y += p.vy * dt;
-      const q = p.age / p.life, rad = p.r * (0.45 + 1.1 * (1 - Math.exp(-p.age * 5)));
-      g.globalAlpha = 0.2 * Math.min(1, p.age / 0.08) * Math.pow(1 - q, 1.6) * Math.max(0, Math.min(1, Math.min(p.x, w - p.x) / 24));   // thins out before the side of the tile
-      g.drawImage(img, p.x - rad * 1.5, p.y - rad * 1.1, rad * 3, rad * 2.2);   // low and wide: it hugs the counter
+      const d = Math.exp(-p.drag * dt); p.vx = p.vx * d + (p.low ? 0 : Math.sin(p.ph + p.age * 3.2) * 26 * big * dt); p.vy *= d; p.x += p.vx * dt; p.y += p.vy * dt;
+      const q = p.age / p.life, rad = p.r * (0.5 + 1.3 * (1 - Math.exp(-p.age * 4)));
+      g.globalAlpha = (p.low ? 0.19 : 0.23) * Math.min(1, p.age / 0.07) * Math.pow(1 - q, 1.5) * Math.max(0, Math.min(1, Math.min(p.x, w - p.x) / 24));   // thins out before the side of the tile
+      if (p.low) g.drawImage(img, p.x - rad * 1.5, p.y - rad * .95, rad * 3, rad * 1.9);   // low and wide: it hugs the counter
+      else g.drawImage(img, p.x - rad, p.y - rad, rad * 2, rad * 2);
     }
     return alive > 0;
-  }, true);
+  }, top);
+}
+// ---- weight: a soft contact shadow on the counter under the piece, only while it is in the air and landing. It sits behind the piece.
+function shade(layer, P, K, frames, ms, at) {
+  const w = (K.r - K.l) * P.w * .86, h = Math.max(10, w * .13), n = el("i", "fx-shade", layer);
+  n.style.cssText = `left:${P.x + (K.l + K.r) / 2 * P.w - w / 2}px;top:${P.y + K.b * P.h - h * .62}px;width:${w}px;height:${h}px`;
+  play(n, frames, ms, at, "none").finished.then(() => n.remove(), () => n.remove());
+}
+// ---- heat behind the piece: a hot halo that swells on each crack and cools between them, so the piece is rim-lit from behind
+function halo(layer, P, K, at) {
+  const w = (K.r - K.l) * P.w * 1.7, h = Math.max((K.b - K.t) * P.h * 2.3, w * .6), n = el("i", "fx-halo", layer);
+  n.style.cssText = `left:${P.x + (K.l + K.r) / 2 * P.w - w / 2}px;top:${P.y + (K.t + K.b) / 2 * P.h - h / 2}px;width:${w}px;height:${h}px`;
+  const f = [{ opacity: 0, transform: "scale(.5)", easing: STRIKE }];
+  [[0, .85, .9], [260, .78, 1], [520, .7, 1.08]].forEach(([t, o, sc]) => {
+    f.push({ opacity: o, transform: `scale(${sc})`, offset: (t + 60) / 1700, easing: STATE }, { opacity: o * .36, transform: `scale(${sc * .86})`, offset: (t + 235) / 1700, easing: STRIKE }); });
+  f.push({ opacity: .22, transform: "scale(.95)", offset: .62, easing: STATE }, { opacity: 0, transform: "scale(.8)" });
+  play(n, f, 1700, at, "none").finished.then(() => n.remove(), () => n.remove());
 }
 
 // ---- light across the piece: one bright band crosses it, cut to the piece by its own photo, so it fits any shape with no setting up
@@ -870,30 +889,57 @@ const ACT = {
       { transform: turn(0) }];
     move(rock, 1900, T0 - 266); play(g, rock, 1900, T0 - 266, "none");
   },
-  // picked up an inch and dropped onto the counter: it knocks and rocks, dust runs out along the counter, and heat lifts off from behind it
-  bowls({ layer, img, K, P, pin, move }) {
+  // picked up, tipped, and dropped onto the counter. It lands with its weight (it squashes against the counter and its
+  // shadow closes under it), bounces once, rocks out; dust is thrown along the counter on both landings; heat lifts off behind it
+  bowls({ layer, K, P, pin, move, host }) {
     pin((K.l + K.r) / 2, K.b);
+    const at = Math.max(0, T0 - 450), C = at + 450, B = C + 195;   // C: it lands. B: it lands again after the bounce
+    const up = Math.max(8, Math.min(34, P.y + K.t * P.h - 8));   // only as high as the room above it: nothing is cut by the tile
+    const tf = (y, r, sx = 1, sy = 1) => `translateY(${y}px) rotate(${r}deg) scale(${sx},${sy})`;
     move([
-      { transform: turn(0, 0), easing: ENTER },
-      { transform: turn(0, -30), offset: .16, easing: STRIKE },   // from rest, so a page that was already showing never jumps
-      { transform: turn(0, 0), offset: .26, easing: ENTER },      // T0: lands
-      { transform: turn(-2.2, 0), offset: .4, easing: SINE },
-      { transform: turn(1.4, 0), offset: .56, easing: SINE },
-      { transform: turn(-.7, 0), offset: .72, easing: SINE },
-      { transform: turn(.3, 0), offset: .87, easing: SINE },
-      { transform: turn(0, 0) }], 1300, T0 - 338);
-    const iw = (K.r - K.l) * P.w, cx = P.x + (K.l + K.r) / 2 * P.w, top = P.y + K.t * P.h, tall = (K.b - K.t) * P.h;
-    when(layer, T0 + 90, () => steam(layer, box(layer, cx - iw * .35, top + tall * .08 - 19, iw * .7, 100)));   // starts behind the piece, shows above it
-    when(layer, T0, () => kick(layer, cx, cx, P.y + K.b * P.h));
+      { transform: tf(0, 0), easing: ENTER },
+      { transform: tf(-up, -up / 11), offset: .15, easing: STATE },                // picked up, tipped
+      { transform: tf(-up * 1.08, -up / 9.5), offset: .22, easing: STRIKE },               // a breath at the top
+      { transform: tf(0, -.6, 1.045, .95), offset: .3, easing: ENTER },        // C: lands, squashes against the counter
+      { transform: tf(-Math.min(8, up * .3), 1.7, .985, 1.02), offset: .365, easing: STRIKE },    // bounces
+      { transform: tf(0, 1.1, 1.016, .984), offset: .43, easing: SINE },       // B: lands again
+      { transform: tf(0, -1.3), offset: .55, easing: SINE },                   // rocks out
+      { transform: tf(0, .75), offset: .68, easing: SINE },
+      { transform: tf(0, -.38), offset: .8, easing: SINE },
+      { transform: tf(0, .15), offset: .91, easing: SINE },
+      { transform: tf(0, 0) }], 1500, at);
+    shade(layer, P, K, [
+      { opacity: 0, transform: "scale(1,1)", easing: ENTER },
+      { opacity: .5, transform: "scale(.62,.8)", offset: .15, easing: STATE },   // in the air: small and soft
+      { opacity: .46, transform: "scale(.58,.78)", offset: .22, easing: STRIKE },
+      { opacity: 1, transform: "scale(1.12,1.1)", offset: .3, easing: ENTER },   // lands: closes under it
+      { opacity: .7, transform: "scale(.9,.95)", offset: .365, easing: STRIKE },
+      { opacity: .95, transform: "scale(1.04,1.02)", offset: .43, easing: STATE },
+      { opacity: .7, transform: "scale(1,1)", offset: .6, easing: STATE },
+      { opacity: 0, transform: "scale(1,1)" }], 1500, at);                       // and the tile is flat again
+    give(host, C, .99);
+    const iw = (K.r - K.l) * P.w, cx = P.x + (K.l + K.r) / 2 * P.w, foot = P.y + K.b * P.h, top = P.y + K.t * P.h, tall = (K.b - K.t) * P.h;
+    when(layer, C, () => { kick(layer, cx, iw * .2, foot, 24, false); kick(layer, cx, iw * .2, foot, 16, true); });
+    when(layer, B, () => kick(layer, cx, iw * .2, foot, 10, true, .55));
+    when(layer, B + 140, () => steam(layer, box(layer, cx - iw * .35, top + tall * .08 - 19, iw * .7, 100)));   // starts behind the piece, shows above it
   },
-  // the coals catch: three cracks. Each one warms the piece from below, throws sparks up from behind it, and makes it hop
-  heat({ layer, img, K, P, move }) {
-    const iw = (K.r - K.l) * P.w, bw = iw * 1.6, mid = P.y + (K.t + K.b) / 2 * P.h;
-    when(layer, T0, () => embers(layer, box(layer, P.x + (K.l + K.r) / 2 * P.w - .42 * bw, mid - 44, bw, 100)));
-    const g = glint(layer, img, P, T0, 1150, true);
-    const hop = a => [{ transform: "translateY(0px)", easing: ENTER }, { transform: `translateY(${-a}px)`, offset: .35, easing: STRIKE }, { transform: "translateY(0px)", offset: .8, easing: ENTER },
-      { transform: `translateY(${-a * .2}px)`, offset: .9, easing: STRIKE }, { transform: "translateY(0px)" }];
-    [6, 5, 3.5].forEach((a, i) => { move(hop(a), 200, T0 + 30 + i * 260); play(g, hop(a), 200, T0 + 30 + i * 260, "none"); });
+  // the coals catch: three cracks. On each one the heat blooms behind the piece, sparks are thrown up from behind it (and a few
+  // out in front), the piece is lit warm from below and jumps; after the last one a little heat keeps lifting off it
+  heat({ layer, img, K, P, pin, move }) {
+    pin((K.l + K.r) / 2, K.b);
+    const C = T0, iw = (K.r - K.l) * P.w, bw = iw * 1.6, cx = P.x + (K.l + K.r) / 2 * P.w, mid = P.y + (K.t + K.b) / 2 * P.h, top = P.y + K.t * P.h, tall = (K.b - K.t) * P.h;
+    halo(layer, P, K, C - 30);
+    when(layer, C, () => { embers(layer, box(layer, cx - .42 * bw, mid - 44, bw, 100), 36, false, true); embers(layer, box(layer, cx - .42 * bw, mid - 30, bw, 100), 9, true, true); });
+    const g = glint(layer, img, P, C, 1150, true);
+    const hop = a => [
+      { transform: "translateY(0px) scale(1,1)", easing: ENTER },
+      { transform: `translateY(${-a}px) scale(.985,1.02)`, offset: .32, easing: STRIKE },
+      { transform: `translateY(0px) scale(${1 + a * .004},${1 - a * .005})`, offset: .62, easing: ENTER },   // lands with its weight
+      { transform: `translateY(${-a * .22}px) scale(1,1)`, offset: .8, easing: STRIKE },
+      { transform: "translateY(0px) scale(1,1)" }];
+    [9, 7, 5].forEach((a, i) => { move(hop(a), 240, C + 20 + i * 260); play(g, hop(a), 240, C + 20 + i * 260, "none"); });
+    g.style.transformOrigin = img.style.transformOrigin ? `${(K.l + K.r) / 2 * P.w}px ${K.b * P.h}px` : "";
+    when(layer, C + 760, () => steam(layer, box(layer, cx - iw * .3, top + tall * .1 - 19, iw * .6, 100)));
   },
   // hung back on its hook and let go: it swings from the top and settles. The swing is sized to the room beside the piece.
   hoses({ K, P, pin, move, host }) {
