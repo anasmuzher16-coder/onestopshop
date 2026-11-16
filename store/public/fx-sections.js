@@ -1,35 +1,27 @@
 // 06 section entrances. One rule for every section of the shop:
-//   the header band carries one real object from that section, a solid silhouette at the weight of the type (the
-//   bowl is the one drawn in colour: clay, foil, lit coals), on
-//   the right; when the page opens, a hand does the one thing you do to that object at the counter, once, and the
-//   object reacts to it.
-//   hookahs  smoke rolls in and pushes the hose (fx-smoke.js)   cologne  the pump is pressed twice; the bottle kicks
-//   bases    filled with water: the level climbs, it rocks still     bowls    tongs set the third coal on the foil; it flares
-//   heat     the coals light, the lid hops on each crackle      hoses    thrown out; the mouthpiece whips
-//   parts    a spanner: two strokes, the last one hard             misc     the price gun: one hit alone, then faster
-// Timing: every act makes contact at T0, after the page change has landed; a wind-up may start at WIND. A tap on
-// the band plays a short version with no page change to wait for. Four curves: ENTER (things arriving), STRIKE
-// (things driven into contact: they speed up), THROW (let go at full speed), SEAT (the label spring).
+//   the header band carries one real object from that section, drawn in colour, on the right; when the page opens,
+//   the one thing you do to that object at the counter is done to it, once, and the object reacts to it.
+//   hookahs  it is drawn on (coals, bubbles); smoke rolls in       cologne  the pump is pressed twice; the bottle kicks
+//   bases    the third ice cube is dropped in; it splashes         bowls    tongs set the third coal on the foil; it flares
+//   heat     the coals take; the lid is let down on them           hoses    tossed down coiled; the handle bounces
+//   parts    the kit is set down on the counter, piece by piece      misc     the price gun labels a pair of sunglasses
+// Timing: T0 is when the page change has landed; each act says in its own notes when its contact is. A tap on the
+// band plays a short version with no page change to wait for (a tap while anything is still moving is left alone,
+// so an arrival is never cut short). Curves: ENTER (things arriving), STATE, STRIKE (things driven into contact).
 // Everything sits behind the type. With motion turned off the objects are simply there, at rest.
 // Rules kept here: a re-draw of the same page changes nothing a shopper can see; nothing already seen is hidden;
-// a resting state never depends on a measurement; nothing is sliced by the edge of the band
-// (the one thing that crosses it is the tongs, which come in from outside the band and leave the same way).
+// a resting state never depends on a measurement; nothing is sliced by the edge of the band by accident. What
+// crosses it does so on purpose: the stems the bowl and the heat keeper stand on run off it, and the tongs, the
+// price gun, the ice cube and the tossed hose come in from outside it.
 import { OBJ } from "./fx-objects.js";
 const RM = matchMedia("(prefers-reduced-motion: reduce)");
 let T0 = 450, WIND = T0 - 140;                                           // contact, and the earliest wind-up
 const clock = replay => { T0 = replay ? 140 : 450; WIND = T0 - 140; };   // a tap has no page change to wait for
 const ENTER = "cubic-bezier(.16,1,.3,1)", STATE = "cubic-bezier(.4,0,.2,1)", STRIKE = "cubic-bezier(.33,0,.67,.33)";
-const THROW = "cubic-bezier(.25,.6,.35,1)";                              // let go at full speed, slowed by drag, no creep at the end
-// an unsupported easing string makes element.animate() throw, so the spring is feature-tested (linear(): Safari 17.2)
-const SEAT = window.CSS && CSS.supports("animation-timing-function", "linear(0,1)")
-  ? "linear(0,.25 6%,.62 14%,.9 22%,1.04 30%,1.07 36%,1.04 44%,.995 56%,.988 66%,1.002 82%,1)" : "cubic-bezier(.34,1.56,.64,1)";
 const play = (node, frames, duration, delay = 0, fill = "backwards") => node.animate(frames, { duration, delay, fill });
 const when = (layer, ms, fn) => setTimeout(() => { if (layer.isConnected) fn(); }, ms);
 const el = (tag, cls, parent) => { const n = document.createElement(tag); n.className = cls; if (parent) parent.append(n); return n; };
 const rnd = (a, b) => a + Math.random() * (b - a);
-const SVG = "http://www.w3.org/2000/svg";
-// wraps drawn parts in a named group, so a part can move on its own pivot (set in styles.css)
-const group = (cls, nodes) => { const g = document.createElementNS(SVG, "g"); g.setAttribute("class", cls); nodes[0].before(g); nodes.forEach(n => g.append(n)); return g; };
 // the object: a square on the right of the band, drawn in a 100 x 100 box
 const obj = (layer, inner, cls = "") => { const w = el("span", "fx-obj " + cls, layer); w.innerHTML = `<svg viewBox="0 0 100 100" aria-hidden="true">${inner}</svg>`; fit(layer, w); return w; };
 // The object rests at the weight set in styles.css (.fx .o). For its act it comes up to full strength, and eases
@@ -41,14 +33,13 @@ const lift = (o, from, to, wet) => {
     { opacity: FULL, offset: act / d, easing: STATE }, { opacity: REST }], d, from, "none");
 };
 // The object never touches the title. Where a long title leaves less room beside it (a phone), the object takes
-// the room there is. When that is too small to read, it drops under the end of the title; an object marked "edge"
-// (the nut, whose ink keeps clear of its box corners) instead goes large and runs off the bottom-right corner.
+// the room there is. When that is too small to read, it drops under the end of the title.
 function fit(layer, o) {
-  o.style.cssText = ""; o.classList.remove("bleed");
+  o.style.cssText = "";
   const band = layer.parentNode, h1 = band && band.querySelector("h1"); if (!h1) return;
   const L = band.getBoundingClientRect(), range = document.createRange(); range.selectNodeContents(h1);
   const T = range.getBoundingClientRect(), box = o.getBoundingClientRect(), size = box.width, gutter = L.right - box.right;
-  const beside = L.right - gutter - T.right - 10, edge = o.classList.contains("edge");
+  const beside = L.right - gutter - T.right - 10;
   if (beside >= size) return;
   if (beside >= Math.max(72, size * .6)) { o.style.height = Math.floor(beside) + "px"; return; } // still big enough to read beside the title
   // the title's box, not its tall line box; a title with no tails (g, j, p, q, y) leaves a little more room under it
@@ -56,8 +47,6 @@ function fit(layer, o) {
   const under = L.bottom - foot - 4, s = Math.max(56, Math.floor(Math.min(size, under)));
   o.style.cssText = `height:${s}px;top:auto;bottom:4px;translate:none`;
 }
-// a point inside the object's box, as a fraction of the layer
-const at = (layer, o, fx, fy) => { const r = o.getBoundingClientRect(), L = layer.getBoundingClientRect(); return [(r.left - L.left + r.width * fx) / L.width, (r.top - L.top + r.height * fy) / L.height]; };
 let uid = 0;
 
 // ---- idle life: one quiet beat every 9 to 14 s while the band is on screen and the tab is showing; eight at most,
@@ -100,60 +89,8 @@ function soft(rgb) {
   g.fillStyle = grd; g.fillRect(0, 0, 64, 64);
   return SOFT[rgb] = c;
 }
-const bell = () => (Math.random() + Math.random() + Math.random()) / 1.5 - 1;   // -1..1, most near 0
 // Nothing is sliced by the top or bottom edge of the layer: whatever comes within 20 px of an edge thins out to nothing there.
 const edge = (y, rad, h) => Math.max(0, Math.min(1, (Math.min(y, h - y) - rad) / 20));
-
-// ---- mist: a pump atomiser. Two presses; each sends a cone of droplets that streak while fast, are stopped by the air
-// within one "reach", and leave a cloud that swells, drifts on, sinks a little and thins out.
-function spritz(layer, ox, oy, angle, power = 1, reach = 0, fat = 1) {
-  const w = layer.clientWidth, h = layer.clientHeight;
-  const R = reach || Math.min(Math.max(w * 0.42, Math.min(w * 0.6, 240)), h * 2.4) * power;   // reach in px: 234 on a 390 band, 602 on a 1440 band
-  const near = Math.max(0, Math.min(1, (520 - R) / 260));   // 1 on a phone band, 0 on a desktop band: a small spray is drawn heavier
-  const S = Math.max(1 + 0.35 * near, Math.min(1.5, R / 220));                        // droplet scale: 1.35 on a phone band, 1.5 on a desktop band
-  const X = ox * w, Y = oy * h, drops = [], puffs = [], img = soft("255,252,246");
-  const burst = (n, force, at) => {
-    for (let i = 0; i < n; i++) {
-      const u = Math.random(), off = bell(), a = angle + off * 0.36;             // cone: 41 degrees across, dense in the middle
-      const k = 3.2 + 3.6 * (1 - u);                                              // air drag per second: fine droplets stop soonest
-      const v = R * k * rnd(0.5, 1.25) * force * (1 - 0.3 * Math.abs(off));      // so each one travels 0.5 to 1.25 reaches
-      drops.push({ x: X, y: Y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, k, r: S * (0.4 + 1.3 * u * u * u),
-        g: 70 * S * u * u - 5, life: (0.55 + 0.8 * u + rnd(0, 0.5)) * (1 + 0.35 * near), age: -at - rnd(0, 0.09), ph: rnd(0, 6.28) });
-    }
-    for (let i = 0; i < Math.round(n / (11 - 2 * near)); i++) {
-      const a = angle + bell() * 0.3, v = R * 2.4 * rnd(0.3, 0.8) * force, off = rnd(0.04, 0.22) * R;   // the cloud starts out along the spray, never as a blob on the nozzle
-      puffs.push({ x: X + Math.cos(a) * off, y: Y + Math.sin(a) * off, vx: Math.cos(a) * v, vy: Math.sin(a) * v, r: R * rnd(0.1, 0.3) * fat, life: rnd(1.4, 2.4) * (1 + 0.4 * near), age: -at - rnd(0, 0.12) });
-    }
-  };
-  burst(240, 1, 0); burst(160, 0.85, 0.38);   // the second press lands 380 ms after the first
-  const pa = 0.15 + 0.05 * near, da = 0.75 + 0.2 * near;
-  fxCanvas(layer, (g, dt) => {
-    let alive = 0;
-    for (const p of puffs) {
-      p.age += dt; if (p.age >= p.life) continue; alive++; if (p.age < 0) continue;
-      const d = Math.exp(-2.4 * dt); p.vx *= d; p.vy = p.vy * d + 5 * dt; p.x += p.vx * dt; p.y += p.vy * dt;
-      const q = p.age / p.life, room = Math.min(p.y, h - p.y) - 2;
-      const rad = Math.min(p.r * (0.3 + 0.7 * (1 - Math.exp(-p.age * 3.5))) * (1 + 0.6 * q), room / 0.8);   // swells fast, then keeps spreading, but never wider than the room it has
-      if (rad < 1) continue;
-      g.globalAlpha = pa * Math.min(1, p.age / 0.12) * Math.pow(1 - q, 1.5) * edge(p.y, rad * 0.5, h);
-      g.drawImage(img, p.x - rad, p.y - rad, rad * 2, rad * 2);
-    }
-    g.strokeStyle = g.fillStyle = "rgb(255,252,246)";
-    for (const p of drops) {
-      p.age += dt; if (p.age >= p.life) continue; alive++; if (p.age < 0) continue;
-      const d = Math.exp(-p.k * dt);
-      p.vx = p.vx * d + Math.sin(p.ph + p.age * 9) * 14 * dt; p.vy = p.vy * d + p.g * dt;   // a little swirl once slow; heavy ones settle, fine ones lift
-      p.x += p.vx * dt; p.y += p.vy * dt;
-      const q = p.age / p.life, sp = Math.hypot(p.vx, p.vy), len = Math.min(sp * 0.022, 18 * S), r = p.r * (1 - 0.5 * q);   // 22 ms of streak; it dries as it goes
-      g.globalAlpha = da * Math.pow(1 - q, 1.2) * r / (r + len * 0.3) * edge(p.y, r, h);    // a streak is the same light spread along a line
-      if (g.globalAlpha <= 0) continue;
-      g.beginPath();
-      if (len > 1) { g.lineWidth = 2 * r; g.moveTo(p.x, p.y); g.lineTo(p.x - p.vx / sp * len, p.y - p.vy / sp * len); g.stroke(); }
-      else { g.arc(p.x, p.y, r, 0, 6.283); g.fill(); }
-    }
-    return alive > 0;
-  });
-}
 
 // ---- sparks: the coal cracks three times. Each crack is a flash over the coals and a handful of embers: most are lofted and
 // zigzag in the hot air, every fifth is spat out sideways and falls in an arc. They cool from pale yellow through orange to red.
@@ -249,20 +186,25 @@ const press = (s, hit) => play(s, [
 const give = (tile, hit, depth = .972) => play(tile, [ // whatever is under the label gives a little
   { scale: "1", easing: ENTER }, { scale: String(depth), offset: .2273, easing: STATE }, { scale: "1.004", offset: .6, easing: STATE }, { scale: "1" }], 220, hit);
 
-// the light of the coals: three under the cubes, five in the slots of the cup. Drawn under the solid, so it shows through it.
-const COALS = '<path class="glow" d="M15 44 H31 V59 H15 Z"/><path class="glow" d="M34 44 H50 V59 H34 Z"/><path class="glow" d="M53 44 H69 V59 H53 Z"/><path class="glow" d="M17.75 73 H22.25 V86 H17.75 Z"/><path class="glow" d="M28.75 73 H33.25 V86 H28.75 Z"/><path class="glow" d="M39.75 73 H44.25 V86 H39.75 Z"/><path class="glow" d="M50.75 73 H55.25 V86 H50.75 Z"/><path class="glow" d="M61.75 73 H66.25 V86 H61.75 Z"/>';
-
 let arrivals = 0; // in-site page changes so far; 0 means this page was the first one loaded
 // Every act takes (layer, go, host, re): go = play it (false: just be there, at rest), re = this is a tap, not an arrival.
 const FX = {
   hookahs(layer, go, host, re) {
-    const o = obj(layer, OBJ.hookahs), line = o.querySelector(".o > .ink"), handle = line.nextElementSibling;
-    const hose = group("hose", [line, handle]), mouth = group("mouth", [handle]);   // the mouthpiece is a weight on the end of the line: it trails it
+    // The whole pipe, drawn in colour. It is drawn on: the coals come up bright and the water bubbles. Then the smoke
+    // gets to it, and the hose is pushed downwind and swings out. A tap is a short pull and a flick of the hose.
+    const o = obj(layer, OBJ.hookahs.replaceAll("ID", "fxc" + (++uid))), hose = o.querySelector(".hose"), mouth = o.querySelector(".mouth"), all = c => [...o.querySelectorAll(c)];   // the mouthpiece is a weight on the end of the line: it trails it
+    const draw = (at, n) => {   // a pull: the coals brighten, bubbles break at the foot of the downstem
+      all(".fl").forEach((f, i) => play(f, [{ opacity: 0, easing: STATE }, { opacity: 1, offset: .25, easing: STATE }, { opacity: .7, offset: .7, easing: STATE }, { opacity: 0 }], n * 110 + 500, at + i * 60, "none"));
+      all(".emb").forEach(e => play(e, [{ opacity: .9, easing: STATE }, { opacity: .3, offset: .3, easing: STATE }, { opacity: .9 }], n * 110 + 500, at, "none"));
+      for (let k = 0; k < n; k++) { const bu = all(".bub")[k % 4], side = k % 2 ? 1 : -1;
+        play(bu, [{ opacity: 0, transform: "translate(0px,0px)", easing: "linear" }, { opacity: 1, transform: `translate(${side * 2.2}px,-2.6px)`, offset: .25, easing: "linear" }, { opacity: 0, transform: `translate(${side * 4}px,-8px)` }], 400, at + 80 + k * 110, "none"); }
+    };
+    idle(layer, () => draw(0, 3));
     if (!go) return;
     // the gust lands when the smoke front gets to the hookah (the front is fx-smoke.js main(), xf; the two must change together)
     const GUST = re ? T0 : Math.round(60 + 900 * (0.6 + 0.1 * layer.clientWidth / Math.max(1, layer.clientHeight))), a = re ? .5 : 1;   // a tap is a flick of the hose, not a new bank
     const deg = v => `rotate(${(v * a).toFixed(2)}deg)`;
-    lift(o, WIND, GUST + 1560);
+    draw(re ? T0 : 140, re ? 6 : 9);   // the pull comes first; the smoke it makes is the bank that rolls in
     play(hose, [ // pushed downwind, swings out
       { transform: deg(0), easing: ENTER },
       { transform: deg(-13), offset: .12, easing: STATE },
@@ -280,51 +222,47 @@ const FX = {
       { transform: deg(0) }], 1500, GUST + 60);
   },
   cologne(layer, go, host, re) {
-    const o = obj(layer, OBJ.cologne), recoil = group("recoil", [...o.querySelector(".o").children]);
+    // A heavy glass flask, the scent in it, a dark pump with a brass nozzle. The pump is pressed twice: each press
+    // throws a fan of droplets toward the title that slow in the air, drift and thin out; the bottle kicks, and the
+    // scent rocks in it. On a tap it is pressed once.
+    const o = obj(layer, OBJ.cologne.replaceAll("ID", "fxc" + (++uid))), q = c => o.querySelector(c), recoil = q(".recoil"), liq = q(".cliq"), drops = [...o.querySelectorAll(".md")];
+    idle(layer, () => play(liq, [{ transform: "rotate(0deg)", easing: SINE }, { transform: "rotate(1.6deg)", offset: .3, easing: SINE }, { transform: "rotate(-1deg)", offset: .65, easing: SINE }, { transform: "rotate(0deg)" }], 1400, 0, "none"));
     if (!go) return;
-    lift(o, T0 - 90, T0 + 760);
-    play(o.querySelector(".head"), [ // driven down, held while it sprays, sprung back; twice, the second a shade shallower
-      { transform: "translateY(0px)", easing: STRIKE },
-      { transform: "translateY(7px)", offset: .1216 },                  // T0: bottom, spray 1
-      { transform: "translateY(7px)", offset: .2703, easing: ENTER },   // held 110 ms
-      { transform: "translateY(0px)", offset: .4865 },
-      { transform: "translateY(0px)", offset: .5135, easing: STRIKE },
-      { transform: "translateY(6px)", offset: .6351 },                  // T0 + 380: bottom, spray 2
-      { transform: "translateY(6px)", offset: .7838, easing: ENTER },
-      { transform: "translateY(0px)" }], 740, T0 - 90);
-    play(recoil, [ // the bottle kicks back from each spray and rocks home
-      { transform: "rotate(0deg)", easing: ENTER },
-      { transform: "rotate(2.6deg)", offset: .1053, easing: STATE },
-      { transform: "rotate(-0.9deg)", offset: .3026, easing: STATE },
-      { transform: "rotate(0deg)", offset: .4737 },
-      { transform: "rotate(0deg)", offset: .5, easing: ENTER },
-      { transform: "rotate(1.9deg)", offset: .6053, easing: STATE },
-      { transform: "rotate(-0.6deg)", offset: .8026, easing: STATE },
-      { transform: "rotate(0deg)" }], 760, T0);
-    when(layer, T0, () => { const [x, y] = at(layer, o, 0.42, 0.22); spritz(layer, x, y, Math.PI * 0.95); }); // the spray hole, 7 units down when it fires; aimed a little below level, behind the title
+    const spray = (at, set, k) => set.forEach((d, j) => {   // a fan 40 degrees across, aimed a little below level; fine droplets stop soonest
+      const i = drops.indexOf(d), n = drops.length, u = (i * 61 % n) / (n - 1), w = ((i * i * 13 + i * 7 + 5) % 41) / 40, far = (12 + 34 * w * w) * k, ang = Math.PI * (1.04 + (u - .5) * .17), x = Math.cos(ang) * far, y = -Math.sin(ang) * far;   // most stop near the nozzle, a few carry: a fan, thick at the root
+      play(d, [{ opacity: 0, transform: "translate(0px,0px) scale(.5)", easing: "cubic-bezier(.05,.7,.2,1)" }, { opacity: 1, offset: .08 }, { opacity: .9, transform: `translate(${x.toFixed(1)}px,${y.toFixed(1)}px) scale(1)`, offset: .4, easing: "linear" }, { opacity: 0, transform: `translate(${(x - 4).toFixed(1)}px,${(y + 3).toFixed(1)}px) scale(1.9)` }], 700 + (i % 4) * 70, at + j * 5, "none"); });
+    const pump = (at, deep) => {
+      play(q(".head"), [{ transform: "translateY(0px)", easing: STRIKE }, { transform: `translateY(${deep}px)`, offset: .25 }, { transform: `translateY(${deep}px)`, offset: .56, easing: ENTER }, { transform: "translateY(0px)" }], 360, at - 90, "none");
+      play(recoil, [{ transform: "rotate(0deg)", easing: ENTER }, { transform: `rotate(${(deep * .7).toFixed(2)}deg)`, offset: .22, easing: STATE }, { transform: `rotate(${(-deep * .24).toFixed(2)}deg)`, offset: .64, easing: STATE }, { transform: "rotate(0deg)" }], 360, at, "none");
+    };
+    pump(T0, 3.6); spray(T0, drops.filter((_, i) => i % 2 === 0), 1);
+    if (!re) { pump(T0 + 380, 3); spray(T0 + 380, drops.filter((_, i) => i % 2 === 1), .82); }
+    play(liq, [0, -5, 3.4, -4.2, 2.6, -1.4, .6, 0].map((v, j, a) => ({ transform: `rotate(${v}deg)`, offset: j / (a.length - 1), easing: SINE })), 1500, T0, "none");
   },
-  bases(layer, go) {
-    // filled at the counter: a stream of water drops into the mouth, the level climbs with a wave on it, bubbles come up,
-    // the stream stops and its tail falls in, and the water rocks until it is still. At rest the base stands filled.
-    const id = "fxc" + (++uid), body = "M35 22.3 A20 5 0 0 0 65 22.3 V38 C65 54 70 62 84 70 C91 74 92 80 92 84 C92 90 88 94 80 94 H20 C12 94 8 90 8 84 C8 80 9 74 16 70 C30 62 35 54 35 38 Z";
-    const wave = "M-60 0 q10 -2.6 20 0" + " t20 0".repeat(10) + " V12 H-60 Z", stream = "M48.7 -10 H51.3 V96 H48.7 Z";
-    const o = obj(layer, `<defs><clipPath id="${id}"><path d="${body}"/></clipPath><clipPath id="${id}m"><path d="M30 -12 H70 V9.6 H30 Z"/></clipPath></defs>
-      <g class="rock">${OBJ.bases}<g clip-path="url(#${id})"><g class="slosh"><g class="water"><path class="wv" d="${wave}"/><path class="wb" d="M-60 3 H160 V52 H-60 Z"/></g></g>
-      <circle class="bub" cx="40" cy="85" r="1.6"/><circle class="bub" cx="56" cy="88" r="2.1"/><circle class="bub" cx="63" cy="83" r="1.3"/><path class="pour" d="${stream}"/></g>
-      <g clip-path="url(#${id}m)"><path class="pour" d="${stream}"/></g><path class="lit sh" d="M22 76 C27 71 34 66 38 60 M42 27 V40"/></g>`);
-    const q = c => o.querySelector(c), all = c => [...o.querySelectorAll(c)];
-    q(".sh").style.opacity = .5;   // the glass keeps a highlight
-    idle(layer, () => play(q(".wv"), [{ transform: "translateX(0px) scaleY(.35)", easing: STATE }, { transform: "translateX(-40px) scaleY(.6)", offset: .5, easing: STATE }, { transform: "translateX(-80px) scaleY(.35)" }], 1600, 0, "none")); // the water stirs
+  bases(layer, go, host, re) {
+    // A glass bell base, deep water in it, two ice cubes afloat. The third cube is dropped in through the mouth from
+    // above the band: it goes under, the water jumps and rocks, drops fly, bubbles come up, and it bobs back up to float
+    // between the others. On a tap the base is given a swirl: the water rocks and the ice rides it.
+    const o = obj(layer, OBJ.bases.replaceAll("ID", "fxc" + (++uid))), q = c => o.querySelector(c), all = c => [...o.querySelectorAll(c)];
+    const ice = [q(".i0"), q(".i1"), q(".i2")], AT = ice.map(n => n.getAttribute("transform").match(/-?[\d.]+/g).map(Number));   // each cube rides where the drawing puts it
+    const bob = (i, amp, ms, delay) => play(ice[i], [0, -1, .55, -.3, .14, 0].map((k, j, a) => ({ transform: `translate(${AT[i][0]}px,${(AT[i][1] + amp * k).toFixed(2)}px)`, offset: j / (a.length - 1), easing: SINE })), ms, delay, "none");
+    const rock = (at, k, ms) => all(".slosh").forEach(n => play(n, [0, 1, -.7, .45, -.22, .08, 0].map((v, j, a) => ({ transform: `rotate(${(v * 3 * k).toFixed(2)}deg)`, offset: j / (a.length - 1), easing: SINE })), ms, at, "none"));
+    const rise = (at, n) => all(".bub").slice(0, n).forEach((bu, i) => { const side = i % 2 ? 1 : -1;
+      play(bu, [{ opacity: 0, transform: "translate(0px,0px) scale(.5)", easing: "linear" }, { opacity: 1, transform: `translate(${side * 3}px,-4px) scale(1)`, offset: .22, easing: "linear" }, { opacity: .95, transform: `translate(${-side * 1.6}px,-11px) scale(1.1)`, offset: .66, easing: "linear" }, { opacity: 0, transform: `translate(${side * 3.4}px,-15px) scale(1.4)` }], 540, at + i * 90, "none"); });
+    idle(layer, () => { rise(0, 2); [0, 1, 2].forEach(i => bob(i, 1.1, 1400, 200 + i * 150)); });
     if (!go) return;
-    const C = Math.max(T0, 150);   // the stream reaches the bottom
-    lift(o, C - 150, C + 1500);
-    all(".pour").forEach(p => play(p, [{ transform: "translateY(-108px)", easing: STRIKE }, { transform: "translateY(0px)", offset: 150 / 1110 }, { transform: "translateY(0px)", offset: 910 / 1110, easing: STRIKE }, { transform: "translateY(108px)" }], 1110, C - 150, "none"));
-    play(q(".water"), [{ transform: "translateY(100px)", easing: "cubic-bezier(.2,.7,.3,1)" }, { transform: "translateY(56px)" }], 950, C);
-    play(q(".wv"), [{ transform: "translateX(0px) scaleY(1.6)", easing: "linear" }, { transform: "translateX(-80px) scaleY(1.25)", offset: .55, easing: STATE }, { transform: "translateX(-120px) scaleY(.35)" }], 1700, C);
-    play(q(".slosh"), [{ transform: "rotate(0deg)", easing: SINE }, { transform: "rotate(1.7deg)", offset: .16, easing: SINE }, { transform: "rotate(-1.2deg)", offset: .4, easing: SINE }, { transform: "rotate(.7deg)", offset: .62, easing: SINE },
-      { transform: "rotate(-.3deg)", offset: .82, easing: SINE }, { transform: "rotate(0deg)" }], 1000, C + 900, "none");
-    all(".bub").forEach((bu, i) => play(bu, [{ opacity: 0, transform: "translateY(0px)", easing: STATE }, { opacity: .85, offset: .15 }, { opacity: .7, offset: .7 }, { opacity: 0, transform: `translateY(${-20 - i * 3}px)` }], 720, C + 240 + i * 270, "none"));
-    play(q(".rock"), [{ transform: "rotate(0deg)", easing: ENTER }, { transform: "rotate(-.9deg)", offset: .3, easing: SINE }, { transform: "rotate(.5deg)", offset: .65, easing: SINE }, { transform: "rotate(0deg)" }], 520, C, "none");   // it takes the first of the weight
+    if (re) { const S = T0 - 80; rock(S, 1.5, 1300); rise(S + 150, 6); [0, 1, 2].forEach(i => bob(i, 2.8, 1300, S + 60 + i * 80));
+      play(q(".rock"), [{ transform: "rotate(0deg)", easing: SINE }, { transform: "rotate(-1.4deg)", offset: .3, easing: SINE }, { transform: "rotate(.7deg)", offset: .65, easing: SINE }, { transform: "rotate(0deg)" }], 560, S, "none"); return; }
+    const C = Math.max(T0, 330), F = 330, D = 1400, N = Math.round((F + D) / 20), X = AT[2][0], Y = AT[2][1];   // C: the cube meets the water
+    const y = t => t < 0 ? -(Y + 24) * (1 - Math.pow(1 + t / F, 2)) : 15 * Math.exp(-t / 300) * Math.sin(t / 165);   // the fall, then under and up
+    play(ice[2], Array.from({ length: N + 1 }, (_, j) => { const t = -F + j / N * (F + D); return { transform: `translate(${X}px,${(j === N ? Y : Y + y(t)).toFixed(2)}px)`, opacity: Math.min(1, j / (N * .1)).toFixed(3) }; }), F + D, C - F);   // it comes into view on the way down
+    all(".lvl").forEach(n => play(n, [{ transform: "translateY(1.6px)", easing: ENTER }, { transform: "translateY(-1.4px)", offset: .2, easing: SINE }, { transform: "translateY(.5px)", offset: .5, easing: SINE }, { transform: "translateY(0px)" }], 700, C));
+    play(q(".rip"), [{ opacity: 1, transform: "scale(.4)", easing: ENTER }, { opacity: 0, transform: "scale(3.2)" }], 620, C, "none");
+    all(".dr").forEach((dr, i) => { const dx = (i - 2) * 3.4, up = -(9 + (i * 5 % 7));
+      play(dr, [{ opacity: 1, transform: "translate(0px,0px)", easing: "cubic-bezier(.2,.7,.5,1)" }, { opacity: 1, transform: `translate(${dx}px,${up}px)`, offset: .5, easing: "cubic-bezier(.5,0,.8,.4)" }, { opacity: 0, transform: `translate(${dx * 1.7}px,1px)` }], 460, C + 10 + i * 24, "none"); });
+    rock(C + 40, 1, 1300); rise(C + 160, 6);
+    play(q(".rock"), [{ transform: "translateY(0px)", easing: ENTER }, { transform: "translateY(1px)", offset: .3, easing: SINE }, { transform: "translateY(0px)" }], 260, C, "none");   // the base takes the weight
+    [0, 1].forEach(i => bob(i, 2.4, 1200, C + 90 + i * 110));
   },
   bowls(layer, go, host, re) {
     // The clay bowl on its hookah, foil over it, two lit coals on the foil. Tongs come down from outside the band carrying
@@ -352,97 +290,82 @@ const FX = {
     coal.querySelectorAll(".fl").forEach(f => play(f, [{ opacity: 0, easing: ENTER }, { opacity: 1, offset: .28 }, { opacity: 1, offset: .46, easing: STATE }, { opacity: 0 }], 540, S + C - 20, "none"));
   },
   heat(layer, go, host, re) {
-    const o = obj(layer, `<g class="keeper">${COALS}${OBJ.heat}</g>`), glows = [...o.querySelectorAll(".glow")];
-    idle(layer, () => glows.forEach(gl => play(gl, [ // the coal breathes
-      { opacity: .45, easing: STATE }, { opacity: .72, offset: .25, easing: STATE }, { opacity: .38, offset: .5, easing: STATE }, { opacity: .6, offset: .75, easing: STATE }, { opacity: .45 }], 900, 0, "none")));
+    // A steel heat keeper on the foil of a bowl, three coals in it, its lid held up over it by the knob. The coals come
+    // up to heat one after another, the lid is let down and shuts on the rim, and the heat shows: the slots and vents
+    // burn up to yellow one after another. On a tap the lid is lifted for a look, the coals flare, and it is set back.
+    const o = obj(layer, OBJ.heat), q = c => o.querySelector(c), all = c => [...o.querySelectorAll(c)], lid = q(".hlid");
+    const up = (y, d) => `translate(${(-d * .5).toFixed(2)}px,${y}px) rotate(${d}deg)`, OPEN = up(-19, -13);
+    const glow = (at, hi, ms = 1500) => {   // the heat shows in the slots and vents: each burns up to yellow in turn, holds, and eases back
+      all(".hslotg,.hventg").forEach((g, i) => play(g, [{ opacity: .85, easing: STATE }, { opacity: hi, offset: .2, easing: STATE }, { opacity: hi, offset: .6, easing: STATE }, { opacity: .85 }], ms, at + (i % 5) * 70, "none"));
+      all(".hsloth").forEach((g, i) => play(g, [{ opacity: .7, transform: "scaleY(1)", easing: STATE }, { opacity: 1, transform: "scaleY(1.45)", offset: .2, easing: STATE }, { opacity: 1, transform: "scaleY(1.45)", offset: .6, easing: STATE }, { opacity: .7, transform: "scaleY(1)" }], ms, at + (i % 5) * 70, "none"));
+    };
+    idle(layer, () => glow(0, 1, 1300));
     if (!go) return;
-    lift(o, WIND, T0 + 1160);
-    glows.forEach(gl => play(gl, [ // glows, then flashes with each crackle, each flash lower, and cools to the level it stays at
-      { opacity: 0, easing: STRIKE },
-      { opacity: .6, offset: .1077 },
-      { opacity: 1, offset: .1385, easing: ENTER },
-      { opacity: .55, offset: .3077 },
-      { opacity: .9, offset: .3385, easing: ENTER },
-      { opacity: .5, offset: .5077 },
-      { opacity: .75, offset: .5385, easing: ENTER },
-      { opacity: .45 }], 1300, WIND));
-    const lid = (y, d) => `translateY(${y}px) rotate(${(d - 6).toFixed(1)}deg)`;   // the lid rests tilted 6 degrees (styles.css .fx .lid)
-    play(o.querySelector(".lid"), [ // the lid hops on each crackle, less each time
-      { transform: lid(0, 0), easing: ENTER },
-      { transform: lid(-6, 2), offset: .0889, easing: STRIKE },
-      { transform: lid(0, -1.2), offset: .1778, easing: STATE },
-      { transform: lid(0, .5), offset: .2444, easing: STATE },
-      { transform: lid(0, 0), offset: .2889, easing: ENTER },
-      { transform: lid(-3, -1.2), offset: .3667, easing: STRIKE },
-      { transform: lid(0, .6), offset: .4444, easing: STATE },
-      { transform: lid(0, 0), offset: .5778, easing: ENTER },
-      { transform: lid(-1.5, .6), offset: .6444, easing: STRIKE },
-      { transform: lid(0, -.3), offset: .7111, easing: STATE },
-      { transform: lid(0, 0) }], 900, T0);
-    when(layer, T0, () => embers(layer, o)); // three crackles of sparks leave the coals and die inside the band
+    const sit = at => play(q(".keeper"), [{ transform: "translateY(0px)", easing: ENTER }, { transform: "translateY(1.1px)", offset: .3, easing: SINE }, { transform: "translateY(0px)" }], 240, at, "none");
+    if (re) {
+      const S = T0 - 100;
+      play(lid, [{ transform: up(0, 0), easing: "cubic-bezier(.3,0,.2,1)" }, { transform: up(-17, -11), offset: .3, easing: STATE }, { transform: up(-17, -11), offset: .55, easing: STRIKE }, { transform: up(0, 0), offset: .8, easing: STATE }, { transform: up(-1.6, 1.2), offset: .88, easing: STATE }, { transform: up(0, 0) }], 900, S, "none");
+      all(".hc .fl").forEach((f, i) => play(f, [{ opacity: 0, easing: ENTER }, { opacity: .95, offset: .3, easing: STATE }, { opacity: 0 }], 440, S + 240 + i * 60, "none"));
+      glow(S + 720, 1); sit(S + 720);
+      return;
+    }
+    const S = Math.max(0, T0 - 380), C = S + 900;   // S: the first coal takes. C: the lid is down
+    all(".hc").forEach((c, i) => {   // cold and black, then it takes: its faces and its core come up, with a flare
+      play(c.querySelector(".cold"), [{ opacity: .92, easing: STATE }, { opacity: 0 }], 360, S + i * 170);
+      play(c.querySelector(".core"), [{ opacity: 0, easing: STATE }, { opacity: 1 }], 420, S + 80 + i * 170);
+      play(c.querySelector(".fl"), [{ opacity: 0, easing: ENTER }, { opacity: 1, offset: .3, easing: STATE }, { opacity: 0 }], 460, S + 200 + i * 170, "none");
+    });
+    play(q(".hglow"), [{ opacity: 0, easing: STATE }, { opacity: .6 }], 700, S + 100);
+    all(".hslotg,.hventg").forEach(g => play(g, [{ opacity: 0, easing: STATE }, { opacity: .85 }], 600, S + 300));
+    all(".hsloth").forEach(g => play(g, [{ opacity: 0, easing: STATE }, { opacity: .7 }], 560, S + 300));
+    play(lid, [{ transform: OPEN, easing: STATE }, { transform: OPEN, offset: .52, easing: STRIKE }, { transform: up(0, 0), offset: .8, easing: STATE }, { transform: up(-2, 1.4), offset: .87, easing: STATE }, { transform: up(0, -.5), offset: .94, easing: STATE }, { transform: up(0, 0) }], (C - S) / .8, S);
+    sit(C); glow(C, 1, 1700);
   },
   hoses(layer, go, host, re) {
-    const o = obj(layer, `<g class="whip">${OBJ.hoses}</g>`), p = o.querySelector(".coil"), tip = o.querySelector(".tip"), whip = o.querySelector(".whip");
-    const flick = (t, a, slow, first) => { // the mouthpiece whips and the hose flexes with it; a = size, slow = stretch
-      const r = v => `rotate(${(v * a).toFixed(2)}deg)`;
-      play(tip, [
-        { transform: first || "scale(1) " + r(0), easing: ENTER },
-        { transform: "scale(1) " + r(-22), offset: .2, easing: STATE },
-        { transform: "scale(1) " + r(11), offset: .44, easing: STATE },
-        { transform: "scale(1) " + r(-5), offset: .66, easing: STATE },
-        { transform: "scale(1) " + r(2), offset: .84, easing: STATE },
-        { transform: "scale(1) " + r(0) }], 760 * slow, t);
-      play(whip, [
-        { transform: r(0), easing: ENTER },
-        { transform: r(-5), offset: .2, easing: STATE },
-        { transform: r(2.4), offset: .5, easing: STATE },
-        { transform: r(-1), offset: .76, easing: STATE },
-        { transform: r(0) }], 700 * slow, t + 40 * slow);
-    };
-    idle(layer, () => flick(0, .2, 2.4)); // every so often the end of the hose sways: 4 degrees over 1.8 s
-    if (!go) return;                      // at rest the line is simply drawn: no dash is left on it
-    if (re) { lift(o, 0, 760); flick(0, .7, 1); return; }  // a tap flicks it; the line is never taken away and drawn again
-    const len = Math.ceil(p.getTotalLength()) + 1, hit = WIND + 650;
-    lift(o, WIND, hit + 760);
-    p.style.strokeDasharray = len;
-    play(p, [{ strokeDashoffset: len * .65, easing: THROW }, { strokeDashoffset: 0 }], 700, WIND).onfinish = () => { p.style.strokeDasharray = ""; }; // the inner turn is in the hand from the start (the band is never empty); the rest is thrown out from it
-    play(tip, [{ opacity: 0 }, { opacity: 1 }], 60, hit);
-    flick(hit, 1, 1, "scale(.2) rotate(55deg)");
-  },
-  parts(layer, go) {
-    // a spanner is on the nut. It turns it a sixth, is pulled off, swung back up and pushed on again (it never swings across the title), and turns it another
-    // sixth: the last few degrees are slow and hard, and when it will go no further everything takes the knock
-    const o = obj(layer, OBJ.parts, "edge");
+    // A wrapped hose lying coiled on the counter: steel connector at one end, two loose turns, its wooden handle lying
+    // out to the right. It is tossed down from above the band: it lands, the turns flatten and spring back, and the
+    // handle bounces twice on the counter and lies still. On a tap the handle is lifted and let drop.
+    const o = obj(layer, OBJ.hoses), q = c => o.querySelector(c), tip = q(".tip"), line = q(".hline"), coil = q(".coilg");
+    const r = v => `rotate(${v.toFixed(2)}deg)`;
+    const bounce = (at, a) => play(tip, [{ transform: r(0), easing: "cubic-bezier(.2,.7,.4,1)" }, { transform: r(-13 * a), offset: .2, easing: "cubic-bezier(.6,0,.9,.5)" }, { transform: r(0), offset: .4, easing: "cubic-bezier(.2,.7,.4,1)" },
+      { transform: r(-5 * a), offset: .56, easing: "cubic-bezier(.6,0,.9,.5)" }, { transform: r(0), offset: .72, easing: "cubic-bezier(.2,.7,.4,1)" }, { transform: r(-1.6 * a), offset: .84, easing: "cubic-bezier(.6,0,.9,.5)" }, { transform: r(0) }], 1040, at, "none");
+    const flat = (at, a) => play(coil, [{ transform: "scale(1,1)", easing: ENTER }, { transform: `scale(${1 + .05 * a},${1 - .13 * a})`, offset: .22, easing: STATE }, { transform: `scale(${1 - .016 * a},${1 + .04 * a})`, offset: .55, easing: STATE }, { transform: `scale(${1 + .006 * a},${1 - .012 * a})`, offset: .8, easing: STATE }, { transform: "scale(1,1)" }], 620, at, "none");
+    idle(layer, () => bounce(0, .35));
     if (!go) return;
-    const S = Math.max(0, T0 - 300), D = 1000, f = ms => ms / D, hit = S + 880;
-    const w = (d, off = 0) => `translate(34px,64px) rotate(${d}deg) translateX(${off}px)`, n = d => `rotate(${d}deg)`;
-    lift(o, S, hit + 360);
-    play(o.querySelector(".wrench"), [
-      { transform: w(-90), easing: "cubic-bezier(.5,0,.3,1)" },
-      { transform: w(-30), offset: f(220), easing: STATE },          // stroke one
-      { transform: w(-30, 17), offset: f(300), easing: STATE },      // pulled off
-      { transform: w(-90, 17), offset: f(440), easing: STRIKE },    // swung back
-      { transform: w(-90), offset: f(520), easing: STATE },         // on again
-      { transform: w(-39), offset: f(700), easing: STRIKE },         // stroke two
-      { transform: w(-30), offset: f(880), easing: ENTER },          // the hard last bit: tight
-      { transform: w(-31.5), offset: f(930), easing: STATE },
-      { transform: w(-30) }], D, S);
-    play(o.querySelector(".turn"), [
-      { transform: n(-120), easing: "cubic-bezier(.5,0,.3,1)" },
-      { transform: n(-60), offset: f(220) },
-      { transform: n(-60), offset: f(520), easing: STATE },
-      { transform: n(-9), offset: f(700), easing: STRIKE },
-      { transform: n(0), offset: f(880) },
-      { transform: n(0) }], D, S);
-    play(o.querySelector("svg"), [{ scale: "1", easing: ENTER }, { scale: ".94", offset: .1389, easing: SEAT }, { scale: "1" }], 360, hit); // it seats
+    if (re) { bounce(T0 - 120, 1.7); flat(T0 + 60, .7); return; }
+    const C = Math.max(T0, 330), F = 330, UP = 120;   // C: it lands
+    play(line, [{ transform: `translate(14px,${-UP}px) rotate(-7deg)`, opacity: 0, easing: "cubic-bezier(.45,0,.85,.55)" }, { opacity: 1, offset: .35 }, { transform: "translate(0px,0px) rotate(0deg)", opacity: 1 }], F, C - F);
+    flat(C, 1); bounce(C + 30, 1);
+  },
+  parts(layer, go, host, re) {
+    // The kit laid out on the counter: a steel downstem, a rubber grommet, a steel adapter, and a bottle brush lying
+    // in front. They are set down one at a time, each coming into view on the way down and landing with a small hop.
+    // On a tap each one hops in turn.
+    const o = obj(layer, OBJ.parts), kit = [0, 1, 2, 3].map(i => o.querySelector(".kit" + i));
+    const hop = (n, at, h) => play(n, [{ transform: "translateY(0px)", easing: "cubic-bezier(.2,.7,.4,1)" }, { transform: `translateY(${-h}px)`, offset: .4, easing: "cubic-bezier(.6,0,.9,.5)" },
+      { transform: "translateY(0px)", offset: .8, easing: ENTER }, { transform: "translateY(.6px)", offset: .9, easing: STATE }, { transform: "translateY(0px)" }], 360, at, "none");
+    idle(layer, () => hop(kit[1], 0, 2.6));   // the grommet, the one that rolls about
+    if (!go) return;
+    if (re) { kit.forEach((n, i) => hop(n, T0 - 100 + i * 90, 5)); return; }
+    const S = Math.max(0, T0 - 250);
+    kit.forEach((n, i) => play(n, [{ transform: "translateY(-24px)", opacity: 0, easing: "cubic-bezier(.5,0,.9,.6)" }, { opacity: 1, offset: .3 }, { transform: "translateY(0px)", opacity: 1, offset: .62, easing: "cubic-bezier(.2,.7,.4,1)" },
+      { transform: `translateY(${-3.4 + i * .3}px)`, offset: .8, easing: "cubic-bezier(.6,0,.9,.5)" }, { transform: "translateY(0px)", opacity: 1 }], 380, S + i * 140));   // lowered into view a short way, on the move, never through the title
   },
   misc(layer, go, host, re) {
-    const o = obj(layer, OBJ.misc);
+    // A pair of sunglasses off the rack, and the price gun. The gun comes down from outside the band, clicks a label
+    // on to a lens and goes back the way it came; the glasses take the knock. Then the cards on the page get theirs.
+    const o = obj(layer, OBJ.misc), q = c => o.querySelector(c);
     if (!go) return;
-    const svg = o.querySelector("svg");
-    if (re) { press(svg, T0); lift(o, T0, T0 + 360); return; } // a tap presses the header's label home again; no price on the page is touched
-    stamp(svg, T0, 1.22);               // the header's label takes the first hit alone; from 1.22 it stays inside the band on a phone
-    lift(o, T0 - 140, T0 + 280, true);  // the ink is wet, then dries
+    const S = Math.max(0, T0 - 330), HIT = S + 330, UP = 96, D = 900;   // HIT: the label is on
+    const cl = v => Math.max(0, Math.min(1, v)), N = D / 20;
+    const gy = t => t < 330 ? -UP * (1 - Math.pow(cl(t / 330), 2.2)) : t < 420 ? 2.2 * Math.sin((t - 330) / 90 * Math.PI) : -UP * Math.pow(cl((t - 420) / 480), 1.7);   // down speeding up, pressed in, away
+    play(q(".gun"), Array.from({ length: N + 1 }, (_, j) => { const t = j / N * D, y = gy(t); return { transform: `translate(0px,${y.toFixed(2)}px)`, opacity: cl((UP + y) / (UP * .5)).toFixed(3) }; }), D, S);
+    if (re) play(q(".mtag"), [{ transform: "scale(1)", easing: STATE }, { transform: "scale(.88)", offset: .3, easing: STATE }, { transform: "scale(1.06)", offset: .6, easing: STATE }, { transform: "scale(1)" }], 280, HIT, "none");   // a tap: pressed down again
+    else {   // the label is pressed out where the nose comes down: it grows from that point under the nose, and seats
+      play(q(".mtag"), [{ opacity: 0, transform: "scale(.3)", easing: "cubic-bezier(.2,.7,.4,1)" }, { opacity: 1, transform: "scale(1.06)", offset: .55, easing: STATE }, { opacity: 1, transform: "scale(1)" }], 220, HIT - 10);
+    }
+    play(q(".mset"), [{ transform: "translateY(0px) rotate(0deg)", easing: ENTER }, { transform: "translateY(2.2px) rotate(1.6deg)", offset: .2, easing: SINE }, { transform: "translateY(-.6px) rotate(-.9deg)", offset: .5, easing: SINE }, { transform: "translateY(0px) rotate(.4deg)", offset: .75, easing: SINE }, { transform: "translateY(0px) rotate(0deg)" }], 520, HIT, "none");
+    if (re) return;   // a tap clicks the header's label again; no price on the page is touched
     if (!arrivals) return; // on a first load the prices are already on screen: nothing already seen is hidden
     const vh = innerHeight, todo = [];   // measure every card first, then start the moves
     for (const tile of document.querySelectorAll(".grid .card .tile")) {
@@ -450,7 +373,7 @@ const FX = {
       const r = tile.getBoundingClientRect(); if (r.top >= vh || r.bottom <= 0) continue;
       todo.push([tile, s, inward(s.getBoundingClientRect(), r, 1.3, 7)]);
     }
-    const GAPS = [260, 120, 100, 85, 75, 70]; let k = 0, hit = T0; // then the cards, speeding up; nothing waits past the sixth
+    const GAPS = [260, 120, 100, 85, 75, 70]; let k = 0, hit = HIT; // then the cards, speeding up; nothing waits past the sixth
     for (const [tile, s, shift] of todo) {
       if (k < GAPS.length) hit += GAPS[k++];
       stamp(s, hit, 1.3, 7, shift); give(tile, hit);
@@ -1067,6 +990,7 @@ document.addEventListener("click", e => {
   const band = e.target.closest(".shophead[data-cat], .shophead[data-fx]"); if (!band || RM.matches || e.target.closest("a,button,input,select,label,summary")) return;
   const sel = window.getSelection && getSelection(); if (sel && !sel.isCollapsed && band.contains(sel.anchorNode)) return; // the end of a drag-select of the title is not a tap
   const old = band.querySelector(":scope > .fx"); if (!old) return;
+  if (old.getAnimations({ subtree: true }).some(a => a.playState === "running" || a.pending)) return;   // something is still moving: an arrival is never cut short
   old.remove(); live = null; playedKey = ""; again = true; try { place(); } finally { again = false; }
 });
 place();

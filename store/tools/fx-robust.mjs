@@ -75,16 +75,17 @@ const probe = p => p.evaluate(() => {
   const tg = a => a.effect && a.effect.target, inFx = a => { const e = tg(a); return !!(e && e.closest && e.closest(".fx")); };
   const cls = e => !e ? "?" : typeof e.className === "string" ? e.className : (e.className && e.className.baseVal) || e.tagName;
   const vis = [...document.querySelectorAll(".sticker")].filter(s => { const r = s.getBoundingClientRect(); return r.width && r.bottom > 0 && r.top < innerHeight; });
-  const o = host && host.querySelector(":scope > .fx > .fx-obj"), r = o && o.getBoundingClientRect(), coil = document.querySelector(".fx .coil");
+  const o = host && host.querySelector(":scope > .fx > .fx-obj"), r = o && o.getBoundingClientRect(), coil = [...document.querySelectorAll(".fx path")].find(n => n.style.strokeDasharray);
   return {
     layers: host ? host.querySelectorAll(":scope > .fx").length : 0, allLayers: document.querySelectorAll(".fx").length,
-    objs: document.querySelectorAll(".fx-obj").length, objW: r ? Math.round(r.width) : 0, ink: o ? +getComputedStyle(o.querySelector(".o") || o).opacity : 0,
+    objs: document.querySelectorAll(".fx-obj").length, objW: r ? Math.round(r.width) : 0, ink: o ? (() => { const g = o.querySelector("svg"), b = g && g.getBBox(); return b && b.width > 20 && b.height > 20 ? +getComputedStyle(g).opacity * +getComputedStyle(o).opacity : 0; })() : 0,   // the drawing is there, has a size and is not faded out
     fxCanvas: cvs.filter(c => c.closest(".fx")).length, stray: cvs.filter(c => !c.closest(".fx") && !c.classList.contains("smoke")).length,
     smoke: document.querySelectorAll(".smoke").length, smokeIn: host ? host.querySelectorAll(":scope > .smoke").length : 0,
     running: run.length, runningInFx: run.filter(inFx).length, names: run.slice(0, 5).map(a => (a.animationName || a.transitionProperty || "script") + "@" + cls(tg(a))),
     hidden: vis.filter(s => +getComputedStyle(s).opacity < 1).length, stickers: vis.length, loose: document.querySelectorAll(".puff,.fly").length,
     sameLayer: !!window.__l && !!host && host.querySelector(":scope > .fx") === window.__l,
-    dash: coil ? getComputedStyle(coil).strokeDasharray : "",
+    dash: coil ? coil.style.strokeDasharray : "",
+    gone: o ? [...o.querySelectorAll(".kit0,.kit1,.kit2,.kit3,.ice,.mtag,.hline,.hlid,.hc,.coal,.recoil,.pipe,.rock")].filter(n => getComputedStyle(n).opacity === "0").map(n => n.getAttribute("class")) : [],   // the parts of a drawing that are always on show at rest
     orphans: (window.__cv || []).filter(c => c.width * c.height > 0 && !c.isConnected && !(c.width === 64 && c.height === 64)).length, // 64 x 64 is the kept sprite
   };
 });
@@ -112,7 +113,7 @@ await load(p, "");
 const shop = await p.evaluate(async () => { const m = await import("/api/catalog-module"); return { cats: m.CATEGORIES.map(c => c.id), prods: m.PRODUCTS.map(x => ({ sku: x.sku, cat: x.cat, photo: !!(x.dark || x.photo) })) }; });
 const only = (process.env.ONLY || "").split(",").filter(Boolean);
 const SECS = ["hookahs", "bases", "bowls", "heat", "hoses", "parts", "cologne", "misc"].filter(c => shop.cats.includes(c) && (!only.length || only.includes(c)));
-const CANVAS = new Set(["cologne", "heat"]), LONG = new Set(["hookahs", "hoses"]), SMOKY = new Set(["hookahs"]);
+const CANVAS = new Set([]), LONG = new Set(["hookahs", "hoses"]), SMOKY = new Set(["hookahs"]);
 const pick = c => shop.prods.find(x => x.cat === c && !x.photo) || shop.prods.find(x => x.cat === c);
 t("the shop has the eight sections", SECS.length === 8 || only.length > 0, SECS.join(","));
 
@@ -262,7 +263,7 @@ if (SECS.includes("hookahs")) {
   for (const c of SECS) {
     await load(r, "shop/" + c); const got = await ready(r); await wait(r, 1500); await mark(r);
     let q = await probe(r);
-    t(c + ": reduced motion shows the object at rest", got && q.layers === 1 && q.objs === 1 && q.objW >= 44 && q.ink > 0, J(q));
+    t(c + ": reduced motion shows the object at rest", got && q.layers === 1 && q.objs === 1 && q.objW >= 44 && q.ink > 0 && q.gone.length === 0, J(q));
     t(c + ": reduced motion has no running animation and no canvas", q.running === 0 && q.fxCanvas === 0 && q.stray === 0, J(q));
     t(c + ": reduced motion hides no price", q.hidden === 0, J(q));
     if (c === "hoses") t("hoses: reduced motion leaves no dash on the hose", q.dash === "none" || q.dash === "", q.dash);
