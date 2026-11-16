@@ -594,7 +594,10 @@ html:not(.hero-seen) .piece .sticker{animation-timing-function:linear(0,.25 6%,.
 .fx .mouth{transform-box:view-box;transform-origin:87px 60px}
 .fx .recoil,.fx .rock,.fx .set{transform-box:view-box;transform-origin:50px 94px}
 .fx .keeper{transform-box:view-box;transform-origin:42px 94px}
-.fx .tongs{transform:translate(92.75px,4.73px) rotate(143deg)} .fx .coal .glow{opacity:.62} .fx .arm.a{transform:rotate(-10deg)} .fx .arm.b{transform:rotate(10deg)} .fx .coal{transform-box:fill-box;transform-origin:center}
+.fx .o.solid{opacity:.72} .fx .kerf,.fx .shine{fill:none;stroke:var(--tile);stroke-width:1.3;stroke-linecap:round} .fx .shine{opacity:.6} .fx .dish{fill:var(--tile);opacity:.24}
+.fx .f0{fill:#c9cfd8} .fx .f1{fill:#b4bcc8} .fx .f2{fill:#9ba4b2} .fx .f3{fill:#d6dbe3} .fx .fold{fill:none;stroke:#e9edf2;stroke-width:1;stroke-linecap:round} .fx .crimp{fill:none;stroke:#8792a4;stroke-width:.6;stroke-linecap:round} .fx .hole{fill:#6b7690} .fx .dent{fill:#9ba4b2} .fx .emb{fill:#f3cfb0;opacity:.9}
+.fx .glowf{fill:#d9421a} .fx .glows{fill:#b3350f} .fx .core{fill:#ff8f2e} .fx .core.dim{fill:#f6772a} .fx .ash{fill:#8f8780;stroke:#c9c3bb;stroke-width:.6;stroke-linejoin:round} .fx .fl{fill:#ffe27a;opacity:0} .fx .fl.pale{fill:#e9e4dc}
+.fx .tongs{opacity:0;transform:translate(67.6px,-110px) rotate(90deg)} .fx .steel{fill:#333d58} .fx .arm.a{transform:rotate(-14.5deg)} .fx .arm.b{transform:rotate(14.5deg)}
 .fx .lid{transform-box:view-box;transform-origin:42px 28px;transform:rotate(-6deg)}
 .fx .whip{transform-box:view-box;transform-origin:20px 64px}
 .fx .tip{transform-box:view-box;transform-origin:68px 38px}

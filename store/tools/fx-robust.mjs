@@ -112,7 +112,7 @@ await load(p, "");
 const shop = await p.evaluate(async () => { const m = await import("/api/catalog-module"); return { cats: m.CATEGORIES.map(c => c.id), prods: m.PRODUCTS.map(x => ({ sku: x.sku, cat: x.cat, photo: !!(x.dark || x.photo) })) }; });
 const only = (process.env.ONLY || "").split(",").filter(Boolean);
 const SECS = ["hookahs", "bases", "bowls", "heat", "hoses", "parts", "cologne", "misc"].filter(c => shop.cats.includes(c) && (!only.length || only.includes(c)));
-const CANVAS = new Set(["cologne", "heat", "bowls"]), LONG = new Set(["hookahs", "hoses"]), SMOKY = new Set(["hookahs"]);
+const CANVAS = new Set(["cologne", "heat"]), LONG = new Set(["hookahs", "hoses"]), SMOKY = new Set(["hookahs"]);
 const pick = c => shop.prods.find(x => x.cat === c && !x.photo) || shop.prods.find(x => x.cat === c);
 t("the shop has the eight sections", SECS.length === 8 || only.length > 0, SECS.join(","));
 
@@ -129,6 +129,8 @@ for (const c of SECS) {
   q = await probe(p);
   t(c + ": one layer on an in-site arrival", q.layers === 1 && q.allLayers === 1, J(q));
   t(c + ": the act is playing", q.runningInFx > 0, J(q));
+  if (c === "bowls") { const b = await p.evaluate(() => { const o = document.querySelector(".shophead .fx-obj"), g = o && o.querySelector(".tongs"); return g ? { opacity: +getComputedStyle(g).opacity, y: g.getBoundingClientRect().bottom - o.getBoundingClientRect().top, h: o.getBoundingClientRect().height } : null; });
+    t("bowls: mid-act the tongs are in view and down at the bowl", !!b && b.opacity > .9 && b.y > b.h * .2 && b.y < b.h * .55, J(b)); }
   await wait(p, 650); q = await probe(p);
   if (CANVAS.has(c)) t(c + ": its canvas is up mid-act", q.fxCanvas === 1, J(q));
   await mark(p);
@@ -143,6 +145,9 @@ for (const c of SECS) {
   t(c + ": no effect canvas 6 s after the entrance", q.fxCanvas === 0 && q.stray === 0, J(q));
   t(c + ": the only canvas left is the smoke, and only where smoke belongs", q.smoke <= 1 && (c === "hookahs" || q.smoke === 0), J(q));
   t(c + ": nothing loose on the page, every price showing", q.loose === 0 && q.hidden === 0, J(q));
+  if (c === "bowls") { const b = await p.evaluate(() => { const o = document.querySelector(".shophead .fx-obj"); if (!o) return null; const cs = n => getComputedStyle(o.querySelector(n));
+    return { tongs: cs(".tongs").opacity, coals: o.querySelectorAll(".coal").length, front: cs(".c1").transform + " " + cs(".c1").opacity, glow: cs(".e1").opacity, flash: cs(".c1 .fl").opacity, moving: o.getAnimations({ subtree: true }).filter(a => a.playState === "running" && a.effect.getTiming().duration < 1300).length }; });
+    t("bowls: three coals at rest with their light, tongs gone, nothing still moving", !!b && b.tongs === "0" && b.coals === 3 && /matrix\(1, 0, 0, 1, 67, 37\.4\) 1$/.test(b.front) && b.glow === "0.9" && b.flash === "0" && b.moving === 0, J(b)); }
   if (c === "hoses") t("hoses: the drawn hose keeps no dash", q.dash === "none" || q.dash === "", q.dash);
 
   // five taps, far enough apart that each one cuts the last act off in mid-air

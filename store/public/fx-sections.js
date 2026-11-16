@@ -1,9 +1,10 @@
 // 06 section entrances. One rule for every section of the shop:
-//   the header band carries one real object from that section, a solid silhouette at the weight of the type, on
+//   the header band carries one real object from that section, a solid silhouette at the weight of the type (the
+//   bowl is the one drawn in colour: clay, foil, lit coals), on
 //   the right; when the page opens, a hand does the one thing you do to that object at the counter, once, and the
 //   object reacts to it.
 //   hookahs  smoke rolls in and pushes the hose (fx-smoke.js)   cologne  the pump is pressed twice; the bottle kicks
-//   bases    filled with water: the level climbs, it rocks stillbowls    the tongs set a coal and push it home; it flares 
+//   bases    filled with water: the level climbs, it rocks still     bowls    tongs set the third coal on the foil; it flares
 //   heat     the coals light, the lid hops on each crackle      hoses    thrown out; the mouthpiece whips
 //   parts    a spanner: two strokes, the last one hard             misc     the price gun: one hit alone, then faster
 // Timing: every act makes contact at T0, after the page change has landed; a wind-up may start at WIND. A tap on
@@ -11,7 +12,8 @@
 // (things driven into contact: they speed up), THROW (let go at full speed), SEAT (the label spring).
 // Everything sits behind the type. With motion turned off the objects are simply there, at rest.
 // Rules kept here: a re-draw of the same page changes nothing a shopper can see; nothing already seen is hidden;
-// a resting state never depends on a measurement; nothing is sliced by the edge of the band.
+// a resting state never depends on a measurement; nothing is sliced by the edge of the band
+// (the one thing that crosses it is the tongs, which come in from outside the band and leave the same way).
 import { OBJ } from "./fx-objects.js";
 const RM = matchMedia("(prefers-reduced-motion: reduce)");
 let T0 = 450, WIND = T0 - 140;                                           // contact, and the earliest wind-up
@@ -324,45 +326,30 @@ const FX = {
     all(".bub").forEach((bu, i) => play(bu, [{ opacity: 0, transform: "translateY(0px)", easing: STATE }, { opacity: .85, offset: .15 }, { opacity: .7, offset: .7 }, { opacity: 0, transform: `translateY(${-20 - i * 3}px)` }], 720, C + 240 + i * 270, "none"));
     play(q(".rock"), [{ transform: "rotate(0deg)", easing: ENTER }, { transform: "rotate(-.9deg)", offset: .3, easing: SINE }, { transform: "rotate(.5deg)", offset: .65, easing: SINE }, { transform: "rotate(0deg)" }], 520, C, "none");   // it takes the first of the weight
   },
-  bowls(layer, go) {
-    // coals are being set on the bowl: one sits on top of the other two. The tongs come down, take it, carry it over and
-    // set it down beside them, let go, then push it in until it knocks against its neighbour. Every coal flares when it is touched.
-    const o = obj(layer, OBJ.bowls), q = c => o.querySelector(c), glows = [...o.querySelectorAll(".glow")];
-    idle(layer, () => glows.forEach((gl, i) => play(gl, [ // the coals breathe
-      { opacity: .62, easing: STATE }, { opacity: .85, offset: .3, easing: STATE }, { opacity: .55, offset: .55, easing: STATE }, { opacity: .75, offset: .8, easing: STATE }, { opacity: .62 }], 900, i * 110, "none")));
+  bowls(layer, go, host, re) {
+    // The clay bowl on its hookah, foil over it, two lit coals on the foil. Tongs come down from outside the band carrying
+    // the third, set it down in the clear, let go and leave the way they came. The foil gives under it and it flares
+    // once. On a tap the coal is already there: the tongs take it by its sides, lift it and set it back down.
+    const o = obj(layer, OBJ.bowls), q = c => o.querySelector(c), all = c => [...o.querySelectorAll(c)], coal = q(".c1");
+    idle(layer, () => all(".emb").forEach((e, i) => play(e, [{ opacity: .9, easing: STATE }, { opacity: .4, offset: .3, easing: STATE }, { opacity: .8, offset: .55, easing: STATE }, { opacity: .5, offset: .78, easing: STATE }, { opacity: .9 }], 1300, i * 170, "none"))); // their light on the foil breathes
     if (!go) return;
-    const S = Math.max(0, T0 - 200), D = 1300, f = ms => ms / D;   // S: the tongs start down. S + 200: they close on the coal
-    lift(o, S, S + D);
-    // the tongs: where the hinge is; the tips are 36 units down the arms, which point down and left at 143 degrees
-    const at = (x, y) => `translate(${x}px,${y}px) rotate(143deg)`, tr = (x, y, r = 0) => `translate(${x}px,${y}px) rotate(${r}deg)`;
-    play(q(".tongs"), [
-      { transform: at(92.75, 4.73), easing: ENTER },
-      { transform: at(73.25, 6.23), offset: f(200), easing: STATE },      // on the top coal
-      { transform: at(76.75, 1.73), offset: f(320), easing: SINE },        // lifted clear
-      { transform: at(85.75, 2.73), offset: f(520), easing: STRIKE },     // carried over
-      { transform: at(92.75, 15.23), offset: f(640), easing: ENTER },     // set down
-      { transform: at(95.75, 7.73), offset: f(760), easing: STATE },      // let go, up and round behind it
-      { transform: at(99.25, 15.23), offset: f(900), easing: STRIKE },
-      { transform: at(96.25, 15.23), offset: f(1000), easing: ENTER },    // pushed in
-      { transform: at(92.75, 4.73) }], D, S, "none");
-    const jaw = s => [10, 10, 8, 8, 11, 11, 2.2, 2.2, 10].map((d, i) => ({ transform: `rotate(${d * s}deg)`, offset: [0, f(140), f(200), f(640), f(700), f(760), f(860), f(1040), 1][i], easing: STATE }));
-    play(q(".arm.a"), jaw(-1), D, S, "none"); play(q(".arm.b"), jaw(1), D, S, "none");
-    play(q(".c2"), [ // the coal that is moved: it starts on top of the other two
-      { transform: tr(-16.5, -9), easing: ENTER },
-      { transform: tr(-16.5, -9), offset: f(200), easing: STATE },
-      { transform: tr(-13, -13.5, -6), offset: f(320), easing: SINE },
-      { transform: tr(-4, -12.5, 5), offset: f(520), easing: STRIKE },
-      { transform: tr(3, 0), offset: f(640), easing: ENTER },
-      { transform: tr(3, 0), offset: f(900), easing: STRIKE },
-      { transform: tr(-.7, 0), offset: f(1000), easing: ENTER },          // knocks into its neighbour
-      { transform: tr(0, 0), offset: f(1070) },
-      { transform: tr(0, 0) }], D, S);
-    const bump = (x, t) => [{ transform: "translateX(0px)" }, { transform: "translateX(0px)", offset: f(t), easing: ENTER }, { transform: `translateX(${x}px)`, offset: f(t + 50), easing: STATE }, { transform: "translateX(0px)", offset: f(t + 170) }, { transform: "translateX(0px)" }];
-    play(q(".c3"), bump(-.9, 990), D, S, "none"); play(q(".c1"), bump(-.45, 1030), D, S, "none");
-    play(q(".set"), [{ transform: "translateY(0px)", easing: ENTER }, { transform: "translateY(1.3px)", offset: .3, easing: STATE }, { transform: "translateY(0px)" }], 220, S + 640, "none");   // the bowl takes the weight
-    glows.forEach(gl => play(gl, [{ opacity: .62, easing: STATE }, { opacity: .62, offset: f(630), easing: ENTER }, { opacity: 1, offset: f(670), easing: STATE }, { opacity: .66, offset: f(900), easing: STRIKE },
-      { opacity: 1, offset: f(1010), easing: STATE }, { opacity: .62 }], D, S, "none"));
-    when(layer, S + 640, () => { const L = layer.getBoundingClientRect(), B = o.getBoundingClientRect(); embers(layer, box(layer, B.left - L.left + .08 * B.width, B.top - L.top - .115 * B.height, B.width, B.height), 9, false, true); });   // a few sparks when it is set down and when it knocks
+    const S = Math.max(0, T0 - 350), IN = 400, C = re ? 760 : 500, OPEN = C + 40, OFF = C + 110, D = OFF + 400;   // IN: the tongs are there. C: the coal is down. OFF: they leave
+    // the tongs point straight down. Pads are 55.5 along each arm; SHUT puts their inner faces on the coal's two sides
+    const ux = 0, uy = 1, SHUT = 9.9, WIDE = 14.5, L = 55.5 * Math.cos(SHUT * Math.PI / 180), X = 67, Y = 37.4, FAR = 74, HOLD = 4, LIFT = 14;
+    const cl = v => Math.max(0, Math.min(1, v)), eo = v => 1 - Math.pow(1 - cl(v), 3), ei = v => cl(v) * cl(v);
+    const away = t => t < IN ? FAR * (1 - eo(t / IN)) : t < OFF ? 0 : FAR * Math.pow(cl((t - OFF) / 400), 2.4);   // how far back up their own line the tongs are
+    const up = t => re ? (t < 450 ? 0 : t < 620 ? LIFT * eo((t - 450) / 170) : t < C - 100 ? LIFT : LIFT * (1 - ei((t - C + 100) / 100))) : (t < C - 100 ? HOLD : HOLD * (1 - ei((t - C + 100) / 100)));   // how high the coal is held
+    const jaw = t => re && t < IN ? WIDE : re && t < 450 ? WIDE - (WIDE - SHUT) * cl((t - IN) / 40) : t < OPEN ? SHUT : SHUT + (WIDE - SHUT) * eo((t - OPEN) / 110);
+    const N = Math.ceil(D / 20), track = fn => Array.from({ length: N + 1 }, (_, k) => fn(k / N * D)), seen = k => cl((FAR - k) / (FAR * .55)).toFixed(3);   // they come into view, and go out of it, on the move
+    play(q(".tongs"), track(t => { const k = away(t), h = t < OFF ? up(t) : 0; return { transform: `translate(${(X + .6 - ux * (L + k)).toFixed(2)}px,${(Y - 4.2 - h - uy * (L + k)).toFixed(2)}px) rotate(90deg)`, opacity: seen(k) }; }), D, S);
+    [".arm.a", ".arm.b"].forEach((c, i) => play(q(c), track(t => ({ transform: `rotate(${((i ? 1 : -1) * jaw(t)).toFixed(2)}deg)` })), D, S));
+    play(coal, track(t => { const k = re || t >= C ? 0 : away(t); return { transform: `translate(${(X - ux * k).toFixed(2)}px,${(Y - (t < C ? up(t) : 0) - uy * k).toFixed(2)}px)`, opacity: re ? 1 : seen(k) }; }), D, S);
+    // its dent in the foil and its light on the foil come as it comes down, and go as it is lifted
+    const near = t => re ? 1 - up(t) / (LIFT * 1.6) : (t > IN - 60 ? cl(1 - up(t) / HOLD) : 0);
+    play(q(".d1"), track(t => ({ opacity: near(t).toFixed(3) })), D, S); play(q(".e1"), track(t => ({ opacity: (.9 * near(t)).toFixed(3) })), D, S);
+    // down: the foil gives and comes back as the tongs let go, and the coal flares: bright on the moment, then back to its own heat
+    play(q(".dip"), [{ transform: "translateY(0px)", easing: ENTER }, { transform: "translateY(1.2px)", offset: .25, easing: SINE }, { transform: "translateY(-.3px)", offset: .65, easing: SINE }, { transform: "translateY(0px)" }], 300, S + OPEN, "none");
+    coal.querySelectorAll(".fl").forEach(f => play(f, [{ opacity: 0, easing: ENTER }, { opacity: 1, offset: .28 }, { opacity: 1, offset: .46, easing: STATE }, { opacity: 0 }], 540, S + C - 20, "none"));
   },
   heat(layer, go, host, re) {
     const o = obj(layer, `<g class="keeper">${COALS}${OBJ.heat}</g>`), glows = [...o.querySelectorAll(".glow")];
