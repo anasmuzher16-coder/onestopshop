@@ -3,9 +3,9 @@
 //   the right; when the page opens, a hand does the one thing you do to that object at the counter, once, and the
 //   object reacts to it.
 //   hookahs  smoke rolls in and pushes the hose (fx-smoke.js)   cologne  the pump is pressed twice; the bottle kicks
-//   bases    the glass is tipped to the light, let go, rocks    bowls    the tongs set a coal and push it home; it flares 
+//   bases    filled with water: the level climbs, it rocks stillbowls    the tongs set a coal and push it home; it flares 
 //   heat     the coals light, the lid hops on each crackle      hoses    thrown out; the mouthpiece whips
-//   parts    spun down the thread, wrenched tight; it seats     misc     the price gun: one hit alone, then faster
+//   parts    a spanner: two strokes, the last one hard             misc     the price gun: one hit alone, then faster
 // Timing: every act makes contact at T0, after the page change has landed; a wind-up may start at WIND. A tap on
 // the band plays a short version with no page change to wait for. Four curves: ENTER (things arriving), STRIKE
 // (things driven into contact: they speed up), THROW (let go at full speed), SEAT (the label spring).
@@ -301,30 +301,28 @@ const FX = {
       { transform: "rotate(0deg)" }], 760, T0);
     when(layer, T0, () => { const [x, y] = at(layer, o, 0.42, 0.22); spritz(layer, x, y, Math.PI * 0.95); }); // the spray hole, 7 units down when it fires; aimed a little below level, behind the title
   },
-  bases(layer, go, host, re) {
-    const id = "fxc" + (++uid), g = "fxg" + uid, body = "M35 22.3 A20 5 0 0 0 65 22.3 V38 C65 54 70 62 84 70 C91 74 92 80 92 84 C92 90 88 94 80 94 H20 C12 94 8 90 8 84 C8 80 9 74 16 70 C30 62 35 54 35 38 Z";
-    const o = obj(layer, `<defs><clipPath id="${id}"><path d="${body}"/></clipPath><linearGradient id="${g}" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".5"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>
-      <g class="rock">${OBJ.bases}<g clip-path="url(#${id})"><g class="beam"><path d="M0 -10 C10 28, 10 74, -6 112 H18 C34 74, 34 28, 24 -10 Z" fill="url(#${g})"/><path d="M-20 -10 C-10 28, -10 74, -26 112 H-19 C-3 74, -3 28, -13 -10 Z" fill="url(#${g})"/></g></g>
-      <path class="lit gl" d="M35 40 C35 54 30 62 16 70 C10 74 9 79 9 83"/><path class="lit gr" d="M65 40 C65 54 70 62 84 70 C90 74 91 79 91 83"/><path class="lit sh" d="M22 76 C27 71 34 66 38 60 M42 27 V40"/></g>`);
-    const q = c => o.querySelector(c), rest = () => { q(".beam").style.opacity = 0; q(".sh").style.opacity = .5; }; // the lit glass, at rest
-    idle(layer, () => play(q(".sh"), [{ opacity: .5, easing: STATE }, { opacity: .95, offset: .4, easing: STATE }, { opacity: .5 }], 1400, 0, "none")); // the highlight catches the light again
-    if (!go) { rest(); return; }
-    lift(o, WIND, T0 + 1040);
-    play(q(".rock"), [ // tipped to the light, let go, rocks out on its foot: each swing smaller and quicker
-      { transform: "rotate(0deg)", easing: STATE },
-      { transform: "rotate(-6deg)", offset: .1667, easing: STATE },     // T0: let go
-      { transform: "rotate(2.4deg)", offset: .4762, easing: STATE },
-      { transform: "rotate(-1.1deg)", offset: .7381, easing: STATE },
-      { transform: "rotate(0.4deg)", offset: .9048, easing: STATE },
-      { transform: "rotate(0deg)" }], 840, WIND);
-    const run = { duration: 1100, delay: T0 - 60, fill: "both" }; // the light crosses because the glass turned; each shoulder glints as it passes
-    const lights = [
-      q(".beam").animate([{ transform: "translateX(-44px) skewX(-14deg)" }, { transform: "translateX(138px) skewX(-14deg)" }], { ...run, easing: "cubic-bezier(.3,.1,.3,1)" }),
-      q(".beam").animate([{ opacity: 0 }, { opacity: 1, offset: .14 }, { opacity: 1, offset: .8 }, { opacity: 0 }], run),
-      q(".gl").animate([{ opacity: 0 }, { opacity: 0, offset: .16 }, { opacity: .9, offset: .34 }, { opacity: 0, offset: .56 }, { opacity: 0 }], run),
-      q(".gr").animate([{ opacity: 0 }, { opacity: 0, offset: .46 }, { opacity: .8, offset: .64 }, { opacity: 0, offset: .86 }, { opacity: 0 }], run),
-      q(".sh").animate([{ opacity: 0 }, { opacity: 0, offset: .6 }, { opacity: .5 }], run)]; // and the glass keeps a highlight
-    lights[4].onfinish = () => { rest(); lights.forEach(x => x.cancel()); }; // the resting look is handed to plain styles: nothing stays alive
+  bases(layer, go) {
+    // filled at the counter: a stream of water drops into the mouth, the level climbs with a wave on it, bubbles come up,
+    // the stream stops and its tail falls in, and the water rocks until it is still. At rest the base stands filled.
+    const id = "fxc" + (++uid), body = "M35 22.3 A20 5 0 0 0 65 22.3 V38 C65 54 70 62 84 70 C91 74 92 80 92 84 C92 90 88 94 80 94 H20 C12 94 8 90 8 84 C8 80 9 74 16 70 C30 62 35 54 35 38 Z";
+    const wave = "M-60 0 q10 -2.6 20 0" + " t20 0".repeat(10) + " V12 H-60 Z", stream = "M48.7 -10 H51.3 V96 H48.7 Z";
+    const o = obj(layer, `<defs><clipPath id="${id}"><path d="${body}"/></clipPath><clipPath id="${id}m"><path d="M30 -12 H70 V9.6 H30 Z"/></clipPath></defs>
+      <g class="rock">${OBJ.bases}<g clip-path="url(#${id})"><g class="slosh"><g class="water"><path class="wv" d="${wave}"/><path class="wb" d="M-60 3 H160 V52 H-60 Z"/></g></g>
+      <circle class="bub" cx="40" cy="85" r="1.6"/><circle class="bub" cx="56" cy="88" r="2.1"/><circle class="bub" cx="63" cy="83" r="1.3"/><path class="pour" d="${stream}"/></g>
+      <g clip-path="url(#${id}m)"><path class="pour" d="${stream}"/></g><path class="lit sh" d="M22 76 C27 71 34 66 38 60 M42 27 V40"/></g>`);
+    const q = c => o.querySelector(c), all = c => [...o.querySelectorAll(c)];
+    q(".sh").style.opacity = .5;   // the glass keeps a highlight
+    idle(layer, () => play(q(".wv"), [{ transform: "translateX(0px) scaleY(.35)", easing: STATE }, { transform: "translateX(-40px) scaleY(.6)", offset: .5, easing: STATE }, { transform: "translateX(-80px) scaleY(.35)" }], 1600, 0, "none")); // the water stirs
+    if (!go) return;
+    const C = Math.max(T0, 150);   // the stream reaches the bottom
+    lift(o, C - 150, C + 1500);
+    all(".pour").forEach(p => play(p, [{ transform: "translateY(-108px)", easing: STRIKE }, { transform: "translateY(0px)", offset: 150 / 1110 }, { transform: "translateY(0px)", offset: 910 / 1110, easing: STRIKE }, { transform: "translateY(108px)" }], 1110, C - 150, "none"));
+    play(q(".water"), [{ transform: "translateY(100px)", easing: "cubic-bezier(.2,.7,.3,1)" }, { transform: "translateY(56px)" }], 950, C);
+    play(q(".wv"), [{ transform: "translateX(0px) scaleY(1.6)", easing: "linear" }, { transform: "translateX(-80px) scaleY(1.25)", offset: .55, easing: STATE }, { transform: "translateX(-120px) scaleY(.35)" }], 1700, C);
+    play(q(".slosh"), [{ transform: "rotate(0deg)", easing: SINE }, { transform: "rotate(1.7deg)", offset: .16, easing: SINE }, { transform: "rotate(-1.2deg)", offset: .4, easing: SINE }, { transform: "rotate(.7deg)", offset: .62, easing: SINE },
+      { transform: "rotate(-.3deg)", offset: .82, easing: SINE }, { transform: "rotate(0deg)" }], 1000, C + 900, "none");
+    all(".bub").forEach((bu, i) => play(bu, [{ opacity: 0, transform: "translateY(0px)", easing: STATE }, { opacity: .85, offset: .15 }, { opacity: .7, offset: .7 }, { opacity: 0, transform: `translateY(${-20 - i * 3}px)` }], 720, C + 240 + i * 270, "none"));
+    play(q(".rock"), [{ transform: "rotate(0deg)", easing: ENTER }, { transform: "rotate(-.9deg)", offset: .3, easing: SINE }, { transform: "rotate(.5deg)", offset: .65, easing: SINE }, { transform: "rotate(0deg)" }], 520, C, "none");   // it takes the first of the weight
   },
   bowls(layer, go) {
     // coals are being set on the bowl: one sits on top of the other two. The tongs come down, take it, carry it over and
@@ -424,24 +422,32 @@ const FX = {
     play(tip, [{ opacity: 0 }, { opacity: 1 }], 60, hit);
     flick(hit, 1, 1, "scale(.2) rotate(55deg)");
   },
-  parts(layer, go, host, re) {
+  parts(layer, go) {
+    // a spanner is on the nut. It turns it a sixth, is pulled off, swung back up and pushed on again (it never swings across the title), and turns it another
+    // sixth: the last few degrees are slow and hard, and when it will go no further everything takes the knock
     const o = obj(layer, OBJ.parts, "edge");
     if (!go) return;
-    const turn = o.querySelector(".turn"), depth = o.getBoundingClientRect().width < 72 ? ".88" : ".94";
-    const hit = re ? 340 : WIND + 810, up = o.classList.contains("bleed") ? 3 : 12;   // beside the end of the title it has less thread to come down
-    lift(o, re ? 0 : WIND, hit + 360);
-    if (re) play(turn, [ // a tap: backed off a sixth and wrenched tight again; it never jumps
-      { transform: "translateY(0px) rotate(0deg)", easing: STATE },
-      { transform: "translateY(-2px) rotate(-40deg)", offset: .4118 },
-      { transform: "translateY(-2px) rotate(-40deg)", offset: .6471, easing: STRIKE },
-      { transform: "translateY(0px) rotate(0deg)" }], 340, 0);
-    else play(turn, [ // backed off, spun on by hand down the thread, a rest, then the wrench gives the last turn and it stops dead
-      { transform: `translateY(${-up}px) rotate(-200deg)`, easing: STATE },
-      { transform: `translateY(${-up - 1}px) rotate(-214deg)`, offset: .1728, easing: STATE },
-      { transform: "translateY(-2px) rotate(-40deg)", offset: .716 },
-      { transform: "translateY(-2px) rotate(-40deg)", offset: .8519, easing: STRIKE },
-      { transform: "translateY(0px) rotate(0deg)" }], 810, WIND);
-    play(o.querySelector("svg"), [{ scale: "1", easing: ENTER }, { scale: depth, offset: .1389, easing: SEAT }, { scale: "1" }], 360, hit); // it seats
+    const S = Math.max(0, T0 - 300), D = 1000, f = ms => ms / D, hit = S + 880;
+    const w = (d, off = 0) => `translate(34px,64px) rotate(${d}deg) translateX(${off}px)`, n = d => `rotate(${d}deg)`;
+    lift(o, S, hit + 360);
+    play(o.querySelector(".wrench"), [
+      { transform: w(-90), easing: "cubic-bezier(.5,0,.3,1)" },
+      { transform: w(-30), offset: f(220), easing: STATE },          // stroke one
+      { transform: w(-30, 17), offset: f(300), easing: STATE },      // pulled off
+      { transform: w(-90, 17), offset: f(440), easing: STRIKE },    // swung back
+      { transform: w(-90), offset: f(520), easing: STATE },         // on again
+      { transform: w(-39), offset: f(700), easing: STRIKE },         // stroke two
+      { transform: w(-30), offset: f(880), easing: ENTER },          // the hard last bit: tight
+      { transform: w(-31.5), offset: f(930), easing: STATE },
+      { transform: w(-30) }], D, S);
+    play(o.querySelector(".turn"), [
+      { transform: n(-120), easing: "cubic-bezier(.5,0,.3,1)" },
+      { transform: n(-60), offset: f(220) },
+      { transform: n(-60), offset: f(520), easing: STATE },
+      { transform: n(-9), offset: f(700), easing: STRIKE },
+      { transform: n(0), offset: f(880) },
+      { transform: n(0) }], D, S);
+    play(o.querySelector("svg"), [{ scale: "1", easing: ENTER }, { scale: ".94", offset: .1389, easing: SEAT }, { scale: "1" }], 360, hit); // it seats
   },
   misc(layer, go, host, re) {
     const o = obj(layer, OBJ.misc);

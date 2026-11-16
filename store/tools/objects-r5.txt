@@ -30,7 +30,7 @@
 
 ### parts
 ```html
-<g class="o"><g class="turn"><path class="sol" fill-rule="evenodd" d="M92 50 L71 86.4 H29 L8 50 L29 13.6 H71 Z M17 50 A33 33 0 1 0 83 50 A33 33 0 1 0 17 50 Z M20 50 A30 30 0 1 0 80 50 A30 30 0 1 0 20 50 Z M35 50 A15 15 0 1 0 65 50 A15 15 0 1 0 35 50 Z"/></g></g>
+<g class="o"><g class="turn"><g transform="translate(34 64) rotate(30) scale(.46) translate(-50 -50)"><path class="sol" fill-rule="evenodd" d="M92 50 L71 86.4 H29 L8 50 L29 13.6 H71 Z M17 50 A33 33 0 1 0 83 50 A33 33 0 1 0 17 50 Z M20 50 A30 30 0 1 0 80 50 A30 30 0 1 0 20 50 Z M35 50 A15 15 0 1 0 65 50 A15 15 0 1 0 35 50 Z"/></g></g><g class="wrench"><path class="sol" d="M-15 -17.3 H10.6 L20.6 0 L10.6 17.3 H-15 V19.67 A27 27 0 1 0 -15 -19.67 Z"/><path class="sol" d="M26 -4.75 H54 A4.75 4.75 0 0 1 54 4.75 H26 Z"/></g></g>
 ```
 
 ### misc

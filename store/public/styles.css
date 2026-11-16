@@ -598,7 +598,8 @@ html:not(.hero-seen) .piece .sticker{animation-timing-function:linear(0,.25 6%,.
 .fx .lid{transform-box:view-box;transform-origin:42px 28px;transform:rotate(-6deg)}
 .fx .whip{transform-box:view-box;transform-origin:20px 64px}
 .fx .tip{transform-box:view-box;transform-origin:68px 38px}
-.fx .turn{transform-box:view-box;transform-origin:50px 50px}
+.fx .turn{transform-box:view-box;transform-origin:34px 64px} .fx .wrench{transform:translate(34px,64px) rotate(-30deg)}
+.fx .water{transform:translateY(56px);opacity:.42} .fx .wv,.fx .wb,.fx .pour,.fx .bub{fill:oklch(0.99 0.01 90)} .fx .wv{transform:scaleY(.35)} .fx .pour{transform:translateY(-108px);opacity:.8} .fx .bub{opacity:0} .fx .slosh{transform-box:view-box;transform-origin:50px 56px}
 .fx .head{transform-box:view-box}
 /* 07 page bands: the pages that are not shop sections open with the same band */
 .shophead--page .shophead__n a{display:inline-flex;align-items:center;min-height:44px;color:inherit;text-underline-offset:.2em}
