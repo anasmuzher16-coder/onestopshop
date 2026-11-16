@@ -82,7 +82,7 @@ function fxCanvas(layer, tick, top) {
   let last = performance.now();
   const frame = now => {
     if (!cv.isConnected) { cv.width = cv.height = 0; return; }   // cut off in mid-air (a tap, a page change): hand the memory back
-    const dt = Math.max(0, Math.min(0.1, (now - last) / 1000)); last = now;   // clock-timed: a slow phone shows the same motion and ends on time down to 10 fps
+    const dt = Math.max(0, Math.min(0.25, (now - last) / 1000)); last = now;   // clock-timed: a slow phone shows the same motion and ends on time down to 4 fps
     g.globalAlpha = 1; g.clearRect(0, 0, w, h);
     if (tick(g, dt)) requestAnimationFrame(frame); else { cv.width = cv.height = 0; cv.remove(); } // hand the memory back
   };
@@ -174,7 +174,7 @@ function embers(layer, o, n = 30, top = false, fine = false) {
       p.age += dt; if (p.age >= p.life) continue; alive++; if (p.age < 0) continue;
       const d = Math.exp(-p.k * dt); p.vx = p.vx * d + Math.sin(p.ph + p.age * p.w) * p.amp * dt; p.vy = p.vy * d + p.grav * dt; p.x += p.vx * dt; p.y += p.vy * dt;
       const heat = 1 - p.age / p.life, fl = 0.8 + 0.2 * Math.sin(p.age * 38 + p.ph), sp = Math.hypot(p.vx, p.vy), len = Math.min(sp * 0.06, 22 * big);
-      const hr = p.r * (2.4 + 3 * heat), ed = edge(p.y, p.r, h); if (ed <= 0) continue;   // one that falls to the floor of the band goes out there
+      const hr = p.r * (2.4 + 3 * heat), ed = edge(p.y, p.r, h) * (fine ? Math.max(0, Math.min(1, Math.min(p.x, L.width - p.x) / 26)) * Math.min(1, heat * 3.2) : 1); if (ed <= 0) continue;   // one that falls to the floor of the band goes out there
       g.globalAlpha = (fine ? 0.6 * heat : 0.7) * heat * fl * ed; g.drawImage(glow, p.x - hr, p.y - hr, hr * 2, hr * 2);            // red glow
       if (len > 1) { g.globalAlpha = 0.85 * heat * ed; g.strokeStyle = heat > 0.55 ? "rgb(255,186,84)" : "rgb(214,51,38)"; g.lineWidth = 1.5 * p.r; g.beginPath(); g.moveTo(p.x, p.y); g.lineTo(p.x - p.vx / sp * len, p.y - p.vy / sp * len); g.stroke(); }
       g.globalAlpha = (fine ? Math.min(1, heat * heat * 2.6) : Math.min(1, heat * 2.2)) * fl * ed; g.fillStyle = heat > 0.6 ? "rgb(255,244,186)" : heat > 0.3 ? "rgb(255,186,84)" : "rgb(214,51,38)";
@@ -820,7 +820,7 @@ function shade(layer, P, K, frames, ms, at) {
 }
 // ---- heat behind the piece: a hot halo that swells on each crack and cools between them, so the piece is rim-lit from behind
 function halo(layer, P, K, at) {
-  const w = (K.r - K.l) * P.w * 1.7, h = Math.max((K.b - K.t) * P.h * 2.3, w * .6), n = el("i", "fx-halo", layer);
+  const w = (K.r - K.l) * P.w * 2.1, h = Math.max((K.b - K.t) * P.h * 2.9, w * .7), n = el("i", "fx-halo", layer);
   n.style.cssText = `left:${P.x + (K.l + K.r) / 2 * P.w - w / 2}px;top:${P.y + (K.t + K.b) / 2 * P.h - h / 2}px;width:${w}px;height:${h}px`;
   const f = [{ opacity: 0, transform: "scale(.5)", easing: STRIKE }];
   [[0, .85, .9], [260, .78, 1], [520, .7, 1.08]].forEach(([t, o, sc]) => {
@@ -835,8 +835,10 @@ function glint(layer, img, P, at, ms, hot) {
   g.style.cssText = `left:${P.x}px;top:${P.y}px;width:${P.w}px;height:${P.h}px`; g.style.webkitMaskImage = src; g.style.maskImage = src;
   const frames = hot ? [{ opacity: 0, easing: STRIKE }, { opacity: .5, offset: .06, easing: STATE }, { opacity: .2, offset: .26, easing: STRIKE }, { opacity: .44, offset: .32, easing: STATE },
       { opacity: .18, offset: .52, easing: STRIKE }, { opacity: .38, offset: .58, easing: STATE }, { opacity: 0 }]   // three cracks, each a flare that cools
-    : [{ transform: "translateX(-46%)", opacity: 0, easing: STATE }, { opacity: 1, offset: .15 }, { opacity: 1, offset: .8 }, { transform: "translateX(46%)", opacity: 0 }];
-  play(band, frames, ms, at, "none").finished.then(() => g.remove(), () => g.remove());
+    : [{ transform: "translateX(-30%) skewX(-14deg)", opacity: 0, easing: STATE }, { opacity: 1, offset: .12 }, { opacity: 1, offset: .86 }, { transform: "translateX(30%) skewX(-14deg)", opacity: 0 }];   // an upright stripe, leaned by a skew: where it is depends only on the width of the piece, never on the shape of the tile
+  // the cut-out is used as a mask, and a mask that has not been fetched hides the whole band: wait for it, then keep to the clock
+  const born = performance.now(), go = () => { if (g.isConnected) play(band, frames, ms, Math.max(0, at - (performance.now() - born)), "none").finished.then(() => g.remove(), () => g.remove()); };
+  const pre = new Image(); pre.src = img.currentSrc || img.src; (pre.decode ? pre.decode() : Promise.resolve()).then(go, go);
   return g;
 }
 // ---- mist in the air: fine droplets and soft cloud appear across the upper part of the tile, drift down and across, and thin out.
@@ -971,8 +973,10 @@ const ACT = {
     glint(layer, img, P, T0 + 330, 720);                          // tight and still: the light runs along it
   },
   // picked up off the counter, turned over once, put back
-  misc({ K, pin, move, hit }) {
+  misc({ layer, K, P, pin, move, hit }) {
     pin((K.l + K.r) / 2, K.b);
+    shade(layer, P, K, [{ opacity: 0, transform: "scale(1,1)", easing: ENTER }, { opacity: .55, transform: "scale(.66,.8)", offset: .3, easing: SINE }, { opacity: .5, transform: "scale(.7,.82)", offset: .58, easing: STRIKE },
+      { opacity: .95, transform: "scale(1.06,1.05)", offset: .78, easing: STATE }, { opacity: 0, transform: "scale(1,1)" }], 1150, hit + 40);
     move([
       { transform: turn(0, 0) + " scale(1)", easing: ENTER },
       { transform: turn(-8, -24) + " scale(1.05)", offset: .3, easing: SINE },

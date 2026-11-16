@@ -201,6 +201,7 @@ body:not([data-route]) .foot{visibility:hidden}
 .pdp{display:grid}
 .pdp__tile{border-radius:0;aspect-ratio:auto;height:min(105vw,52svh);background:var(--tile,var(--color-raised));transition:background-color var(--dur-state) var(--ease-state)}
 .pdp__tile .sticker{top:var(--s-4);right:var(--s-4);bottom:auto;width:92px;height:92px} .pdp__tile .sticker__v{font-size:2rem}
+.pdp__tile .shot:not(.shot--photo){padding:7% 6% 5%}   /* a cut-out never touches the tile edge on a phone, and has room above it to move */
 .pdp__tile.tile--photo{background:#000}
 .pdp__info{padding:var(--s-5) var(--gutter) var(--s-8)}
 .crumb{margin:0 0 var(--s-2);font-size:var(--t-14)} .crumb a{display:inline-block;min-width:44px;padding:13px 0;margin:-13px 0;color:var(--color-muted)}
@@ -576,10 +577,10 @@ html:not(.hero-seen) .piece .sticker{animation-timing-function:linear(0,.25 6%,.
 .fx{position:absolute;inset:0;z-index:-1;overflow:hidden;pointer-events:none;color:var(--color-on-tile);--ink-w:6px}
 @media (min-width:960px){.fx{--ink-w:9px}}
 .fx-spritz{position:absolute;inset:0;width:100%;height:100%}
-.fx--over{z-index:auto} .pdp__tile > .shot--act{position:relative;z-index:1} .pdp__tile > .sticker{z-index:3} .fx-top{z-index:2} .fx-shade,.fx-halo{position:absolute;border-radius:50%;opacity:0} .fx-shade{background:radial-gradient(closest-side,rgba(10,6,4,.46),rgba(10,6,4,.2) 55%,rgba(10,6,4,0))} .fx-halo{background:radial-gradient(closest-side,rgba(255,240,186,.95),rgba(255,170,60,.62) 36%,rgba(255,84,16,.24) 66%,rgba(255,84,16,0))}
+.fx--over{z-index:auto} .pdp__tile > .shot--act{position:relative;z-index:1} .pdp__tile > .sticker{z-index:3} .fx-top{z-index:2} .fx-shade,.fx-halo{position:absolute;border-radius:50%;opacity:0} .fx-shade{background:radial-gradient(closest-side,rgba(10,6,4,.46),rgba(10,6,4,.2) 55%,rgba(10,6,4,0))} .fx-halo{background:radial-gradient(closest-side,rgba(255,246,206,.96),rgba(255,226,150,.9) 44%,rgba(255,150,50,.5) 68%,rgba(255,90,20,.16) 86%,rgba(255,84,16,0))}
 .fx-glint{position:absolute;z-index:2;overflow:hidden;-webkit-mask:center / 100% 100% no-repeat;mask:center / 100% 100% no-repeat}
 .fx-glint i.hot{inset:0;background:linear-gradient(0deg,rgba(255,74,16,.95),rgba(255,140,40,.6) 38%,rgba(255,176,70,0) 82%)}
-.fx-glint i{position:absolute;inset:-20% -60%;opacity:0;background:linear-gradient(104deg,transparent 34%,rgba(12,18,24,.2) 40%,rgba(255,255,255,.3) 43.5%,rgba(255,255,255,.85) 46.5%,rgba(255,255,255,.85) 47.8%,rgba(255,255,255,.18) 50.5%,rgba(255,255,255,.6) 52.5%,rgba(255,255,255,.14) 54.5%,rgba(12,18,24,.16) 57.5%,transparent 62%)}
+.fx-glint i{position:absolute;inset:-20% -60%;opacity:0;background:linear-gradient(90deg,transparent 46.2%,rgba(255,255,255,.2) 47.7%,rgba(255,255,255,.92) 49%,rgba(255,255,255,.92) 50.2%,rgba(255,255,255,.16) 51.4%,rgba(255,255,255,.5) 52.5%,rgba(255,255,255,.1) 53.6%,transparent 55%)}
 .fx-obj{position:absolute;right:max(var(--gutter),5%);top:50%;height:94%;aspect-ratio:1;translate:0 -50%}
 .fx-obj.low{top:auto;bottom:4%;height:62%;translate:none}
 .fx-obj svg{display:block;width:100%;height:100%;overflow:visible}
