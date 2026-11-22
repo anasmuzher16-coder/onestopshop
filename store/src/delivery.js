@@ -3,12 +3,12 @@
 // is down, delivery is simply not offered: shipping and pickup keep working.
 import { deliveryFee, localArea, parsePostal } from "../public/rates-core.js";
 
-const SHOP = "760 Wyandotte St E, Windsor, ON N9A 3J4, Canada";
+// 760 Wyandotte St E, Windsor, ON N9A 3J4: the map pin, fixed here so one bad lookup can never move the shop.
+const SHOP = { lat: 42.3179407, lon: -83.0263116 };
 const PLACES = new Set(["building", "amenity", "street"]);
 // Neighbourhoods and hamlets people write as their town, against the name the map files them under.
 const ALSO = { windsor: ["riverside", "walkerville", "sandwich", "forestglade", "fontainebleau", "southwindsor", "eastwindsor"], lakeshore: ["belleriver", "stoneycreek", "emeryville", "puce", "pointeauxroches", "ruscom", "comber"], tecumseh: ["stclairbeach", "oldcastle", "maidstone", "sttarcisius"], essex: ["harrow", "colchester", "mcgregor"], amherstburg: ["malden", "anderdon"], lasalle: ["lasalle"] };
 const WAIT = 5000, KEEP = 7 * 24 * 3600;
-let shopAt = null;
 
 const base = env => (env.GEOAPIFY_BASE || "https://api.geoapify.com").replace(/\/+$/, "");
 const same = s => String(s || "").toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -44,31 +44,21 @@ export function houseNumber(line1) {
   return m ? m[1].toLowerCase() : null;
 }
 
-async function shop(env) {
-  if (!shopAt) {
-    const s = await locate(env, SHOP);   // one wrong answer here would misprice every order, so it is checked before it is kept
-    if (!s || s.state_code !== "ON" || same(s.city) !== "windsor" || !same(s.postcode).startsWith("n9a") || String(s.housenumber) !== "760") throw new Error("shop address did not match");
-    shopAt = s;
-  }
-  return shopAt;
-}
 // From the postal code alone: only a match on the whole code is trusted, because the first three characters can cover a whole county.
 async function measurePostal(env, dest) {
-  await shop(env);
   const hit = (await ask(env, "/v1/geocode/search", { text: `${dest.full}, Ontario, Canada`, type: "postcode", filter: "countrycode:ca", limit: "1" })).results?.[0];
   if (!hit || hit.country_code !== "ca" || hit.state_code !== "ON" || same(hit.postcode) !== same(dest.full) || !Number.isFinite(hit.lat) || !Number.isFinite(hit.lon)) return { status: "address" };
-  const d = (await ask(env, "/v1/routing", { waypoints: `${shopAt.lat},${shopAt.lon}|${hit.lat},${hit.lon}`, mode: "drive" })).results?.[0]?.distance;
+  const d = (await ask(env, "/v1/routing", { waypoints: `${SHOP.lat},${SHOP.lon}|${hit.lat},${hit.lon}`, mode: "drive" })).results?.[0]?.distance;
   return Number.isFinite(d) && d >= 0 ? { metres: d, hit } : { status: "address" };
 }
 async function measure(env, line1, city, dest) {
-  await shop(env);
   const number = houseNumber(line1);
   const hit = await locate(env, `${line1}, ${city}, ON ${dest.full}, Canada`);
   if (!number) return { status: "unsure" };
   // A street or house number the map has not recorded is normal. If nothing contradicts the postal code, the postal code prices it.
   if (!hit) return { status: "unsure", soft: true };
   if (!trustworthy(hit, dest, city)) return agrees(hit, dest, city) ? { status: "unsure", soft: true, seen: PLACES.has(hit.result_type) ? hit : null } : { status: "unsure" };
-  const road = async (lat, lon) => { const d = (await ask(env, "/v1/routing", { waypoints: `${shopAt.lat},${shopAt.lon}|${lat},${lon}`, mode: "drive" })).results?.[0]?.distance; return Number.isFinite(d) && d >= 0 ? d : null; };
+  const road = async (lat, lon) => { const d = (await ask(env, "/v1/routing", { waypoints: `${SHOP.lat},${SHOP.lon}|${lat},${lon}`, mode: "drive" })).results?.[0]?.distance; return Number.isFinite(d) && d >= 0 ? d : null; };
   if (hit.housenumber) {
     if (same(hit.housenumber) !== same(number)) return { status: "unsure", soft: true, seen: hit };
     const metres = await road(hit.lat, hit.lon);
@@ -89,7 +79,7 @@ const NEAR_POSTAL = 3000;
 async function cacheKey(line1, city, full) {
   const raw = new TextEncoder().encode(JSON.stringify([line1, city, full].map(s => String(s).trim().toLowerCase().replace(/\s+/g, " "))));
   const hash = [...new Uint8Array(await crypto.subtle.digest("SHA-256", raw))].map(b => b.toString(16).padStart(2, "0")).join("");
-  return new Request("https://delivery.cache/" + hash);
+  return new Request("https://delivery.cache/v2/" + hash);
 }
 
 export async function deliveryQuote(env, { line1, city, postal }, ip = "local") {
