@@ -25,6 +25,8 @@ const byName = n => PRODUCTS.find(p => p.name === n);
 const SOLD = new Set(["Resin Bishop, Clear Blue"]); // mockup: one of the one-of-one stems has sold
 const isSold = p => SOLD.has(p.name) || p.stock === 0; // a one-off that has gone, or anything the shop has none of
 const inCat = c => PRODUCTS.filter(p => p.cat === c && !p.dark);
+const SHOP_STREET = "760 Wyandotte St E", SHOP_ADDRESS = "760 Wyandotte St E, Windsor, ON N9A 3J4", SHOP_MAP = "https://www.google.com/maps/search/?api=1&query=One%20Stop%20Shop%2C%20760%20Wyandotte%20St%20E%2C%20Windsor%2C%20ON%20N9A%203J4";
+const directions = (label = "Get directions") => `<a class="link" href="${SHOP_MAP}" target="_blank" rel="noopener">${label}</a>`;
 // Shop hours, Windsor time. [open, close] in 24h, Sunday first.
 const HOURS = [[11, 19], [10, 21], [10, 21], [10, 21], [10, 21], [10, 21], [10, 21]], DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const h12 = h => (h % 12 || 12) + (h < 12 ? " am" : " pm");
@@ -154,9 +156,10 @@ function viewHome() {
       <h2 class="h2 h2--xl" id="visit-h">Visit the counter.</h2>
       <p class="visit__now">${openLine()}</p>
       <dl class="visit__facts">
-        <div><dt>Where</dt><dd>Windsor, Ontario <span class="visit__todo">Street address to be added</span></dd></div>
+        <div><dt>Where</dt><dd>${SHOP_ADDRESS}<span class="visit__todo">${directions()}</span></dd></div>
         <div><dt>Pick up</dt><dd>Order online, pick up at the counter the same day. Free.</dd></div>
         <div><dt>Call</dt><dd><a class="link" href="tel:+15192552222">519-255-2222</a></dd></div>
+        <div><dt>Rated</dt><dd>${directions("4.5 stars on Google, 115 reviews")}</dd></div>
       </dl>
     </div>
     <table class="visit__hours"><caption class="sr">Opening hours</caption><tbody>${[1, 2, 3, 4, 5, 6, 0].map(d => `<tr ${d === nowInWindsor().day ? 'class="is-today"' : ""}><th scope="row">${DAYS[d]}</th><td class="num">${h12(HOURS[d][0])} to ${h12(HOURS[d][1])}</td></tr>`).join("")}</tbody></table>
@@ -200,7 +203,7 @@ function viewProduct(sku) {
         ${opts.length ? `<p class="ways__to">To ${esc(state.dest.full)}${state.dest.city ? ", " + esc(state.dest.city) : ""}. <button class="link" type="button" data-open-postal>Change</button></p>
         <table class="ledger"><thead><tr><th scope="col">Service</th><th scope="col">Arrives</th><th scope="col" class="r">Cost</th></tr></thead>
         <tbody>${localRow(p)}${opts.map(o => `<tr><td>${o.carrier} ${o.service}</td><td>${days(o.days)}</td><td class="r num">${money(o.total)}</td></tr>`).join("")}
-        <tr><td>Pick up at the Windsor counter</td><td>Today</td><td class="r num">Free</td></tr></tbody></table>`
+        <tr><td>Pick up at ${SHOP_STREET}</td><td>Today</td><td class="r num">Free</td></tr></tbody></table>`
         : `<p class="ways__to">Local delivery from $10 near Windsor. Free pickup. ${p.ship === "ground_only" ? "Ships by ground across Canada." : "Ships across Canada."}</p><button class="btn btn--ghost btn--wide" type="button" data-open-postal>Check delivery to my postal code</button>`}
       </section>
       ${p.cat === "hookahs" ? `<section class="parts" aria-labelledby="parts-h">
@@ -402,13 +405,13 @@ function viewCart() {
       ${tooHeavy ? `<p class="note">One of these boxes is over the 30 kg carrier limit. Call the counter at 519-255-2222 and we will quote it by hand.</p>` : ""}
       ${opts.length || canLocal ? `<fieldset class="opts"><legend>Getting it to ${esc(state.dest.full)} <button class="link" type="button" data-open-postal>Change</button></legend>
         ${canLocal ? `<label class="opt"><input type="radio" name="ship" value="local" ${local ? "checked" : ""}><span class="opt__name">Local delivery<small>${localFee !== null ? "From our Windsor shop to your door" : "We price it from your street address at checkout"}</small></span><span class="num">${localFee !== null ? money(localFee) : "At checkout"}</span></label>` : ""}
-        <label class="opt"><input type="radio" name="ship" value="pickup" ${pickup ? "checked" : ""}><span class="opt__name">Pick up at the Windsor counter<small>Ready the same day</small></span><span class="num">Free</span></label>
+        <label class="opt"><input type="radio" name="ship" value="pickup" ${pickup ? "checked" : ""}><span class="opt__name">Pick up at the Windsor counter<small>${SHOP_STREET}, Windsor. Ready the same day</small></span><span class="num">Free</span></label>
         ${opts.map(o => `<label class="opt"><input type="radio" name="ship" value="${o.id}" ${chosen && o.id === chosen.id ? "checked" : ""}><span class="opt__name">${o.carrier} ${o.service}<small>${days(o.days)}</small></span><span class="num">${money(o.total)}</span></label>`).join("")}
       </fieldset>
       ${chosen ? `<details class="why" ${state.whyOpen ? "open" : ""}><summary>What makes up ${money(chosen.total)}</summary><dl>
         ${chosen.perParcel.map((p, i) => `<div><dt>Box ${i + 1}, billed at ${p.billableKg} kg</dt><dd class="num">${money(p.freight)}</dd></div>`).join("")}
         ${chosen.cover ? `<div><dt>Glass coverage and signature</dt><dd class="num">${money(chosen.cover)}</dd></div>` : ""}
-        <div><dt>Carrier fuel charge, ${(fuelOn().pct * 100).toFixed(1)}%, the rate posted for ${fuelOn().week}</dt><dd class="num">${money(chosen.fuel)}</dd></div></dl></details>` : ""}` : `<fieldset class="opts"><legend>Or skip shipping</legend><label class="opt"><input type="radio" name="ship" value="pickup" ${pickup ? "checked" : ""}><span class="opt__name">Pick up at the Windsor counter<small>Ready the same day</small></span><span class="num">Free</span></label></fieldset>`}
+        <div><dt>Carrier fuel charge, ${(fuelOn().pct * 100).toFixed(1)}%, the rate posted for ${fuelOn().week}</dt><dd class="num">${money(chosen.fuel)}</dd></div></dl></details>` : ""}` : `<fieldset class="opts"><legend>Or skip shipping</legend><label class="opt"><input type="radio" name="ship" value="pickup" ${pickup ? "checked" : ""}><span class="opt__name">Pick up at the Windsor counter<small>${SHOP_STREET}, Windsor. Ready the same day</small></span><span class="num">Free</span></label></fieldset>`}
     </section>
     <div class="giftnote"><label class="field__label" for="note">Gift note <span class="fine">optional, written on a card in the box</span></label>
       <textarea class="field field--text field--area" id="note" data-note maxlength="240" rows="2" placeholder="Happy birthday, from all of us">${esc(state.note)}</textarea></div>
@@ -437,7 +440,7 @@ function viewShipping() {
     <h2 class="h3">What we ship</h2>
     <p>Hookahs, bases, bowls, heat keepers, hoses and parts. Anything else in the shop is counter only.</p>
     <h2 class="h3">Pick up</h2>
-    <p>Order online and pick up at the counter for free. Call <a class="link" href="tel:+15192552222">519-255-2222</a>.</p>
+    <p>Order online and pick up for free at ${SHOP_ADDRESS}. ${directions()} or call <a class="link" href="tel:+15192552222">519-255-2222</a>.</p>
   </section>`;
 }
 
@@ -527,7 +530,7 @@ function viewCheckout() {
         ${field("email", "Email", 'type="email" autocomplete="email" inputmode="email" maxlength="120" required', local ? "for the receipt" : "for the receipt and tracking")}
         ${field("phone", "Phone", `type="tel" autocomplete="tel" inputmode="tel" maxlength="30"${local ? " required" : ""}`, local ? "so the driver can reach you" : "optional")}
       </fieldset>
-      ${pickup ? `<fieldset class="co__set"><legend class="h3">Pickup</legend><p class="co__p">At the Windsor counter. We email you when it is ready, usually the same day. Bring the order number.</p></fieldset>`
+      ${pickup ? `<fieldset class="co__set"><legend class="h3">Pickup</legend><p class="co__p">At ${SHOP_ADDRESS}. We email you when it is ready, usually the same day. Bring the order number. ${directions()}</p></fieldset>`
         : `<fieldset class="co__set"><legend class="h3">Where it is going</legend>
         ${field("line1", "Street address", 'autocomplete="address-line1" maxlength="120" required')}
         ${field("city", "City or town", 'autocomplete="address-level2" maxlength="60" required')}
@@ -550,7 +553,7 @@ function viewOrder(id) {
   <section class="cart done">
     <p class="done__tag"><span>Order</span> <b class="num">${esc(o.id)}</b></p>
     <h1 class="h2 h2--xl">Thank you, ${esc(o.name.split(" ")[0])}.</h1>
-    <p class="lead">${o.method === "pickup" ? "We will email you when it is ready at the Windsor counter. Bring this order number." : o.service === "Local delivery" ? "We will deliver it from the Windsor shop and call if we need anything." : `We pack it and send it by ${esc(o.service)}. Tracking comes by email${o.days ? `, and it should arrive in about ${days(o.days)}` : ""}.`}</p>
+    <p class="lead">${o.method === "pickup" ? `We will email you when it is ready at ${SHOP_ADDRESS}. Bring this order number. ${directions()}` : o.service === "Local delivery" ? "We will deliver it from the Windsor shop and call if we need anything." : `We pack it and send it by ${esc(o.service)}. Tracking comes by email${o.days ? `, and it should arrive in about ${days(o.days)}` : ""}.`}</p>
     <ul class="done__lines">${o.items.map(i => `<li><span><b class="num">${i.qty}</b> &times; ${esc(i.name)}</span><span class="num">${c(i.unit_cents * i.qty)}</span></li>`).join("")}</ul>
     <dl class="totals">
       <div><dt>Items</dt><dd class="num">${c(o.subtotal_cents)}</dd></div>
@@ -624,7 +627,7 @@ const viewTerms = () => doc("Terms of sale", "The plain rules for buying from us
   ["Prices and tax", ["Prices are in Canadian dollars. Tax is added at checkout, based on the province the order ships to."]],
   ["Shipping", ["We ship within Canada. The price at checkout is the price you pay for shipping. Delivery times are the carrier's estimates. Cologne ships by ground only."]],
   ["Local delivery", ["We deliver within 25 km of the shop by road: $10 up to 10 km and $15 from there to 25 km, per order, plus tax. Delivery days and times are confirmed by the shop."]],
-  ["Pickup", ["Pickup at the Windsor counter is free. We email you when the order is ready and hold it for 14 days."]],
+  ["Pickup", ["Pickup at 760 Wyandotte St E, Windsor, ON N9A 3J4 is free. We email you when the order is ready and hold it for 14 days."]],
   ["Returns", ["Unused items in their original packaging can be returned within 14 days for a refund to the original payment method. Opened cologne cannot be returned."]],
   ["Damage in transit", ["If something arrives broken, keep the packaging, take a photo and tell us within 3 days. We will replace it or refund it."]],
   ["If something is wrong with the order", ["If we cannot ship within 30 days of the date promised, you can cancel for a full refund."]],

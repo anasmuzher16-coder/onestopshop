@@ -56,6 +56,10 @@ async function page(request, env, url, ctx) {
       offers: { "@type": "Offer", price: (p.price_cents / 100).toFixed(2), priceCurrency: "CAD", url: canonical, availability: "https://schema.org/" + (p.stock > 0 ? "InStock" : "OutOfStock") } };
     extra.push(`<script type="application/ld+json">${JSON.stringify(ld).replace(/</g, "\\u003c")}</script>`);
   }
+  if (url.pathname === "/") {   // what search engines and maps read about the shop
+    const ld = { "@context": "https://schema.org", "@type": "Store", name: site, url: url.origin, telephone: "+1-519-255-2222", address: { "@type": "PostalAddress", streetAddress: "760 Wyandotte St E", addressLocality: "Windsor", addressRegion: "ON", postalCode: "N9A 3J4", addressCountry: "CA" }, geo: { "@type": "GeoCoordinates", latitude: 42.3179407, longitude: -83.0263116 }, openingHours: ["Mo-Sa 10:00-21:00", "Su 11:00-19:00"], sameAs: ["https://www.instagram.com/one1_stop_shop/", "https://www.tiktok.com/@onestopshop6"] };
+    extra.push(`<script type="application/ld+json">${JSON.stringify(ld).replace(/</g, "\\u003c")}</script>`);
+  }
   const out = new HTMLRewriter()
     .on("title", { element(e) { e.setInnerContent(meta.title); } })
     .on('meta[name="description"]', { element(e) { e.setAttribute("content", meta.desc); } })

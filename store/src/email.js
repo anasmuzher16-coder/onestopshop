@@ -22,7 +22,7 @@ export function orderPlaced(site, o, items) {
   const rows = [...lines(items), ["Items", money(o.subtotal_cents)], [o.method === "pickup" ? "Pickup at the counter" : o.ship_service === "Local delivery" ? "Local delivery" : `Shipping, ${esc(o.ship_service || "")}`, o.method === "pickup" ? "Free" : money(o.shipping_cents)],
     [`Tax, ${esc(o.tax_province || "")}`, money(o.tax_cents)], ["Total", money(o.total_cents), true]];
   const heading = `Order ${esc(o.id)} is in`, first = esc(String(o.name).split(" ")[0]);
-  const intro = o.method === "pickup" ? `Thank you, ${first}. We will email you again when it is ready at the Windsor counter.` : o.ship_service === "Local delivery" ? `Thank you, ${first}. We will deliver it from the Windsor shop and call if we need anything.` : `Thank you, ${first}. We are packing it now and will email the tracking number when it leaves.`;
+  const intro = o.method === "pickup" ? `Thank you, ${first}. We will email you again when it is ready at 760 Wyandotte St E, Windsor.` : o.ship_service === "Local delivery" ? `Thank you, ${first}. We will deliver it from the Windsor shop and call if we need anything.` : `Thank you, ${first}. We are packing it now and will email the tracking number when it leaves.`;
   const foot = "Questions? Reply to this email or call the counter at 519-255-2222.";
   return { kind: "order_placed", subject: `Your ${site} order ${o.id}`, html: frame(site, heading, intro, rows, foot), body: plain(heading, intro, rows, foot) };
 }
@@ -32,7 +32,7 @@ export function orderShipped(site, o, items) {
   return { kind: "order_shipped", subject: o.ship_service === "Local delivery" ? `Your ${site} order ${o.id} is out for delivery` : `Your ${site} order ${o.id} has shipped`, html: frame(site, heading, intro, lines(items), foot), body: plain(heading, intro, lines(items), foot) };
 }
 export function pickupReady(site, o, items) {
-  const heading = `Order ${esc(o.id)} is ready`, intro = "It is waiting at the Windsor counter. Bring this order number and a piece of ID.";
+  const heading = `Order ${esc(o.id)} is ready`, intro = "It is waiting at 760 Wyandotte St E, Windsor, ON N9A 3J4. Bring this order number and a piece of ID.";
   const foot = "We hold pickup orders for 14 days. Call 519-255-2222 if you need longer.";
   return { kind: "pickup_ready", subject: `Your ${site} order ${o.id} is ready for pickup`, html: frame(site, heading, intro, lines(items), foot), body: plain(heading, intro, lines(items), foot) };
 }
