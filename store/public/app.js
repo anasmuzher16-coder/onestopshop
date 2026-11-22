@@ -103,7 +103,7 @@ function viewHome() {
     <div class="hero__in">
       <h1 class="hero__h"><span class="hero__lead">Hookahs,</span> <span class="hero__rest">and everything that goes with them.</span></h1>
       <div class="hero__side">
-        <p class="hero__p">Egyptian brass, German steel and hand\u2011cut glass. In store in Windsor, shipped across Canada.</p>
+        <p class="hero__p">Local delivery from $10 near Windsor, free pickup, and shipping across Canada. Egyptian brass, German steel and hand\u2011cut glass.</p>
         <div class="hero__cta"><a class="btn" href="/shop/hookahs">Shop hookahs</a><a class="btn btn--ghost" href="/shop">All ${PRODUCTS.length} pieces</a></div>
       </div>
     </div>
@@ -194,13 +194,14 @@ function viewProduct(sku) {
       ${p.details && p.details.notes ? `<p class="pdp__notes"><span>Notes</span> ${esc(p.details.notes)}</p>` : ""}
       ${sold ? `<p class="soldline">${SOLD.has(p.name) ? "This one has sold. Each resin stem is poured once." : "Sold out for now. More are on the way."}</p><button class="btn btn--ghost btn--wide" type="button" data-notify>${SOLD.has(p.name) ? "Tell me when the next one is poured" : "Tell me when it is back"}</button>`
         : inCart ? `<a class="btn btn--wide" href="/cart">In your cart. View cart</a>` : `<button class="btn btn--wide" type="button" data-add="${p.sku}">Add to cart</button>`}
+      ${deliveryLine(p, opts)}
       <section class="ways" aria-labelledby="ways-h">
         <h2 class="h3" id="ways-h">Delivery, shipping and pickup</h2>
         ${opts.length ? `<p class="ways__to">To ${esc(state.dest.full)}${state.dest.city ? ", " + esc(state.dest.city) : ""}. <button class="link" type="button" data-open-postal>Change</button></p>
         <table class="ledger"><thead><tr><th scope="col">Service</th><th scope="col">Arrives</th><th scope="col" class="r">Cost</th></tr></thead>
         <tbody>${localRow(p)}${opts.map(o => `<tr><td>${o.carrier} ${o.service}</td><td>${days(o.days)}</td><td class="r num">${money(o.total)}</td></tr>`).join("")}
         <tr><td>Pick up at the Windsor counter</td><td>Today</td><td class="r num">Free</td></tr></tbody></table>`
-        : `<p class="ways__to">Local delivery from $10 near Windsor. Free pickup. ${p.ship === "ground_only" ? "Ships by ground across Canada." : "Ships across Canada."}</p><button class="btn btn--ghost btn--wide" type="button" data-open-postal>Price it to my postal code</button>`}
+        : `<p class="ways__to">Local delivery from $10 near Windsor. Free pickup. ${p.ship === "ground_only" ? "Ships by ground across Canada." : "Ships across Canada."}</p><button class="btn btn--ghost btn--wide" type="button" data-open-postal>Check delivery to my postal code</button>`}
       </section>
       ${p.cat === "hookahs" ? `<section class="parts" aria-labelledby="parts-h">
         <h2 class="h3" id="parts-h">The parts</h2>
@@ -308,11 +309,11 @@ const localQ = () => state.localQ && state.localQ.postal === state.dest?.full ? 
 // The postal code alone gives the shopper one answer: $10, $15, or too far.
 async function priceLocal() {
   const d = state.dest; if (!d || !d.complete || !localArea(d) || localQ()) return;
-  const postal = d.full, ticket = ++localTicket; state.localQ = { postal, status: "checking" };
+  const postal = d.full, ticket = ++localTicket; state.localQ = { postal, status: "checking" }; syncDelivery();
   let a = { status: "down" }; try { const r = await fetch("/api/delivery", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ postal }), signal: AbortSignal.timeout?.(20000) }); a = await r.json(); } catch {}
   if (ticket !== localTicket) return;   // a newer lookup owns the answer
   if (state.dest?.full !== postal) { state.localQ = null; return; }
-  state.localQ = { postal, status: a.status, fee_cents: a.fee_cents };
+  state.localQ = { postal, status: a.status, fee_cents: a.fee_cents }; syncDelivery();
   const on = route().replace(/^#\/?/, "").split("/")[0], f = $("[data-checkout]");
   if (f) {   // never rebuild a form someone is typing in
     const box = f.querySelector("[data-deliv-msg]"), btn = f.querySelector('button[type="submit"]');
@@ -324,6 +325,41 @@ async function priceLocal() {
     render();
     if (note) { const n = $("[data-note]"); if (n) { n.focus({ preventScroll: true }); n.setSelectionRange(at[0], at[1]); } }
   }
+}
+// What we can honestly say about delivery right now. The strip and the product line both read this, so they never disagree.
+function deliveryNow() {
+  const d = state.dest, from = "Local delivery from $10 near Windsor", either = "It ships across Canada, or pickup is free";
+  if (!d) return { key: "none", msg: from, sub: "", act: "Check your postal code" };
+  const far = { key: "far", msg: `${d.full} is past our delivery area`, sub: either, act: "Change" };
+  if (localArea(d) && !d.complete) return { key: "partial", msg: from, sub: "", act: "Add your full postal code" };
+  if (localArea(d)) {
+    const q = localQ();
+    if (!q || q.status === "checking") return { key: "checking", msg: `Checking delivery to ${d.full}`, sub: "", act: "Change" };
+    if (q.status === "ok") return { key: "ok", msg: `We deliver to ${d.full} for ${whole(q.fee_cents / 100)}`, sub: "", act: "Change" };
+    if (q.status === "far") return far;
+    if (q.status === "down") return { key: "down", msg: "We cannot check delivery right now", sub: either, act: "Try again" };
+    return { key: "later", msg: `Delivery to ${d.full} is priced at checkout`, sub: "", act: "Change" };
+  }
+  if (d.complete && d.prov === "ON" && /^N[089]/.test(d.fsa)) return far;
+  return { key: "ship", msg: `We ship to ${d.full}`, sub: "", act: "Change" };
+}
+function deliveryLine(p, opts) {
+  if (isSold(p)) return "";
+  if (p.ship === "pickup_only") return `<p class="dline"><span class="dline__msg">Pickup only, free at the Windsor counter</span></p>`;
+  let s = deliveryNow();
+  if (state.dest && !opts.length && (s.key === "far" || s.key === "ship" || s.key === "down")) s = { msg: `We cannot price shipping to ${state.dest.full} here`, sub: "Call 519-255-2222, or pickup is free", act: "Change" };
+  return `<button class="dline" type="button" data-open-postal><span class="dline__msg">${esc(s.msg)}</span>${s.sub ? `<span class="dline__sub">${esc(s.sub)}</span>` : ""}<span class="dline__act">${esc(s.act)}</span></button>`;
+}
+function syncDelivery() {
+  const box = $("[data-delivery-strip]"), btn = $("button", box), on = route().replace(/^#\/?/, "").split("/")[0], show = !["cart", "checkout", "order"].includes(on);
+  box.hidden = !show; btn.toggleAttribute("data-open-postal", show);   // a hidden strip must never be the control that opens the sheet
+  if (!show) return;
+  const s = deliveryNow(), line = [s.msg, s.sub, s.act].filter(Boolean).join(". ");
+  if (btn.getAttribute("aria-label") === line) return;   // same words: leave it alone
+  const said = btn.hasAttribute("aria-label");
+  $(".dstrip__msg", box).textContent = s.msg; $(".dstrip__sub", box).textContent = s.sub; $(".dstrip__act", box).textContent = s.act;
+  btn.setAttribute("aria-label", line); box.dataset.state = s.key;
+  if (said) $("[data-delivery-live]", box).textContent = s.sub ? `${s.msg}. ${s.sub}.` : `${s.msg}.`;
 }
 function localRow(p) {
   const q = localQ(); if (!state.dest?.complete || !localArea(state.dest) || p.ship === "pickup_only" || !q || q.status === "far" || q.status === "down") return "";
@@ -361,7 +397,7 @@ function viewCart() {
     <section class="cartship">
       <h2 class="h3">How we pack it</h2>
       <ol class="boxes">${parcels.map(p => `<li><span class="num">${p.l} \u00d7 ${p.w} \u00d7 ${p.h} cm, ${p.kg} kg</span> ${esc(p.label.toLowerCase())}, ${p.items.length} ${p.items.length === 1 ? "item" : "items"}</li>`).join("")}</ol>
-      ${!state.dest ? `<button class="btn btn--wide" type="button" data-open-postal>Price shipping to my postal code</button>` : ""}
+      ${!state.dest ? `<button class="btn btn--wide" type="button" data-open-postal>Check delivery to my postal code</button>` : ""}
       ${localNote}
       ${tooHeavy ? `<p class="note">One of these boxes is over the 30 kg carrier limit. Call the counter at 519-255-2222 and we will quote it by hand.</p>` : ""}
       ${opts.length || canLocal ? `<fieldset class="opts"><legend>Getting it to ${esc(state.dest.full)} <button class="link" type="button" data-open-postal>Change</button></legend>
@@ -424,6 +460,7 @@ function syncChrome() {
     : ra === "cart" && lines.length
     ? `<a class="dock__side" href="/shop">Shop</a>${canPay ? `<a class="dock__buy" href="/checkout">Check out <span class="num">${money(sub + (ship ? ship.total : sc && sc.local ? sc.localFee || 0 : 0))}</span></a>` : sc && sc.checking ? `<span class="dock__buy dock__buy--off">Checking delivery</span>` : `<button class="dock__buy" type="button" data-open-postal>Add postal code for shipping</button>`}<span class="dock__side">${count}</span>`
     : `<a href="/" ${h === "#/" ? 'aria-current="page"' : ""}>Home</a><a href="/shop" ${h.startsWith("#/shop") ? 'aria-current="page"' : ""}>Shop</a><a href="/search" ${h === "#/search" ? 'aria-current="page"' : ""}>Search</a><a href="/cart" ${h === "#/cart" ? 'aria-current="page"' : ""}>Cart ${count}</a>`;
+  syncDelivery();
 }
 const sheet = $("[data-postal-sheet]"), postalInput = $("#postal"), postalErr = $("#postal-err");
 function openSheet() { postalInput.value = state.dest ? state.dest.full : ""; postalErr.hidden = true; postalInput.removeAttribute("aria-invalid"); sheet.showModal(); postalInput.focus(); postalInput.select(); }

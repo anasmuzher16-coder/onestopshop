@@ -33,6 +33,10 @@
   <nav class="top__nav" aria-label="Shop" data-nav></nav>
   <a class="top__cart" href="/cart">Cart <span data-cart-count>0</span></a>
 </header>
+<div class="dstrip" data-delivery-strip hidden>
+  <button class="dstrip__btn" type="button"><span class="dstrip__msg"></span><span class="dstrip__more"><span class="dstrip__sub"></span><span class="dstrip__act"></span></span></button>
+  <p class="sr" role="status" data-delivery-live></p>
+</div>
 <main id="main" tabindex="-1"></main>
 <footer class="foot">
   <p class="foot__en">From Windsor to all of Canada.</p>
@@ -46,13 +50,13 @@
 <nav class="dock" aria-label="Quick links"><a href="/">Home</a><a href="/shop">Shop</a><a href="/search">Search</a><a href="/cart">Cart <span data-cart-count>0</span></a></nav>
 <dialog class="sheet" data-postal-sheet aria-labelledby="sheet-h">
   <form class="sheet__form" data-postal-form novalidate>
-    <h2 class="sheet__h" id="sheet-h">Shipping estimate</h2>
-    <p class="sheet__p">Enter your postal code to see shipping options and cost.</p>
+    <h2 class="sheet__h" id="sheet-h">Do we deliver to you?</h2>
+    <p class="sheet__p">Local delivery near Windsor is $10 or $15. Enter your postal code for your exact price, or your shipping options anywhere in Canada.</p>
     <label class="field__label" for="postal">Postal code</label>
     <input class="field" id="postal" name="postal" autocomplete="postal-code" inputmode="text" spellcheck="false" maxlength="12" placeholder="A1A 1A1" aria-describedby="postal-err">
     <p class="field__err" id="postal-err" role="alert" hidden>That is not a Canadian postal code. It looks like A1A 1A1.</p>
     <div class="sheet__row">
-      <button class="btn" type="submit">Get estimate</button>
+      <button class="btn" type="submit">Check delivery</button>
       <button class="btn btn--ghost" type="button" data-close-postal>Not now</button>
     </div>
   </form>

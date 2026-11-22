@@ -687,3 +687,30 @@ html.pour-page .chips a:not([aria-current]){background:var(--color-bg)}
 }
 /* with motion turned off the smoke is simply there: no fade */
 @media (prefers-reduced-motion:reduce){.smoke{transition:none}}
+
+/* ========== DELIVERY STRIP AND PRODUCT LINE (2026-11-22) ==========
+   Teal on ink, flat: ember stays for stickers and the primary action. Fixed height, so no state can move the page. */
+.dstrip{--color-delivery:var(--teal);background:var(--color-delivery);color:var(--color-on-tile);border-bottom:2px solid var(--color-bg)}
+.dstrip[hidden]{display:none}
+.dstrip__btn{display:flex;flex-direction:column;justify-content:center;width:100%;height:56px;padding:0 var(--gutter);border:0;background:none;color:inherit;text-align:left;cursor:pointer;touch-action:manipulation}
+.dstrip__btn:active{background:color-mix(in oklch,var(--color-delivery) 90%,var(--ink))}
+.dstrip__btn:focus-visible{outline:2px solid var(--ink);outline-offset:-4px}
+.dstrip__msg{min-width:0;overflow:hidden;font-size:var(--t-14);font-weight:600;line-height:20px;white-space:nowrap;text-overflow:ellipsis}
+.dstrip__more{display:flex;align-items:baseline;gap:var(--s-2);min-width:0;font-size:var(--t-12);line-height:16px;white-space:nowrap}
+.dstrip__sub{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.dstrip__sub:empty{display:none}
+.dstrip__act{flex:none;font-weight:500;text-decoration:underline;text-underline-offset:2px}
+.dline{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:var(--s-3);align-items:center;width:100%;min-height:56px;margin:var(--s-3) 0 0;padding:var(--s-2) var(--s-4);border:0;border-radius:var(--radius);background:var(--color-raised);color:var(--color-text);font-size:var(--t-14);line-height:20px;text-align:left}
+button.dline{cursor:pointer;touch-action:manipulation}
+button.dline:active{background:var(--color-line)}
+.dline__msg{grid-column:1;color:var(--color-strong);font-size:var(--t-16);font-weight:600;line-height:24px}
+.dline__sub{grid-column:1;color:var(--color-muted)}
+.dline__act{grid-column:2;grid-row:1 / span 2;color:var(--color-strong);font-weight:500;text-decoration:underline;text-underline-offset:2px;max-width:12ch;text-align:right}
+@media (max-width:959px) and (min-height:501px){.hero__stage{height:max(202px,calc(100svh - 558px))}}
+@media (min-width:960px){
+  .hero__stage{height:max(360px,calc(100svh - 408px))}
+  .dstrip__btn{flex-direction:row;align-items:center;justify-content:flex-start;gap:var(--s-4);height:48px}
+  .dstrip__more{flex:1;align-items:center;justify-content:space-between;font-size:var(--t-14);line-height:20px}
+  .dstrip__act{margin-left:auto}
+}
+/* ========== END DELIVERY STRIP AND PRODUCT LINE ========== */
