@@ -156,15 +156,16 @@ function frame(now) {
   // a phone that truly struggles does less work and keeps moving. A steady 30 fps (Low Power Mode) is fine and is left alone.
   slow = ms > 45 ? slow + 1 : Math.max(0, slow - 2);
   if (slow > 60) { slow = 0; if (iters > 7) iters = 7; else skip = true; }
+  if (T < .45) aim();   // the bottle can mount a moment after the page
   T += ms / 1000; odd = !odd; owed += ms / 16.667;
   if (!skip || odd) { step(Math.min(2.4, ms / 16.667 * (skip ? 2 : 1))); show(); }
   if (!document.hidden) raf = requestAnimationFrame(frame);
 }
 const kick = () => { if (on && !raf && gl && F && !lost && !parked && !manual && !document.hidden) { last = performance.now(); raf = requestAnimationFrame(frame); } };
 // the heavy opening plays once per visit (per tab), and never when arriving by Back or Forward
-const played = new Set(); let popped = -1e9; addEventListener("popstate", () => { popped = performance.now(); });
+const played = new Set(); let popped = -1e9, arrivedBack = performance.getEntriesByType("navigation")[0]?.type === "back_forward"; addEventListener("popstate", () => { popped = performance.now(); });
 function firstOpen() {
-  if (played.has(modeName) || performance.now() - popped < 800 || performance.getEntriesByType("navigation")[0]?.type === "back_forward") return false;
+  if (played.has(modeName) || performance.now() - popped < 800 || arrivedBack) return false;
   played.add(modeName); try { const k = KEY + ":" + modeName; if (sessionStorage.getItem(k)) return false; sessionStorage.setItem(k, "1"); } catch {} return true;
 }
 const toStill = () => { off(); gl = null; document.documentElement.classList.add("pour-still", "pour-page"); };
@@ -188,18 +189,19 @@ function place() {
   const hk = document.querySelector('.shophead[data-cat="hookahs"]'), co = document.querySelector('.shophead[data-cat="cologne"]'), pdp = document.querySelector('.pdp[data-cat="cologne"]');
   const next = hk ? "hookahs" : co || pdp ? "cologne" : null;
   head = hk || co || (pdp && pdp.querySelector("[data-stage]")) || null; chips = hk || co ? head.parentNode.querySelector(":scope > .chips") : null;
-  if (!next) { stop(); modeName = null; return; }
+  const settled = () => { if (document.getElementById("main").childElementCount) arrivedBack = false; };   // only the page you came Back to skips its opening
+  if (!next) { stop(); modeName = null; settled(); return; }
   if (next !== modeName && (on || cv.isConnected)) off();
-  modeName = next; M = MODES[next]; begin(); stick();
+  modeName = next; M = MODES[next]; begin(); stick(); settled();
 }
 addEventListener("scroll", stick, { passive: true });
-let rs = 0; addEventListener("resize", () => { clearTimeout(rs); rs = setTimeout(() => { if (on && !lost && !parked && (innerWidth !== W || Math.abs(innerHeight - Hh) > 140)) { if (size()) { if (torNow()) show(); else settle(); } else toStill(); } }, 200); });
+let rs = 0; addEventListener("resize", () => { clearTimeout(rs); rs = setTimeout(() => { if (on && !lost && !parked && (innerWidth !== W || Math.abs(innerHeight - Hh) > 140)) { if (size()) { if (heavy && T < BANK_END) show(); else settle(); } else toStill(); } }, 200); });
 document.addEventListener("visibilitychange", kick);
 addEventListener("pagehide", () => { if (on && !lost) { if (raf) cancelAnimationFrame(raf); raf = 0; release(); parked = true; } });
 addEventListener("pageshow", () => { if (parked && on && !lost) { parked = false; if (size()) settle(); else { toStill(); return; } } kick(); });
 RM.addEventListener("change", () => { if (modeName) { stop(); place(); } });
 const giveUp = () => { if (!lost || !on) return; if (document.hidden) { lostTimer = setTimeout(giveUp, 2000); return; } lost = false; F = null; toStill(); };
 cv.addEventListener("webglcontextlost", e => { e.preventDefault(); lost = true; if (raf) cancelAnimationFrame(raf); raf = 0; F = null; clearTimeout(lostTimer); lostTimer = setTimeout(giveUp, 2000); });
-cv.addEventListener("webglcontextrestored", () => { clearTimeout(lostTimer); lost = false; gl = null; const live = on, ok = setup(); if (!live) return; if (!ok || !size()) { toStill(); return; } if (torNow()) show(); else settle(); kick(); });
+cv.addEventListener("webglcontextrestored", () => { clearTimeout(lostTimer); lost = false; parked = false; gl = null; const live = on, ok = setup(); if (!live) return; if (!ok || !size()) { toStill(); return; } if (heavy && T < BANK_END) show(); else settle(); kick(); });
 new MutationObserver(place).observe(document.getElementById("main"), { childList: true }); place();
 window.__pour = { canvas: cv, hold() { manual = true; if (raf) cancelAnimationFrame(raf); raf = 0; }, advance(sec, fps = 60) { const n = Math.round(sec * fps); for (let i = 0; i < n; i++) { T += 1 / fps; step(60 / fps); } show(); return T; }, get t() { return T; } };
