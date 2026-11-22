@@ -46,11 +46,11 @@ function srgb(L, C, h) {
   return [4.0767416621 * l - 3.3077115913 * m + .2309699292 * s, -1.2684380046 * l + 2.6097574011 * m - .3413193965 * s, -.0041960863 * l - .7034186147 * m + 1.707614701 * s].map(n => { n = Math.min(1, Math.max(0, n)); return n <= .0031308 ? 12.92 * n : 1.055 * n ** (1 / 2.4) - .055; });
 }
 const RAMP = [[.155, .012, 50], [.205, .008, 80], [.265, .007, 80], [.315, .006, 80], [.345, .005, 80]].flatMap(c => srgb(...c));
-const MIST = [[.155, .012, 50], [.21, .012, 270], [.27, .016, 275], [.32, .018, 280], [.345, .018, 285]].flatMap(c => srgb(...c));
+const MIST = [[.155, .012, 50], [.205, .006, 240], [.265, .008, 235], [.318, .009, 232], [.345, .009, 230]].flatMap(c => srgb(...c));
 // what each section's air does: how it opens, how much stays afterward, and how it moves
 const MODES = {
   hookahs: { tornado: true, radial: false, rest: .36, sc: 2.6, lift: 2, restLift: .2, ramp: RAMP, power: [.06, .06], drifts: 9, size: [.0018, .0034] },
-  cologne: { tornado: false, radial: true, rest: .66, sc: 4.6, lift: .5, restLift: .12, ramp: MIST, power: [.025, .04], drifts: 9, size: [.001, .0026] },
+  cologne: { tornado: false, radial: true, rest: .74, sc: 6.4, lift: .34, restLift: .09, ramp: MIST, power: [.012, .018], drifts: 9, size: [.0012, .0024] },
 };
 let M = MODES.hookahs, modeName = null, tick = 0, org = [.75, .8];
 const ease = (a, b, x) => { x = Math.min(1, Math.max(0, (x - a) / (b - a))); return x * x * (3 - 2 * x); };
@@ -106,6 +106,7 @@ function torUniforms(n) {
 const pace = () => heavy ? .62 - .42 * ease(HOLD, SETTLE + 2.5, T) : .2;
 function emit(dt, raw) {
   const R = .0011 * Math.max(1, asp * asp), BASE = .045;
+  if (heavy && M.radial && T < .6) aim();   // the bottle may land a moment after the page does
   if (heavy && M.radial && T > .5 && T < 2.2) {   // the spray leaves the bottle and pushes the air across the page
     const go = Math.sin(Math.PI * (T - .5) / 1.7); splat(F.u, org[0], org[1], .006, -1.5 * go * dt, -1.1 * go * dt, 0);
   }
@@ -130,7 +131,7 @@ const BANK_END = 7.2;
 function bank(raw, full = false) {
   const opening = heavy && T < BANK_END; if (!opening && !full) { tick = (tick + 1) % 3; if (tick) return; }   // the resting layer moves slowly, so a third of the frames is enough
   const el = Math.min(8, owed || raw), wear = opening ? ease(3.4, 7, T) : 0, feed = opening ? 1 - ease(3, 3.6, T) : 1;
-  const front = !opening ? 9 : M.radial ? 1.75 * ease(.45, 2.2, T) : -.25 + 1.6 * ease(1.2, 2.8, T), fill = full ? 1 : opening ? feed * (1 - Math.pow(.88, el)) : 1 - Math.pow(.985, el * 3);
+  const front = !opening ? 9 : M.radial ? (Math.hypot(Math.max(org[0], 1 - org[0]) * asp, Math.max(org[1], 1 - org[1])) + .34) * ease(.2, 2.2, T) : -.25 + 1.6 * ease(1.2, 2.8, T), fill = full ? 1 : opening ? feed * (1 - Math.pow(.88, el)) : 1 - Math.pow(.985, el * 3);
   pass("bank", F.d.b, n => { gl.uniform1i(n.Q, tex(0, F.d.a)); gl.uniform1f(n.front, front); gl.uniform1f(n.fill, fill); gl.uniform1f(n.keep, opening ? Math.pow(1 - .028 * wear, el) : 1); gl.uniform1f(n.cut, opening ? .006 * wear * el : 0); gl.uniform1f(n.w, T + seed); gl.uniform1f(n.asp, asp); gl.uniform1f(n.sc, M.sc); gl.uniform1f(n.rest, M.rest); gl.uniform1f(n.soft, opening ? 0 : 1); gl.uniform1f(n.radial, M.radial ? 1 : 0); gl.uniform2f(n.org, org[0], org[1]); }); F.d.swap();
 }
 function step(raw) {
