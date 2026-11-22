@@ -13,7 +13,7 @@ const NEAR = `uniform vec2 tx; vec2 L(){return v-vec2(tx.x,0.);} vec2 R(){return
 const TOR = `uniform vec4 tg; uniform vec2 ta; uniform float tw;
 float tor(vec2 p){ float y = 1. - p.y, wy = y + .006 * sin(p.x * tg.z * 9. + tg.w * .35) + .003 * sin(p.x * tg.z * 23. - tg.w * .5), s = clamp((wy - tg.x) / (tg.y - tg.x), 0., 1.), m = 1. - s;
   float cx = .5 + .038 * sin(s * 7. + .5 + tg.w * .3) * m * m, r = .006 + .188 * tw * pow(m, 4.1), u = clamp((p.x - cx) * tg.z / r, -1.35, 1.35), a = asin(clamp(u, -1., 1.)), q = 1. - pow(m, 2.4);
-  float bands = .5 + .38 * sin(a * 1.9 + q * 34. + tg.w) + .12 * sin(a * 3.8 + q * 71. - tg.w * 1.3), shape = exp(-pow(abs(u) / .92, 4.2)) * (.72 + .28 * abs(u));
+  float bands = .5 + .38 * sin(a * 1.9 + q * 34. + tg.w) + .12 * sin(a * 3.8 + q * 71. - tg.w * 1.3), shape = exp(-pow(abs(u) / .92, 4.2)) * (.72 + .28 * abs(u)) * (1. - smoothstep(1.1, 1.35, abs(u)));
   float edge = clamp((wy - tg.x + .007) / .025, 0., 1.) * clamp((tg.y + .005 - wy) / .071, 0., 1.), front = tg.x + (tg.y - tg.x + .1) * ta.x;
   return clamp(shape * bands, 0., 1.) * 4.4 * edge * (1. - smoothstep(front - .06, front, wy)) * ta.y; }`;
 const SRC = {
@@ -42,7 +42,7 @@ const RAMP = [[.155, .012, 50], [.205, .008, 80], [.265, .007, 80], [.315, .006,
 const ease = (a, b, x) => { x = Math.min(1, Math.max(0, (x - a) / (b - a))); return x * x * (3 - 2 * x); };
 
 const cv = document.createElement("canvas"); cv.className = "pour"; cv.setAttribute("aria-hidden", "true"); cv.width = cv.height = 0;
-let gl = null, P = {}, F = null, raf = 0, on = false, lost = false, last = 0, T = 0, heavy = false, drifts = [], iters = 14, slow = 0, skip = false, odd = false, parked = false, tried = false, lostTimer = 0, manual = false, head = null, chips = null, W = 0, Hh = 0, asp = 1;
+let gl = null, P = {}, F = null, raf = 0, on = false, lost = false, last = 0, T = 0, heavy = false, drifts = [], iters = 14, slow = 0, owed = 0, skip = false, odd = false, parked = false, tried = false, lostTimer = 0, manual = false, head = null, chips = null, W = 0, Hh = 0, asp = 1;
 const phase = [Math.random() * 6.3, Math.random() * 6.3, Math.random() * 6.3], seed = Math.random() * 400;
 function setup() {
   if (new URLSearchParams(location.search).has("still")) return false;
@@ -84,7 +84,8 @@ const splat = (x, px, py, r, a, b, c) => { pass("splat", x.b, u => { gl.uniform1
 // touches down in .75 s, turns slowly, and from 3 s loosens into the smoke around it
 const TOR_END = 4.4, torNow = () => heavy && T < TOR_END ? [ease(0, .75, T), 1 - ease(3, TOR_END, T)] : null;
 function torUniforms(n) {
-  const b = head && head.isConnected ? head.getBoundingClientRect().bottom : 0, h = cv.getBoundingClientRect().height || Hh, top = Math.min(.8, Math.max(.04, b / h)), a = torNow() || [0, 0];
+  const a = torNow(); if (!a) { gl.uniform2f(n.ta, 0, 0); return; }   // over: no more layout reads or uploads
+  const b = head && head.isConnected ? head.getBoundingClientRect().bottom : 0, h = cv.getBoundingClientRect().height || Hh, top = Math.min(.8, Math.max(.04, b / h));
   gl.uniform4f(n.tg, top, Math.min(.94, top + .55), asp, T * 2.6); gl.uniform1f(n.tw, Math.max(1, asp * .9)); gl.uniform2f(n.ta, a[0], a[1]);
 }
 // how fast the air moves: a slow build on opening, then a very slow drift that never pulls the eye from the products
@@ -94,7 +95,7 @@ function emit(dt, raw) {
   if (heavy && T < SETTLE) {
     const fade = 1 - ease(HOLD, SETTLE - .3, T), spots = asp > 1 ? [.5, .14, .86, .32, .68, .03, .97] : [.5, .14, .86, .32, .68];
     spots.forEach((s, i) => {
-      const go = ease(2.3 + i * .12, 2.8 + i * .12, T) * fade * .8;   // the funnel stands clear first, then smoke rises as it loosens if (go <= 0) return;
+      const go = ease(2.3 + i * .12, 2.8 + i * .12, T) * fade * .8; if (go <= 0) return;   // the funnel stands clear first, then smoke rises as it loosens
       const x = s + .035 * Math.sin(T * .8 + phase[i % 3]), pulse = .64 + .36 * Math.sin(T * (2 + i * .23) + phase[i % 3] + i), side = .3 * Math.sin(T * 1.4 + phase[i % 3]);
       splat(F.u, x, BASE, R, side * go * dt, 2.1 * pulse * go * dt, 0); splat(F.d, x, BASE, R * 1.5, 1.05 * pulse * go * raw, 0, 0);
     });
@@ -119,7 +120,8 @@ function step(raw) {
   pass("adv", u.b, n => { gl.uniform1i(n.U, tex(0, u.a)); gl.uniform1i(n.Q, tex(0, u.a)); gl.uniform2f(n.ts, ts[0], ts[1]); gl.uniform1f(n.dt, dt); gl.uniform1f(n.k, 1); gl.uniform1f(n.lift, 0); gl.uniform1f(n.w, T); }); u.swap();
   const thin = heavy && T < HOLD ? .9992 : heavy && T < SETTLE ? .9992 - .0062 * ease(HOLD, SETTLE, T) : .993 + .0032 * ease(SETTLE, SETTLE + 3, T); // it thins after the heavy opening, then what is added and what fades stay in balance
   pass("adv", F.d.b, n => { gl.uniform1i(n.U, tex(0, u.a)); gl.uniform1i(n.Q, tex(1, F.d.a)); gl.uniform2f(n.ts, ts[0], ts[1]); gl.uniform1f(n.dt, dt); gl.uniform1f(n.k, Math.pow(thin, raw)); gl.uniform1f(n.lift, raw * (heavy ? 2 - 1.8 * ease(HOLD, SETTLE + 2, T) : .2)); gl.uniform1f(n.w, T + seed); }); F.d.swap();
-  if (torNow() && T > 3) { pass("feed", F.d.b, n => { gl.uniform1i(n.Q, tex(0, F.d.a)); torUniforms(n); gl.uniform1f(n.rate, .02 * raw); }); F.d.swap(); }
+  if (torNow() && T > 3) { pass("feed", F.d.b, n => { gl.uniform1i(n.Q, tex(0, F.d.a)); torUniforms(n); gl.uniform1f(n.rate, .02 * Math.min(8, owed || raw)); }); F.d.swap(); }
+  owed = 0;
 }
 const show = () => pass("show", null, n => { gl.uniform1i(n.D, tex(0, F.d.a)); gl.uniform3fv(n.c, RAMP); torUniforms(n); });
 function frame(now) {
@@ -128,7 +130,7 @@ function frame(now) {
   // a phone that truly struggles does less work and keeps moving. A steady 30 fps (Low Power Mode) is fine and is left alone.
   slow = ms > 45 ? slow + 1 : Math.max(0, slow - 2);
   if (slow > 60) { slow = 0; if (iters > 7) iters = 7; else skip = true; }
-  T += ms / 1000; odd = !odd;
+  T += ms / 1000; odd = !odd; owed += ms / 16.667;
   if (!skip || odd) { step(Math.min(2.4, ms / 16.667 * (skip ? 2 : 1))); show(); }
   if (!document.hidden) raf = requestAnimationFrame(frame);
 }
@@ -159,13 +161,13 @@ function place() {
   if (head) { begin(); stick(); } else stop();
 }
 addEventListener("scroll", stick, { passive: true });
-let rs = 0; addEventListener("resize", () => { clearTimeout(rs); rs = setTimeout(() => { if (on && !lost && !parked && (innerWidth !== W || Math.abs(innerHeight - Hh) > 140)) { if (size()) settle(); else toStill(); } }, 200); });
+let rs = 0; addEventListener("resize", () => { clearTimeout(rs); rs = setTimeout(() => { if (on && !lost && !parked && (innerWidth !== W || Math.abs(innerHeight - Hh) > 140)) { if (size()) { if (torNow()) show(); else settle(); } else toStill(); } }, 200); });
 document.addEventListener("visibilitychange", kick);
 addEventListener("pagehide", () => { if (on && !lost) { if (raf) cancelAnimationFrame(raf); raf = 0; release(); parked = true; } });
 addEventListener("pageshow", () => { if (parked && on && !lost) { parked = false; if (size()) settle(); else { toStill(); return; } } kick(); });
 RM.addEventListener("change", () => { if (document.querySelector('.shophead[data-cat="hookahs"]')) { stop(); place(); } });
 const giveUp = () => { if (!lost || !on) return; if (document.hidden) { lostTimer = setTimeout(giveUp, 2000); return; } lost = false; F = null; toStill(); };
 cv.addEventListener("webglcontextlost", e => { e.preventDefault(); lost = true; if (raf) cancelAnimationFrame(raf); raf = 0; F = null; clearTimeout(lostTimer); lostTimer = setTimeout(giveUp, 2000); });
-cv.addEventListener("webglcontextrestored", () => { clearTimeout(lostTimer); lost = false; gl = null; const live = on, ok = setup(); if (!live) return; if (!ok || !size()) { toStill(); return; } settle(); kick(); });
+cv.addEventListener("webglcontextrestored", () => { clearTimeout(lostTimer); lost = false; gl = null; const live = on, ok = setup(); if (!live) return; if (!ok || !size()) { toStill(); return; } if (torNow()) show(); else settle(); kick(); });
 new MutationObserver(place).observe(document.getElementById("main"), { childList: true }); place();
 window.__pour = { canvas: cv, hold() { manual = true; if (raf) cancelAnimationFrame(raf); raf = 0; }, advance(sec, fps = 60) { const n = Math.round(sec * fps); for (let i = 0; i < n; i++) { T += 1 / fps; step(60 / fps); } show(); return T; }, get t() { return T; } };
