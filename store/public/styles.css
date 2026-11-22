@@ -563,9 +563,8 @@ html:not(.hero-seen) .piece .sticker{animation-timing-function:linear(0,.25 6%,.
 /* The Pour: live smoke on the black page ground only. Fixed under all content; the header band, tiles, labels and bars stay opaque above it. */
 .pour{position:fixed;inset:0;width:100vw;height:100lvh;z-index:-1;pointer-events:none;opacity:0;transition:opacity .35s var(--ease-state)}
 .pour.on{opacity:1}
-html.pour-still body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:var(--coal-0) url(img/pour-still.webp) center / cover no-repeat}
+html.pour-still body::before{content:"";position:fixed;inset:0 0 auto;height:100lvh;z-index:-1;pointer-events:none;background:var(--coal-0) url(img/pour-still.webp) center / cover no-repeat}
 html.pour-page .top{background:var(--color-bg);-webkit-backdrop-filter:none;backdrop-filter:none}
-html.pour-page .shophead > .smoke{display:none}
 html.pour-page .chips:not(.is-stuck){background:transparent}
 html.pour-page .chips a:not([aria-current]){background:var(--color-bg)}
 @media print{.pour{display:none !important}html.pour-still body::before{display:none}}

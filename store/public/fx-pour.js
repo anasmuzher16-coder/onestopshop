@@ -2,7 +2,7 @@
 // It opens heavy, pouring out from under the header for 3 to 5 seconds, thins, then keeps moving for as long as the page is open.
 // Nothing is looped or played back: the flow is computed live and new drifts start at random, so it never repeats.
 // WebGL2, no library, no images. With motion turned off, or on a phone that cannot run it, a designed still stands in.
-const RM = matchMedia("(prefers-reduced-motion: reduce)"), KEY = "oss:pour-open", DAY = 864e5;
+const RM = matchMedia("(prefers-reduced-motion: reduce)"), KEY = "oss:pour-open";
 const HOLD = 3.2, SETTLE = 4.8, CELLS = 422; // seconds; CELLS sets the size of one unit of flow against the height of the screen
 const V = `#version 300 es
 in vec2 a; out vec2 v; void main(){ v = a * .5 + .5; gl_Position = vec4(a, 0., 1.); }`;
@@ -12,7 +12,7 @@ const NEAR = `uniform vec2 tx; vec2 L(){return v-vec2(tx.x,0.);} vec2 R(){return
 const SRC = {
   adv: `${H} uniform sampler2D U, Q; uniform vec2 ts; uniform float dt, k; void main(){ o = k * texture(Q, v - dt * texture(U, v).xy * ts); }`,
   force: `${H} uniform sampler2D U, D; uniform float g, dt, keep; void main(){ vec2 u = texture(U, v).xy; u.y -= g * dt * min(texture(D, v).r, 3.); u *= keep;
-    float f = 1. - smoothstep(0., .05, v.y); if (u.y < 0.) u.y *= 1. - f; u *= smoothstep(0., .025, v.x) * smoothstep(0., .025, 1. - v.x) * smoothstep(0., .02, 1. - v.y) + .15;
+    float f = 1. - smoothstep(0., .05, v.y); if (u.y < 0.) u.y *= 1. - f; u *= .85 * smoothstep(0., .025, v.x) * smoothstep(0., .025, 1. - v.x) * smoothstep(0., .02, 1. - v.y) + .15;
     float m = length(u); if (m > 5.) u *= 5. / m; o = vec4(u, 0., 1.); }`,
   vort: `${H} ${NEAR} uniform sampler2D U; uniform float e, dt; float c(vec2 p){ return texture(U, p + vec2(tx.x, 0.)).y - texture(U, p - vec2(tx.x, 0.)).y - texture(U, p + vec2(0., tx.y)).x + texture(U, p - vec2(0., tx.y)).x; }
     void main(){ float w = c(v); vec2 n = vec2(abs(c(R())) - abs(c(L())), abs(c(T())) - abs(c(B()))); n /= length(n) + 1e-4; o = vec4(texture(U, v).xy + e * dt * .5 * w * vec2(n.y, -n.x), 0., 1.); }`,
@@ -21,7 +21,7 @@ const SRC = {
   grad: `${H} ${NEAR} uniform sampler2D P, U; void main(){ o = vec4(texture(U, v).xy - .5 * vec2(texture(P, R()).r - texture(P, L()).r, texture(P, T()).r - texture(P, B()).r), 0., 1.); }`,
   splat: `${H} uniform sampler2D Q; uniform vec2 p; uniform vec3 c; uniform float r, asp; void main(){ vec2 d = v - p; d.x *= asp; o = texture(Q, v) + vec4(c * exp(-dot(d, d) / r), 0.); }`,
   show: `${H} uniform sampler2D D; uniform vec3 c[5]; float h(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
-    void main(){ float q = max(texture(D, v).r, 0.), t = pow(clamp((1. - exp(-1.15 * q) - .035) / .9, 0., 1.), .86); vec3 s;
+    void main(){ float q = max(texture(D, v).r, 0.), t = pow(1. - exp(-.8 * q), 1.25); vec3 s;
       if (t < .25) s = mix(c[0], c[1], t / .25); else if (t < .55) s = mix(c[1], c[2], (t - .25) / .3); else if (t < .82) s = mix(c[2], c[3], (t - .55) / .27); else s = mix(c[3], c[4], (t - .82) / .18);
       o = vec4(s + (h(gl_FragCoord.xy) - .5) / 255., 1.); }`,
 };
@@ -34,7 +34,7 @@ const RAMP = [[.155, .012, 50], [.205, .008, 80], [.265, .007, 80], [.315, .006,
 const ease = (a, b, x) => { x = Math.min(1, Math.max(0, (x - a) / (b - a))); return x * x * (3 - 2 * x); };
 
 const cv = document.createElement("canvas"); cv.className = "pour"; cv.setAttribute("aria-hidden", "true"); cv.width = cv.height = 0;
-let gl = null, P = {}, F = null, raf = 0, on = false, lost = false, last = 0, T = 0, heavy = false, drifts = [], iters = 14, slow = 0, skip = false, frozen = false, manual = false, head = null, chips = null, W = 0, Hh = 0, asp = 1;
+let gl = null, P = {}, F = null, raf = 0, on = false, lost = false, last = 0, T = 0, heavy = false, drifts = [], iters = 14, slow = 0, skip = false, odd = false, parked = false, tried = false, lostTimer = 0, manual = false, head = null, chips = null, W = 0, Hh = 0, asp = 1;
 const phase = [Math.random() * 6.3, Math.random() * 6.3, Math.random() * 6.3];
 function setup() {
   if (new URLSearchParams(location.search).has("still")) return false;
@@ -74,20 +74,20 @@ const tex = (i, x) => { gl.activeTexture(gl.TEXTURE0 + i); gl.bindTexture(gl.TEX
 function pass(name, into, set) { const p = P[name]; gl.useProgram(p.p); set(p.u); gl.bindFramebuffer(gl.FRAMEBUFFER, into ? into.f : null); gl.viewport(0, 0, into ? into.w : cv.width, into ? into.h : cv.height); gl.drawArrays(gl.TRIANGLES, 0, 3); }
 const splat = (x, px, py, r, a, b, c) => { pass("splat", x.b, u => { gl.uniform1i(u.Q, tex(0, x.a)); gl.uniform2f(u.p, px, py); gl.uniform1f(u.r, r); gl.uniform1f(u.asp, asp); gl.uniform3f(u.c, a, b, c); }); x.swap(); };
 // where the black ground starts on screen, as a height from the bottom (0 to 1)
-function groundTop() { const b = head && head.isConnected ? head.getBoundingClientRect().bottom : 0; return 1 - Math.min(.8, Math.max(.06, b / Hh)); }
+function groundTop() { const b = head && head.isConnected ? head.getBoundingClientRect().bottom : 0, h = cv.getBoundingClientRect().height || Hh; return 1 - Math.min(.8, Math.max(.06, b / h)); }
 function emit(dt) {
-  const top = groundTop();
+  const top = groundTop(), R = .0011 * Math.max(1, asp * asp);
   if (heavy && T < SETTLE) {
     const fade = 1 - ease(HOLD, SETTLE - .3, T), spots = asp > 1 ? [.68, .4, .14, .9] : [.74, .42, .12];
     spots.forEach((s, i) => {
       const go = ease(i * .16, i * .16 + .35, T) * fade; if (go <= 0) return;
       const x = s + .05 * Math.sin(T * 1.9 + phase[i % 3]), pulse = .72 + .28 * Math.sin(T * 4.6 + phase[i % 3]), side = (i === 0 ? -.75 : .5 - i * .45) + .6 * Math.sin(T * 3.5 + phase[i % 3]);
-      splat(F.u, x, top, .0011, side * go * dt, -2.25 * pulse * go * dt, 0); splat(F.d, x, top, .0011, 1.05 * pulse * go * dt, 0, 0);
+      splat(F.u, x, top, R, side * go * dt, -2.25 * pulse * go * dt, 0); splat(F.d, x, top, R, 1.05 * pulse * go * dt, 0, 0);
     });
   }
   if (!heavy || T > HOLD) {
-    while (drifts.length < 4) { const down = -Math.PI / 2 + (Math.random() - .5) * 2.5, born = T + (drifts.length ? Math.random() * 2.4 : 0), life = 3 + Math.random() * 4.5;
-      drifts.push({ x: .04 + Math.random() * .92, y: .12 + Math.random() * (top - .1), a: down, born, life, power: .1 + Math.random() * .16, turn: (Math.random() - .5) * .5, r: .0007 + Math.random() * .0012 }); }
+    while (drifts.length < 7) { const down = -Math.PI / 2 + (Math.random() - .5) * 2.5, born = T + (drifts.length ? Math.random() * 2.4 : 0), life = 3 + Math.random() * 4.5;
+      drifts.push({ x: .04 + Math.random() * .92, y: .12 + Math.random() * (top - .1), a: down, born, life, power: .03 + Math.random() * .035, turn: (Math.random() - .5) * .5, r: .0018 + Math.random() * .0034 }); }
     drifts = drifts.filter(e => T < e.born + e.life);
     for (const e of drifts) { const s = (T - e.born) / e.life; if (s < 0) continue; const go = Math.sin(Math.PI * s), a = e.a + e.turn * s * 6;
       splat(F.u, e.x, e.y, e.r * 1.4, Math.cos(a) * .85 * go * dt, Math.sin(a) * .85 * go * dt, 0); splat(F.d, e.x, e.y, e.r, e.power * go * dt, 0, 0); e.x += Math.cos(a) * .0007 * dt / asp; e.y += Math.sin(a) * .0007 * dt; }
@@ -103,29 +103,37 @@ function step(dt) {
   cur = "grad"; pass("grad", u.b, n => { gl.uniform1i(n.P, tex(0, F.p.a)); gl.uniform1i(n.U, tex(1, u.a)); tx(); }); u.swap();
   const ts = [Hh / (CELLS * W), 1 / CELLS];
   pass("adv", u.b, n => { gl.uniform1i(n.U, tex(0, u.a)); gl.uniform1i(n.Q, tex(0, u.a)); gl.uniform2f(n.ts, ts[0], ts[1]); gl.uniform1f(n.dt, dt); gl.uniform1f(n.k, 1); }); u.swap();
-  const thin = heavy && T < HOLD ? .9992 : heavy && T < SETTLE ? .9992 - .0062 * ease(HOLD, SETTLE, T) : .9962; // it thins after the heavy opening, then what is added and what fades stay in balance
+  const thin = heavy && T < HOLD ? .9992 : heavy && T < SETTLE ? .9992 - .0062 * ease(HOLD, SETTLE, T) : .993 + .0032 * ease(SETTLE, SETTLE + 3, T); // it thins after the heavy opening, then what is added and what fades stay in balance
   pass("adv", F.d.b, n => { gl.uniform1i(n.U, tex(0, u.a)); gl.uniform1i(n.Q, tex(1, F.d.a)); gl.uniform2f(n.ts, ts[0], ts[1]); gl.uniform1f(n.dt, dt); gl.uniform1f(n.k, Math.pow(thin, dt)); }); F.d.swap();
 }
 const show = () => pass("show", null, n => { gl.uniform1i(n.D, tex(0, F.d.a)); gl.uniform3fv(n.c, RAMP); });
 function frame(now) {
   raf = 0; if (!on || lost || manual) return;
-  const ms = Math.min(120, now - last || 16.7); last = now;
-  // a phone that struggles does less work, and as a last resort holds the current picture
-  slow = ms > 27 ? slow + 1 : Math.max(0, slow - 2);
-  if (slow > 60) { slow = 0; if (iters > 7) iters = 7; else if (!skip) skip = true; else frozen = true; }
-  if (frozen) return;
-  T += ms / 1000;
-  if (!skip || Math.round(T * 60) % 2 === 0) { step(Math.min(2.4, ms / 16.667 * (skip ? 2 : 1))); show(); }
+  const ms = Math.min(120, Math.max(1, now - last)); last = now;
+  // a phone that truly struggles does less work and keeps moving. A steady 30 fps (Low Power Mode) is fine and is left alone.
+  slow = ms > 45 ? slow + 1 : Math.max(0, slow - 2);
+  if (slow > 60) { slow = 0; if (iters > 7) iters = 7; else skip = true; }
+  T += ms / 1000; odd = !odd;
+  if (!skip || odd) { step(Math.min(2.4, ms / 16.667 * (skip ? 2 : 1))); show(); }
   if (!document.hidden) raf = requestAnimationFrame(frame);
 }
-const kick = () => { if (on && !raf && gl && !lost && !frozen && !manual && !document.hidden) { last = performance.now(); raf = requestAnimationFrame(frame); } };
-function firstOpen() { try { const s = +localStorage.getItem(KEY) || 0; if (Date.now() - s < DAY) return false; localStorage.setItem(KEY, String(Date.now())); return true; } catch { return true; } }
+const kick = () => { if (on && !raf && gl && F && !lost && !parked && !manual && !document.hidden) { last = performance.now(); raf = requestAnimationFrame(frame); } };
+// the heavy opening plays once per visit (per tab), and never when arriving by Back or Forward
+let played = false, popped = 0; addEventListener("popstate", () => { popped = performance.now(); });
+function firstOpen() {
+  if (played || performance.now() - popped < 800 || performance.getEntriesByType("navigation")[0]?.type === "back_forward") return false;
+  played = true; try { if (sessionStorage.getItem(KEY)) return false; sessionStorage.setItem(KEY, "1"); } catch {} return true;
+}
+const toStill = () => { off(); gl = null; document.documentElement.classList.add("pour-still", "pour-page"); };
+function settle() { heavy = false; for (let i = 0; i < 24; i++) { T += 1 / 30; step(2); } show(); }
 function begin() {
-  if (on) return; if (RM.matches || !gl) { document.documentElement.classList.add("pour-still", "pour-page"); return; }
-  document.body.prepend(cv); if (!size()) { off(); gl = null; document.documentElement.classList.add("pour-still", "pour-page"); return; }
-  on = true; frozen = false; skip = false; iters = 14; T = 0; drifts = []; heavy = firstOpen() && performance.getEntriesByType("navigation")[0]?.type !== "back_forward";
-  if (!heavy) { const was = iters; iters = 8; for (let i = 0; i < 150; i++) { T += 1 / 30; step(2); } iters = was; } // a later visit opens on smoke already drifting, with no second big entrance
-  document.documentElement.classList.add("pour-page"); show(); requestAnimationFrame(() => cv.classList.add("on")); kick();
+  if (on) return;
+  if (!RM.matches && !gl && !tried) { tried = true; if (!setup()) gl = null; }   // only the hookah page ever pays for this
+  if (RM.matches || !gl) { document.documentElement.classList.add("pour-still", "pour-page"); return; }
+  document.body.prepend(cv); if (!size()) { toStill(); return; }
+  on = true; parked = false; skip = false; odd = false; slow = 0; iters = 14; T = 0; drifts = []; heavy = firstOpen();
+  if (!heavy) settle(); // a later visit opens on smoke already drifting, with no second big entrance
+  document.documentElement.classList.remove("pour-still"); document.documentElement.classList.add("pour-page"); show(); requestAnimationFrame(() => { if (on) cv.classList.add("on"); }); kick();
 }
 function off() { on = false; if (raf) cancelAnimationFrame(raf); raf = 0; cv.classList.remove("on"); release(); cv.width = cv.height = 0; cv.remove(); }
 function stop() { document.documentElement.classList.remove("pour-page", "pour-still"); if (on || cv.isConnected) off(); }
@@ -136,11 +144,13 @@ function place() {
   if (head) { begin(); stick(); } else stop();
 }
 addEventListener("scroll", stick, { passive: true });
-let rs = 0; addEventListener("resize", () => { clearTimeout(rs); rs = setTimeout(() => { if (on && (innerWidth !== W || Math.abs(innerHeight - Hh) > 140)) { size(); heavy = false; for (let i = 0; i < 90; i++) { T += 1 / 30; step(2); } show(); } }, 200); });
-document.addEventListener("visibilitychange", kick); addEventListener("pageshow", kick);
+let rs = 0; addEventListener("resize", () => { clearTimeout(rs); rs = setTimeout(() => { if (on && !lost && !parked && (innerWidth !== W || Math.abs(innerHeight - Hh) > 140)) { if (size()) settle(); else toStill(); } }, 200); });
+document.addEventListener("visibilitychange", kick);
+addEventListener("pagehide", () => { if (on && !lost) { if (raf) cancelAnimationFrame(raf); raf = 0; release(); parked = true; } });
+addEventListener("pageshow", () => { if (parked && on && !lost) { parked = false; if (size()) settle(); else { toStill(); return; } } kick(); });
 RM.addEventListener("change", () => { if (document.querySelector('.shophead[data-cat="hookahs"]')) { stop(); place(); } });
-cv.addEventListener("webglcontextlost", e => { e.preventDefault(); lost = true; if (raf) cancelAnimationFrame(raf); raf = 0; F = null; });
-cv.addEventListener("webglcontextrestored", () => { lost = false; gl = null; if (!setup() || !on) { if (on) { on = false; cv.remove(); document.documentElement.classList.add("pour-still"); } return; } size(); heavy = false; for (let i = 0; i < 90; i++) { T += 1 / 30; step(2); } show(); kick(); });
-if (!setup()) gl = null;
+const giveUp = () => { if (!lost || !on) return; if (document.hidden) { lostTimer = setTimeout(giveUp, 2000); return; } lost = false; F = null; toStill(); };
+cv.addEventListener("webglcontextlost", e => { e.preventDefault(); lost = true; if (raf) cancelAnimationFrame(raf); raf = 0; F = null; clearTimeout(lostTimer); lostTimer = setTimeout(giveUp, 2000); });
+cv.addEventListener("webglcontextrestored", () => { clearTimeout(lostTimer); lost = false; gl = null; const live = on, ok = setup(); if (!live) return; if (!ok || !size()) { toStill(); return; } settle(); kick(); });
 new MutationObserver(place).observe(document.getElementById("main"), { childList: true }); place();
 window.__pour = { canvas: cv, hold() { manual = true; if (raf) cancelAnimationFrame(raf); raf = 0; }, advance(sec, fps = 60) { const n = Math.round(sec * fps); for (let i = 0; i < n; i++) { T += 1 / fps; step(60 / fps); } show(); return T; }, get t() { return T; } };
