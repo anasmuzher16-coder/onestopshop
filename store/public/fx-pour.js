@@ -1,5 +1,5 @@
-// The hookah section's smoke: a real simulation that lives on the black page ground, behind every word, photo and button.
-// It opens with one tornado touching down, smoke rising from the bottom, then thins and keeps drifting slowly upward while the page is open.
+// Hookah smoke and cologne mist: a real simulation that lives on the black page ground, behind every word, photo and button.
+// Hookahs open with one tornado and thick smoke from the bottom. Cologne opens with mist bursting from the bottle across the page. Both settle into a living background.
 // Nothing is looped or played back: the flow is computed live and new drifts start at random, so it never repeats.
 // WebGL2, no library, no images. With motion turned off, or on a phone that cannot run it, a designed still stands in.
 const RM = matchMedia("(prefers-reduced-motion: reduce)"), KEY = "oss:pour-open";
@@ -29,11 +29,12 @@ const SRC = {
   splat: `${H} uniform sampler2D Q; uniform vec2 p; uniform vec3 c; uniform float r, asp; void main(){ vec2 d = v - p; d.x *= asp; o = texture(Q, v) + vec4(c * exp(-dot(d, d) / r), 0.); }`,
   feed: `${H} ${TOR} uniform sampler2D Q; uniform float rate; void main(){ o = texture(Q, v) + vec4(rate * tor(v), 0., 0., 0.); }`,
   // the thick opening bank lives in its own channel, so the slow drift underneath is untouched and is exactly what remains when the bank has gone
-  bank: `${H} uniform sampler2D Q; uniform float front, fill, keep, cut, w, asp; float h(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+  bank: `${H} uniform sampler2D Q; uniform float front, fill, keep, cut, w, asp, sc, rest, soft, radial; uniform vec2 org; float h(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
     float n(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3. - 2. * f); return mix(mix(h(i), h(i + vec2(1., 0.)), f.x), mix(h(i + vec2(0., 1.)), h(i + vec2(1., 1.)), f.x), f.y); }
     float fb(vec2 p){ float s = 0., a = .5; for (int i = 0; i < 4; i++) { s += a * n(p); p = p * 2.03 + vec2(7.1, 3.3); a *= .5; } return s / .9375; }
-    void main(){ vec2 p = vec2(v.x * asp, v.y) * 2.6 - vec2(0., w * .1), d = vec2(fb(p + w * .03), fb(p + vec2(5.2, 1.3) - w * .02)); float m = fb(p + 1.8 * d), edge = 1. - smoothstep(front - .24, front + .1, v.y + .34 * (m - .5)), goal = edge * (.9 + 2.2 * smoothstep(.25, .75, m));
-      vec4 q = texture(Q, v); float g = mix(q.g, max(q.g, goal), fill); o = vec4(q.r, max(0., g * keep - cut), q.b, q.a); }`,
+    void main(){ vec2 p = vec2(v.x * asp, v.y) * sc - vec2(0., w * .1), d = vec2(fb(p + w * .03), fb(p + vec2(5.2, 1.3) - w * .02)); float m = fb(p + 1.8 * d), at = radial > .5 ? length((v - org) * vec2(asp, 1.)) : v.y, edge = 1. - smoothstep(front - .24, front + .1, at + .34 * (m - .5));
+      float big = edge * (.45 + 2.6 * smoothstep(.3, .72, m)), base = rest * (.35 + 1.3 * smoothstep(.28, .74, m)); vec4 q = texture(Q, v); float g = mix(q.g, soft > .5 ? base : max(q.g, big), fill);
+      o = vec4(q.r, max(soft > .5 ? 0. : base * edge, g * keep - cut), q.b, q.a); }`,
   show: `${H} ${TOR} uniform sampler2D D; uniform vec3 c[5]; float h(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); } float dn(vec2 p){ vec2 s = texture(D, p).rg; return s.r + s.g; }
     void main(){ vec2 e = 1.4 / vec2(textureSize(D, 0)); float q = max(.4 * dn(v) + .15 * (dn(v + e) + dn(v - e) + dn(v + vec2(e.x, -e.y)) + dn(v + vec2(-e.x, e.y))), 0.); if (ta.x > 0. && ta.y > 0.) q += tor(v); float t = pow(1. - exp(-.8 * q), 1.25); vec3 s;
       if (t < .25) s = mix(c[0], c[1], t / .25); else if (t < .55) s = mix(c[1], c[2], (t - .25) / .3); else if (t < .82) s = mix(c[2], c[3], (t - .55) / .27); else s = mix(c[3], c[4], (t - .82) / .18);
@@ -45,6 +46,13 @@ function srgb(L, C, h) {
   return [4.0767416621 * l - 3.3077115913 * m + .2309699292 * s, -1.2684380046 * l + 2.6097574011 * m - .3413193965 * s, -.0041960863 * l - .7034186147 * m + 1.707614701 * s].map(n => { n = Math.min(1, Math.max(0, n)); return n <= .0031308 ? 12.92 * n : 1.055 * n ** (1 / 2.4) - .055; });
 }
 const RAMP = [[.155, .012, 50], [.205, .008, 80], [.265, .007, 80], [.315, .006, 80], [.345, .005, 80]].flatMap(c => srgb(...c));
+const MIST = [[.155, .012, 50], [.21, .012, 270], [.27, .016, 275], [.32, .018, 280], [.345, .018, 285]].flatMap(c => srgb(...c));
+// what each section's air does: how it opens, how much stays afterward, and how it moves
+const MODES = {
+  hookahs: { tornado: true, radial: false, rest: .36, sc: 2.6, lift: 2, restLift: .2, ramp: RAMP, power: [.06, .06], drifts: 9, size: [.0018, .0034] },
+  cologne: { tornado: false, radial: true, rest: .66, sc: 4.6, lift: .5, restLift: .12, ramp: MIST, power: [.025, .04], drifts: 9, size: [.001, .0026] },
+};
+let M = MODES.hookahs, modeName = null, tick = 0, org = [.75, .8];
 const ease = (a, b, x) => { x = Math.min(1, Math.max(0, (x - a) / (b - a))); return x * x * (3 - 2 * x); };
 
 const cv = document.createElement("canvas"); cv.className = "pour"; cv.setAttribute("aria-hidden", "true"); cv.width = cv.height = 0;
@@ -88,7 +96,7 @@ const tex = (i, x) => { gl.activeTexture(gl.TEXTURE0 + i); gl.bindTexture(gl.TEX
 function pass(name, into, set) { const p = P[name]; gl.useProgram(p.p); set(p.u); gl.bindFramebuffer(gl.FRAMEBUFFER, into ? into.f : null); gl.viewport(0, 0, into ? into.w : cv.width, into ? into.h : cv.height); gl.drawArrays(gl.TRIANGLES, 0, 3); }
 const splat = (x, px, py, r, a, b, c) => { pass("splat", x.b, u => { gl.uniform1i(u.Q, tex(0, x.a)); gl.uniform2f(u.p, px, py); gl.uniform1f(u.r, r); gl.uniform1f(u.asp, asp); gl.uniform3f(u.c, a, b, c); }); x.swap(); };
 // touches down in .75 s, turns slowly, and from 3 s loosens into the smoke around it
-const TOR_END = 4.4, torNow = () => heavy && T < TOR_END ? [ease(0, .75, T), 1 - ease(3, TOR_END, T)] : null;
+const TOR_END = 4.4, torNow = () => M.tornado && heavy && T < TOR_END ? [ease(0, .75, T), 1 - ease(3, TOR_END, T)] : null;
 function torUniforms(n) {
   const a = torNow(); if (!a) { gl.uniform2f(n.ta, 0, 0); return; }   // over: no more layout reads or uploads
   const b = head && head.isConnected ? head.getBoundingClientRect().bottom : 0, h = cv.getBoundingClientRect().height || Hh, top = Math.min(.8, Math.max(.04, b / h));
@@ -98,7 +106,10 @@ function torUniforms(n) {
 const pace = () => heavy ? .62 - .42 * ease(HOLD, SETTLE + 2.5, T) : .2;
 function emit(dt, raw) {
   const R = .0011 * Math.max(1, asp * asp), BASE = .045;
-  if (heavy && T < SETTLE) {
+  if (heavy && M.radial && T > .5 && T < 2.2) {   // the spray leaves the bottle and pushes the air across the page
+    const go = Math.sin(Math.PI * (T - .5) / 1.7); splat(F.u, org[0], org[1], .006, -1.5 * go * dt, -1.1 * go * dt, 0);
+  }
+  if (heavy && !M.radial && T < SETTLE) {
     const fade = 1 - ease(HOLD, SETTLE - .3, T), spots = asp > 1 ? [.5, .14, .86, .32, .68, .03, .97] : [.5, .14, .86, .32, .68];
     spots.forEach((s, i) => {
       const go = ease(2.3 + i * .12, 2.8 + i * .12, T) * fade * .8; if (go <= 0) return;   // the funnel stands clear first, then smoke rises as it loosens
@@ -107,19 +118,20 @@ function emit(dt, raw) {
     });
   }
   if (!heavy || T > HOLD) {
-    while (drifts.length < 7) { const rise = Math.PI / 2 + (Math.random() - .5) * 1.2, born = T + (drifts.length ? Math.random() * 2.4 : 0), life = 3 + Math.random() * 4.5;
-      drifts.push({ x: .04 + Math.random() * .92, y: .02 + Math.random() * .38, a: rise, born, life, power: .03 + Math.random() * .035, turn: (Math.random() - .5) * .16, r: .0018 + Math.random() * .0034 }); }
+    while (drifts.length < M.drifts) { const rise = Math.PI / 2 + (Math.random() - .5) * 1.2, born = T + (drifts.length ? Math.random() * 2.4 : 0), life = 3 + Math.random() * 4.5;
+      drifts.push({ x: .04 + Math.random() * .92, y: .02 + Math.random() * .38, a: rise, born, life, power: M.power[0] + Math.random() * M.power[1], turn: (Math.random() - .5) * .16, r: M.size[0] + Math.random() * M.size[1] }); }
     drifts = drifts.filter(e => T < e.born + e.life);
     for (const e of drifts) { const s = (T - e.born) / e.life; if (s < 0) continue; const go = Math.sin(Math.PI * s), a = e.a + e.turn * s * 6;
       splat(F.u, e.x, e.y, e.r * 1.4, Math.cos(a) * .5 * go * dt, Math.sin(a) * .5 * go * dt, 0); splat(F.d, e.x, e.y, e.r, e.power * go * raw, 0, 0); e.x += Math.cos(a) * .0007 * dt / asp; e.y += Math.sin(a) * .0007 * dt; }
   }
 }
 // after the funnel has landed, a thick bank climbs from the floor, peaks near 3 s, then wears away thin parts first; timed by the clock so a slow phone sees the same thing
-const BANK_END = 6.8;
-function bank(raw) {
-  if (!heavy || T >= BANK_END) return;
-  const el = Math.min(8, owed || raw), wear = ease(3, 6.4, T), feed = 1 - ease(2.7, 3.3, T);
-  pass("bank", F.d.b, n => { gl.uniform1i(n.Q, tex(0, F.d.a)); gl.uniform1f(n.front, -.25 + 1.6 * ease(1.2, 2.8, T)); gl.uniform1f(n.fill, feed * (1 - Math.pow(.88, el))); gl.uniform1f(n.keep, Math.pow(1 - .028 * wear, el)); gl.uniform1f(n.cut, .006 * wear * el); gl.uniform1f(n.w, T + seed); gl.uniform1f(n.asp, asp); }); F.d.swap();
+const BANK_END = 7.2;
+function bank(raw, full = false) {
+  const opening = heavy && T < BANK_END; if (!opening && !full) { tick = (tick + 1) % 3; if (tick) return; }   // the resting layer moves slowly, so a third of the frames is enough
+  const el = Math.min(8, owed || raw), wear = opening ? ease(3.4, 7, T) : 0, feed = opening ? 1 - ease(3, 3.6, T) : 1;
+  const front = !opening ? 9 : M.radial ? 1.75 * ease(.45, 2.2, T) : -.25 + 1.6 * ease(1.2, 2.8, T), fill = full ? 1 : opening ? feed * (1 - Math.pow(.88, el)) : 1 - Math.pow(.985, el * 3);
+  pass("bank", F.d.b, n => { gl.uniform1i(n.Q, tex(0, F.d.a)); gl.uniform1f(n.front, front); gl.uniform1f(n.fill, fill); gl.uniform1f(n.keep, opening ? Math.pow(1 - .028 * wear, el) : 1); gl.uniform1f(n.cut, opening ? .006 * wear * el : 0); gl.uniform1f(n.w, T + seed); gl.uniform1f(n.asp, asp); gl.uniform1f(n.sc, M.sc); gl.uniform1f(n.rest, M.rest); gl.uniform1f(n.soft, opening ? 0 : 1); gl.uniform1f(n.radial, M.radial ? 1 : 0); gl.uniform2f(n.org, org[0], org[1]); }); F.d.swap();
 }
 function step(raw) {
   const dt = raw * pace(), u = F.u, tx = () => gl.uniform2f(P[cur].u.tx, 1 / u.a.w, 1 / u.a.h); let cur = "vort";
@@ -132,12 +144,12 @@ function step(raw) {
   const ts = [Hh / (CELLS * W), 1 / CELLS];
   pass("adv", u.b, n => { gl.uniform1i(n.U, tex(0, u.a)); gl.uniform1i(n.Q, tex(0, u.a)); gl.uniform2f(n.ts, ts[0], ts[1]); gl.uniform1f(n.dt, dt); gl.uniform1f(n.k, 1); gl.uniform1f(n.lift, 0); gl.uniform1f(n.w, T); }); u.swap();
   const thin = heavy && T < HOLD ? .9992 : heavy && T < SETTLE ? .9992 - .0062 * ease(HOLD, SETTLE, T) : .993 + .0032 * ease(SETTLE, SETTLE + 3, T); // it thins after the heavy opening, then what is added and what fades stay in balance
-  pass("adv", F.d.b, n => { gl.uniform1i(n.U, tex(0, u.a)); gl.uniform1i(n.Q, tex(1, F.d.a)); gl.uniform2f(n.ts, ts[0], ts[1]); gl.uniform1f(n.dt, dt); gl.uniform1f(n.k, Math.pow(thin, raw)); gl.uniform1f(n.lift, raw * (heavy ? 2 - 1.8 * ease(HOLD, SETTLE + 2, T) : .2)); gl.uniform1f(n.w, T + seed); }); F.d.swap();
+  pass("adv", F.d.b, n => { gl.uniform1i(n.U, tex(0, u.a)); gl.uniform1i(n.Q, tex(1, F.d.a)); gl.uniform2f(n.ts, ts[0], ts[1]); gl.uniform1f(n.dt, dt); gl.uniform1f(n.k, Math.pow(thin, raw)); gl.uniform1f(n.lift, raw * (heavy ? M.lift - (M.lift - M.restLift) * ease(HOLD, SETTLE + 2, T) : M.restLift)); gl.uniform1f(n.w, T + seed); }); F.d.swap();
   bank(raw);
   if (torNow() && T > 3) { pass("feed", F.d.b, n => { gl.uniform1i(n.Q, tex(0, F.d.a)); torUniforms(n); gl.uniform1f(n.rate, .02 * Math.min(8, owed || raw)); }); F.d.swap(); }
   owed = 0;
 }
-const show = () => pass("show", null, n => { gl.uniform1i(n.D, tex(0, F.d.a)); gl.uniform3fv(n.c, RAMP); torUniforms(n); });
+const show = () => pass("show", null, n => { gl.uniform1i(n.D, tex(0, F.d.a)); gl.uniform3fv(n.c, M.ramp); torUniforms(n); });
 function frame(now) {
   raf = 0; if (!on || lost || manual) return;
   const ms = Math.min(120, Math.max(1, now - last)); last = now;
@@ -150,19 +162,19 @@ function frame(now) {
 }
 const kick = () => { if (on && !raf && gl && F && !lost && !parked && !manual && !document.hidden) { last = performance.now(); raf = requestAnimationFrame(frame); } };
 // the heavy opening plays once per visit (per tab), and never when arriving by Back or Forward
-let played = false, popped = -1e9; addEventListener("popstate", () => { popped = performance.now(); });
+const played = new Set(); let popped = -1e9; addEventListener("popstate", () => { popped = performance.now(); });
 function firstOpen() {
-  if (played || performance.now() - popped < 800 || performance.getEntriesByType("navigation")[0]?.type === "back_forward") return false;
-  played = true; try { if (sessionStorage.getItem(KEY)) return false; sessionStorage.setItem(KEY, "1"); } catch {} return true;
+  if (played.has(modeName) || performance.now() - popped < 800 || performance.getEntriesByType("navigation")[0]?.type === "back_forward") return false;
+  played.add(modeName); try { const k = KEY + ":" + modeName; if (sessionStorage.getItem(k)) return false; sessionStorage.setItem(k, "1"); } catch {} return true;
 }
 const toStill = () => { off(); gl = null; document.documentElement.classList.add("pour-still", "pour-page"); };
-function settle() { heavy = false; for (let i = 0; i < 24; i++) { T += 1 / 30; step(2); } show(); }
+function settle() { heavy = false; for (let i = 0; i < 24; i++) { T += 1 / 30; step(2); } bank(1, true); show(); }
 function begin() {
   if (on) return;
-  if (!RM.matches && !gl && !tried) { tried = true; if (!setup()) gl = null; }   // only the hookah page ever pays for this
+  if (!RM.matches && !gl && !tried) { tried = true; if (!setup()) gl = null; }   // only the smoke and mist pages ever pay for this
   if (RM.matches || !gl) { document.documentElement.classList.add("pour-still", "pour-page"); return; }
   document.body.prepend(cv); if (!size()) { toStill(); return; }
-  on = true; parked = false; skip = false; odd = false; slow = 0; iters = 14; T = 0; drifts = []; heavy = firstOpen();
+  on = true; parked = false; skip = false; odd = false; slow = 0; iters = 14; T = 0; drifts = []; aim(); heavy = firstOpen();
   if (!heavy) settle(); // a later visit opens on smoke already drifting, with no second big entrance
   document.documentElement.classList.remove("pour-still"); document.documentElement.classList.add("pour-page"); show(); requestAnimationFrame(() => { if (on) cv.classList.add("on"); }); kick();
 }
@@ -170,16 +182,22 @@ function off() { on = false; if (raf) cancelAnimationFrame(raf); raf = 0; cv.cla
 function stop() { document.documentElement.classList.remove("pour-page", "pour-still"); if (on || cv.isConnected) off(); }
 // the filter bar is see-through while it sits in the page, and solid once it sticks over the products
 function stick() { if (!head || !chips || !head.isConnected) return; chips.classList.toggle("is-stuck", head.getBoundingClientRect().bottom < chips.getBoundingClientRect().top - .5); }
+// where the spray leaves the bottle
+function aim() { const o = head && (head.querySelector(".fx-obj") || head), r = o && o.getBoundingClientRect(), h = cv.getBoundingClientRect().height || Hh; if (r && r.width) org = [(r.left + r.width / 2) / W, 1 - (r.top + r.height * .2) / h]; }
 function place() {
-  head = document.querySelector('.shophead[data-cat="hookahs"]'); chips = head && head.parentNode.querySelector(":scope > .chips");
-  if (head) { begin(); stick(); } else stop();
+  const hk = document.querySelector('.shophead[data-cat="hookahs"]'), co = document.querySelector('.shophead[data-cat="cologne"]'), pdp = document.querySelector('.pdp[data-cat="cologne"]');
+  const next = hk ? "hookahs" : co || pdp ? "cologne" : null;
+  head = hk || co || (pdp && pdp.querySelector("[data-stage]")) || null; chips = hk || co ? head.parentNode.querySelector(":scope > .chips") : null;
+  if (!next) { stop(); modeName = null; return; }
+  if (next !== modeName && (on || cv.isConnected)) off();
+  modeName = next; M = MODES[next]; begin(); stick();
 }
 addEventListener("scroll", stick, { passive: true });
 let rs = 0; addEventListener("resize", () => { clearTimeout(rs); rs = setTimeout(() => { if (on && !lost && !parked && (innerWidth !== W || Math.abs(innerHeight - Hh) > 140)) { if (size()) { if (torNow()) show(); else settle(); } else toStill(); } }, 200); });
 document.addEventListener("visibilitychange", kick);
 addEventListener("pagehide", () => { if (on && !lost) { if (raf) cancelAnimationFrame(raf); raf = 0; release(); parked = true; } });
 addEventListener("pageshow", () => { if (parked && on && !lost) { parked = false; if (size()) settle(); else { toStill(); return; } } kick(); });
-RM.addEventListener("change", () => { if (document.querySelector('.shophead[data-cat="hookahs"]')) { stop(); place(); } });
+RM.addEventListener("change", () => { if (modeName) { stop(); place(); } });
 const giveUp = () => { if (!lost || !on) return; if (document.hidden) { lostTimer = setTimeout(giveUp, 2000); return; } lost = false; F = null; toStill(); };
 cv.addEventListener("webglcontextlost", e => { e.preventDefault(); lost = true; if (raf) cancelAnimationFrame(raf); raf = 0; F = null; clearTimeout(lostTimer); lostTimer = setTimeout(giveUp, 2000); });
 cv.addEventListener("webglcontextrestored", () => { clearTimeout(lostTimer); lost = false; gl = null; const live = on, ok = setup(); if (!live) return; if (!ok || !size()) { toStill(); return; } if (torNow()) show(); else settle(); kick(); });
