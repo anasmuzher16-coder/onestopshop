@@ -49,7 +49,7 @@ const RAMP = [[.155, .012, 50], [.205, .008, 80], [.265, .007, 80], [.315, .006,
 const MIST = [[.155, .012, 50], [.21, .012, 270], [.27, .016, 275], [.32, .018, 280], [.345, .018, 285]].flatMap(c => srgb(...c));
 // what each section's air does: how it opens, how much stays afterward, and how it moves
 const MODES = {
-  hookahs: { tornado: true, radial: false, rest: .36, sc: 2.6, lift: 2, restLift: .2, ramp: RAMP, power: [.06, .06], drifts: 9, size: [.0018, .0034] },
+  hookahs: { tornado: true, radial: false, rest: .5, sc: 2.1, lift: 2, restLift: .2, ramp: RAMP, power: [.05, .05], drifts: 9, size: [.0024, .0042] },
   cologne: { tornado: false, radial: true, rest: .66, sc: 4.6, lift: .5, restLift: .12, ramp: MIST, power: [.025, .04], drifts: 9, size: [.001, .0026] },
 };
 let M = MODES.hookahs, modeName = null, tick = 0, org = [.75, .8];
@@ -114,7 +114,7 @@ function emit(dt, raw) {
     spots.forEach((s, i) => {
       const go = ease(2.3 + i * .12, 2.8 + i * .12, T) * fade * .8; if (go <= 0) return;   // the funnel stands clear first, then smoke rises as it loosens
       const x = s + .035 * Math.sin(T * .8 + phase[i % 3]), pulse = .64 + .36 * Math.sin(T * (2 + i * .23) + phase[i % 3] + i), side = .3 * Math.sin(T * 1.4 + phase[i % 3]);
-      splat(F.u, x, BASE, R, side * go * dt, 2.1 * pulse * go * dt, 0); splat(F.d, x, BASE, R * 1.5, 1.05 * pulse * go * raw, 0, 0);
+      splat(F.u, x, BASE, R, side * go * dt, 2.1 * pulse * go * dt, 0); splat(F.d, x, BASE, R * 1.1, .28 * pulse * go * raw, 0, 0);   // lighter columns, so the bank's crests and hollows stay visible instead of filling to one grey
     });
   }
   if (!heavy || T > HOLD) {
