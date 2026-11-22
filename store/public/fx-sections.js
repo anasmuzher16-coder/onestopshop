@@ -235,8 +235,15 @@ const FX = {
       play(q(".head"), [{ transform: "translateY(0px)", easing: STRIKE }, { transform: `translateY(${deep}px)`, offset: .25 }, { transform: `translateY(${deep}px)`, offset: .56, easing: ENTER }, { transform: "translateY(0px)" }], 360, at - 90, "none");
       play(recoil, [{ transform: "rotate(0deg)", easing: ENTER }, { transform: `rotate(${(deep * .7).toFixed(2)}deg)`, offset: .22, easing: STATE }, { transform: `rotate(${(-deep * .24).toFixed(2)}deg)`, offset: .64, easing: STATE }, { transform: "rotate(0deg)" }], 360, at, "none");
     };
-    pump(T0, 3.6); spray(T0, drops.filter((_, i) => i % 2 === 0), 1);
-    if (!re) { pump(T0 + 380, 3); spray(T0 + 380, drops.filter((_, i) => i % 2 === 1), .82); }
+    // the first press is a short puff; the second is the full throw, and its mist reaches the far side of the band
+    if (re) { pump(T0, 4.2); spray(T0, drops, 1.1); }
+    else { pump(T0, 3); spray(T0, drops.filter((_, i) => i % 2 === 0), .8); pump(T0 + 380, 4.6); spray(T0 + 380, drops.filter((_, i) => i % 2 === 1), 1.25); }
+    when(layer, T0, () => {
+      const L = layer.getBoundingClientRect(), b = o.getBoundingClientRect(), band = layer.parentNode, t = band.querySelector("h1"), n = band.querySelector(".shophead__n"), keep = [];
+      if (t) { const r = document.createRange(); r.selectNodeContents(t); keep.push(r.getBoundingClientRect()); }
+      if (n) keep.push(n.getBoundingClientRect());
+      mist(layer, b.left - L.left + .326 * b.width, b.top - L.top + .158 * b.height, re ? [{ at: 0, share: 1, reach: 1, life: 3 }] : [{ at: 0, share: .3, reach: .42, life: 2.5 }, { at: .38, share: .7, reach: 1, life: 4.4 }], keep.map(k => ({ l: k.left - L.left, r: k.right - L.left, t: k.top - L.top, b: k.bottom - L.top })));
+    });
     play(liq, [0, -5, 3.4, -4.2, 2.6, -1.4, .6, 0].map((v, j, a) => ({ transform: `rotate(${v}deg)`, offset: j / (a.length - 1), easing: SINE })), 1500, T0, "none");
   },
   bases(layer, go, host, re) {
@@ -777,41 +784,49 @@ function glint(layer, img, P, at, ms, hot) {
   const pre = new Image(); pre.src = img.currentSrc || img.src; (pre.decode ? pre.decode() : Promise.resolve()).then(go, go);
   return g;
 }
-// ---- mist in the air: fine droplets and soft cloud appear across the upper part of the tile, drift down and across, and thin out.
-// It belongs to the tile, not to a point on the photo.
-function veil(layer) {
-  const w = layer.clientWidth, h = layer.clientHeight, big = Math.max(1, Math.min(1.8, w / 400)), img = soft("255,252,246"), drops = [], puffs = [];
-  for (let i = 0; i < 150; i++) { const u = Math.random();
-    drops.push({ x: rnd(-.05, .95) * w, y: rnd(.04, .5) * h, vx: rnd(14, 46) * big, vy: rnd(10, 34) * big + 26 * u * big, r: big * (.5 + 1.2 * u * u), life: rnd(1.3, 2.6), age: -rnd(0, .7), ph: rnd(0, 6.28) }); }
-  for (let i = 0; i < 30; i++) puffs.push({ x: rnd(-.05, .85) * w, y: rnd(.06, .5) * h, vx: rnd(16, 44) * big, vy: rnd(8, 22) * big, r: rnd(46, 96) * big, life: rnd(2, 3.2), age: -rnd(0, .7) });
-  const side = x => Math.max(0, Math.min(1, Math.min(x, w - x) / 26));   // nothing is sliced by the side of the tile either
+// ---- the spritz: perfume leaves the nozzle fast, brakes hard in the air, and hangs. Each droplet has its own place to reach, spread
+// over the whole width, so one press fills the band. It holds for about 3 s, sinks a little and thins out one droplet at a time.
+// Almost all of it is fine points; the haze under them is faint, so it reads as atomised scent and never as smoke. Over the
+// title and the count (keep) it is held back, so the type keeps its contrast. Positions are worked out from age, so a slow phone sees the same spray.
+function mist(layer, ox, oy, shots, keep = []) {
+  const w = layer.clientWidth, h = layer.clientHeight, big = Math.max(1, Math.min(1.5, w / 700)), img = soft("255,252,246"), drops = [], haze = [];
+  const cl = v => Math.max(0, Math.min(1, v)), smooth = v => { const t = cl(v); return t * t * (3 - 2 * t); };
+  const held = (x, y, pad, floor) => { let k = 1; for (const z of keep) { const d = Math.hypot(Math.max(z.l - x, 0, x - z.r), Math.max(z.t - y, 0, y - z.b)); k = Math.min(k, floor + (1 - floor) * smooth((d - pad) / 26)); } return k; };
+  const aim = s => { const tx = ox + (rnd(0, w) - ox) * s.reach, fan = Math.abs(tx - ox) / Math.max(1, w); return [tx, oy + (rnd(.06, .94) * h - oy) * Math.min(1, .22 + fan * 1.7)]; };
+  const count = Math.min(540, Math.round(230 + w * .24));
+  for (const s of shots) {
+    for (let i = 0, n = Math.round(count * s.share); i < n; i++) { const [tx, ty] = aim(s), u = Math.random();
+      drops.push({ tx, ty, k: rnd(2.6, 4.8), age: -s.at - rnd(0, .1), life: s.life * rnd(.82, 1), r: big * (.55 + 1.15 * u * u * u), a: rnd(.5, .95), fall: rnd(6, 24), amp: rnd(1.5, 7), f: rnd(.7, 1.6), ph: rnd(0, 6.28) }); }
+    for (let i = 0, n = Math.round((14 + w / 36) * s.share); i < n; i++) { const [tx, ty] = aim(s);
+      haze.push({ tx, ty, k: rnd(2.2, 3.6), age: -s.at - rnd(0, .14), life: s.life * rnd(.86, 1), r: h * rnd(.26, .5), fall: rnd(4, 14) }); }
+  }
   fxCanvas(layer, (g, dt) => {
     let alive = 0;
-    for (const p of puffs) {
+    for (const p of haze) {
       p.age += dt; if (p.age >= p.life) continue; alive++; if (p.age < 0) continue;
-      p.x += p.vx * dt; p.y += p.vy * dt; const q = p.age / p.life, rad = p.r * (.7 + .6 * q);
-      g.globalAlpha = .27 * Math.min(1, p.age / .35) * Math.pow(1 - q, 1.4) * edge(p.y, rad * .4, h) * side(p.x);
-      g.drawImage(img, p.x - rad, p.y - rad, rad * 2, rad * 2);
+      const q = p.age / p.life, e = 1 - Math.exp(-p.k * p.age), x = ox + (p.tx - ox) * e, y = oy + (p.ty - oy) * e + p.fall * q * q, rad = p.r * (.35 + .95 * e);
+      const a = .1 * smooth(p.age / .3) * (1 - smooth((q - .55) / .45)) * cl(Math.min(x + rad, w - x + rad) / (rad + 30)) * held(x, y, rad * .55, .12); if (a <= .002) continue;
+      g.globalAlpha = a; g.drawImage(img, x - rad * 1.7, y - rad, rad * 3.4, rad * 2);
     }
-    g.fillStyle = "rgb(255,252,246)";
     for (const p of drops) {
       p.age += dt; if (p.age >= p.life) continue; alive++; if (p.age < 0) continue;
-      p.x += (p.vx + Math.sin(p.ph + p.age * 5) * 9) * dt; p.y += p.vy * dt; const q = p.age / p.life;
-      g.globalAlpha = .8 * Math.min(1, p.age / .15) * Math.pow(1 - q, 1.2) * edge(p.y, p.r, h) * side(p.x); if (g.globalAlpha <= 0) continue;
-      g.beginPath(); g.arc(p.x, p.y, p.r, 0, 6.283); g.fill();
+      const q = p.age / p.life, e = 1 - Math.exp(-p.k * p.age), x = ox + (p.tx - ox) * e + Math.sin(p.ph + p.age * p.f) * p.amp * e, y = oy + (p.ty - oy) * e + p.fall * q * q + Math.cos(p.ph + p.age * p.f * .8) * p.amp * .5 * e;
+      const a = p.a * cl(p.age / .05) * (1 - smooth((q - .6) / .4)) * edge(y, p.r, h) * cl(Math.min(x, w - x) / 14) * held(x, y, 0, .34); if (a <= .004) continue;
+      g.globalAlpha = a; const d = p.r * 1.9; g.drawImage(img, x - d, y - d, d * 2, d * 2);   // the soft round sprite: a droplet, never a square fleck
     }
     return alive > 0;
-  }, true);
+  });
 }
 
 const ACT = {
-  // scent in the air: a fine mist drifts down through the whole tile and thins out, and the light runs once across the bottle.
+  // the spritz: the bottle takes two presses, the second harder; its mist opens across the whole tile BEHIND the piece, and the light runs once across the bottle
   cologne({ layer, img, K, P, pin, move }) {
     pin((K.l + K.r) / 2, K.b);
-    const up = [{ transform: turn(0, 0), easing: ENTER }, { transform: turn(0, -7), offset: .3, easing: SINE }, { transform: turn(0, 0), offset: .75, easing: SINE }, { transform: turn(0, -1.5), offset: .88, easing: SINE }, { transform: turn(0, 0) }];
-    move(up, 900, T0 - 120);
-    when(layer, T0 - 60, () => veil(layer));
-    play(glint(layer, img, P, T0 + 260, 900), up, 900, T0 - 120, "none");   // the light is cut to the bottle, so it rides with the bottle
+    const up = [{ transform: turn(0, 0), easing: STRIKE }, { transform: turn(0, 2.4), offset: .08, easing: ENTER }, { transform: turn(0, 0), offset: .26, easing: STRIKE }, { transform: turn(0, 4), offset: .36, easing: ENTER },
+      { transform: turn(0, -6), offset: .58, easing: SINE }, { transform: turn(0, 0), offset: .84, easing: SINE }, { transform: turn(0, -1.2), offset: .92, easing: SINE }, { transform: turn(0, 0) }];
+    move(up, 1150, T0 - 40);
+    when(layer, T0, () => mist(layer, P.x + (K.l + K.r) / 2 * P.w, P.y + (K.t + (K.b - K.t) * .12) * P.h, [{ at: 0, share: .3, reach: .5, life: 2.5 }, { at: .38, share: .7, reach: 1, life: 4.4 }]));
+    play(glint(layer, img, P, T0 + 520, 900), up, 1150, T0 - 40, "none");   // the light is cut to the bottle, so it rides with the bottle
   },
   // glass is held up to the light: tipped, a glint runs across it (cut to the glass by its own photo), let go, it rocks home
   bases({ layer, img, K, P, pin, move }) {
@@ -990,7 +1005,7 @@ document.addEventListener("click", e => {
   const band = e.target.closest(".shophead[data-cat], .shophead[data-fx]"); if (!band || RM.matches || e.target.closest("a,button,input,select,label,summary")) return;
   const sel = window.getSelection && getSelection(); if (sel && !sel.isCollapsed && band.contains(sel.anchorNode)) return; // the end of a drag-select of the title is not a tap
   const old = band.querySelector(":scope > .fx"); if (!old) return;
-  if (old.getAnimations({ subtree: true }).some(a => a.playState === "running" || a.pending)) return;   // something is still moving: an arrival is never cut short
+  if (old.querySelector("canvas") || old.getAnimations({ subtree: true }).some(a => a.playState === "running" || a.pending)) return;   // something is still moving: an arrival is never cut short
   old.remove(); live = null; playedKey = ""; again = true; try { place(); } finally { again = false; }
 });
 place();
