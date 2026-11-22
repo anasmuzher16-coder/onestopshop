@@ -56,7 +56,7 @@ export async function placeOrder(request, env, url) {
       const d = await deliveryQuote(env, { line1, city, postal: dest.full }, request.headers.get("CF-Connecting-IP") || "local");
       if (d.status !== "ok") return json({ error: d.status === "far" ? `${dest.full} is past our 25 km delivery area. You can still ship it or pick it up free.` : d.status === "down" ? "Delivery cannot be checked right now. You can still ship it or pick it up free." : "We could not confirm that address. Check the street number and postal code.", field: "line1", delivery: d.status }, 409);
       if (body.delivery_fee_cents !== d.fee_cents) return json({ error: `Delivery to this address is $${d.fee_cents / 100}. Check the new total, then place your order.`, delivery: "ok", fee_cents: d.fee_cents }, 409);
-      shipping = d.fee_cents; service = "Local delivery"; province = "ON"; quote = { id: "local", metres: d.metres };
+      shipping = d.fee_cents; service = "Local delivery"; province = "ON"; quote = { id: "local", metres: d.metres, ...(d.confirm ? { confirm_address: true } : {}) };
       address = { demo: true, line1, city, province, postal: dest.full };
     } else {
     const parcels = rates.pack(lines), opts = rates.quote(dest, parcels);

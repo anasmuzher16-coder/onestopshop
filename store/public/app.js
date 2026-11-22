@@ -198,7 +198,7 @@ function viewProduct(sku) {
         <h2 class="h3" id="ways-h">Delivery, shipping and pickup</h2>
         ${opts.length ? `<p class="ways__to">To ${esc(state.dest.full)}${state.dest.city ? ", " + esc(state.dest.city) : ""}. <button class="link" type="button" data-open-postal>Change</button></p>
         <table class="ledger"><thead><tr><th scope="col">Service</th><th scope="col">Arrives</th><th scope="col" class="r">Cost</th></tr></thead>
-        <tbody>${localArea(state.dest) && p.ship !== "pickup_only" ? `<tr><td>Local delivery</td><td>From the shop</td><td class="r num">$10 or $15</td></tr>` : ""}${opts.map(o => `<tr><td>${o.carrier} ${o.service}</td><td>${days(o.days)}</td><td class="r num">${money(o.total)}</td></tr>`).join("")}
+        <tbody>${localRow(p)}${opts.map(o => `<tr><td>${o.carrier} ${o.service}</td><td>${days(o.days)}</td><td class="r num">${money(o.total)}</td></tr>`).join("")}
         <tr><td>Pick up at the Windsor counter</td><td>Today</td><td class="r num">Free</td></tr></tbody></table>`
         : `<p class="ways__to">Local delivery from $10 near Windsor. Free pickup. ${p.ship === "ground_only" ? "Ships by ground across Canada." : "Ships across Canada."}</p><button class="btn btn--ghost btn--wide" type="button" data-open-postal>Price it to my postal code</button>`}
       </section>
@@ -303,18 +303,50 @@ function viewSearch() {
 }
 
 // One place decides how an order is travelling, so the cart, the dock and checkout can never disagree.
+let localTicket = 0;
+const localQ = () => state.localQ && state.localQ.postal === state.dest?.full ? state.localQ : null;
+// The postal code alone gives the shopper one answer: $10, $15, or too far.
+async function priceLocal() {
+  const d = state.dest; if (!d || !d.complete || !localArea(d) || localQ()) return;
+  const postal = d.full, ticket = ++localTicket; state.localQ = { postal, status: "checking" };
+  let a = { status: "down" }; try { const r = await fetch("/api/delivery", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ postal }), signal: AbortSignal.timeout?.(20000) }); a = await r.json(); } catch {}
+  if (ticket !== localTicket) return;   // a newer lookup owns the answer
+  if (state.dest?.full !== postal) { state.localQ = null; return; }
+  state.localQ = { postal, status: a.status, fee_cents: a.fee_cents };
+  const on = route().replace(/^#\/?/, "").split("/")[0], f = $("[data-checkout]");
+  if (f) {   // never rebuild a form someone is typing in
+    const box = f.querySelector("[data-deliv-msg]"), btn = f.querySelector('button[type="submit"]');
+    if (box && !btn.disabled) { if (a.status === "ok") refreshDelivery(f); else if (a.status === "far" || a.status === "down") { if (a.status === "far") state.farFor = postal; box.innerHTML = deliveryMsg(a.status); } }
+    return;
+  }
+  if (["cart", "p", "checkout"].includes(on)) {
+    const note = document.activeElement?.matches?.("[data-note]") ? document.activeElement : null, at = note ? [note.selectionStart, note.selectionEnd] : null;
+    render();
+    if (note) { const n = $("[data-note]"); if (n) { n.focus({ preventScroll: true }); n.setSelectionRange(at[0], at[1]); } }
+  }
+}
+function localRow(p) {
+  const q = localQ(); if (!state.dest?.complete || !localArea(state.dest) || p.ship === "pickup_only" || !q || q.status === "far" || q.status === "down") return "";
+  return `<tr><td>Local delivery</td><td>From the shop</td><td class="r num">${q.status === "ok" ? money(q.fee_cents / 100) : q.status === "checking" ? "Checking" : "At checkout"}</td></tr>`;
+}
 function shipChoice(lines) {
-  const parcels = pack(lines), opts = state.dest ? quote(state.dest, parcels) : [];
-  const canLocal = localArea(state.dest) && state.localOff !== state.dest.full && lines.every(l => l.product.ship !== "pickup_only");
-  const pickup = state.ship === "pickup", local = !pickup && canLocal && (state.ship === "local" || !state.ship);
-  return { parcels, opts, canLocal, pickup, local, chosen: pickup || local || state.ship === "local" ? null : opts.find(o => o.id === state.ship) || opts[0] || null };
+  const parcels = pack(lines), opts = state.dest ? quote(state.dest, parcels) : [], q = localQ();
+  const near = localArea(state.dest) && !!state.dest.complete && state.localOff !== state.dest.full && lines.every(l => l.product.ship !== "pickup_only");
+  const checking = near && (!q || q.status === "checking"), canLocal = near && !!q && (q.status === "ok" || q.status === "address" || q.status === "unsure");
+  const localFee = canLocal && q.status === "ok" ? q.fee_cents / 100 : null;
+  const pickup = state.ship === "pickup", local = !pickup && canLocal && (state.ship === "local" || !state.ship), waiting = checking && (!state.ship || state.ship === "local");
+  return { parcels, opts, canLocal, checking, localFee, status: near && q ? q.status : null, pickup, local, chosen: pickup || local || waiting || state.ship === "local" ? null : opts.find(o => o.id === state.ship) || opts[0] || null };
 }
 function viewCart() {
   const lines = cartLines();
   if (!lines.length) return `${band("cart", "gilt", "Your cart", "Nothing in it yet.")}<section class="empty"><p class="lead">Start with the <a class="link" href="/shop/hookahs">hookahs</a>, the <a class="link" href="/shop/bowls">bowls</a>, or <a class="link" href="/set">build a set</a>.</p></section>`;
-  if (state.ship === "local" && !shipChoice(lines).canLocal) { state.ship = null; store.set("ship", null); }   // the cart is where a new way of sending it is shown and chosen
-  const { parcels, opts, canLocal, pickup, local, chosen } = shipChoice(lines), sub = lines.reduce((a, l) => a + l.product.price * l.qty, 0);
+  const was = shipChoice(lines); if (state.ship === "local" && !was.canLocal && !was.checking) { state.ship = null; store.set("ship", null); }   // the cart is where a new way of sending it is shown and chosen
+  const { parcels, opts, canLocal, checking, localFee, status, pickup, local, chosen } = shipChoice(lines), sub = lines.reduce((a, l) => a + l.product.price * l.qty, 0);
   const ready = pickup || local || !!chosen;
+  const localNote = !state.dest ? "" : !state.dest.complete && localArea(state.dest) ? `<p class="note">Add your full postal code to see your delivery price. <button class="link" type="button" data-open-postal>Add it</button></p>`
+    : checking ? `<p class="note" role="status">Checking delivery to ${esc(state.dest.full)}.</p>`
+    : status === "far" || (state.dest.complete && !localArea(state.dest) && state.dest.prov === "ON" && /^N[089]/.test(state.dest.fsa)) ? `<p class="note">${esc(state.dest.full)} is past our 25 km delivery area. You can still ship it or pick it up free.</p>`
+    : status === "down" ? `<p class="note">We cannot check delivery right now. You can still ship it or pick it up free.</p>` : "";
   const tooHeavy = state.dest && !opts.length && !canLocal;
   return `
   ${band("cart", "gilt", "Your cart", `<span class="num">${lines.reduce((a, l) => a + l.qty, 0)}</span> ${lines.reduce((a, l) => a + l.qty, 0) === 1 ? "piece" : "pieces"}, packed at the counter`)}
@@ -330,9 +362,10 @@ function viewCart() {
       <h2 class="h3">How we pack it</h2>
       <ol class="boxes">${parcels.map(p => `<li><span class="num">${p.l} \u00d7 ${p.w} \u00d7 ${p.h} cm, ${p.kg} kg</span> ${esc(p.label.toLowerCase())}, ${p.items.length} ${p.items.length === 1 ? "item" : "items"}</li>`).join("")}</ol>
       ${!state.dest ? `<button class="btn btn--wide" type="button" data-open-postal>Price shipping to my postal code</button>` : ""}
+      ${localNote}
       ${tooHeavy ? `<p class="note">One of these boxes is over the 30 kg carrier limit. Call the counter at 519-255-2222 and we will quote it by hand.</p>` : ""}
       ${opts.length || canLocal ? `<fieldset class="opts"><legend>Getting it to ${esc(state.dest.full)} <button class="link" type="button" data-open-postal>Change</button></legend>
-        ${canLocal ? `<label class="opt"><input type="radio" name="ship" value="local" ${local ? "checked" : ""}><span class="opt__name">Local delivery<small>Within 25 km of the shop. Exact price at checkout</small></span><span class="num">$10 or $15</span></label>` : ""}
+        ${canLocal ? `<label class="opt"><input type="radio" name="ship" value="local" ${local ? "checked" : ""}><span class="opt__name">Local delivery<small>${localFee !== null ? "From our Windsor shop to your door" : "We price it from your street address at checkout"}</small></span><span class="num">${localFee !== null ? money(localFee) : "At checkout"}</span></label>` : ""}
         <label class="opt"><input type="radio" name="ship" value="pickup" ${pickup ? "checked" : ""}><span class="opt__name">Pick up at the Windsor counter<small>Ready the same day</small></span><span class="num">Free</span></label>
         ${opts.map(o => `<label class="opt"><input type="radio" name="ship" value="${o.id}" ${chosen && o.id === chosen.id ? "checked" : ""}><span class="opt__name">${o.carrier} ${o.service}<small>${days(o.days)}</small></span><span class="num">${money(o.total)}</span></label>`).join("")}
       </fieldset>
@@ -345,8 +378,8 @@ function viewCart() {
       <textarea class="field field--text field--area" id="note" data-note maxlength="240" rows="2" placeholder="Happy birthday, from all of us">${esc(state.note)}</textarea></div>
     <dl class="totals">
       <div><dt>Items</dt><dd class="num">${money(sub)}</dd></div>
-      <div><dt>${pickup ? "Pickup" : local ? "Delivery" : "Shipping"}</dt><dd class="num">${pickup ? "Free" : local ? "$10 or $15" : chosen ? money(chosen.total) : "add postal code"}</dd></div>
-      <div class="totals__door"><dt>${local ? "Total before tax, from" : "Total before tax"}</dt><dd class="num">${local ? money(sub + 10) : chosen ? money(sub + chosen.total) : money(sub)}</dd></div>
+      <div><dt>${pickup ? "Pickup" : local ? "Delivery" : "Shipping"}</dt><dd class="num">${pickup ? "Free" : local ? (localFee !== null ? money(localFee) : "At checkout") : chosen ? money(chosen.total) : checking ? "Checking" : "add postal code"}</dd></div>
+      <div class="totals__door"><dt>${local && localFee === null ? "Total before delivery and tax" : "Total before tax"}</dt><dd class="num">${local ? money(sub + (localFee || 0)) : chosen ? money(sub + chosen.total) : money(sub)}</dd></div>
     </dl>
     ${ready ? `<a class="btn btn--wide" href="/checkout">Check out</a>` : `<button class="btn btn--wide" type="button" disabled>Check out</button>`}
     <p class="fine">Tax is added at checkout.</p>
@@ -359,7 +392,7 @@ function viewShipping() {
   <section class="reading">
     <p class="lead">We pack every order at the counter in Windsor and ship to every province and territory.</p>
     <h2 class="h3">Local delivery</h2>
-    <p>We deliver from the shop for $10 up to 10 km and $15 up to 25 km by road, per order, plus tax. Enter your address at checkout and we confirm the price before you order.</p>
+    <p>We deliver from the shop for $10 up to 10 km and $15 up to 25 km by road, per order, plus tax. Enter your postal code and we show your exact price, or tell you if you are past our delivery area.</p>
     <h2 class="h3">What it costs</h2>
     <p>Shipping is worked out from the packed weight and box size of your order and the carrier\u2019s rate to your postal code. You see the cost on the product page and in the cart before you pay.</p>
     <p><button class="btn btn--ghost" type="button" data-open-postal>${state.dest ? "Estimating to " + esc(state.dest.full) + ". Change" : "Enter my postal code"}</button></p>
@@ -389,7 +422,7 @@ function syncChrome() {
     : ra === "set"
     ? `<a class="dock__side" href="/shop">Shop</a><button class="dock__buy" type="button" data-add-set>Add the set <span class="num">${whole(setPicks().reduce((a, p) => a + p.price, 0))}</span></button><a class="dock__side" href="/cart" aria-label="Cart">${count}</a>`
     : ra === "cart" && lines.length
-    ? `<a class="dock__side" href="/shop">Shop</a>${canPay ? `<a class="dock__buy" href="/checkout">Check out <span class="num">${sc && sc.local ? "from " : ""}${money(sub + (ship ? ship.total : sc && sc.local ? 10 : 0))}</span></a>` : `<button class="dock__buy" type="button" data-open-postal>Add postal code for shipping</button>`}<span class="dock__side">${count}</span>`
+    ? `<a class="dock__side" href="/shop">Shop</a>${canPay ? `<a class="dock__buy" href="/checkout">Check out <span class="num">${money(sub + (ship ? ship.total : sc && sc.local ? sc.localFee || 0 : 0))}</span></a>` : sc && sc.checking ? `<span class="dock__buy dock__buy--off">Checking delivery</span>` : `<button class="dock__buy" type="button" data-open-postal>Add postal code for shipping</button>`}<span class="dock__side">${count}</span>`
     : `<a href="/" ${h === "#/" ? 'aria-current="page"' : ""}>Home</a><a href="/shop" ${h.startsWith("#/shop") ? 'aria-current="page"' : ""}>Shop</a><a href="/search" ${h === "#/search" ? 'aria-current="page"' : ""}>Search</a><a href="/cart" ${h === "#/cart" ? 'aria-current="page"' : ""}>Cart ${count}</a>`;
 }
 const sheet = $("[data-postal-sheet]"), postalInput = $("#postal"), postalErr = $("#postal-err");
@@ -414,6 +447,7 @@ $("[data-postal-form]").addEventListener("submit", e => {
   e.preventDefault();
   const d = parsePostal(postalInput.value);
   if (!d) { postalErr.hidden = false; postalInput.setAttribute("aria-invalid", "true"); postalInput.focus(); return; }
+  if (state.localQ?.status === "down") state.localQ = null;   // a new try after the map service was unavailable
   state.dest = d; store.set("postal", d.full); sheet.close(); render();
 });
 postalInput.addEventListener("input", () => { postalErr.hidden = true; postalInput.removeAttribute("aria-invalid"); });
@@ -427,13 +461,13 @@ function focusKey(el) {
 }
 // ---------- checkout and confirmation ----------
 const deliveryKey = () => [state.form?.line1, state.form?.city, state.dest?.full].map(s => String(s || "").trim().toLowerCase()).join("|");
-const deliveryFeeNow = () => state.delivery && state.delivery.key === deliveryKey() ? state.delivery.fee_cents / 100 : null;
+const deliveryFeeNow = () => state.refused === deliveryKey() ? null : state.delivery && state.delivery.key === deliveryKey() ? state.delivery.fee_cents / 100 : localQ()?.status === "ok" ? localQ().fee_cents / 100 : null;
 function coTotals(lines, sc) {
   const { pickup, local, chosen } = sc, fee = local ? deliveryFeeNow() : null, sub = lines.reduce((a, l) => a + l.product.price * l.qty, 0), ship = pickup ? 0 : local ? fee || 0 : chosen.total, prov = pickup || local ? "ON" : state.dest.prov;
   const tax = Math.round((sub + ship) * taxRate(prov) * 100) / 100, units = lines.reduce((a, l) => a + l.qty, 0);
   return `<dl class="totals">
         <div><dt>${units} ${units === 1 ? "item" : "items"}</dt><dd class="num">${money(sub)}</dd></div>
-        <div><dt>${pickup ? "Pickup" : local ? "Delivery" : "Shipping"}</dt><dd class="num">${pickup ? "Free" : local ? (fee === null ? "$10 or $15" : money(fee)) : money(ship)}</dd></div>
+        <div><dt>${pickup ? "Pickup" : local ? "Delivery" : "Shipping"}</dt><dd class="num">${pickup ? "Free" : local ? (fee === null ? "Enter your address" : money(fee)) : money(ship)}</dd></div>
         <div><dt>${taxLabel(prov)}</dt><dd class="num">${money(tax)}</dd></div>
         <div class="totals__door"><dt>${local && fee === null ? "Total before delivery" : "Total"}</dt><dd class="num">${money(sub + ship + tax)}</dd></div>
       </dl>`;
@@ -442,6 +476,8 @@ function viewCheckout() {
   const lines = cartLines();
   if (!lines.length) return viewCart();
   const sc = shipChoice(lines), { pickup, local, chosen } = sc;
+  if (!state.ship && (sc.status === "far" || sc.status === "down")) return `${band("checkout", "emerald", "One step back.")}<section class="empty"><p class="lead">${sc.status === "far" ? `${esc(state.dest.full)} is past our 25 km delivery area.` : "We cannot check delivery right now."} You can still <a class="link" href="/cart">ship it or pick it up free</a>.</p></section>`;
+  if (sc.checking && !pickup && !chosen && !local) return `${band("checkout", "emerald", "Checkout")}<section class="empty"><p class="lead" role="status">Checking delivery to ${esc(state.dest.full)}.</p></section>`;
   if (!pickup && !local && !chosen) return `${band("checkout", "emerald", "One step back.")}<section class="empty"><p class="lead">Choose shipping or pickup in <a class="link" href="/cart">your cart</a> first.</p></section>`;
   const f = state.form || {}, quoted = local && deliveryFeeNow() !== null;
   const field = (id, label, attrs, hint = "") => `<label class="field__label" for="co-${id}">${label}${hint ? ` <span class="fine">${hint}</span>` : ""}</label><input class="field" id="co-${id}" name="${id}" value="${esc(f[id] || "")}" ${attrs}>`;
@@ -506,7 +542,7 @@ async function checkDelivery(f, btn) {
   let d = { status: "down" }, key = deliveryKey();
   try { const r = await fetch("/api/delivery", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ line1: state.form.line1, city: state.form.city, postal: state.dest.full }) }); d = await r.json(); } catch {}
   btn.disabled = false; if (d.status === "far") state.farFor = state.dest.full;
-  state.delivery = d.status === "ok" && key === deliveryKey() ? { key, fee_cents: d.fee_cents } : null;
+  state.delivery = d.status === "ok" && key === deliveryKey() ? { key, fee_cents: d.fee_cents } : null; state.refused = d.status === "ok" ? null : key;
   refreshDelivery(f, d.status === "ok" ? undefined : deliveryMsg(d.status));
 }
 document.addEventListener("submit", async e => {
@@ -516,6 +552,7 @@ document.addEventListener("submit", async e => {
   const v = n => (f.elements[n] ? f.elements[n].value.trim() : "");
   if (!v("name")) return fail("Tell us the name for the order.", "name");
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v("email"))) return fail("That email address does not look right.", "email");
+  if (!pickup && !local && !state.ship && (sc.status === "far" || sc.status === "down")) return fail("Delivery is not available here. Choose shipping or pickup in your cart.");
   if (!pickup && !v("line1")) return fail("Enter the street address.", "line1");
   if (!pickup && !v("city")) return fail("Enter the city or town.", "city");
   if (local) {
@@ -525,13 +562,13 @@ document.addEventListener("submit", async e => {
   }
   btn.disabled = true; btn.textContent = "Placing your order"; err.hidden = true;
   try {
-    const r = await fetch("/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ lines: state.cart, method: pickup ? "pickup" : "ship", service: local ? "local" : chosen && chosen.id, delivery_fee_cents: local ? state.delivery.fee_cents : undefined, postal: state.dest && state.dest.full,
+    const r = await fetch("/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ lines: state.cart, method: pickup ? "pickup" : "ship", service: local ? "local" : chosen && chosen.id, delivery_fee_cents: local ? Math.round(deliveryFeeNow() * 100) : undefined, postal: state.dest && state.dest.full,
       name: v("name"), email: v("email"), phone: v("phone"), note: state.note, address: { line1: v("line1"), city: v("city") } }) });
     const data = await r.json().catch(() => ({}));
-    if (!r.ok) { btn.disabled = false; btn.textContent = "Place order"; if (local && data.delivery) { state.delivery = data.delivery === "ok" ? { key: deliveryKey(), fee_cents: data.fee_cents } : null; refreshDelivery(f, data.delivery === "ok" ? undefined : deliveryMsg(data.delivery)); if (data.delivery !== "ok") return; } if (typeof data.stock === "number" && bySku[data.sku]) bySku[data.sku].stock = data.stock; return fail(data.error || "That did not go through. Please try again.", data.field); }
+    if (!r.ok) { btn.disabled = false; btn.textContent = "Place order"; if (local && data.delivery) { if (data.delivery === "far") state.farFor = state.dest.full; state.delivery = data.delivery === "ok" ? { key: deliveryKey(), fee_cents: data.fee_cents } : null; state.refused = data.delivery === "ok" ? null : deliveryKey(); refreshDelivery(f, data.delivery === "ok" ? undefined : deliveryMsg(data.delivery)); if (data.delivery !== "ok") return; } if (typeof data.stock === "number" && bySku[data.sku]) bySku[data.sku].stock = data.stock; return fail(data.error || "That did not go through. Please try again.", data.field); }
     try { sessionStorage.setItem("oss:order:" + data.order.id, JSON.stringify(data.order)); } catch {}
     for (const i of data.order.items) if (bySku[i.sku]) bySku[i.sku].stock = Math.max(0, bySku[i.sku].stock - i.qty);
-    state.cart = []; saveCart(); state.delivery = null; state.form = {}; state.note = ""; store.set("note", "");
+    state.cart = []; saveCart(); state.delivery = null; state.refused = null; state.form = {}; state.note = ""; store.set("note", "");
     navigate("/order/" + data.order.id, true);
   } catch { btn.disabled = false; btn.textContent = "Place order"; fail("We could not reach the shop. Check your connection and try again."); }
 });
@@ -563,6 +600,7 @@ function render() {
   document.body.dataset.route = a || "home";
   syncChrome();
   if (keep) { const el = document.querySelector(keep); if (el) el.focus({ preventScroll: true }); }
+  priceLocal();
 }
 let last = route();
 document.addEventListener("click", e => {

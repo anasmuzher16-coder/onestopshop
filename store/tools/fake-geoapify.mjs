@@ -5,6 +5,10 @@ const place = (lat, over = {}) => ({ lat, lon: -83, country_code: "ca", state_co
 createServer((req, res) => {
   const u = new URL(req.url, "http://x"), send = (o, s = 200) => { res.writeHead(s, { "Content-Type": "application/json" }); res.end(JSON.stringify(o)); };
   if (u.pathname === "/v1/geocode/search") {
+    if (u.searchParams.get("type") === "postcode") {
+      const code = (u.searchParams.get("text") || "").slice(0, 7), km = { "N9A 1A1": 5, "N8N 1W9": 12.5, "N8M 1A8": 30, "N8X 1A1": 10, "N9H 1A1": 25 }[code];
+      return send({ results: km === undefined ? [] : [place(42 + km / 1000, { postcode: code, result_type: "postcode" })] });
+    }
     const t = u.searchParams.get("text") || "", pc = (t.match(/[A-Z]\d[A-Z] \d[A-Z]\d/) || ["N9A 1A1"])[0];
     if (/^760 Wyandotte/.test(t)) return send({ results: [place(42, { postcode: "N9A 3J4", housenumber: "760" })] });
     if (/NOTFOUND/.test(t)) return send({ results: [] });
@@ -12,6 +16,7 @@ createServer((req, res) => {
     if (/DETROIT/.test(t)) return send({ results: [place(42.3, { state_code: "MI", postcode: pc })] });
     if (/WRONGPC/.test(t)) return send({ results: [place(42.1, { postcode: "M5V 2T6" })] });
     if (/VAGUE/.test(t)) return send({ results: [place(42.1, { postcode: pc, result_type: "city" })] });
+    if (/FARHIT/.test(t)) return send({ results: [place(42.19, { housenumber: "12", result_type: "building" })] });
     if (/WRONGNUM/.test(t)) return send({ results: [place(42.005, { postcode: pc, housenumber: "12" })] });
     if (/ROADSAME/.test(t)) return send({ results: [place(42.005, { postcode: pc, result_type: "street", bbox: { lat1: 42.004, lon1: -83, lat2: 42.006, lon2: -83 } })] });
     if (/ROADSPLIT/.test(t)) return send({ results: [place(42.01, { postcode: pc, result_type: "street", bbox: { lat1: 42.005, lon1: -83, lat2: 42.02, lon2: -83 } })] });
