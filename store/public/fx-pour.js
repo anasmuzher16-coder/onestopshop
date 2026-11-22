@@ -28,8 +28,14 @@ const SRC = {
   grad: `${H} ${NEAR} uniform sampler2D P, U; void main(){ o = vec4(texture(U, v).xy - .5 * vec2(texture(P, R()).r - texture(P, L()).r, texture(P, T()).r - texture(P, B()).r), 0., 1.); }`,
   splat: `${H} uniform sampler2D Q; uniform vec2 p; uniform vec3 c; uniform float r, asp; void main(){ vec2 d = v - p; d.x *= asp; o = texture(Q, v) + vec4(c * exp(-dot(d, d) / r), 0.); }`,
   feed: `${H} ${TOR} uniform sampler2D Q; uniform float rate; void main(){ o = texture(Q, v) + vec4(rate * tor(v), 0., 0., 0.); }`,
-  show: `${H} ${TOR} uniform sampler2D D; uniform vec3 c[5]; float h(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
-    void main(){ vec2 e = 1.4 / vec2(textureSize(D, 0)); float q = max(.4 * texture(D, v).r + .15 * (texture(D, v + e).r + texture(D, v - e).r + texture(D, v + vec2(e.x, -e.y)).r + texture(D, v + vec2(-e.x, e.y)).r), 0.); if (ta.x > 0. && ta.y > 0.) q += tor(v); float t = pow(1. - exp(-.8 * q), 1.25); vec3 s;
+  // the thick opening bank lives in its own channel, so the slow drift underneath is untouched and is exactly what remains when the bank has gone
+  bank: `${H} uniform sampler2D Q; uniform float front, fill, keep, cut, w, asp; float h(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+    float n(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3. - 2. * f); return mix(mix(h(i), h(i + vec2(1., 0.)), f.x), mix(h(i + vec2(0., 1.)), h(i + vec2(1., 1.)), f.x), f.y); }
+    float fb(vec2 p){ float s = 0., a = .5; for (int i = 0; i < 4; i++) { s += a * n(p); p = p * 2.03 + vec2(7.1, 3.3); a *= .5; } return s / .9375; }
+    void main(){ vec2 p = vec2(v.x * asp, v.y) * 2.6 - vec2(0., w * .1), d = vec2(fb(p + w * .03), fb(p + vec2(5.2, 1.3) - w * .02)); float m = fb(p + 1.8 * d), edge = 1. - smoothstep(front - .24, front + .1, v.y + .34 * (m - .5)), goal = edge * (.9 + 2.2 * smoothstep(.25, .75, m));
+      vec4 q = texture(Q, v); float g = mix(q.g, max(q.g, goal), fill); o = vec4(q.r, max(0., g * keep - cut), q.b, q.a); }`,
+  show: `${H} ${TOR} uniform sampler2D D; uniform vec3 c[5]; float h(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); } float dn(vec2 p){ vec2 s = texture(D, p).rg; return s.r + s.g; }
+    void main(){ vec2 e = 1.4 / vec2(textureSize(D, 0)); float q = max(.4 * dn(v) + .15 * (dn(v + e) + dn(v - e) + dn(v + vec2(e.x, -e.y)) + dn(v + vec2(-e.x, e.y))), 0.); if (ta.x > 0. && ta.y > 0.) q += tor(v); float t = pow(1. - exp(-.8 * q), 1.25); vec3 s;
       if (t < .25) s = mix(c[0], c[1], t / .25); else if (t < .55) s = mix(c[1], c[2], (t - .25) / .3); else if (t < .82) s = mix(c[2], c[3], (t - .55) / .27); else s = mix(c[3], c[4], (t - .82) / .18);
       o = vec4(s + (h(gl_FragCoord.xy) - .5) / 255., 1.); }`,
 };
@@ -108,6 +114,13 @@ function emit(dt, raw) {
       splat(F.u, e.x, e.y, e.r * 1.4, Math.cos(a) * .5 * go * dt, Math.sin(a) * .5 * go * dt, 0); splat(F.d, e.x, e.y, e.r, e.power * go * raw, 0, 0); e.x += Math.cos(a) * .0007 * dt / asp; e.y += Math.sin(a) * .0007 * dt; }
   }
 }
+// after the funnel has landed, a thick bank climbs from the floor, peaks near 3 s, then wears away thin parts first; timed by the clock so a slow phone sees the same thing
+const BANK_END = 6.8;
+function bank(raw) {
+  if (!heavy || T >= BANK_END) return;
+  const el = Math.min(8, owed || raw), wear = ease(3, 6.4, T), feed = 1 - ease(2.7, 3.3, T);
+  pass("bank", F.d.b, n => { gl.uniform1i(n.Q, tex(0, F.d.a)); gl.uniform1f(n.front, -.25 + 1.6 * ease(1.2, 2.8, T)); gl.uniform1f(n.fill, feed * (1 - Math.pow(.88, el))); gl.uniform1f(n.keep, Math.pow(1 - .028 * wear, el)); gl.uniform1f(n.cut, .006 * wear * el); gl.uniform1f(n.w, T + seed); gl.uniform1f(n.asp, asp); }); F.d.swap();
+}
 function step(raw) {
   const dt = raw * pace(), u = F.u, tx = () => gl.uniform2f(P[cur].u.tx, 1 / u.a.w, 1 / u.a.h); let cur = "vort";
   pass("vort", u.b, n => { gl.uniform1i(n.U, tex(0, u.a)); tx(); gl.uniform1f(n.e, .035); gl.uniform1f(n.dt, dt); }); u.swap();
@@ -120,6 +133,7 @@ function step(raw) {
   pass("adv", u.b, n => { gl.uniform1i(n.U, tex(0, u.a)); gl.uniform1i(n.Q, tex(0, u.a)); gl.uniform2f(n.ts, ts[0], ts[1]); gl.uniform1f(n.dt, dt); gl.uniform1f(n.k, 1); gl.uniform1f(n.lift, 0); gl.uniform1f(n.w, T); }); u.swap();
   const thin = heavy && T < HOLD ? .9992 : heavy && T < SETTLE ? .9992 - .0062 * ease(HOLD, SETTLE, T) : .993 + .0032 * ease(SETTLE, SETTLE + 3, T); // it thins after the heavy opening, then what is added and what fades stay in balance
   pass("adv", F.d.b, n => { gl.uniform1i(n.U, tex(0, u.a)); gl.uniform1i(n.Q, tex(1, F.d.a)); gl.uniform2f(n.ts, ts[0], ts[1]); gl.uniform1f(n.dt, dt); gl.uniform1f(n.k, Math.pow(thin, raw)); gl.uniform1f(n.lift, raw * (heavy ? 2 - 1.8 * ease(HOLD, SETTLE + 2, T) : .2)); gl.uniform1f(n.w, T + seed); }); F.d.swap();
+  bank(raw);
   if (torNow() && T > 3) { pass("feed", F.d.b, n => { gl.uniform1i(n.Q, tex(0, F.d.a)); torUniforms(n); gl.uniform1f(n.rate, .02 * Math.min(8, owed || raw)); }); F.d.swap(); }
   owed = 0;
 }
