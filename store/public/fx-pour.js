@@ -1,5 +1,5 @@
-// The Pour: a real smoke simulation that lives on the black page ground of the hookah section, behind every word, photo and button.
-// It opens heavy, pouring out from under the header for 3 to 5 seconds, thins, then keeps moving for as long as the page is open.
+// The hookah section's smoke: a real simulation that lives on the black page ground, behind every word, photo and button.
+// It opens heavy, rising from the bottom of the screen for 3 to 5 seconds, thins, then keeps drifting slowly upward while the page is open.
 // Nothing is looped or played back: the flow is computed live and new drifts start at random, so it never repeats.
 // WebGL2, no library, no images. With motion turned off, or on a phone that cannot run it, a designed still stands in.
 const RM = matchMedia("(prefers-reduced-motion: reduce)"), KEY = "oss:pour-open";
@@ -10,10 +10,10 @@ const H = `#version 300 es
 precision highp float; precision highp sampler2D; in vec2 v; out vec4 o;`;
 const NEAR = `uniform vec2 tx; vec2 L(){return v-vec2(tx.x,0.);} vec2 R(){return v+vec2(tx.x,0.);} vec2 B(){return v-vec2(0.,tx.y);} vec2 T(){return v+vec2(0.,tx.y);}`;
 const SRC = {
-  adv: `${H} uniform sampler2D U, Q; uniform vec2 ts; uniform float dt, k; void main(){ o = k * texture(Q, v - dt * texture(U, v).xy * ts); }`,
+  adv: `${H} uniform sampler2D U, Q; uniform vec2 ts; uniform float dt, k, lift, w; void main(){ vec2 c = v - (dt * texture(U, v).xy + lift * vec2(.62 * sin(v.y * 8. + w * .22 + 2.2 * sin(v.x * 6.3 - w * .13)), .72 + .28 * sin(v.x * 11. + v.y * 3. + w * .17))) * ts; o = k * texture(Q, c) * smoothstep(-.002, .012, c.y); }`,
   force: `${H} uniform sampler2D U, D; uniform float g, dt, keep; void main(){ vec2 u = texture(U, v).xy; u.y -= g * dt * min(texture(D, v).r, 3.); u *= keep;
-    float f = 1. - smoothstep(0., .05, v.y); if (u.y < 0.) u.y *= 1. - f; u *= .85 * smoothstep(0., .025, v.x) * smoothstep(0., .025, 1. - v.x) * smoothstep(0., .02, 1. - v.y) + .15;
-    float m = length(u); if (m > 5.) u *= 5. / m; o = vec4(u, 0., 1.); }`,
+    float f = 1. - smoothstep(0., .05, v.y); if (u.y < 0.) u.y *= 1. - f; if (u.y > 0.) u.y *= smoothstep(0., .06, 1. - v.y); u *= .85 * smoothstep(0., .025, v.x) * smoothstep(0., .025, 1. - v.x) * smoothstep(0., .02, 1. - v.y) + .15;
+    float m = length(u); if (m > 2.6) u *= 2.6 / m; o = vec4(u, 0., 1.); }`,
   vort: `${H} ${NEAR} uniform sampler2D U; uniform float e, dt; float c(vec2 p){ return texture(U, p + vec2(tx.x, 0.)).y - texture(U, p - vec2(tx.x, 0.)).y - texture(U, p + vec2(0., tx.y)).x + texture(U, p - vec2(0., tx.y)).x; }
     void main(){ float w = c(v); vec2 n = vec2(abs(c(R())) - abs(c(L())), abs(c(T())) - abs(c(B()))); n /= length(n) + 1e-4; o = vec4(texture(U, v).xy + e * dt * .5 * w * vec2(n.y, -n.x), 0., 1.); }`,
   div: `${H} ${NEAR} uniform sampler2D U; void main(){ o = vec4(.5 * (texture(U, R()).x - texture(U, L()).x + texture(U, T()).y - texture(U, B()).y), 0., 0., 1.); }`,
@@ -21,7 +21,7 @@ const SRC = {
   grad: `${H} ${NEAR} uniform sampler2D P, U; void main(){ o = vec4(texture(U, v).xy - .5 * vec2(texture(P, R()).r - texture(P, L()).r, texture(P, T()).r - texture(P, B()).r), 0., 1.); }`,
   splat: `${H} uniform sampler2D Q; uniform vec2 p; uniform vec3 c; uniform float r, asp; void main(){ vec2 d = v - p; d.x *= asp; o = texture(Q, v) + vec4(c * exp(-dot(d, d) / r), 0.); }`,
   show: `${H} uniform sampler2D D; uniform vec3 c[5]; float h(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
-    void main(){ float q = max(texture(D, v).r, 0.), t = pow(1. - exp(-.8 * q), 1.25); vec3 s;
+    void main(){ vec2 e = 1.4 / vec2(textureSize(D, 0)); float q = max(.4 * texture(D, v).r + .15 * (texture(D, v + e).r + texture(D, v - e).r + texture(D, v + vec2(e.x, -e.y)).r + texture(D, v + vec2(-e.x, e.y)).r), 0.), t = pow(1. - exp(-.8 * q), 1.25); vec3 s;
       if (t < .25) s = mix(c[0], c[1], t / .25); else if (t < .55) s = mix(c[1], c[2], (t - .25) / .3); else if (t < .82) s = mix(c[2], c[3], (t - .55) / .27); else s = mix(c[3], c[4], (t - .82) / .18);
       o = vec4(s + (h(gl_FragCoord.xy) - .5) / 255., 1.); }`,
 };
@@ -35,7 +35,7 @@ const ease = (a, b, x) => { x = Math.min(1, Math.max(0, (x - a) / (b - a))); ret
 
 const cv = document.createElement("canvas"); cv.className = "pour"; cv.setAttribute("aria-hidden", "true"); cv.width = cv.height = 0;
 let gl = null, P = {}, F = null, raf = 0, on = false, lost = false, last = 0, T = 0, heavy = false, drifts = [], iters = 14, slow = 0, skip = false, odd = false, parked = false, tried = false, lostTimer = 0, manual = false, head = null, chips = null, W = 0, Hh = 0, asp = 1;
-const phase = [Math.random() * 6.3, Math.random() * 6.3, Math.random() * 6.3];
+const phase = [Math.random() * 6.3, Math.random() * 6.3, Math.random() * 6.3], seed = Math.random() * 400;
 function setup() {
   if (new URLSearchParams(location.search).has("still")) return false;
   const g = cv.getContext("webgl2", { alpha: false, antialias: false, depth: false, stencil: false, powerPreference: "low-power", preserveDrawingBuffer: false });
@@ -73,38 +73,38 @@ function size() {
 const tex = (i, x) => { gl.activeTexture(gl.TEXTURE0 + i); gl.bindTexture(gl.TEXTURE_2D, x.t); return i; };
 function pass(name, into, set) { const p = P[name]; gl.useProgram(p.p); set(p.u); gl.bindFramebuffer(gl.FRAMEBUFFER, into ? into.f : null); gl.viewport(0, 0, into ? into.w : cv.width, into ? into.h : cv.height); gl.drawArrays(gl.TRIANGLES, 0, 3); }
 const splat = (x, px, py, r, a, b, c) => { pass("splat", x.b, u => { gl.uniform1i(u.Q, tex(0, x.a)); gl.uniform2f(u.p, px, py); gl.uniform1f(u.r, r); gl.uniform1f(u.asp, asp); gl.uniform3f(u.c, a, b, c); }); x.swap(); };
-// where the black ground starts on screen, as a height from the bottom (0 to 1)
-function groundTop() { const b = head && head.isConnected ? head.getBoundingClientRect().bottom : 0, h = cv.getBoundingClientRect().height || Hh; return 1 - Math.min(.8, Math.max(.06, b / h)); }
-function emit(dt) {
-  const top = groundTop(), R = .0011 * Math.max(1, asp * asp);
+// how fast the air moves: a slow build on opening, then a very slow drift that never pulls the eye from the products
+const pace = () => heavy ? .62 - .42 * ease(HOLD, SETTLE + 2.5, T) : .2;
+function emit(dt, raw) {
+  const R = .0011 * Math.max(1, asp * asp), BASE = .045;
   if (heavy && T < SETTLE) {
-    const fade = 1 - ease(HOLD, SETTLE - .3, T), spots = asp > 1 ? [.68, .4, .14, .9] : [.74, .42, .12];
+    const fade = 1 - ease(HOLD, SETTLE - .3, T), spots = asp > 1 ? [.5, .14, .86, .32, .68, .03, .97] : [.5, .14, .86, .32, .68];
     spots.forEach((s, i) => {
       const go = ease(i * .16, i * .16 + .35, T) * fade; if (go <= 0) return;
-      const x = s + .05 * Math.sin(T * 1.9 + phase[i % 3]), pulse = .72 + .28 * Math.sin(T * 4.6 + phase[i % 3]), side = (i === 0 ? -.75 : .5 - i * .45) + .6 * Math.sin(T * 3.5 + phase[i % 3]);
-      splat(F.u, x, top, R, side * go * dt, -2.25 * pulse * go * dt, 0); splat(F.d, x, top, R, 1.05 * pulse * go * dt, 0, 0);
+      const x = s + .035 * Math.sin(T * .8 + phase[i % 3]), pulse = .64 + .36 * Math.sin(T * (2 + i * .23) + phase[i % 3] + i), side = .3 * Math.sin(T * 1.4 + phase[i % 3]);
+      splat(F.u, x, BASE, R, side * go * dt, 2.1 * pulse * go * dt, 0); splat(F.d, x, BASE, R * 1.5, 1.05 * pulse * go * raw, 0, 0);
     });
   }
   if (!heavy || T > HOLD) {
-    while (drifts.length < 7) { const down = -Math.PI / 2 + (Math.random() - .5) * 2.5, born = T + (drifts.length ? Math.random() * 2.4 : 0), life = 3 + Math.random() * 4.5;
-      drifts.push({ x: .04 + Math.random() * .92, y: .12 + Math.random() * (top - .1), a: down, born, life, power: .03 + Math.random() * .035, turn: (Math.random() - .5) * .5, r: .0018 + Math.random() * .0034 }); }
+    while (drifts.length < 7) { const rise = Math.PI / 2 + (Math.random() - .5) * 1.2, born = T + (drifts.length ? Math.random() * 2.4 : 0), life = 3 + Math.random() * 4.5;
+      drifts.push({ x: .04 + Math.random() * .92, y: .02 + Math.random() * .38, a: rise, born, life, power: .03 + Math.random() * .035, turn: (Math.random() - .5) * .16, r: .0018 + Math.random() * .0034 }); }
     drifts = drifts.filter(e => T < e.born + e.life);
     for (const e of drifts) { const s = (T - e.born) / e.life; if (s < 0) continue; const go = Math.sin(Math.PI * s), a = e.a + e.turn * s * 6;
-      splat(F.u, e.x, e.y, e.r * 1.4, Math.cos(a) * .85 * go * dt, Math.sin(a) * .85 * go * dt, 0); splat(F.d, e.x, e.y, e.r, e.power * go * dt, 0, 0); e.x += Math.cos(a) * .0007 * dt / asp; e.y += Math.sin(a) * .0007 * dt; }
+      splat(F.u, e.x, e.y, e.r * 1.4, Math.cos(a) * .5 * go * dt, Math.sin(a) * .5 * go * dt, 0); splat(F.d, e.x, e.y, e.r, e.power * go * raw, 0, 0); e.x += Math.cos(a) * .0007 * dt / asp; e.y += Math.sin(a) * .0007 * dt; }
   }
 }
-function step(dt) {
-  const u = F.u, tx = () => gl.uniform2f(P[cur].u.tx, 1 / u.a.w, 1 / u.a.h); let cur = "vort";
-  pass("vort", u.b, n => { gl.uniform1i(n.U, tex(0, u.a)); tx(); gl.uniform1f(n.e, .1); gl.uniform1f(n.dt, dt); }); u.swap();
-  pass("force", u.b, n => { gl.uniform1i(n.U, tex(0, u.a)); gl.uniform1i(n.D, tex(1, F.d.a)); gl.uniform1f(n.g, .036); gl.uniform1f(n.dt, dt); gl.uniform1f(n.keep, Math.pow(.996, dt)); }); u.swap();
-  emit(dt);
+function step(raw) {
+  const dt = raw * pace(), u = F.u, tx = () => gl.uniform2f(P[cur].u.tx, 1 / u.a.w, 1 / u.a.h); let cur = "vort";
+  pass("vort", u.b, n => { gl.uniform1i(n.U, tex(0, u.a)); tx(); gl.uniform1f(n.e, .035); gl.uniform1f(n.dt, dt); }); u.swap();
+  pass("force", u.b, n => { gl.uniform1i(n.U, tex(0, u.a)); gl.uniform1i(n.D, tex(1, F.d.a)); gl.uniform1f(n.g, -.03); gl.uniform1f(n.dt, dt); gl.uniform1f(n.keep, Math.pow(.996, dt)); }); u.swap();
+  emit(dt, raw);
   cur = "div"; pass("div", F.div, n => { gl.uniform1i(n.U, tex(0, u.a)); tx(); });
   cur = "prs"; for (let i = 0; i < iters; i++) { pass("prs", F.p.b, n => { gl.uniform1i(n.P, tex(0, F.p.a)); gl.uniform1i(n.D, tex(1, F.div)); tx(); }); F.p.swap(); }
   cur = "grad"; pass("grad", u.b, n => { gl.uniform1i(n.P, tex(0, F.p.a)); gl.uniform1i(n.U, tex(1, u.a)); tx(); }); u.swap();
   const ts = [Hh / (CELLS * W), 1 / CELLS];
-  pass("adv", u.b, n => { gl.uniform1i(n.U, tex(0, u.a)); gl.uniform1i(n.Q, tex(0, u.a)); gl.uniform2f(n.ts, ts[0], ts[1]); gl.uniform1f(n.dt, dt); gl.uniform1f(n.k, 1); }); u.swap();
+  pass("adv", u.b, n => { gl.uniform1i(n.U, tex(0, u.a)); gl.uniform1i(n.Q, tex(0, u.a)); gl.uniform2f(n.ts, ts[0], ts[1]); gl.uniform1f(n.dt, dt); gl.uniform1f(n.k, 1); gl.uniform1f(n.lift, 0); gl.uniform1f(n.w, T); }); u.swap();
   const thin = heavy && T < HOLD ? .9992 : heavy && T < SETTLE ? .9992 - .0062 * ease(HOLD, SETTLE, T) : .993 + .0032 * ease(SETTLE, SETTLE + 3, T); // it thins after the heavy opening, then what is added and what fades stay in balance
-  pass("adv", F.d.b, n => { gl.uniform1i(n.U, tex(0, u.a)); gl.uniform1i(n.Q, tex(1, F.d.a)); gl.uniform2f(n.ts, ts[0], ts[1]); gl.uniform1f(n.dt, dt); gl.uniform1f(n.k, Math.pow(thin, dt)); }); F.d.swap();
+  pass("adv", F.d.b, n => { gl.uniform1i(n.U, tex(0, u.a)); gl.uniform1i(n.Q, tex(1, F.d.a)); gl.uniform2f(n.ts, ts[0], ts[1]); gl.uniform1f(n.dt, dt); gl.uniform1f(n.k, Math.pow(thin, raw)); gl.uniform1f(n.lift, raw * (heavy ? 2 - 1.8 * ease(HOLD, SETTLE + 2, T) : .2)); gl.uniform1f(n.w, T + seed); }); F.d.swap();
 }
 const show = () => pass("show", null, n => { gl.uniform1i(n.D, tex(0, F.d.a)); gl.uniform3fv(n.c, RAMP); });
 function frame(now) {
@@ -119,7 +119,7 @@ function frame(now) {
 }
 const kick = () => { if (on && !raf && gl && F && !lost && !parked && !manual && !document.hidden) { last = performance.now(); raf = requestAnimationFrame(frame); } };
 // the heavy opening plays once per visit (per tab), and never when arriving by Back or Forward
-let played = false, popped = 0; addEventListener("popstate", () => { popped = performance.now(); });
+let played = false, popped = -1e9; addEventListener("popstate", () => { popped = performance.now(); });
 function firstOpen() {
   if (played || performance.now() - popped < 800 || performance.getEntriesByType("navigation")[0]?.type === "back_forward") return false;
   played = true; try { if (sessionStorage.getItem(KEY)) return false; sessionStorage.setItem(KEY, "1"); } catch {} return true;
