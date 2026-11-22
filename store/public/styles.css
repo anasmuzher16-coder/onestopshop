@@ -560,6 +560,15 @@ html:not(.hero-seen) .piece .sticker{animation-timing-function:linear(0,.25 6%,.
 /* effect layers never print, and every price prints */
 @media print{.fx,.smoke,.puff,.fly,.zoom{display:none !important}.sticker{opacity:1 !important;scale:1 !important;rotate:none !important;translate:none !important;animation:none !important}}
 /* 05 smoke: between the colour and the type or cut-out. The bank sits under the section's object. */
+/* The Pour: live smoke on the black page ground only. Fixed under all content; the header band, tiles, labels and bars stay opaque above it. */
+.pour{position:fixed;inset:0;width:100vw;height:100lvh;z-index:-1;pointer-events:none;opacity:0;transition:opacity .35s var(--ease-state)}
+.pour.on{opacity:1}
+html.pour-still body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:var(--coal-0) url(img/pour-still.webp) center / cover no-repeat}
+html.pour-page .top{background:var(--color-bg);-webkit-backdrop-filter:none;backdrop-filter:none}
+html.pour-page .shophead > .smoke{display:none}
+html.pour-page .chips:not(.is-stuck){background:transparent}
+html.pour-page .chips a:not([aria-current]){background:var(--color-bg)}
+@media print{.pour{display:none !important}html.pour-still body::before{display:none}}
 .smoke{position:absolute;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none;opacity:0;transition:opacity 600ms var(--ease-state) 300ms}
 .smoke.on{opacity:1}
 .smoke--hero{z-index:auto;transition:opacity 600ms var(--ease-state) 500ms}
