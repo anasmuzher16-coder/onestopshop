@@ -1,5 +1,5 @@
 // The hookah section's smoke: a real simulation that lives on the black page ground, behind every word, photo and button.
-// It opens heavy, rising from the bottom of the screen for 3 to 5 seconds, thins, then keeps drifting slowly upward while the page is open.
+// It opens with one tornado touching down, smoke rising from the bottom, then thins and keeps drifting slowly upward while the page is open.
 // Nothing is looped or played back: the flow is computed live and new drifts start at random, so it never repeats.
 // WebGL2, no library, no images. With motion turned off, or on a phone that cannot run it, a designed still stands in.
 const RM = matchMedia("(prefers-reduced-motion: reduce)"), KEY = "oss:pour-open";
@@ -9,6 +9,13 @@ in vec2 a; out vec2 v; void main(){ v = a * .5 + .5; gl_Position = vec4(a, 0., 1
 const H = `#version 300 es
 precision highp float; precision highp sampler2D; in vec2 v; out vec4 o;`;
 const NEAR = `uniform vec2 tx; vec2 L(){return v-vec2(tx.x,0.);} vec2 R(){return v+vec2(tx.x,0.);} vec2 B(){return v-vec2(0.,tx.y);} vec2 T(){return v+vec2(0.,tx.y);}`;
+// The opening tornado: one slim funnel under the header, its tail running down the gap between the products.
+const TOR = `uniform vec4 tg; uniform vec2 ta; uniform float tw;
+float tor(vec2 p){ float y = 1. - p.y, wy = y + .006 * sin(p.x * tg.z * 9. + tg.w * .35) + .003 * sin(p.x * tg.z * 23. - tg.w * .5), s = clamp((wy - tg.x) / (tg.y - tg.x), 0., 1.), m = 1. - s;
+  float cx = .5 + .038 * sin(s * 7. + .5 + tg.w * .3) * m * m, r = .006 + .188 * tw * pow(m, 4.1), u = clamp((p.x - cx) * tg.z / r, -1.35, 1.35), a = asin(clamp(u, -1., 1.)), q = 1. - pow(m, 2.4);
+  float bands = .5 + .38 * sin(a * 1.9 + q * 34. + tg.w) + .12 * sin(a * 3.8 + q * 71. - tg.w * 1.3), shape = exp(-pow(abs(u) / .92, 4.2)) * (.72 + .28 * abs(u));
+  float edge = clamp((wy - tg.x + .007) / .025, 0., 1.) * clamp((tg.y + .005 - wy) / .071, 0., 1.), front = tg.x + (tg.y - tg.x + .1) * ta.x;
+  return clamp(shape * bands, 0., 1.) * 4.4 * edge * (1. - smoothstep(front - .06, front, wy)) * ta.y; }`;
 const SRC = {
   adv: `${H} uniform sampler2D U, Q; uniform vec2 ts; uniform float dt, k, lift, w; void main(){ vec2 c = v - (dt * texture(U, v).xy + lift * vec2(.62 * sin(v.y * 8. + w * .22 + 2.2 * sin(v.x * 6.3 - w * .13)), .72 + .28 * sin(v.x * 11. + v.y * 3. + w * .17))) * ts; o = k * texture(Q, c) * smoothstep(-.002, .012, c.y); }`,
   force: `${H} uniform sampler2D U, D; uniform float g, dt, keep; void main(){ vec2 u = texture(U, v).xy; u.y -= g * dt * min(texture(D, v).r, 3.); u *= keep;
@@ -20,8 +27,9 @@ const SRC = {
   prs: `${H} ${NEAR} uniform sampler2D P, D; void main(){ o = vec4((texture(P, L()).r + texture(P, R()).r + texture(P, B()).r + texture(P, T()).r - texture(D, v).r) * .25, 0., 0., 1.); }`,
   grad: `${H} ${NEAR} uniform sampler2D P, U; void main(){ o = vec4(texture(U, v).xy - .5 * vec2(texture(P, R()).r - texture(P, L()).r, texture(P, T()).r - texture(P, B()).r), 0., 1.); }`,
   splat: `${H} uniform sampler2D Q; uniform vec2 p; uniform vec3 c; uniform float r, asp; void main(){ vec2 d = v - p; d.x *= asp; o = texture(Q, v) + vec4(c * exp(-dot(d, d) / r), 0.); }`,
-  show: `${H} uniform sampler2D D; uniform vec3 c[5]; float h(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
-    void main(){ vec2 e = 1.4 / vec2(textureSize(D, 0)); float q = max(.4 * texture(D, v).r + .15 * (texture(D, v + e).r + texture(D, v - e).r + texture(D, v + vec2(e.x, -e.y)).r + texture(D, v + vec2(-e.x, e.y)).r), 0.), t = pow(1. - exp(-.8 * q), 1.25); vec3 s;
+  feed: `${H} ${TOR} uniform sampler2D Q; uniform float rate; void main(){ o = texture(Q, v) + vec4(rate * tor(v), 0., 0., 0.); }`,
+  show: `${H} ${TOR} uniform sampler2D D; uniform vec3 c[5]; float h(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+    void main(){ vec2 e = 1.4 / vec2(textureSize(D, 0)); float q = max(.4 * texture(D, v).r + .15 * (texture(D, v + e).r + texture(D, v - e).r + texture(D, v + vec2(e.x, -e.y)).r + texture(D, v + vec2(-e.x, e.y)).r), 0.); if (ta.x > 0. && ta.y > 0.) q += tor(v); float t = pow(1. - exp(-.8 * q), 1.25); vec3 s;
       if (t < .25) s = mix(c[0], c[1], t / .25); else if (t < .55) s = mix(c[1], c[2], (t - .25) / .3); else if (t < .82) s = mix(c[2], c[3], (t - .55) / .27); else s = mix(c[3], c[4], (t - .82) / .18);
       o = vec4(s + (h(gl_FragCoord.xy) - .5) / 255., 1.); }`,
 };
@@ -73,6 +81,12 @@ function size() {
 const tex = (i, x) => { gl.activeTexture(gl.TEXTURE0 + i); gl.bindTexture(gl.TEXTURE_2D, x.t); return i; };
 function pass(name, into, set) { const p = P[name]; gl.useProgram(p.p); set(p.u); gl.bindFramebuffer(gl.FRAMEBUFFER, into ? into.f : null); gl.viewport(0, 0, into ? into.w : cv.width, into ? into.h : cv.height); gl.drawArrays(gl.TRIANGLES, 0, 3); }
 const splat = (x, px, py, r, a, b, c) => { pass("splat", x.b, u => { gl.uniform1i(u.Q, tex(0, x.a)); gl.uniform2f(u.p, px, py); gl.uniform1f(u.r, r); gl.uniform1f(u.asp, asp); gl.uniform3f(u.c, a, b, c); }); x.swap(); };
+// touches down in .75 s, turns slowly, and from 3 s loosens into the smoke around it
+const TOR_END = 4.4, torNow = () => heavy && T < TOR_END ? [ease(0, .75, T), 1 - ease(3, TOR_END, T)] : null;
+function torUniforms(n) {
+  const b = head && head.isConnected ? head.getBoundingClientRect().bottom : 0, h = cv.getBoundingClientRect().height || Hh, top = Math.min(.8, Math.max(.04, b / h)), a = torNow() || [0, 0];
+  gl.uniform4f(n.tg, top, Math.min(.94, top + .55), asp, T * 2.6); gl.uniform1f(n.tw, Math.max(1, asp * .9)); gl.uniform2f(n.ta, a[0], a[1]);
+}
 // how fast the air moves: a slow build on opening, then a very slow drift that never pulls the eye from the products
 const pace = () => heavy ? .62 - .42 * ease(HOLD, SETTLE + 2.5, T) : .2;
 function emit(dt, raw) {
@@ -80,7 +94,7 @@ function emit(dt, raw) {
   if (heavy && T < SETTLE) {
     const fade = 1 - ease(HOLD, SETTLE - .3, T), spots = asp > 1 ? [.5, .14, .86, .32, .68, .03, .97] : [.5, .14, .86, .32, .68];
     spots.forEach((s, i) => {
-      const go = ease(i * .16, i * .16 + .35, T) * fade; if (go <= 0) return;
+      const go = ease(2.3 + i * .12, 2.8 + i * .12, T) * fade * .8;   // the funnel stands clear first, then smoke rises as it loosens if (go <= 0) return;
       const x = s + .035 * Math.sin(T * .8 + phase[i % 3]), pulse = .64 + .36 * Math.sin(T * (2 + i * .23) + phase[i % 3] + i), side = .3 * Math.sin(T * 1.4 + phase[i % 3]);
       splat(F.u, x, BASE, R, side * go * dt, 2.1 * pulse * go * dt, 0); splat(F.d, x, BASE, R * 1.5, 1.05 * pulse * go * raw, 0, 0);
     });
@@ -105,8 +119,9 @@ function step(raw) {
   pass("adv", u.b, n => { gl.uniform1i(n.U, tex(0, u.a)); gl.uniform1i(n.Q, tex(0, u.a)); gl.uniform2f(n.ts, ts[0], ts[1]); gl.uniform1f(n.dt, dt); gl.uniform1f(n.k, 1); gl.uniform1f(n.lift, 0); gl.uniform1f(n.w, T); }); u.swap();
   const thin = heavy && T < HOLD ? .9992 : heavy && T < SETTLE ? .9992 - .0062 * ease(HOLD, SETTLE, T) : .993 + .0032 * ease(SETTLE, SETTLE + 3, T); // it thins after the heavy opening, then what is added and what fades stay in balance
   pass("adv", F.d.b, n => { gl.uniform1i(n.U, tex(0, u.a)); gl.uniform1i(n.Q, tex(1, F.d.a)); gl.uniform2f(n.ts, ts[0], ts[1]); gl.uniform1f(n.dt, dt); gl.uniform1f(n.k, Math.pow(thin, raw)); gl.uniform1f(n.lift, raw * (heavy ? 2 - 1.8 * ease(HOLD, SETTLE + 2, T) : .2)); gl.uniform1f(n.w, T + seed); }); F.d.swap();
+  if (torNow() && T > 3) { pass("feed", F.d.b, n => { gl.uniform1i(n.Q, tex(0, F.d.a)); torUniforms(n); gl.uniform1f(n.rate, .02 * raw); }); F.d.swap(); }
 }
-const show = () => pass("show", null, n => { gl.uniform1i(n.D, tex(0, F.d.a)); gl.uniform3fv(n.c, RAMP); });
+const show = () => pass("show", null, n => { gl.uniform1i(n.D, tex(0, F.d.a)); gl.uniform3fv(n.c, RAMP); torUniforms(n); });
 function frame(now) {
   raf = 0; if (!on || lost || manual) return;
   const ms = Math.min(120, Math.max(1, now - last)); last = now;
