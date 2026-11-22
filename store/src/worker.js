@@ -3,6 +3,7 @@
 import { loadCatalog, shopCatalog, dropCatalog, catalogModule } from "./catalog.js";
 import { admin, photo } from "./admin.js";
 import { placeOrder } from "./checkout.js";
+import { deliveryRoute } from "./delivery.js";
 import { nightly } from "./backup.js";
 
 const SECURITY = {
@@ -93,6 +94,7 @@ export default {
       }
       if (path.startsWith("/api/admin/")) { const r = await admin(request, env, url); if (request.method !== "GET" && r.ok) dropCatalog(ctx); return r; } // a change in the back office shows in the shop at once
       if (path === "/api/orders") { if (request.method !== "POST") return json({ error: "Method not allowed" }, 405); const r = await placeOrder(request, env, url); if (r.ok) dropCatalog(ctx); return r; }
+      if (path === "/api/delivery") return await deliveryRoute(request, env, url);
       const ph = path.match(/^\/api\/photo\/(OSS-\d{4,6})$/); if (ph && request.method === "GET") return await photo(env, ph[1]);
       if (path.startsWith("/api/")) return json({ error: "Not found" }, 404);
       if (path === "/admin" || path.startsWith("/admin/")) {

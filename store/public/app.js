@@ -1,6 +1,6 @@
 import { PRODUCTS, CATEGORIES, BOXES } from "/api/catalog-module";
 import { route, navigate } from "./route.js";
-import { parsePostal, pack, quote, money, days, MAX_QTY, fuelOn, taxRate, taxLabel } from "./rates.js";
+import { parsePostal, pack, quote, money, days, MAX_QTY, fuelOn, taxRate, taxLabel, localArea } from "./rates.js";
 
 // ---------- state (everything read from storage is validated) ----------
 const bySku = Object.fromEntries(PRODUCTS.map(p => [p.sku, p]));
@@ -195,12 +195,12 @@ function viewProduct(sku) {
       ${sold ? `<p class="soldline">${SOLD.has(p.name) ? "This one has sold. Each resin stem is poured once." : "Sold out for now. More are on the way."}</p><button class="btn btn--ghost btn--wide" type="button" data-notify>${SOLD.has(p.name) ? "Tell me when the next one is poured" : "Tell me when it is back"}</button>`
         : inCart ? `<a class="btn btn--wide" href="/cart">In your cart. View cart</a>` : `<button class="btn btn--wide" type="button" data-add="${p.sku}">Add to cart</button>`}
       <section class="ways" aria-labelledby="ways-h">
-        <h2 class="h3" id="ways-h">Shipping and pickup</h2>
+        <h2 class="h3" id="ways-h">Delivery, shipping and pickup</h2>
         ${opts.length ? `<p class="ways__to">To ${esc(state.dest.full)}${state.dest.city ? ", " + esc(state.dest.city) : ""}. <button class="link" type="button" data-open-postal>Change</button></p>
         <table class="ledger"><thead><tr><th scope="col">Service</th><th scope="col">Arrives</th><th scope="col" class="r">Cost</th></tr></thead>
-        <tbody>${opts.map(o => `<tr><td>${o.carrier} ${o.service}</td><td>${days(o.days)}</td><td class="r num">${money(o.total)}</td></tr>`).join("")}
+        <tbody>${localArea(state.dest) && p.ship !== "pickup_only" ? `<tr><td>Local delivery</td><td>From the shop</td><td class="r num">$10 or $15</td></tr>` : ""}${opts.map(o => `<tr><td>${o.carrier} ${o.service}</td><td>${days(o.days)}</td><td class="r num">${money(o.total)}</td></tr>`).join("")}
         <tr><td>Pick up at the Windsor counter</td><td>Today</td><td class="r num">Free</td></tr></tbody></table>`
-        : `<p class="ways__to">${p.ship === "ground_only" ? "Ships by ground across Canada" : "Ships anywhere in Canada"}, or pick up free at the Windsor counter.</p><button class="btn btn--ghost btn--wide" type="button" data-open-postal>Estimate shipping to my postal code</button>`}
+        : `<p class="ways__to">Local delivery from $10 near Windsor. Free pickup. ${p.ship === "ground_only" ? "Ships by ground across Canada." : "Ships across Canada."}</p><button class="btn btn--ghost btn--wide" type="button" data-open-postal>Price it to my postal code</button>`}
       </section>
       ${p.cat === "hookahs" ? `<section class="parts" aria-labelledby="parts-h">
         <h2 class="h3" id="parts-h">The parts</h2>
@@ -302,13 +302,20 @@ function viewSearch() {
   </section>`;
 }
 
+// One place decides how an order is travelling, so the cart, the dock and checkout can never disagree.
+function shipChoice(lines) {
+  const parcels = pack(lines), opts = state.dest ? quote(state.dest, parcels) : [];
+  const canLocal = localArea(state.dest) && state.localOff !== state.dest.full && lines.every(l => l.product.ship !== "pickup_only");
+  const pickup = state.ship === "pickup", local = !pickup && canLocal && (state.ship === "local" || !state.ship);
+  return { parcels, opts, canLocal, pickup, local, chosen: pickup || local || state.ship === "local" ? null : opts.find(o => o.id === state.ship) || opts[0] || null };
+}
 function viewCart() {
   const lines = cartLines();
   if (!lines.length) return `${band("cart", "gilt", "Your cart", "Nothing in it yet.")}<section class="empty"><p class="lead">Start with the <a class="link" href="/shop/hookahs">hookahs</a>, the <a class="link" href="/shop/bowls">bowls</a>, or <a class="link" href="/set">build a set</a>.</p></section>`;
-  const parcels = pack(lines), opts = state.dest ? quote(state.dest, parcels) : [];
-  const pickup = state.ship === "pickup", chosen = pickup ? null : opts.find(o => o.id === state.ship) || opts[0], sub = lines.reduce((a, l) => a + l.product.price * l.qty, 0);
-  const ready = pickup || !!chosen;
-  const tooHeavy = state.dest && !opts.length;
+  if (state.ship === "local" && !shipChoice(lines).canLocal) { state.ship = null; store.set("ship", null); }   // the cart is where a new way of sending it is shown and chosen
+  const { parcels, opts, canLocal, pickup, local, chosen } = shipChoice(lines), sub = lines.reduce((a, l) => a + l.product.price * l.qty, 0);
+  const ready = pickup || local || !!chosen;
+  const tooHeavy = state.dest && !opts.length && !canLocal;
   return `
   ${band("cart", "gilt", "Your cart", `<span class="num">${lines.reduce((a, l) => a + l.qty, 0)}</span> ${lines.reduce((a, l) => a + l.qty, 0) === 1 ? "piece" : "pieces"}, packed at the counter`)}
   <section class="cart">
@@ -324,9 +331,10 @@ function viewCart() {
       <ol class="boxes">${parcels.map(p => `<li><span class="num">${p.l} \u00d7 ${p.w} \u00d7 ${p.h} cm, ${p.kg} kg</span> ${esc(p.label.toLowerCase())}, ${p.items.length} ${p.items.length === 1 ? "item" : "items"}</li>`).join("")}</ol>
       ${!state.dest ? `<button class="btn btn--wide" type="button" data-open-postal>Price shipping to my postal code</button>` : ""}
       ${tooHeavy ? `<p class="note">One of these boxes is over the 30 kg carrier limit. Call the counter at 519-255-2222 and we will quote it by hand.</p>` : ""}
-      ${opts.length ? `<fieldset class="opts"><legend>Shipping to ${esc(state.dest.full)} <button class="link" type="button" data-open-postal>Change</button></legend>
-        ${opts.map(o => `<label class="opt"><input type="radio" name="ship" value="${o.id}" ${chosen && o.id === chosen.id ? "checked" : ""}><span class="opt__name">${o.carrier} ${o.service}<small>${days(o.days)}</small></span><span class="num">${money(o.total)}</span></label>`).join("")}
+      ${opts.length || canLocal ? `<fieldset class="opts"><legend>Getting it to ${esc(state.dest.full)} <button class="link" type="button" data-open-postal>Change</button></legend>
+        ${canLocal ? `<label class="opt"><input type="radio" name="ship" value="local" ${local ? "checked" : ""}><span class="opt__name">Local delivery<small>Within 25 km of the shop. Exact price at checkout</small></span><span class="num">$10 or $15</span></label>` : ""}
         <label class="opt"><input type="radio" name="ship" value="pickup" ${pickup ? "checked" : ""}><span class="opt__name">Pick up at the Windsor counter<small>Ready the same day</small></span><span class="num">Free</span></label>
+        ${opts.map(o => `<label class="opt"><input type="radio" name="ship" value="${o.id}" ${chosen && o.id === chosen.id ? "checked" : ""}><span class="opt__name">${o.carrier} ${o.service}<small>${days(o.days)}</small></span><span class="num">${money(o.total)}</span></label>`).join("")}
       </fieldset>
       ${chosen ? `<details class="why" ${state.whyOpen ? "open" : ""}><summary>What makes up ${money(chosen.total)}</summary><dl>
         ${chosen.perParcel.map((p, i) => `<div><dt>Box ${i + 1}, billed at ${p.billableKg} kg</dt><dd class="num">${money(p.freight)}</dd></div>`).join("")}
@@ -337,8 +345,8 @@ function viewCart() {
       <textarea class="field field--text field--area" id="note" data-note maxlength="240" rows="2" placeholder="Happy birthday, from all of us">${esc(state.note)}</textarea></div>
     <dl class="totals">
       <div><dt>Items</dt><dd class="num">${money(sub)}</dd></div>
-      <div><dt>${pickup ? "Pickup" : "Shipping"}</dt><dd class="num">${pickup ? "Free" : chosen ? money(chosen.total) : "add postal code"}</dd></div>
-      <div class="totals__door"><dt>Total before tax</dt><dd class="num">${chosen ? money(sub + chosen.total) : money(sub)}</dd></div>
+      <div><dt>${pickup ? "Pickup" : local ? "Delivery" : "Shipping"}</dt><dd class="num">${pickup ? "Free" : local ? "$10 or $15" : chosen ? money(chosen.total) : "add postal code"}</dd></div>
+      <div class="totals__door"><dt>${local ? "Total before tax, from" : "Total before tax"}</dt><dd class="num">${local ? money(sub + 10) : chosen ? money(sub + chosen.total) : money(sub)}</dd></div>
     </dl>
     ${ready ? `<a class="btn btn--wide" href="/checkout">Check out</a>` : `<button class="btn btn--wide" type="button" disabled>Check out</button>`}
     <p class="fine">Tax is added at checkout.</p>
@@ -350,6 +358,8 @@ function viewShipping() {
   ${band("shipping", "cobalt", "Shipping", "From Windsor to every province and territory.")}
   <section class="reading">
     <p class="lead">We pack every order at the counter in Windsor and ship to every province and territory.</p>
+    <h2 class="h3">Local delivery</h2>
+    <p>We deliver from the shop for $10 up to 10 km and $15 up to 25 km by road, per order, plus tax. Enter your address at checkout and we confirm the price before you order.</p>
     <h2 class="h3">What it costs</h2>
     <p>Shipping is worked out from the packed weight and box size of your order and the carrier\u2019s rate to your postal code. You see the cost on the product page and in the cart before you pay.</p>
     <p><button class="btn btn--ghost" type="button" data-open-postal>${state.dest ? "Estimating to " + esc(state.dest.full) + ". Change" : "Enter my postal code"}</button></p>
@@ -371,7 +381,7 @@ function syncChrome() {
   const count = `<span data-cart-count>${cartCount()}</span>`, dock = $(".dock");
   dock.classList.toggle("dock--buy", !!prod);
   const lines = cartLines(), sub = lines.reduce((a, l) => a + l.product.price * l.qty, 0);
-  const qs = ra === "cart" && state.dest && lines.length ? quote(state.dest, pack(lines)) : [], ship = state.ship === "pickup" ? null : qs.find(o => o.id === state.ship) || qs[0], canPay = state.ship === "pickup" || !!ship;
+  const sc = ra === "cart" && lines.length ? shipChoice(lines) : null, ship = sc && sc.chosen, canPay = !!sc && (sc.pickup || sc.local || !!ship);
   dock.classList.toggle("dock--buy", !!prod || ra === "set" || (ra === "cart" && lines.length > 0));
   dock.innerHTML = prod
     ? `<a class="dock__side" href="/shop/${prod.cat}">Back</a>${state.cart.some(l => l.sku === prod.sku)
@@ -379,13 +389,14 @@ function syncChrome() {
     : ra === "set"
     ? `<a class="dock__side" href="/shop">Shop</a><button class="dock__buy" type="button" data-add-set>Add the set <span class="num">${whole(setPicks().reduce((a, p) => a + p.price, 0))}</span></button><a class="dock__side" href="/cart" aria-label="Cart">${count}</a>`
     : ra === "cart" && lines.length
-    ? `<a class="dock__side" href="/shop">Shop</a>${canPay ? `<a class="dock__buy" href="/checkout">Check out <span class="num">${money(sub + (ship ? ship.total : 0))}</span></a>` : `<button class="dock__buy" type="button" data-open-postal>Add postal code for shipping</button>`}<span class="dock__side">${count}</span>`
+    ? `<a class="dock__side" href="/shop">Shop</a>${canPay ? `<a class="dock__buy" href="/checkout">Check out <span class="num">${sc && sc.local ? "from " : ""}${money(sub + (ship ? ship.total : sc && sc.local ? 10 : 0))}</span></a>` : `<button class="dock__buy" type="button" data-open-postal>Add postal code for shipping</button>`}<span class="dock__side">${count}</span>`
     : `<a href="/" ${h === "#/" ? 'aria-current="page"' : ""}>Home</a><a href="/shop" ${h.startsWith("#/shop") ? 'aria-current="page"' : ""}>Shop</a><a href="/search" ${h === "#/search" ? 'aria-current="page"' : ""}>Search</a><a href="/cart" ${h === "#/cart" ? 'aria-current="page"' : ""}>Cart ${count}</a>`;
 }
 const sheet = $("[data-postal-sheet]"), postalInput = $("#postal"), postalErr = $("#postal-err");
 function openSheet() { postalInput.value = state.dest ? state.dest.full : ""; postalErr.hidden = true; postalInput.removeAttribute("aria-invalid"); sheet.showModal(); postalInput.focus(); postalInput.select(); }
 document.addEventListener("click", e => {
   if (e.target.closest("[data-open-postal]")) openSheet();
+  if (e.target.closest("[data-local-off]")) { const o = state.dest ? quote(state.dest, pack(cartLines()))[0] : null; if (state.farFor === state.dest?.full) state.localOff = state.farFor; state.delivery = null; state.ship = o ? o.id : "pickup"; store.set("ship", state.ship); navigate("/cart"); }
   else if (e.target.closest("[data-close-postal]") || e.target === sheet) sheet.close();
   const add = e.target.closest("[data-add]"); if (add) { addToCart(add.dataset.add); render(); }
   const q = e.target.closest("[data-qty]"); if (q) setQty(q.dataset.qty, +q.dataset.n);
@@ -415,13 +426,24 @@ function focusKey(el) {
   return null;
 }
 // ---------- checkout and confirmation ----------
+const deliveryKey = () => [state.form?.line1, state.form?.city, state.dest?.full].map(s => String(s || "").trim().toLowerCase()).join("|");
+const deliveryFeeNow = () => state.delivery && state.delivery.key === deliveryKey() ? state.delivery.fee_cents / 100 : null;
+function coTotals(lines, sc) {
+  const { pickup, local, chosen } = sc, fee = local ? deliveryFeeNow() : null, sub = lines.reduce((a, l) => a + l.product.price * l.qty, 0), ship = pickup ? 0 : local ? fee || 0 : chosen.total, prov = pickup || local ? "ON" : state.dest.prov;
+  const tax = Math.round((sub + ship) * taxRate(prov) * 100) / 100, units = lines.reduce((a, l) => a + l.qty, 0);
+  return `<dl class="totals">
+        <div><dt>${units} ${units === 1 ? "item" : "items"}</dt><dd class="num">${money(sub)}</dd></div>
+        <div><dt>${pickup ? "Pickup" : local ? "Delivery" : "Shipping"}</dt><dd class="num">${pickup ? "Free" : local ? (fee === null ? "$10 or $15" : money(fee)) : money(ship)}</dd></div>
+        <div><dt>${taxLabel(prov)}</dt><dd class="num">${money(tax)}</dd></div>
+        <div class="totals__door"><dt>${local && fee === null ? "Total before delivery" : "Total"}</dt><dd class="num">${money(sub + ship + tax)}</dd></div>
+      </dl>`;
+}
 function viewCheckout() {
   const lines = cartLines();
   if (!lines.length) return viewCart();
-  const pickup = state.ship === "pickup", parcels = pack(lines), opts = !pickup && state.dest ? quote(state.dest, parcels) : [], chosen = opts.find(o => o.id === state.ship) || opts[0];
-  if (!pickup && !chosen) return `${band("checkout", "emerald", "One step back.")}<section class="empty"><p class="lead">Choose shipping or pickup in <a class="link" href="/cart">your cart</a> first.</p></section>`;
-  const sub = lines.reduce((a, l) => a + l.product.price * l.qty, 0), ship = pickup ? 0 : chosen.total, prov = pickup ? "ON" : state.dest.prov;
-  const tax = Math.round((sub + ship) * taxRate(prov) * 100) / 100, units = lines.reduce((a, l) => a + l.qty, 0), f = state.form || {};
+  const sc = shipChoice(lines), { pickup, local, chosen } = sc;
+  if (!pickup && !local && !chosen) return `${band("checkout", "emerald", "One step back.")}<section class="empty"><p class="lead">Choose shipping or pickup in <a class="link" href="/cart">your cart</a> first.</p></section>`;
+  const f = state.form || {}, quoted = local && deliveryFeeNow() !== null;
   const field = (id, label, attrs, hint = "") => `<label class="field__label" for="co-${id}">${label}${hint ? ` <span class="fine">${hint}</span>` : ""}</label><input class="field" id="co-${id}" name="${id}" value="${esc(f[id] || "")}" ${attrs}>`;
   return `
   ${band("checkout", "emerald", "Checkout", `<a href="/cart">Back to the cart</a>`)}
@@ -429,8 +451,8 @@ function viewCheckout() {
     <form class="co" data-checkout novalidate>
       <fieldset class="co__set"><legend class="h3">Who it is for</legend>
         ${field("name", "Full name", 'autocomplete="name" maxlength="80" required')}
-        ${field("email", "Email", 'type="email" autocomplete="email" inputmode="email" maxlength="120" required', "for the receipt and tracking")}
-        ${field("phone", "Phone", 'type="tel" autocomplete="tel" inputmode="tel" maxlength="30"', "optional")}
+        ${field("email", "Email", 'type="email" autocomplete="email" inputmode="email" maxlength="120" required', local ? "for the receipt" : "for the receipt and tracking")}
+        ${field("phone", "Phone", `type="tel" autocomplete="tel" inputmode="tel" maxlength="30"${local ? " required" : ""}`, local ? "so the driver can reach you" : "optional")}
       </fieldset>
       ${pickup ? `<fieldset class="co__set"><legend class="h3">Pickup</legend><p class="co__p">At the Windsor counter. We email you when it is ready, usually the same day. Bring the order number.</p></fieldset>`
         : `<fieldset class="co__set"><legend class="h3">Where it is going</legend>
@@ -438,15 +460,11 @@ function viewCheckout() {
         ${field("city", "City or town", 'autocomplete="address-level2" maxlength="60" required')}
         ${state.dest.complete ? `<p class="co__p">Postal code <b class="num">${esc(state.dest.full)}</b>, ${esc(state.dest.prov)}. <button class="link" type="button" data-open-postal>Change</button></p>`
           : `<p class="co__p">We need the full postal code for the label. <button class="link" type="button" data-open-postal>Enter it</button></p>`}
-        <p class="co__p">${chosen.carrier} ${chosen.service}, ${days(chosen.days)}. <a class="link" href="/cart">Change</a></p></fieldset>`}
-      <dl class="totals">
-        <div><dt>${units} ${units === 1 ? "item" : "items"}</dt><dd class="num">${money(sub)}</dd></div>
-        <div><dt>${pickup ? "Pickup" : "Shipping"}</dt><dd class="num">${pickup ? "Free" : money(ship)}</dd></div>
-        <div><dt>${taxLabel(prov)}</dt><dd class="num">${money(tax)}</dd></div>
-        <div class="totals__door"><dt>Total</dt><dd class="num">${money(sub + ship + tax)}</dd></div>
-      </dl>
+        ${local ? `<p class="co__p">Local delivery from the Windsor shop. <a class="link" href="/cart">Change</a></p><div class="co__p" role="status" data-deliv-msg>${quoted ? `Good news, we deliver to ${esc(state.dest.full)}.` : ""}</div><p class="fine">Address check by <a class="link" href="https://www.geoapify.com/" rel="noopener">Geoapify</a>. Map data from OpenStreetMap contributors.</p>`
+          : `<p class="co__p">${chosen.carrier} ${chosen.service}, ${days(chosen.days)}. <a class="link" href="/cart">Change</a></p>`}</fieldset>`}
+      ${coTotals(lines, sc)}
       <p class="field__err" role="alert" data-co-err hidden></p>
-      <button class="btn btn--wide" type="submit" ${!pickup && !state.dest.complete ? "disabled" : ""}>Place order</button>
+      <button class="btn btn--wide" type="submit" ${!pickup && !state.dest.complete ? "disabled" : ""}>${local && !quoted ? "Check delivery price" : "Place order"}</button>
       <p class="fine">This store is still in build. Placing an order here takes no payment: it goes to the shop's back office as a demo order.</p>
     </form>
   </section>`;
@@ -459,11 +477,11 @@ function viewOrder(id) {
   <section class="cart done">
     <p class="done__tag"><span>Order</span> <b class="num">${esc(o.id)}</b></p>
     <h1 class="h2 h2--xl">Thank you, ${esc(o.name.split(" ")[0])}.</h1>
-    <p class="lead">${o.method === "pickup" ? "We will email you when it is ready at the Windsor counter. Bring this order number." : `We pack it and send it by ${esc(o.service)}. Tracking comes by email${o.days ? `, and it should arrive in about ${days(o.days)}` : ""}.`}</p>
+    <p class="lead">${o.method === "pickup" ? "We will email you when it is ready at the Windsor counter. Bring this order number." : o.service === "Local delivery" ? "We will deliver it from the Windsor shop and call if we need anything." : `We pack it and send it by ${esc(o.service)}. Tracking comes by email${o.days ? `, and it should arrive in about ${days(o.days)}` : ""}.`}</p>
     <ul class="done__lines">${o.items.map(i => `<li><span><b class="num">${i.qty}</b> &times; ${esc(i.name)}</span><span class="num">${c(i.unit_cents * i.qty)}</span></li>`).join("")}</ul>
     <dl class="totals">
       <div><dt>Items</dt><dd class="num">${c(o.subtotal_cents)}</dd></div>
-      <div><dt>${o.method === "pickup" ? "Pickup" : "Shipping"}</dt><dd class="num">${o.method === "pickup" ? "Free" : c(o.shipping_cents)}</dd></div>
+      <div><dt>${o.method === "pickup" ? "Pickup" : o.service === "Local delivery" ? "Delivery" : "Shipping"}</dt><dd class="num">${o.method === "pickup" ? "Free" : c(o.shipping_cents)}</dd></div>
       <div><dt>${esc(o.tax_label)}</dt><dd class="num">${c(o.tax_cents)}</dd></div>
       <div class="totals__door"><dt>Total</dt><dd class="num">${c(o.total_cents)}</dd></div>
     </dl>
@@ -472,26 +490,48 @@ function viewOrder(id) {
     <a class="btn btn--wide" href="/shop">Keep looking</a>
   </section>`;
 }
-document.addEventListener("input", e => { const f = e.target.closest("[data-checkout]"); if (f && e.target.name) { state.form = state.form || {}; state.form[e.target.name] = e.target.value; } });
+document.addEventListener("input", e => { const f = e.target.closest("[data-checkout]"); if (f && e.target.name) { state.form = state.form || {}; state.form[e.target.name] = e.target.value; if ((e.target.name === "line1" || e.target.name === "city") && f.querySelector("[data-deliv-msg]")) refreshDelivery(f); } });
+function refreshDelivery(f, msg) {
+  const lines = cartLines(), sc = shipChoice(lines), quoted = deliveryFeeNow() !== null, box = f.querySelector("[data-deliv-msg]"), btn = f.querySelector('button[type="submit"]');
+  f.querySelector(".totals").outerHTML = coTotals(lines, sc);
+  if (box) box.innerHTML = msg !== undefined ? msg : quoted ? `Good news, we deliver to ${esc(state.dest.full)}.` : "";
+  btn.textContent = quoted ? "Place order" : "Check delivery price";
+}
+const OTHER_WAY = `<button class="link" type="button" data-local-off>See shipping and pickup</button>`;
+const deliveryMsg = status => status === "far" ? `${esc(state.dest.full)} is past our 25 km delivery area. You can still ship it or pick it up free. ${OTHER_WAY}`
+  : status === "down" ? `We cannot check delivery right now. You can still ship it or pick it up free. ${OTHER_WAY}`
+  : `We could not confirm that address. Check the street number and postal code, or ${OTHER_WAY.replace("See shipping", "see shipping")}.`;
+async function checkDelivery(f, btn) {
+  btn.disabled = true; btn.textContent = "Checking your address";
+  let d = { status: "down" }, key = deliveryKey();
+  try { const r = await fetch("/api/delivery", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ line1: state.form.line1, city: state.form.city, postal: state.dest.full }) }); d = await r.json(); } catch {}
+  btn.disabled = false; if (d.status === "far") state.farFor = state.dest.full;
+  state.delivery = d.status === "ok" && key === deliveryKey() ? { key, fee_cents: d.fee_cents } : null;
+  refreshDelivery(f, d.status === "ok" ? undefined : deliveryMsg(d.status));
+}
 document.addEventListener("submit", async e => {
   const f = e.target.closest("[data-checkout]"); if (!f) return; e.preventDefault();
-  const err = f.querySelector("[data-co-err]"), btn = f.querySelector('button[type="submit"]'), pickup = state.ship === "pickup";
+  const err = f.querySelector("[data-co-err]"), btn = f.querySelector('button[type="submit"]'), sc = shipChoice(cartLines()), pickup = sc.pickup, local = sc.local, chosen = sc.chosen;
   const fail = (msg, field) => { err.textContent = msg; err.hidden = false; const el = field && f.querySelector(`[name="${field}"]`); if (el) el.focus(); };
   const v = n => (f.elements[n] ? f.elements[n].value.trim() : "");
   if (!v("name")) return fail("Tell us the name for the order.", "name");
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v("email"))) return fail("That email address does not look right.", "email");
   if (!pickup && !v("line1")) return fail("Enter the street address.", "line1");
   if (!pickup && !v("city")) return fail("Enter the city or town.", "city");
-  const opts = !pickup && state.dest ? quote(state.dest, pack(cartLines())) : [], chosen = opts.find(o => o.id === state.ship) || opts[0];
+  if (local) {
+    if (v("phone").replace(/\D/g, "").length < 10) return fail("Enter a phone number so the driver can reach you.", "phone");
+    state.form = { ...(state.form || {}), line1: v("line1"), city: v("city") }; err.hidden = true;
+    if (deliveryFeeNow() === null) return checkDelivery(f, btn);   // show the price first: the next tap places the order
+  }
   btn.disabled = true; btn.textContent = "Placing your order"; err.hidden = true;
   try {
-    const r = await fetch("/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ lines: state.cart, method: pickup ? "pickup" : "ship", service: chosen && chosen.id, postal: state.dest && state.dest.full,
+    const r = await fetch("/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ lines: state.cart, method: pickup ? "pickup" : "ship", service: local ? "local" : chosen && chosen.id, delivery_fee_cents: local ? state.delivery.fee_cents : undefined, postal: state.dest && state.dest.full,
       name: v("name"), email: v("email"), phone: v("phone"), note: state.note, address: { line1: v("line1"), city: v("city") } }) });
     const data = await r.json().catch(() => ({}));
-    if (!r.ok) { btn.disabled = false; btn.textContent = "Place order"; if (typeof data.stock === "number" && bySku[data.sku]) bySku[data.sku].stock = data.stock; return fail(data.error || "That did not go through. Please try again.", data.field); }
+    if (!r.ok) { btn.disabled = false; btn.textContent = "Place order"; if (local && data.delivery) { state.delivery = data.delivery === "ok" ? { key: deliveryKey(), fee_cents: data.fee_cents } : null; refreshDelivery(f, data.delivery === "ok" ? undefined : deliveryMsg(data.delivery)); if (data.delivery !== "ok") return; } if (typeof data.stock === "number" && bySku[data.sku]) bySku[data.sku].stock = data.stock; return fail(data.error || "That did not go through. Please try again.", data.field); }
     try { sessionStorage.setItem("oss:order:" + data.order.id, JSON.stringify(data.order)); } catch {}
     for (const i of data.order.items) if (bySku[i.sku]) bySku[i.sku].stock = Math.max(0, bySku[i.sku].stock - i.qty);
-    state.cart = []; saveCart(); state.form = {}; state.note = ""; store.set("note", "");
+    state.cart = []; saveCart(); state.delivery = null; state.form = {}; state.note = ""; store.set("note", "");
     navigate("/order/" + data.order.id, true);
   } catch { btn.disabled = false; btn.textContent = "Place order"; fail("We could not reach the shop. Check your connection and try again."); }
 });
@@ -501,7 +541,7 @@ const doc = (title, lead, parts) => `${band("docs", "bone", title, lead)}<sectio
 const viewPrivacy = () => doc("Privacy", "What we collect when you order, why, and how to ask about it.", [
   ["What we collect", ["Your name, email, phone number if you give it, and delivery address, so we can send your order and answer questions about it.", "Your card details go straight to the payment company. We never see or store the card number."]],
   ["What we do not do", ["We do not sell or rent your details. We do not use advertising trackers. Visit counts on this site use no cookies and do not identify you."]],
-  ["Who else sees it", ["The carrier gets your name and address to deliver the parcel. The payment company gets what it needs to take the payment. Our hosting company stores the order on our behalf."]],
+  ["Who else sees it", ["The carrier or our driver gets your name, phone number and address to deliver the order. For local delivery, your address goes to our map service, Geoapify, to work out the distance. The payment company gets what it needs to take the payment. Our hosting company stores the order on our behalf."]],
   ["How long we keep it", ["Order records are kept for six years, because tax law requires it. After that they are deleted."]],
   ["Your choices", ["You can ask to see what we hold about you, to correct it, or to have it deleted where the law allows. Email or call the counter and we will answer within 30 days.", "Marketing emails are only sent if you ask for them, and every one has an unsubscribe link."]],
   ["Who to ask", ["The person responsible for privacy at the shop is the manager. Call 519-255-2222."]],
@@ -509,6 +549,7 @@ const viewPrivacy = () => doc("Privacy", "What we collect when you order, why, a
 const viewTerms = () => doc("Terms of sale", "The plain rules for buying from us online.", [
   ["Prices and tax", ["Prices are in Canadian dollars. Tax is added at checkout, based on the province the order ships to."]],
   ["Shipping", ["We ship within Canada. The price at checkout is the price you pay for shipping. Delivery times are the carrier's estimates. Cologne ships by ground only."]],
+  ["Local delivery", ["We deliver within 25 km of the shop by road: $10 up to 10 km and $15 from there to 25 km, per order, plus tax. Delivery days and times are confirmed by the shop."]],
   ["Pickup", ["Pickup at the Windsor counter is free. We email you when the order is ready and hold it for 14 days."]],
   ["Returns", ["Unused items in their original packaging can be returned within 14 days for a refund to the original payment method. Opened cologne cannot be returned."]],
   ["Damage in transit", ["If something arrives broken, keep the packaging, take a photo and tell us within 3 days. We will replace it or refund it."]],

@@ -4,6 +4,7 @@
 import * as rates from "../public/rates-core.js";
 import { loadCatalog, toStorefront } from "./catalog.js";
 import { orderPlaced, lowStock, writeEmail } from "./email.js";
+import { deliveryQuote } from "./delivery.js";
 
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" } });
 const text = (v, max) => typeof v === "string" && v.trim().length > 0 && v.trim().length <= max ? v.trim() : null;
@@ -50,6 +51,14 @@ export async function placeOrder(request, env, url) {
     const line1 = text(body.address && body.address.line1, 120), city = text(body.address && body.address.city, 60);
     if (!line1) return json({ error: "Enter the street address.", field: "line1" }, 400);
     if (!city) return json({ error: "Enter the city or town.", field: "city" }, 400);
+    if (body.service === "local") {   // the fee comes only from the road distance worked out here
+      if (!phone || String(phone).replace(/\D/g, "").length < 10) return json({ error: "Enter a phone number so the driver can reach you.", field: "phone" }, 400);
+      const d = await deliveryQuote(env, { line1, city, postal: dest.full }, request.headers.get("CF-Connecting-IP") || "local");
+      if (d.status !== "ok") return json({ error: d.status === "far" ? `${dest.full} is past our 25 km delivery area. You can still ship it or pick it up free.` : d.status === "down" ? "Delivery cannot be checked right now. You can still ship it or pick it up free." : "We could not confirm that address. Check the street number and postal code.", field: "line1", delivery: d.status }, 409);
+      if (body.delivery_fee_cents !== d.fee_cents) return json({ error: `Delivery to this address is $${d.fee_cents / 100}. Check the new total, then place your order.`, delivery: "ok", fee_cents: d.fee_cents }, 409);
+      shipping = d.fee_cents; service = "Local delivery"; province = "ON"; quote = { id: "local", metres: d.metres };
+      address = { demo: true, line1, city, province, postal: dest.full };
+    } else {
     const parcels = rates.pack(lines), opts = rates.quote(dest, parcels);
     if (!opts.length) return json({ error: "One of these boxes is over the carrier's 30 kg limit. Call the counter and we will quote it by hand." }, 409);
     const chosen = opts.find(o => o.id === body.service);
@@ -57,6 +66,7 @@ export async function placeOrder(request, env, url) {
     shipping = cents(chosen.total); service = chosen.service; province = dest.prov;
     quote = { id: chosen.id, days: chosen.days, parcels: chosen.perParcel, fuel: chosen.fuel, cover: chosen.cover };
     address = { demo: true, line1, city, province, postal: dest.full };
+    }
   }
   const tax = Math.round((subtotal + shipping) * rates.taxRate(province)), total = subtotal + shipping + tax;
 

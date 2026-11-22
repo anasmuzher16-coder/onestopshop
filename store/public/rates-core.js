@@ -173,6 +173,11 @@ export function quote(dest, parcels, fuelPct = fuelOn().pct) {   // read at call
   return out.sort((a, b) => a.total - b.total || a.days - b.days);
 }
 
+// Local delivery, the owner's terms: up to 10 km is $10, over 10 through 25 km is $15, past 25 km is not offered. Per order, in cents.
+export const deliveryFee = metres => !Number.isFinite(metres) || metres < 0 ? null : metres <= 10000 ? 1000 : metres <= 25000 ? 1500 : null;
+// Postal areas near the shop where delivery is worth offering. The real answer comes from the road distance at checkout.
+export const localArea = d => !!d && d.prov === "ON" && (/^N9/.test(d.fsa) || /^N0R/.test(d.fsa) || (/^N8/.test(d.fsa) && !/^N8[AH]/.test(d.fsa)));
+
 export const days = n => n + (n === 1 ? " day" : " days");
 export const money = n => (n < 0 ? "-$" : "$") + Math.abs(n).toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
