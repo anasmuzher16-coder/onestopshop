@@ -3,7 +3,7 @@ import { commitNav, setNavGate } from "./route.js";
 // opaque body that hides the page change, and a wake that leaves along the same bearing. One lazy WebGL2 canvas, z-index 15 (over the
 // page and chips, under the top bar and dock), never takes a tap. If anything is wrong it steps aside and the normal transition runs.
 const RM = matchMedia("(prefers-reduced-motion: reduce)");
-const TIERS = [1280, 900, 640], COOL = 1500, MAX_MS = 860, GONE_MS = 895, FREE_MS = 20000;
+const TIERS = [1280, 900, 640], MAX_MS = 860, GONE_MS = 895, FREE_MS = 20000;
 
 // the store's tokens (tokens.css) as display sRGB. Anything darker is worked out in OKLCH at the jewel's own hue, never by scaling sRGB.
 function ok(L, C, h) {
@@ -18,8 +18,8 @@ const tone = (c, h, accent = C.bone) => [c, mid(h), deep(h), accent];
 // THE TILE ARRIVES. Every wave is the destination's own header colour: the material lives only on the leading edge, the body and tail are the flat token.
 // m: edge, d: bearing (screen, y up), e: how far the edge reaches past the frame in CSS px (r: the same as a share of travel), p: [body, mid, deep, accent], c and ms: cover and reveal
 const W = {
-  hookahs: { m: "smoke", d: [S2, S2], e: 150, p: [C.coal, C.ash, C.coal2, C.bone], atlas: "smoke" },   // coal body: pink smoke is banned
-  heat: { m: "fire", d: [0, 1], e: 130, p: [C.coal, C.emberlt, C.ember, C.gilt], atlas: "fire" },      // coal body: fire needs the dark to glow
+  hookahs: { m: "smoke", d: [S2, S2], e: 400, p: [C.bone, C.ash, C.coal, C.bonelt] },   // flowing inked clouds in bone and ash, never pink
+  heat: { m: "fire", d: [0, 1], e: 290, p: [C.emberlt, C.ember, C.coal, C.gilt] },      // drawn flames: ember, the Heat tile's orange and gilt, with a coal ink line
   bases: { m: "water", d: [-S2, S2], e: 40, p: tone(C.teal, 190) },
   bowls: { m: "sweep", d: [0, -1], e: 2, p: tone(C.cobalt, 265) },
   hoses: { m: "rope", d: [1, 0], e: 6, p: tone(C.emerald, 155) },
@@ -57,9 +57,29 @@ void main() {
 }`;
 const SIG = "void mat(vec2 f, vec2 p, inout float h, inout float t, inout vec3 c)";
 const MAT = {
-  // stand-ins, used only if the baked flipbooks are missing
-  smoke: `${SIG} { vec2 q = p / 900. + vec2(uTime * .05, -uTime * .09); float e = (fbm(q + fbm(q * 1.7) * .34) - .5) * 190.; h += e - 60.; t += e * .4; c = mix(uB, uA, ss(0., 90., h)); }`,
-  fire: `${SIG} { vec2 q = vec2(f.x / 620., f.y / 900. - uTime * .4); float e = (fbm(q) - .5) * 170.; h += e - 50.; t += e * .4; c = mix(uE, mix(uB, mix(uC, uA, ss(26., 84., h)), ss(4., 26., h)), ss(0., 5., h)); }`,
+  // puffy smoke that flows: billows ride a winding current, lean and stretch along it, roll on their own axis and swell, each with a shadow, a crescent of light and a curl of brush ink
+  smoke: `float gS, gD, gR, gP; vec2 gO;
+  float puff(vec2 q, float k) { float W = 118., SP = 92., dir = mod(k, 2.) > .5 ? 1. : -1., x = q.x + k * 53. + dir * uTime * 34., id = floor(x / W), m = 1e5, cy = k * SP + 104.; gS = H2(vec2(k, 4.)) * .5; gD = -1e5; gO = vec2(0., 240.); gR = 80.; gP = .5;
+    for (float i = -1.; i < 2.; i++) { float n = id + i, s = H2(vec2(n, k)), pl = .5 + .5 * sin(((n + .5) * W - k * 53. - dir * uTime * 34.) / 150. + k * .28), R = (52. + 54. * s * s) * mix(.58, 1., ss(.25, .8, pl)) * mix(.65, 1., ss(0., 5., k)) * (1. + .16 * min(uTime, .9)); vec2 u = vec2(x, q.y) - vec2((n + .5 + (H2(vec2(n, k + 3.)) - .5) * .42) * W, cy + (s - .5) * 76.);
+      float ang = .55 * sin(cy / 190. + n * .7 + uTime * 1.3), ca = cos(ang), sa = sin(ang); u = vec2(ca * u.x + sa * u.y, -sa * u.x + ca * u.y); u.x *= .82;
+      float a = atan(u.y, u.x) + dir * uTime * (.9 + s * .7), lobe = R * (.13 * abs(sin(a * (3. + floor(s * 3.)) + s * 9.)) + .045 * abs(sin(a * (7. + floor(s * 3.)) - s * 5.))), d = length(u) - R * .9 - lobe;
+      if (d < m) m = d; if (d < 0.) { gD = d; gS = H2(vec2(n + 9., k)); gO = u; gR = R; gP = pl; } }
+    return min(m, cy + 20. + 40. * sin(x / 137. + k * 1.7 + uTime * 1.1) + 22. * sin(x / 61. - k) - q.y); }
+  ${SIG} { vec2 wv = vec2(sin(p.y / 170. + uTime * 1.1) + .6 * sin(p.x / 97. - uTime * .8 + p.y / 230.), cos(p.x / 150. - uTime * .9) + .6 * cos(p.y / 110. + uTime * .7 + p.x / 260.)) * .5, q = vec2(f.x + wv.x * 44. + 78. * sin(h / 300. - uTime * 1.7), h + wv.y * 26.); float z = clamp(uV.x / 620., 1., 1.7); q /= z; float k0 = floor(q.y / 92.);
+    for (float k = k0 + 1.; k >= max(0., k0 - 2.); k--) { float d = puff(q, k); if (d < 0.) { vec2 u = gO / gR; float g = .22 * sin(gO.x / (gR * .45) + gS * 6.) * cos(gO.y / (gR * .5) - gS * 4.), aa = 1.5 * PX / (gR * z), sh = length(u + vec2(.2, .4)) + g * .7;
+        c = gP > .62 ? uE : gP > .3 ? uA : mix(uA, uB, .5); c = mix(c, uB, ss(.98, .98 + aa, sh)); c = mix(c, mix(uB, uC, .38), ss(1.24, 1.24 + aa, sh)); c = mix(c, vec3(.985, .975, .955), .8 * (1. - ss(.4, .4 + aa, length(u + vec2(.26, .44)) + g * .9)));
+        if (gD < -9e3) c = mix(uB, uA, .3); vec2 cu = u - vec2(.08, .06); float cr = length(cu), th = atan(cu.y, cu.x), arc = ss(-2.4, -1., th) * (1. - ss(2.2, 3., th)), ink = 1.1 + .7 * sin(th + gS * 6.28); c = mix(c, uC, .85 * step(.75, fract(gS * 7.)) * arc * (1. - ss(ink - .5, ink + .5, abs((cr - .44 - .07 * th - g * .22) * gR * z))));
+        float bw = 3.6 * ss(-.25, .75, dot(gO / (length(gO) + .001), vec2(.45, .89)) + .25 * sin(gS * 6.28)); c = mix(c, uC, ss(.3, 1., bw) * ss(-bw - .5, -bw + .5, gD * z)); break; } }
+    h = -puff(q, 0.) * z; float b = t + 34. * (abs(sin(f.x / 52. + uTime * 1.4)) - 1.); c = mix(uC, c, E(b - 3.)); t = b; }`,
+  // cartoon fire: rows of curling teardrop flames, each one ember outside, the Heat orange inside, a gilt heart, under a coal ink line
+  fire: `float tear(vec2 q, float W, float T, float bend, float bulb) { float u = clamp(q.y / T, 0., 1.), x = q.x - bend * u * u * W * .5; return q.y > T ? T - q.y : W * .56 * pow(1. - u, .85) * (1. + .6 * u) * mix(1., sqrt(min(1., u * 5.)), bulb) - abs(x); }
+  float row(vec2 p, float k, out vec3 col) { float W = 132., T = 230., x = p.x + mod(k, 2.) * W * .5 + k * 19., id = floor(x / W), best = -1e5, y = k * 136. + T - p.y; col = uB;
+    for (float i = -1.; i < 2.; i++) { float n = id + i, s = H2(vec2(n, k)), Ts = T * (.72 + .38 * s), bd = (s - .5) * 1.1 + .35 * sin(uTime * 6. + s * 6.28); vec2 q = vec2(x - (n + .5) * W, y); float d = y < 0. ? max(-y, tear(q, W, Ts, bd, 0.)) : tear(q, W, Ts, bd, 0.); vec2 qi = q - vec2(0., Ts * .08);
+      if (d > best) { best = d; col = uB; if (y >= 0.) { if (tear(q - vec2(W * .13, 0.), W * .8, Ts * .92, bd, 0.) < 0.) col = mix(uB, uC, .28); if (tear(qi, W * .62, Ts * .74, bd, 1.) > 0.) col = tear(qi + vec2(W * .07, 0.), W * .42, Ts * .62, bd, 1.) > 0. ? mix(uA, uE, .45) : uA; if (tear(qi, W * .3, Ts * .44, bd, 1.) > 0.) col = uE; if (tear(qi, W * .12, Ts * .24, bd, 1.) > 0.) col = mix(uE, vec3(.98, .95, .86), .7); } } }
+    return best; }
+  ${SIG} { vec3 col; vec2 g = vec2(f.x + 130. * (fbm(vec2(f.x / 3400., h / 4600. - uTime * .22)) - .5), h); float k0 = floor(h / 136.);
+    for (float k = k0 + 1.; k >= max(0., k0 - 2.); k--) { float d = row(g, k, col); if (d > 0.) { c = mix(uC, col, E(d - 2.6)); break; } }
+    h = row(g, 0., col); float b = t - 40. * abs(sin(f.x / 48. + uTime * 2.)); c = mix(uC, c, E(b - 3.)); t = b; }`,
   // a water line sloshing, one bone crest, a few bubbles riding just behind it
   water: `${SIG} { float e = 11. * sin(f.x / 47. + uTime * 5.) + 5. * sin(f.x / 19. - uTime * 7. + 1.) - 18.; h += e; t += 5. * sin(f.x / 70. + uTime * 3.);
     float b = h - 15. - 4. * sin(f.x / 31. - uTime * 4.); c = mix(uB, c, ss(1., 1. + PX, abs(b))); c = mix(uE, c, E(h - 3.));
@@ -104,7 +124,7 @@ void main() {
 const VERT = `#version 300 es
 out vec2 v; void main() { vec2 p = vec2(gl_VertexID == 1 ? 3. : -1., gl_VertexID == 2 ? 3. : -1.); v = p * .5 + .5; gl_Position = vec4(p, 0., 1.); }`;
 
-let cv = null, gl = null, vao = null, noise = null, progs = {}, broken = false, tier = 0, atlas = null, tex = {}, imgs = {}, w = null, raf = 0, lastStart = -1e9, freeTimer = 0, undo = null, lastD = null, proxy = null;
+let cv = null, gl = null, vao = null, noise = null, progs = {}, broken = false, tier = 0, atlas = null, tex = {}, imgs = {}, w = null, raf = 0, freeTimer = 0, undo = null, lastD = null, proxy = null;
 try { tier = Math.min(2, +sessionStorage.getItem("oss:wave-tier") || 0); } catch {}
 const saveData = () => !!navigator.connection?.saveData;
 
@@ -138,10 +158,7 @@ function build(fs) {
 }
 const prog = key => progs[key] || (progs[key] = build(key === "flip" ? FLIP : HEAD + MAT[key] + FOOT));
 // THE SLOT for the baked art. A new bake only changes its entry here: file, grid, cell size, full-cover frame, and optionally flow (a same-grid RG map) with flowMax (its reach in cell UV).
-const BOOKS = {
-  smoke: { file: "smoke.webp", cols: 4, rows: 4, frames: 16, frameWidth: 360, frameHeight: 780, fullCoverFrame: 5 },
-  fire: { file: "fire.webp", cols: 4, rows: 4, frames: 16, frameWidth: 360, frameHeight: 780, fullCoverFrame: 5 },
-};
+const BOOKS = {};   // empty: smoke and fire are drawn in their shaders now, so nothing extra downloads
 // the flipbooks are asked for when the browser is idle, never on Save-Data or reduced motion
 function loadAtlas() {
   if (atlas || saveData() || RM.matches) return; atlas = {};
@@ -190,15 +207,17 @@ function draw(o, now, H, Tl, frame) {
     gl.uniform1f(P.u.uFloor, fl2 * fl2 * (3 - 2 * fl2)); gl.uniform1f(P.u.uHot, o.atlas === "fire" ? 1 : 0); gl.uniform3fv(P.u.uC, C.coal); gl.drawArrays(gl.TRIANGLES, 0, 3); return;
   }
   const P = prog(o.m), [a, b, c, e] = o.p; gl.useProgram(P.p); if (P.u.uN) { gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, noise); gl.uniform1i(P.u.uN, 0); }
-  gl.uniform2f(P.u.uR, cv.width, cv.height); gl.uniform2f(P.u.uV, vw, vh); gl.uniform2f(P.u.uD, o.d[0], o.d[1]); gl.uniform1f(P.u.uTime, (now - w.t0) / 1000); gl.uniform1f(P.u.uH, H); gl.uniform1f(P.u.uT, Tl);
+  gl.uniform2f(P.u.uR, cv.width, cv.height); gl.uniform2f(P.u.uV, vw, vh); gl.uniform2f(P.u.uD, o.d[0], o.d[1]); gl.uniform1f(P.u.uTime, (now - o.t0) / 1000); gl.uniform1f(P.u.uH, H); gl.uniform1f(P.u.uT, Tl);
   gl.uniform3fv(P.u.uA, a); if (P.u.uB) gl.uniform3fv(P.u.uB, b); if (P.u.uC) gl.uniform3fv(P.u.uC, c); if (P.u.uE) gl.uniform3fv(P.u.uE, e);
-  gl.drawArrays(gl.TRIANGLES, 0, 3);
+  gl.drawArrays(gl.TRIANGLES, 0, 3); o.lastH = H; o.lastT = Tl;
 }
 // one unbroken pass: the head arrives still moving and the tail leaves at that same speed, so nothing stops dead at the page swap
 const coverEase = p => (1 - (1 - .82 * p) ** 2) / .9676, revealEase = p => ((.18 + .82 * p) ** 2 - .0324) / .9676;
 function paint(now) {
   const o = w.o, m = margin(o), A = o.atlasOn;
-  if (w.phase === "cover") { const p = Math.min(1, (now - w.t0) / o.cover), e = coverEase(p); w.p = p; draw(o, now, -m + e * (1 + 2 * m), -m - .02, A ? e * A.fullCoverFrame : null); return p >= 1; }
+  if (w.phase === "cover") { const p = Math.min(1, (now - w.t0) / o.cover), e = coverEase(p); w.p = p; const u = w.under;   // a wave that was interrupted holds its place underneath until the new one has covered it
+    if (u) { draw(u, now, u.lastH, u.lastT, null); gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA); }
+    try { draw(o, now, -m + e * (1 + 2 * m), -m - .02, A ? e * A.fullCoverFrame : null); } finally { if (u) gl.disable(gl.BLEND); } return p >= 1; }
   const p = Math.min(1, (now - w.rt) / w.rd), e = revealEase(p); w.p = p; draw(o, now, 1 + m + .02, -m - .02 + e * (1 + 2 * m + .04), A ? A.fullCoverFrame + e * (A.frames - 1 - A.fullCoverFrame) : null); return p >= 1;
 }
 // Search: an input focused inside the tap, so an iPhone opens its keyboard; the real field takes the focus over at the swap
@@ -206,17 +225,13 @@ function holdKeyboard() { const i = document.createElement("input"); i.type = "s
 function dropKeyboard() { if (!proxy) return; const i = proxy; proxy = null; i.remove(); }
 function swap() {
   if (!w || w.swapped) return; if (w.phase === "cover") try { paint(w.t0 + w.o.cover); } catch {} // a late frame clock still swaps under a full cover
-  w.swapped = true; const path = w.path; w.path = null; undo = null; if (path) commitNav(path, "wave"); dropKeyboard();
+  w.swapped = true; w.under = null; w.skip = true; const path = w.path; w.path = null; undo = null; if (path) commitNav(path, "wave"); dropKeyboard();
   if (!w) return; w.phase = "reveal"; const t = performance.now(); w.rt = t; w.rd = Math.max(120, Math.min(w.o.ms, w.t0 + Math.min(MAX_MS, w.o.cover + w.o.ms) - t));
 }
 function tick(now) {
   raf = 0; if (!w) return; raf = requestAnimationFrame(tick); now = Math.max(now, performance.now() - 40);
   const dt = now - w.last; w.last = now;
-  if (w.frames++ > 0 && w.phase === "cover" && !w.peak) { // the governor, measured only before the swap: the swap frame is long on purpose: a heavy frame drops the resolution; a device that cannot keep up gets the plain transition from then on
-    w.slow = dt > 48 ? w.slow + 1 : 0; w.vslow = dt > 150 ? w.vslow + 1 : 0;
-    if (w.slow >= 2 && tier < TIERS.length - 1) { tier++; w.slow = 0; try { sessionStorage.setItem("oss:wave-tier", tier); } catch {} }
-    if (w.vslow >= 2) { broken = true; abort(); return; }
-  }
+  if (w.frames++ > 0 && !w.skip) { w.sum += dt; w.n++; } w.skip = false;   // frame times for the governor, leaving out the swap frame, which is long on purpose
   try {
     const done = paint(now);
     if (w.phase === "cover" && done) { if (w.peak) swap(); else w.peak = true; }
@@ -229,18 +244,18 @@ function hide() {
   clearTimeout(freeTimer); freeTimer = setTimeout(freeTex, FREE_MS);
 }
 function freeTex() { if (w || !gl || gl.isContextLost()) return; for (const k in tex) { gl.deleteTexture(tex[k]); delete tex[k]; } }
-function finish() { const pending = w?.path; clearTimers(); w = null; hide(); undo = null; if (pending) commitNav(pending, proxy ? "wave" : "push"); dropKeyboard(); }
+function finish() { const pending = w?.path; if (w?.n >= 2 && w.sum / w.n > 40 && tier < TIERS.length - 1) { tier++; try { sessionStorage.setItem("oss:wave-tier", tier); } catch {} } /* a slow device keeps its transitions and gets a lighter resolution from the next page load */ clearTimers(); w = null; hide(); undo = null; if (pending) commitNav(pending, proxy ? "wave" : "push"); dropKeyboard(); }
 function abort() { const pending = w?.path; clearTimers(); w = null; hide(); undo = null; if (pending) commitNav(pending, proxy ? "wave" : "push"); dropKeyboard(); }
 function lostGL() { gl = null; if (cv) cv.remove(); cv = null; progs = {}; tex = {}; noise = null; vao = null; if (w) abort(); }
 
-function play(key, path) {
+function play(key, path, under = null) {
   if (!glInit()) return false;
-  const base = W[key], o = { ...base, cover: base.c ?? 300, ms: base.ms ?? 480 }; if (base.atlas && atlas?.[base.atlas] && imgs[base.atlas]) o.atlasOn = atlas[base.atlas];
+  const base = W[key], o = { ...base, cover: base.c ?? 300, ms: base.ms ?? 480, t0: performance.now() }; if (base.atlas && atlas?.[base.atlas] && imgs[base.atlas]) o.atlasOn = atlas[base.atlas];
   if (key === "gifts") o.p = pageTone(path);
   if (key === "home" && lastD) o.d = [-lastD[0], -lastD[1]];   // home leaves the way you came
   try { if (o.atlasOn) { if (!atlasTex(o.atlas)) o.atlasOn = null; else prog("flip"); } if (!o.atlasOn) prog(o.m); } catch (e) { console.error("fx-wave: " + e); broken = true; return false; }
-  clearTimeout(freeTimer); const t = performance.now(); lastStart = t; lastD = o.d;
-  w = { key, o, path, t0: t, last: t, phase: "cover", frames: 0, slow: 0, vslow: 0, swapped: false, peak: false, rt: t, rd: o.ms, p: 0 };
+  clearTimeout(freeTimer); const t = performance.now(); lastD = o.d;
+  o.t0 = t; w = { key, o, path, under, t0: t, last: t, phase: "cover", frames: 0, sum: 0, n: 0, skip: false, swapped: false, peak: false, rt: t, rd: o.ms, p: 0 };
   if (!cv.isConnected) document.body.append(cv); cv.style.opacity = "1"; if (key === "search") holdKeyboard();
   underline(path); try { paint(t); } catch (e) { console.error("fx-wave: " + e); broken = true; w.path = null; undo?.(); abort(); return false; } w.swapT = setTimeout(swap, o.cover + 70);   // a stalled frame clock still lands the page
   w.goneT = setTimeout(finish, Math.min(GONE_MS, o.cover + o.ms + 90)); raf = requestAnimationFrame(tick);
@@ -248,25 +263,29 @@ function play(key, path) {
 }
 // the page this wave was carrying is cancelled; the band itself keeps travelling, so nothing jumps
 function drop(restore) { if (!w?.path) return; w.path = null; if (restore) undo?.(); undo = null; dropKeyboard(); }
+const keeper = () => { const a = w.o, b = w.under; if (b && (a.lastH == null || b.lastH > a.lastH)) return b; return a.lastH == null ? null : a; };
 setNavGate({
   // true: the wave owns this navigation and will commit it at full cover
   take(path, replace) {
-    if (w) { // a tap during a wave goes through at once, with one history entry; what it replaced never lands
+    if (w) { // a tap during a wave replaces it, with one history entry; what it replaced never lands
       if (w.path === path) return true;
-      drop(true); return false;
+      const next = replace ? null : waveFor(path); if (!next) { drop(true); return false; }   // back to the page still showing: this band finishes its pass over it
+      const under = keeper(); drop(true); clearTimers(); w = null; if (raf) cancelAnimationFrame(raf); raf = 0;   // the new tap plays its own wave over this one, so nothing pops off
+      if (play(next, path, under)) return true; hide(); return false;
     }
-    if (replace || performance.now() - lastStart < COOL) return false;
-    const key = waveFor(path); if (!key) return false;
-    if (!play(key, path)) return false;
+    const key = replace ? null : waveFor(path); if (!key || !play(key, path)) return false;
     return true;
   },
-  same() { drop(true); },
+  same() {   // a tap back to the page still showing, under a wave heading elsewhere: that page gets its own wave too
+    if (!w?.path) return; const p = location.pathname + location.search, k = sectionOf(p); if (w.path === p) return; if (k === "search" || !W[k] || RM.matches || saveData() || document.hidden || broken) { drop(true); return; }
+    const under = keeper(); drop(true); clearTimers(); w = null; if (raf) cancelAnimationFrame(raf); raf = 0; if (!play(k, p, under)) hide();
+  },
   pop() { drop(false); },
   live: () => !!w,
 });
 // the work is done before the first tap: shaders on the first touch, flipbooks when the browser is idle
 const idle = window.requestIdleCallback || (f => setTimeout(f, 60));
-const warm = () => { if (RM.matches || saveData() || broken) return; const todo = ["flip", ...new Set(Object.values(W).map(x => x.m))];   // one shader per idle moment, so a first touch never stutters
+const warm = () => { if (RM.matches || saveData() || broken) return; const todo = [...new Set(Object.values(W).map(x => x.m))];   // one shader per idle moment, so a first touch never stutters
   const next = () => { if (!todo.length || broken || w) { if (todo.length && w) setTimeout(() => idle(next), 1000); return; } try { if (glInit()) prog(todo.shift()); else return; } catch (e) { console.error("fx-wave: " + e); broken = true; return; } idle(next); }; idle(next); };
 addEventListener("pointerdown", warm, { once: true, passive: true, capture: true });
 addEventListener("pointerdown", e => {   // only the book this finger is about to open goes to the GPU, before the finger lifts
