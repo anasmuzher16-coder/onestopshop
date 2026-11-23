@@ -20,18 +20,18 @@ const tone = (c, h, accent = C.bone) => [c, mid(h), deep(h), accent];
 const W = {
   hookahs: { m: "smoke", d: [S2, S2], e: 400, p: [C.bone, C.ash, C.coal, C.bonelt] },   // flowing inked clouds in bone and ash, never pink
   heat: { m: "fire", d: [0, 1], e: 290, p: [C.emberlt, C.ember, C.coal, C.gilt] },      // drawn flames: ember, the Heat tile's orange and gilt, with a coal ink line
-  bases: { m: "water", d: [-S2, S2], e: 40, p: tone(C.teal, 190) },
+  bases: { m: "water", d: [0, 1], e: 80, p: tone(C.teal, 190) },
   bowls: { m: "foil", d: [0, -1], e: 40, p: tone(C.cobalt, 265) },
-  hoses: { m: "rope", d: [1, 0], e: 6, p: tone(C.emerald, 155) },
-  parts: { m: "teeth", d: [-1, 0], e: 90, p: tone(C.gilt, 88) },
+  hoses: { m: "rope", d: [1, 0], e: 210, p: tone(C.emerald, 155) },
+  parts: { m: "teeth", d: [-1, 0], e: 420, p: tone(C.gilt, 88) },
   cologne: { m: "mist", d: [-S2, -S2], e: 380, p: [C.amethyst, ok(.62, .1, 312), deep(312), ok(.86, .06, 312)] },
   misc: { m: "labels", d: [S2, -S2], e: 150, p: [C.bonelt, C.ember, C.coal, C.bone] },
-  home: { m: "motes", d: [.38, .925], e: 56, p: [C.coal, C.gilt, C.coal2, C.ember] },
+  home: { m: "motes", d: [.38, .925], e: 110, p: [C.coal, C.gilt, C.coal2, C.ember] },
   all: { m: "tiles", d: [0, 1], e: 340, p: [C.bonelt, C.bone, C.coal, C.bone] },
   gifts: { m: "ribbon", d: [S2, S2], e: 56, p: tone(C.cobalt, 265) },
-  set: { m: "pieces", d: [1, 0], e: 150, p: tone(C.ruby, 18) },
-  shipping: { m: "route", d: [1, 0], e: 140, p: tone(C.cobalt, 265) },
-  search: { m: "sweep", d: [1, 0], e: 2, p: tone(C.teal, 190), c: 150, ms: 230 },
+  set: { m: "pieces", d: [1, 0], e: 190, p: tone(C.ruby, 18) },
+  shipping: { m: "route", d: [1, 0], e: 240, p: tone(C.cobalt, 265) },
+  search: { m: "sweep", d: [1, 0], e: 70, p: tone(C.teal, 190), c: 150, ms: 230 },
   cart: { m: "receipt", d: [0, 1], e: 30, p: tone(C.gilt, 88), c: 170, ms: 260 },
 };
 const pageTone = path => /^\/gifts\/under-50/.test(path) ? tone(C.emerald, 155) : tone(C.cobalt, 265);   // Gifts wears the colour of the page it lands on
@@ -67,7 +67,7 @@ const MAT = {
     return min(m, cy + 20. + 40. * sin(x / 137. + k * 1.7 + uTime * 1.1) + 22. * sin(x / 61. - k) - q.y); }
   ${SIG} { vec2 wv = vec2(sin(p.y / 170. + uTime * 1.1) + .6 * sin(p.x / 97. - uTime * .8 + p.y / 230.), cos(p.x / 150. - uTime * .9) + .6 * cos(p.y / 110. + uTime * .7 + p.x / 260.)) * .5, q = vec2(f.x + wv.x * 44. + 78. * sin(h / 300. - uTime * 1.7), h + wv.y * 26.); float z = clamp(uV.x / 620., 1., 1.7); q /= z; float k0 = floor(q.y / 92.);
     for (float k = k0 + 1.; k >= max(0., k0 - 2.); k--) { float d = puff(q, k); if (d < 0.) { vec2 u = gO / gR; float g = .22 * sin(gO.x / (gR * .45) + gS * 6.) * cos(gO.y / (gR * .5) - gS * 4.), aa = 1.5 * PX / (gR * z), sh = length(u + vec2(.2, .4)) + g * .7;
-        c = gP > .62 ? uE : gP > .3 ? uA : mix(uA, uB, .5); c = mix(c, uB, ss(.98, .98 + aa, sh)); c = mix(c, mix(uB, uC, .38), ss(1.24, 1.24 + aa, sh)); c = mix(c, vec3(.985, .975, .955), .8 * (1. - ss(.4, .4 + aa, length(u + vec2(.26, .44)) + g * .9)));
+        c = gP > .62 ? uE : gP > .3 ? uA : mix(uA, uB, .5); c = mix(c, uB, ss(.98, .98 + aa, sh)); c = mix(c, mix(uB, uC, .38), ss(1.24, 1.24 + aa, sh)); c = mix(c, vec3(.985, .975, .955), .8 * (1. - ss(.4, .4 + aa, length(u + vec2(.26, .44)) + g * .9)) * ss(.3, .3 + aa, length(u + vec2(.12, .26))));
         if (gD < -9e3) c = mix(uB, uA, .3); vec2 cu = u - vec2(.08, .06); float cr = length(cu), th = atan(cu.y, cu.x), arc = ss(-2.4, -1., th) * (1. - ss(2.2, 3., th)), ink = 1.1 + .7 * sin(th + gS * 6.28); c = mix(c, uC, .85 * step(.75, fract(gS * 7.)) * arc * (1. - ss(ink - .5, ink + .5, abs((cr - .44 - .07 * th - g * .22) * gR * z))));
         float bw = 3.6 * ss(-.25, .75, dot(gO / (length(gO) + .001), vec2(.45, .89)) + .25 * sin(gS * 6.28)); c = mix(c, uC, ss(.3, 1., bw) * ss(-bw - .5, -bw + .5, gD * z)); break; } }
     h = -puff(q, 0.) * z; float b = t + 34. * (abs(sin(f.x / 52. + uTime * 1.4)) - 1.); c = mix(uC, c, E(b - 3.)); t = b; }`,
@@ -80,58 +80,60 @@ const MAT = {
   ${SIG} { vec3 col; vec2 g = vec2(f.x + 130. * (fbm(vec2(f.x / 3400., h / 4600. - uTime * .22)) - .5), h); float k0 = floor(h / 136.);
     for (float k = k0 + 1.; k >= max(0., k0 - 2.); k--) { float d = row(g, k, col); if (d > 0.) { c = mix(uC, col, E(d - 2.6)); break; } }
     h = row(g, 0., col); float b = t - 40. * abs(sin(f.x / 48. + uTime * 2.)); c = mix(uC, c, E(b - 3.)); t = b; }`,
-  // a water line sloshing, one bone crest, a few bubbles riding just behind it
-  water: `${SIG} { float e = 11. * sin(f.x / 47. + uTime * 5.) + 5. * sin(f.x / 19. - uTime * 7. + 1.) - 18.; h += e; t += 5. * sin(f.x / 70. + uTime * 3.);
-    float b = h - 15. - 4. * sin(f.x / 31. - uTime * 4.); c = mix(uB, c, ss(1., 1. + PX, abs(b))); c = mix(uE, c, E(h - 3.));
-    float z = 17.; vec2 g = vec2(f.x, f.y + uTime * 30.) / z, id = floor(g), u = fract(g) - .5;
-    if (H2(id) > .66) { vec2 o = (vec2(H2(id + 1.), H2(id + 2.)) - .5) * .46; float hc = h + (u.y - o.y) * z, d = length(u - o) * z - (1.4 + 2.2 * H2(id + 7.)); if (hc > 24. && hc < 58.) c = mix(uE, c, E(d)); } }`,
-  // one twisted hose rope along the edge, one colour, shaded by the twist
-  rope: `${SIG} { float P = 24., W = 32.; h += 3. * abs(sin(3.14159 * (f.x + h * 1.1) / P)) - 3.;
-    if (h < W + 2.) { float s = abs(fract((f.x + h * 1.1) / P) - .5) * 2.; c = mix(uA, uB, ss(.66, .76, s)); c = mix(c, uC, ss(.88, .95, s)); c = mix(uC, c, E(abs(h - W) - 1.)); if (h > W + 1.) c = uA; } }`,
+  // bases: the screen fills like a glass base. A foaming water line surges up, layered currents behind it, big bubbles rising through all of it
+  water: `void bub(vec2 q, float P, float v, float sd, inout vec3 c) { vec2 g = vec2(q.x + 9. * sin(q.y / 60. + sd + uTime * 3.), q.y - uTime * v) / P + sd, id = floor(g); if (H2(id + sd) > .56) return; vec2 j = (vec2(H2(id + 1.), H2(id + 2.)) - .5) * .36, u = (fract(g) - .5 - j) * P; float z = H2(id + 3.), r = P * (.1 + .2 * z), d = length(u) - r; if (d > 1.5) return;
+    vec3 b = mix(c, uE, .2); b = mix(b, uC, ss(-2.6, -1.6, d)); b = mix(b, uE, 1. - E(length(u + vec2(r * .34, -r * .38)) - r * .22)); c = mix(b, c, ss(.6, 1.4, d)); }
+  ${SIG} { float T = uTime, z = clamp(uV.x / 620., 1., 1.5), w = 14. * sin(f.x / 61. + T * 5.) + 8. * sin(f.x / 27. - T * 7. + 1.), hh = h + w - 30., b1 = hh - 48. - 12. * sin(f.x / 83. - T * 4.), b2 = hh - 150. - 18. * sin(f.x / 120. + T * 3. + 2.), b3 = hh - 310. - 22. * sin(f.x / 150. - T * 2.4), tb = t + 12. * sin(f.x / 70. + T * 3.); vec2 q = f / z;
+    c = uE; c = mix(c, mix(uA, uE, .38), E(hh - 13.)); c = mix(c, uA, E(b1)); c = mix(c, mix(uA, uB, .2), E(b2)); c = mix(c, mix(uA, uB, .36), E(b3)); c = mix(uA, c, E(tb - 120.)); c = mix(uC, c, E(abs(b1) - 1.2));
+    if (hh > 18.) { bub(q, 118., 250., 1., c); bub(q, 62., 360., 7., c); } c = mix(uC, c, E(hh - 2.6)); c = mix(uC, c, E(tb - 2.5)); h = hh; t = tb; }`,
+  // hoses: thick braided hoses with brass fittings whip across and pile up until they bury the page
+  rope: `${SIG} { float z = clamp(uV.x / 620., 1., 1.55), x = f.x / z, y = h / z, SP = 46., W = 31., k0 = floor(y / SP), a0 = 30. + 24. * H1(3.), c0 = W + a0 + a0 * sin(x / (92. + 54. * H1(0.)) + uTime * (2.6 + 1.6 * H1(9.))); c = mix(uB, uC, .6);
+    for (float k = k0; k >= max(0., k0 - 4.); k--) { float am = 30. + 24. * H1(k + 3.), cy = k * SP + W + am + am * sin(x / (92. + 54. * H1(k)) + k * 2.1 + uTime * (2.6 + 1.6 * H1(k + 9.))), v = (y - cy) / W; if (abs(v) < 1.) { float m = mod(k, 3.), fe = fract(x / (360. + 90. * H1(k + 5.)) + H1(k + 6.)), ed = (1. - abs(v)) * W * z; vec3 b = m < .5 ? uA : m < 1.5 ? mix(uA, uB, .42) : mix(uB, uC, .4);
+        b = mix(b, mix(b, uC, .38), ss(.28, .32, v)); b = mix(b, mix(b, uC, .22), ss(.7, .74, fract((x + v * W * .9) / 15.))); b = mix(b, mix(b, uE, .65), 1. - ss(.13, .18, abs(v + .44))); if (fe < .06) { b = mix(vec3(${C.gilt}), vec3(.98, .94, .78), 1. - ss(.14, .2, abs(v + .4))); b = mix(b, uC, 1. - ss(.002, .005, min(fe, .06 - fe))); } c = mix(uC, b, ss(2., 3., ed)); break; } }
+    h = (y - c0 + W) * z; float tb = t - 40. - 34. * sin(f.x / 96. + uTime * 2.6); c = mix(uC, c, E(tb - 3.)); t = tb; }`,
   // large blank price labels dealt across, the body following under them
   labels: `${SIG} { vec2 cl = vec2(128., 82.), g = p / cl; float ro = mod(floor(g.y), 2.); g.x += ro * .5; vec2 id = floor(g), q = (fract(g) - .5) * cl, ctr = (id + .5 - vec2(ro * .5, 0.)) * cl;
     float sc = dot(ctr, uD) + L * .5 + H2(id) * 34., k = clamp((uH * L - sc + 76.) / 56., 0., 1.); k = k * k * (3. - 2. * k); float bh = h - 64., lb = -1.; vec3 lc = uA;
     if (k > 0.) { vec2 w = (q + uD * (1. - k) * 38.) / (.72 + .28 * k), b = abs(w) - vec2(46., 23.); float d = length(max(b, 0.)) + min(max(b.x, b.y), 0.) - 6.; lb = -d; lc = w.y > 12. ? uB : uE; lc = mix(uC, lc, E(-d - 1.5)); }
     c = mix(lc, uA, E(bh)); h = max(bh, lb); }`,
-  // coal, with a few embers rising off the edge
-  motes: `${SIG} { float z = 34., dr = -1.; vec2 g = vec2(p.x + uTime * 7., p.y - uTime * 42.) / z, id = floor(g), u = fract(g) - .5; float bh = h - 10.;
-    if (H2(id) > .78) { vec2 j = (vec2(H2(id + 1.), H2(id + 2.)) - .5) * .5; float hc = h + dot((u - j) * z, uD); if (hc > -38. && hc < 26.) { dr = (1.2 + 1.7 * H2(id + 3.)) - length(u - j) * z; if (dr > 0.) c = H2(id + 4.) > .7 ? uB : uE; } }
-    if (bh > 0. && dr <= 0.) c = uA; h = max(bh, dr); }`,
+  // home: the coal itself arrives behind a burning edge of gilt and ember
+  motes: `${SIG} { float e = h - 26. + 130. * (fbm(vec2(f.x / 3400., h / 4600.)) - .5); c = mix(uB, mix(uE, uA, E(e - 18.)), E(e - 7.)); h = e; }`,
   // a bone ribbon crossing on the page's own colour, tied in a bow
   ribbon: `${SIG} { float e = 4. * sin(f.x / 63. + uTime * 3.) - 34.; float b = h + e; vec2 q = vec2(f.x, b - 17.); vec2 l = vec2(abs(q.x) - 25., q.y - abs(q.x) * .16); float loop = 1. - length(l / vec2(25., 15.)), hole = length(vec2(abs(q.x) - 25., l.y) / vec2(11., 5.)) - 1., knot = 7. - length(q);
     float bow = max(min(loop * 15., hole * 5.), knot); if (b < 34. || bow > 0.) c = uE; if (b > 0. && b < 34.) c = mix(uB, c, E(abs(b - 17.) - 12.) + step(0., bow)); if (bow > 0.) c = mix(uB, uE, E(bow - 1.4)); h = max(b, bow); t += 0.; }`,
   // one bone route line running out ahead of the flat colour, ending in a map pin
   route: `float rt(float x) { return 64. * sin(x / 130. + .6) + 28. * sin(x / 61. + 2.); }
-  ${SIG} { float tip = uH * L, dl = 3. - abs(f.x - rt(f.y)); vec2 q = vec2(f.y - tip, f.x - rt(tip) - 25.); float pin = 15. - length(q), tp = min(q.y + 25., 15. - abs(q.x) - (q.y < 0. ? -q.y * .62 : 99.)), hole = length(q) - 5.5, bh = h - 120.;
-    pin = max(pin, q.y < -4. ? tp : -1.); c = mix(uA, uE, E(dl) * E(h) * E(230. - h)); c = mix(c, uE, E(pin)); c = mix(uB, c, 1. - E(pin) * (1. - E(hole))); h = max(bh, max(min(h, dl), pin)); }`,
+  ${SIG} { float tip = uH * L, dl = 5. - abs(f.x - rt(f.y)); vec2 q = vec2(f.y - tip, f.x - rt(tip) - 25.); float pin = 15. - length(q), tp = min(q.y + 25., 15. - abs(q.x) - (q.y < 0. ? -q.y * .62 : 99.)), hole = length(q) - 5.5, bh = h - 120. + .9 * rt(f.x);
+    pin = max(pin, q.y < -4. ? tp : -1.); c = mix(uA, uE, E(dl) * E(h) * step(.45, fract(f.y / 26.))); c = mix(c, uE, E(pin)); c = mix(uB, c, 1. - E(pin) * (1. - E(hole))); h = max(bh, max(min(h, dl), pin)); }`,
   // bowls: a sheet of crimped hookah foil, pleated at the edge and punched with rows of holes
   foil: `${SIG} { float P = 40., x = f.x + 8. * sin(h / 60. + uTime * 3.), u = abs(fract(x / P) - .5) * 2., hh = h - 18. * u * u - 2.;
     if (hh < 112.) { c = fract(x / P) < .5 ? mix(uA, uE, .38) : mix(uA, uB, .28); c = mix(c, uA, ss(88., 112., hh)); float rw = floor((h - 34.) / 15.); vec2 g = vec2(f.x / 16. + mod(rw, 2.) * .5, (h - 34.) / 15.); float d = length((fract(g) - .5) * vec2(16., 15.)) - 2.2; if (h > 34. && h < 95.) { c = mix(uE, c, E(d - .8)); c = mix(uC, c, E(d)); } }
     c = mix(uC, c, E(hh - 3.)); h = hh; float b = t - 12. * abs(sin(f.x * 3.14159 / 40.)); c = mix(uC, c, E(b - 3.)); t = b; }`,
-  // parts: five big machined gear teeth with a bevel and a bolt in each
-  teeth: `${SIG} { float P = CR / 5., g = (f.x + CR * .5) / P, u = fract(g) - .5, tp = clamp((.36 - abs(u)) / .1, 0., 1.), hh = h - 72. * (1. - tp);
-    if (hh < 16.) c = mix(uA, uE, .5); else if (hh < 26.) c = mix(uA, uB, .22); vec2 q = vec2(u * P, h - 82.); float d = length(q) - 13.; if (h < 130.) { c = mix(mix(uA, uB, .5), c, E(d - 3.)); c = mix(mix(uA, uE, .45), c, E(d)); c = mix(c, uC, (1. - E(abs(q.x + q.y) - 1.4)) * (1. - E(d + 3.))); }
-    c = mix(uC, c, E(hh - 3.)); h = hh; float b = t - 40. * (1. - clamp((.36 - abs(fract(g + .5) - .5)) / .1, 0., 1.)); c = mix(uC, c, E(b - 3.)); t = b; }`,
+  // parts: a wall of big machined gears rolls in, each meshing with and turning against its neighbours
+  teeth: `${SIG} { float P = clamp(uV.x / 3.2, 168., 250.), r0 = P * .43; vec2 g = p / P, id = floor(g), u = (fract(g) - .5) * P, ctr = (id + .5) * P; float par = mod(id.x + id.y, 2.) < .5 ? 1. : -1., sc = dot(ctr, uD) + L * .5 + H2(id) * 34., k = clamp((uH * L - sc + P * .7) / (P * .6), 0., 1.), bh = h - P * 1.45, lb = -1.; k = k * k * (3. - 2. * k); vec3 plate = vec3(${C.coal}); c = plate;
+    if (k > 0.) { vec2 w = u / max(.001, k); float spin = (1. - k) * 2.4 + uTime * 2.6, a = atan(w.y, w.x) + par * spin + (par < 0. ? .2618 : 0.), r = length(w), d = r - r0 - 8. * clamp(cos(a * 12.) * 2.6, -1., 1.); lb = -d * k;
+      if (d < 0.) { float sw = abs(fract(a * .79577) - .5), wm = ss(r0 * .34 - 1., r0 * .34 + 1., r) * (1. - ss(r0 * .72 - 1., r0 * .72 + 1., r)) * ss(.165, .18, sw); vec3 b = mix(uA, mix(uA, uE, .42), ss(r0 * .8 - 1., r0 * .8 + 1., r) * (1. - ss(r0 * .92 - 1., r0 * .92 + 1., r))); b = mix(b, plate, wm); b = mix(b, uC, (1. - E(abs(r - r0 * .72) - 1.2)) * (1. - wm)); b = mix(b, mix(uA, uE, .45), 1. - ss(r0 * .26 - 1., r0 * .26 + 1., r)); b = mix(b, uC, 1. - ss(r0 * .1 - 1., r0 * .1 + 1., r)); c = mix(uC, b, E(-d - 2.6)); } }
+    h = max(bh, lb); float tb = t - 34. * (.5 + .5 * clamp(cos(f.x / P * 37.7) * 3., -1., 1.)); c = mix(uC, c, E(tb - 3.)); t = tb; }`,
   // everything: the store's jewel tiles deal in across the counter, then the page's bone
   tiles: `vec3 J(float i) { i = mod(i, 6.); return i < 1. ? vec3(${C.ruby}) : i < 2. ? vec3(${C.teal}) : i < 3. ? vec3(${C.cobalt}) : i < 4. ? vec3(${C.emberlt}) : i < 5. ? vec3(${C.emerald}) : vec3(${C.gilt}); }
   ${SIG} { float S = clamp(uV.x / 5., 78., 132.); vec2 g = p / S, id = floor(g), q = (fract(g) - .5) * S, ctr = (id + .5) * S; float sc = dot(ctr, uD) + L * .5 + H2(id) * 60., k = clamp((uH * L - sc + 150.) / 60., 0., 1.), lb = -1., bh = h - 250.; k = k * k * (3. - 2. * k);
-    if (k > 0.) { vec2 w = q / max(.001, k); vec2 b = abs(w) - vec2(S * .5 - 11.); float d = length(max(b, 0.)) + min(max(b.x, b.y), 0.) - 7.; lb = -d * k; c = mix(uC, J(id.x + id.y * 2.), E(-d - 2.5)); }
+    if (k > 0.) { float ta = (H2(id + 5.) - .5) * .21; vec2 w = mat2(cos(ta), -sin(ta), sin(ta), cos(ta)) * q / max(.001, k); vec2 b = abs(w) - vec2(S * .5 - 11.); float d = length(max(b, 0.)) + min(max(b.x, b.y), 0.) - 7.; lb = -d * k; c = mix(uC, J(id.x + id.y * 2.), E(-d - 2.5)); }
     if (bh > 0.) { float e = step(250. + S * .5, uH * L - sc); c = mix(c, uA, lb > 0. ? e : 1.); } h = max(bh, lb); }`,
-  // build a set: four pieces slide in at staggered depths and lock together on jigsaw tabs
-  pieces: `${SIG} { float w = CR / 4., r = clamp(floor((f.x + CR * .5) / w), 0., 3.), cx = (r + .5) * w - CR * .5, even = mod(r, 2.) < .5 ? 1. : 0., o = even > .5 ? 0. : 86.; vec2 u = vec2(f.x - cx, h - o - 24.); float hh = max(h - o - 24., 58. - length(u));
-    c = even > .5 ? uA : mix(uA, uB, .22); c = mix(c, mix(c, uE, .3), (1. - E(hh - 10.)) * E(hh - 3.)); c = mix(uC, c, E(w * .5 - abs(f.x - cx) - 1.5)); c = mix(uC, c, E(hh - 3.)); h = hh; float b = t - (even > .5 ? 86. : 0.); c = mix(uC, c, E(b - 3.)); t = b; }`,
+  // build a set: four jewel pieces, one for each part of a setup, slide in at staggered depths and lock on jigsaw tabs
+  pieces: `${SIG} { float w = CR / 4., r = clamp(floor((f.x + CR * .5) / w), 0., 3.), cx = (r + .5) * w - CR * .5, o = r < .5 ? 0. : r < 1.5 ? 86. : r < 2.5 ? 38. : 124.; vec2 u = vec2(f.x - cx, h - o - 24.); float hh = max(h - o - 24., 58. - length(u)); vec3 J = r < .5 ? uA : r < 1.5 ? vec3(${C.gilt}) : r < 2.5 ? vec3(${C.teal}) : vec3(${C.cobalt});
+    c = h < o + 170. ? J : uA; c = mix(c, mix(c, vec3(.98), .22), (1. - E(hh - 10.)) * E(hh - 3.)); c = mix(uC, c, E(w * .5 - abs(f.x - cx) - 1.5)); c = mix(uC, c, E(hh - 3.)); h = hh; float b = t - (124. - o); c = mix(uC, c, E(b - 3.)); t = b; }`,
   // cart: the till receipt tearing up the screen, printed lines on bone, a zigzag torn edge
   receipt: `${SIG} { float u = abs(fract(f.x / 22.) - .5) * 2., hh = h - 13. * u; if (h < 88.) { c = uE; float rn = floor((h - 24.) / 13.), ln = abs(fract((h - 24.) / 13.) - .5) * 13., rw = H2(vec2(rn, 3.)); if (h > 24. && h < 76. && abs(f.x) < CR * .5 - 14. && fract((f.x + rn * 37.) / (46. + rw * 60.)) < .7) c = mix(uC, c, E(ln - 2.)); }
     c = mix(uC, c, E(abs(h - 88.) - 1.5)); c = mix(uC, c, E(hh - 2.5)); h = hh; float b = t - 10. * u; c = mix(uC, c, E(b - 2.5)); t = b; }`,
-  // the plain family wave: the flat header colour with a clean edge. Search uses it, because a search should feel instant
-  sweep: `${SIG} { }`,
+  // the plain family wave: the flat header colour with a clean edge. Search wears a barcode on its edge and stays instant
+  sweep: `${SIG} { if (h < 64.) c = H2(vec2(floor(h / 4.), 7.)) > .48 ? uC : uE; c = mix(uC, c, E(h - 3.)); }`,
 };
 // cologne: an aerosol. A tight pressurised jet leaves the nozzle with a bright dense core, then blooms into an ultra-fine spray and soft amethyst mist that fills the screen
-MAT.mist = `float sp(vec2 p, vec2 nz, float pitch, float k, float dn, float big, float seed) { vec2 a = nz + (p - nz) / (1. + uTime * k), g = a / pitch + seed, id = floor(g); if (H2(id + seed) > dn) return 0.; vec2 j = (vec2(H2(id + 1.), H2(id + 2.)) - .5) * .86; float z = H2(id + 3.), rad = pitch * (.12 + big * z * z * z); vec2 o = (fract(g) - .5 - j) * pitch, dr = normalize(p - nz + .001); float al = dot(o, dr) / (1. + uTime * 5.), ac = dot(o, vec2(-dr.y, dr.x)), d = rad - length(vec2(al, ac)); return (.5 + .5 * H2(id + 4.)) * ss(-.8, .6, d); }
+MAT.mist = `float sp(vec2 p, vec2 nz, float pitch, float k, float dn, float big, float seed) { vec2 a = nz + (p - nz) / (1. + uTime * k), g = a / pitch + seed, id = floor(g); if (H2(id + seed) > dn) return 0.; vec2 j = (vec2(H2(id + 1.), H2(id + 2.)) - .5) * .86; float z = H2(id + 3.), rad = pitch * (.12 + big * z * z * z); vec2 o = (fract(g) - .5 - j) * pitch * (1. + uTime * k), dr = normalize(p - nz + .001); float al = dot(o, dr) / (1. + uTime * 1.2), ac = dot(o, vec2(-dr.y, dr.x)), d = rad - length(vec2(al, ac)); return (.5 + .5 * H2(id + 4.)) * ss(-.8, .6, d); }
   ${SIG} { vec2 nz = uV * .5 - vec2(min(uV.x * .16, 180.), 96.), w = abs(nz) + uV * .5, dir = normalize(p - nz + .001); float r = length(p - nz), RM = length(w), hr = uH * RM - r, tr = r - uT * RM, n = fbm(p / 11000. + vec2(-uTime * .03, uTime * .02)), n2 = fbm(p / 6400. + vec2(uTime * .035, .31)), fo = (n - .5) * 190.;
     float th = acos(clamp(dot(dir, vec2(-.6, -.8)), -1., 1.)) + (n2 - .5) * .42, wd = mix(.13, 5., pow(clamp(uH, 0., 1.), 2.2)), cn = 1. - ss(wd * .72, wd * 1.25, th), ce = 1. - ss(wd * .9, wd * 1.7, th), core = exp(-pow(th / (wd * .42), 2.));
     float m = ss(-60., 130., hr + fo) * ss(-60., 130., tr - fo) * cn, env = ss(-240., -40., hr + fo * .6) * ss(-230., -30., tr - fo * .6) * ce, pk = 1. - ss(70., 420., hr), dn = env * (.2 + .55 * pk), d1 = sp(p, nz, 3.4, 2.2, dn * .72, .13, 1.), d2 = sp(p, nz, 5.6, 3., dn * .85, .14, 7.), d3 = sp(p, nz, 10., 4., dn * .4, .1, 13.), da = max(d1, max(d2, d3));
-    vec3 b = mix(mix(uA, uB, .12), mix(uA, uE, .5), ss(.34, .66, .6 * n + .4 * n2)); b = mix(b, mix(uE, vec3(.99), .4), .78 * core * exp(-r / (.75 * RM))); c = mix(b, vec3(.99, .97, 1.), da); h = (max(m, da) - .5) * 1.5 * PX; t = PX * 9.; }`;
+    vec3 b = mix(mix(uA, uB, .12), mix(uA, uE, .5), ss(.34, .66, .6 * n + .4 * n2)); b = mix(b, mix(uE, vec3(.99), .4), .78 * core * exp(-r / (.75 * RM))); c = mix(b, mix(uE, vec3(.99), .35), da * .8); h = (max(m, da) - .5) * 1.5 * PX; t = PX * 9.; }`;
 // the baked smoke and fire: a flipbook, sampled at one uniform cover scale. With a flow map, frames warp into each other instead of double-exposing.
 const FLIP = `#version 300 es
 precision highp float;
