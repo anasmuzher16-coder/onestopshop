@@ -354,7 +354,8 @@ function deliveryLine(p, opts) {
   return `<button class="dline" type="button" data-open-postal><span class="dline__msg">${esc(s.msg)}</span>${s.sub ? `<span class="dline__sub">${esc(s.sub)}</span>` : ""}<span class="dline__act">${esc(s.act)}</span></button>`;
 }
 function syncDelivery() {
-  const box = $("[data-delivery-strip]"), btn = $("button", box), on = route().replace(/^#\/?/, "").split("/")[0], show = !["cart", "checkout", "order"].includes(on);
+  const box = $("[data-delivery-strip]"), btn = $("button", box), on = route().replace(/^#\/?/, "").split("/")[0], answered = !!state.dest && (state.dest.complete || !localArea(state.dest)),
+    show = !["cart", "checkout", "order"].includes(on) && !answered && !store.get("strip-off");   // gone once we have their postal code, or once they close it. The product page and cart can still take one
   box.hidden = !show; btn.toggleAttribute("data-open-postal", show);   // a hidden strip must never be the control that opens the sheet
   if (!show) return;
   const s = deliveryNow(), line = [s.msg, s.sub, s.act].filter(Boolean).join(". ");
@@ -468,6 +469,7 @@ function syncChrome() {
 const sheet = $("[data-postal-sheet]"), postalInput = $("#postal"), postalErr = $("#postal-err");
 function openSheet() { postalInput.value = state.dest ? state.dest.full : ""; postalErr.hidden = true; postalInput.removeAttribute("aria-invalid"); sheet.showModal(); postalInput.focus(); postalInput.select(); }
 document.addEventListener("click", e => {
+  if (e.target.closest("[data-strip-close]")) { store.set("strip-off", true); syncDelivery(); $("#main").focus({ preventScroll: true }); return; }
   if (e.target.closest("[data-open-postal]")) openSheet();
   if (e.target.closest("[data-local-off]")) { const o = state.dest ? quote(state.dest, pack(cartLines()))[0] : null; if (state.farFor === state.dest?.full) state.localOff = state.farFor; state.delivery = null; state.ship = o ? o.id : "pickup"; store.set("ship", state.ship); navigate("/cart"); }
   else if (e.target.closest("[data-close-postal]") || e.target === sheet) sheet.close();

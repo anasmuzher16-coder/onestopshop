@@ -706,8 +706,12 @@ html.pour-still.pour-mist body::before{background-image:url(img/mist-still.webp)
 /* ========== DELIVERY STRIP AND PRODUCT LINE (2026-11-22) ==========
    Teal on ink, flat: ember stays for stickers and the primary action. Fixed height, so no state can move the page. */
 .dstrip{--color-delivery:var(--teal);background:var(--color-delivery);color:var(--color-on-tile);border-bottom:2px solid var(--color-bg)}
+.dstrip{position:relative}
 .dstrip[hidden]{display:none}
-.dstrip__btn{display:flex;flex-direction:column;justify-content:center;width:100%;height:56px;padding:0 var(--gutter);border:0;background:none;color:inherit;text-align:left;cursor:pointer;touch-action:manipulation}
+.dstrip__x{position:absolute;top:50%;right:max(2px,calc(var(--gutter) - 14px));display:grid;place-items:center;width:44px;height:44px;margin-top:-22px;padding:0;border:0;border-radius:var(--radius);background:none;color:inherit;cursor:pointer;touch-action:manipulation}
+.dstrip__x:active{background:color-mix(in oklch,var(--color-delivery) 82%,var(--ink))}
+.dstrip__x:focus-visible{outline:2px solid var(--ink);outline-offset:-3px}
+.dstrip__btn{display:flex;flex-direction:column;justify-content:center;width:100%;height:56px;padding:0 calc(var(--gutter) + 40px) 0 var(--gutter);border:0;background:none;color:inherit;text-align:left;cursor:pointer;touch-action:manipulation}
 .dstrip__btn:active{background:color-mix(in oklch,var(--color-delivery) 90%,var(--ink))}
 .dstrip__btn:focus-visible{outline:2px solid var(--ink);outline-offset:-4px}
 .dstrip__msg{min-width:0;overflow:hidden;font-size:var(--t-14);font-weight:600;line-height:20px;white-space:nowrap;text-overflow:ellipsis}
