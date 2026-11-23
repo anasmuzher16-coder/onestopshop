@@ -569,8 +569,20 @@ html.pour-still body::before{content:"";position:fixed;inset:0 0 auto;height:100
 html.pour-page .top{background:var(--color-bg);-webkit-backdrop-filter:none;backdrop-filter:none}
 html.pour-page .chips:not(.is-stuck){background:transparent}
 html.pour-page .chips a:not([aria-current]){background:var(--color-bg)}
+html.air-still body::before{content:"";position:fixed;inset:0 0 auto;height:100lvh;z-index:-1;pointer-events:none;background:var(--coal-0) center / cover no-repeat}
+html.air-still[data-air="bases"] body::before{background-image:url(img/air-bases.webp)}
+html.air-still[data-air="bowls"] body::before{background-image:url(img/air-bowls.webp)}
+html.air-still[data-air="heat"] body::before{background-image:url(img/air-heat.webp)}
+html.air-still[data-air="hoses"] body::before{background-image:url(img/air-hoses.webp)}
+html.air-still[data-air="parts"] body::before{background-image:url(img/air-parts.webp)}
+html.air-still[data-air="misc"] body::before{background-image:url(img/air-misc.webp)}
+html.air-still[data-air="house"] body::before{background-image:url(img/air-house.webp)}
+html.air-still[data-air="calm"] body::before{background-image:url(img/air-calm.webp)}
+html.air-page .top{background:var(--color-bg);-webkit-backdrop-filter:none;backdrop-filter:none}
+html.air-page .chips:not(.is-stuck){background:transparent}
+html.air-page .chips a:not([aria-current]){background:var(--color-bg)}
 html.pour-still.pour-mist body::before{background-image:url(img/mist-still.webp)}
-@media print{.pour,.pour--spritz{display:none !important}html.pour-still body::before{display:none}}
+@media print{html.air-still body::before{display:none}.pour,.pour--spritz{display:none !important}html.pour-still body::before{display:none}}
 .smoke{position:absolute;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none;opacity:0;transition:opacity 600ms var(--ease-state) 300ms}
 .smoke.on{opacity:1}
 .smoke--hero{z-index:auto;transition:opacity 600ms var(--ease-state) 500ms}

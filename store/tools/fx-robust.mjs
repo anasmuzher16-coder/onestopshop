@@ -79,7 +79,7 @@ const probe = p => p.evaluate(() => {
   return {
     layers: host ? host.querySelectorAll(":scope > .fx").length : 0, allLayers: document.querySelectorAll(".fx").length,
     objs: document.querySelectorAll(".fx-obj").length, objW: r ? Math.round(r.width) : 0, ink: o ? (() => { const g = o.querySelector("svg"), b = g && g.getBBox(); return b && b.width > 20 && b.height > 20 ? +getComputedStyle(g).opacity * +getComputedStyle(o).opacity : 0; })() : 0,   // the drawing is there, has a size and is not faded out
-    fxCanvas: cvs.filter(c => c.closest(".fx")).length, stray: cvs.filter(c => !c.closest(".fx") && !c.classList.contains("smoke") && !(c.classList.contains("pour") && !!document.querySelector('.shophead[data-cat="hookahs"],.shophead[data-cat="cologne"],.pdp[data-cat="cologne"]') && !matchMedia("(prefers-reduced-motion: reduce)").matches)).length,
+    fxCanvas: cvs.filter(c => c.closest(".fx")).length, stray: cvs.filter(c => !c.closest(".fx") && !c.classList.contains("smoke") && !(c.classList.contains("pour") && !matchMedia("(prefers-reduced-motion: reduce)").matches)).length,
     smoke: document.querySelectorAll(".smoke").length, smokeIn: host ? host.querySelectorAll(":scope > .smoke").length : 0,
     running: run.length, runningInFx: run.filter(inFx).length, names: run.slice(0, 5).map(a => (a.animationName || a.transitionProperty || "script") + "@" + cls(tg(a))),
     hidden: vis.filter(s => +getComputedStyle(s).opacity < 1).length, stickers: vis.length, loose: document.querySelectorAll(".puff,.fly").length,

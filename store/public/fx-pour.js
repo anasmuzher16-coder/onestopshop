@@ -229,9 +229,9 @@ function stick() { if (!head || !chips || !head.isConnected) return; chips.class
 // where the spray leaves the bottle
 function aim() { const o = head && (head.querySelector(".fx-obj") || head), r = o && o.getBoundingClientRect(), h = cv.getBoundingClientRect().height || Hh; if (r && r.width) org = [(r.left + r.width / 2) / W, 1 - (r.top + r.height * .2) / h]; }
 function place() {
-  const hk = document.querySelector('.shophead[data-cat="hookahs"]'), co = document.querySelector('.shophead[data-cat="cologne"]'), pdp = document.querySelector('.pdp[data-cat="cologne"]');
-  const next = hk ? "hookahs" : co || pdp ? "cologne" : null;
-  head = hk || co || (pdp && pdp.querySelector("[data-stage]")) || null; chips = hk || co ? head.parentNode.querySelector(":scope > .chips") : null;
+  const hk = document.querySelector('.shophead[data-cat="hookahs"]'), hkp = document.querySelector('.pdp[data-cat="hookahs"]'), co = document.querySelector('.shophead[data-cat="cologne"]'), pdp = document.querySelector('.pdp[data-cat="cologne"]');
+  const next = hk || hkp ? "hookahs" : co || pdp ? "cologne" : null;
+  head = hk || co || ((pdp || hkp) && (pdp || hkp).querySelector("[data-stage]")) || null; chips = hk || co ? head.parentNode.querySelector(":scope > .chips") : null;
   const settled = () => { if (document.getElementById("main").childElementCount) arrivedBack = false; };   // only the page you came Back to skips its opening
   if (!next) { stop(); modeName = null; settled(); return; }
   if (next !== modeName) { document.documentElement.classList.remove("pour-still", "pour-mist"); if (on || air || spray || cv.isConnected) off(); }
