@@ -23,7 +23,7 @@ const W = {
   bases: { m: "water", d: [0, 1], e: 80, p: tone(C.teal, 190) },
   bowls: { m: "teeth", sprite: "bowls", d: [0, -1], e: 340, p: tone(C.cobalt, 265) },
   hoses: { m: "rope", d: [1, 0], e: 2, p: tone(C.emerald, 155), c: 340, ms: 500 },
-  parts: { m: "teeth", sprite: "parts", d: [-1, 0], e: 340, p: tone(C.gilt, 88) },
+  parts: { m: "fly", sprite: "parts", d: [-1, 0], e: 300, p: tone(C.gilt, 88) },
   cologne: { m: "mist", d: [-S2, -S2], e: 380, p: [C.amethyst, ok(.62, .1, 312), deep(312), ok(.86, .06, 312)] },
   misc: { m: "teeth", sprite: "misc", d: [S2, -S2], e: 340, p: tone(C.bonelt, 80) },
   home: { m: "motes", d: [.38, .925], e: 110, p: [C.coal, C.gilt, C.coal2, C.ember] },
@@ -104,6 +104,12 @@ MAT.mist = `float sp(vec2 p, vec2 nz, float pitch, float k, float dn, float big,
     float th = acos(clamp(dot(dir, vec2(-.6, -.8)), -1., 1.)) + (n2 - .5) * .42, wd = mix(.13, 5., pow(clamp(uH, 0., 1.), 2.2)), cn = 1. - ss(wd * .72, wd * 1.25, th), ce = 1. - ss(wd * .9, wd * 1.7, th), core = exp(-pow(th / (wd * .42), 2.));
     float m = ss(-60., 130., hr + fo) * ss(-60., 130., tr - fo) * cn, env = ss(-240., -40., hr + fo * .6) * ss(-230., -30., tr - fo * .6) * ce, pk = 1. - ss(70., 420., hr), dn = env * (.2 + .55 * pk), d1 = sp(p, nz, 3.4, 2.2, dn * .72, .13, 1.), d2 = sp(p, nz, 5.6, 3., dn * .85, .14, 7.), d3 = sp(p, nz, 10., 4., dn * .4, .1, 13.), da = max(d1, max(d2, d3));
     vec3 b = mix(mix(uA, uB, .12), mix(uA, uE, .5), ss(.34, .66, .6 * n + .4 * n2)); b = mix(b, mix(uE, vec3(.99), .4), .78 * core * exp(-r / (.75 * RM))); c = mix(b, mix(uE, vec3(.99), .35), da * .8); h = (max(m, da) - .5) * 1.5 * PX; t = PX * 9.; }`;
+// parts: the same drawn kit, small, spinning and flying across the screen in three depths and speeds, ahead of and over the gold tile
+MAT.fly = `uniform sampler2D uS; uniform float uHas; vec4 spr(vec2 w, float i, float l) { if (w.x < .006 || w.x > .994 || w.y < .006 || w.y > .994) return vec4(0.); i = mod(i, 4.); return textureLod(uS, (vec2(mod(i, 2.), floor(i / 2.)) + vec2(w.x, 1. - w.y)) / 2., l); }
+  void lay(vec2 p, float S, float v, float sd, inout vec3 ac, inout float aa) { vec2 drift = uD * uTime * v, g = (p - drift) / S; float ro = floor(g.y), sh = H1(ro + sd); g.x += sh; vec2 id = floor(g); if (H2(id + sd) > .62) return; vec2 j = (vec2(H2(id + sd + 1.), H2(id + sd + 2.)) - .5) * .22, u = (fract(g) - .5 - j) * S, ctr = (id + .5 + j - vec2(sh, 0.)) * S + drift; float sc = dot(ctr, uD) + L * .5, k = min(clamp((uH * L + 150. - sc) / 70., 0., 1.), clamp((sc - uT * L + 150.) / 70., 0., 1.)); if (k <= 0.) return; k = k * k * (3. - 2. * k);
+    float an = (H2(id + sd + 4.) - .5) * 6.28 + uTime * (H2(id + sd + 5.) < .5 ? -1. : 1.) * (2.2 + 2.6 * H2(id + sd + 6.)), ca = cos(an), sa = sin(an), sz = S * .7 * max(k, .01); vec2 w = vec2(ca * u.x + sa * u.y, -sa * u.x + ca * u.y) / sz + .5; vec4 t = spr(w, id.x + id.y * 2. + sd, max(0., log2(float(textureSize(uS, 0).x) * .5 * PX / sz))); if (t.a <= 0.) return; ac = aa < .001 ? t.rgb : mix(ac, t.rgb, t.a); aa += t.a * (1. - aa); }
+  ${SIG} { float z = clamp(uV.x / 620., 1., 1.45), aa = 0.; vec3 ac = vec3(0.); if (uHas > .5) { lay(p, 84. * z, 980., 1., ac, aa); lay(p, 108. * z, 1360., 7., ac, aa); lay(p, 140. * z, 1780., 13., ac, aa); }
+    float bh = h - 60. + 14. * sin(f.x / 53. + uTime * 4.), b = t - 18. - 16. * sin(f.x / 37. + uTime * 3.), m = E(bh) * E(b); vec3 tile = mix(uC, uA, E(bh - 3.) * E(b - 3.)); c = mix(ac, mix(tile, ac, aa), m); h = (max(m, aa) - .5) * 1.5 * PX; t = PX * 9.; }`;
 // the baked smoke and fire: a flipbook, sampled at one uniform cover scale. With a flow map, frames warp into each other instead of double-exposing.
 const FLIP = `#version 300 es
 precision highp float;
