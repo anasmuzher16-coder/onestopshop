@@ -160,7 +160,7 @@ const BOOKS = { parts: { file: "parts.webp", mip: true }, bowls: { file: "kit-bo
 // the flipbooks are asked for when the browser is idle, never on Save-Data or reduced motion
 function loadAtlas() {
   if (atlas || saveData() || RM.matches) return; atlas = {};
-  for (const k in BOOKS) { const B = BOOKS[k], im = new Image(); im.decoding = "async"; im.src = "img/wave/" + B.file;
+  for (const k in BOOKS) { const B = BOOKS[k], im = new Image(); im.decoding = "async"; im.src = "img/wave/" + B.file + "?v=3";   /* images cache for a day: bump this whenever the art changes */
     const fl = B.flow ? new Image() : null; if (fl) { fl.decoding = "async"; fl.src = "img/wave/" + B.flow; }
     Promise.all([im.decode(), fl?.decode()]).then(() => { atlas[k] = B; imgs[k] = im; if (fl) imgs[k + ":flow"] = fl; }).catch(() => {}); }   // decoded off the main thread, so the tap never pays for it
 }
