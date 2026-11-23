@@ -6,5 +6,5 @@ const get = f => import(`./fx-${f}.js`);
 const load = list => list.forEach(f => get(f).catch(() => setTimeout(() => get(f).catch(e => console.error("fx-" + f + ": " + e)), 1500)));
 requestAnimationFrame(() => requestAnimationFrame(() => {
   load(["objects", "bounds", "sections", "smoke", "pour", "air", "hero", "stick"]); // what the first screen shows; the drawings are asked for at once, not after the code that uses them
-  setTimeout(() => load(["routes", ...(pop ? ["zoom"] : []), "cartfly", "lineup", "till"]), 300); // what only a tap or a scroll needs
+  setTimeout(() => load(["wave", "routes", ...(pop ? ["zoom"] : []), "cartfly", "lineup", "till"]), 300); // what only a tap or a scroll needs
 }));

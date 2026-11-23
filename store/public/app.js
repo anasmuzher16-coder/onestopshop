@@ -1,5 +1,5 @@
 import { PRODUCTS, CATEGORIES, BOXES } from "/api/catalog-module";
-import { route, navigate } from "./route.js";
+import { route, navigate, navInfo } from "./route.js";
 import { parsePostal, pack, quote, money, days, MAX_QTY, fuelOn, taxRate, taxLabel, localArea, localDue, localEta, FREE_LOCAL_CENTS, SHOP_HOURS } from "./rates.js";
 
 // ---------- state (everything read from storage is validated) ----------
@@ -701,6 +701,6 @@ function go() {
 }
 window.addEventListener("routechange", () => {
   if (route() === last) return;
-  if (document.startViewTransition && !matchMedia("(prefers-reduced-motion: reduce)").matches) document.startViewTransition(go); else go();
+  if (!navInfo().instant && document.startViewTransition && !matchMedia("(prefers-reduced-motion: reduce)").matches) document.startViewTransition(go); else go();   // a wave is already covering the change
 });
 render();

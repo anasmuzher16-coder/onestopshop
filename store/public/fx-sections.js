@@ -14,9 +14,10 @@
 // crosses it does so on purpose: the stems the bowl and the heat keeper stand on run off it, and the tongs, the
 // price gun, the ice cube and the tossed hose come in from outside it.
 import { OBJ } from "./fx-objects.js";
+import { waved } from "./route.js";
 const RM = matchMedia("(prefers-reduced-motion: reduce)");
 let T0 = 450, WIND = T0 - 140;                                           // contact, and the earliest wind-up
-const clock = replay => { T0 = replay ? 140 : 450; WIND = T0 - 140; };   // a tap has no page change to wait for
+const clock = replay => { T0 = replay ? 140 : waved() ? 520 : 450; WIND = T0 - 140; };   // a tap has no page change to wait for
 const ENTER = "cubic-bezier(.16,1,.3,1)", STATE = "cubic-bezier(.4,0,.2,1)", STRIKE = "cubic-bezier(.33,0,.67,.33)";
 const play = (node, frames, duration, delay = 0, fill = "backwards") => node.animate(frames, { duration, delay, fill });
 const when = (layer, ms, fn) => setTimeout(() => { if (layer.isConnected) fn(); }, ms);

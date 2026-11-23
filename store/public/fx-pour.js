@@ -2,6 +2,7 @@
 // Hookahs open with thick smoke rising from the bottom. Cologne opens with mist bursting from the bottle across the page. Both settle into a living background.
 // Nothing is looped or played back: the flow is computed live and new drifts start at random, so it never repeats.
 // WebGL2, no library, no images. With motion turned off, or on a phone that cannot run it, a designed still stands in.
+import { waved } from "./route.js";
 const RM = matchMedia("(prefers-reduced-motion: reduce)"), KEY = "oss:pour-open";
 const HOLD = 3.2, SETTLE = 4.8, CELLS = 422; // seconds; CELLS sets the size of one unit of flow against the height of the screen
 const V = `#version 300 es
@@ -160,7 +161,7 @@ function settle() { heavy = false; for (let i = 0; i < 24; i++) { T += 1 / 30; s
 let air = null;
 function endAir() { if (!air) return; cancelAnimationFrame(air.raf); removeEventListener("resize", air.fit); document.removeEventListener("visibilitychange", air.fit); document.removeEventListener("visibilitychange", air.vis); air.c.width = air.c.height = 0; air.c.remove(); air = null; }
 function beginAir() {
-  const open = firstOpen(); W = innerWidth; Hh = innerHeight; aim();
+  const open = firstOpen() && !waved(); W = innerWidth; Hh = innerHeight; aim();
   const c = document.createElement("canvas"); c.className = "pour pour--air"; c.setAttribute("aria-hidden", "true"); document.body.prepend(c);
   const g = c.getContext("2d"); if (!g) { c.width = c.height = 0; c.remove(); document.documentElement.classList.add("pour-still", "pour-mist", "pour-page"); return; }
   const dot = document.createElement("canvas"); dot.width = dot.height = 24; const x = dot.getContext("2d"), rg = x.createRadialGradient(12, 12, 0, 12, 12, 12); rg.addColorStop(0, "rgba(255,253,248,1)"); rg.addColorStop(.42, "rgba(255,253,248,.6)"); rg.addColorStop(1, "rgba(255,253,248,0)"); x.fillStyle = rg; x.fillRect(0, 0, 24, 24);
@@ -200,6 +201,7 @@ function begin() {
   if (RM.matches || !gl) { document.documentElement.classList.add("pour-still", "pour-page"); return; }
   document.body.prepend(cv); if (!size()) { toStill(); return; }
   on = true; parked = false; skip = false; odd = false; slow = 0; iters = 14; T = 0; drifts = []; aim(); heavy = firstOpen();
+  if (heavy && waved()) for (let i = 0; i < 9; i++) { T += 1 / 30; step(2); } // the smoke wave hands over to a bank already rising
   if (!heavy) settle(); else if (M.radial) spritzAll(); // a later visit opens on air already drifting, with no second big entrance
   document.documentElement.classList.remove("pour-still"); document.documentElement.classList.add("pour-page"); show(); requestAnimationFrame(() => { if (on) cv.classList.add("on"); }); kick();
 }

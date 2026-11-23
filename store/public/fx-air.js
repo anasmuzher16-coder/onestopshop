@@ -5,6 +5,7 @@
 //   home, browsing and gifts: warm motes      cart, checkout, the small print: the same, far quieter
 // Each drop drifts, fades and is replaced somewhere new, so nothing loops. On a section's first open they fly out from its object.
 // Plain 2D at half rate once settled, stopped when hidden. With motion turned off a designed still stands in.
+import { waved } from "./route.js";
 const RM = matchMedia("(prefers-reduced-motion: reduce)"), KEY = "oss:air:", root = document.documentElement;
 const P = {
   bases: { sprite: "ring", rgb: [158, 236, 226], n: 150, r: [1.6, 5.2], a: [.16, .5], vx: 3, vy: [-27, -9], life: [7, 15], sway: 7, haze: .014 },
@@ -40,7 +41,7 @@ let cv = null, g = null, raf = 0, now0 = 0, kind = null, want = null, w = 0, h =
 const played = new Set(); let arrivedBack = performance.getEntriesByType("navigation")[0]?.type === "back_forward";
 addEventListener("popstate", () => { popped = performance.now(); });
 function firstOpen(k) {
-  if (!CATS.has(k) || played.has(k) || arrivedBack || performance.now() - popped < 800) return false; played.add(k);
+  if (!CATS.has(k) || played.has(k) || arrivedBack || performance.now() - popped < 800) return false; played.add(k); if (waved()) return false; // the wave was the entrance
   try { if (sessionStorage.getItem(KEY + k)) return false; sessionStorage.setItem(KEY + k, "1"); } catch {} return true;
 }
 function seat(p, c, t, first) {

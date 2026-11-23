@@ -2,12 +2,25 @@
 // views and effects that compare against it did not have to change. "routechange" fires on every in-site move.
 export const route = () => "#" + (location.pathname.replace(/\/+$/, "") || "/");
 const fire = () => dispatchEvent(new Event("routechange"));
+// why the page last changed: "load", "push", "replace", "pop" or "wave". instant means an overlay is covering the move, so no View Transition.
+let info = { cause: "load", at: 0, instant: false }, gate = null;
+const mark = (cause, instant) => { info = { cause, at: performance.now(), instant: !!instant }; };
+export const navInfo = () => info;
+export const waved = () => info.cause === "wave" && performance.now() - info.at < 1500;
+export const setNavGate = g => { gate = g; };
 export function navigate(path, replace = false) {
-  if (path === location.pathname + location.search) return;
+  if (path === location.pathname + location.search) { gate?.same(); return; }
+  if (gate?.take(path, replace)) return;
   history[replace ? "replaceState" : "pushState"](null, "", path);
+  mark(replace ? "replace" : "push", gate?.live() || /^\/search(\?|$)/.test(path));   // Search swaps inside the tap, or an iPhone will not open the keyboard
   fire();
 }
-addEventListener("popstate", fire);
+// the wave lands its page at full cover
+export function commitNav(path, cause = "wave") {
+  if (path === location.pathname + location.search) return;
+  history.pushState(null, "", path); mark(cause, cause === "wave"); fire();
+}
+addEventListener("popstate", () => { gate?.pop(); mark("pop", gate?.live()); fire(); });
 // Old shared links used "#/p/OSS-1001". Fragments never reach the server, so they are upgraded here.
 if (location.hash.startsWith("#/")) history.replaceState(null, "", location.hash.slice(1));
 document.addEventListener("click", e => {
