@@ -163,11 +163,10 @@ const isLocal = o => o.ship_service === "Local delivery";
 const stateLabel = o => isLocal(o) && o.status === "packed" ? "Packed, to deliver" : isLocal(o) && o.status === "shipped" ? "Out for delivery" : ORDER_STATE[o.status][1];
 const dropInfo = o => { let a = {}; try { a = JSON.parse(o.address || "{}"); } catch {} const where = a.line1 ? `${a.line1}, ${a.city}, ${a.province} ${a.postal}` : ""; let q = {}; try { q = JSON.parse(o.ship_quote || "{}"); } catch {} return `${q.confirm_address ? `<div><dt>Check first</dt><dd>Priced from the postal code. Call to confirm the address before driving.</dd></div>` : ""}${a.note ? `<div><dt>Note</dt><dd>${esc(a.note)}</dd></div>` : ""}`; };
 // Address and phone first and large: this is what gets read and tapped from a phone on the way out the door.
-const SHOP_NAME = { wyandotte: "Wyandotte", lauzon: "Lauzon" };
 const dropCard = o => {
   let a = {}, q = {}; try { a = JSON.parse(o.address || "{}"); } catch {} try { q = JSON.parse(o.ship_quote || "{}"); } catch {}
   if (!a.line1 && !o.phone) return "";
-  const where = a.line1 ? `${a.line1}, ${a.city}, ${a.province} ${a.postal}` : "", from = isLocal(o) && SHOP_NAME[q.shop] ? `Nearer shop: ${SHOP_NAME[q.shop]}${Number.isFinite(q.metres) ? `, ${(q.metres / 1000).toFixed(1)} km by road` : ""}` : "";
+  const where = a.line1 ? `${a.line1}, ${a.city}, ${a.province} ${a.postal}` : "", from = isLocal(o) && Number.isFinite(q.metres) ? `Road distance: ${(q.metres / 1000).toFixed(1)} km` : "";
   const title = o.method === "pickup" ? "Picking up" : isLocal(o) ? "Deliver to" : "Ship to";
   return `<section class="drop" aria-label="${title}"><p class="meta">${title}</p>
     ${a.line1 ? `<p class="drop__addr">${esc(a.line1)}<br>${esc(a.city)}, ${esc(a.province)} ${esc(a.postal)}</p>` : ""}${from ? `<p class="drop__from">${from}</p>` : ""}
