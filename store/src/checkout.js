@@ -40,11 +40,11 @@ export async function placeOrder(request, env, url) {
     const p = bySku[sku];
     if (!p) return json({ error: "One of the items is no longer sold. Remove it and try again.", sku }, 409);
     if (p.stock < qty) return json({ error: p.stock ? `Only ${p.stock} left of ${p.name}.` : `${p.name} has just sold out.`, sku, stock: p.stock }, 409);
-    if (method === "ship" && p.ship === "pickup_only") return json({ error: `${p.name} is pickup only.`, sku }, 409);
+    if (method === "ship" && body.service !== "local" && p.ship === "pickup_only") return json({ error: `${p.name} is pickup only.`, sku }, 409);
     lines.push({ product: p, qty });
   }
   const subtotal = lines.reduce((a, l) => a + cents(l.product.price) * l.qty, 0);
-  let shipping = 0, service = null, quote = {}, province = "ON", address = { demo: true };
+  let shipping = 0, service = null, quote = {}, province = "ON", address = { demo: true }, eta = null;
   if (method === "ship") {
     const dest = rates.parsePostal(body.postal);
     if (!dest || !dest.complete) return json({ error: "Enter the full postal code, like N9A 1A1.", field: "postal" }, 400);
@@ -54,9 +54,11 @@ export async function placeOrder(request, env, url) {
     if (body.service === "local") {   // the fee comes only from the road distance worked out here
       if (!phone || String(phone).replace(/\D/g, "").length < 10) return json({ error: "Enter a phone number so the driver can reach you.", field: "phone" }, 400);
       const d = await deliveryQuote(env, { line1, city, postal: dest.full }, request.headers.get("CF-Connecting-IP") || "local");
-      if (d.status !== "ok") return json({ error: d.status === "far" ? `${dest.full} is past our 25 km delivery area. You can still ship it or pick it up free.` : d.status === "down" ? "Delivery cannot be checked right now. You can still ship it or pick it up free." : "We could not confirm that address. Check the street number and postal code.", field: "line1", delivery: d.status }, 409);
-      if (body.delivery_fee_cents !== d.fee_cents) return json({ error: `Delivery to this address is $${d.fee_cents / 100}. Check the new total, then place your order.`, delivery: "ok", fee_cents: d.fee_cents }, 409);
-      shipping = d.fee_cents; service = "Local delivery"; province = "ON"; quote = { id: "local", metres: d.metres, ...(d.confirm ? { confirm_address: true } : {}) };
+      const other = lines.some(l => l.product.ship === "pickup_only") ? "You can still pick it up free." : "You can still ship it or pick it up free.";
+      if (d.status !== "ok") return json({ error: d.status === "far" ? `${dest.full} is past our 25 km delivery area. ${other}` : d.status === "down" ? `Delivery cannot be checked right now. ${other}` : "We could not confirm that address. Check the street number and postal code.", field: "line1", delivery: d.status }, 409);
+      const due = rates.localDue(d.fee_cents, subtotal);   // $200.00 of items before tax delivers free
+      if (body.delivery_fee_cents !== due) return json({ error: `Delivery to this address is ${due ? "$" + due / 100 : "free"}. Check the new total, then place your order.`, delivery: "ok", fee_cents: due, base_fee_cents: d.fee_cents }, 409);
+      shipping = due; service = "Local delivery"; province = "ON"; eta = rates.localEta(); quote = { id: "local", metres: d.metres, shop: d.shop, base_fee_cents: d.fee_cents, ...(d.confirm ? { confirm_address: true } : {}) };
       address = { demo: true, line1, city, province, postal: dest.full };
     } else {
     const parcels = rates.pack(lines), opts = rates.quote(dest, parcels);
@@ -93,10 +95,10 @@ export async function placeOrder(request, env, url) {
   await db.prepare("UPDATE orders SET status = 'paid', updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = ?").bind(id).run();
   // the receipt to the shopper, and a note to the shop if this order took anything down to its warning level
   const site = env.SITE_NAME || "One Stop Shop", sold = lines.map(l => ({ name: l.product.name, qty: l.qty, unit_cents: cents(l.product.price) }));
-  await writeEmail(env, id, email, orderPlaced(site, { id, name, method, ship_service: service, subtotal_cents: subtotal, shipping_cents: shipping, tax_cents: tax, total_cents: total, tax_province: province }, sold));
+  await writeEmail(env, id, email, orderPlaced(site, { id, name, method, ship_service: service, subtotal_cents: subtotal, shipping_cents: shipping, tax_cents: tax, total_cents: total, tax_province: province, eta }, sold));
   const low = await db.prepare(`SELECT name, stock FROM products WHERE active = 1 AND stock <= low_stock_at AND sku IN (${lines.map(() => "?").join(",")}) ORDER BY stock, name`).bind(...lines.map(l => l.product.sku)).all();
   if (low.results.length) await writeEmail(env, id, env.OWNER_EMAIL || "the shop", lowStock(site, low.results));
   return json({ ok: true, order: { id, method, name, email, service, province, subtotal_cents: subtotal, shipping_cents: shipping, tax_cents: tax, total_cents: total,
-    tax_label: rates.taxLabel(province), days: quote.days ?? null, address: method === "ship" ? address : null,
+    tax_label: rates.taxLabel(province), days: quote.days ?? null, eta, address: method === "ship" ? address : null,
     items: lines.map(l => ({ sku: l.product.sku, name: l.product.name, qty: l.qty, unit_cents: cents(l.product.price) })) } }, 201);
 }

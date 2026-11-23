@@ -19,16 +19,16 @@ const lines = items => items.map(i => [`${i.qty} &times; ${esc(i.name)}`, money(
 const plain = (heading, intro, rows, foot) => [heading, "", intro, "", ...rows.map(r => `${String(r[0]).replace(/&times;/g, "x").replace(/&amp;/g, "&")}  ${r[1]}`), "", foot].join("\n").replace(/<[^>]+>/g, "");
 
 export function orderPlaced(site, o, items) {
-  const rows = [...lines(items), ["Items", money(o.subtotal_cents)], [o.method === "pickup" ? "Pickup at the counter" : o.ship_service === "Local delivery" ? "Local delivery" : `Shipping, ${esc(o.ship_service || "")}`, o.method === "pickup" ? "Free" : money(o.shipping_cents)],
+  const rows = [...lines(items), ["Items", money(o.subtotal_cents)], [o.method === "pickup" ? "Pickup at the counter" : o.ship_service === "Local delivery" ? "Local delivery" : `Shipping, ${esc(o.ship_service || "")}`, o.method === "pickup" || (o.ship_service === "Local delivery" && !o.shipping_cents) ? "Free" : money(o.shipping_cents)],
     [`Tax, ${esc(o.tax_province || "")}`, money(o.tax_cents)], ["Total", money(o.total_cents), true]];
   const heading = `Order ${esc(o.id)} is in`, first = esc(String(o.name).split(" ")[0]);
-  const intro = o.method === "pickup" ? `Thank you, ${first}. We will email you again when it is ready at 760 Wyandotte St E, Windsor.` : o.ship_service === "Local delivery" ? `Thank you, ${first}. We will deliver it from the Windsor shop and call if we need anything.` : `Thank you, ${first}. We are packing it now and will email the tracking number when it leaves.`;
+  const intro = o.method === "pickup" ? `Thank you, ${first}. We will email you again when it is ready at 760 Wyandotte St E, Windsor.` : o.ship_service === "Local delivery" ? `Thank you, ${first}. ${o.eta ? esc(o.eta) + ". " : ""}We will deliver it from our nearest Windsor shop and call if we need anything.` : `Thank you, ${first}. We are packing it now and will email the tracking number when it leaves.`;
   const foot = "Questions? Reply to this email or call the counter at 519-255-2222.";
   return { kind: "order_placed", subject: `Your ${site} order ${o.id}`, html: frame(site, heading, intro, rows, foot), body: plain(heading, intro, rows, foot) };
 }
 export function orderShipped(site, o, items) {
-  const heading = `Order ${esc(o.id)} is on its way`, intro = o.ship_service === "Local delivery" ? "It is out for delivery from the Windsor shop. The driver will call if they need you." : `It left the shop by ${esc(o.ship_service || "Canada Post")}.${o.tracking ? ` Tracking number: <b>${esc(o.tracking)}</b>.` : " The tracking number follows as soon as the carrier scans it."}`;
-  const foot = o.ship_service === "Local delivery" ? "If anything arrives damaged, take a photo and reply to this email within 3 days." : "If the box arrives damaged, keep the packaging, take a photo and reply to this email within 3 days.";
+  const heading = `Order ${esc(o.id)} is on its way`, intro = o.ship_service === "Local delivery" ? "It is out for delivery from our Windsor shop. The driver will call if they need you." : `It left the shop by ${esc(o.ship_service || "Canada Post")}.${o.tracking ? ` Tracking number: <b>${esc(o.tracking)}</b>.` : " The tracking number follows as soon as the carrier scans it."}`;
+  const foot = "If anything arrives broken, bring it into the store at 760 Wyandotte St E and talk to the store manager.";
   return { kind: "order_shipped", subject: o.ship_service === "Local delivery" ? `Your ${site} order ${o.id} is out for delivery` : `Your ${site} order ${o.id} has shipped`, html: frame(site, heading, intro, lines(items), foot), body: plain(heading, intro, lines(items), foot) };
 }
 export function pickupReady(site, o, items) {

@@ -35,6 +35,13 @@
 </header>
 <div class="dstrip" data-delivery-strip hidden>
   <button class="dstrip__btn" type="button"><span class="dstrip__msg"></span><span class="dstrip__more"><span class="dstrip__sub"></span><span class="dstrip__act"></span></span></button>
+  <div class="dchoose" hidden>
+    <h2 class="dchoose__h">How should we get it to you?</h2>
+    <div class="dchoose__row">
+      <button class="dchoose__opt" type="button" data-reach="local"><span class="dchoose__name">Local delivery</span><span class="dchoose__sub">Near Windsor, from $10</span></button>
+      <button class="dchoose__opt" type="button" data-reach="nationwide"><span class="dchoose__name">Nationwide delivery</span><span class="dchoose__sub">Anywhere in Canada</span></button>
+    </div>
+  </div>
   <button class="dstrip__x" type="button" data-strip-close aria-label="Close delivery banner"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg></button>
   <p class="sr" role="status" data-delivery-live></p>
 </div>
@@ -53,7 +60,7 @@
 <dialog class="sheet" data-postal-sheet aria-labelledby="sheet-h">
   <form class="sheet__form" data-postal-form novalidate>
     <h2 class="sheet__h" id="sheet-h">Do we deliver to you?</h2>
-    <p class="sheet__p">Local delivery near Windsor is $10 or $15. Enter your postal code for your exact price, or your shipping options anywhere in Canada.</p>
+    <p class="sheet__p">Local delivery near Windsor is $10 or $15, free on orders of $200 or more. Enter your postal code for your exact price, or your shipping options anywhere in Canada.</p>
     <label class="field__label" for="postal">Postal code</label>
     <input class="field" id="postal" name="postal" autocomplete="postal-code" inputmode="text" spellcheck="false" maxlength="12" placeholder="A1A 1A1" aria-describedby="postal-err">
     <p class="field__err" id="postal-err" role="alert" hidden>That is not a Canadian postal code. It looks like A1A 1A1.</p>

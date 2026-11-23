@@ -117,7 +117,7 @@ function editSheet(p) {
       <label class="field" style="margin-top:var(--s-3)"><span>Scent notes</span><input class="input" name="notes" value="${esc(d.notes ?? "")}" maxlength="120" placeholder="Saffron, rose, oud"></label></div>
     <div class="grid2"><label class="field"><span>Weight, grams</span><input class="input num" name="weight_g" inputmode="numeric" value="${esc(p.weight_g)}" required></label>
       <label class="field"><span>Ships in</span><select class="input" name="box_id">${state.boxes.map(b => opt(b.id, `${b.label} (${b.l_cm} x ${b.w_cm} x ${b.h_cm} cm)`, p.box_id)).join("")}</select></label></div>
-    <label class="field"><span>How it can ship</span><select class="input" name="ship_class">${opt("standard", "Any service", p.ship_class)}${opt("ground_only", "Ground only (cologne, anything flammable)", p.ship_class)}${opt("pickup_only", "Pickup only, never shipped", p.ship_class)}</select></label>
+    <label class="field"><span>How it can ship</span><select class="input" name="ship_class">${opt("standard", "Any service", p.ship_class)}${opt("ground_only", "Ground only (cologne, anything flammable)", p.ship_class)}${opt("pickup_only", "No Canada Post (pickup or local delivery)", p.ship_class)}</select></label>
     <div class="grid2"><label class="field"><span>Your cost, $ (private)</span><input class="input num" name="cost" inputmode="decimal" value="${dol(p.cost_cents)}"></label>
       <label class="field"><span>Warn me at</span><input class="input num" name="low_stock_at" inputmode="numeric" value="${esc(p.low_stock_at)}"></label></div>
     ${isNew ? `<label class="field"><span>How many on the shelf now</span><input class="input num" name="stock" inputmode="numeric" value="0"></label>` : ""}
@@ -161,7 +161,18 @@ document.addEventListener("change", async e => {
 const ORDER_STATE = { pending: ["done", "Not paid"], paid: ["go", "To pack"], packed: ["go", "Packed, to send"], ready: ["go", "Ready for pickup"], shipped: ["done", "Shipped"], collected: ["done", "Collected"], cancelled: ["out", "Cancelled"], refunded: ["out", "Refunded"] };
 const isLocal = o => o.ship_service === "Local delivery";
 const stateLabel = o => isLocal(o) && o.status === "packed" ? "Packed, to deliver" : isLocal(o) && o.status === "shipped" ? "Out for delivery" : ORDER_STATE[o.status][1];
-const dropInfo = o => { let a = {}; try { a = JSON.parse(o.address || "{}"); } catch {} const where = a.line1 ? `${a.line1}, ${a.city}, ${a.province} ${a.postal}` : ""; let q = {}; try { q = JSON.parse(o.ship_quote || "{}"); } catch {} return `${where ? `<div><dt>${isLocal(o) ? "Deliver to" : "Ship to"}</dt><dd>${esc(where)}</dd></div>` : ""}${q.confirm_address ? `<div><dt>Check first</dt><dd>Priced from the postal code. Call to confirm the address before driving.</dd></div>` : ""}${o.phone ? `<div><dt>Phone</dt><dd><a href="tel:${esc(String(o.phone).replace(/[^\d+]/g, ""))}">${esc(o.phone)}</a></dd></div>` : ""}${a.note ? `<div><dt>Note</dt><dd>${esc(a.note)}</dd></div>` : ""}`; };
+const dropInfo = o => { let a = {}; try { a = JSON.parse(o.address || "{}"); } catch {} const where = a.line1 ? `${a.line1}, ${a.city}, ${a.province} ${a.postal}` : ""; let q = {}; try { q = JSON.parse(o.ship_quote || "{}"); } catch {} return `${q.confirm_address ? `<div><dt>Check first</dt><dd>Priced from the postal code. Call to confirm the address before driving.</dd></div>` : ""}${a.note ? `<div><dt>Note</dt><dd>${esc(a.note)}</dd></div>` : ""}`; };
+// Address and phone first and large: this is what gets read and tapped from a phone on the way out the door.
+const SHOP_NAME = { wyandotte: "Wyandotte", lauzon: "Lauzon" };
+const dropCard = o => {
+  let a = {}, q = {}; try { a = JSON.parse(o.address || "{}"); } catch {} try { q = JSON.parse(o.ship_quote || "{}"); } catch {}
+  if (!a.line1 && !o.phone) return "";
+  const where = a.line1 ? `${a.line1}, ${a.city}, ${a.province} ${a.postal}` : "", from = isLocal(o) && SHOP_NAME[q.shop] ? `Nearer shop: ${SHOP_NAME[q.shop]}${Number.isFinite(q.metres) ? `, ${(q.metres / 1000).toFixed(1)} km by road` : ""}` : "";
+  const title = o.method === "pickup" ? "Picking up" : isLocal(o) ? "Deliver to" : "Ship to";
+  return `<section class="drop" aria-label="${title}"><p class="meta">${title}</p>
+    ${a.line1 ? `<p class="drop__addr">${esc(a.line1)}<br>${esc(a.city)}, ${esc(a.province)} ${esc(a.postal)}</p>` : ""}${from ? `<p class="drop__from">${from}</p>` : ""}
+    <div class="drop__act">${o.phone ? `<a class="btn" href="tel:${esc(String(o.phone).replace(/[^\d+]/g, ""))}">Call ${esc(o.phone)}</a>` : ""}${where ? `<a class="btn btn--ghost" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(where)}" target="_blank" rel="noopener">Open in Maps</a>` : ""}</div></section>`;
+};
 const NEXT = o => ({ paid: o.method === "pickup" ? ["ready", "Mark ready for pickup"] : ["packed", "Mark packed"], packed: ["shipped", isLocal(o) ? "Mark out for delivery" : "Mark shipped"], ready: ["collected", "Mark collected"] }[o.status]);
 function viewOrders() {
   const todo = o => ["paid", "packed", "ready"].includes(o.status), list = state.orders.filter(o => state.oflt === "all" || (state.oflt === "todo" ? todo(o) : !todo(o)));
@@ -173,8 +184,9 @@ async function orderSheet(id) {
   const { order: o, items, emails = [] } = await api("/orders/" + id), k = ORDER_STATE[o.status][0], label = stateLabel(o), next = NEXT(o);
   sheet.innerHTML = `<div class="sheet__in" data-ordersheet="${o.id}">
     <div class="sheet__top"><div><p class="meta">Order ${o.id} &middot; ${when(o.created_at)}</p><h2 class="h2" style="margin:0">${esc(o.name)}</h2><span class="state ${k}">${label}</span></div><button class="sheet__x" type="button" data-close>Close</button></div>
+    ${dropCard(o)}
     <div class="rows items">${items.map(i => `<div class="row">${thumb(i, catOf((state.products.find(p => p.sku === i.sku) || {}).category_id).tone)}<span class="row__main"><span class="row__name">${esc(i.name)}</span><span class="row__meta">${i.sku}${i.box_id ? " &middot; box " + esc(i.box_id) : ""}</span></span><span class="num"><b style="color:var(--color-strong)">${i.qty}</b> &times; ${money(i.unit_cents)}</span></div>`).join("")}</div>
-    <dl class="facts"><div><dt>Items</dt><dd class="num">${money(o.subtotal_cents)}</dd></div><div><dt>${o.method === "pickup" ? "Pickup at the counter" : isLocal(o) ? "Local delivery" : "Shipping, " + esc(o.ship_service || "")}</dt><dd class="num">${o.method === "pickup" ? "Free" : money(o.shipping_cents)}</dd></div>
+    <dl class="facts"><div><dt>Items</dt><dd class="num">${money(o.subtotal_cents)}</dd></div><div><dt>${o.method === "pickup" ? "Pickup at the counter" : isLocal(o) ? "Local delivery" : "Shipping, " + esc(o.ship_service || "")}</dt><dd class="num">${o.method === "pickup" || (isLocal(o) && !o.shipping_cents) ? "Free" : money(o.shipping_cents)}</dd></div>
       <div><dt>Tax, ${esc(o.tax_province || "")}</dt><dd class="num">${money(o.tax_cents)}</dd></div><div><dt><b style="color:var(--color-strong)">Total paid</b></dt><dd class="num"><b>${money(o.total_cents)}</b></dd></div>
       ${o.tracking ? `<div><dt>Tracking</dt><dd class="num">${esc(o.tracking)}</dd></div>` : ""}${dropInfo(o)}</dl>
     <section><h3 class="meta" style="margin-bottom:var(--s-2)">Emails to the customer</h3><div class="hist">${emails.map(e => `<button class="mailrow" type="button" data-mail="${e.id}"><span>${esc(MAIL[e.kind] || e.kind)}, ${when(e.at)}</span><span class="state ${e.status === "sent" ? "done" : e.status === "failed" ? "out" : "low"}">${e.status === "sent" ? "Sent" : e.status === "failed" ? "Failed" : "Written, not sent"}</span></button>`).join("") || `<div><span>None yet.</span></div>`}</div>

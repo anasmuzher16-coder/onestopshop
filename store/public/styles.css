@@ -731,4 +731,23 @@ button.dline:active{background:var(--color-line)}
   .dstrip__more{flex:1;align-items:center;justify-content:space-between;font-size:var(--t-14);line-height:20px}
   .dstrip__act{margin-left:auto}
 }
+.dstrip__btn[hidden],.dchoose[hidden]{display:none}
+/* The chooser: in the page flow under the header, so it can never sit on a product. Two coal plates on the teal band. */
+.dstrip[data-mode="choose"] .dstrip__x{top:var(--s-1);margin-top:0}
+.dchoose{padding:var(--s-3) var(--gutter) var(--s-4)}
+.dchoose__h{min-height:36px;margin:0 var(--s-8) var(--s-2) 0;font-size:var(--t-16);font-weight:600;line-height:36px}
+.dchoose__row{display:grid;grid-template-columns:1fr 1fr;gap:var(--s-2)}
+.dchoose__opt{display:flex;flex-direction:column;justify-content:space-between;gap:var(--s-2);min-width:0;min-height:112px;padding:var(--s-3);border:0;border-radius:var(--radius);background:var(--ink);color:var(--color-strong);text-align:left;cursor:pointer;touch-action:manipulation;transition:background var(--dur-micro) var(--ease-state)}
+.dchoose__opt:hover{background:var(--coal-2)}
+.dchoose__opt:active{background:var(--coal-1)}
+.dchoose__opt:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.dchoose__name{font-family:var(--font-display);font-size:var(--t-22);line-height:1.05;letter-spacing:.01em;text-transform:uppercase}
+.dchoose__sub{color:var(--bone);font-size:var(--t-12);line-height:16px}
+@media (min-width:960px){
+  .dchoose{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);align-items:center;column-gap:var(--s-6);padding-right:calc(var(--gutter) + 40px)}
+  .dchoose__h{margin:0;font-size:var(--t-18)}
+  .dchoose__opt{flex-direction:row;align-items:center;min-height:64px;padding:var(--s-2) var(--s-4)}
+  .dchoose__name{font-size:var(--t-22)}
+  .dchoose__sub{font-size:var(--t-14);line-height:20px;text-align:right}
+}
 /* ========== END DELIVERY STRIP AND PRODUCT LINE ========== */

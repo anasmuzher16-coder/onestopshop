@@ -173,10 +173,21 @@ export function quote(dest, parcels, fuelPct = fuelOn().pct) {   // read at call
   return out.sort((a, b) => a.total - b.total || a.days - b.days);
 }
 
-// Local delivery, the owner's terms: up to 10 km is $10, over 10 through 25 km is $15, past 25 km is not offered. Per order, in cents.
-export const deliveryFee = metres => !Number.isFinite(metres) || metres < 0 ? null : metres <= 10000 ? 1000 : metres <= 25000 ? 1500 : null;
-// Postal areas near the shop where delivery is worth offering. The real answer comes from the road distance at checkout.
-export const localArea = d => !!d && d.prov === "ON" && (/^N9/.test(d.fsa) || /^N0R/.test(d.fsa) || (/^N8/.test(d.fsa) && !/^N8[AH]/.test(d.fsa)));
+// Local delivery, the owner's terms: road distance from the nearer shop. Up to 10 km is $10, over 10 through 25 km is $15, past 25 km is not offered. Per order, in cents.
+export const LOCAL_LIMIT_M = 25000, FREE_LOCAL_CENTS = 20000;
+export const deliveryFee = metres => !Number.isFinite(metres) || metres < 0 ? null : metres <= 10000 ? 1000 : metres <= LOCAL_LIMIT_M ? 1500 : null;
+// An items subtotal of $200.00 or more before tax delivers free.
+export const localDue = (feeCents, subtotalCents) => subtotalCents >= FREE_LOCAL_CENTS ? 0 : feeCents;
+// Postal areas worth asking the map about, drawn wide around both shops: the road distance makes the real decision. Only Wallaceburg (N8A) is ruled out here.
+export const localArea = d => !!d && d.prov === "ON" && /^N(?:9|0R|0P|8(?!A))/.test(d.fsa);
+// Shop hours, Windsor time. [open, close] in 24h, Sunday first.
+export const SHOP_HOURS = [[11, 19], [10, 21], [10, 21], [10, 21], [10, 21], [10, 21], [10, 21]];
+// When a local order arrives, in words. Never an exact time.
+export function localEta(now = new Date()) {
+  const parts = Object.fromEntries(new Intl.DateTimeFormat("en-CA", { timeZone: "America/Toronto", weekday: "short", hour: "numeric", minute: "numeric", hour12: false }).formatToParts(now).map(x => [x.type, x.value]));
+  const day = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(parts.weekday.slice(0, 3)), t = (+parts.hour % 24) + +parts.minute / 60, [open, close] = SHOP_HOURS[day];
+  return t >= open && t < close ? "Arrives in about 25 minutes to 1 hour" : t < open ? "Arrives this morning" : "Arrives tomorrow morning";
+}
 
 export const days = n => n + (n === 1 ? " day" : " days");
 export const money = n => (n < 0 ? "-$" : "$") + Math.abs(n).toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });

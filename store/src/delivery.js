@@ -1,10 +1,13 @@
-// Local delivery: road distance from the shop to the shopper's full address, worked out on the server.
+// Local delivery: road distance from the nearer of our two shops to the shopper's full address, worked out on the server.
 // The price comes only from deliveryFee() in rates-core.js. If the address cannot be confirmed, or the map service
 // is down, delivery is simply not offered: shipping and pickup keep working.
-import { deliveryFee, localArea, parsePostal } from "../public/rates-core.js";
+import { LOCAL_LIMIT_M, deliveryFee, localArea, parsePostal } from "../public/rates-core.js";
 
-// 760 Wyandotte St E, Windsor, ON N9A 3J4: the map pin, fixed here so one bad lookup can never move the shop.
-const SHOP = { lat: 42.3179407, lon: -83.0263116 };
+// Both shops' map pins, fixed here so one bad lookup can never move a shop.
+const SHOPS = [
+  { id: "wyandotte", lat: 42.3179407, lon: -83.0263116 },   // 760 Wyandotte St E, Windsor, ON N9A 3J4
+  { id: "lauzon", lat: 42.3166188, lon: -82.9321728 },      // 1950 Lauzon Rd, Windsor, ON N8R 1A2
+];
 const PLACES = new Set(["building", "amenity", "street"]);
 // Neighbourhoods and hamlets people write as their town, against the name the map files them under.
 const ALSO = { windsor: ["riverside", "walkerville", "sandwich", "forestglade", "fontainebleau", "southwindsor", "eastwindsor"], lakeshore: ["belleriver", "stoneycreek", "emeryville", "puce", "pointeauxroches", "ruscom", "comber"], tecumseh: ["stclairbeach", "oldcastle", "maidstone", "sttarcisius"], essex: ["harrow", "colchester", "mcgregor"], amherstburg: ["malden", "anderdon"], lasalle: ["lasalle"] };
@@ -44,12 +47,27 @@ export function houseNumber(line1) {
   return m ? m[1].toLowerCase() : null;
 }
 
+// The shorter road from either shop. A road is never shorter than the straight line, so a shop that cannot win or is past the limit is not asked about:
+// at most two route lookups per map point, and none at all for a place clearly too far. The 1% allows for the straight-line sum being an approximation.
+async function shortest(env, lat, lon) {
+  const to = { lat, lon }, order = SHOPS.map(s => ({ s, line: apart(s, to) })).sort((a, b) => a.line - b.line);
+  if (order[0].line * 0.99 > LOCAL_LIMIT_M) return { metres: order[0].line, shop: order[0].s.id };
+  let best = null;
+  for (const { s, line } of order) {
+    if (line * 0.99 > LOCAL_LIMIT_M || (best && line * 0.99 >= best.metres)) continue;
+    const d = (await ask(env, "/v1/routing", { waypoints: `${s.lat},${s.lon}|${lat},${lon}`, mode: "drive" })).results?.[0]?.distance;
+    if (!Number.isFinite(d) || d < 0) continue;   // no road from this shop: the other shop can still answer
+    if (!best || d < best.metres) best = { metres: d, shop: s.id };
+  }
+  return best;
+}
+
 // From the postal code alone: only a match on the whole code is trusted, because the first three characters can cover a whole county.
 async function measurePostal(env, dest) {
   const hit = (await ask(env, "/v1/geocode/search", { text: `${dest.full}, Ontario, Canada`, type: "postcode", filter: "countrycode:ca", limit: "1" })).results?.[0];
   if (!hit || hit.country_code !== "ca" || hit.state_code !== "ON" || same(hit.postcode) !== same(dest.full) || !Number.isFinite(hit.lat) || !Number.isFinite(hit.lon)) return { status: "address" };
-  const d = (await ask(env, "/v1/routing", { waypoints: `${SHOP.lat},${SHOP.lon}|${hit.lat},${hit.lon}`, mode: "drive" })).results?.[0]?.distance;
-  return Number.isFinite(d) && d >= 0 ? { metres: d, hit } : { status: "address" };
+  const r = await shortest(env, hit.lat, hit.lon);
+  return r ? { ...r, hit } : { status: "address" };
 }
 async function measure(env, line1, city, dest) {
   const number = houseNumber(line1);
@@ -58,19 +76,17 @@ async function measure(env, line1, city, dest) {
   // A street or house number the map has not recorded is normal. If nothing contradicts the postal code, the postal code prices it.
   if (!hit) return { status: "unsure", soft: true };
   if (!trustworthy(hit, dest, city)) return agrees(hit, dest, city) ? { status: "unsure", soft: true, seen: PLACES.has(hit.result_type) ? hit : null } : { status: "unsure" };
-  const road = async (lat, lon) => { const d = (await ask(env, "/v1/routing", { waypoints: `${SHOP.lat},${SHOP.lon}|${lat},${lon}`, mode: "drive" })).results?.[0]?.distance; return Number.isFinite(d) && d >= 0 ? d : null; };
   if (hit.housenumber) {
     if (same(hit.housenumber) !== same(number)) return { status: "unsure", soft: true, seen: hit };
-    const metres = await road(hit.lat, hit.lon);
-    return metres === null ? { status: "unsure" } : { metres };
+    return (await shortest(env, hit.lat, hit.lon)) || { status: "unsure" };
   }
   // Only the street is known, not the house: price it only if both ends of the street land on the same fee.
   const b = hit.bbox; if (!b || ![b.lat1, b.lon1, b.lat2, b.lon2].every(Number.isFinite)) return { status: "unsure", soft: true, seen: hit };
-  const [one, two] = await Promise.all([road(b.lat1, b.lon1), road(b.lat2, b.lon2)]);
-  if (one === null || two === null || deliveryFee(one) !== deliveryFee(two)) return { status: "unsure", soft: true, seen: hit };
-  return { metres: Math.max(one, two) };
+  const [one, two] = await Promise.all([shortest(env, b.lat1, b.lon1), shortest(env, b.lat2, b.lon2)]);
+  if (!one || !two || deliveryFee(one.metres) !== deliveryFee(two.metres)) return { status: "unsure", soft: true, seen: hit };
+  return one.metres >= two.metres ? one : two;
 }
-const priced = (metres, confirm = false) => { const fee = deliveryFee(metres); return fee === null ? { status: "far", metres } : { status: "ok", fee_cents: fee, metres, ...(confirm ? { confirm: true } : {}) }; };
+const priced = ({ metres, shop, confirm = false }) => { const fee = deliveryFee(metres); return fee === null ? { status: "far", metres, shop } : { status: "ok", fee_cents: fee, metres, shop, ...(confirm ? { confirm: true } : {}) }; };
 // straight-line metres between two map points
 function apart(a, b) { const r = Math.PI / 180, x = (b.lon - a.lon) * r * Math.cos((a.lat + b.lat) * r / 2), y = (b.lat - a.lat) * r; return 6371000 * Math.hypot(x, y); }
 const NEAR_POSTAL = 3000;
@@ -79,7 +95,7 @@ const NEAR_POSTAL = 3000;
 async function cacheKey(line1, city, full) {
   const raw = new TextEncoder().encode(JSON.stringify([line1, city, full].map(s => String(s).trim().toLowerCase().replace(/\s+/g, " "))));
   const hash = [...new Uint8Array(await crypto.subtle.digest("SHA-256", raw))].map(b => b.toString(16).padStart(2, "0")).join("");
-  return new Request("https://delivery.cache/v2/" + hash);
+  return new Request("https://delivery.cache/v3/" + hash);
 }
 
 export async function deliveryQuote(env, { line1, city, postal }, ip = "local") {
@@ -89,19 +105,19 @@ export async function deliveryQuote(env, { line1, city, postal }, ip = "local") 
   if (!dest || !dest.complete || (!byPostal && (!line1 || !city))) return { status: "unsure" };
   if (!env.GEOAPIFY_KEY) return { status: "down" };
   let key = null;
-  try { key = await cacheKey(line1 || "", city || "", dest.full); const c = await caches.default.match(key); if (c) { const k = await c.json(); if (Number.isFinite(k.metres)) return priced(k.metres, k.confirm); } } catch { key = null; }
+  try { key = await cacheKey(line1 || "", city || "", dest.full); const c = await caches.default.match(key); if (c) { const k = await c.json(); if (Number.isFinite(k.metres) && typeof k.shop === "string") return priced(k); } } catch { key = null; }
   if (tooFast(ip)) return { status: "down" };   // only real map lookups count, so a repeat of a checked address is never held up
   let out;
   try {
     out = await (byPostal ? measurePostal(env, dest) : measure(env, line1, city, dest));
     if (out.soft) {   // the map placed this street somewhere: it must be beside the postal code, or it is not priced from it
       const p = await measurePostal(env, dest), close = !out.seen || (Number.isFinite(p.hit?.lat) && apart(out.seen, p.hit) <= NEAR_POSTAL);
-      out = Number.isFinite(p.metres) && cityMatch(p.hit, city) && close ? { metres: p.metres, confirm: true } : { status: "unsure" };
+      out = Number.isFinite(p.metres) && cityMatch(p.hit, city) && close ? { metres: p.metres, shop: p.shop, confirm: true } : { status: "unsure" };
     }
-    if (Number.isFinite(out.metres)) out = priced(out.metres, out.confirm);
+    if (Number.isFinite(out.metres)) out = priced(out);
   }
   catch (e) { console.error(JSON.stringify({ at: "delivery", message: String(e && e.message || e).replace(/apiKey=[^&\s]+/g, "apiKey=hidden").slice(0, 160) })); return { status: "down" }; }
-  if (key && Number.isFinite(out.metres)) { try { await caches.default.put(key, new Response(JSON.stringify({ metres: out.metres, confirm: !!out.confirm }), { headers: { "Content-Type": "application/json", "Cache-Control": `max-age=${KEEP}` } })); } catch {} }
+  if (key && Number.isFinite(out.metres)) { try { await caches.default.put(key, new Response(JSON.stringify({ metres: out.metres, shop: out.shop, confirm: !!out.confirm }), { headers: { "Content-Type": "application/json", "Cache-Control": `max-age=${KEEP}` } })); } catch {} }
   return out;
 }
 

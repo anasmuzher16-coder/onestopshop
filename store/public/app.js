@@ -1,6 +1,6 @@
 import { PRODUCTS, CATEGORIES, BOXES } from "/api/catalog-module";
 import { route, navigate } from "./route.js";
-import { parsePostal, pack, quote, money, days, MAX_QTY, fuelOn, taxRate, taxLabel, localArea } from "./rates.js";
+import { parsePostal, pack, quote, money, days, MAX_QTY, fuelOn, taxRate, taxLabel, localArea, localDue, localEta, FREE_LOCAL_CENTS, SHOP_HOURS } from "./rates.js";
 
 // ---------- state (everything read from storage is validated) ----------
 const bySku = Object.fromEntries(PRODUCTS.map(p => [p.sku, p]));
@@ -11,7 +11,7 @@ const store = {
 };
 const cleanCart = x => Array.isArray(x)
   ? x.filter(l => l && bySku[l.sku] && Number.isInteger(l.qty) && l.qty > 0).map(l => ({ sku: l.sku, qty: Math.min(MAX_QTY, l.qty) })) : [];
-const state = { whyOpen: false, q: "", note: typeof store.get("note") === "string" ? store.get("note") : "", set: {}, dest: parsePostal(store.get("postal")), cart: cleanCart(store.get("cart")), ship: typeof store.get("ship") === "string" ? store.get("ship") : null };
+const state = { reach: ["local", "nationwide"].includes(store.get("reach")) ? store.get("reach") : null, whyOpen: false, q: "", note: typeof store.get("note") === "string" ? store.get("note") : "", set: {}, dest: parsePostal(store.get("postal")), cart: cleanCart(store.get("cart")), ship: typeof store.get("ship") === "string" ? store.get("ship") : null };
 const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const whole = n => "$" + (Math.round(n * 100) % 100 ? n.toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : Math.round(n).toLocaleString("en-CA")); // cents only when the price has them
@@ -27,8 +27,7 @@ const isSold = p => SOLD.has(p.name) || p.stock === 0; // a one-off that has gon
 const inCat = c => PRODUCTS.filter(p => p.cat === c && !p.dark);
 const SHOP_STREET = "760 Wyandotte St E", SHOP_ADDRESS = "760 Wyandotte St E, Windsor, ON N9A 3J4", SHOP_MAP = "https://www.google.com/maps/search/?api=1&query=One%20Stop%20Shop%2C%20760%20Wyandotte%20St%20E%2C%20Windsor%2C%20ON%20N9A%203J4";
 const directions = (label = "Get directions") => `<a class="link" href="${SHOP_MAP}" target="_blank" rel="noopener">${label}</a>`;
-// Shop hours, Windsor time. [open, close] in 24h, Sunday first.
-const HOURS = [[11, 19], [10, 21], [10, 21], [10, 21], [10, 21], [10, 21], [10, 21]], DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const HOURS = SHOP_HOURS, DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const h12 = h => (h % 12 || 12) + (h < 12 ? " am" : " pm");
 function nowInWindsor() {
   const parts = Object.fromEntries(new Intl.DateTimeFormat("en-CA", { timeZone: "America/Toronto", weekday: "long", hour: "numeric", minute: "numeric", hour12: false }).formatToParts(new Date()).map(x => [x.type, x.value]));
@@ -41,6 +40,13 @@ function openLine() {
 
 const cartLines = () => state.cart.map(l => ({ product: bySku[l.sku], qty: l.qty }));
 const cartCount = () => state.cart.reduce((a, l) => a + l.qty, 0);
+const toCents = n => Math.round(n * 100);
+const cartCents = (lines = cartLines()) => lines.reduce((a, l) => a + toCents(l.product.price) * l.qty, 0);
+const feeText = n => n === 0 ? "Free" : money(n);
+// Pickup-only pieces never go by Canada Post. Our own driver can still bring them.
+const carried = lines => !lines.some(l => l.product.ship === "pickup_only");
+const cpQuote = lines => state.dest && carried(lines) ? quote(state.dest, pack(lines)) : [];
+const freeNote = sub => sub >= FREE_LOCAL_CENTS ? "Free local delivery: your items are $200 or more before tax." : `Local delivery is free on orders of $200 or more before tax. Add ${money((FREE_LOCAL_CENTS - sub) / 100)} more to get it.`;
 function saveCart() { store.set("cart", state.cart); syncChrome(); }
 function addToCart(sku) {
   if (!bySku[sku] || isSold(bySku[sku])) return;
@@ -51,7 +57,7 @@ function addToCart(sku) {
 function setQty(sku, qty) {
   state.cart = cleanCart(state.cart.map(l => l.sku === sku ? { ...l, qty } : l)); saveCart(); render();
 }
-const bestFor = p => state.dest ? quote(state.dest, pack([{ product: p, qty: 1 }]))[0] : null;
+const bestFor = p => cpQuote([{ product: p, qty: 1 }])[0] || null;
 
 // ---------- images ----------
 const V = "?v=1794615693"; // bumped on every photo rebuild so no phone keeps an old copy
@@ -181,7 +187,7 @@ function viewShop(cat) {
 function viewProduct(sku) {
   const p = bySku[sku];
   if (!p) return `${band("missing", "ruby", "That one is gone.")}<section class="empty"><p class="lead">It may have sold. <a class="link" href="/shop">See what is on the counter</a>.</p></section>`;
-  const c = catById[p.cat], parcels = pack([{ product: p, qty: 1 }]), opts = state.dest ? quote(state.dest, parcels) : [], b = parcels[0];
+  const c = catById[p.cat], parcels = pack([{ product: p, qty: 1 }]), opts = cpQuote([{ product: p, qty: 1 }]), b = parcels[0];
   const inCart = state.cart.some(l => l.sku === sku);
   const more = PRODUCTS.filter(x => x.cat === p.cat && x.sku !== sku && !x.dark).sort((a, b) => (seriesOf(b) === seriesOf(p)) - (seriesOf(a) === seriesOf(p))).slice(0, 4);
   const n = parseInt(p.sku.slice(-3), 10), nth = (c, k) => { const l = inCat(c); return l[(n + k) % l.length]; };
@@ -200,11 +206,11 @@ function viewProduct(sku) {
       ${deliveryLine(p, opts)}
       <section class="ways" aria-labelledby="ways-h">
         <h2 class="h3" id="ways-h">Delivery, shipping and pickup</h2>
-        ${opts.length ? `<p class="ways__to">To ${esc(state.dest.full)}${state.dest.city ? ", " + esc(state.dest.city) : ""}. <button class="link" type="button" data-open-postal>Change</button></p>
+        ${opts.length || (state.dest && p.ship === "pickup_only") ? `<p class="ways__to">To ${esc(state.dest.full)}${state.dest.city ? ", " + esc(state.dest.city) : ""}. <button class="link" type="button" data-open-postal>Change</button></p>
         <table class="ledger"><thead><tr><th scope="col">Service</th><th scope="col">Arrives</th><th scope="col" class="r">Cost</th></tr></thead>
         <tbody>${localRow(p)}${opts.map(o => `<tr><td>${o.carrier} ${o.service}</td><td>${days(o.days)}</td><td class="r num">${money(o.total)}</td></tr>`).join("")}
         <tr><td>Pick up at ${SHOP_STREET}</td><td>Today</td><td class="r num">Free</td></tr></tbody></table>`
-        : `<p class="ways__to">Local delivery from $10 near Windsor. Free pickup. ${p.ship === "ground_only" ? "Ships by ground across Canada." : "Ships across Canada."}</p><button class="btn btn--ghost btn--wide" type="button" data-open-postal>Check delivery to my postal code</button>`}
+        : `<p class="ways__to">Local delivery from $10 near Windsor. Free pickup. ${p.ship === "pickup_only" ? "Not sent by Canada Post." : p.ship === "ground_only" ? "Ships by ground across Canada." : "Ships across Canada."}</p><button class="btn btn--ghost btn--wide" type="button" data-open-postal>Check delivery to my postal code</button>`}
       </section>
       ${p.cat === "hookahs" ? `<section class="parts" aria-labelledby="parts-h">
         <h2 class="h3" id="parts-h">The parts</h2>
@@ -260,13 +266,13 @@ const SLOTS = [["hookah", "hookahs", "The hookah"], ["bowl", "bowls", "A bowl"],
 function setPicks() { return SLOTS.map(([slot, cat]) => bySku[state.set[slot]] || (slot === "hookah" ? byName("Mamoun Kamanja Gold") : null) || inCat(cat)[0]); }
 function setSummary() {
   const picks = setPicks(), lines = picks.map(product => ({ product, qty: 1 })), parcels = pack(lines), sum = picks.reduce((a, p) => a + p.price, 0);
-  const q = state.dest ? quote(state.dest, parcels)[0] : null;
+  const q = cpQuote(lines)[0] || null;
   return `
     <h2 class="h3">Your set</h2>
     <ul class="setlines">${picks.map(p => `<li><span>${esc(p.name)}</span><span class="num">${money(p.price)}</span></li>`).join("")}</ul>
     <dl class="totals">
       <div><dt>Ships as</dt><dd>${parcels.length} ${parcels.length === 1 ? "box" : "boxes"}, <span class="num">${parcels.reduce((a, b) => a + b.kg, 0).toFixed(1)} kg</span></dd></div>
-      <div><dt>Shipping${q ? " to " + esc(state.dest.full) : ""}</dt><dd>${q ? `<span class="num">${money(q.total)}</span>` : `<button class="link" type="button" data-open-postal>Add postal code</button>`}</dd></div>
+      <div><dt>Shipping${q ? " to " + esc(state.dest.full) : ""}</dt><dd>${q ? `<span class="num">${money(q.total)}</span>` : state.dest && !carried(lines) ? "Local delivery or pickup" : `<button class="link" type="button" data-open-postal>Add postal code</button>`}</dd></div>
       <div class="totals__door"><dt>Set price</dt><dd class="num">${money(sum)}</dd></div>
     </dl>
     <button class="btn btn--wide" type="button" data-add-set>Add the set to cart</button>`;
@@ -330,7 +336,7 @@ async function priceLocal() {
   }
 }
 // What we can honestly say about delivery right now. The strip and the product line both read this, so they never disagree.
-function deliveryNow() {
+function deliveryNow(subCents = cartCents()) {
   const d = state.dest, from = "Local delivery from $10 near Windsor", either = "It ships across Canada, or pickup is free";
   if (!d) return { key: "none", msg: from, sub: "", act: "Check your postal code" };
   const far = { key: "far", msg: `${d.full} is past our delivery area`, sub: either, act: "Change" };
@@ -338,7 +344,7 @@ function deliveryNow() {
   if (localArea(d)) {
     const q = localQ();
     if (!q || q.status === "checking") return { key: "checking", msg: `Checking delivery to ${d.full}`, sub: "", act: "Change" };
-    if (q.status === "ok") return { key: "ok", msg: `We deliver to ${d.full} for ${whole(q.fee_cents / 100)}`, sub: "", act: "Change" };
+    if (q.status === "ok") { const due = localDue(q.fee_cents, subCents); return { key: "ok", msg: due ? `We deliver to ${d.full} for ${whole(due / 100)}` : `Free local delivery to ${d.full}`, sub: "", act: "Change" }; }
     if (q.status === "far") return far;
     if (q.status === "down") return { key: "down", msg: "We cannot check delivery right now", sub: either, act: "Try again" };
     return { key: "later", msg: `Delivery to ${d.full} is priced at checkout`, sub: "", act: "Change" };
@@ -348,16 +354,17 @@ function deliveryNow() {
 }
 function deliveryLine(p, opts) {
   if (isSold(p)) return "";
-  if (p.ship === "pickup_only") return `<p class="dline"><span class="dline__msg">Pickup only, free at the Windsor counter</span></p>`;
-  let s = deliveryNow();
-  if (state.dest && !opts.length && (s.key === "far" || s.key === "ship" || s.key === "down")) s = { msg: `We cannot price shipping to ${state.dest.full} here`, sub: "Call 519-255-2222, or pickup is free", act: "Change" };
+  let s = deliveryNow(cartCents() + (state.cart.some(l => l.sku === p.sku) ? 0 : toCents(p.price)));
+  if (p.ship === "pickup_only" && (s.key === "far" || s.key === "ship" || s.key === "down")) s = { msg: "This one goes by local delivery or pickup", sub: "Canada Post does not carry it. Pickup is free", act: "Change" };
+  else if (state.dest && !opts.length && (s.key === "far" || s.key === "ship" || s.key === "down")) s = { msg: `We cannot price shipping to ${state.dest.full} here`, sub: "Call 519-255-2222, or pickup is free", act: "Change" };
   return `<button class="dline" type="button" data-open-postal><span class="dline__msg">${esc(s.msg)}</span>${s.sub ? `<span class="dline__sub">${esc(s.sub)}</span>` : ""}<span class="dline__act">${esc(s.act)}</span></button>`;
 }
 function syncDelivery() {
-  const box = $("[data-delivery-strip]"), btn = $("button", box), on = route().replace(/^#\/?/, "").split("/")[0], answered = !!state.dest && (state.dest.complete || !localArea(state.dest)),
-    show = !["cart", "checkout", "order"].includes(on) && !answered && !store.get("strip-off");   // gone once we have their postal code, or once they close it. The product page and cart can still take one
-  box.hidden = !show; btn.toggleAttribute("data-open-postal", show);   // a hidden strip must never be the control that opens the sheet
-  if (!show) return;
+  const box = $("[data-delivery-strip]"), btn = $(".dstrip__btn", box), on = route().replace(/^#\/?/, "").split("/")[0], answered = !!state.reach || (!!state.dest && (state.dest.complete || !localArea(state.dest))),
+    choosing = on === "shop" && !answered && !store.get("choose-off"), show = choosing || (!["cart", "checkout", "order", "shop"].includes(on) && !answered && !store.get("strip-off"));   // gone once we have their answer, or once they close it. The product page and cart can still take one
+  box.hidden = !show; box.dataset.mode = choosing ? "choose" : "slim"; btn.hidden = choosing; $(".dchoose", box).hidden = !choosing;
+  btn.toggleAttribute("data-open-postal", show && !choosing);   // a hidden strip must never be the control that opens the sheet
+  if (!show || choosing) return;
   const s = deliveryNow(), line = [s.msg, s.sub, s.act].filter(Boolean).join(". ");
   if (btn.getAttribute("aria-label") === line) return;   // same words: leave it alone
   const said = btn.hasAttribute("aria-label");
@@ -366,15 +373,17 @@ function syncDelivery() {
   if (said) $("[data-delivery-live]", box).textContent = s.sub ? `${s.msg}. ${s.sub}.` : `${s.msg}.`;
 }
 function localRow(p) {
-  const q = localQ(); if (!state.dest?.complete || !localArea(state.dest) || p.ship === "pickup_only" || !q || q.status === "far" || q.status === "down") return "";
-  return `<tr><td>Local delivery</td><td>From the shop</td><td class="r num">${q.status === "ok" ? money(q.fee_cents / 100) : q.status === "checking" ? "Checking" : "At checkout"}</td></tr>`;
+  const q = localQ(); if (!state.dest?.complete || !localArea(state.dest) || !q || q.status === "far" || q.status === "down") return "";
+  const sub = cartCents() + (state.cart.some(l => l.sku === p.sku) ? 0 : toCents(p.price)), when = localEta().replace(/^Arrives /, "");
+  return `<tr><td>Local delivery</td><td>${when[0].toUpperCase() + when.slice(1)}</td><td class="r num">${q.status === "ok" ? feeText(localDue(q.fee_cents, sub) / 100) : q.status === "checking" ? "Checking" : "At checkout"}</td></tr>`;
 }
 function shipChoice(lines) {
-  const parcels = pack(lines), opts = state.dest ? quote(state.dest, parcels) : [], q = localQ();
-  const near = localArea(state.dest) && !!state.dest.complete && state.localOff !== state.dest.full && lines.every(l => l.product.ship !== "pickup_only");
+  const parcels = pack(lines), opts = cpQuote(lines), q = localQ();
+  const near = localArea(state.dest) && !!state.dest.complete && state.localOff !== state.dest.full;
   const checking = near && (!q || q.status === "checking"), canLocal = near && !!q && (q.status === "ok" || q.status === "address" || q.status === "unsure");
-  const localFee = canLocal && q.status === "ok" ? q.fee_cents / 100 : null;
-  const pickup = state.ship === "pickup", local = !pickup && canLocal && (state.ship === "local" || !state.ship), waiting = checking && (!state.ship || state.ship === "local");
+  const localFee = canLocal && q.status === "ok" ? localDue(q.fee_cents, cartCents(lines)) / 100 : null;
+  const wantsLocal = state.ship === "local" || (!state.ship && state.reach !== "nationwide");   // someone who chose nationwide is never defaulted onto local delivery
+  const pickup = state.ship === "pickup", local = !pickup && canLocal && wantsLocal, waiting = checking && wantsLocal;
   return { parcels, opts, canLocal, checking, localFee, status: near && q ? q.status : null, pickup, local, chosen: pickup || local || waiting || state.ship === "local" ? null : opts.find(o => o.id === state.ship) || opts[0] || null };
 }
 function viewCart() {
@@ -382,12 +391,12 @@ function viewCart() {
   if (!lines.length) return `${band("cart", "gilt", "Your cart", "Nothing in it yet.")}<section class="empty"><p class="lead">Start with the <a class="link" href="/shop/hookahs">hookahs</a>, the <a class="link" href="/shop/bowls">bowls</a>, or <a class="link" href="/set">build a set</a>.</p></section>`;
   const was = shipChoice(lines); if (state.ship === "local" && !was.canLocal && !was.checking) { state.ship = null; store.set("ship", null); }   // the cart is where a new way of sending it is shown and chosen
   const { parcels, opts, canLocal, checking, localFee, status, pickup, local, chosen } = shipChoice(lines), sub = lines.reduce((a, l) => a + l.product.price * l.qty, 0);
-  const ready = pickup || local || !!chosen;
+  const ready = pickup || local || !!chosen, otherWay = carried(lines) ? "You can still ship it or pick it up free." : "You can still pick it up free.";
   const localNote = !state.dest ? "" : !state.dest.complete && localArea(state.dest) ? `<p class="note">Add your full postal code to see your delivery price. <button class="link" type="button" data-open-postal>Add it</button></p>`
     : checking ? `<p class="note" role="status">Checking delivery to ${esc(state.dest.full)}.</p>`
-    : status === "far" || (state.dest.complete && !localArea(state.dest) && state.dest.prov === "ON" && /^N[089]/.test(state.dest.fsa)) ? `<p class="note">${esc(state.dest.full)} is past our 25 km delivery area. You can still ship it or pick it up free.</p>`
-    : status === "down" ? `<p class="note">We cannot check delivery right now. You can still ship it or pick it up free.</p>` : "";
-  const tooHeavy = state.dest && !opts.length && !canLocal;
+    : status === "far" || (state.dest.complete && !localArea(state.dest) && state.dest.prov === "ON" && /^N[089]/.test(state.dest.fsa)) ? `<p class="note">${esc(state.dest.full)} is past our 25 km delivery area. ${otherWay}</p>`
+    : status === "down" ? `<p class="note">We cannot check delivery right now. ${otherWay}</p>` : "";
+  const tooHeavy = state.dest && !opts.length && !canLocal && carried(lines);
   return `
   ${band("cart", "gilt", "Your cart", `<span class="num">${lines.reduce((a, l) => a + l.qty, 0)}</span> ${lines.reduce((a, l) => a + l.qty, 0) === 1 ? "piece" : "pieces"}, packed at the counter`)}
   <section class="cart">
@@ -403,12 +412,14 @@ function viewCart() {
       <ol class="boxes">${parcels.map(p => `<li><span class="num">${p.l} \u00d7 ${p.w} \u00d7 ${p.h} cm, ${p.kg} kg</span> ${esc(p.label.toLowerCase())}, ${p.items.length} ${p.items.length === 1 ? "item" : "items"}</li>`).join("")}</ol>
       ${!state.dest ? `<button class="btn btn--wide" type="button" data-open-postal>Check delivery to my postal code</button>` : ""}
       ${localNote}
+      ${state.dest && !carried(lines) ? `<p class="note">One piece here does not go by Canada Post. ${canLocal ? "Choose local delivery or free pickup." : "Pickup at the Windsor counter is free."}</p>` : ""}
       ${tooHeavy ? `<p class="note">One of these boxes is over the 30 kg carrier limit. Call the counter at 519-255-2222 and we will quote it by hand.</p>` : ""}
       ${opts.length || canLocal ? `<fieldset class="opts"><legend>Getting it to ${esc(state.dest.full)} <button class="link" type="button" data-open-postal>Change</button></legend>
-        ${canLocal ? `<label class="opt"><input type="radio" name="ship" value="local" ${local ? "checked" : ""}><span class="opt__name">Local delivery<small>${localFee !== null ? "From our Windsor shop to your door" : "We price it from your street address at checkout"}</small></span><span class="num">${localFee !== null ? money(localFee) : "At checkout"}</span></label>` : ""}
+        ${canLocal ? `<label class="opt"><input type="radio" name="ship" value="local" ${local ? "checked" : ""}><span class="opt__name">Local delivery<small>${localFee !== null ? localEta() : "We price it from your street address at checkout"}</small></span><span class="num">${localFee !== null ? feeText(localFee) : "At checkout"}</span></label>` : ""}
         <label class="opt"><input type="radio" name="ship" value="pickup" ${pickup ? "checked" : ""}><span class="opt__name">Pick up at the Windsor counter<small>${SHOP_STREET}, Windsor. Ready the same day</small></span><span class="num">Free</span></label>
         ${opts.map(o => `<label class="opt"><input type="radio" name="ship" value="${o.id}" ${chosen && o.id === chosen.id ? "checked" : ""}><span class="opt__name">${o.carrier} ${o.service}<small>${days(o.days)}</small></span><span class="num">${money(o.total)}</span></label>`).join("")}
       </fieldset>
+      ${canLocal ? `<p class="note" data-free-note>${freeNote(cartCents(lines))}</p>` : ""}
       ${chosen ? `<details class="why" ${state.whyOpen ? "open" : ""}><summary>What makes up ${money(chosen.total)}</summary><dl>
         ${chosen.perParcel.map((p, i) => `<div><dt>Box ${i + 1}, billed at ${p.billableKg} kg</dt><dd class="num">${money(p.freight)}</dd></div>`).join("")}
         ${chosen.cover ? `<div><dt>Glass coverage and signature</dt><dd class="num">${money(chosen.cover)}</dd></div>` : ""}
@@ -418,7 +429,7 @@ function viewCart() {
       <textarea class="field field--text field--area" id="note" data-note maxlength="240" rows="2" placeholder="Happy birthday, from all of us">${esc(state.note)}</textarea></div>
     <dl class="totals">
       <div><dt>Items</dt><dd class="num">${money(sub)}</dd></div>
-      <div><dt>${pickup ? "Pickup" : local ? "Delivery" : "Shipping"}</dt><dd class="num">${pickup ? "Free" : local ? (localFee !== null ? money(localFee) : "At checkout") : chosen ? money(chosen.total) : checking ? "Checking" : "add postal code"}</dd></div>
+      <div><dt>${pickup ? "Pickup" : local ? "Delivery" : "Shipping"}</dt><dd class="num">${pickup ? "Free" : local ? (localFee !== null ? feeText(localFee) : "At checkout") : chosen ? money(chosen.total) : checking ? "Checking" : state.dest && !carried(lines) ? "Choose pickup" : "add postal code"}</dd></div>
       <div class="totals__door"><dt>${local && localFee === null ? "Total before delivery and tax" : "Total before tax"}</dt><dd class="num">${local ? money(sub + (localFee || 0)) : chosen ? money(sub + chosen.total) : money(sub)}</dd></div>
     </dl>
     ${ready ? `<a class="btn btn--wide" href="/checkout">Check out</a>` : `<button class="btn btn--wide" type="button" disabled>Check out</button>`}
@@ -432,16 +443,19 @@ function viewShipping() {
   <section class="reading">
     <p class="lead">We pack every order at the counter in Windsor and ship to every province and territory.</p>
     <h2 class="h3">Local delivery</h2>
-    <p>We deliver from the shop for $10 up to 10 km and $15 up to 25 km by road, per order, plus tax. Enter your postal code and we show your exact price, or tell you if you are past our delivery area.</p>
+    <p>We deliver from whichever of our two Windsor shops is closer by road: $10 up to 10 km and $15 up to 25 km, per order, plus tax. Orders with $200 or more in items before tax deliver free. Anything in the shop can come by local delivery. Enter your postal code and we show your exact price, or tell you if you are past our delivery area.</p>
+    <p>While the shop is open, it arrives in about 25 minutes to 1 hour. After closing, it arrives the next morning. These are estimates, not set times. Local delivery is paid online when you order.</p>
     <h2 class="h3">What it costs</h2>
     <p>Shipping is worked out from the packed weight and box size of your order and the carrier\u2019s rate to your postal code. You see the cost on the product page and in the cart before you pay.</p>
     <p><button class="btn btn--ghost" type="button" data-open-postal>${state.dest ? "Estimating to " + esc(state.dest.full) + ". Change" : "Enter my postal code"}</button></p>
     <h2 class="h3">How glass is packed</h2>
-    <p>Hookahs ship taken apart. The glass base is double boxed. If anything arrives broken, send a photo and we make it right.</p>
+    <p>Hookahs ship taken apart. The glass base is double boxed. If anything arrives broken, bring it into the store and talk to the store manager.</p>
     <h2 class="h3">What we ship</h2>
-    <p>Hookahs, bases, bowls, heat keepers, hoses and parts. Anything else in the shop is counter only.</p>
+    <p>Hookahs, bases, bowls, heat keepers, hoses and parts. A piece marked pickup only does not go by Canada Post, but we can still bring it to you by local delivery.</p>
     <h2 class="h3">Pick up</h2>
     <p>Order online and pick up for free at ${SHOP_ADDRESS}. ${directions()} or call <a class="link" href="tel:+15192552222">519-255-2222</a>.</p>
+    <h2 class="h3">Returns</h2>
+    <p>All sales are final. If something arrives broken, bring it into the store and talk to the store manager.</p>
   </section>`;
 }
 
@@ -462,16 +476,24 @@ function syncChrome() {
     : ra === "set"
     ? `<a class="dock__side" href="/shop">Shop</a><button class="dock__buy" type="button" data-add-set>Add the set <span class="num">${whole(setPicks().reduce((a, p) => a + p.price, 0))}</span></button><a class="dock__side" href="/cart" aria-label="Cart">${count}</a>`
     : ra === "cart" && lines.length
-    ? `<a class="dock__side" href="/shop">Shop</a>${canPay ? `<a class="dock__buy" href="/checkout">Check out <span class="num">${money(sub + (ship ? ship.total : sc && sc.local ? sc.localFee || 0 : 0))}</span></a>` : sc && sc.checking ? `<span class="dock__buy dock__buy--off">Checking delivery</span>` : `<button class="dock__buy" type="button" data-open-postal>Add postal code for shipping</button>`}<span class="dock__side">${count}</span>`
+    ? `<a class="dock__side" href="/shop">Shop</a>${canPay ? `<a class="dock__buy" href="/checkout">Check out <span class="num">${money(sub + (ship ? ship.total : sc && sc.local ? sc.localFee || 0 : 0))}</span></a>` : sc && sc.checking ? `<span class="dock__buy dock__buy--off">Checking delivery</span>` : `<button class="dock__buy" type="button" data-open-postal>${state.dest ? "Change postal code" : "Add postal code for shipping"}</button>`}<span class="dock__side">${count}</span>`
     : `<a href="/" ${h === "#/" ? 'aria-current="page"' : ""}>Home</a><a href="/shop" ${h.startsWith("#/shop") ? 'aria-current="page"' : ""}>Shop</a><a href="/search" ${h === "#/search" ? 'aria-current="page"' : ""}>Search</a><a href="/cart" ${h === "#/cart" ? 'aria-current="page"' : ""}>Cart ${count}</a>`;
   syncDelivery();
 }
 const sheet = $("[data-postal-sheet]"), postalInput = $("#postal"), postalErr = $("#postal-err");
-function openSheet() { postalInput.value = state.dest ? state.dest.full : ""; postalErr.hidden = true; postalInput.removeAttribute("aria-invalid"); sheet.showModal(); postalInput.focus(); postalInput.select(); }
+const sheetH = $("#sheet-h"), sheetP = $(".sheet__p", sheet), sheetGo = $('button[type="submit"]', sheet), postalBad = postalErr.textContent;
+const SHEET_WORDS = {
+  plain: { h: sheetH.textContent, p: sheetP.textContent, go: sheetGo.textContent },
+  local: { h: "Where should we deliver?", p: "Local delivery is $10 up to 10 km and $15 up to 25 km from our nearer Windsor shop. Free on orders of $200 or more before tax.", go: "Check local delivery" },
+  nationwide: { h: "Where should we ship it?", p: "We ship anywhere in Canada by Canada Post. Enter your postal code to see the prices.", go: "See shipping prices" },
+};
+function sheetWords(mode) { const w = SHEET_WORDS[mode || "plain"]; state.sheetMode = mode || null; sheetH.textContent = w.h; sheetP.textContent = w.p; sheetGo.textContent = w.go; }
+function openSheet(mode) { sheetWords(mode); state.sheetFell = false; postalInput.value = state.dest ? state.dest.full : ""; postalErr.textContent = postalBad; postalErr.hidden = true; postalInput.removeAttribute("aria-invalid"); sheet.showModal(); postalInput.focus(); postalInput.select(); }
 document.addEventListener("click", e => {
-  if (e.target.closest("[data-strip-close]")) { store.set("strip-off", true); syncDelivery(); $("#main").focus({ preventScroll: true }); return; }
+  if (e.target.closest("[data-strip-close]")) { store.set("strip-off", true); if ($("[data-delivery-strip]").dataset.mode === "choose") store.set("choose-off", true); syncDelivery(); $("#main").focus({ preventScroll: true }); return; }
+  const reach = e.target.closest("[data-reach]"); if (reach) { openSheet(reach.dataset.reach); return; }
   if (e.target.closest("[data-open-postal]")) openSheet();
-  if (e.target.closest("[data-local-off]")) { const o = state.dest ? quote(state.dest, pack(cartLines()))[0] : null; if (state.farFor === state.dest?.full) state.localOff = state.farFor; state.delivery = null; state.ship = o ? o.id : "pickup"; store.set("ship", state.ship); navigate("/cart"); }
+  if (e.target.closest("[data-local-off]")) { const o = cpQuote(cartLines())[0] || null; if (state.farFor === state.dest?.full) state.localOff = state.farFor; state.delivery = null; state.ship = o ? o.id : "pickup"; store.set("ship", state.ship); navigate("/cart"); }
   else if (e.target.closest("[data-close-postal]") || e.target === sheet) sheet.close();
   const add = e.target.closest("[data-add]"); if (add) { addToCart(add.dataset.add); render(); }
   const q = e.target.closest("[data-qty]"); if (q) setQty(q.dataset.qty, +q.dataset.n);
@@ -488,9 +510,16 @@ document.addEventListener("change", e => { if (e.target.name === "ship") { state
 $("[data-postal-form]").addEventListener("submit", e => {
   e.preventDefault();
   const d = parsePostal(postalInput.value);
-  if (!d) { postalErr.hidden = false; postalInput.setAttribute("aria-invalid", "true"); postalInput.focus(); return; }
+  const refuse = msg => { postalErr.textContent = msg; postalErr.hidden = false; postalInput.setAttribute("aria-invalid", "true"); postalInput.focus(); };
+  if (!d) return refuse(postalBad);
+  if (state.sheetFell && localArea(d)) { sheetWords("local"); state.sheetFell = false; }   // they corrected a mistyped code: they still asked for local delivery
+  if (state.sheetMode === "local" && !localArea(d)) { sheetWords("nationwide"); state.sheetFell = true; return refuse(`${d.full} is past our local delivery area. We can ship it to you anywhere in Canada.`); }
+  if (state.sheetMode === "local" && !d.complete) return refuse("Enter the full postal code, like N9A 1A1, so we can check the distance.");
   if (state.localQ?.status === "down") state.localQ = null;   // a new try after the map service was unavailable
+  const chose = state.sheetMode;
+  if (chose) { state.reach = chose; store.set("reach", chose); state.ship = null; store.set("ship", null); }
   state.dest = d; store.set("postal", d.full); sheet.close(); render();
+  if (chose) $("#main").focus({ preventScroll: true });
 });
 postalInput.addEventListener("input", () => { postalErr.hidden = true; postalInput.removeAttribute("aria-invalid"); });
 
@@ -503,13 +532,18 @@ function focusKey(el) {
 }
 // ---------- checkout and confirmation ----------
 const deliveryKey = () => [state.form?.line1, state.form?.city, state.dest?.full].map(s => String(s || "").trim().toLowerCase()).join("|");
-const deliveryFeeNow = () => state.refused === deliveryKey() ? null : state.delivery && state.delivery.key === deliveryKey() ? state.delivery.fee_cents / 100 : localQ()?.status === "ok" ? localQ().fee_cents / 100 : null;
+const baseFeeNow = () => state.refused === deliveryKey() ? null : state.delivery && state.delivery.key === deliveryKey() ? state.delivery.fee_cents : localQ()?.status === "ok" ? localQ().fee_cents : null;
+const deliveryFeeNow = () => {
+  const base = baseFeeNow(), told = state.delivery; if (base === null) return null;
+  if (told && told.key === deliveryKey() && told.sub === cartCents() && Number.isFinite(told.due)) return told.due / 100;   // the server has spoken for this exact cart: its figure wins over ours
+  return localDue(base, cartCents()) / 100;
+};   // the same free-over-$200 rule the server applies
 function coTotals(lines, sc) {
   const { pickup, local, chosen } = sc, fee = local ? deliveryFeeNow() : null, sub = lines.reduce((a, l) => a + l.product.price * l.qty, 0), ship = pickup ? 0 : local ? fee || 0 : chosen.total, prov = pickup || local ? "ON" : state.dest.prov;
   const tax = Math.round((sub + ship) * taxRate(prov) * 100) / 100, units = lines.reduce((a, l) => a + l.qty, 0);
   return `<dl class="totals">
         <div><dt>${units} ${units === 1 ? "item" : "items"}</dt><dd class="num">${money(sub)}</dd></div>
-        <div><dt>${pickup ? "Pickup" : local ? "Delivery" : "Shipping"}</dt><dd class="num">${pickup ? "Free" : local ? (fee === null ? "Enter your address" : money(fee)) : money(ship)}</dd></div>
+        <div><dt>${pickup ? "Pickup" : local ? "Delivery" : "Shipping"}</dt><dd class="num">${pickup ? "Free" : local ? (fee === null ? "Enter your address" : feeText(fee)) : money(ship)}</dd></div>
         <div><dt>${taxLabel(prov)}</dt><dd class="num">${money(tax)}</dd></div>
         <div class="totals__door"><dt>${local && fee === null ? "Total before delivery" : "Total"}</dt><dd class="num">${money(sub + ship + tax)}</dd></div>
       </dl>`;
@@ -518,7 +552,7 @@ function viewCheckout() {
   const lines = cartLines();
   if (!lines.length) return viewCart();
   const sc = shipChoice(lines), { pickup, local, chosen } = sc;
-  if (!state.ship && (sc.status === "far" || sc.status === "down")) return `${band("checkout", "emerald", "One step back.")}<section class="empty"><p class="lead">${sc.status === "far" ? `${esc(state.dest.full)} is past our 25 km delivery area.` : "We cannot check delivery right now."} You can still <a class="link" href="/cart">ship it or pick it up free</a>.</p></section>`;
+  if (!state.ship && !chosen && (sc.status === "far" || sc.status === "down")) return `${band("checkout", "emerald", "One step back.")}<section class="empty"><p class="lead">${sc.status === "far" ? `${esc(state.dest.full)} is past our 25 km delivery area.` : "We cannot check delivery right now."} You can still <a class="link" href="/cart">${carried(lines) ? "ship it or pick it up free" : "pick it up free"}</a>.</p></section>`;
   if (sc.checking && !pickup && !chosen && !local) return `${band("checkout", "emerald", "Checkout")}<section class="empty"><p class="lead" role="status">Checking delivery to ${esc(state.dest.full)}.</p></section>`;
   if (!pickup && !local && !chosen) return `${band("checkout", "emerald", "One step back.")}<section class="empty"><p class="lead">Choose shipping or pickup in <a class="link" href="/cart">your cart</a> first.</p></section>`;
   const f = state.form || {}, quoted = local && deliveryFeeNow() !== null;
@@ -538,7 +572,7 @@ function viewCheckout() {
         ${field("city", "City or town", 'autocomplete="address-level2" maxlength="60" required')}
         ${state.dest.complete ? `<p class="co__p">Postal code <b class="num">${esc(state.dest.full)}</b>, ${esc(state.dest.prov)}. <button class="link" type="button" data-open-postal>Change</button></p>`
           : `<p class="co__p">We need the full postal code for the label. <button class="link" type="button" data-open-postal>Enter it</button></p>`}
-        ${local ? `<p class="co__p">Local delivery from the Windsor shop. <a class="link" href="/cart">Change</a></p><div class="co__p" role="status" data-deliv-msg>${quoted ? `Good news, we deliver to ${esc(state.dest.full)}.` : ""}</div><p class="fine">Address check by <a class="link" href="https://www.geoapify.com/" rel="noopener">Geoapify</a>. Map data from OpenStreetMap contributors.</p>`
+        ${local ? `<p class="co__p">Local delivery from our nearer Windsor shop. ${localEta()}. <a class="link" href="/cart">Change</a></p><p class="co__p">${freeNote(cartCents(lines))}</p><div class="co__p" role="status" data-deliv-msg>${quoted ? `Good news, we deliver to ${esc(state.dest.full)}.` : ""}</div><p class="fine">Address check by <a class="link" href="https://www.geoapify.com/" rel="noopener">Geoapify</a>. Map data from OpenStreetMap contributors.</p>`
           : `<p class="co__p">${chosen.carrier} ${chosen.service}, ${days(chosen.days)}. <a class="link" href="/cart">Change</a></p>`}</fieldset>`}
       ${coTotals(lines, sc)}
       <p class="field__err" role="alert" data-co-err hidden></p>
@@ -555,11 +589,11 @@ function viewOrder(id) {
   <section class="cart done">
     <p class="done__tag"><span>Order</span> <b class="num">${esc(o.id)}</b></p>
     <h1 class="h2 h2--xl">Thank you, ${esc(o.name.split(" ")[0])}.</h1>
-    <p class="lead">${o.method === "pickup" ? `We will email you when it is ready at ${SHOP_ADDRESS}. Bring this order number. ${directions()}` : o.service === "Local delivery" ? "We will deliver it from the Windsor shop and call if we need anything." : `We pack it and send it by ${esc(o.service)}. Tracking comes by email${o.days ? `, and it should arrive in about ${days(o.days)}` : ""}.`}</p>
+    <p class="lead">${o.method === "pickup" ? `We will email you when it is ready at ${SHOP_ADDRESS}. Bring this order number. ${directions()}` : o.service === "Local delivery" ? `${o.eta ? esc(o.eta) + ". " : ""}We will deliver it from our nearer Windsor shop and call if we need anything.` : `We pack it and send it by ${esc(o.service)}. Tracking comes by email${o.days ? `, and it should arrive in about ${days(o.days)}` : ""}.`}</p>
     <ul class="done__lines">${o.items.map(i => `<li><span><b class="num">${i.qty}</b> &times; ${esc(i.name)}</span><span class="num">${c(i.unit_cents * i.qty)}</span></li>`).join("")}</ul>
     <dl class="totals">
       <div><dt>Items</dt><dd class="num">${c(o.subtotal_cents)}</dd></div>
-      <div><dt>${o.method === "pickup" ? "Pickup" : o.service === "Local delivery" ? "Delivery" : "Shipping"}</dt><dd class="num">${o.method === "pickup" ? "Free" : c(o.shipping_cents)}</dd></div>
+      <div><dt>${o.method === "pickup" ? "Pickup" : o.service === "Local delivery" ? "Delivery" : "Shipping"}</dt><dd class="num">${o.method === "pickup" || (o.service === "Local delivery" && !o.shipping_cents) ? "Free" : c(o.shipping_cents)}</dd></div>
       <div><dt>${esc(o.tax_label)}</dt><dd class="num">${c(o.tax_cents)}</dd></div>
       <div class="totals__door"><dt>Total</dt><dd class="num">${c(o.total_cents)}</dd></div>
     </dl>
@@ -575,10 +609,12 @@ function refreshDelivery(f, msg) {
   if (box) box.innerHTML = msg !== undefined ? msg : quoted ? `Good news, we deliver to ${esc(state.dest.full)}.` : "";
   btn.textContent = quoted ? "Place order" : "Check delivery price";
 }
-const OTHER_WAY = `<button class="link" type="button" data-local-off>See shipping and pickup</button>`;
-const deliveryMsg = status => status === "far" ? `${esc(state.dest.full)} is past our 25 km delivery area. You can still ship it or pick it up free. ${OTHER_WAY}`
-  : status === "down" ? `We cannot check delivery right now. You can still ship it or pick it up free. ${OTHER_WAY}`
-  : `We could not confirm that address. Check the street number and postal code, or ${OTHER_WAY.replace("See shipping", "see shipping")}.`;
+const deliveryMsg = status => {
+  const can = carried(cartLines()), way = can ? "See shipping and pickup" : "See pickup", btn = w => `<button class="link" type="button" data-local-off>${w}</button>`, other = can ? "You can still ship it or pick it up free." : "You can still pick it up free.";
+  return status === "far" ? `${esc(state.dest.full)} is past our 25 km delivery area. ${other} ${btn(way)}`
+    : status === "down" ? `We cannot check delivery right now. ${other} ${btn(way)}`
+    : `We could not confirm that address. Check the street number and postal code, or ${btn(way[0].toLowerCase() + way.slice(1))}.`;
+};
 async function checkDelivery(f, btn) {
   btn.disabled = true; btn.textContent = "Checking your address";
   let d = { status: "down" }, key = deliveryKey();
@@ -594,7 +630,7 @@ document.addEventListener("submit", async e => {
   const v = n => (f.elements[n] ? f.elements[n].value.trim() : "");
   if (!v("name")) return fail("Tell us the name for the order.", "name");
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v("email"))) return fail("That email address does not look right.", "email");
-  if (!pickup && !local && !state.ship && (sc.status === "far" || sc.status === "down")) return fail("Delivery is not available here. Choose shipping or pickup in your cart.");
+  if (!pickup && !local && !chosen && !state.ship && (sc.status === "far" || sc.status === "down")) return fail("Delivery is not available here. Choose shipping or pickup in your cart.");
   if (!pickup && !v("line1")) return fail("Enter the street address.", "line1");
   if (!pickup && !v("city")) return fail("Enter the city or town.", "city");
   if (local) {
@@ -607,7 +643,7 @@ document.addEventListener("submit", async e => {
     const r = await fetch("/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ lines: state.cart, method: pickup ? "pickup" : "ship", service: local ? "local" : chosen && chosen.id, delivery_fee_cents: local ? Math.round(deliveryFeeNow() * 100) : undefined, postal: state.dest && state.dest.full,
       name: v("name"), email: v("email"), phone: v("phone"), note: state.note, address: { line1: v("line1"), city: v("city") } }) });
     const data = await r.json().catch(() => ({}));
-    if (!r.ok) { btn.disabled = false; btn.textContent = "Place order"; if (local && data.delivery) { if (data.delivery === "far") state.farFor = state.dest.full; state.delivery = data.delivery === "ok" ? { key: deliveryKey(), fee_cents: data.fee_cents } : null; state.refused = data.delivery === "ok" ? null : deliveryKey(); refreshDelivery(f, data.delivery === "ok" ? undefined : deliveryMsg(data.delivery)); if (data.delivery !== "ok") return; } if (typeof data.stock === "number" && bySku[data.sku]) bySku[data.sku].stock = data.stock; return fail(data.error || "That did not go through. Please try again.", data.field); }
+    if (!r.ok) { btn.disabled = false; btn.textContent = "Place order"; if (local && data.delivery) { if (data.delivery === "far") state.farFor = state.dest.full; state.delivery = data.delivery === "ok" ? { key: deliveryKey(), fee_cents: data.base_fee_cents ?? data.fee_cents, due: data.fee_cents, sub: cartCents() } : null; state.refused = data.delivery === "ok" ? null : deliveryKey(); refreshDelivery(f, data.delivery === "ok" ? undefined : deliveryMsg(data.delivery)); if (data.delivery !== "ok") return; } if (typeof data.stock === "number" && bySku[data.sku]) bySku[data.sku].stock = data.stock; return fail(data.error || "That did not go through. Please try again.", data.field); }
     try { sessionStorage.setItem("oss:order:" + data.order.id, JSON.stringify(data.order)); } catch {}
     for (const i of data.order.items) if (bySku[i.sku]) bySku[i.sku].stock = Math.max(0, bySku[i.sku].stock - i.qty);
     state.cart = []; saveCart(); state.delivery = null; state.refused = null; state.form = {}; state.note = ""; store.set("note", "");
@@ -628,10 +664,10 @@ const viewPrivacy = () => doc("Privacy", "What we collect when you order, why, a
 const viewTerms = () => doc("Terms of sale", "The plain rules for buying from us online.", [
   ["Prices and tax", ["Prices are in Canadian dollars. Tax is added at checkout, based on the province the order ships to."]],
   ["Shipping", ["We ship within Canada. The price at checkout is the price you pay for shipping. Delivery times are the carrier's estimates. Cologne ships by ground only."]],
-  ["Local delivery", ["We deliver within 25 km of the shop by road: $10 up to 10 km and $15 from there to 25 km, per order, plus tax. Delivery days and times are confirmed by the shop."]],
+  ["Local delivery", ["We deliver within 25 km by road of the nearer of our two Windsor shops: $10 up to 10 km and $15 from there to 25 km, per order, plus tax. Orders with $200 or more in items before tax deliver free. Arrival times are estimates. Local delivery is paid online when you order."]],
   ["Pickup", ["Pickup at 760 Wyandotte St E, Windsor, ON N9A 3J4 is free. We email you when the order is ready and hold it for 14 days."]],
-  ["Returns", ["Unused items in their original packaging can be returned within 14 days for a refund to the original payment method. Opened cologne cannot be returned."]],
-  ["Damage in transit", ["If something arrives broken, keep the packaging, take a photo and tell us within 3 days. We will replace it or refund it."]],
+  ["Returns", ["All sales are final."]],
+  ["Broken on arrival", ["If something arrives broken, bring it into the store at 760 Wyandotte St E and talk to the store manager."]],
   ["If something is wrong with the order", ["If we cannot ship within 30 days of the date promised, you can cancel for a full refund."]],
 ]);
 const viewMissing = () => `${band("missing", "ruby", "Nothing at this address.")}<section class="empty"><p class="lead">The link may be old. <a class="link" href="/shop">See what is on the counter</a>.</p></section>`;
