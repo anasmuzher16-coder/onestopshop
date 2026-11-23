@@ -46,8 +46,8 @@ try {
         }
         for (const i of document.querySelectorAll("#main img")) if (i.complete && !i.naturalWidth) out.push("broken image " + i.src.split("/").pop());
         // fixed chrome at rest
-        const top = document.querySelector(".top").getBoundingClientRect(), rib = document.querySelector(".mock-ribbon").getBoundingClientRect(), dock = document.querySelector(".dock").getBoundingClientRect();
-        const chrome = top.height + dock.height; // the ribbon scrolls away and is mockup-only
+        const top = document.querySelector(".top").getBoundingClientRect(), dock = document.querySelector(".dock").getBoundingClientRect();
+        const chrome = top.height + dock.height;
         if (chrome / vh > (vw > vh ? 0.36 : 0.2)) out.push(`fixed bars take ${Math.round(chrome)}px of ${vh}px (${Math.round(chrome / vh * 100)}%)`);
         // first screen: one h1, and the main action is visible and not under the dock
         if (document.querySelectorAll("h1").length !== 1) out.push("h1 count " + document.querySelectorAll("h1").length);

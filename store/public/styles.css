@@ -17,7 +17,6 @@ button{font:inherit;color:inherit}
 body:not([data-route]) .foot{visibility:hidden}
 [lang="ar"]{font-family:var(--font-display);line-height:1.2}
 
-.mock-ribbon{margin:0;font-size:var(--t-12);line-height:1.5;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:2px var(--gutter);background:var(--color-strong);color:var(--ink)}
 
 /* ---------- top bar ---------- */
 .top{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:var(--s-4);min-height:52px;padding:0 var(--gutter);
