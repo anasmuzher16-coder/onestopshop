@@ -139,8 +139,8 @@ function build(fs) {
 const prog = key => progs[key] || (progs[key] = build(key === "flip" ? FLIP : HEAD + MAT[key] + FOOT));
 // THE SLOT for the baked art. A new bake only changes its entry here: file, grid, cell size, full-cover frame, and optionally flow (a same-grid RG map) with flowMax (its reach in cell UV).
 const BOOKS = {
-  smoke: { file: "smoke.webp", cols: 6, rows: 4, frames: 24, frameWidth: 256, frameHeight: 512, fullCoverFrame: 8 },
-  fire: { file: "fire.webp", cols: 6, rows: 4, frames: 24, frameWidth: 256, frameHeight: 512, fullCoverFrame: 8 },
+  smoke: { file: "smoke.webp", cols: 4, rows: 4, frames: 16, frameWidth: 360, frameHeight: 780, fullCoverFrame: 5 },
+  fire: { file: "fire.webp", cols: 4, rows: 4, frames: 16, frameWidth: 360, frameHeight: 780, fullCoverFrame: 5 },
 };
 // the flipbooks are asked for when the browser is idle, never on Save-Data or reduced motion
 function loadAtlas() {
