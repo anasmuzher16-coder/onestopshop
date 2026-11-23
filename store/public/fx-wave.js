@@ -21,18 +21,18 @@ const W = {
   hookahs: { m: "smoke", d: [S2, S2], e: 400, p: [C.bone, C.ash, C.coal, C.bonelt] },   // flowing inked clouds in bone and ash, never pink
   heat: { m: "fire", d: [0, 1], e: 290, p: [C.emberlt, C.ember, C.coal, C.gilt] },      // drawn flames: ember, the Heat tile's orange and gilt, with a coal ink line
   bases: { m: "water", d: [0, 1], e: 80, p: tone(C.teal, 190) },
-  bowls: { m: "teeth", sprite: "bowls", d: [0, -1], e: 340, p: tone(C.cobalt, 265) },
+  bowls: { m: "fly", sprite: "bowls", d: [0, -1], e: 300, p: tone(C.cobalt, 265) },
   hoses: { m: "rope", d: [1, 0], e: 2, p: tone(C.emerald, 155), c: 340, ms: 500 },
   parts: { m: "fly", sprite: "parts", d: [-1, 0], e: 300, p: tone(C.gilt, 88) },
   cologne: { m: "mist", d: [-S2, -S2], e: 380, p: [C.amethyst, ok(.62, .1, 312), deep(312), ok(.86, .06, 312)] },
-  misc: { m: "teeth", sprite: "misc", d: [S2, -S2], e: 340, p: tone(C.bonelt, 80) },
+  misc: { m: "fly", sprite: "misc", d: [S2, -S2], e: 300, p: tone(C.bonelt, 80) },
   home: { m: "motes", d: [.38, .925], e: 110, p: [C.coal, C.gilt, C.coal2, C.ember] },
-  all: { m: "teeth", sprite: "all", d: [0, 1], e: 340, p: tone(C.bonelt, 80) },
-  gifts: { m: "teeth", sprite: "gifts", d: [S2, S2], e: 340, p: tone(C.cobalt, 265) },
-  set: { m: "teeth", sprite: "set", d: [1, 0], e: 340, p: tone(C.ruby, 18) },
-  shipping: { m: "teeth", sprite: "shipping", d: [1, 0], e: 340, p: tone(C.cobalt, 265) },
-  search: { m: "teeth", sprite: "search", d: [1, 0], e: 340, p: tone(C.teal, 190), c: 150, ms: 230 },
-  cart: { m: "teeth", sprite: "cart", d: [0, 1], e: 340, p: tone(C.gilt, 88), c: 170, ms: 260 },
+  all: { m: "fly", sprite: "all", d: [0, 1], e: 300, p: tone(C.bonelt, 80) },
+  gifts: { m: "fly", sprite: "gifts", d: [S2, S2], e: 300, p: tone(C.cobalt, 265) },
+  set: { m: "fly", sprite: "set", d: [1, 0], e: 300, p: tone(C.ruby, 18) },
+  shipping: { m: "fly", sprite: "shipping", d: [1, 0], e: 300, p: tone(C.cobalt, 265) },
+  search: { m: "fly", sprite: "search", d: [1, 0], e: 300, p: tone(C.teal, 190), c: 150, ms: 230 },
+  cart: { m: "fly", sprite: "cart", d: [0, 1], e: 300, p: tone(C.gilt, 88), c: 170, ms: 260 },
 };
 const pageTone = path => /^\/gifts\/under-50/.test(path) ? tone(C.emerald, 155) : tone(C.cobalt, 265);   // Gifts wears the colour of the page it lands on
 
@@ -92,11 +92,6 @@ const MAT = {
     if (a < 58.) { b = mix(vec3(${C.gilt}), vec3(.98, .94, .78), 1. - ss(.13, .2, abs(v + .42))); b = mix(b, mix(vec3(${C.gilt}), uC, .45), ss(.3, .36, v)); } b = mix(uC, b, E(abs(a - 58.) - 1.4)); c = mix(uC, b, ss(1.6, 2.8, ed)); float hh = a - cap, tb = arc - At - cap; c = mix(uC, c, E(hh - 2.6)); c = mix(uC, c, E(tb - 2.6)); h = hh; t = tb; }`,
   // home: the coal itself arrives behind a burning edge of gilt and ember
   motes: `${SIG} { float e = h - 26. + 130. * (fbm(vec2(f.x / 3400., h / 4600.)) - .5); c = mix(uB, mix(uE, uA, E(e - 18.)), E(e - 7.)); h = e; }`,
-  // the section's own header objects, the same drawings, set down one by one across its colour tile with a small hop and a flat shadow. Parts, Bowls, Misc, Everything, Gifts, Build a set, Shipping, Search and Cart
-  teeth: `uniform sampler2D uS; uniform float uHas; vec4 spr(vec2 w, float i, float l) { if (w.x < .006 || w.x > .994 || w.y < .006 || w.y > .994) return vec4(0.); i = mod(i, 4.); return textureLod(uS, (vec2(mod(i, 2.), floor(i / 2.)) + vec2(w.x, 1. - w.y)) / 2., l); }
-  ${SIG} { float S = clamp(uV.x / 2.1, 170., 280.); vec2 g = p / S; float ro = floor(g.y), sf = mod(ro, 2.) * .5; g.x += sf; vec2 id = floor(g), q = (fract(g) - .5) * S, ctr = (id + .5 - vec2(sf, 0.)) * S; float sc = dot(ctr, uD) + L * .5 + H2(id) * 50., k = clamp((uH * L - sc + 170.) / 105., 0., 1.), bh = h - S * .85; vec3 base = uA; vec4 sp = vec4(0.);
-    if (uHas > .5 && k > 0.) { float e = 1. - (1. - k) * (1. - k) * (1. - k), pop = max(.01, e + .14 * sin(k * 3.14159)), an = (H2(id + 2.) - .5) * .9 + (1. - e) * 1.6 * (H2(id + 4.) - .5), ca = cos(an), sa = sin(an), n = id.x + ro * 2., lod = max(0., log2(float(textureSize(uS, 0).x) * .5 * PX / (S * 1.06 * pop))); vec2 w = vec2(ca * q.x + sa * q.y, -sa * q.x + ca * q.y) / (S * 1.06 * pop) + .5, q2 = q - vec2(7., -9.), w2 = vec2(ca * q2.x + sa * q2.y, -sa * q2.x + ca * q2.y) / (S * 1.06 * pop) + .5; sp = spr(w, n, lod); base = mix(base, mix(uA, uB, .55), spr(w2, n, lod).a * .85); }
-    c = mix(sp.rgb, mix(base, sp.rgb, sp.a), E(bh)); h = max(bh, (sp.a - .5) * 1.5 * PX); float b = t - 18. - 16. * sin(f.x / 37. + uTime * 3.); c = mix(uC, c, E(b - 3.)); t = b; }`,
 };
 // cologne: an aerosol. A tight pressurised jet leaves the nozzle with a bright dense core, then blooms into an ultra-fine spray and soft amethyst mist that fills the screen
 MAT.mist = `float sp(vec2 p, vec2 nz, float pitch, float k, float dn, float big, float seed) { vec2 a = nz + (p - nz) / (1. + uTime * k), g = a / pitch + seed, id = floor(g); if (H2(id + seed) > dn) return 0.; vec2 j = (vec2(H2(id + 1.), H2(id + 2.)) - .5) * .86; float z = H2(id + 3.), rad = pitch * (.12 + big * z * z * z); vec2 o = (fract(g) - .5 - j) * pitch * (1. + uTime * k), dr = normalize(p - nz + .001); float al = dot(o, dr) / (1. + uTime * 1.2), ac = dot(o, vec2(-dr.y, dr.x)), d = rad - length(vec2(al, ac)); return (.5 + .5 * H2(id + 4.)) * ss(-.8, .6, d); }
@@ -104,7 +99,7 @@ MAT.mist = `float sp(vec2 p, vec2 nz, float pitch, float k, float dn, float big,
     float th = acos(clamp(dot(dir, vec2(-.6, -.8)), -1., 1.)) + (n2 - .5) * .42, wd = mix(.13, 5., pow(clamp(uH, 0., 1.), 2.2)), cn = 1. - ss(wd * .72, wd * 1.25, th), ce = 1. - ss(wd * .9, wd * 1.7, th), core = exp(-pow(th / (wd * .42), 2.));
     float m = ss(-60., 130., hr + fo) * ss(-60., 130., tr - fo) * cn, env = ss(-240., -40., hr + fo * .6) * ss(-230., -30., tr - fo * .6) * ce, pk = 1. - ss(70., 420., hr), dn = env * (.2 + .55 * pk), d1 = sp(p, nz, 3.4, 2.2, dn * .72, .13, 1.), d2 = sp(p, nz, 5.6, 3., dn * .85, .14, 7.), d3 = sp(p, nz, 10., 4., dn * .4, .1, 13.), da = max(d1, max(d2, d3));
     vec3 b = mix(mix(uA, uB, .12), mix(uA, uE, .5), ss(.34, .66, .6 * n + .4 * n2)); b = mix(b, mix(uE, vec3(.99), .4), .78 * core * exp(-r / (.75 * RM))); c = mix(b, mix(uE, vec3(.99), .35), da * .8); h = (max(m, da) - .5) * 1.5 * PX; t = PX * 9.; }`;
-// parts: the same drawn kit, small, spinning and flying across the screen in three depths and speeds, ahead of and over the gold tile
+// the section's own drawn header objects, small, spinning and flying across the screen in three depths and speeds, ahead of and over its colour tile. Parts, Bowls, Misc, Everything, Gifts, Build a set, Shipping, Search and Cart
 MAT.fly = `uniform sampler2D uS; uniform float uHas; vec4 spr(vec2 w, float i, float l) { if (w.x < .006 || w.x > .994 || w.y < .006 || w.y > .994) return vec4(0.); i = mod(i, 4.); return textureLod(uS, (vec2(mod(i, 2.), floor(i / 2.)) + vec2(w.x, 1. - w.y)) / 2., l); }
   void lay(vec2 p, float S, float v, float sd, inout vec3 ac, inout float aa) { vec2 drift = uD * uTime * v, g = (p - drift) / S; float ro = floor(g.y), sh = H1(ro + sd); g.x += sh; vec2 id = floor(g); if (H2(id + sd) > .62) return; vec2 j = (vec2(H2(id + sd + 1.), H2(id + sd + 2.)) - .5) * .22, u = (fract(g) - .5 - j) * S, ctr = (id + .5 + j - vec2(sh, 0.)) * S + drift; float sc = dot(ctr, uD) + L * .5, k = min(clamp((uH * L + 150. - sc) / 70., 0., 1.), clamp((sc - uT * L + 150.) / 70., 0., 1.)); if (k <= 0.) return; k = k * k * (3. - 2. * k);
     float an = (H2(id + sd + 4.) - .5) * 6.28 + uTime * (H2(id + sd + 5.) < .5 ? -1. : 1.) * (2.2 + 2.6 * H2(id + sd + 6.)), ca = cos(an), sa = sin(an), sz = S * .7 * max(k, .01); vec2 w = vec2(ca * u.x + sa * u.y, -sa * u.x + ca * u.y) / sz + .5; vec4 t = spr(w, id.x + id.y * 2. + sd, max(0., log2(float(textureSize(uS, 0).x) * .5 * PX / sz))); if (t.a <= 0.) return; ac = aa < .001 ? t.rgb : mix(ac, t.rgb, t.a); aa += t.a * (1. - aa); }
