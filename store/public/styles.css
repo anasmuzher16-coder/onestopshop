@@ -569,6 +569,7 @@ html.pour-still body::before{content:"";position:fixed;inset:0 0 auto;height:100
 html.pour-page .top{background:var(--color-bg);-webkit-backdrop-filter:none;backdrop-filter:none}
 html.pour-page .chips:not(.is-stuck){background:transparent}
 html.pour-page .chips a:not([aria-current]){background:var(--color-bg)}
+html.pour-still.pour-mist body::before{background-image:url(img/mist-still.webp)}
 @media print{.pour,.pour--spritz{display:none !important}html.pour-still body::before{display:none}}
 .smoke{position:absolute;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none;opacity:0;transition:opacity 600ms var(--ease-state) 300ms}
 .smoke.on{opacity:1}

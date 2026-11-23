@@ -42,7 +42,7 @@ const MIST = [[.155, .012, 50], [.205, .006, 240], [.265, .008, 235], [.318, .00
 // what each section's air does: how it opens, how much stays afterward, and how it moves
 const MODES = {
   hookahs: { end: 9, radial: false, rest: .3, sc: 2.1, lift: 2, restLift: .2, ramp: RAMP, power: [.03, .03], drifts: 9, size: [.0024, .0042] },
-  cologne: { end: 7.2, radial: true, rest: .74, sc: 6.4, lift: .34, restLift: .09, ramp: MIST, power: [.012, .018], drifts: 9, size: [.0012, .0024] },
+  cologne: { air: true, end: 7.2, radial: true, rest: .74, sc: 6.4, lift: .34, restLift: .09, ramp: MIST, power: [.012, .018], drifts: 9, size: [.0012, .0024] },
 };
 let lite = false, M = MODES.hookahs, modeName = null, tick = 0, org = [.75, .8];
 const ease = (a, b, x) => { x = Math.min(1, Math.max(0, (x - a) / (b - a))); return x * x * (3 - 2 * x); };
@@ -155,8 +155,45 @@ function firstOpen() {
 }
 const toStill = () => { off(); gl = null; document.documentElement.classList.add("pour-still", "pour-page"); };
 function settle() { heavy = false; for (let i = 0; i < 24; i++) { T += 1 / 30; step(2); } bank(1, true); show(); }
+// the cologne background: the same fine droplets the spray throws, hanging in the air behind the page. Each one drifts, glints, fades
+// and is replaced somewhere new, so the field never repeats. No smoke, no clouds. It is plain 2D and runs at half rate once settled.
+let air = null;
+function endAir() { if (!air) return; cancelAnimationFrame(air.raf); removeEventListener("resize", air.fit); air.c.width = air.c.height = 0; air.c.remove(); air = null; }
+function beginAir() {
+  const open = firstOpen(); W = innerWidth; Hh = innerHeight; aim();
+  const c = document.createElement("canvas"); c.className = "pour pour--air"; c.setAttribute("aria-hidden", "true"); document.body.prepend(c);
+  const g = c.getContext("2d"); if (!g) { c.width = c.height = 0; c.remove(); document.documentElement.classList.add("pour-still", "pour-mist", "pour-page"); return; }
+  const dot = document.createElement("canvas"); dot.width = dot.height = 24; const x = dot.getContext("2d"), rg = x.createRadialGradient(12, 12, 0, 12, 12, 12); rg.addColorStop(0, "rgba(255,253,248,1)"); rg.addColorStop(.42, "rgba(255,253,248,.6)"); rg.addColorStop(1, "rgba(255,253,248,0)"); x.fillStyle = rg; x.fillRect(0, 0, 24, 24);
+  const rnd = (a, b) => a + Math.random() * (b - a); let w = 0, h = 0, drops = [], veil = [], limit = 1, slowFrames = 0, odd = false, prev = performance.now();
+  const t0 = performance.now(), ox = () => org[0] * w, oy = () => (1 - org[1]) * h;
+  const place = (p, now, first) => { const u = Math.random(), v = veil.length && Math.random() < .64 ? veil[Math.floor(Math.random() * veil.length)] : null, near = () => (Math.random() + Math.random() + Math.random() - 1.5) * .24; p.x = (v ? v.x + near() : rnd(-.02, 1.02)) * w; p.y = (v ? v.y + near() : rnd(-.02, 1.02)) * h; p.vx = rnd(-7, 7); p.vy = rnd(1.5, 11); p.r = .24 + .9 * u * u * u; p.a = rnd(.16, .58); p.life = rnd(6, 15); p.born = first ? now - rnd(0, p.life) : now + rnd(0, 700); p.tw = rnd(.5, 1.6); p.ph = rnd(0, 6.28); p.sw = rnd(2, 8); p.fly = 0; };
+  const fit = () => { const d = Math.min(1.5, devicePixelRatio || 1); w = innerWidth; h = innerHeight; W = w; Hh = h; c.width = Math.round(w * d); c.height = Math.round(h * d); g.setTransform(d, 0, 0, d, 0, 0); const n = Math.round(Math.min(2400, 900 + w * h / 420)), now = performance.now();
+    if (!veil.length) for (let i = 0; i < 18; i++) veil.push({ x: Math.random(), y: Math.random(), r: rnd(.16, .32), vx: rnd(-.006, .006), vy: rnd(.002, .008), ph: rnd(0, 6.28) });
+    while (drops.length < n) { const p = {}; place(p, now, !open); if (open) { p.born = t0 + rnd(650, 1150); p.fly = rnd(2.4, 4.2); p.life = rnd(8, 16); } drops.push(p); } drops.length = n; };
+  fit();
+  const run = now => {
+    if (!air) return; air.raf = requestAnimationFrame(run); const ms = now - prev; odd = !odd; const settled = now - t0 > 4600;
+    if (settled && odd) return;   // the air moves slowly: every other frame is plenty once the spray has landed
+    prev = now; slowFrames = ms > (settled ? 80 : 45) ? slowFrames + 1 : Math.max(0, slowFrames - 2); if (slowFrames > 40) { slowFrames = 0; limit = Math.max(.4, limit * .75); }
+    g.clearRect(0, 0, w, h); const s = (now - t0) / 1000, grow = open ? Math.min(1, Math.max(0, (s - .7) / 1.6)) : 1, size = Math.max(w, h);
+    for (const v of veil) { const px = ((v.x + v.vx * s) % 1.3 + 1.3) % 1.3 - .15, py = ((v.y + v.vy * s) % 1.3 + 1.3) % 1.3 - .15, z = v.r * size; g.globalAlpha = (.036 + .012 * Math.sin(s * .22 + v.ph)) * grow; g.drawImage(dot, px * w - z, py * h - z, z * 2, z * 2); }
+    const count = Math.round(drops.length * limit);
+    for (let i = 0; i < count; i++) { const p = drops[i], age = (now - p.born) / 1000; if (age < 0) continue; if (age >= p.life) { place(p, now, false); continue; }
+      const q = age / p.life, fade = Math.min(1, q / .14) * Math.min(1, (1 - q) / .22), glint = .72 + .28 * Math.sin(p.ph + s * p.tw), e = p.fly ? 1 - Math.exp(-p.fly * age) : 1;
+      const dx = p.vx * age + Math.sin(p.ph + age * .55) * p.sw, dy = p.vy * age + Math.cos(p.ph + age * .42) * p.sw * .5, px = ox() + (p.x - ox()) * e + dx, py = oy() + (p.y - oy()) * e + dy, sz = p.r * 2.4;
+      g.globalAlpha = p.a * fade * glint; g.drawImage(dot, px - sz, py - sz, sz * 2, sz * 2); }
+    g.globalAlpha = 1;
+  };
+  air = { c, fit, raf: requestAnimationFrame(run) }; addEventListener("resize", fit); requestAnimationFrame(() => { if (air && air.c === c) c.classList.add("on"); });
+  document.documentElement.classList.remove("pour-still", "pour-mist"); document.documentElement.classList.add("pour-page");
+  if (open) spritzAll();
+}
 function begin() {
-  if (on) return;
+  if (on || air) return;
+  if (M.air) {
+    if (RM.matches || new URLSearchParams(location.search).has("still")) { document.documentElement.classList.add("pour-still", "pour-mist", "pour-page"); return; }
+    beginAir(); return;
+  }
   if (!RM.matches && !gl && !tried) { tried = true; if (!setup()) gl = null; }   // only the smoke and mist pages ever pay for this
   if (RM.matches || !gl) { document.documentElement.classList.add("pour-still", "pour-page"); return; }
   document.body.prepend(cv); if (!size()) { toStill(); return; }
@@ -185,8 +222,8 @@ function spritzAll() {
   };
   spray = { c, raf: requestAnimationFrame(run) };
 }
-function off() { endSpray(); on = false; if (raf) cancelAnimationFrame(raf); raf = 0; cv.classList.remove("on"); release(); cv.width = cv.height = 0; cv.remove(); }
-function stop() { document.documentElement.classList.remove("pour-page", "pour-still"); if (on || cv.isConnected) off(); }
+function off() { endSpray(); endAir(); on = false; if (raf) cancelAnimationFrame(raf); raf = 0; cv.classList.remove("on"); release(); cv.width = cv.height = 0; cv.remove(); }
+function stop() { document.documentElement.classList.remove("pour-page", "pour-still", "pour-mist"); if (on || air || spray || cv.isConnected) off(); }
 // the filter bar is see-through while it sits in the page, and solid once it sticks over the products
 function stick() { if (!head || !chips || !head.isConnected) return; chips.classList.toggle("is-stuck", head.getBoundingClientRect().bottom < chips.getBoundingClientRect().top - .5); }
 // where the spray leaves the bottle
@@ -197,7 +234,7 @@ function place() {
   head = hk || co || (pdp && pdp.querySelector("[data-stage]")) || null; chips = hk || co ? head.parentNode.querySelector(":scope > .chips") : null;
   const settled = () => { if (document.getElementById("main").childElementCount) arrivedBack = false; };   // only the page you came Back to skips its opening
   if (!next) { stop(); modeName = null; settled(); return; }
-  if (next !== modeName && (on || cv.isConnected)) off();
+  if (next !== modeName) { document.documentElement.classList.remove("pour-still", "pour-mist"); if (on || air || spray || cv.isConnected) off(); }
   modeName = next; M = MODES[next]; begin(); stick(); settled();
 }
 addEventListener("scroll", stick, { passive: true });
