@@ -21,18 +21,18 @@ const W = {
   hookahs: { m: "smoke", d: [S2, S2], e: 400, p: [C.bone, C.ash, C.coal, C.bonelt] },   // flowing inked clouds in bone and ash, never pink
   heat: { m: "fire", d: [0, 1], e: 290, p: [C.emberlt, C.ember, C.coal, C.gilt] },      // drawn flames: ember, the Heat tile's orange and gilt, with a coal ink line
   bases: { m: "water", d: [0, 1], e: 80, p: tone(C.teal, 190) },
-  bowls: { m: "foil", d: [0, -1], e: 40, p: tone(C.cobalt, 265) },
+  bowls: { m: "teeth", sprite: "bowls", d: [0, -1], e: 340, p: tone(C.cobalt, 265) },
   hoses: { m: "rope", d: [1, 0], e: 2, p: tone(C.emerald, 155), c: 340, ms: 500 },
   parts: { m: "teeth", sprite: "parts", d: [-1, 0], e: 340, p: tone(C.gilt, 88) },
   cologne: { m: "mist", d: [-S2, -S2], e: 380, p: [C.amethyst, ok(.62, .1, 312), deep(312), ok(.86, .06, 312)] },
-  misc: { m: "labels", d: [S2, -S2], e: 150, p: [C.bonelt, C.ember, C.coal, C.bone] },
+  misc: { m: "teeth", sprite: "misc", d: [S2, -S2], e: 340, p: tone(C.bonelt, 80) },
   home: { m: "motes", d: [.38, .925], e: 110, p: [C.coal, C.gilt, C.coal2, C.ember] },
-  all: { m: "tiles", d: [0, 1], e: 340, p: [C.bonelt, C.bone, C.coal, C.bone] },
-  gifts: { m: "ribbon", d: [S2, S2], e: 56, p: tone(C.cobalt, 265) },
-  set: { m: "pieces", d: [1, 0], e: 190, p: tone(C.ruby, 18) },
-  shipping: { m: "route", d: [1, 0], e: 240, p: tone(C.cobalt, 265) },
-  search: { m: "sweep", d: [1, 0], e: 70, p: tone(C.teal, 190), c: 150, ms: 230 },
-  cart: { m: "receipt", d: [0, 1], e: 30, p: tone(C.gilt, 88), c: 170, ms: 260 },
+  all: { m: "teeth", sprite: "all", d: [0, 1], e: 340, p: tone(C.bonelt, 80) },
+  gifts: { m: "teeth", sprite: "gifts", d: [S2, S2], e: 340, p: tone(C.cobalt, 265) },
+  set: { m: "teeth", sprite: "set", d: [1, 0], e: 340, p: tone(C.ruby, 18) },
+  shipping: { m: "teeth", sprite: "shipping", d: [1, 0], e: 340, p: tone(C.cobalt, 265) },
+  search: { m: "teeth", sprite: "search", d: [1, 0], e: 340, p: tone(C.teal, 190), c: 150, ms: 230 },
+  cart: { m: "teeth", sprite: "cart", d: [0, 1], e: 340, p: tone(C.gilt, 88), c: 170, ms: 260 },
 };
 const pageTone = path => /^\/gifts\/under-50/.test(path) ? tone(C.emerald, 155) : tone(C.cobalt, 265);   // Gifts wears the colour of the page it lands on
 
@@ -90,42 +90,13 @@ const MAT = {
   rope: `${SIG} { float P = clamp(uV.x / 6.2, 56., 96.), W = P * .5, TAU = 6.28318, r = length(p), th = mod(atan(p.y, p.x) + uTime * 1.2, TAU), ring = floor(r / P - th / TAU + .5), phi = max(th + TAU * ring, 0.), vr = r - P * phi / TAU, arc = P / (2. * TAU) * phi * phi, Rm = length(uV) * .5 + P, pm = TAU * (Rm / P + 1.2), Am = P / (2. * TAU) * pm * pm, span = Am + W + 40., Ah = -W - 20. + span * (1. - clamp(uH, 0., 1.)), At = -W - 20. + span * clamp(uT, 0., 1.), cap = W - sqrt(max(W * W - vr * vr, 0.)), a = arc - Ah, v = clamp(vr / W, -1., 1.), ed = (1. - abs(v)) * W;
     vec3 b = uA; b = mix(b, mix(b, uC, .4), ss(.26, .31, v)); b = mix(b, mix(b, uC, .24), ss(.68, .73, fract((arc + v * W * .9) / 15.))); b = mix(b, mix(b, uE, .68), 1. - ss(.12, .18, abs(v + .44)));
     if (a < 58.) { b = mix(vec3(${C.gilt}), vec3(.98, .94, .78), 1. - ss(.13, .2, abs(v + .42))); b = mix(b, mix(vec3(${C.gilt}), uC, .45), ss(.3, .36, v)); } b = mix(uC, b, E(abs(a - 58.) - 1.4)); c = mix(uC, b, ss(1.6, 2.8, ed)); float hh = a - cap, tb = arc - At - cap; c = mix(uC, c, E(hh - 2.6)); c = mix(uC, c, E(tb - 2.6)); h = hh; t = tb; }`,
-  // large blank price labels dealt across, the body following under them
-  labels: `${SIG} { vec2 cl = vec2(128., 82.), g = p / cl; float ro = mod(floor(g.y), 2.); g.x += ro * .5; vec2 id = floor(g), q = (fract(g) - .5) * cl, ctr = (id + .5 - vec2(ro * .5, 0.)) * cl;
-    float sc = dot(ctr, uD) + L * .5 + H2(id) * 34., k = clamp((uH * L - sc + 76.) / 56., 0., 1.); k = k * k * (3. - 2. * k); float bh = h - 64., lb = -1.; vec3 lc = uA;
-    if (k > 0.) { vec2 w = (q + uD * (1. - k) * 38.) / (.72 + .28 * k), b = abs(w) - vec2(46., 23.); float d = length(max(b, 0.)) + min(max(b.x, b.y), 0.) - 6.; lb = -d; lc = w.y > 12. ? uB : uE; lc = mix(uC, lc, E(-d - 1.5)); }
-    c = mix(lc, uA, E(bh)); h = max(bh, lb); }`,
   // home: the coal itself arrives behind a burning edge of gilt and ember
   motes: `${SIG} { float e = h - 26. + 130. * (fbm(vec2(f.x / 3400., h / 4600.)) - .5); c = mix(uB, mix(uE, uA, E(e - 18.)), E(e - 7.)); h = e; }`,
-  // a bone ribbon crossing on the page's own colour, tied in a bow
-  ribbon: `${SIG} { float e = 4. * sin(f.x / 63. + uTime * 3.) - 34.; float b = h + e; vec2 q = vec2(f.x, b - 17.); vec2 l = vec2(abs(q.x) - 25., q.y - abs(q.x) * .16); float loop = 1. - length(l / vec2(25., 15.)), hole = length(vec2(abs(q.x) - 25., l.y) / vec2(11., 5.)) - 1., knot = 7. - length(q);
-    float bow = max(min(loop * 15., hole * 5.), knot); if (b < 34. || bow > 0.) c = uE; if (b > 0. && b < 34.) c = mix(uB, c, E(abs(b - 17.) - 12.) + step(0., bow)); if (bow > 0.) c = mix(uB, uE, E(bow - 1.4)); h = max(b, bow); t += 0.; }`,
-  // one bone route line running out ahead of the flat colour, ending in a map pin
-  route: `float rt(float x) { return 64. * sin(x / 130. + .6) + 28. * sin(x / 61. + 2.); }
-  ${SIG} { float tip = uH * L, dl = 5. - abs(f.x - rt(f.y)); vec2 q = vec2(f.y - tip, f.x - rt(tip) - 25.); float pin = 15. - length(q), tp = min(q.y + 25., 15. - abs(q.x) - (q.y < 0. ? -q.y * .62 : 99.)), hole = length(q) - 5.5, bh = h - 120. + .9 * rt(f.x);
-    pin = max(pin, q.y < -4. ? tp : -1.); c = mix(uA, uE, E(dl) * E(h) * step(.45, fract(f.y / 26.))); c = mix(c, uE, E(pin)); c = mix(uB, c, 1. - E(pin) * (1. - E(hole))); h = max(bh, max(min(h, dl), pin)); }`,
-  // bowls: a sheet of crimped hookah foil, pleated at the edge and punched with rows of holes
-  foil: `${SIG} { float P = 40., x = f.x + 8. * sin(h / 60. + uTime * 3.), u = abs(fract(x / P) - .5) * 2., hh = h - 18. * u * u - 2.;
-    if (hh < 112.) { c = fract(x / P) < .5 ? mix(uA, uE, .38) : mix(uA, uB, .28); c = mix(c, uA, ss(88., 112., hh)); float rw = floor((h - 34.) / 15.); vec2 g = vec2(f.x / 16. + mod(rw, 2.) * .5, (h - 34.) / 15.); float d = length((fract(g) - .5) * vec2(16., 15.)) - 2.2; if (h > 34. && h < 95.) { c = mix(uE, c, E(d - .8)); c = mix(uC, c, E(d)); } }
-    c = mix(uC, c, E(hh - 3.)); h = hh; float b = t - 12. * abs(sin(f.x * 3.14159 / 40.)); c = mix(uC, c, E(b - 3.)); t = b; }`,
-  // parts: the section's own header kit, the same drawn downstem, grommet, adapter and bottle brush, set down one by one across the gold tile with a small hop and a flat shadow
+  // the section's own header objects, the same drawings, set down one by one across its colour tile with a small hop and a flat shadow. Parts, Bowls, Misc, Everything, Gifts, Build a set, Shipping, Search and Cart
   teeth: `uniform sampler2D uS; uniform float uHas; vec4 spr(vec2 w, float i, float l) { if (w.x < .006 || w.x > .994 || w.y < .006 || w.y > .994) return vec4(0.); i = mod(i, 4.); return textureLod(uS, (vec2(mod(i, 2.), floor(i / 2.)) + vec2(w.x, 1. - w.y)) / 2., l); }
   ${SIG} { float S = clamp(uV.x / 2.1, 170., 280.); vec2 g = p / S; float ro = floor(g.y), sf = mod(ro, 2.) * .5; g.x += sf; vec2 id = floor(g), q = (fract(g) - .5) * S, ctr = (id + .5 - vec2(sf, 0.)) * S; float sc = dot(ctr, uD) + L * .5 + H2(id) * 50., k = clamp((uH * L - sc + 170.) / 105., 0., 1.), bh = h - S * .85; vec3 base = uA; vec4 sp = vec4(0.);
-    if (uHas > .5 && k > 0.) { float e = 1. - (1. - k) * (1. - k) * (1. - k), pop = max(.01, e + .14 * sin(k * 3.14159)), an = (H2(id + 2.) - .5) * .9 + (1. - e) * 1.6 * (H2(id + 4.) - .5), ca = cos(an), sa = sin(an), n = id.x + ro * 2., lod = max(0., log2(512. * PX / (S * 1.06 * pop))); vec2 w = vec2(ca * q.x + sa * q.y, -sa * q.x + ca * q.y) / (S * 1.06 * pop) + .5, q2 = q - vec2(7., -9.), w2 = vec2(ca * q2.x + sa * q2.y, -sa * q2.x + ca * q2.y) / (S * 1.06 * pop) + .5; sp = spr(w, n, lod); base = mix(base, mix(uA, uB, .55), spr(w2, n, lod).a * .85); }
+    if (uHas > .5 && k > 0.) { float e = 1. - (1. - k) * (1. - k) * (1. - k), pop = max(.01, e + .14 * sin(k * 3.14159)), an = (H2(id + 2.) - .5) * .9 + (1. - e) * 1.6 * (H2(id + 4.) - .5), ca = cos(an), sa = sin(an), n = id.x + ro * 2., lod = max(0., log2(float(textureSize(uS, 0).x) * .5 * PX / (S * 1.06 * pop))); vec2 w = vec2(ca * q.x + sa * q.y, -sa * q.x + ca * q.y) / (S * 1.06 * pop) + .5, q2 = q - vec2(7., -9.), w2 = vec2(ca * q2.x + sa * q2.y, -sa * q2.x + ca * q2.y) / (S * 1.06 * pop) + .5; sp = spr(w, n, lod); base = mix(base, mix(uA, uB, .55), spr(w2, n, lod).a * .85); }
     c = mix(sp.rgb, mix(base, sp.rgb, sp.a), E(bh)); h = max(bh, (sp.a - .5) * 1.5 * PX); float b = t - 18. - 16. * sin(f.x / 37. + uTime * 3.); c = mix(uC, c, E(b - 3.)); t = b; }`,
-  // everything: the store's jewel tiles deal in across the counter, then the page's bone
-  tiles: `vec3 J(float i) { i = mod(i, 6.); return i < 1. ? vec3(${C.ruby}) : i < 2. ? vec3(${C.teal}) : i < 3. ? vec3(${C.cobalt}) : i < 4. ? vec3(${C.emberlt}) : i < 5. ? vec3(${C.emerald}) : vec3(${C.gilt}); }
-  ${SIG} { float S = clamp(uV.x / 5., 78., 132.); vec2 g = p / S, id = floor(g), q = (fract(g) - .5) * S, ctr = (id + .5) * S; float sc = dot(ctr, uD) + L * .5 + H2(id) * 60., k = clamp((uH * L - sc + 150.) / 60., 0., 1.), lb = -1., bh = h - 250.; k = k * k * (3. - 2. * k);
-    if (k > 0.) { float ta = (H2(id + 5.) - .5) * .21; vec2 w = mat2(cos(ta), -sin(ta), sin(ta), cos(ta)) * q / max(.001, k); vec2 b = abs(w) - vec2(S * .5 - 11.); float d = length(max(b, 0.)) + min(max(b.x, b.y), 0.) - 7.; lb = -d * k; c = mix(uC, J(id.x + id.y * 2.), E(-d - 2.5)); }
-    if (bh > 0.) { float e = step(250. + S * .5, uH * L - sc); c = mix(c, uA, lb > 0. ? e : 1.); } h = max(bh, lb); }`,
-  // build a set: four jewel pieces, one for each part of a setup, slide in at staggered depths and lock on jigsaw tabs
-  pieces: `${SIG} { float w = CR / 4., r = clamp(floor((f.x + CR * .5) / w), 0., 3.), cx = (r + .5) * w - CR * .5, o = r < .5 ? 0. : r < 1.5 ? 86. : r < 2.5 ? 38. : 124.; vec2 u = vec2(f.x - cx, h - o - 24.); float hh = max(h - o - 24., 58. - length(u)); vec3 J = r < .5 ? uA : r < 1.5 ? vec3(${C.gilt}) : r < 2.5 ? vec3(${C.teal}) : vec3(${C.cobalt});
-    c = h < o + 170. ? J : uA; c = mix(c, mix(c, vec3(.98), .22), (1. - E(hh - 10.)) * E(hh - 3.)); c = mix(uC, c, E(w * .5 - abs(f.x - cx) - 1.5)); c = mix(uC, c, E(hh - 3.)); h = hh; float b = t - (124. - o); c = mix(uC, c, E(b - 3.)); t = b; }`,
-  // cart: the till receipt tearing up the screen, printed lines on bone, a zigzag torn edge
-  receipt: `${SIG} { float u = abs(fract(f.x / 22.) - .5) * 2., hh = h - 13. * u; if (h < 88.) { c = uE; float rn = floor((h - 24.) / 13.), ln = abs(fract((h - 24.) / 13.) - .5) * 13., rw = H2(vec2(rn, 3.)); if (h > 24. && h < 76. && abs(f.x) < CR * .5 - 14. && fract((f.x + rn * 37.) / (46. + rw * 60.)) < .7) c = mix(uC, c, E(ln - 2.)); }
-    c = mix(uC, c, E(abs(h - 88.) - 1.5)); c = mix(uC, c, E(hh - 2.5)); h = hh; float b = t - 10. * u; c = mix(uC, c, E(b - 2.5)); t = b; }`,
-  // the plain family wave: the flat header colour with a clean edge. Search wears a barcode on its edge and stays instant
-  sweep: `${SIG} { if (h < 64.) c = H2(vec2(floor(h / 4.), 7.)) > .48 ? uC : uE; c = mix(uC, c, E(h - 3.)); }`,
 };
 // cologne: an aerosol. A tight pressurised jet leaves the nozzle with a bright dense core, then blooms into an ultra-fine spray and soft amethyst mist that fills the screen
 MAT.mist = `float sp(vec2 p, vec2 nz, float pitch, float k, float dn, float big, float seed) { vec2 a = nz + (p - nz) / (1. + uTime * k), g = a / pitch + seed, id = floor(g); if (H2(id + seed) > dn) return 0.; vec2 j = (vec2(H2(id + 1.), H2(id + 2.)) - .5) * .86; float z = H2(id + 3.), rad = pitch * (.12 + big * z * z * z); vec2 o = (fract(g) - .5 - j) * pitch * (1. + uTime * k), dr = normalize(p - nz + .001); float al = dot(o, dr) / (1. + uTime * 1.2), ac = dot(o, vec2(-dr.y, dr.x)), d = rad - length(vec2(al, ac)); return (.5 + .5 * H2(id + 4.)) * ss(-.8, .6, d); }
@@ -184,7 +155,7 @@ function build(fs) {
 }
 const prog = key => progs[key] || (progs[key] = build(key === "flip" ? FLIP : HEAD + MAT[key] + FOOT));
 // THE SLOT for the baked art. A new bake only changes its entry here: file, grid, cell size, full-cover frame, and optionally flow (a same-grid RG map) with flowMax (its reach in cell UV).
-const BOOKS = { parts: { file: "parts.webp", mip: true } };   // empty: smoke and fire are drawn in their shaders now, so nothing extra downloads
+const BOOKS = { parts: { file: "parts.webp", mip: true }, bowls: { file: "kit-bowls.webp", mip: true }, misc: { file: "kit-misc.webp", mip: true }, set: { file: "kit-set.webp", mip: true }, shipping: { file: "kit-shipping.webp", mip: true }, search: { file: "kit-search.webp", mip: true }, cart: { file: "kit-cart.webp", mip: true }, gifts: { file: "kit-gifts.webp", mip: true }, all: { file: "kit-all.webp", mip: true } };   // empty: smoke and fire are drawn in their shaders now, so nothing extra downloads
 // the flipbooks are asked for when the browser is idle, never on Save-Data or reduced motion
 function loadAtlas() {
   if (atlas || saveData() || RM.matches) return; atlas = {};
