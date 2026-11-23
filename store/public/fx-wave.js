@@ -23,7 +23,7 @@ const W = {
   bases: { m: "water", d: [0, 1], e: 80, p: tone(C.teal, 190) },
   bowls: { m: "foil", d: [0, -1], e: 40, p: tone(C.cobalt, 265) },
   hoses: { m: "rope", d: [1, 0], e: 2, p: tone(C.emerald, 155), c: 340, ms: 500 },
-  parts: { m: "teeth", d: [-1, 0], e: 380, p: tone(C.gilt, 88) },
+  parts: { m: "teeth", sprite: "parts", d: [-1, 0], e: 340, p: tone(C.gilt, 88) },
   cologne: { m: "mist", d: [-S2, -S2], e: 380, p: [C.amethyst, ok(.62, .1, 312), deep(312), ok(.86, .06, 312)] },
   misc: { m: "labels", d: [S2, -S2], e: 150, p: [C.bonelt, C.ember, C.coal, C.bone] },
   home: { m: "motes", d: [.38, .925], e: 110, p: [C.coal, C.gilt, C.coal2, C.ember] },
@@ -108,21 +108,11 @@ const MAT = {
   foil: `${SIG} { float P = 40., x = f.x + 8. * sin(h / 60. + uTime * 3.), u = abs(fract(x / P) - .5) * 2., hh = h - 18. * u * u - 2.;
     if (hh < 112.) { c = fract(x / P) < .5 ? mix(uA, uE, .38) : mix(uA, uB, .28); c = mix(c, uA, ss(88., 112., hh)); float rw = floor((h - 34.) / 15.); vec2 g = vec2(f.x / 16. + mod(rw, 2.) * .5, (h - 34.) / 15.); float d = length((fract(g) - .5) * vec2(16., 15.)) - 2.2; if (h > 34. && h < 95.) { c = mix(uE, c, E(d - .8)); c = mix(uC, c, E(d)); } }
     c = mix(uC, c, E(hh - 3.)); h = hh; float b = t - 12. * abs(sin(f.x * 3.14159 / 40.)); c = mix(uC, c, E(b - 3.)); t = b; }`,
-  // parts: the things this section sells, each drawn as itself. Downstems with knurled grips, threads and diffuser holes; riveted tongs with rubber grips and serrated tips; twisted pokers; bristle stem brushes; slotted diffusers with brass nuts
-  teeth: `float sb(vec2 q, vec2 e) { vec2 d = abs(q) - e; return length(max(d, 0.)) + min(max(d.x, d.y), 0.); }
-  vec3 st(float x) { vec3 md = vec3(${C.ash}), lt = vec3(${C.bone}), dk = vec3(${C.coal2}), b = mix(dk, md, ss(-1., -.72, x)); b = mix(b, lt, ss(-.5, -.34, x)); b = mix(b, vec3(.99, .98, .95), 1. - ss(.05, .11, abs(x + .2))); b = mix(b, md, ss(.12, .24, x)); b = mix(b, dk, ss(.62, .8, x)); return mix(b, md, ss(.86, .94, x) * .6); }
-  vec3 br(float x) { vec3 g = vec3(${C.gilt}), b = mix(g * .62, g, ss(-1., -.6, x)); b = mix(b, vec3(.99, .95, .8), 1. - ss(.06, .16, abs(x + .25))); return mix(b, b * .66, ss(.45, .8, x)); }
-  void part(vec2 p, float z, float ca, float sa, float P, float sd, inout vec3 c, inout float lb) { vec2 q = vec2(ca * p.x + sa * p.y, -sa * p.x + ca * p.y); float row = floor(q.y / P), cy = (row + .5) * P; if (H2(vec2(row, sd)) > .58) return;
-    float off = H2(vec2(row, sd + 1.)) * 520., x = q.x + off, id = floor(x / 520.), cx = (id + .5) * 520. - off, r1 = H2(vec2(id, row + sd)), r2 = H2(vec2(id + 3., row + sd)), hl = 170. + 70. * r1, w = P * (.2 + .08 * r2), tr = H2(vec2(id + 7., row + sd)); vec2 ctr = vec2(ca * cx - sa * cy, sa * cx + ca * cy) * z; float sc = dot(ctr, uD) + L * .5, k = clamp((uH * L - sc + 180. - 120. * r1) / 130., 0., 1.); k = k * k * (3. - 2. * k); if (k <= 0.) return;
-    float an = (1. - k) * (r1 - .5) * .7, cr = cos(an), sr = sin(an); vec2 l = vec2(q.x - cx, q.y - cy); l = vec2(cr * l.x + sr * l.y, -sr * l.x + cr * l.y) / k; float u = l.x, v = l.y, uu = u / hl, d; vec3 ink = vec3(${C.coal}), b;
-    if (tr < .34) { float wv = w * (uu < -.86 ? 1.62 : uu < -.78 ? 1.28 : uu < -.72 ? 1.12 : uu > .72 ? .88 : 1.), vv = clamp(v / wv, -1., 1.); d = max(abs(v) - wv, abs(u) - hl); b = st(vv); if (uu < -.86) b *= .82; if (uu > -.7 && uu < -.42) { vec2 kn = fract(vec2(u + v, u - v) / 7.); b = mix(b, b * .62, max(step(kn.x, .22), step(kn.y, .22))); } if (abs(uu + .38) < .035 || abs(uu - .5) < .03) b = br(vv); if (uu > .53 && uu < .71) b = mix(b, b * .58, step(.55, fract(u / 4.6))); if (uu > .74) { float rw = floor(v / 9.); vec2 o = (fract(vec2(u / 12. + .5 * mod(rw, 2.), v / 9.)) - .5) * vec2(12., 9.); b = mix(ink, b, ss(1.5, 2.3, length(o))); } b = mix(ink, b, ss(.6, 1.4, min(abs(u + hl * .78), min(abs(u + hl * .86), min(abs(u + hl * .72), abs(u - hl * .72)))))); }
-    else if (tr < .54) { float pv = -.2 * hl, o = u > pv ? (u - pv) / (hl - pv) * w * 1.25 : 0., vt = abs(v) - o, hw = w * .4 * (1. - .35 * max(uu, 0.)), arm = max(abs(vt) - hw, abs(u) - hl), gp = sb(vec2(u + hl * .62, v), vec2(hl * .38, w * .62)), rv = length(vec2(u - pv, v)) - w * .42; d = min(min(arm, gp), rv);
-      if (gp < 0.) { b = st(clamp(v / (w * .62), -1., 1.)) * .42; b = mix(b, b * 1.75, step(.6, fract(u / 8.))); } else { b = st(clamp(vt / hw, -1., 1.)); if (uu > .8) b = mix(b, ink, step(.5, fract(u / 5.)) * step(vt, -hw * .25)); if (abs(u + .24 * hl) < 7.) b = br(clamp(v / w, -1., 1.)); } if (rv < 0.) { b = br(clamp(v / (w * .42), -1., 1.)); b = mix(ink, b, ss(.6, 1.4, -rv)); b = mix(ink, b, ss(.7, 1.3, length(vec2(u - pv, v)) - w * .12)); } }
-    else if (tr < .72) { float hw = w * .42 * min(1., (hl - u) / (.16 * hl) + .06), shaft = max(abs(v) - hw, abs(u) - hl), rl = length(vec2(u + hl, v)) - w * .95, rd = abs(rl) - w * .26; d = min(shaft, rd); if (rd < shaft) b = br(clamp(rl / (w * .26), -1., 1.)); else { float vv = clamp(v / max(hw, .5), -1., 1.); b = st(vv); b = mix(b, b * .55, step(.6, fract((u + v * 1.5) / 10.)) * step(uu, .72)); if (abs(uu + .84) < .03) b = br(vv); } }
-    else if (tr < .88) { float wire = max(abs(v) - w * .22, abs(u) - hl), bw = w * (1.35 - .45 * max((uu - .05) / .95, 0.)), bd = max(abs(v) - bw, max(.05 * hl - u, u - hl)), rl = length(vec2(u + hl, v)) - w * .8, rd = abs(rl) - w * .18; d = min(min(wire, bd), rd); if (bd < 0.) { b = mix(vec3(${C.bone}), vec3(${C.ash}) * .7, step(.5, fract(u / 3.6 + H1(floor(v / 5.)) * .4))); b = mix(b, b * .72, ss(.55, 1., abs(v) / bw)); if (abs(v) < w * .16) b = br(v / (w * .16)); } else if (rd < wire) b = br(clamp(rl / (w * .18), -1., 1.)); else { b = st(clamp(v / (w * .22), -1., 1.)); b = mix(b, b * .55, step(.55, fract((u + v * 1.6) / 7.))); } }
-    else { float h4 = hl * .46, body = sb(l, vec2(h4, w * 1.18)), nut = sb(vec2(u + h4 + 16., v), vec2(16., w * 1.45)); d = min(body, nut); if (nut < body) { float nv = clamp(v / (w * 1.45), -1., 1.); b = br(nv); b = mix(ink, b, ss(.7, 1.4, abs(abs(v) - w * .72))); } else { b = st(clamp(v / (w * 1.18), -1., 1.)); vec2 o = (fract(vec2(u / 26., v / (w * .62))) - .5) * vec2(26., w * .62); b = mix(ink, b, ss(-.4, .6, sb(o, vec2(8., w * .1)))); if (abs(u - h4) < 9.) b = br(clamp(v / (w * 1.18), -1., 1.)); } }
-    d *= k * z; lb = max(lb, -d); if (d > 1.) return; b = mix(ink, b, ss(2., 3., -d)); c = mix(b, c, ss(-.6, .6, d)); }
-  ${SIG} { float z = clamp(uV.x / 620., 1., 1.6), lb = -1.; vec2 q = p / z; c = uA; part(q, z, .788, -.616, 112., 1., c, lb); part(q, z, .914, .407, 128., 5., c, lb); part(q, z, .342, -.94, 120., 9., c, lb); h = max(h - 300., lb); float b = t - 18. - 16. * sin(f.x / 37. + uTime * 3.); c = mix(uC, c, E(b - 3.)); t = b; }`,
+  // parts: the section's own header kit, the same drawn downstem, grommet, adapter and bottle brush, set down one by one across the gold tile with a small hop and a flat shadow
+  teeth: `uniform sampler2D uS; uniform float uHas; vec4 spr(vec2 w, float i, float l) { if (w.x < .006 || w.x > .994 || w.y < .006 || w.y > .994) return vec4(0.); i = mod(i, 4.); return textureLod(uS, (vec2(mod(i, 2.), floor(i / 2.)) + vec2(w.x, 1. - w.y)) / 2., l); }
+  ${SIG} { float S = clamp(uV.x / 2.1, 170., 280.); vec2 g = p / S; float ro = floor(g.y), sf = mod(ro, 2.) * .5; g.x += sf; vec2 id = floor(g), q = (fract(g) - .5) * S, ctr = (id + .5 - vec2(sf, 0.)) * S; float sc = dot(ctr, uD) + L * .5 + H2(id) * 50., k = clamp((uH * L - sc + 170.) / 105., 0., 1.), bh = h - S * .85; vec3 base = uA; vec4 sp = vec4(0.);
+    if (uHas > .5 && k > 0.) { float e = 1. - (1. - k) * (1. - k) * (1. - k), pop = max(.01, e + .14 * sin(k * 3.14159)), an = (H2(id + 2.) - .5) * .9 + (1. - e) * 1.6 * (H2(id + 4.) - .5), ca = cos(an), sa = sin(an), n = id.x + ro * 2., lod = max(0., log2(512. * PX / (S * 1.06 * pop))); vec2 w = vec2(ca * q.x + sa * q.y, -sa * q.x + ca * q.y) / (S * 1.06 * pop) + .5, q2 = q - vec2(7., -9.), w2 = vec2(ca * q2.x + sa * q2.y, -sa * q2.x + ca * q2.y) / (S * 1.06 * pop) + .5; sp = spr(w, n, lod); base = mix(base, mix(uA, uB, .55), spr(w2, n, lod).a * .85); }
+    c = mix(sp.rgb, mix(base, sp.rgb, sp.a), E(bh)); h = max(bh, (sp.a - .5) * 1.5 * PX); float b = t - 18. - 16. * sin(f.x / 37. + uTime * 3.); c = mix(uC, c, E(b - 3.)); t = b; }`,
   // everything: the store's jewel tiles deal in across the counter, then the page's bone
   tiles: `vec3 J(float i) { i = mod(i, 6.); return i < 1. ? vec3(${C.ruby}) : i < 2. ? vec3(${C.teal}) : i < 3. ? vec3(${C.cobalt}) : i < 4. ? vec3(${C.emberlt}) : i < 5. ? vec3(${C.emerald}) : vec3(${C.gilt}); }
   ${SIG} { float S = clamp(uV.x / 5., 78., 132.); vec2 g = p / S, id = floor(g), q = (fract(g) - .5) * S, ctr = (id + .5) * S; float sc = dot(ctr, uD) + L * .5 + H2(id) * 60., k = clamp((uH * L - sc + 150.) / 60., 0., 1.), lb = -1., bh = h - 250.; k = k * k * (3. - 2. * k);
@@ -194,7 +184,7 @@ function build(fs) {
 }
 const prog = key => progs[key] || (progs[key] = build(key === "flip" ? FLIP : HEAD + MAT[key] + FOOT));
 // THE SLOT for the baked art. A new bake only changes its entry here: file, grid, cell size, full-cover frame, and optionally flow (a same-grid RG map) with flowMax (its reach in cell UV).
-const BOOKS = {};   // empty: smoke and fire are drawn in their shaders now, so nothing extra downloads
+const BOOKS = { parts: { file: "parts.webp", mip: true } };   // empty: smoke and fire are drawn in their shaders now, so nothing extra downloads
 // the flipbooks are asked for when the browser is idle, never on Save-Data or reduced motion
 function loadAtlas() {
   if (atlas || saveData() || RM.matches) return; atlas = {};
@@ -205,7 +195,7 @@ function loadAtlas() {
 function upload(key, unit, im) {
   if (tex[key]) return tex[key]; const t = gl.createTexture(); gl.activeTexture(unit); gl.bindTexture(gl.TEXTURE_2D, t);
   gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false); gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, im);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  if (BOOKS[key]?.mip) gl.generateMipmap(gl.TEXTURE_2D); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, BOOKS[key]?.mip ? gl.LINEAR_MIPMAP_LINEAR : gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
   return tex[key] = t;
 }
 function atlasTex(k) { const im = imgs[k]; if (!im) return null; if (imgs[k + ":flow"]) upload(k + ":flow", gl.TEXTURE2, imgs[k + ":flow"]); return upload(k, gl.TEXTURE1, im); }
@@ -243,6 +233,7 @@ function draw(o, now, H, Tl, frame) {
     gl.uniform1f(P.u.uFloor, fl2 * fl2 * (3 - 2 * fl2)); gl.uniform1f(P.u.uHot, o.atlas === "fire" ? 1 : 0); gl.uniform3fv(P.u.uC, C.coal); gl.drawArrays(gl.TRIANGLES, 0, 3); return;
   }
   const P = prog(o.m), [a, b, c, e] = o.p; gl.useProgram(P.p); if (P.u.uN) { gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, noise); gl.uniform1i(P.u.uN, 0); }
+  if (P.u.uS) { const st = o.sprite && imgs[o.sprite] ? atlasTex(o.sprite) : null; gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, st); gl.uniform1i(P.u.uS, 1); gl.uniform1f(P.u.uHas, st ? 1 : 0); }
   gl.uniform2f(P.u.uR, cv.width, cv.height); gl.uniform2f(P.u.uV, vw, vh); gl.uniform2f(P.u.uD, o.d[0], o.d[1]); gl.uniform1f(P.u.uTime, (now - o.t0) / 1000); gl.uniform1f(P.u.uH, H); gl.uniform1f(P.u.uT, Tl);
   gl.uniform3fv(P.u.uA, a); if (P.u.uB) gl.uniform3fv(P.u.uB, b); if (P.u.uC) gl.uniform3fv(P.u.uC, c); if (P.u.uE) gl.uniform3fv(P.u.uE, e);
   gl.drawArrays(gl.TRIANGLES, 0, 3); o.lastH = H; o.lastT = Tl;
@@ -326,7 +317,7 @@ const warm = () => { if (RM.matches || saveData() || broken) return; const todo 
 addEventListener("pointerdown", warm, { once: true, passive: true, capture: true });
 addEventListener("pointerdown", e => {   // only the book this finger is about to open goes to the GPU, before the finger lifts
   const a = e.target.closest?.("a[href]"); if (!a) return; let u; try { u = new URL(a.href); } catch { return; } if (u.origin !== location.origin) return;
-  const key = waveFor(u.pathname), k = key && W[key].atlas; if (!k || !imgs[k]) return; idle(() => { if (!gl || w || gl.isContextLost()) return; try { atlasTex(k); } catch {} });
+  const key = waveFor(u.pathname), k = key && (W[key].atlas || W[key].sprite); if (!k || !imgs[k]) return; idle(() => { if (!gl || w || gl.isContextLost()) return; try { atlasTex(k); } catch {} });
 }, { passive: true, capture: true });
 idle(loadAtlas);
 window.__wave = { palette: () => w ? w.o.p : null, get active() { return w ? { key: w.key, phase: w.phase, p: w.p, pending: w.path } : null; }, get canvas() { return cv; }, get tier() { return tier; }, sectionOf, waveFor };
