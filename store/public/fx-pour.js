@@ -158,19 +158,19 @@ function settle() { heavy = false; for (let i = 0; i < 24; i++) { T += 1 / 30; s
 // the cologne background: the same fine droplets the spray throws, hanging in the air behind the page. Each one drifts, glints, fades
 // and is replaced somewhere new, so the field never repeats. No smoke, no clouds. It is plain 2D and runs at half rate once settled.
 let air = null;
-function endAir() { if (!air) return; cancelAnimationFrame(air.raf); removeEventListener("resize", air.fit); air.c.width = air.c.height = 0; air.c.remove(); air = null; }
+function endAir() { if (!air) return; cancelAnimationFrame(air.raf); removeEventListener("resize", air.fit); document.removeEventListener("visibilitychange", air.vis); air.c.width = air.c.height = 0; air.c.remove(); air = null; }
 function beginAir() {
   const open = firstOpen(); W = innerWidth; Hh = innerHeight; aim();
   const c = document.createElement("canvas"); c.className = "pour pour--air"; c.setAttribute("aria-hidden", "true"); document.body.prepend(c);
   const g = c.getContext("2d"); if (!g) { c.width = c.height = 0; c.remove(); document.documentElement.classList.add("pour-still", "pour-mist", "pour-page"); return; }
   const dot = document.createElement("canvas"); dot.width = dot.height = 24; const x = dot.getContext("2d"), rg = x.createRadialGradient(12, 12, 0, 12, 12, 12); rg.addColorStop(0, "rgba(255,253,248,1)"); rg.addColorStop(.42, "rgba(255,253,248,.6)"); rg.addColorStop(1, "rgba(255,253,248,0)"); x.fillStyle = rg; x.fillRect(0, 0, 24, 24);
   const rnd = (a, b) => a + Math.random() * (b - a); let w = 0, h = 0, drops = [], veil = [], limit = 1, slowFrames = 0, odd = false, prev = performance.now();
-  const t0 = performance.now(), ox = () => org[0] * w, oy = () => (1 - org[1]) * h;
-  const place = (p, now, first) => { const u = Math.random(), v = veil.length && Math.random() < .64 ? veil[Math.floor(Math.random() * veil.length)] : null, near = () => (Math.random() + Math.random() + Math.random() - 1.5) * .24; p.x = (v ? v.x + near() : rnd(-.02, 1.02)) * w; p.y = (v ? v.y + near() : rnd(-.02, 1.02)) * h; p.vx = rnd(-7, 7); p.vy = rnd(1.5, 11); p.r = .24 + .9 * u * u * u; p.a = rnd(.16, .58); p.life = rnd(6, 15); p.born = first ? now - rnd(0, p.life) : now + rnd(0, 700); p.tw = rnd(.5, 1.6); p.ph = rnd(0, 6.28); p.sw = rnd(2, 8); p.fly = 0; };
-  const fit = () => { const d = Math.min(1.5, devicePixelRatio || 1); w = innerWidth; h = innerHeight; W = w; Hh = h; c.width = Math.round(w * d); c.height = Math.round(h * d); g.setTransform(d, 0, 0, d, 0, 0); const n = Math.round(Math.min(2400, 900 + w * h / 420)), now = performance.now();
+  let t0 = performance.now(), hiddenAt = 0; const ox = () => org[0] * w, oy = () => (1 - org[1]) * h;
+  const place = (p, now, first) => { const u = Math.random(), v = veil.length && Math.random() < .64 ? veil[Math.floor(Math.random() * veil.length)] : null, near = () => (Math.random() + Math.random() + Math.random() - 1.5) * .24; p.x = (v ? v.x + near() : rnd(-.02, 1.02)) * w; p.y = (v ? v.y + near() : rnd(-.02, 1.02)) * h; p.vx = rnd(-7, 7); p.vy = rnd(1.5, 11); p.r = .18 + .62 * u * u * u; p.a = rnd(.16, .58); p.life = rnd(6, 15); p.born = first ? now - rnd(0, p.life) : now + rnd(0, 700); p.tw = rnd(.5, 1.6); p.ph = rnd(0, 6.28); p.sw = rnd(2, 8); p.fly = 0; };
+  const fit = () => { const d = Math.min(1.5, devicePixelRatio || 1), nw = c.clientWidth || innerWidth, nh = c.clientHeight || innerHeight, pw = Math.round(nw * d), ph = Math.round(nh * d); if (c.width === pw && c.height === ph && w === nw && h === nh) return; w = nw; h = nh; W = w; Hh = h; c.width = pw; c.height = ph; g.setTransform(d, 0, 0, d, 0, 0); const n = Math.round(Math.min(2400, 300 + w * h / 620)), now = performance.now();
     if (!veil.length) for (let i = 0; i < 18; i++) veil.push({ x: Math.random(), y: Math.random(), r: rnd(.16, .32), vx: rnd(-.006, .006), vy: rnd(.002, .008), ph: rnd(0, 6.28) });
     while (drops.length < n) { const p = {}; place(p, now, !open); if (open) { p.born = t0 + rnd(650, 1150); p.fly = rnd(2.4, 4.2); p.life = rnd(8, 16); } drops.push(p); } drops.length = n; };
-  fit();
+  fit(); aim();
   const run = now => {
     if (!air) return; air.raf = requestAnimationFrame(run); const ms = now - prev; odd = !odd; const settled = now - t0 > 4600;
     if (settled && odd) return;   // the air moves slowly: every other frame is plenty once the spray has landed
@@ -184,7 +184,9 @@ function beginAir() {
       g.globalAlpha = p.a * fade * glint; g.drawImage(dot, px - sz, py - sz, sz * 2, sz * 2); }
     g.globalAlpha = 1;
   };
-  air = { c, fit, raf: requestAnimationFrame(run) }; addEventListener("resize", fit); requestAnimationFrame(() => { if (air && air.c === c) c.classList.add("on"); });
+  // back from another app: the clock skips the time away, so the field carries on instead of all expiring and regrowing
+  const vis = () => { if (document.hidden) { hiddenAt = performance.now(); return; } if (!hiddenAt) return; const gap = performance.now() - hiddenAt; hiddenAt = 0; t0 += gap; prev = performance.now(); for (const p of drops) p.born += gap; };
+  air = { c, fit, vis, raf: requestAnimationFrame(run) }; addEventListener("resize", fit); document.addEventListener("visibilitychange", vis); requestAnimationFrame(() => { if (air && air.c === c) c.classList.add("on"); });
   document.documentElement.classList.remove("pour-still", "pour-mist"); document.documentElement.classList.add("pour-page");
   if (open) spritzAll();
 }
@@ -206,12 +208,12 @@ function begin() {
 let spray = null;
 function endSpray() { if (!spray) return; cancelAnimationFrame(spray.raf); spray.c.width = spray.c.height = 0; spray.c.remove(); spray = null; }
 function spritzAll() {
-  endSpray(); const w = innerWidth, h = innerHeight, d = Math.min(1.5, devicePixelRatio || 1), c = document.createElement("canvas"); c.className = "pour pour--spritz"; c.setAttribute("aria-hidden", "true"); c.width = Math.round(w * d); c.height = Math.round(h * d); document.body.append(c);
+  endSpray(); const d = Math.min(1.5, devicePixelRatio || 1), c = document.createElement("canvas"); c.className = "pour pour--spritz"; c.setAttribute("aria-hidden", "true"); document.body.append(c); const w = c.clientWidth || innerWidth, h = c.clientHeight || innerHeight; c.width = Math.round(w * d); c.height = Math.round(h * d);
   const g = c.getContext("2d"); if (!g) { c.width = c.height = 0; c.remove(); return; } g.scale(d, d);
   const dot = document.createElement("canvas"); dot.width = dot.height = 24; const x = dot.getContext("2d"), rg = x.createRadialGradient(12, 12, 0, 12, 12, 12); rg.addColorStop(0, "rgba(255,253,248,1)"); rg.addColorStop(.45, "rgba(255,253,248,.62)"); rg.addColorStop(1, "rgba(255,253,248,0)"); x.fillStyle = rg; x.fillRect(0, 0, 24, 24);
-  const rnd = (a, b) => a + Math.random() * (b - a), ox = org[0] * w, oy = (1 - org[1]) * h, n = Math.round(Math.min(1500, 620 + w * h / 700) * (lite ? .35 : 1)), drops = [], veil = [];
+  const rnd = (a, b) => a + Math.random() * (b - a), ox = org[0] * w, oy = (1 - org[1]) * h, n = Math.round(Math.min(1500, 240 + w * h / 700) * (lite ? .35 : 1)), drops = [], veil = [];
   for (let i = 0; i < 34; i++) veil.push({ tx: rnd(-.1, 1.1) * w, ty: rnd(-.1, 1.1) * h, k: rnd(1.8, 3), at: rnd(.5, .95), life: rnd(2.2, 3.2), r: Math.max(w, h) * rnd(.16, .3) });
-  for (let i = 0; i < n; i++) { const late = i % 10 < 7, u = Math.random(); drops.push({ tx: rnd(-.02, 1.02) * w, ty: rnd(-.02, 1.02) * h, k: rnd(2.2, 4.2), at: (late ? .83 : .45) + rnd(0, .12), life: rnd(2.1, 3.1) * (late ? 1 : .8), r: .28 + .95 * u * u * u, a: rnd(.22, .62), fall: rnd(8, 34), ph: rnd(0, 6.28) }); }
+  for (let i = 0; i < n; i++) { const late = i % 10 < 7, u = Math.random(); drops.push({ tx: rnd(-.02, 1.02) * w, ty: rnd(-.02, 1.02) * h, k: rnd(2.2, 4.2), at: (late ? .83 : .45) + rnd(0, .12), life: rnd(2.1, 3.1) * (late ? 1 : .8), r: .2 + .6 * u * u * u, a: rnd(.16, .48), fall: rnd(4, 16), ph: rnd(0, 6.28) }); }
   const t0 = performance.now(), run = now => {
     if (!spray) return; const s = (now - t0) / 1000; if (s > 4.3) { dot.width = dot.height = 0; endSpray(); return; }
     g.clearRect(0, 0, w, h);

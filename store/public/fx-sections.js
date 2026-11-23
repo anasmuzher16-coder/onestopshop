@@ -26,7 +26,7 @@ const rnd = (a, b) => a + Math.random() * (b - a);
 const obj = (layer, inner, cls = "") => { const w = el("span", "fx-obj " + cls, layer); w.innerHTML = `<svg viewBox="0 0 100 100" aria-hidden="true">${inner}</svg>`; fit(layer, w); return w; };
 // The object rests at the weight set in styles.css (.fx .o). For its act it comes up to full strength, and eases
 // back over 1.2 s once the act is over. One opacity animation, nothing held afterwards.
-const REST = .32, FULL = .55;
+const REST = .72, FULL = .92;
 const lift = (o, from, to, wet) => {
   const act = Math.max(1, to - from), d = act + 1200;
   return play(o.querySelector(".o"), [{ opacity: wet ? FULL : REST, easing: STATE }, { opacity: FULL, offset: wet ? 0 : Math.min(160, act) / d },
@@ -796,7 +796,7 @@ function mist(layer, ox, oy, shots, keep = []) {
   const count = Math.min(540, Math.round(230 + w * .24));
   for (const s of shots) {
     for (let i = 0, n = Math.round(count * s.share); i < n; i++) { const [tx, ty] = aim(s), u = Math.random();
-      drops.push({ tx, ty, k: rnd(2.6, 4.8), age: -s.at - rnd(0, .1), life: s.life * rnd(.82, 1), r: big * (.55 + 1.15 * u * u * u), a: rnd(.5, .95), fall: rnd(6, 24), amp: rnd(1.5, 7), f: rnd(.7, 1.6), ph: rnd(0, 6.28) }); }
+      drops.push({ tx, ty, k: rnd(2.6, 4.8), age: -s.at - rnd(0, .1), life: s.life * rnd(.82, 1), r: big * (.4 + .75 * u * u * u), a: rnd(.5, .95), fall: rnd(6, 24), amp: rnd(1.5, 7), f: rnd(.7, 1.6), ph: rnd(0, 6.28) }); }
     for (let i = 0, n = Math.round((14 + w / 36) * s.share); i < n; i++) { const [tx, ty] = aim(s);
       haze.push({ tx, ty, k: rnd(2.2, 3.6), age: -s.at - rnd(0, .14), life: s.life * rnd(.86, 1), r: h * rnd(.26, .5), fall: rnd(4, 14) }); }
   }
