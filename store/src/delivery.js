@@ -1,12 +1,11 @@
-// Local delivery: road distance from the nearer of our two shops to the shopper's full address, worked out on the server.
+// Local delivery: road distance from the Walkerville shop to the shopper's full address, worked out on the server.
 // The price comes only from deliveryFee() in rates-core.js. If the address cannot be confirmed, or the map service
 // is down, delivery is simply not offered: shipping and pickup keep working.
 import { LOCAL_LIMIT_M, deliveryFee, localArea, parsePostal } from "../public/rates-core.js";
 
-// Both shops' map pins, fixed here so one bad lookup can never move a shop.
+// The shop's map pin, fixed here so one bad lookup can never move it.
 const SHOPS = [
   { id: "wyandotte", lat: 42.3179407, lon: -83.0263116 },   // 760 Wyandotte St E, Windsor, ON N9A 3J4
-  { id: "lauzon", lat: 42.3166188, lon: -82.9321728 },      // 1950 Lauzon Rd, Windsor, ON N8R 1A2
 ];
 const PLACES = new Set(["building", "amenity", "street"]);
 // Neighbourhoods and hamlets people write as their town, against the name the map files them under.
@@ -47,8 +46,8 @@ export function houseNumber(line1) {
   return m ? m[1].toLowerCase() : null;
 }
 
-// The shorter road from either shop. A road is never shorter than the straight line, so a shop that cannot win or is past the limit is not asked about:
-// at most two route lookups per map point, and none at all for a place clearly too far. The 1% allows for the straight-line sum being an approximation.
+// The road from the shop. A road is never shorter than the straight line, so a place clearly past the limit needs no route lookup.
+// The 1% allows for the straight line being an approximation.
 async function shortest(env, lat, lon) {
   const to = { lat, lon }, order = SHOPS.map(s => ({ s, line: apart(s, to) })).sort((a, b) => a.line - b.line);
   if (order[0].line * 0.99 > LOCAL_LIMIT_M) return { metres: order[0].line, shop: order[0].s.id };
@@ -56,7 +55,7 @@ async function shortest(env, lat, lon) {
   for (const { s, line } of order) {
     if (line * 0.99 > LOCAL_LIMIT_M || (best && line * 0.99 >= best.metres)) continue;
     const d = (await ask(env, "/v1/routing", { waypoints: `${s.lat},${s.lon}|${lat},${lon}`, mode: "drive" })).results?.[0]?.distance;
-    if (!Number.isFinite(d) || d < 0) continue;   // no road from this shop: the other shop can still answer
+    if (!Number.isFinite(d) || d < 0) continue;   // no road found: the caller treats this as unsure
     if (!best || d < best.metres) best = { metres: d, shop: s.id };
   }
   return best;
@@ -95,7 +94,7 @@ const NEAR_POSTAL = 3000;
 async function cacheKey(line1, city, full) {
   const raw = new TextEncoder().encode(JSON.stringify([line1, city, full].map(s => String(s).trim().toLowerCase().replace(/\s+/g, " "))));
   const hash = [...new Uint8Array(await crypto.subtle.digest("SHA-256", raw))].map(b => b.toString(16).padStart(2, "0")).join("");
-  return new Request("https://delivery.cache/v3/" + hash);
+  return new Request("https://delivery.cache/v4/" + hash);
 }
 
 export async function deliveryQuote(env, { line1, city, postal }, ip = "local") {

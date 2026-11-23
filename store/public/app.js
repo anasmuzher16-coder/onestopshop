@@ -487,7 +487,7 @@ const sheet = $("[data-postal-sheet]"), postalInput = $("#postal"), postalErr = 
 const sheetH = $("#sheet-h"), sheetP = $(".sheet__p", sheet), sheetGo = $('button[type="submit"]', sheet), postalBad = postalErr.textContent;
 const SHEET_WORDS = {
   plain: { h: sheetH.textContent, p: sheetP.textContent, go: sheetGo.textContent },
-  local: { h: "Where should we deliver?", p: "Local delivery is $10 up to 10 km and $15 up to 25 km from our nearer Windsor shop. Free on orders of $200 or more before tax.", go: "Check local delivery" },
+  local: { h: "Where should we deliver?", p: "Local delivery is $10 up to 10 km and $15 up to 25 km from our Windsor shop. Free on orders of $200 or more before tax.", go: "Check local delivery" },
   nationwide: { h: "Where should we ship it?", p: "We ship anywhere in Canada by Canada Post. Enter your postal code to see the prices.", go: "See shipping prices" },
 };
 function sheetWords(mode) { const w = SHEET_WORDS[mode || "plain"]; state.sheetMode = mode || null; sheetH.textContent = w.h; sheetP.textContent = w.p; sheetGo.textContent = w.go; }
@@ -574,7 +574,7 @@ function viewCheckout() {
         ${field("city", "City or town", 'autocomplete="address-level2" maxlength="60" required')}
         ${state.dest.complete ? `<p class="co__p">Postal code <b class="num">${esc(state.dest.full)}</b>, ${esc(state.dest.prov)}. <button class="link" type="button" data-open-postal>Change</button></p>`
           : `<p class="co__p">We need the full postal code for the label. <button class="link" type="button" data-open-postal>Enter it</button></p>`}
-        ${local ? `<p class="co__p">Local delivery from our nearer Windsor shop. ${localEta()}. <a class="link" href="/cart">Change</a></p><p class="co__p">${freeNote(cartCents(lines))}</p><div class="co__p" role="status" data-deliv-msg>${quoted ? `Good news, we deliver to ${esc(state.dest.full)}.` : ""}</div><p class="fine">Address check by <a class="link" href="https://www.geoapify.com/" rel="noopener">Geoapify</a>. Map data from OpenStreetMap contributors.</p>`
+        ${local ? `<p class="co__p">Local delivery from our Windsor shop. ${localEta()}. <a class="link" href="/cart">Change</a></p><p class="co__p">${freeNote(cartCents(lines))}</p><div class="co__p" role="status" data-deliv-msg>${quoted ? `Good news, we deliver to ${esc(state.dest.full)}.` : ""}</div><p class="fine">Address check by <a class="link" href="https://www.geoapify.com/" rel="noopener">Geoapify</a>. Map data from OpenStreetMap contributors.</p>`
           : `<p class="co__p">${chosen.carrier} ${chosen.service}, ${days(chosen.days)}. <a class="link" href="/cart">Change</a></p>`}</fieldset>`}
       ${coTotals(lines, sc)}
       <p class="field__err" role="alert" data-co-err hidden></p>
@@ -667,7 +667,7 @@ const viewPrivacy = () => doc("Privacy", "What we collect when you order, why, a
 const viewTerms = () => doc("Terms of sale", "The plain rules for buying from us online.", [
   ["Prices and tax", ["Prices are in Canadian dollars. Tax is added at checkout, based on the province the order ships to."]],
   ["Shipping", ["We ship within Canada. The price at checkout is the price you pay for shipping. Delivery times are the carrier's estimates. Cologne ships by ground only."]],
-  ["Local delivery", ["We deliver within 25 km by road of the nearer of our two Windsor shops: $10 up to 10 km and $15 from there to 25 km, per order, plus tax. Orders with $200 or more in items before tax deliver free. Arrival times are estimates. Local delivery is paid online when you order."]],
+  ["Local delivery", ["We deliver within 25 km by road of our Windsor shop: $10 up to 10 km and $15 from there to 25 km, per order, plus tax. Orders with $200 or more in items before tax deliver free. Arrival times are estimates. Local delivery is paid online when you order."]],
   ["Pickup", ["Pickup at 760 Wyandotte St E, Windsor, ON N9A 3J4 is free. We email you when the order is ready and hold it for 14 days."]],
   ["Returns", ["All sales are final."]],
   ["Broken on arrival", ["If something arrives broken, bring it into the store at 760 Wyandotte St E and talk to the store manager."]],

@@ -173,12 +173,12 @@ export function quote(dest, parcels, fuelPct = fuelOn().pct) {   // read at call
   return out.sort((a, b) => a.total - b.total || a.days - b.days);
 }
 
-// Local delivery, the owner's terms: road distance from the nearer shop. Up to 10 km is $10, over 10 through 25 km is $15, past 25 km is not offered. Per order, in cents.
+// Local delivery, the owner's terms: road distance from the shop. Up to 10 km is $10, over 10 through 25 km is $15, past 25 km is not offered. Per order, in cents.
 export const LOCAL_LIMIT_M = 25000, FREE_LOCAL_CENTS = 20000;
 export const deliveryFee = metres => !Number.isFinite(metres) || metres < 0 ? null : metres <= 10000 ? 1000 : metres <= LOCAL_LIMIT_M ? 1500 : null;
 // An items subtotal of $200.00 or more before tax delivers free.
 export const localDue = (feeCents, subtotalCents) => subtotalCents >= FREE_LOCAL_CENTS ? 0 : feeCents;
-// Postal areas worth asking the map about, drawn wide around both shops: the road distance makes the real decision. Only Wallaceburg (N8A) is ruled out here.
+// Postal areas worth asking the map about, drawn wide around the shop: the road distance makes the real decision. Only Wallaceburg (N8A) is ruled out here.
 export const localArea = d => !!d && d.prov === "ON" && /^N(?:9|0R|0P|8(?!A))/.test(d.fsa);
 // Shop hours, Windsor time. [open, close] in 24h, Sunday first.
 export const SHOP_HOURS = [[11, 19], [10, 21], [10, 21], [10, 21], [10, 21], [10, 21], [10, 21]];

@@ -111,7 +111,7 @@ for (const [engine, w, h, mobile] of [["chromium", 390, 844, true], ["webkit", 3
     await press(p.locator('[data-tab="orders"]')); await press(p.locator(`[data-order="${id}"]`)); await p.waitForSelector("dialog[open] [data-next]");
     const sheet = await p.locator("dialog[open]").innerText();
     t(`${tag} back office shows address and phone`, sheet.includes(`7 LZ12500W13500 ${run} St`) && sheet.includes("519-555-0101") && /Local delivery/.test(sheet), sheet.slice(0, 200));
-    t(`${tag} back office names the nearer shop`, /Nearer shop: Lauzon, 12\.5 km/.test(sheet), sheet.slice(0, 300));
+    t(`${tag} back office shows the road distance`, /Road distance: 13\.5 km/.test(sheet), sheet.slice(0, 300));
     { const call = p.locator('dialog[open] .drop a[href^="tel:"]'), map = p.locator('dialog[open] .drop a[href^="https://www.google.com/maps/search/"]'), h = await call.evaluate(e => e.getBoundingClientRect().height); t(`${tag} back office has a big call button and a map link`, await call.getAttribute("href") === "tel:5195550101" && h >= 48 && await map.count() === 1, String(h)); }
     await snap("admin");
     await press(p.locator("[data-next]")); await p.waitForFunction(() => /Mark out for delivery/.test(document.querySelector("dialog[open] [data-next]")?.textContent || ""), null, { timeout: 8000 });
