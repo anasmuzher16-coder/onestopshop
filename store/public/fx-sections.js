@@ -242,7 +242,7 @@ const FX = {
       const L = layer.getBoundingClientRect(), b = o.getBoundingClientRect(), band = layer.parentNode, t = band.querySelector("h1"), n = band.querySelector(".shophead__n"), keep = [];
       if (t) { const r = document.createRange(); r.selectNodeContents(t); keep.push(r.getBoundingClientRect()); }
       if (n) keep.push(n.getBoundingClientRect());
-      mist(layer, b.left - L.left + .326 * b.width, b.top - L.top + .158 * b.height, re ? [{ at: 0, share: 1, reach: 1, life: 3 }] : [{ at: 0, share: .3, reach: .42, life: 2.5 }, { at: .38, share: .7, reach: 1, life: 4.4 }], keep.map(k => ({ l: k.left - L.left, r: k.right - L.left, t: k.top - L.top, b: k.bottom - L.top })));
+      mist(layer, b.left - L.left + .326 * b.width, b.top - L.top + .158 * b.height, re ? [{ at: 0, share: 1, reach: 1, life: 1.6 }] : [{ at: 0, share: .3, reach: .42, life: 2.5 }, { at: .38, share: .7, reach: 1, life: 3.7 }], keep.map(k => ({ l: k.left - L.left, r: k.right - L.left, t: k.top - L.top, b: k.bottom - L.top })));
     });
     play(liq, [0, -5, 3.4, -4.2, 2.6, -1.4, .6, 0].map((v, j, a) => ({ transform: `rotate(${v}deg)`, offset: j / (a.length - 1), easing: SINE })), 1500, T0, "none");
   },
@@ -825,7 +825,7 @@ const ACT = {
     const up = [{ transform: turn(0, 0), easing: STRIKE }, { transform: turn(0, 2.4), offset: .08, easing: ENTER }, { transform: turn(0, 0), offset: .26, easing: STRIKE }, { transform: turn(0, 4), offset: .36, easing: ENTER },
       { transform: turn(0, -6), offset: .58, easing: SINE }, { transform: turn(0, 0), offset: .84, easing: SINE }, { transform: turn(0, -1.2), offset: .92, easing: SINE }, { transform: turn(0, 0) }];
     move(up, 1150, T0 - 40);
-    when(layer, T0, () => mist(layer, P.x + (K.l + K.r) / 2 * P.w, P.y + (K.t + (K.b - K.t) * .12) * P.h, [{ at: 0, share: .3, reach: .5, life: 2.5 }, { at: .38, share: .7, reach: 1, life: 4.4 }]));
+    when(layer, T0, () => mist(layer, P.x + (K.l + K.r) / 2 * P.w, P.y + (K.t + (K.b - K.t) * .12) * P.h, [{ at: 0, share: .3, reach: .5, life: 2.5 }, { at: .38, share: .7, reach: 1, life: 3.7 }]));
     play(glint(layer, img, P, T0 + 520, 900), up, 1150, T0 - 40, "none");   // the light is cut to the bottle, so it rides with the bottle
   },
   // glass is held up to the light: tipped, a glint runs across it (cut to the glass by its own photo), let go, it rocks home

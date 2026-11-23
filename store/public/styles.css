@@ -415,6 +415,7 @@ body:not([data-route]) .foot{visibility:hidden}
 .visit__facts>div{display:grid;grid-template-columns:72px 1fr;gap:var(--s-3);padding:var(--s-3) 0;border-top:1px solid var(--color-line)}
 .visit__facts dt{color:var(--color-muted);font-size:var(--t-14)} .visit__facts dd{margin:0}
 .visit__todo{display:block;font-size:var(--t-12);color:var(--color-muted)}
+.visit__facts .link{display:inline-flex;align-items:center;min-height:44px}
 .visit__hours{width:100%;border-collapse:collapse;font-size:var(--t-14);align-self:end}
 .visit__hours th{text-align:left;font-weight:400;color:var(--color-muted);padding:var(--s-2) 0;border-top:1px solid var(--color-line)}
 .visit__hours td{text-align:right;padding:var(--s-2) 0;border-top:1px solid var(--color-line)}
@@ -563,11 +564,12 @@ html:not(.hero-seen) .piece .sticker{animation-timing-function:linear(0,.25 6%,.
 /* The Pour: live smoke on the black page ground only. Fixed under all content; the header band, tiles, labels and bars stay opaque above it. */
 .pour{position:fixed;inset:0;width:100vw;height:100lvh;z-index:-1;pointer-events:none;opacity:0;transition:opacity .35s var(--ease-state)}
 .pour.on{opacity:1}
+.pour--spritz{z-index:40;opacity:1;transition:none}
 html.pour-still body::before{content:"";position:fixed;inset:0 0 auto;height:100lvh;z-index:-1;pointer-events:none;background:var(--coal-0) url(img/pour-still.webp) center / cover no-repeat}
 html.pour-page .top{background:var(--color-bg);-webkit-backdrop-filter:none;backdrop-filter:none}
 html.pour-page .chips:not(.is-stuck){background:transparent}
 html.pour-page .chips a:not([aria-current]){background:var(--color-bg)}
-@media print{.pour{display:none !important}html.pour-still body::before{display:none}}
+@media print{.pour,.pour--spritz{display:none !important}html.pour-still body::before{display:none}}
 .smoke{position:absolute;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none;opacity:0;transition:opacity 600ms var(--ease-state) 300ms}
 .smoke.on{opacity:1}
 .smoke--hero{z-index:auto;transition:opacity 600ms var(--ease-state) 500ms}
