@@ -26,13 +26,13 @@ const W = {
   parts: { m: "fly", sprite: "parts", d: [-1, 0], e: 300, p: tone(C.gilt, 88) },
   cologne: { m: "mist", d: [-S2, -S2], e: 380, p: [C.amethyst, ok(.62, .1, 312), deep(312), ok(.86, .06, 312)] },
   misc: { m: "fly", sprite: "misc", d: [S2, -S2], e: 300, p: tone(C.bonelt, 80) },
-  home: { m: "motes", d: [.38, .925], e: 110, p: [C.coal, C.gilt, C.coal2, C.ember] },
+  home: { m: "motes", d: [.38, .925], e: 110, c: 220, ms: 360, p: [C.coal, C.gilt, C.coal2, C.ember] },
   all: { m: "fly", sprite: "all", d: [0, 1], e: 300, p: tone(C.bonelt, 80) },
   gifts: { m: "fly", sprite: "gifts", d: [S2, S2], e: 300, p: tone(C.cobalt, 265) },
-  set: { m: "fly", sprite: "set", d: [1, 0], e: 300, p: tone(C.ruby, 18) },
+  set: { m: "fly", sprite: "set", d: [-S2, S2], e: 300, p: tone(C.ruby, 18) },
   shipping: { m: "fly", sprite: "shipping", d: [1, 0], e: 300, p: tone(C.cobalt, 265) },
-  search: { m: "fly", sprite: "search", d: [1, 0], e: 300, p: tone(C.teal, 190), c: 150, ms: 230 },
-  cart: { m: "fly", sprite: "cart", d: [0, 1], e: 300, p: tone(C.gilt, 88), c: 170, ms: 260 },
+  search: { m: "fly", sprite: "search", d: [-.38, -.925], e: 300, p: tone(C.teal, 190), c: 150, ms: 230 },
+  cart: { m: "fly", sprite: "cart", d: [.92, .38], e: 300, p: tone(C.gilt, 88), c: 170, ms: 260 },
 };
 const pageTone = path => /^\/gifts\/under-50/.test(path) ? tone(C.emerald, 155) : tone(C.cobalt, 265);   // Gifts wears the colour of the page it lands on
 
@@ -61,15 +61,15 @@ const MAT = {
   smoke: `float gS, gD, gR, gP; vec2 gO;
   float puff(vec2 q, float k) { float W = 118., SP = 92., dir = mod(k, 2.) > .5 ? 1. : -1., x = q.x + k * 53. + dir * uTime * 34., id = floor(x / W), m = 1e5, cy = k * SP + 104.; gS = H2(vec2(k, 4.)) * .5; gD = -1e5; gO = vec2(0., 240.); gR = 80.; gP = .5;
     for (float i = -1.; i < 2.; i++) { float n = id + i, s = H2(vec2(n, k)), pl = .5 + .5 * sin(((n + .5) * W - k * 53. - dir * uTime * 34.) / 150. + k * .28), R = (52. + 54. * s * s) * mix(.58, 1., ss(.25, .8, pl)) * mix(.65, 1., ss(0., 5., k)) * (1. + .16 * min(uTime, .9)); vec2 u = vec2(x, q.y) - vec2((n + .5 + (H2(vec2(n, k + 3.)) - .5) * .42) * W, cy + (s - .5) * 76.);
-      float ang = .55 * sin(cy / 190. + n * .7 + uTime * 1.3), ca = cos(ang), sa = sin(ang); u = vec2(ca * u.x + sa * u.y, -sa * u.x + ca * u.y); u.x *= .82;
+      float ang = .55 * sin(cy / 190. + n * .7 + uTime * 1.3), ca = cos(ang), sa = sin(ang); u = vec2(ca * u.x + sa * u.y, -sa * u.x + ca * u.y); u.x *= .62;
       float a = atan(u.y, u.x) + dir * uTime * (.9 + s * .7), lobe = R * (.13 * abs(sin(a * (3. + floor(s * 3.)) + s * 9.)) + .045 * abs(sin(a * (7. + floor(s * 3.)) - s * 5.))), d = length(u) - R * .9 - lobe;
       if (d < m) m = d; if (d < 0.) { gD = d; gS = H2(vec2(n + 9., k)); gO = u; gR = R; gP = pl; } }
     return min(m, cy + 20. + 40. * sin(x / 137. + k * 1.7 + uTime * 1.1) + 22. * sin(x / 61. - k) - q.y); }
   ${SIG} { vec2 wv = vec2(sin(p.y / 170. + uTime * 1.1) + .6 * sin(p.x / 97. - uTime * .8 + p.y / 230.), cos(p.x / 150. - uTime * .9) + .6 * cos(p.y / 110. + uTime * .7 + p.x / 260.)) * .5, q = vec2(f.x + wv.x * 44. + 78. * sin(h / 300. - uTime * 1.7), h + wv.y * 26.); float z = clamp(uV.x / 620., 1., 1.7); q /= z; float k0 = floor(q.y / 92.);
     for (float k = k0 + 1.; k >= max(0., k0 - 2.); k--) { float d = puff(q, k); if (d < 0.) { vec2 u = gO / gR; float g = .22 * sin(gO.x / (gR * .45) + gS * 6.) * cos(gO.y / (gR * .5) - gS * 4.), aa = 1.5 * PX / (gR * z), sh = length(u + vec2(.2, .4)) + g * .7;
-        c = gP > .62 ? uE : gP > .3 ? uA : mix(uA, uB, .5); c = mix(c, uB, ss(.98, .98 + aa, sh)); c = mix(c, mix(uB, uC, .38), ss(1.24, 1.24 + aa, sh)); c = mix(c, vec3(.985, .975, .955), .8 * (1. - ss(.4, .4 + aa, length(u + vec2(.26, .44)) + g * .9)) * ss(.3, .3 + aa, length(u + vec2(.12, .26))));
+        c = gP > .62 ? uE : gP > .3 ? uA : mix(uA, uB, .5); c = mix(c, uB, ss(.98, .98 + aa, sh)); c = mix(c, mix(uB, uC, .16), ss(1.24, 1.24 + aa, sh)); c = mix(c, vec3(.985, .975, .955), .8 * (1. - ss(.4, .4 + aa, length(u + vec2(.26, .44)) + g * .9)) * ss(.3, .3 + aa, length(u + vec2(.12, .26))));
         if (gD < -9e3) c = mix(uB, uA, .3); vec2 cu = u - vec2(.08, .06); float cr = length(cu), th = atan(cu.y, cu.x), arc = ss(-2.4, -1., th) * (1. - ss(2.2, 3., th)), ink = 1.1 + .7 * sin(th + gS * 6.28); c = mix(c, uC, .85 * step(.75, fract(gS * 7.)) * arc * (1. - ss(ink - .5, ink + .5, abs((cr - .44 - .07 * th - g * .22) * gR * z))));
-        float bw = 3.6 * ss(-.25, .75, dot(gO / (length(gO) + .001), vec2(.45, .89)) + .25 * sin(gS * 6.28)); c = mix(c, uC, ss(.3, 1., bw) * ss(-bw - .5, -bw + .5, gD * z)); break; } }
+        float bw = 1.7 * ss(-.25, .75, dot(gO / (length(gO) + .001), vec2(.45, .89)) + .25 * sin(gS * 6.28)); c = mix(c, uC, ss(.3, 1., bw) * ss(-bw - .5, -bw + .5, gD * z)); break; } }
     h = -puff(q, 0.) * z; float b = t + 34. * (abs(sin(f.x / 52. + uTime * 1.4)) - 1.); c = mix(uC, c, E(b - 3.)); t = b; }`,
   // cartoon fire: rows of curling teardrop flames, each one ember outside, the Heat orange inside, a gilt heart, under a coal ink line
   fire: `float tear(vec2 q, float W, float T, float bend, float bulb) { float u = clamp(q.y / T, 0., 1.), x = q.x - bend * u * u * W * .5; return q.y > T ? T - q.y : W * .56 * pow(1. - u, .85) * (1. + .6 * u) * mix(1., sqrt(min(1., u * 5.)), bulb) - abs(x); }
@@ -90,21 +90,21 @@ const MAT = {
   rope: `${SIG} { float P = clamp(uV.x / 6.2, 56., 96.), W = P * .5, TAU = 6.28318, r = length(p), th = mod(atan(p.y, p.x) + uTime * 1.2, TAU), ring = floor(r / P - th / TAU + .5), phi = max(th + TAU * ring, 0.), vr = r - P * phi / TAU, arc = P / (2. * TAU) * phi * phi, Rm = length(uV) * .5 + P, pm = TAU * (Rm / P + 1.2), Am = P / (2. * TAU) * pm * pm, span = Am + W + 40., Ah = -W - 20. + span * (1. - clamp(uH, 0., 1.)), At = -W - 20. + span * clamp(uT, 0., 1.), cap = W - sqrt(max(W * W - vr * vr, 0.)), a = arc - Ah, v = clamp(vr / W, -1., 1.), ed = (1. - abs(v)) * W;
     vec3 b = uA; b = mix(b, mix(b, uC, .4), ss(.26, .31, v)); b = mix(b, mix(b, uC, .24), ss(.68, .73, fract((arc + v * W * .9) / 15.))); b = mix(b, mix(b, uE, .68), 1. - ss(.12, .18, abs(v + .44)));
     if (a < 58.) { b = mix(vec3(${C.gilt}), vec3(.98, .94, .78), 1. - ss(.13, .2, abs(v + .42))); b = mix(b, mix(vec3(${C.gilt}), uC, .45), ss(.3, .36, v)); } b = mix(uC, b, E(abs(a - 58.) - 1.4)); c = mix(uC, b, ss(1.6, 2.8, ed)); float hh = a - cap, tb = arc - At - cap; c = mix(uC, c, E(hh - 2.6)); c = mix(uC, c, E(tb - 2.6)); h = hh; t = tb; }`,
-  // home: the coal itself arrives behind a burning edge of gilt and ember
-  motes: `${SIG} { float e = h - 26. + 130. * (fbm(vec2(f.x / 3400., h / 4600.)) - .5); c = mix(uB, mix(uE, uA, E(e - 18.)), E(e - 7.)); h = e; }`,
+  // home: the coal itself arrives behind a burning edge of gilt and ember, with embers rising through it
+  motes: `${SIG} { float e = h - 26. + 130. * (fbm(vec2(f.x / 3400., h / 4600.)) - .5); c = mix(uB, mix(uE, uA, E(e - 18.)), E(e - 7.)); vec2 g = vec2(p.x + 12. * sin(p.y / 90. + uTime * 3.), p.y - uTime * 190.) / 44., id = floor(g); if (e > 20. && H2(id) > .55) { vec2 j = (vec2(H2(id + 1.), H2(id + 2.)) - .5) * .5, u = (fract(g) - .5 - j) * 44.; float z = H2(id + 3.), d = 1.3 + 3.4 * z * z - length(u * vec2(1., .42)); c = mix(c, mix(uE, uB, H2(id + 4.)), E(d)); } h = e; }`,
 };
 // cologne: an aerosol. A tight pressurised jet leaves the nozzle with a bright dense core, then blooms into an ultra-fine spray and soft amethyst mist that fills the screen
 MAT.mist = `float sp(vec2 p, vec2 nz, float pitch, float k, float dn, float big, float seed) { vec2 a = nz + (p - nz) / (1. + uTime * k), g = a / pitch + seed, id = floor(g); if (H2(id + seed) > dn) return 0.; vec2 j = (vec2(H2(id + 1.), H2(id + 2.)) - .5) * .86; float z = H2(id + 3.), rad = pitch * (.12 + big * z * z * z); vec2 o = (fract(g) - .5 - j) * pitch * (1. + uTime * k), dr = normalize(p - nz + .001); float al = dot(o, dr) / (1. + uTime * 1.2), ac = dot(o, vec2(-dr.y, dr.x)), d = rad - length(vec2(al, ac)); return (.5 + .5 * H2(id + 4.)) * ss(-.8, .6, d); }
   ${SIG} { vec2 nz = uV * .5 - vec2(min(uV.x * .16, 180.), 96.), w = abs(nz) + uV * .5, dir = normalize(p - nz + .001); float r = length(p - nz), RM = length(w), hr = uH * RM - r, tr = r - uT * RM, n = fbm(p / 11000. + vec2(-uTime * .03, uTime * .02)), n2 = fbm(p / 6400. + vec2(uTime * .035, .31)), fo = (n - .5) * 190.;
     float th = acos(clamp(dot(dir, vec2(-.6, -.8)), -1., 1.)) + (n2 - .5) * .42, wd = mix(.13, 5., pow(clamp(uH, 0., 1.), 2.2)), cn = 1. - ss(wd * .72, wd * 1.25, th), ce = 1. - ss(wd * .9, wd * 1.7, th), core = exp(-pow(th / (wd * .42), 2.));
-    float m = ss(-60., 130., hr + fo) * ss(-60., 130., tr - fo) * cn, env = ss(-240., -40., hr + fo * .6) * ss(-230., -30., tr - fo * .6) * ce, pk = 1. - ss(70., 420., hr), dn = env * (.2 + .55 * pk), d1 = sp(p, nz, 3.4, 2.2, dn * .72, .13, 1.), d2 = sp(p, nz, 5.6, 3., dn * .85, .14, 7.), d3 = sp(p, nz, 10., 4., dn * .4, .1, 13.), da = max(d1, max(d2, d3));
+    float m = ss(-60., 130., hr + fo) * ss(-60., 130., tr - fo) * cn, env = ss(-240., -40., hr + fo * .6) * ss(-230., -30., tr - fo * .6) * ce, pk = 1. - ss(70., 420., hr), dn = env * (.3 + .45 * pk), d1 = sp(p, nz, 3.4, 2.2, dn * .72, .13, 1.), d2 = sp(p, nz, 5.6, 3., dn * .85, .14, 7.), d3 = sp(p, nz, 10., 4., dn * .4, .1, 13.), da = max(d1, max(d2, d3));
     vec3 b = mix(mix(uA, uB, .12), mix(uA, uE, .5), ss(.34, .66, .6 * n + .4 * n2)); b = mix(b, mix(uE, vec3(.99), .4), .78 * core * exp(-r / (.75 * RM))); c = mix(b, mix(uE, vec3(.99), .35), da * .8); h = (max(m, da) - .5) * 1.5 * PX; t = PX * 9.; }`;
 // the section's own drawn header objects, small, spinning and flying across the screen in three depths and speeds, ahead of and over its colour tile. Parts, Bowls, Misc, Everything, Gifts, Build a set, Shipping, Search and Cart
 MAT.fly = `uniform sampler2D uS; uniform float uHas; vec4 spr(vec2 w, float i, float l) { if (w.x < .006 || w.x > .994 || w.y < .006 || w.y > .994) return vec4(0.); i = mod(i, 4.); return textureLod(uS, (vec2(mod(i, 2.), floor(i / 2.)) + vec2(w.x, 1. - w.y)) / 2., l); }
-  void lay(vec2 p, float S, float v, float sd, inout vec3 ac, inout float aa) { vec2 drift = uD * uTime * v, g = (p - drift) / S; float ro = floor(g.y), sh = H1(ro + sd); g.x += sh; vec2 id = floor(g); if (H2(id + sd) > .62) return; vec2 j = (vec2(H2(id + sd + 1.), H2(id + sd + 2.)) - .5) * .22, u = (fract(g) - .5 - j) * S, ctr = (id + .5 + j - vec2(sh, 0.)) * S + drift; float sc = dot(ctr, uD) + L * .5, k = min(clamp((uH * L + 150. - sc) / 70., 0., 1.), clamp((sc - uT * L + 150.) / 70., 0., 1.)); if (k <= 0.) return; k = k * k * (3. - 2. * k);
-    float an = (H2(id + sd + 4.) - .5) * 6.28 + uTime * (H2(id + sd + 5.) < .5 ? -1. : 1.) * (2.2 + 2.6 * H2(id + sd + 6.)), ca = cos(an), sa = sin(an), sz = S * .7 * max(k, .01); vec2 w = vec2(ca * u.x + sa * u.y, -sa * u.x + ca * u.y) / sz + .5; vec4 t = spr(w, id.x + id.y * 2. + sd, max(0., log2(float(textureSize(uS, 0).x) * .5 * PX / sz))); if (t.a <= 0.) return; ac = aa < .001 ? t.rgb : mix(ac, t.rgb, t.a); aa += t.a * (1. - aa); }
-  ${SIG} { float z = clamp(uV.x / 620., 1., 1.45), aa = 0.; vec3 ac = vec3(0.); if (uHas > .5) { lay(p, 84. * z, 980., 1., ac, aa); lay(p, 108. * z, 1360., 7., ac, aa); lay(p, 140. * z, 1780., 13., ac, aa); }
-    float bh = h - 60. + 14. * sin(f.x / 53. + uTime * 4.), b = t - 18. - 16. * sin(f.x / 37. + uTime * 3.), m = E(bh) * E(b); vec3 tile = mix(uC, uA, E(bh - 3.) * E(b - 3.)); c = mix(ac, mix(tile, ac, aa), m); h = (max(m, aa) - .5) * 1.5 * PX; t = PX * 9.; }`;
+  void lay(vec2 p, float S, float v, float sd, float dn, inout vec3 ac, inout float aa) { vec2 drift = uD * uTime * v, g = (p - drift) / S; float ro = floor(g.y), sh = H1(ro + sd); g.x += sh; vec2 id = floor(g); if (H2(id + sd) > dn) return; vec2 j = (vec2(H2(id + sd + 1.), H2(id + sd + 2.)) - .5) * .14, u = (fract(g) - .5 - j) * S, ctr = (id + .5 + j - vec2(sh, 0.)) * S + drift; float sc = dot(ctr, uD) + L * .5, k = min(clamp((uH * L + 150. - sc) / 70., 0., 1.), clamp((sc - uT * L + 150.) / 70., 0., 1.)); if (k <= 0.) return; k = k * k * (3. - 2. * k);
+    float an = (H2(id + sd + 4.) - .5) * 6.28 + uTime * (H2(id + sd + 5.) < .5 ? -1. : 1.) * (2.2 + 2.6 * H2(id + sd + 6.)) * (sd > 12. ? .55 : 1.), ca = cos(an), sa = sin(an), sz = S * .7 * max(k, .01); vec2 w = vec2(ca * u.x + sa * u.y, -sa * u.x + ca * u.y) / sz + .5; float l = max(0., log2(float(textureSize(uS, 0).x) * .5 * PX / sz)); vec4 t = spr(w, id.x + id.y * 2. + sd, l); if (sd > 12.) { float o = ss(.08, .3, spr(w, id.x + id.y * 2. + sd, l + 2.).a); ac = aa < .001 ? vec3(.93, .91, .86) : mix(ac, vec3(.93, .91, .86), o); aa = max(aa, o); } if (t.a <= 0.) return; ac = aa < .001 ? t.rgb : mix(ac, t.rgb, t.a); aa += t.a * (1. - aa); }
+  ${SIG} { float z = clamp(uV.x / 620., 1., 1.6), aa = 0.; vec3 ac = vec3(0.); if (uHas > .5) { lay(p, 72. * z, 980., 1., .7, ac, aa); lay(p, 104. * z, 1360., 7., .5, ac, aa); lay(p, 164. * z, 1780., 13., .34, ac, aa); }
+    float bh = h - 60. + 14. * z * sin(f.x / (53. * z) + uTime * 4.), b = t - 18. - 16. * z * sin(f.x / (37. * z) + uTime * 3.), m = E(bh) * E(b); vec3 tile = mix(uC, uA, E(bh - 3.) * E(b - 3.)); c = mix(ac, mix(tile, ac, aa), m); h = (max(m, aa) - .5) * 1.5 * PX; t = PX * 9.; }`;
 // the baked smoke and fire: a flipbook, sampled at one uniform cover scale. With a flow map, frames warp into each other instead of double-exposing.
 const FLIP = `#version 300 es
 precision highp float;
@@ -166,7 +166,7 @@ function loadAtlas() {
 }
 function upload(key, unit, im) {
   if (tex[key]) return tex[key]; const t = gl.createTexture(); gl.activeTexture(unit); gl.bindTexture(gl.TEXTURE_2D, t);
-  gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false); gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, im);
+  gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false); gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE); while (gl.getError()); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, im); if (gl.getError()) { gl.deleteTexture(t); delete imgs[key]; return null; }
   if (BOOKS[key]?.mip) gl.generateMipmap(gl.TEXTURE_2D); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, BOOKS[key]?.mip ? gl.LINEAR_MIPMAP_LINEAR : gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
   return tex[key] = t;
 }
@@ -215,7 +215,7 @@ const coverEase = p => (1 - (1 - .82 * p) ** 2) / .9676, revealEase = p => ((.18
 function paint(now) {
   const o = w.o, m = margin(o), A = o.atlasOn;
   if (w.phase === "cover") { const p = Math.min(1, (now - w.t0) / o.cover), e = coverEase(p); w.p = p; const u = w.under;   // a wave that was interrupted holds its place underneath until the new one has covered it
-    if (u) { draw(u, now, u.lastH, u.lastT, null); gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA); }
+    if (u) { gl.disable(gl.BLEND); u.forEach((x, i) => { draw(x, now, x.lastH, x.lastT, null); if (!i) { gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA); } }); }
     try { draw(o, now, -m + e * (1 + 2 * m), -m - .02, A ? e * A.fullCoverFrame : null); } finally { if (u) gl.disable(gl.BLEND); } return p >= 1; }
   const p = Math.min(1, (now - w.rt) / w.rd), e = revealEase(p); w.p = p; draw(o, now, 1 + m + .02, -m - .02 + e * (1 + 2 * m + .04), A ? A.fullCoverFrame + e * (A.frames - 1 - A.fullCoverFrame) : null); return p >= 1;
 }
@@ -225,7 +225,7 @@ function dropKeyboard() { if (!proxy) return; const i = proxy; proxy = null; i.r
 function swap() {
   if (!w || w.swapped) return; if (w.phase === "cover") try { paint(w.t0 + w.o.cover); } catch {} // a late frame clock still swaps under a full cover
   w.swapped = true; w.under = null; w.skip = true; const path = w.path; w.path = null; undo = null; if (path) commitNav(path, "wave"); dropKeyboard();
-  if (!w) return; w.phase = "reveal"; const t = performance.now(); w.rt = t; w.rd = Math.max(120, Math.min(w.o.ms, w.t0 + Math.min(MAX_MS, w.o.cover + w.o.ms) - t));
+  if (!w) return; w.phase = "reveal"; const t = performance.now(); w.rt = t; w.rd = Math.max(120, Math.min(w.o.ms, w.t0 + Math.min(MAX_MS, w.o.cover + w.o.ms) - t)); clearTimeout(w.goneT); w.goneT = setTimeout(finish, w.rd + 90);
 }
 function tick(now) {
   raf = 0; if (!w) return; raf = requestAnimationFrame(tick); now = Math.max(now, performance.now() - 40);
@@ -262,7 +262,7 @@ function play(key, path, under = null) {
 }
 // the page this wave was carrying is cancelled; the band itself keeps travelling, so nothing jumps
 function drop(restore) { if (!w?.path) return; w.path = null; if (restore) undo?.(); undo = null; dropKeyboard(); }
-const keeper = () => { const a = w.o, b = w.under; if (b && (a.lastH == null || b.lastH > a.lastH)) return b; return a.lastH == null ? null : a; };
+const keeper = () => { const list = [...(w.under || [])]; if (w.o.lastH != null) list.push(w.o); return list.length ? list.slice(-4) : null; };
 setNavGate({
   // true: the wave owns this navigation and will commit it at full cover
   take(path, replace) {
