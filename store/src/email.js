@@ -22,7 +22,7 @@ export function orderPlaced(site, o, items) {
   const rows = [...lines(items), ["Items", money(o.subtotal_cents)], [o.method === "pickup" ? "Pickup at the counter" : o.ship_service === "Local delivery" ? "Local delivery" : `Shipping, ${esc(o.ship_service || "")}`, o.method === "pickup" || (o.ship_service === "Local delivery" && !o.shipping_cents) ? "Free" : money(o.shipping_cents)],
     [`Tax, ${esc(o.tax_province || "")}`, money(o.tax_cents)], ["Total", money(o.total_cents), true]];
   const heading = `Order ${esc(o.id)} is in`, first = esc(String(o.name).split(" ")[0]);
-  const intro = o.method === "pickup" ? `Thank you, ${first}. We will email you again when it is ready at 760 Wyandotte St E, Windsor.` : o.ship_service === "Local delivery" ? `Thank you, ${first}. ${o.eta ? esc(o.eta) + ". " : ""}We will deliver it from our nearest Windsor shop and call if we need anything.` : `Thank you, ${first}. We are packing it now and will email the tracking number when it leaves.`;
+  const intro = `Thank you, ${first}. This is a test order: no payment was taken, and nothing will be packed or sent.`;   // restore the real wording when payments are connected
   const foot = "Questions? Reply to this email or call the counter at 519-255-2222.";
   return { kind: "order_placed", subject: `Your ${site} order ${o.id}`, html: frame(site, heading, intro, rows, foot), body: plain(heading, intro, rows, foot) };
 }

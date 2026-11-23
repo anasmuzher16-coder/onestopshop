@@ -100,7 +100,8 @@ function viewHome() {
   const picks = ["Sultan Totem", "Stuttgart Pure, Jade", "Regent Neon Blue", "Cairo Avatar", "Carbon Black", "Mamoun Moagza Copper", "Regent Neon Pink", "Orbit"].map(n => PRODUCTS.find(p => p.name === n)).filter(Boolean).slice(0, 8);
   const resin = PRODUCTS.filter(p => p.dark);
   const SLABS = ["gilt", "cobalt", "ruby", "emerald", "teal"];
-  const stars = ["Mamoun Hatshepsut", "Orbit", "Mamoun Cafe Chiller", "Lounge Six", "Mamoun Star"].map(n => PRODUCTS.find(p => p.name === n)).filter(Boolean);
+  const ok = p => p && p.cat === "hookahs" && !p.dark && p.img && !isSold(p), named = ["Mamoun Hatshepsut", "Sultan Totem", "Mamoun Cafe Chiller", "Lounge Six", "Mamoun Star"].map(byName).filter(ok);
+  const stars = [...named, ...PRODUCTS.filter(p => ok(p) && !named.includes(p))].slice(0, 5);   // always five live pieces while the shop has them; the grid follows the real count
   return `
   <section class="hero">
     <div class="hero__stage">
@@ -201,7 +202,7 @@ function viewProduct(sku) {
       <h1 class="pdp__name">${esc(p.name)}</h1>
       <p class="pdp__note">${esc(p.note)}${p.height ? `. Stands ${p.height} cm.` : "."}</p>
       ${p.details && p.details.notes ? `<p class="pdp__notes"><span>Notes</span> ${esc(p.details.notes)}</p>` : ""}
-      ${sold ? `<p class="soldline">${SOLD.has(p.name) ? "This one has sold. Each resin stem is poured once." : "Sold out for now. More are on the way."}</p><button class="btn btn--ghost btn--wide" type="button" data-notify>${SOLD.has(p.name) ? "Tell me when the next one is poured" : "Tell me when it is back"}</button>`
+      ${sold ? `<p class="soldline">${SOLD.has(p.name) ? "This one has sold. Each resin stem is poured once." : "Sold out for now."}</p><a class="btn btn--ghost btn--call" href="tel:+15192552222">Call the counter</a>`
         : inCart ? `<a class="btn btn--wide" href="/cart">In your cart. View cart</a>` : `<button class="btn btn--wide" type="button" data-add="${p.sku}">Add to cart</button>`}
       ${deliveryLine(p, opts)}
       <section class="ways" aria-labelledby="ways-h">
@@ -229,9 +230,8 @@ function viewProduct(sku) {
             <li><b>Purge valve.</b> Clears the base in one breath out.</li><li><b>Hose port.</b> Takes any standard hose.</li><li><b>Base.</b> ${p.glass ? "Glass" : "Acrylic"}, holds the water.</li>
           </ol>
         </div>
-        <h2 class="h3 parts__box">In the box</h2>
+        <h2 class="h3 parts__box">How it goes together</h2>
         <ul class="inbox">${[["1", "Stem"], ["1", p.glass ? "Glass base" : "Base"], ["1", "Tray"], ["1", "Bowl"], ["1", "Hose with handle"], ["1", "Tongs"], ["1 set", "Grommets"]].map(([q, t]) => `<li><span class="num">${q}</span>${t}</li>`).join("")}</ul>
-        <p class="fine">Sample contents for the mockup. Each model lists its own at launch.</p>
       </section>` : ""}
       <section class="spec" aria-labelledby="spec-h">
         <h2 class="h3" id="spec-h">Packed size</h2>
@@ -263,9 +263,11 @@ function viewGifts(kind) {
 
 // ---------- build a set ----------
 const SLOTS = [["hookah", "hookahs", "The hookah"], ["bowl", "bowls", "A bowl"], ["heat", "heat", "A heat keeper"], ["hose", "hoses", "A hose"]];
-function setPicks() { return SLOTS.map(([slot, cat]) => bySku[state.set[slot]] || (slot === "hookah" ? byName("Mamoun Kamanja Gold") : null) || inCat(cat)[0]); }
+const setOpts = c => inCat(c).filter(p => !isSold(p));   // a set is never offered, or defaulted to, something the shop cannot sell
+const canSet = p => p && !isSold(p) ? p : null;
+function setPicks() { return SLOTS.map(([slot, cat]) => canSet(bySku[state.set[slot]]) || (slot === "hookah" ? canSet(byName("Mamoun Kamanja Gold")) : null) || setOpts(cat)[0] || null); }
 function setSummary() {
-  const picks = setPicks(), lines = picks.map(product => ({ product, qty: 1 })), parcels = pack(lines), sum = picks.reduce((a, p) => a + p.price, 0);
+  const picks = setPicks().filter(Boolean), lines = picks.map(product => ({ product, qty: 1 })), parcels = pack(lines), sum = picks.reduce((a, p) => a + p.price, 0);
   const q = cpQuote(lines)[0] || null;
   return `
     <h2 class="h3">Your set</h2>
@@ -275,7 +277,7 @@ function setSummary() {
       <div><dt>Shipping${q ? " to " + esc(state.dest.full) : ""}</dt><dd>${q ? `<span class="num">${money(q.total)}</span>` : state.dest && !carried(lines) ? "Local delivery or pickup" : `<button class="link" type="button" data-open-postal>Add postal code</button>`}</dd></div>
       <div class="totals__door"><dt>Set price</dt><dd class="num">${money(sum)}</dd></div>
     </dl>
-    <button class="btn btn--wide" type="button" data-add-set>Add the set to cart</button>`;
+    ${picks.length ? `<button class="btn btn--wide" type="button" data-add-set>Add the set to cart</button>` : `<a class="btn btn--wide" href="/shop">See what is in stock</a>`}`;
 }
 function viewSet() {
   const picks = setPicks();
@@ -288,7 +290,7 @@ function viewSet() {
     <div class="set__steps">${SLOTS.map(([slot, cat, label], i) => `
       <section class="pick" aria-labelledby="pick-${slot}">
         <h2 class="h3" id="pick-${slot}"><span class="num">${i + 1}</span> ${label}</h2>
-        <div class="pick__row" role="group" aria-label="${label}">${inCat(cat).map(p => `<button class="pick__opt" type="button" data-set="${slot}" data-sku="${p.sku}" aria-pressed="${picks[i].sku === p.sku}" data-tone="${toneOf(p)}"><span class="tile">${shot(p, { small: true, use: "thumb" })}</span><span class="pick__name">${esc(p.name)}</span><span class="num">${whole(p.price)}</span></button>`).join("")}</div>
+        <div class="pick__row" role="group" aria-label="${label}">${setOpts(cat).map(p => `<button class="pick__opt" type="button" data-set="${slot}" data-sku="${p.sku}" aria-pressed="${picks[i]?.sku === p.sku}" data-tone="${toneOf(p)}"><span class="tile">${shot(p, { small: true, use: "thumb" })}${sticker(p)}</span><span class="pick__name">${esc(p.name)}</span></button>`).join("")}</div>
       </section>`).join("")}</div>
     <aside class="set__sum" data-set-summary>${setSummary()}</aside>
   </div>`;
@@ -432,7 +434,8 @@ function viewCart() {
       <div><dt>${pickup ? "Pickup" : local ? "Delivery" : "Shipping"}</dt><dd class="num">${pickup ? "Free" : local ? (localFee !== null ? feeText(localFee) : "At checkout") : chosen ? money(chosen.total) : checking ? "Checking" : state.dest && !carried(lines) ? "Choose pickup" : "add postal code"}</dd></div>
       <div class="totals__door"><dt>${local && localFee === null ? "Total before delivery and tax" : "Total before tax"}</dt><dd class="num">${local ? money(sub + (localFee || 0)) : chosen ? money(sub + chosen.total) : money(sub)}</dd></div>
     </dl>
-    ${ready ? `<a class="btn btn--wide" href="/checkout">Check out</a>` : `<button class="btn btn--wide" type="button" disabled>Check out</button>`}
+    ${!ready && !checking && !tooHeavy ? `<p class="fine" id="checkout-why">Add a postal code or choose pickup to check out.</p>` : ""}
+    ${ready ? `<a class="btn btn--wide" href="/checkout">Check out</a>` : `<button class="btn btn--wide" type="button" disabled ${!checking && !tooHeavy ? 'aria-describedby="checkout-why"' : ""}>Check out</button>`}
     <p class="fine">Tax is added at checkout.</p>
   </section>`;
 }
@@ -474,7 +477,7 @@ function syncChrome() {
     ? `<a class="dock__side" href="/shop/${prod.cat}">Back</a>${state.cart.some(l => l.sku === prod.sku)
         ? `<a class="dock__buy" href="/cart">In your cart. View cart</a>` : isSold(prod) ? `<a class="dock__buy dock__buy--off" href="/shop/${prod.cat}">Sold. See what is left</a>` : `<button class="dock__buy" type="button" data-add="${prod.sku}">Add to cart <span class="num">${whole(prod.price)}</span></button>`}<a class="dock__side" href="/cart" aria-label="Cart">${count}</a>`
     : ra === "set"
-    ? `<a class="dock__side" href="/shop">Shop</a><button class="dock__buy" type="button" data-add-set>Add the set <span class="num">${whole(setPicks().reduce((a, p) => a + p.price, 0))}</span></button><a class="dock__side" href="/cart" aria-label="Cart">${count}</a>`
+    ? `<a class="dock__side" href="/shop">Shop</a>${setPicks().some(Boolean) ? `<button class="dock__buy" type="button" data-add-set>Add the set <span class="num">${whole(setPicks().filter(Boolean).reduce((a, p) => a + p.price, 0))}</span></button>` : `<a class="dock__buy dock__buy--off" href="/shop">See what is in stock</a>`}<a class="dock__side" href="/cart" aria-label="Cart">${count}</a>`
     : ra === "cart" && lines.length
     ? `<a class="dock__side" href="/shop">Shop</a>${canPay ? `<a class="dock__buy" href="/checkout">Check out <span class="num">${money(sub + (ship ? ship.total : sc && sc.local ? sc.localFee || 0 : 0))}</span></a>` : sc && sc.checking ? `<span class="dock__buy dock__buy--off">Checking delivery</span>` : `<button class="dock__buy" type="button" data-open-postal>${state.dest ? "Change postal code" : "Add postal code for shipping"}</button>`}<span class="dock__side">${count}</span>`
     : `<a href="/" ${h === "#/" ? 'aria-current="page"' : ""}>Home</a><a href="/shop" ${h.startsWith("#/shop") ? 'aria-current="page"' : ""}>Shop</a><a href="/search" ${h === "#/search" ? 'aria-current="page"' : ""}>Search</a><a href="/cart" ${h === "#/cart" ? 'aria-current="page"' : ""}>Cart ${count}</a>`;
@@ -499,8 +502,7 @@ document.addEventListener("click", e => {
   const q = e.target.closest("[data-qty]"); if (q) setQty(q.dataset.qty, +q.dataset.n);
   const pk = e.target.closest("[data-set]");
   if (pk) { state.set[pk.dataset.set] = pk.dataset.sku; $$(`[data-set="${pk.dataset.set}"]`).forEach(b => b.setAttribute("aria-pressed", b === pk)); $("[data-set-summary]").innerHTML = setSummary(); syncChrome(); }
-  if (e.target.closest("[data-add-set]")) { setPicks().forEach(p => addToCart(p.sku)); navigate("/cart"); }
-  const nt = e.target.closest("[data-notify]"); if (nt) { nt.textContent = "Noted. We will let you know."; nt.disabled = true; }
+  if (e.target.closest("[data-add-set]")) { setPicks().filter(Boolean).forEach(p => addToCart(p.sku)); navigate("/cart"); }
 });
 document.addEventListener("input", e => {
   if (e.target.id === "q") { state.q = e.target.value; $("[data-search-out]").innerHTML = searchResults(); }
@@ -583,13 +585,14 @@ function viewCheckout() {
 }
 function viewOrder(id) {
   let o = null; try { o = JSON.parse(sessionStorage.getItem("oss:order:" + id)); } catch { o = null; }
-  if (!o) return `<section class="empty"><h1 class="h2 h2--xl">Order ${esc(id)}</h1><p class="lead">Thank you. The details are in your email. <a class="link" href="/shop">Back to the shop</a>.</p></section>`;
+  if (!o) return `<section class="empty"><h1 class="h2 h2--xl">Order ${esc(id)}</h1><p class="lead">Test order. No payment is taken, and nothing will be packed or sent.</p><p class="lead"><a class="link" href="/shop">Back to the shop</a>.</p></section>`;
   const c = n => money(n / 100);
   return `
   <section class="cart done">
     <p class="done__tag"><span>Order</span> <b class="num">${esc(o.id)}</b></p>
     <h1 class="h2 h2--xl">Thank you, ${esc(o.name.split(" ")[0])}.</h1>
-    <p class="lead">${o.method === "pickup" ? `We will email you when it is ready at ${SHOP_ADDRESS}. Bring this order number. ${directions()}` : o.service === "Local delivery" ? `${o.eta ? esc(o.eta) + ". " : ""}We will deliver it from our nearer Windsor shop and call if we need anything.` : `We pack it and send it by ${esc(o.service)}. Tracking comes by email${o.days ? `, and it should arrive in about ${days(o.days)}` : ""}.`}</p>
+    <p class="lead">Test order. No payment is taken, and nothing will be packed or sent.</p>
+    <p class="fine">${o.method === "pickup" ? `You chose free pickup at ${SHOP_ADDRESS}. ${directions()}` : o.service === "Local delivery" ? `You chose local delivery.${o.eta ? " On a real order: " + esc(o.eta) + "." : ""}` : `You chose ${esc(o.service)}.`}</p>
     <ul class="done__lines">${o.items.map(i => `<li><span><b class="num">${i.qty}</b> &times; ${esc(i.name)}</span><span class="num">${c(i.unit_cents * i.qty)}</span></li>`).join("")}</ul>
     <dl class="totals">
       <div><dt>Items</dt><dd class="num">${c(o.subtotal_cents)}</dd></div>
@@ -677,6 +680,7 @@ function render() {
   $("#main").innerHTML = a === "shop" ? (b && !catById[b] ? viewMissing() : viewShop(b)) : a === "p" ? viewProduct(b) : a === "cart" ? viewCart() : a === "shipping" ? viewShipping() : a === "gifts" ? viewGifts(b) : a === "set" ? viewSet() : a === "search" ? viewSearch() : a === "privacy" ? viewPrivacy() : a === "terms" ? viewTerms() : a === "checkout" ? viewCheckout() : a === "order" ? viewOrder(b) : !a ? viewHome() : viewMissing();
   document.body.dataset.route = a || "home";
   syncChrome();
+  const chip = $(".chips [aria-current]"); if (chip) chip.parentNode.scrollLeft = chip.offsetLeft - (chip.parentNode.clientWidth - chip.offsetWidth) / 2;   // the section you are in sits centred in the row
   if (keep) { const el = document.querySelector(keep); if (el) el.focus({ preventScroll: true }); }
   priceLocal();
 }
