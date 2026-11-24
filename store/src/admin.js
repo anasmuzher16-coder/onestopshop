@@ -287,14 +287,18 @@ export async function admin(request, env, url) {
     if (o.cancel_op && o.cancel_op === op) return json({ ok: true, status: "cancelled", replayed: true });
     // a pay-at-counter pickup is still "pending" (nothing paid): it can be cancelled too, which is the usual no-show
     if (!["paid", "packed", "ready"].includes(o.status) && !(o.status === "pending" && o.pay_status === "pay_at_pickup")) return json({ error: o.status === "cancelled" ? "This order is already cancelled." : "Only orders not yet sent or collected can be cancelled here." }, 409);
+    // Part of a counter payment already given back at the till: a cancel would count the order as given back whole while
+    // only that part is on the report, and a cancelled order takes no more till refunds. The rest is recorded as a till refund.
+    const tillPart = "NOT (COALESCE(pay_method, '') = 'at_pickup' AND COALESCE(pay_status, '') = 'part_refunded')";
+    if (o.pay_method === "at_pickup" && o.pay_status === "part_refunded") return json({ error: "Part of this order was already given back at the till. Record the rest as a counter refund instead of cancelling." }, 409);
     // Every statement asks the same question of the order as it was before this transaction: still open, never
     // cancelled. The order is flipped last. A retry, or a second tap, sees the flipped order and changes nothing.
-    const open = `EXISTS (SELECT 1 FROM orders WHERE id = ?1 AND (status IN ('paid','packed','ready') OR (status = 'pending' AND pay_status = 'pay_at_pickup' AND release_op IS NULL)) AND cancel_op IS NULL)`;
+    const open = `EXISTS (SELECT 1 FROM orders WHERE id = ?1 AND (status IN ('paid','packed','ready') OR (status = 'pending' AND pay_status = 'pay_at_pickup' AND release_op IS NULL)) AND cancel_op IS NULL AND ${tillPart})`;
     const res = await db.batch([
       db.prepare(`UPDATE products SET stock = stock + (SELECT qty FROM order_items i WHERE i.order_id = ?1 AND i.sku = products.sku), updated_at = ${NOW} WHERE sku IN (SELECT sku FROM order_items WHERE order_id = ?1) AND ${open}`).bind(m[1]),
       db.prepare(`INSERT INTO stock_moves (sku, delta, reason, ref, actor) SELECT sku, qty, 'released', ?1, ?2 FROM order_items WHERE order_id = ?1 AND ${open}`).bind(m[1], actor),
       db.prepare(`INSERT INTO audit_log (actor, action, target, before, after) SELECT ?2, 'order.cancel', ?1, ?3, ?4 WHERE ${open}`).bind(m[1], actor, JSON.stringify({ status: o.status }), JSON.stringify({ status: "cancelled", reason, ...(note ? { note } : {}) })),
-      db.prepare(`UPDATE orders SET status = 'cancelled', cancelled_at = ${NOW}, cancelled_by = ?3, cancel_reason = ?4, cancel_note = ?5, cancel_op = ?2, updated_at = ${NOW} WHERE id = ?1 AND (status IN ('paid','packed','ready') OR (status = 'pending' AND pay_status = 'pay_at_pickup' AND release_op IS NULL)) AND cancel_op IS NULL`).bind(m[1], op, actor, reason, note || null),
+      db.prepare(`UPDATE orders SET status = 'cancelled', cancelled_at = ${NOW}, cancelled_by = ?3, cancel_reason = ?4, cancel_note = ?5, cancel_op = ?2, updated_at = ${NOW} WHERE id = ?1 AND (status IN ('paid','packed','ready') OR (status = 'pending' AND pay_status = 'pay_at_pickup' AND release_op IS NULL)) AND cancel_op IS NULL AND ${tillPart}`).bind(m[1], op, actor, reason, note || null),
       db.prepare("SELECT status, cancel_op FROM orders WHERE id = ?1").bind(m[1]),
     ]);
     const now = res[4].results[0];

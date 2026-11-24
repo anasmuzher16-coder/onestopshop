@@ -33,12 +33,18 @@ async function signIn(email, from = ip()) {
 }
 // An order as a shopper places it. A card order is paid on the Stripe stand-in (tools/fake-stripe.mjs), whose signed
 // webhook marks it paid, so "placed" here means paid, as it does for a real shopper.
+// With no card keys (the live demo) a pickup is paid at the counter instead: the same order is placed that way and the
+// shop records the payment at the counter, so "placed" still means paid. Refunds then go back at the till (counter-refund).
+const CARD = /<meta name="oss-pay" content="card">/.test(await (await fetch(B + "/")).text());
 const order = async (body, cookie) => {
+  const counter = !CARD && body.method === "pickup" && body.pay === undefined; if (counter) body = { ...body, pay: "at_pickup" };
   const r = await fetch(B + "/api/orders", { method: "POST", headers: { "Content-Type": "application/json", ...(cookie ? { Cookie: cookie } : {}) }, body: JSON.stringify(body) });
   const out = { status: r.status, data: await r.json().catch(() => ({})) };
   if (out.status === 201 && out.data.pay?.url) { await fetch(out.data.pay.url, { method: "POST", redirect: "manual" }); await new Promise(res => setTimeout(res, 300)); }
+  if (out.status === 201 && counter) { const p = await adm(`/orders/${out.data.order.id}/paid`, "POST", {}); if (p.status !== 200) console.log("counter payment not recorded", out.data.order.id, p.status); }
   return out;
 };
+const refundTo = CARD ? "refund" : "counter-refund", refundWhy = CARD ? {} : { reason: "returned" };
 const points = async cookie => (await api("/me", { cookie })).data.loyalty;
 const opKey = () => "op-" + run + "-" + Math.random().toString(36).slice(2, 14);
 const login = await fetch(B + "/api/admin/login", { method: "POST", headers: { "Content-Type": "application/json", "X-OSS-Admin": "1", "CF-Connecting-IP": ip() }, body: JSON.stringify({ passcode: KEY }) }), admin = (login.headers.get("set-cookie") || "").split(";")[0];
@@ -211,11 +217,11 @@ await adm(`/orders/${e1.data.order.id}/status`, "POST", { status: "ready" }); aw
 ok((await points(erin)).points === e1pts, "a card order paid through Stripe and collected earns its points: " + e1pts);
 const paid1 = sql(`SELECT paid_cents FROM orders WHERE id = '${e1.data.order.id}'`)[0].paid_cents, half = Math.floor(paid1 / 2);
 const rep0 = (await adm("/report")).data.refunds;
-const rf1 = await adm(`/orders/${e1.data.order.id}/refund`, "POST", { op: opKey(), amount_cents: half });
+const rf1 = await adm(`/orders/${e1.data.order.id}/${refundTo}`, "POST", { op: opKey(), amount_cents: half, ...refundWhy });
 const rep1 = (await adm("/report")).data.refunds;
 ok(rep1.total === rep0.total + half && rep1.orders === rep0.orders, `the monthly report takes a part refund off the month, without counting a whole refunded order: ${rep0.total} -> ${rep1.total}`);
 ok(rf1.status === 200 && (await points(erin)).points === Math.floor(e1pts * (paid1 - half) / paid1), `a part refund takes back its share of the points: ${(await points(erin)).points} of ${e1pts}`);
-const rf2 = await adm(`/orders/${e1.data.order.id}/refund`, "POST", { op: opKey() });
+const rf2 = await adm(`/orders/${e1.data.order.id}/${refundTo}`, "POST", { op: opKey(), ...refundWhy });
 ok(rf2.status === 200 && rf2.data.order?.status === "refunded" && (await points(erin)).points === 0, "refunding the rest through the back office takes every point back");
 const rep2 = (await adm("/report")).data.refunds;
 ok(rep2.total === rep0.total + paid1 && rep2.orders === rep0.orders + 1, "once fully refunded, the report holds the whole amount and one refunded order");
@@ -224,8 +230,8 @@ ok(signMail && (await adm(`/emails/${signMail.id}`)).status === 404, "the back o
 const e2 = await order({ name: "Erin", email: erinEmail, method: "pickup", lines: [{ sku: mid.sku, qty: 1 }] }, erin), e2pts = Math.floor(mid.price_cents / 100);
 ok((await points(erin)).coming === e2pts, "a paid order's points are on the way");
 const cx = await adm(`/orders/${e2.data.order.id}/cancel`, "POST", { op: opKey(), reason: "customer" });
-ok(cx.status === 200 && cx.data.refund_owed === true && (await points(erin)).coming === 0, "cancelling a paid order in the back office voids its points, and says the card refund is still owed");
-await adm(`/orders/${e2.data.order.id}/refund`, "POST", { op: opKey() });
+ok(cx.status === 200 && cx.data.refund_owed === CARD && (await points(erin)).coming === 0, "cancelling a paid order in the back office voids its points, and says a card refund is still owed (a counter payment is handed back at the till)");
+await adm(`/orders/${e2.data.order.id}/${refundTo}`, "POST", { op: opKey(), ...refundWhy });
 ok((await points(erin)).points === 0 && (await points(erin)).coming === 0, "refunding the cancelled order changes nothing more: " + JSON.stringify(await points(erin)));
 const e3 = await order({ name: "Erin", email: erinEmail, method: "pickup", pay: "at_pickup", lines: [{ sku: mid.sku, qty: 1 }] }, erin);
 ok(e3.status === 201 && (await points(erin)).coming === e2pts, "an order to pay at the counter shows its points on the way");
@@ -260,6 +266,17 @@ const e6 = await order({ name: "Erin", email: erinEmail, method: "pickup", pay: 
 for (const step of [["status", { status: "ready" }], ["paid", {}], ["cancel", { op: opKey(), reason: "customer" }]]) await adm(`/orders/${e6id}/${step[0]}`, "POST", step[1]);
 const rep7 = (await adm("/report")).data.refunds;
 ok((await adm(`/orders/${e6id}/counter-refund`, "POST", { op: opKey(), reason: "returned" })).status === 409 && (await adm("/report")).data.refunds.total === rep7.total, "a cancelled order takes no counter refund: the report already counts it given back, and stays as it was");
+// part given back at the till, then a cancel: the cancel is refused (it would count the order whole while only the part
+// is on the report, and lock the rest out), and the rest can still be recorded as a counter refund
+const e7 = await order({ name: "Erin", email: erinEmail, method: "pickup", pay: "at_pickup", lines: [{ sku: mid.sku, qty: 1 }] }, erin), e7id = e7.data.order.id;
+for (const step of [["status", { status: "ready" }], ["paid", {}]]) await adm(`/orders/${e7id}/${step[0]}`, "POST", step[1]);
+const paid7 = sql(`SELECT paid_cents FROM orders WHERE id = '${e7id}'`)[0].paid_cents, stock7 = sql(`SELECT stock FROM products WHERE sku = '${mid.sku}'`)[0].stock;
+const cr7 = await adm(`/orders/${e7id}/counter-refund`, "POST", { op: opKey(), amount_cents: Math.floor(paid7 / 2), reason: "one returned" });
+const rep8 = (await adm("/report")).data.refunds, can7 = await adm(`/orders/${e7id}/cancel`, "POST", { op: opKey(), reason: "customer" });
+const o7 = sql(`SELECT status, pay_status FROM orders WHERE id = '${e7id}'`)[0];
+ok(cr7.status === 200 && can7.status === 409 && o7.status === "ready" && o7.pay_status === "part_refunded" && sql(`SELECT stock FROM products WHERE sku = '${mid.sku}'`)[0].stock === stock7 && (await adm("/report")).data.refunds.total === rep8.total, "an order part refunded at the till cannot be cancelled: no restock, the report unchanged: " + JSON.stringify({ cancel: can7.status, o7 }));
+const cr7b = await adm(`/orders/${e7id}/counter-refund`, "POST", { op: opKey(), reason: "the rest returned" });
+ok(cr7b.status === 200 && cr7b.data.order?.status === "refunded" && (await adm("/report")).data.refunds.total === rep8.total + (paid7 - Math.floor(paid7 / 2)), "the rest is recorded as a counter refund and the report holds the whole order");
 ok((await adm(`/orders/${e5id}`)).data.trail.some(a => a.action === "order.counter_refund" && a.actor === "owner"), "the counter refund is in the order's history with who recorded it");
 
 // ---- 8. sign out, sign out everywhere, delete
