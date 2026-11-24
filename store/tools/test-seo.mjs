@@ -50,7 +50,8 @@ const supplier = new Map(); for (const fam of master.families) for (const v of f
 // ---------- 1 robots, sitemap, noindex while not live ----------
 const rb = await get("/robots.txt");
 ok(rb.r.status === 200 && /^text\/plain/.test(rb.r.headers.get("content-type") || ""), "robots.txt is served as text: " + rb.r.status);
-for (const line of ["Disallow: /admin", "Disallow: /api/", "Allow: /api/catalog-module", "Allow: /api/photo/", "Disallow: /account", "Disallow: /checkout", "Disallow: /cart", "Disallow: /order/"]) ok(rb.t.split("\n").includes(line), "robots.txt: " + line);
+for (const line of ["Disallow: /admin", "Disallow: /api/", "Allow: /api/catalog-module", "Allow: /api/photo/", "Disallow: /account", "Disallow: /checkout"]) ok(rb.t.split("\n").includes(line), "robots.txt: " + line);
+ok(!/Disallow: \/(cart|order)/.test(rb.t), "robots.txt leaves /cart and /order/ crawlable so their noindex is seen (the cart is linked from every page)");
 ok(!/Sitemap:/i.test(rb.t), "demo: robots.txt names no sitemap");
 ok(!/Disallow: \/\s*$/m.test(rb.t), "robots.txt never blocks the whole shop (Google must reach the noindex on each page)");
 const sm = await get("/sitemap.xml"); ok(sm.r.status === 404, "demo: no sitemap: " + sm.r.status);
@@ -84,9 +85,9 @@ let badShape = [], offerWrong = [], tbdLeak = [], supplierLeak = [], ssrWrong = 
 const checkProduct = async p => {
   const g = await get("/p/" + p.sku); if (g.r.status !== 200) { ssrWrong.push(p.sku + " " + g.r.status); return; }
   const all = lds(g.t), prod = all.find(x => x["@type"] === "Product"), crumbs = all.find(x => x["@type"] === "BreadcrumbList"), m = mainOf(g.t);
-  if (!prod) { badShape.push(p.sku + " no Product"); return; }
-  const e = shape(prod, p.sku); if (e.length) badShape.push(...e);
-  if (!prod.name || !prod.sku || prod.sku !== p.sku || (prod.image && !prod.image.every(abs))) badShape.push(p.sku + " name/sku/image");
+  // Product data only for an item on sale (Google needs an offer); Price TBD and Coming soon items carry none at all
+  if (p.state === "sale" && !prod) { badShape.push(p.sku + " on sale but no Product"); return; }
+  if (prod) { const e = shape(prod, p.sku); if (e.length) badShape.push(...e); if (!prod.name || !prod.sku || prod.sku !== p.sku || (prod.image && !prod.image.every(abs))) badShape.push(p.sku + " name/sku/image"); }
   const lead = p.family ? P.find(x => x.family === p.family && x.lead).sku : p.sku, canon = (g.t.match(/<link rel="canonical" href="([^"]+)">/) || [])[1];
   if (!canon || !canon.endsWith("/p/" + lead) || !abs(canon)) canonWrong.push(`${p.sku} -> ${canon}`);
   if (p.state === "sale") {
@@ -96,8 +97,10 @@ const checkProduct = async p => {
     const money = "$" + p.price.toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     if (!m.includes(`<h1>${p.name.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</h1>`) || !m.includes(money)) ssrWrong.push(p.sku + " sale block");
   } else {
-    // Price TBD / coming soon: no offer, no price, no "$" anywhere in the written content or the data
-    if (prod.offers || /"price"/.test(JSON.stringify(all)) || /\$\d/.test(m)) tbdLeak.push(p.sku);
+    // Price TBD / coming soon: no Product, no offer, no price in the data; a TBD item has no "$" in the written content
+    // or the descriptions either (a coming-soon item may show the shop's own price, as its page sticker does)
+    const desc = (g.t.match(/<meta property="og:description" content="([^"]*)"/) || ["", ""])[1] + (g.t.match(/<meta name="description" content="([^"]*)"/) || ["", ""])[1];
+    if (prod || /"price"|"offers"/.test(JSON.stringify(all)) || (p.state === "tbd" && (/\$\d/.test(m) || /\$\d/.test(desc)))) tbdLeak.push(p.sku);
     if (p.state === "tbd" && !m.includes("Price TBD")) ssrWrong.push(p.sku + " says no Price TBD");
   }
   if (supplier.has(p.sku)) { const sp = supplier.get(p.sku) / 100, txt = JSON.stringify(all) + m + (g.t.match(/<meta property="og:description" content="([^"]*)"/) || ["", ""])[1]; if (txt.includes("$" + sp.toFixed(2)) || txt.includes(`"${sp.toFixed(2)}"`) || txt.includes(`"price":${sp}`)) supplierLeak.push(p.sku); }
@@ -118,7 +121,9 @@ ok(shareWrong.length === 0, "share image: absolute, and the item's own card when
 
 // ---------- 4 section pages ----------
 for (const c of C) {
-  const g = await get("/shop/" + c.id), m = mainOf(g.t), want = shelf.filter(p => p.cat === c.id), links = [...m.matchAll(/<li><a href="\/p\/(OSS-\d+)"/g)].map(x => x[1]);
+  const g = await get("/shop/" + c.id), m = mainOf(g.t);
+  ok(!/in stock/i.test(m + (g.t.match(/<meta name="description" content="([^"]*)"/) || ["", ""])[1]), `/shop/${c.id}: the section never claims its items are in stock (some may be sold out)`);
+  const want = shelf.filter(p => p.cat === c.id), links = [...m.matchAll(/<li><a href="\/p\/(OSS-\d+)"/g)].map(x => x[1]);
   if (!want.length) continue;
   ok(links.length === want.length && want.every(p => links.includes(p.sku)), `/shop/${c.id}: one entry per item a shopper sees (${links.length} of ${want.length})`);
   ok(want.filter(p => p.state === "tbd").every(p => new RegExp(`/p/${p.sku}"[^]*?</a> <span>Price TBD</span>`).test(m)), `/shop/${c.id}: TBD items say Price TBD, never a number`);
@@ -149,6 +154,7 @@ const sh = await fetch(B + "/img/share.jpg"), shb = Buffer.from(await sh.arrayBu
 const feed = await fetch(B + "/api/catalog"), tag = feed.headers.get("etag"), fj = await feed.json();
 ok(feed.headers.get("cache-control") === "no-cache" && /^"f[0-9a-z]+-\d+"$/.test(tag || ""), "feed: tagged and always checked (never stale stock): " + feed.headers.get("cache-control") + " " + tag);
 ok((await fetch(B + "/api/catalog", { headers: { "If-None-Match": tag } })).status === 304, "feed: an unchanged feed answers 304 without the body");
+ok((await fetch(B + "/api/catalog", { headers: { "If-None-Match": `"old", W/${tag}` } })).status === 304, "feed: a list of tags, weak or strong, still matches");
 const KEYS = ["sku", "name", "category_id", "price_cents", "weight_g", "box_id", "glass", "ship_class", "height_cm", "note", "img", "stock", "for_sale", "details"];
 ok(fj.products.every(p => Object.keys(p).every(k => KEYS.includes(k))), "feed: only public fields (no cost, supplier, facts or switches)");
 const DET = ["charcoal", "brand", "variant", "shape", "box_sku", "photo", "description", "ml", "kind", "notes"];
@@ -161,9 +167,11 @@ ok(!JSON.stringify(fj).match(/supplier|cost_cents|facts_known|photo_rights|sourc
 const seo = await import(new URL("../src/seo.js", import.meta.url));
 const u = s => new URL(s), demo = u("https://onestopshop-store.anas-dev.workers.dev/p/OSS-9601"), own = u("https://shop.example.ca/p/OSS-9601");
 ok(!seo.liveHere({ LIVE: "0" }, own), "LIVE 0: nothing is indexable");
+for (const bad of ["shop.example.ca", "http://shop.example.ca", "https://shop.example.ca:443", "https://shop.example.ca/shop", "javascript:alert(1)"])
+  ok(!seo.liveHere({ LIVE: "1", SITE_ORIGIN: bad }, demo) && !seo.liveHere({ LIVE: "1", SITE_ORIGIN: bad }, own) && seo.siteOrigin({ SITE_ORIGIN: bad }, demo) === demo.origin && !seo.robots({ LIVE: "1", SITE_ORIGIN: bad }, demo).includes("Sitemap:"), `a malformed SITE_ORIGIN (${bad}) fails closed: nothing indexable, no sitemap`);
 ok(seo.liveHere({ LIVE: "1" }, own), "LIVE 1 with no SITE_ORIGIN: the address asked for is the shop's");
 ok(seo.liveHere({ LIVE: "1", SITE_ORIGIN: "https://shop.example.ca" }, own) && !seo.liveHere({ LIVE: "1", SITE_ORIGIN: "https://shop.example.ca" }, demo), "LIVE 1 with SITE_ORIGIN: only the shop's own address is indexable, the workers.dev copy is not");
-ok(seo.siteOrigin({ SITE_ORIGIN: "https://Shop.Example.ca/" }, demo) === "https://shop.example.ca" && seo.siteOrigin({ SITE_ORIGIN: "javascript:alert(1)" }, demo) === demo.origin && seo.siteOrigin({ SITE_ORIGIN: "https://x.ca/path" }, demo) === demo.origin && seo.siteOrigin({ SITE_ORIGIN: "http://shop.example.ca" }, demo) === demo.origin, "SITE_ORIGIN: an https host only; anything else falls back to the request");
+ok(seo.siteOrigin({ SITE_ORIGIN: "https://Shop.Example.ca/" }, demo) === "https://shop.example.ca", "SITE_ORIGIN: https://host, case and one trailing slash forgiven");
 const env = { LIVE: "1", SITE_ORIGIN: "https://shop.example.ca" };
 ok(seo.robots(env, own).includes("Sitemap: https://shop.example.ca/sitemap.xml") && !seo.robots(env, demo).includes("Sitemap:"), "live: robots.txt names the sitemap on the shop's address only");
 const fake = { categories: C.map(c => ({ id: c.id, name: c.name, tone: c.tone })), boxes: [], products: [] };
@@ -178,7 +186,7 @@ ok(locs.includes("https://shop.example.ca/shop/bowls") && locs.includes("https:/
 const s1 = seo.seoFor({ env, url: u("https://onestopshop-store.anas-dev.workers.dev/p/OSS-100002"), cat: fake, meta: { title: "x", desc: "x", index: true, product: fake.products[2] }, site: "One Stop Shop" });
 ok(s1.canonical === "https://shop.example.ca/p/OSS-100001", "canonical on the demo address points at the shop's own address and the family lead: " + s1.canonical);
 const s2 = seo.seoFor({ env, url: own, cat: fake, meta: { title: "x", desc: "x", index: true, product: fake.products[3] }, site: "One Stop Shop" });
-ok(!/"offers"/.test(s2.head.join("")) && /Coming soon/.test(s2.body) && !/\$9\.99/.test(s2.body), "a priced item not switched on: no offer, says Coming soon, no price in the written content");
+ok(!/"offers"|"Product"/.test(s2.head.join("")) && /\$9\.99, coming soon/.test(s2.body), "a priced item not switched on: no Product or offer data; the written content says its shop price, coming soon, as the page does");
 
 // ---------- 8 a second store started with LIVE "1" (optional) ----------
 if (BL) {

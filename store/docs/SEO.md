@@ -19,14 +19,18 @@ What changes on its own when the switches flip: the `<meta name="robots">` tag a
 indexable pages, `/sitemap.xml` answers, `robots.txt` names it, and canonical, `og:url` and every structured-data address
 use `SITE_ORIGIN`. The `workers.dev` address keeps `noindex` and points its canonical at the domain, so the two copies
 never compete. Until both switches are set, every page says `noindex, nofollow` and there is no sitemap.
-`SITE_ORIGIN` accepts only `https://host`; anything else is ignored and the request's own address is used.
+`SITE_ORIGIN` must be exactly `https://host` (one trailing slash is forgiven). Left empty, the request's own address is
+used. Set but malformed (no scheme, `http`, a port or a path), it fails closed: nothing is indexable anywhere and the
+Worker logs the problem, so a typo can never put the workers.dev copy into search.
 
 ## Rulings built in (owner)
 
 - Never a supplier price. The catalogue the pages read (`loadCatalog`) does not select the supplier price column, and
   `test-seo` checks every Ace page against the master file's supplier prices.
-- No price for Price TBD or Coming soon items: no `Offer` at all, no price in the written content, the words "Price TBD"
-  or "Coming soon" instead. An item is offered only when it is switched on with the shop's own price (`sellable`).
+- No price for Price TBD items: no Product data, no `Offer`, no price in the written content or the descriptions, the
+  words "Price TBD" instead. A Coming soon item (the shop has set its price but not switched it on) shows that shop price
+  with "coming soon", exactly as its page sticker does, and also gets no Product data or `Offer`. An item is offered
+  only when it is switched on with the shop's own price (`sellable`).
 - Availability only from the shop's own count: `InStock` when stock is above 0, else `OutOfStock`. Never assumed.
 - No ID or age wording and no health claims: nothing new is said about products. The written content repeats the
   product's own name, description and price line exactly as the page shows them.
@@ -39,7 +43,7 @@ content into `<main>`: home (the shop, its sections, address and phone), Everyth
 each section (one entry per item a shopper sees, with its photo, name and price or "Price TBD") and each product (trail,
 name, photo, description, price line, how it is delivered).
 
-It does not change how the page looks. A style in the head hides `.ssr` before the body is parsed, and the page's own
+It does not change how the page looks (checked with screenshots at 390 and 1440, JavaScript on and off). A style in the head hides `.ssr` before the body is parsed, and the page's own
 render replaces `<main>` the moment it runs, so nobody with JavaScript ever sees it. Without JavaScript a `<noscript>`
 style shows it. Its pictures are `loading="lazy"` inside a hidden block, so browsers never download them for people;
 crawlers read the addresses from the HTML. `#main` keeps its full-screen height while only the copy is in it (the same
@@ -58,13 +62,15 @@ crawlable even though `/api/` is disallowed: "Google Search won't render JavaScr
 - **Return policy**: `MerchantReturnNotPermitted`, country CA, on the Store (merchant level; a product-level policy is
   only for overrides [G-ML]). The terms say all sales are final except faulty, wrong, damaged or undelivered items; those
   are legal remedies, not a return window, so "returns not permitted" is the honest category.
-- **Product** on every product page: name, sku, url, description (the shop's own words), image (the product photo, not the
+- **Product** on the page of every item on sale (only those: see Offer below): name, sku, url, description (the shop's own words), image (the product photo, not the
   share card), brand only where the record has one (charcoal and shisha; Ace items carry other brands' names that the
   shop has not confirmed, plan section 8, so none is stated).
 - **Offer**, only for items on sale: `price` (shop price, two decimals), `priceCurrency` CAD, `availability`,
   `itemCondition` New, `url`, `seller` and `availableAtOrFrom` (the Store), `availableDeliveryMethod` OnSitePickup, plus
-  ParcelService for items that ship. Merchant listings require an Offer with a price above zero [G-ML]; a page without
-  an offer is simply not eligible for price rich results, which is the correct outcome for Price TBD items [G-PS].
+  ParcelService for items that ship. Merchant listings require an Offer with a price above zero [G-ML], and product
+  snippets require an offer, a review or a rating [G-PS]. The shop collects no reviews, so a Price TBD or Coming soon
+  item gets no Product data at all (a Product with none of the three is reported as an invalid item). Its name,
+  description and photo are still in the page and the written content, and its breadcrumbs are marked up.
 - **Shipping details are not marked up.** Google's `OfferShippingDetails` needs a fixed rate, destination and delivery
   time [G-ML]; ours are live Canada Post quotes and a distance-priced local delivery. Stating a rate we do not charge would
   be worse than none. Set shipping in Merchant Center if the shop opens a merchant feed.
@@ -84,11 +90,13 @@ or a parent type, and every enumeration value (`availability`, `itemCondition`, 
 
 ## 3. robots.txt and the sitemap
 
-`/robots.txt` (Worker route) disallows `/admin`, `/api/` (except the catalogue module and photos), `/account`,
-`/checkout`, `/cart` and `/order/`, and names the sitemap only when live. It never blocks the whole site: a page blocked
-in robots.txt can still be listed from links because the crawler "will never see the noindex rule" [G-NOINDEX], so the
-demo relies on `noindex` on every page instead. Private pages are both disallowed and `noindex`, the common pattern for
-carts and checkouts.
+`/robots.txt` (Worker route) disallows `/admin`, `/api/` (except the catalogue module and photos), `/account` and
+`/checkout`, and names the sitemap only when live. It never blocks the whole site: a page blocked in robots.txt can still
+be listed from links because the crawler "will never see the noindex rule" [G-NOINDEX], so the demo relies on `noindex`
+on every page instead. For the same reason `/cart` and `/order/` are not blocked: the cart is linked from every page, so
+it stays crawlable and its `noindex` is seen. The trade-off on `/account` (also linked from every page) is accepted as
+briefed: it is disallowed and `noindex`; if Search Console ever lists it as "indexed, though blocked by robots.txt", drop
+its Disallow line and let the `noindex` work.
 
 `/sitemap.xml` exists only when live on the shop's own address. It lists only indexable pages, absolute and canonical
 [G-SM]: home, Everything, each section with something on view, Build a set, shipping, terms, privacy, and each item a
@@ -99,9 +107,13 @@ shopper can open (one per hookah family). Never cart, checkout, account, search,
 
 Facebook asks for at least 1200 x 630, close to 1.91:1, and caches images by URL, so a changed image needs a new URL
 [FB]. The product photos are 720 x 900 portraits, which previews crop to a slice of the middle. `tools/build-share.py`
-draws a 1200 x 630 card for every photo: coal ground, ONE STOP with SHOP on the counter sticker (the site's device, as in
-the favicon), the address, and the product standing on the bone tile. The shop's chassis never changes; the product is
-the one thing that does. No price and no product name on the card: prices change in the back office and an image cannot
+draws a 1200 x 630 card for every photo. The shop's chassis never changes; the product is the one thing that does.
+After an atelier design review (REJECT on the first version: a generic red block instead of the
+shop's label, products cut in half by square crops, uneven product sizes) the card was redrawn: the product, cropped to
+what is actually drawn and fitted by its longer side, stands on a shelf with a contact shadow; the shop's real price-gun
+label (white stock, ember ONE STOP band, perforation, SHOP in ink, -6 degrees, drop shadow) is stuck on the tile's
+corner; both sit inside the centred square (x 285 to 915) that small iMessage and WhatsApp previews keep; the address
+runs in Readex Pro across a coal band at the foot. No price and no product name on the card: prices change in the back office and an image cannot
 follow; the preview prints the page title beside it. The shop's own card (`img/share.jpg`, used by home, sections and
 items without a photo) now shows three of the shop's ticked Ace hookahs instead of the retired sample hookahs.
 
@@ -125,9 +137,10 @@ address as the page, so the browser reuses that download.
 
 It was rebuilt as JSON on every request with `public, max-age=30`, so a browser could show stock 30 seconds old. It is now
 written once per copy of the catalogue (the same shared copy the pages use) and tagged: `Cache-Control: no-cache` with an
-`ETag`, so a reader always checks and an unchanged feed answers `304` with no body. Only public fields go out (an
-allowlist), items off sale show stock 0 and no price, and the import's placeholder weights (1 g, 2,500 g for unweighed
-hookahs) are `null`: unknown is not a fact.
+`ETag`, so a reader always checks and an unchanged feed answers `304` with no body (a list of tags in `If-None-Match`
+works too). Only public fields go out (an allowlist); items off sale show stock 0; Price TBD items show no price (a
+Coming soon item keeps its shop price, as on its page); the import's placeholder weights (1 g, 2,500 g for unweighed
+hookahs) are `null`: unknown is not a fact. Section descriptions no longer say "in stock": they counted sold-out items.
 
 ## 7. "Show more" after 48 cards: not built
 

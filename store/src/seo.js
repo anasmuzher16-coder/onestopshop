@@ -11,13 +11,15 @@ const SHOP = { phone: "+1-519-255-2222", street: "760 Wyandotte St E", city: "Wi
   geo: { latitude: 42.3179407, longitude: -83.0263116 }, sameAs: ["https://www.instagram.com/one1_stop_shop/", "https://www.tiktok.com/@onestopshop6"] };
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
-// The shop's own address when it is set and well-formed (https, a host, nothing else); otherwise the address asked for.
-export function siteOrigin(env, url) {
-  const o = String(env.SITE_ORIGIN || "").trim().replace(/\/+$/, "");
-  return /^https:\/\/[a-z0-9.-]+\.[a-z]{2,}$/i.test(o) ? o.toLowerCase() : url.origin;
-}
-// Whether this request may be indexed at all: the shop is live and this is its own address.
-export const liveHere = (env, url) => env.LIVE === "1" && siteOrigin(env, url) === url.origin;
+// SITE_ORIGIN: empty means "the address asked for"; set, it must be exactly https://host (one trailing slash allowed).
+const setting = env => { const raw = String(env.SITE_ORIGIN || "").trim(), o = raw.replace(/\/$/, "");
+  return !raw ? { set: false } : /^https:\/\/[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}$/i.test(o) ? { set: true, ok: true, origin: o.toLowerCase() } : { set: true, ok: false }; };
+// The address canonicals, the sitemap and share images use.
+export function siteOrigin(env, url) { const s = setting(env); return s.ok ? s.origin : url.origin; }
+// Whether this request may be indexed at all: the shop is live and this is its own address. A SITE_ORIGIN that is set but
+// malformed fails closed (nothing is indexable anywhere) instead of letting the workers.dev copy into search.
+export const liveHere = (env, url) => { if (env.LIVE !== "1") return false; const s = setting(env); return !s.set || (s.ok && s.origin === url.origin); };
+export const originProblem = env => { const s = setting(env); return s.set && !s.ok ? `SITE_ORIGIN "${env.SITE_ORIGIN}" is not https://host: every page stays noindex until it is fixed` : ""; };
 
 const esc = s => String(s ?? "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 const money = cents => "$" + (cents / 100).toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -53,7 +55,7 @@ export function shareImage(origin, p, site) {
 // What a shopper is told about an item's price, in the same words as the shop: the shop's own price, or that it is not set.
 function priceWords(p) {
   if (sellable(p)) return `${money(p.price_cents)}${p.stock > 0 ? "" : ", sold out"}`;
-  return p.price_cents > 0 ? "Coming soon" : "Price TBD";
+  return p.price_cents > 0 ? `${money(p.price_cents)}, coming soon` : "Price TBD";   // the shop's own price, as the page's sticker shows it
 }
 
 // ---------- JSON-LD ----------
@@ -71,13 +73,17 @@ export function storeLd(origin, site) {
     // All sales final, except faulty, wrong, damaged or undelivered items (terms of sale): no change-of-mind returns.
     hasMerchantReturnPolicy: { "@type": "MerchantReturnPolicy", applicableCountry: "CA", returnPolicyCategory: "https://schema.org/MerchantReturnNotPermitted" } };
 }
+// Only for an item on sale. Google's product results need an offer (or reviews, which the shop does not collect), so a
+// Price TBD or Coming soon item gets no Product data at all rather than an invalid item in Search Console; its name,
+// description and photo are still in the page and the written content.
 export function productLd(origin, p, site, canonical) {
+  if (!sellable(p)) return null;
   const img = photoUrl(origin, p), brand = parse(p.details).brand, desc = describeText(p);
   const o = { "@context": "https://schema.org", "@type": "Product", name: p.name, sku: p.sku, url: canonical, ...(desc ? { description: desc } : {}), ...(img ? { image: [img] } : {}),
     ...(brand ? { brand: { "@type": "Brand", name: String(brand) } } : {}) };
-  // An offer only for an item on sale at the shop's own price. "Price TBD" and "Coming soon" items have no offer at all:
-  // no price is guessed, and the supplier's price never reaches this page (loadCatalog does not even read it).
-  if (sellable(p)) o.offers = { "@type": "Offer", url: canonical, price: (p.price_cents / 100).toFixed(2), priceCurrency: "CAD", itemCondition: "https://schema.org/NewCondition",
+  // The offer: the shop's own price only. No price is ever guessed, and the supplier's price never reaches this page
+  // (loadCatalog does not even read it).
+  o.offers = { "@type": "Offer", url: canonical, price: (p.price_cents / 100).toFixed(2), priceCurrency: "CAD", itemCondition: "https://schema.org/NewCondition",
     availability: "https://schema.org/" + (p.stock > 0 ? "InStock" : "OutOfStock"),   // the shop's own count, never assumed
     availableDeliveryMethod: counterRow(p) ? "https://schema.org/OnSitePickup" : ["https://schema.org/OnSitePickup", "https://schema.org/ParcelService"],
     availableAtOrFrom: storeRef(origin, site), seller: storeRef(origin, site) };
@@ -92,7 +98,9 @@ export function crumbsLd(trail) {
 // scripts and for anyone without JavaScript. It sits inside <main>, hidden by a style in the head; the page replaces it
 // the moment it draws, so nobody with JavaScript ever sees it. Without JavaScript the <noscript> style shows it.
 // (#main keeps the full-screen height it has while empty, styles.css #main:empty, so the footer never jumps.)
-export const SSR_STYLE = `<style>.ssr{display:none}#main:has(>.ssr:only-child){min-height:100svh}</style><noscript><style>.ssr{display:block;padding:24px var(--gutter,16px)}.ssr img{max-width:180px;height:auto}.ssr ul{list-style:none;padding:0}.ssr li{margin:0 0 16px}</style></noscript>`;
+export const SSR_STYLE = `<style>.ssr{display:none}#main:has(>.ssr:only-child){min-height:100svh}</style><noscript><style>.ssr{display:block;padding:var(--s-6,24px) var(--gutter,16px) var(--s-12,48px)}.ssr h1{font:400 var(--t-d1,2rem)/1 var(--font-display,sans-serif);margin:var(--s-4,16px) 0}.ssr p{max-width:65ch}`
+  + `.ssr ol{display:flex;flex-wrap:wrap;gap:var(--s-2,8px);list-style:none;padding:0;margin:0;font-size:var(--t-14,.875rem)}.ssr ol li+li::before{content:"/";margin-right:var(--s-2,8px);color:var(--color-muted,#999)}.ssr ol li{white-space:nowrap}.ssr ol a{display:inline;padding:0;margin:0;min-height:0;min-width:0}`
+  + `.ssr ul{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:var(--s-6,24px) var(--s-4,16px);list-style:none;padding:0}.ssr li a{display:block}.ssr li img{display:block;width:100%;height:auto;background:var(--bonelt,#eee);margin-bottom:var(--s-2,8px)}article.ssr>img{display:block;width:100%;max-width:360px;height:auto;background:var(--bonelt,#eee)}</style></noscript>`;
 const crumbNav = trail => `<nav aria-label="Breadcrumb"><ol>${trail.map(([name, href], i) => `<li>${i === trail.length - 1 ? `<span aria-current="page">${esc(name)}</span>` : `<a href="${esc(href)}">${esc(name)}</a>`}</li>`).join("")}</ol></nav>`;
 const item = p => { const src = smallUrl(p); return `<li><a href="/p/${esc(p.sku)}">${src ? `<img src="${esc(src)}" alt="${esc(p.name)}" width="360" height="450" loading="lazy" decoding="async">` : ""}${esc(p.name)}</a> <span>${esc(priceWords(p))}</span></li>`; };
 
@@ -119,7 +127,8 @@ export function seoFor({ env, url, cat, meta, site }) {
   } else if (a === "p" && meta.product) {
     const p = meta.product, c = cat.categories.find(x => x.id === p.category_id), sku = canonicalSku(cat, p.sku), canon = `${origin}/p/${sku}`;
     out.canonical = canon; out.share = shareImage(origin, p, site);
-    out.head.push(ld(productLd(origin, p, site, canon)), ld(crumbsLd([...home, ...(c ? [[c.name, `${origin}/shop/${c.id}`]] : []), [p.name, canon]])));
+    const pl = productLd(origin, p, site, canon);
+    out.head.push(...(pl ? [ld(pl)] : []), ld(crumbsLd([...home, ...(c ? [[c.name, `${origin}/shop/${c.id}`]] : []), [p.name, canon]])));
     const src = photoUrl("", p), desc = describeText(p);
     out.body = `<article class="ssr">${crumbNav([["Home", "/"], ...(c ? [[c.name, `/shop/${c.id}`]] : []), [p.name, `/p/${p.sku}`]])}<h1>${esc(p.name)}</h1>${src ? `<img src="${esc(src)}" alt="${esc(p.name)}" width="720" height="900" loading="lazy" decoding="async">` : ""}`
       + `${desc ? `<p>${esc(desc)}</p>` : ""}<p>${esc(priceWords(p))}</p>${sellable(p) ? `<p>${counterRow(p) ? "Pickup in Windsor or local delivery near Windsor. Not shipped." : "Shipped across Canada, or free pickup in Windsor."}</p>` : `<p>Ask the counter: <a href="tel:+15192552222">519-255-2222</a>.</p>`}</article>`;
@@ -132,7 +141,9 @@ export function robots(env, url) {
   const live = liveHere(env, url);
   // Private pages and the data routes stay out. The page needs /api/catalog-module to draw its shelves and /api/photo for
   // uploaded photos, so those two stay crawlable (a blocked script means a blank page to Google's renderer).
-  const lines = ["User-agent: *", "Disallow: /admin", "Disallow: /api/", "Allow: /api/catalog-module", "Allow: /api/photo/", "Disallow: /account", "Disallow: /checkout", "Disallow: /cart", "Disallow: /order/"];
+  const lines = ["User-agent: *", "Disallow: /admin", "Disallow: /api/", "Allow: /api/catalog-module", "Allow: /api/photo/", "Disallow: /account", "Disallow: /checkout"];
+  // /cart and /order/ are NOT blocked: the cart is linked from every page, and a blocked page can still be listed from
+  // its links because the crawler never sees its noindex (docs/SEO.md). They stay crawlable and say noindex instead.
   if (live) lines.push("", `Sitemap: ${siteOrigin(env, url)}/sitemap.xml`);
   return lines.join("\n") + "\n";
 }

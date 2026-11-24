@@ -1,7 +1,7 @@
 // One Stop Shop store Worker. Answers the page routes (each with its own title, description and a real 404),
 // serves the catalogue from the database, and passes every other request to the static files.
 import { shopCatalog, dropCatalog, catalogModule, counterRow, sellable, weightUnknown, CHARCOAL } from "./catalog.js";
-import { seoFor, liveHere, robots, sitemap, view, SSR_STYLE } from "./seo.js";
+import { seoFor, liveHere, robots, sitemap, view, SSR_STYLE, originProblem } from "./seo.js";
 import { heroPicks } from "../public/picks.js";
 import { admin, photo, signedIn } from "./admin.js";
 import { accountRoute, stockAlerts, restockReminders, scrubCodes } from "./account.js";
@@ -33,7 +33,7 @@ function describe(path, cat, site) {
     const list = cat.products.filter(p => p.category_id === c.id), n = new Set(list.map(p => p.family && p.family.startsWith("ace-") ? p.family : p.sku)).size, counter = n && list.every(counterRow);
     // nothing in this section can be bought yet: say what stage it is at, never "in stock"
     if (n && !list.some(sellable)) return { title: `${c.name} | ${site}`, desc: list.some(p => p.price_cents > 0) ? `${n} ${c.name.toLowerCase()} coming soon to our Windsor counter.` : `${n} ${c.name.toLowerCase()} from the catalogue. Shop prices are on the way.`, index: true };
-    return { title: `${c.name} | ${site}`, desc: counter ? `${n} ${c.id === CHARCOAL ? "kinds of hookah charcoal and foil" : c.name.toLowerCase()} at our Windsor counter. Pickup or local delivery only.` : `${n} ${c.name.toLowerCase()} in stock at our Windsor counter, shipped anywhere in Canada.`, index: true };
+    return { title: `${c.name} | ${site}`, desc: counter ? `${n} ${c.id === CHARCOAL ? "kinds of hookah charcoal and foil" : c.name.toLowerCase()} at our Windsor counter. Pickup or local delivery only.` : `${n} ${c.name.toLowerCase()} at our Windsor counter, shipped anywhere in Canada.`, index: true };
   }
   if (a === "p") {
     const p = cat.products.find(x => x.sku === b); if (!p) return null;
@@ -63,7 +63,7 @@ async function page(request, env, url, ctx) {
   if (!d) { const to = await retiredTo(env, url.pathname); if (to) return new Response(null, { status: 301, headers: { ...SECURITY, Location: url.origin + to, "Cache-Control": "public, max-age=3600", "X-Robots-Tag": "noindex, nofollow" } }); }
   const meta = d || { title: `Page not found | ${site}`, desc: "That page does not exist.", index: false, missing: true };
   // indexable only when the shop is live AND this is its own address (SITE_ORIGIN); the workers.dev copy stays noindex
-  const live = liveHere(env, url);
+  const live = liveHere(env, url); if (env.LIVE === "1" && originProblem(env)) console.error(JSON.stringify({ at: "seo", problem: originProblem(env) }));
   const seo = seoFor({ env, url, cat, meta, site }), canonical = seo.canonical, img = seo.share;
   const shell = await env.ASSETS.fetch(new URL("/index.html", url));
   const extra = [`<link rel="canonical" href="${esc(canonical)}">`, `<meta name="oss-pay" content="${cardReady(env) ? "card" : "off"}">`, `<meta name="oss-shisha-card" content="${env.STRIPE_TOBACCO_OK === "1" ? "1" : "0"}">`,
@@ -103,6 +103,8 @@ function publicFeed(cat) {
     if (counterRow(p)) o.ship_class = "pickup_only";   // charcoal, and anything whose weight is not known yet
     return o; }) };
 }
+// If-None-Match may carry a list of tags, weak or strong (RFC 9110 13.1.2): any one of them matching is a hit.
+const matches = (request, tag) => (request.headers.get("If-None-Match") || "").split(",").some(t => t.trim().replace(/^W\//, "") === tag || t.trim() === "*");
 const fnv = s => { let h = 2166136261; for (let k = 0; k < s.length; k++) h = Math.imul(h ^ s.charCodeAt(k), 16777619); return (h >>> 0).toString(36); };
 const esc = s => String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
 // The first hookah in the home hero, picked by the page's own rule (public/picks.js), with the same image list, so the browser reuses this download.
@@ -126,7 +128,7 @@ export default {
         // round trip answered from memory: an unchanged catalogue is "304, use the copy you have".
         const body = catalogModule(await shopCatalog(env, ctx));
         const tag = `"c${fnv(body)}-${body.length}"`, head = { "Content-Type": "text/javascript; charset=utf-8", "Cache-Control": "no-cache", ETag: tag, "X-Content-Type-Options": "nosniff" };
-        if ((request.headers.get("If-None-Match") || "").replace(/^W\//, "") === tag) return new Response(null, { status: 304, headers: head });
+        if (matches(request, tag)) return new Response(null, { status: 304, headers: head });
         return new Response(body, { headers: head });
       }
       if (path === "/api/catalog") {
@@ -137,7 +139,7 @@ export default {
         const cat = await shopCatalog(env, ctx), v = view(cat);
         if (!v.feed) { const body = JSON.stringify(publicFeed(cat)); v.feed = { body, tag: `"f${fnv(body)}-${body.length}"` }; }
         const head = { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-cache", ETag: v.feed.tag, "X-Content-Type-Options": "nosniff" };
-        if ((request.headers.get("If-None-Match") || "").replace(/^W\//, "") === v.feed.tag) return new Response(null, { status: 304, headers: head });
+        if (matches(request, v.feed.tag)) return new Response(null, { status: 304, headers: head });
         return new Response(request.method === "HEAD" ? null : v.feed.body, { headers: head });
       }
       if (path === "/api/admin/loyalty") return await loyaltyAdmin(request, env, url, async (r, e) => !!(await signedIn(r, e))?.owner);   // the points program is the owner's setting, never staff

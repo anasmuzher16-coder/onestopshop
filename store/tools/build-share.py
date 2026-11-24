@@ -23,14 +23,13 @@ import math
 import sys
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 STORE = Path(__file__).resolve().parent.parent
 PC, OUT, VERS = STORE / "public/img/pc", STORE / "public/img/share", STORE / "src/img-versions.json"
 HOME_OUT = STORE / "public/img/share.jpg"           # the shop's own card (home, sections, items with no photo)
-FONT = STORE / "tools/assets/lalezar-latin.woff"   # Lalezar, the site's display face (SIL OFL), as WOFF so Pillow can read it
 W, H, U = 1200, 630, 8                              # the card, and the 8 px unit every measure below is a multiple of
-CARD = 4                                            # bump when the card's design changes: every share image is redrawn
+CARD = 5                                            # bump when the card's design changes: every share image is redrawn
 
 
 def oklch(l, c, h):
@@ -66,58 +65,122 @@ def version(stem):
     return h.hexdigest()[:8]
 
 
-# The shop's own card (home, sections, Everything): three of the shop's ticked Ace hookahs side by side on the tile.
+# The shop's own card (home, sections, Everything): three of the shop's ticked Ace hookahs on the shelf.
 # Plain names only (no other brand's name, plan section 8); the old card showed the retired sample hookahs.
 HOME = ["ace/ace-226-wood-bronze", "ace/ace-dmx-red", "ace/ace-2312-mahir-ace-teal"]
 
+# The composition. Previews crop: Facebook and X show 1.91:1, small iMessage and WhatsApp previews cut a centred square
+# (x 285 to 915). Everything that must survive (the label and the product) sits inside that square; only the address,
+# which the page title repeats anyway, lives in the coal band across the foot.
+SAFE0, SAFE1 = (W - H) // 2, (W + H) // 2           # 285 .. 915
+CX = 85 * U                                        # 680: the product's centre, right of the label, inside the square
+FLOOR, FOOT = 65 * U, 71 * U                       # feet stand at y 520; the coal band starts at 568
+BOX_W, BOX_H = 50 * U, 54 * U                      # 400 x 432: the longer side of every product is fitted to this box
+SHELF = oklch(.86, .03, 78)                        # one step darker than the tile: the shelf the pieces stand on
+_FACES = {}
+
+
+def face(name, px, wght=None):
+    """The site's own fonts (public/fonts, WOFF2), unpacked for Pillow with fontTools; Readex is variable."""
+    import io
+    from fontTools.ttLib import TTFont
+    key = (name, px, wght)
+    if key not in _FACES:
+        t = TTFont(str(STORE / f"public/fonts/{name}-latin.woff2"))
+        t.flavor = None
+        buf = io.BytesIO()
+        t.save(buf)
+        buf.seek(0)
+        f = ImageFont.truetype(buf, px)
+        if wght:
+            f.set_variation_by_axes([wght])
+        _FACES[key] = f
+    return _FACES[key]
+
+
+def cutout(stem):
+    """The product alone: a cut-out cropped to what is actually drawn (frame and foot margin dropped); a photo with its
+    own background as it is."""
+    src = Image.open(PC / f"{stem}.webp")
+    if src.mode == "RGBA":
+        box = src.getchannel("A").point(lambda a: 255 if a > 96 else 0).getbbox()   # above the faint shadow some photos carry
+        return src.crop(box) if box else src
+    return src.convert("RGBA")
+
+
+def fit(im, w, h):
+    s = min(w / im.width, h / im.height)
+    return im.resize((max(1, round(im.width * s)), max(1, round(im.height * s))), Image.LANCZOS)
+
+
+def stand(card_im, piece, cx):
+    """Puts a piece on the shelf at x = cx, feet on the floor line, with a soft contact shadow under it."""
+    sh = Image.new("L", card_im.size, 0)
+    sw = min(piece.width * .9, 45 * U)
+    ImageDraw.Draw(sh).ellipse([cx - sw / 2, FLOOR - 1.5 * U, cx + sw / 2, FLOOR + 1.5 * U], fill=110)
+    sh = sh.filter(ImageFilter.GaussianBlur(10))
+    card_im.paste(Image.new("RGB", card_im.size, COAL0), (0, 0), sh)
+    card_im.paste(piece, (round(cx - piece.width / 2), FLOOR - piece.height), piece)
+
+
+def label():
+    """The shop's price-gun label (styles.css .sticker; the favicon): white stock, the ember band carrying ONE STOP,
+    a perforation line, and SHOP in ink where the price would be. No price: an image cannot follow the back office."""
+    em = 4 * U                                     # 1em of the site's label, in px
+    band, pad = round(1.02 * em) + 2 * U, 3 * U
+    word = face("lalezar", 13 * U)
+    wb = word.getbbox("SHOP")
+    lw = wb[2] - wb[0] + 2 * pad
+    lh = band + U + (wb[3] - wb[1]) + 2 * pad
+    st = Image.new("RGBA", (lw, lh), (0, 0, 0, 0))
+    d = ImageDraw.Draw(st)
+    r = round(.2 * em)
+    d.rounded_rectangle([0, 0, lw - 1, lh - 1], radius=r, fill=WHITE)
+    d.rounded_rectangle([0, 0, lw - 1, band + r], radius=r, fill=EMBER)
+    d.rectangle([0, band, lw - 1, band + r], fill=WHITE)
+    bpx = 2 * U + 4
+    band_font = face("readex", bpx, 600)
+    text, track = "ONE STOP", .14 * bpx
+    tw = sum(band_font.getlength(c) for c in text) + track * (len(text) - 1)
+    ob = band_font.getbbox("O")
+    x, ty = (lw - tw) / 2, (band - (ob[3] - ob[1])) / 2 - ob[1]
+    for c in text:                                   # letter-spaced like the site's band (.14em)
+        d.text((x, ty), c, font=band_font, fill=WHITE)
+        x += band_font.getlength(c) + track
+    for x in range(round(.3 * em), lw - round(.3 * em), 6):   # the perforation, dashed
+        d.line([x, band + U // 2 + 2, x + 2, band + U // 2 + 2], fill=(*COAL0, 90))
+    d.text((pad - wb[0], band + U + pad - wb[1]), "SHOP", font=word, fill=COAL0)
+    st = st.rotate(6, resample=Image.BICUBIC, expand=True)   # stuck on by hand, -6 degrees like the favicon
+    # its shadow, like the site's (a contact edge and a soft drop): a blurred, offset copy of the label's shape
+    out = Image.new("RGBA", (st.width + 8 * U, st.height + 8 * U), (0, 0, 0, 0))
+    sa = Image.new("L", out.size, 0)
+    sa.paste(st.getchannel("A").point(lambda v: v * 80 // 255), (4 * U, 4 * U + 6))
+    shadow = Image.new("RGBA", out.size, (*COAL0, 0))
+    shadow.putalpha(sa.filter(ImageFilter.GaussianBlur(9)))
+    out.alpha_composite(shadow)
+    out.alpha_composite(st, (4 * U, 4 * U))
+    return out
+
 
 def card(stem):
-    font = lambda px: ImageFont.truetype(str(FONT), px)
-    im = Image.new("RGB", (W, H), COAL0)
+    im = Image.new("RGB", (W, H), BONELT)
     d = ImageDraw.Draw(im)
-    # the tile: the right 640 px, the bone the shop's photographed pieces stand on
-    tx = W - 80 * U
-    d.rectangle([tx, 0, W, H], fill=BONELT)
-    if stem == "home":     # three pieces, each at the same scale, overlapping a little like a shelf
-        tile = im.crop((tx, 0, W, H))   # drawn on the tile alone, so nothing crosses onto the coal or off the card
-        for i, s_ in enumerate(HOME):
-            src = Image.open(PC / f"{s_}.webp")
-            s = (H - 8 * U) / src.height
-            p = src.resize((round(src.width * s), H - 8 * U), Image.LANCZOS)
-            tile.paste(p, (round(80 * U * (2 * i + 1) / 6 - p.width / 2), 8 * U), p)   # centres at 1/6, 3/6, 5/6, feet on one line
-        im.paste(tile, (tx, 0))
-        src = None
+    d.rectangle([0, FLOOR - 4 * U, W, FOOT], fill=SHELF)       # the shelf, the full width
+    if stem == "home":     # three pieces at one scale, overlapping a little, the middle one in front
+        pieces = [fit(cutout(s_), BOX_W, 42 * U) for s_ in HOME]   # shorter than one piece alone, so the label clears their heads
+        gap = 19 * U
+        for i in (0, 2, 1):
+            stand(im, pieces[i], CX + U + (i - 1) * gap)
     else:
-        src = Image.open(PC / f"{stem}.webp")
-    if src is None:
-        pass
-    elif src.mode == "RGBA":   # a cut-out, framed 720 x 900 with its foot margin: stands on the tile at full height
-        s = H / src.height
-        p = src.resize((round(src.width * s), H), Image.LANCZOS)
-        im.paste(p, (tx + (80 * U - p.width) // 2, 0), p)
-    else:                    # a full photo (the few older shots with their own background): fills the tile
-        s = max(80 * U / src.width, H / src.height)
-        p = src.convert("RGB").resize((math.ceil(src.width * s), math.ceil(src.height * s)), Image.LANCZOS)
-        im.paste(p.crop(((p.width - 80 * U) // 2, (p.height - H) // 2, (p.width - 80 * U) // 2 + 80 * U, (p.height - H) // 2 + H)), (tx, 0))
-    # the wordmark, left-aligned on the 8 px grid: ONE STOP in bone, SHOP on the ember sticker set at -6 degrees
-    x0, y0, px = 8 * U, 8 * U, 16 * U
-    while font(px).getlength("ONE STOP") > tx - x0 - 8 * U:   # the widest size that keeps a full 64 px gutter before the tile
-        px -= U // 2
-    big = font(px)
-    d.text((x0, y0), "ONE STOP", font=big, fill=BONE)
-    asc = big.getbbox("ONE STOP")
-    sw = big.getbbox("SHOP")
-    pad = 3 * U
-    st = Image.new("RGBA", (sw[2] + 2 * pad, (sw[3] - sw[1]) + 2 * pad), (0, 0, 0, 0))
-    sd = ImageDraw.Draw(st)
-    sd.rounded_rectangle([0, 0, st.width - 1, st.height - 1], radius=U // 2, fill=EMBER)
-    sd.text((pad, pad - sw[1]), "SHOP", font=big, fill=WHITE)
-    st = st.rotate(6, resample=Image.BICUBIC, expand=True)
-    im.paste(st, (x0 - U, y0 + asc[3] + 2 * U), st)
-    # the address, the one fact every preview should carry: where the counter is
-    small = font(4 * U)
-    d.line([x0, H - 15 * U, tx - 8 * U, H - 15 * U], fill=COAL2, width=1)
-    d.text((x0, H - 13 * U), "760 Wyandotte St E, Windsor", font=small, fill=ASH)
+        stand(im, fit(cutout(stem), BOX_W, BOX_H), CX)
+    lab = label()
+    im.paste(lab, (SAFE0 - 7 * U, -U), lab)                 # the top-left corner of the safe square, like a label on a tile
+    # the foot: the address, the one fact every preview carries, in the site's text face
+    d.rectangle([0, FOOT, W, H], fill=COAL0)
+    small = face("readex", 3 * U + 4, 500)
+    t = "760 Wyandotte St E, Windsor, Ontario"
+    tb = small.getbbox(t)
+    d.text((6 * U, FOOT + (H - FOOT - (tb[3] - tb[1])) / 2 - tb[1]), t, font=small, fill=BONE)
     return im
 
 
