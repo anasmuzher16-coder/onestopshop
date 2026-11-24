@@ -2,7 +2,7 @@
 // so nothing the shopper's phone sends can change what is charged. Stock comes down in the same step and can
 // never go below zero. Payment is not connected yet: orders are marked as demo orders and no card is taken.
 import * as rates from "../public/rates-core.js";
-import { loadCatalog, toStorefront } from "./catalog.js";
+import { loadCatalog, toStorefront, isCharcoal } from "./catalog.js";
 import { orderPlaced, lowStock, writeEmail } from "./email.js";
 import { deliveryQuote } from "./delivery.js";
 
@@ -86,7 +86,9 @@ export async function placeOrder(request, env, url) {
     const p = bySku[sku];
     if (!p) return json({ error: "One of the items is no longer sold. Remove it and try again.", sku, stock: 0 }, 409);
     if (p.stock < qty) return json({ error: p.stock ? `Only ${p.stock} left of ${p.name}.` : `${p.name} has just sold out.`, sku, stock: p.stock }, 409);
-    if (method === "ship" && body.service !== "local" && p.ship === "pickup_only") return json({ error: `${p.name} is pickup only.`, sku }, 409);
+    // Charcoal (and anything stored as pickup_only) goes by pickup or our own local delivery, never by Canada Post or any
+    // carrier (owner, 2026-11-24). Every service other than "local" is a carrier service, so all of them are refused.
+    if (method === "ship" && body.service !== "local" && (p.ship === "pickup_only" || isCharcoal(p))) return json({ error: `${p.name} is pickup only or local delivery near Windsor: it cannot be shipped by Canada Post.`, sku, local_only: true }, 409);
     lines.push({ product: p, qty });
   }
   const subtotal = lines.reduce((a, l) => a + cents(l.product.price) * l.qty, 0);
@@ -100,7 +102,7 @@ export async function placeOrder(request, env, url) {
     if (body.service === "local") {   // the fee comes only from the road distance worked out here
       if (!phone || String(phone).replace(/\D/g, "").length < 10) return json({ error: "Enter a phone number so the driver can reach you.", field: "phone" }, 400);
       const d = await deliveryQuote(env, { line1, city, postal: dest.full }, request.headers.get("CF-Connecting-IP") || "local");
-      const other = lines.some(l => l.product.ship === "pickup_only") ? "You can still pick it up free." : "You can still ship it or pick it up free.";
+      const other = lines.some(l => l.product.ship === "pickup_only" || isCharcoal(l.product)) ? "You can still pick it up free." : "You can still ship it or pick it up free.";
       if (d.status !== "ok") return json({ error: d.status === "far" ? `${dest.full} is past our 25 km delivery area. ${other}` : d.status === "down" ? `Delivery cannot be checked right now. ${other}` : "We could not confirm that address. Check the street number and postal code.", field: "line1", delivery: d.status }, 409);
       const due = rates.localDue(d.fee_cents, subtotal);   // $200.00 of items before tax delivers free
       if (body.delivery_fee_cents !== due) return json({ error: `Delivery to this address is ${due ? "$" + due / 100 : "free"}. Check the new total, then place your order.`, delivery: "ok", fee_cents: due, base_fee_cents: d.fee_cents }, 409);

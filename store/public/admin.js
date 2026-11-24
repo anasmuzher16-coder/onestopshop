@@ -15,7 +15,7 @@ async function api(path, opts = {}) {
 }
 const state = { in: false, tab: "home", products: [], categories: [], boxes: [], orders: [], q: "", cat: "all", oflt: "todo" };
 const catOf = id => state.categories.find(c => c.id === id) || { name: id, tone: "bone" };
-const thumbSrc = p => p.photo_ver ? `/api/photo/${p.sku}?v=${p.photo_ver}` : p.img ? `img/pc/${p.img}${p.img_dark ? "" : "-s"}.webp` : "";
+const thumbSrc = p => p.photo_ver ? `/api/photo/${p.sku}?v=${p.photo_ver}` : p.img ? `img/pc/${p.img}${p.img_dark ? "" : "-s"}.webp` : /"charcoal":true/.test(p.details || "") ? "img/pc/coming-charcoal.svg" : "";   // charcoal with no photo yet: the drawn stand-in
 const thumb = (p, tone) => { const src = thumbSrc(p); return src ? `<img class="thumb" data-tone="${esc(tone)}" src="${esc(src)}" alt="" loading="lazy" width="52" height="64">` : `<span class="thumb" data-tone="${esc(tone)}"></span>`; };
 const when = iso => { const d = new Date(iso), now = new Date(), days = Math.floor((new Date(now.toDateString()) - new Date(d.toDateString())) / 864e5);
   const t = d.toLocaleTimeString("en-CA", { hour: "numeric", minute: "2-digit" }); return days === 0 ? "Today " + t : days === 1 ? "Yesterday " + t : d.toLocaleDateString("en-CA", { month: "short", day: "numeric" }); };
@@ -85,7 +85,7 @@ const stockState = p => p.stock <= 0 ? ["out", "Out"] : p.stock <= p.low_stock_a
 function stockRow(p) {
   const c = catOf(p.category_id), [k, label] = stockState(p);
   return `<div class="row ${p.active ? "" : "off"}" data-sku="${p.sku}">${thumb(p, c.tone)}
-    <button class="row__main" type="button" data-edit="${p.sku}"><span class="row__name">${esc(p.name)}</span><span class="row__meta">${p.sku} &middot; ${esc(c.name)}${p.active ? "" : " &middot; hidden"}</span></button>
+    <button class="row__main" type="button" data-edit="${p.sku}"><span class="row__name">${esc(p.name)}</span><span class="row__meta">${p.sku} &middot; ${esc(c.name)}${p.active ? "" : " &middot; hidden"}${!p.photo_ver && /"photo":"coming"/.test(p.details || "") ? " &middot; photo coming" : ""}</span></button>
     <span class="row__price num">${money(p.price_cents)}</span>
     <span class="state ${k}" data-state>${label}</span>
     <span class="step"><button type="button" data-step="-1" aria-label="One fewer ${esc(p.name)}" ${p.stock <= 0 ? "disabled" : ""}>&minus;</button><output class="num" aria-label="In stock">${p.stock}</output><button type="button" data-step="1" aria-label="One more ${esc(p.name)}">+</button></span></div>`;
@@ -117,7 +117,7 @@ function editSheet(p) {
       <label class="field" style="margin-top:var(--s-3)"><span>Scent notes</span><input class="input" name="notes" value="${esc(d.notes ?? "")}" maxlength="120" placeholder="Saffron, rose, oud"></label></div>
     <div class="grid2"><label class="field"><span>Weight, grams</span><input class="input num" name="weight_g" inputmode="numeric" value="${esc(p.weight_g)}" required></label>
       <label class="field"><span>Ships in</span><select class="input" name="box_id">${state.boxes.map(b => opt(b.id, `${b.label} (${b.l_cm} x ${b.w_cm} x ${b.h_cm} cm)`, p.box_id)).join("")}</select></label></div>
-    <label class="field"><span>How it can ship</span><select class="input" name="ship_class">${opt("standard", "Any service", p.ship_class)}${opt("ground_only", "Ground only (cologne, anything flammable)", p.ship_class)}${opt("pickup_only", "No Canada Post (pickup or local delivery)", p.ship_class)}</select></label>
+    <label class="field"><span>How it can ship</span><select class="input" name="ship_class">${opt("standard", "Any service", p.ship_class)}${opt("ground_only", "Ground only (cologne, anything flammable)", p.ship_class)}${opt("pickup_only", "Pickup or local delivery only (never shipped)", p.ship_class)}</select></label>
     <div class="grid2"><label class="field"><span>Your cost, $ (private)</span><input class="input num" name="cost" inputmode="decimal" value="${dol(p.cost_cents)}"></label>
       <label class="field"><span>Warn me at</span><input class="input num" name="low_stock_at" inputmode="numeric" value="${esc(p.low_stock_at)}"></label></div>
     ${isNew ? `<label class="field"><span>How many on the shelf now</span><input class="input num" name="stock" inputmode="numeric" value="0"></label>` : ""}
@@ -184,6 +184,7 @@ async function orderSheet(id) {
   sheet.innerHTML = `<div class="sheet__in" data-ordersheet="${o.id}">
     <div class="sheet__top"><div><p class="meta">Order ${o.id} &middot; ${when(o.created_at)}</p><h2 class="h2" style="margin:0">${esc(o.name)}</h2><span class="state ${k}">${label}</span></div><button class="sheet__x" type="button" data-close>Close</button></div>
     ${dropCard(o)}
+    ${items.some(i => i.category_id === "heat" || /"charcoal":true/.test(i.details || "")) ? `<p class="fineprint" data-staff-note>Charcoal order. Check ID if the customer looks young.</p>` : ""}
     <div class="rows items">${items.map(i => `<div class="row">${thumb(i, catOf((state.products.find(p => p.sku === i.sku) || {}).category_id).tone)}<span class="row__main"><span class="row__name">${esc(i.name)}</span><span class="row__meta">${i.sku}${i.box_id ? " &middot; box " + esc(i.box_id) : ""}</span></span><span class="num"><b style="color:var(--color-strong)">${i.qty}</b> &times; ${money(i.unit_cents)}</span></div>`).join("")}</div>
     <dl class="facts"><div><dt>Items</dt><dd class="num">${money(o.subtotal_cents)}</dd></div><div><dt>${o.method === "pickup" ? "Pickup at the counter" : isLocal(o) ? "Local delivery" : "Shipping, " + esc(o.ship_service || "")}</dt><dd class="num">${o.method === "pickup" || (isLocal(o) && !o.shipping_cents) ? "Free" : money(o.shipping_cents)}</dd></div>
       <div><dt>Tax, ${esc(o.tax_province || "")}</dt><dd class="num">${money(o.tax_cents)}</dd></div><div><dt><b style="color:var(--color-strong)">Total paid</b></dt><dd class="num"><b>${money(o.total_cents)}</b></dd></div>

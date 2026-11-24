@@ -1,5 +1,6 @@
 import { orderShipped, pickupReady, writeEmail } from "./email.js";
 import { snapshot } from "./backup.js";
+import { CHARCOAL } from "./catalog.js";
 // The shop's back office: sign-in, shop numbers, stock and orders. Every route here needs the admin cookie,
 // and every write also needs a same-site JSON request, so another website cannot trigger one.
 const json = (body, status = 200, headers = {}) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", ...headers } });
@@ -12,6 +13,13 @@ async function signedIn(request, env) {
   // each sign-in is its own random token, kept only as a hash, and it expires by itself
   const t = cookieToken(request); if (!t) return false;
   return !!(await env.DB.prepare("SELECT 1 AS ok FROM sessions WHERE token_hash = ? AND expires_at > strftime('%Y-%m-%dT%H:%M:%SZ','now')").bind(await sha(t)).first("ok"));
+}
+// A product added to the charcoal section, and any charcoal item saved later, is stored as charcoal, pickup or local delivery only, whatever the form sent.
+// (The storefront and checkout enforce the same from the section alone; this keeps the stored row honest too.)
+function charcoalRules(out, was) {
+  out.ship_class = "pickup_only";
+  const d = "details" in out ? JSON.parse(out.details) : was;
+  out.details = JSON.stringify({ ...d, charcoal: true });
 }
 const SOLD = "('paid','packed','shipped','ready','collected')";
 const LOCAL = "'-5 hours'"; // the shop's clock (Windsor), close enough for day totals
@@ -104,6 +112,7 @@ export async function admin(request, env, url) {
     const { out, bad } = await fields({ ship_class: "standard", note: "", low_stock_at: 1, ...body });
     for (const k of ["name", "category_id", "price_cents", "weight_g", "box_id"]) if (!(k in out)) bad.push(k.replace(/_.*/, ""));
     if (bad.length) return json({ error: "Check: " + [...new Set(bad)].join(", ") + "." }, 400);
+    if (out.category_id === CHARCOAL) charcoalRules(out, {});
     const prefix = { hookahs: 1, bases: 2, bowls: 3, heat: 4, hoses: 5, parts: 6, cologne: 7, misc: 8 }[out.category_id] || 9;
     const last = await db.prepare("SELECT MAX(CAST(substr(sku, 5) AS INTEGER)) AS n FROM products WHERE sku LIKE ? AND length(sku) = 8").bind(`OSS-${prefix}%`).first("n"); // 4-digit numbers only: OSS-SSNNNN catalogue numbers belong to store/catalog/registry.json
     const sku = "OSS-" + String(Math.max(prefix * 1000, last || 0) + 1);
@@ -119,6 +128,11 @@ export async function admin(request, env, url) {
     const before = await db.prepare("SELECT * FROM products WHERE sku = ?").bind(m[1]).first(); if (!before) return json({ error: "No such product." }, 404);
     const { out, bad } = await fields(await request.json().catch(() => ({})));
     if (bad.length) return json({ error: "Check: " + bad.join(", ") + "." }, 400);
+    // The form edits only the cologne fields. Everything else in details (the charcoal mark, photo status, brand,
+    // source lines, a roll's box) is kept, so saving a charcoal item in the back office never erases its rules.
+    let had = {}; try { had = JSON.parse(before.details || "{}"); } catch {}
+    if ("details" in out) { const { ml, kind, notes, ...keep } = had; out.details = JSON.stringify({ ...keep, ...JSON.parse(out.details) }); }
+    if (had.charcoal) charcoalRules(out, had);   // charcoal stays charcoal; retired Heat pieces are never turned into it
     const cols = Object.keys(out); if (!cols.length) return json({ ok: true });
     const was = {}; for (const k of cols) was[k] = before[k];
     await db.batch([db.prepare(`UPDATE products SET ${cols.map(k => k + " = ?").join(", ")}, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE sku = ?`).bind(...cols.map(k => out[k]), m[1]), audit("product.edit", m[1], was, out)]);
@@ -162,7 +176,7 @@ export async function admin(request, env, url) {
     return json({ orders: r.results });
   }
   if ((m = path.match(/^\/orders\/([A-Z0-9]{3,12})$/)) && method === "GET") {
-    const [o, i] = await db.batch([db.prepare("SELECT * FROM orders WHERE id = ?").bind(m[1]), db.prepare("SELECT i.sku, i.name, i.qty, i.unit_cents, p.img, p.img_dark, p.photo_ver, p.box_id FROM order_items i LEFT JOIN products p ON p.sku = i.sku WHERE i.order_id = ?").bind(m[1])]);
+    const [o, i] = await db.batch([db.prepare("SELECT * FROM orders WHERE id = ?").bind(m[1]), db.prepare("SELECT i.sku, i.name, i.qty, i.unit_cents, p.img, p.img_dark, p.photo_ver, p.box_id, p.category_id, p.details FROM order_items i LEFT JOIN products p ON p.sku = i.sku WHERE i.order_id = ?").bind(m[1])]);
     if (!o.results.length) return json({ error: "No such order." }, 404);
     const mail = await db.prepare("SELECT id, kind, recipient, subject, status, at FROM emails WHERE order_id = ? ORDER BY id").bind(m[1]).all();
     return json({ order: o.results[0], items: i.results, emails: mail.results });

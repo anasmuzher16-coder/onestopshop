@@ -43,10 +43,46 @@ try {
   // 3 sold out on the shelf
   await p.goto(B + "/p/OSS-7008", { waitUntil: "networkidle" });
   t("a product with no stock shows as sold and cannot be added", await p.locator("[data-add]").count() === 0 && /Sold out/.test(await p.locator(".soldline").innerText()));
+  // 3b charcoal: pickup or our own local delivery only, never Canada Post (owner, 2026-11-24); nothing about age or ID for the customer.
+  await p.evaluate(() => { localStorage.setItem("oss:postal", JSON.stringify("M5V 2T6")); localStorage.removeItem("oss:ship"); });
+  await p.goto(B + "/p/OSS-9101", { waitUntil: "networkidle" });
+  const pdp = await p.locator(".pdp__info").innerText();
+  t("charcoal product page says pickup or local delivery only, offers no Canada Post, and says nothing about age or ID", /Pickup or local delivery only/.test(pdp) && !/Canada Post (Regular|Expedited|Xpresspost|Priority)/.test(pdp) && !/photo id|\bage\b|adult/i.test(pdp), pdp.slice(0, 200));
+  t("a charcoal item with no photo shows the drawn stand-in, never a broken image", await p.locator(".pdp__tile img.shot--drawn").count() === 1 && await p.evaluate(() => [...document.images].every(i => !i.getAttribute("src") || !i.complete || i.naturalWidth > 0)));
+  await p.locator("[data-add]:visible").first().tap(); await p.waitForTimeout(700);
+  await p.goto(B + "/p/OSS-8004", { waitUntil: "networkidle" }); await p.locator("[data-add]:visible").first().tap(); await p.waitForTimeout(700);
+  await p.goto(B + "/cart", { waitUntil: "networkidle" }); await p.waitForTimeout(600);
+  let ways = await p.locator('input[name="ship"]').evaluateAll(els => els.map(e => e.value));
+  t("a mixed cart going to Toronto offers pickup or leaving the charcoal out, never Canada Post", ways.join() === "pickup,drop", ways.join());
+  t("the cart line says pickup or local delivery only", /Pickup or local delivery only/.test(await p.locator(".line", { hasText: "Coco Cafe" }).innerText()));
+  await p.locator('input[name="ship"][value="drop"]').tap()   /* the radio acts at once and leaves the page, so it is tapped, not "checked" */; await p.waitForTimeout(500);
+  ways = await p.locator('input[name="ship"]').evaluateAll(els => els.map(e => e.value));
+  t("leaving the charcoal out keeps the rest and opens Canada Post for it", await p.locator(".line").count() === 1 && ways.some(w => /^cp-/.test(w)), ways.join());
+  await p.locator("[data-undo-drop]").tap(); await p.waitForTimeout(500);
+  ways = await p.locator('input[name="ship"]').evaluateAll(els => els.map(e => e.value));
+  t("putting the charcoal back takes Canada Post away again", await p.locator(".line").count() === 2 && !ways.some(w => /^cp-/.test(w)), ways.join());
+  // a Windsor postal code: the whole order can come by our own local delivery
+  await p.evaluate(() => localStorage.setItem("oss:postal", JSON.stringify("N9A 1A1"))); await p.reload({ waitUntil: "networkidle" });
+  await p.waitForSelector('input[name="ship"][value="local"]', { timeout: 8000 }).catch(() => {});
+  ways = await p.locator('input[name="ship"]').evaluateAll(els => els.map(e => e.value));
+  t("a mixed cart near Windsor offers local delivery, pickup, or leaving the charcoal out", ways.join() === "local,pickup,drop", ways.join());
+  await snap("flow-charcoal-mixed");
+  await p.locator('input[name="ship"][value="pickup"]').check(); await p.waitForTimeout(300);
+  await p.locator('a[href="/checkout"]:visible').first().tap(); await p.waitForURL(/\/checkout$/);
+  t("checkout asks nothing about age", await p.locator('input[type="checkbox"]').count() === 0 && !/photo id|\bage\b|adult/i.test(await p.locator("#main").innerText()));
+  await snap("flow-charcoal-checkout");
+  await p.fill("#co-name", "Cole Coal"); await p.fill("#co-email", "cole@example.com");
+  await p.locator('[data-checkout] button[type="submit"]').tap(); await p.waitForURL(/\/order\/W[A-Z0-9]{6}$/, { timeout: 15000 });
+  const id3 = new URL(p.url()).pathname.split("/").pop();
+  t("the confirmation says nothing about age or ID", !/photo id|\bage\b|adult/i.test(await p.locator("#main").innerText()));
+  await p.evaluate(() => { localStorage.removeItem("oss:postal"); localStorage.removeItem("oss:ship"); });
   // 4 the back office
   await p.goto(B + "/admin", { waitUntil: "networkidle" }); await p.fill("#passcode", KEY); await p.locator('button[type="submit"]').tap(); await p.waitForSelector(".hero__fig");
   await p.locator('[data-tab="orders"]').tap(); await p.waitForSelector(".order");
   t("both new orders are waiting in the back office", await p.locator(`[data-order="${id1}"]`).count() === 1 && await p.locator(`[data-order="${id2}"]`).count() === 1);
+  await p.locator(`[data-order="${id3}"]`).tap(); await p.waitForSelector("dialog[open] [data-next]");
+  t("staff, and only staff, get a discreet ID note on the charcoal order", /Check ID if the customer looks young/.test(await p.locator("dialog[open]").innerText()));
+  await p.locator("dialog[open] .sheet__act [data-close]").tap(); await p.waitForTimeout(200);
   await p.locator(`[data-order="${id1}"]`).tap(); await p.waitForSelector("dialog[open] [data-next]"); await snap("flow-admin-order");
   await p.locator("[data-next]").tap(); await p.waitForFunction(() => /Mark shipped/.test(document.querySelector("dialog[open] [data-next]")?.textContent || ""), null, { timeout: 8000 });
   t("order moves from To pack to Packed", /packed/i.test(await p.locator("dialog[open] .sheet__top .state").innerText()));

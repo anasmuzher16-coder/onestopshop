@@ -26,14 +26,23 @@ const mod = await get("/api/catalog-module");
 ok((mod.r.headers.get("content-type") || "").startsWith("text/javascript"), "catalog.js content type");
 const m = await import("data:text/javascript;base64," + Buffer.from(mod.t).toString("base64"));
 const ref = await import("../../site/catalog.js");
-ok(m.PRODUCTS.length === ref.PRODUCTS.length + 4 && m.CATEGORIES.length === ref.CATEGORIES.length + 2, `catalogue size ${m.PRODUCTS.length}/${ref.PRODUCTS.length}`);
+// Heat is the shop's charcoal since 2026-11-23: the sample Heat pieces are hidden and 69 charcoal items take their place.
+const FLAWED = ["hookah50", "bowl30", "acc03", "bowl26", "hmd12", "acc06", "hose09", "bowl06"], oldHeat = ref.PRODUCTS.filter(p => p.cat === "heat");
+const coal = m.PRODUCTS.filter(p => p.cat === "heat");
+ok(m.PRODUCTS.length === ref.PRODUCTS.length - FLAWED.length - oldHeat.filter(p => !FLAWED.includes(p.img)).length + 12 + 69 && m.CATEGORIES.length === ref.CATEGORIES.length + 2, `catalogue size ${m.PRODUCTS.length}/${ref.PRODUCTS.length}`);
+ok(coal.length === 69 && oldHeat.every(a => !m.PRODUCTS.some(b => b.sku === a.sku)), "the heat section holds the 69 charcoal items and none of the old Heat pieces: " + coal.length);
+ok(coal.every(p => p.ship === "pickup_only" && p.details.charcoal === true && p.stock === 10), "every charcoal item is pickup only and starts at 10 in stock");
+ok(coal.filter(p => p.img).length === 28 && coal.every(p => p.img ? p.details.photo === "approved" : p.details.photo === "coming"), "28 charcoal photos, the rest carry photo status coming");
+for (const p of coal.filter(x => x.img)) { const r = await fetch(B + `/img/pc/${p.img}-s.webp`); ok(r.status === 200, `photo ${p.img}-s.webp: ${r.status}`); }
+ok((await fetch(B + "/img/pc/coming-charcoal.svg")).status === 200, "the drawn stand-in is served");
+const coalPage = await get("/p/OSS-9101"); ok(/Pickup in Windsor or local delivery near Windsor\. Not shipped/.test(coalPage.t) && /og:image" content="[^"]+\/img\/share\.jpg"/.test(coalPage.t), "a charcoal page without a photo says pickup or local delivery only and shares the shop image");
 let diff = 0;
-for (const a of ref.PRODUCTS) { if (["hookah50", "bowl30", "acc03", "bowl26", "hmd12", "acc06", "hose09", "bowl06"].includes(a.img)) continue; const b = m.PRODUCTS.find(x => x.sku === a.sku); if (!b) { diff++; continue; }
+for (const a of ref.PRODUCTS) { if (FLAWED.includes(a.img) || a.cat === "heat") continue; const b = m.PRODUCTS.find(x => x.sku === a.sku); if (!b) { diff++; continue; }
   for (const k of ["name", "cat", "price", "kg", "box", "glass", "note", "img", "dark"]) if (a[k] !== b[k]) diff++;
   if ((a.height ?? null) !== (b.height ?? null) || (a.lw ?? null) !== (b.lw ?? null)) diff++; }
 ok(diff === 0, `${diff} product fields differ between the database and the sample file`);
 for (const [id, a] of Object.entries(ref.BOXES)) { const b = m.BOXES[id]; ok(b && a.l === b.l && a.w === b.w && a.h === b.h && Math.abs(a.tare - b.tare) < 1e-9, "box " + id); }
-ok(m.PRODUCTS.every(p => (p.cat === "cologne" ? p.ship === "ground_only" : p.ship === "standard") && Number.isInteger(p.stock) && p.stock >= 0), "ship class and stock come through");
+ok(m.PRODUCTS.every(p => (p.cat === "cologne" ? p.ship === "ground_only" : p.cat === "heat" ? p.ship === "pickup_only" : p.ship === "standard") && Number.isInteger(p.stock) && p.stock >= 0), "ship class and stock come through");
 
 const post = await fetch(B + "/api/catalog", { method: "POST" }); ok(post.status === 405, "POST /api/catalog gave " + post.status);
 console.log(f ? `FAIL ${f} of ${n} checks` : `PASS ${n} checks`);

@@ -1,6 +1,6 @@
 // One Stop Shop store Worker. Answers the page routes (each with its own title, description and a real 404),
 // serves the catalogue from the database, and passes every other request to the static files.
-import { loadCatalog, shopCatalog, dropCatalog, catalogModule } from "./catalog.js";
+import { loadCatalog, shopCatalog, dropCatalog, catalogModule, counterRow, CHARCOAL } from "./catalog.js";
 import { admin, photo } from "./admin.js";
 import { placeOrder } from "./checkout.js";
 import { deliveryRoute } from "./delivery.js";
@@ -25,12 +25,12 @@ function describe(path, cat, site) {
   if (a === "shop") {
     if (!b) return { ...base, title: `Shop | ${site}` };
     const c = cat.categories.find(x => x.id === b); if (!c) return null;
-    const n = cat.products.filter(p => p.category_id === c.id).length;
-    return { title: `${c.name} | ${site}`, desc: `${n} ${c.name.toLowerCase()} in stock at our Windsor counter, shipped anywhere in Canada.`, index: true };
+    const list = cat.products.filter(p => p.category_id === c.id), n = list.length, counter = n && list.every(counterRow);
+    return { title: `${c.name} | ${site}`, desc: counter ? `${n} ${c.id === CHARCOAL ? "kinds of hookah charcoal" : c.name.toLowerCase()} at our Windsor counter. Pickup or local delivery only.` : `${n} ${c.name.toLowerCase()} in stock at our Windsor counter, shipped anywhere in Canada.`, index: true };
   }
   if (a === "p") {
     const p = cat.products.find(x => x.sku === b); if (!p) return null;
-    return { title: `${p.name} | ${site}`, desc: `${p.note}. ${money(p.price_cents)}. Shipped across Canada or free pickup in Windsor.`, index: true, product: p };
+    return { title: `${p.name} | ${site}`, desc: `${p.note}. ${money(p.price_cents)}. ${counterRow(p) ? "Pickup in Windsor or local delivery near Windsor. Not shipped." : "Shipped across Canada or free pickup in Windsor."}`, index: true, product: p };
   }
   if (a === "order") return b && /^W[A-Z0-9]{6}$/.test(b) ? { ...base, title: `Order ${b} | ${site}`, index: false } : null;
   if (a === "gifts" && b && b !== "under-50" && b !== "under-150") return null;
@@ -52,10 +52,11 @@ async function page(request, env, url, ctx) {
     `<meta property="og:type" content="${meta.product ? "product" : "website"}">`, `<meta property="og:site_name" content="${esc(site)}">`,
     `<meta property="og:title" content="${esc(meta.title)}">`, `<meta property="og:description" content="${esc(meta.desc)}">`, `<meta property="og:url" content="${canonical}">`];
   if (meta.product) {
-    const p = meta.product, img = `${url.origin}/img/pc/${p.img}.webp`;
+    const p = meta.product, img = p.img ? `${url.origin}/img/pc/${p.img}.webp` : `${url.origin}/img/share.jpg`;   // no photo yet: the shop's share image, never a broken link
     extra.push(`<meta property="og:image" content="${img}">`);
     const ld = { "@context": "https://schema.org", "@type": "Product", name: p.name, sku: p.sku, description: p.note, image: img,
-      offers: { "@type": "Offer", price: (p.price_cents / 100).toFixed(2), priceCurrency: "CAD", url: canonical, availability: "https://schema.org/" + (p.stock > 0 ? "InStock" : "OutOfStock") } };
+      offers: { "@type": "Offer", price: (p.price_cents / 100).toFixed(2), priceCurrency: "CAD", url: canonical, availability: "https://schema.org/" + (p.stock > 0 ? "InStock" : "OutOfStock"),
+        ...(counterRow(p) ? { availableDeliveryMethod: "http://purl.org/goodrelations/v1#DeliveryModePickUp" } : {}) } };
     extra.push(`<script type="application/ld+json">${JSON.stringify(ld).replace(/</g, "\\u003c")}</script>`);
   }
   else extra.push(`<meta property="og:image" content="${url.origin}/img/share.jpg">`, `<meta property="og:image:width" content="1200">`, `<meta property="og:image:height" content="630">`, `<meta name="twitter:card" content="summary_large_image">`);
