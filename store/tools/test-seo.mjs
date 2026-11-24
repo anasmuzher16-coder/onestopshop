@@ -213,7 +213,7 @@ ok(locs.includes("https://shop.example.ca/set"), "sitemap: /set while a bowl is 
 { const { SAMPLE_SKUS } = await import("../src/samples.js"), sql = readFileSync(new URL("../catalog/live/samples-off-2026-11-24.sql", import.meta.url), "utf8");
   const lists = [...sql.matchAll(/sku IN \(([^)]*)\)/g)].map(x => [...x[1].matchAll(/'(OSS-\d+)'/g)].map(y => y[1]).sort().join(","));
   const want = [...SAMPLE_SKUS].filter(s => !/^OSS-1/.test(s)).sort().join(",");
-  ok(lists.length === 2 && lists.every(l => l === want) && want.split(",").length === 62, "samples-off SQL switches off exactly the 62 non-hookah samples of src/samples.js, in both statements"); }
+  ok(lists.length === 2 && lists.every(l => l === want) && want.split(",").length === 65, "samples-off SQL switches off exactly the 65 non-hookah sample numbers of src/samples.js, in both statements"); }
 // an empty section (all six since 2026-11-24) answers 200, says noindex and the stock is coming, and is not in the demo's page data as a list of products
 { const e = await get("/shop/bowls"); ok(e.r.status === 200 && /<meta name="robots" content="noindex, nofollow">/.test(e.t) && /Bowls: stock arriving soon/.test(e.t) && !/"ItemList"/.test(e.t), "an empty section: 200, noindex, says stock arriving soon"); }
 
@@ -222,7 +222,8 @@ if (BL) {
   const h = await get("/", BL), p = await get("/p/" + sale[0].sku, BL), sm2 = await get("/sitemap.xml", BL), rb2 = await get("/robots.txt", BL);
   ok(!/name="robots"/.test(h.t) && !h.r.headers.get("x-robots-tag"), "live: the home page can be indexed");
   ok(!/name="robots"/.test(p.t) && !p.r.headers.get("x-robots-tag"), "live: a product page can be indexed");
-  for (const q of ["/account", "/cart", "/checkout", "/search", "/order/WABCDEF", "/gifts/under-50"]) { const g = await get(q, BL); ok(/noindex/.test(g.r.headers.get("x-robots-tag") || "") && /<meta name="robots" content="noindex/.test(g.t), "live: still noindex " + q); }
+  // an empty section (2026-11-24) and a set that cannot be built stay noindex when live
+  for (const q of ["/account", "/cart", "/checkout", "/search", "/order/WABCDEF", "/gifts/under-50", "/shop/bowls", ...(sm2.t.includes("/set</loc>") ? [] : ["/set"])]) { const g = await get(q, BL); ok(/noindex/.test(g.r.headers.get("x-robots-tag") || "") && /<meta name="robots" content="noindex/.test(g.t), "live: still noindex " + q); }
   ok((await get("/admin", BL)).r.headers.get("x-robots-tag") === "noindex, nofollow", "live: the back office stays noindex");
   ok(sm2.r.status === 200 && /<urlset/.test(sm2.t) && !/\/(cart|checkout|account|admin|gifts)/.test(sm2.t) && rb2.t.includes(`Sitemap: ${BL}/sitemap.xml`), "live: sitemap served and named in robots.txt");
   const locs2 = [...sm2.t.matchAll(/<loc>([^<]+)<\/loc>/g)].map(x => x[1].replace(BL, ""));

@@ -29,6 +29,15 @@ try {
     t("1 Windsor code moves a nationwide shopper to local delivery", await p.locator('input[name="ship"][value="local"]').isChecked());
     await c.close();
   }
+  { // 1b a saved cart still holding a made-up sample (switched off 2026-11-24): taken out with a note, even when another line
+    // also changes (a sold-out flavour), and the rest of the cart is kept
+    const { c, p } = await open({ cart: [{ sku: "OSS-2001", qty: 1 }, { sku: "OSS-9616", qty: 1 }, { sku: "OSS-8004", qty: 1 }] });
+    await go(p, "/cart"); const news = await p.locator("[data-cart-news]").innerText().catch(() => ""), saved = await cart(p);
+    t("1b the sample is taken out of the saved cart", !saved.some(l => l.sku === "OSS-2001") && saved.some(l => l.sku === "OSS-8004"), JSON.stringify(saved));
+    t("1b the cart says so, beside the sold-out note", /no longer sold online/.test(news) && /has sold/.test(news), news);
+    await go(p, "/p/OSS-2001"); t("1b its old address lands on its section", new URL(p.url()).pathname === "/shop/bases" && /Stock arriving soon/.test(await main(p)), p.url());
+    t("1b no page errors", !p.errs.length, p.errs.join(" | ")); await c.close();
+  }
   { // 2 and 3 stock limits; a sold-out flavour cannot be bought from any saved cart (the sample Resin Bishop was retired 2026-11-24)
     const { c, p } = await open({ cart: [{ sku: "OSS-9616", qty: 2 }, { sku: "OSS-8004", qty: 1 }, { sku: "OSS-7008", qty: 1 }, { sku: "OSS-7006", qty: 5 }], postal: "M5V 2T6" });
     await go(p, "/cart"); const body = await main(p), saved = await cart(p);

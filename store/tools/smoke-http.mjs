@@ -37,7 +37,7 @@ const coal = m.PRODUCTS.filter(p => p.cat === "charcoal"), heat = m.PRODUCTS.fil
 ok(m.PRODUCTS.length === 69 + 15 + 47 + 296 && m.CATEGORIES.length === ref.CATEGORIES.length + 4, `catalogue size ${m.PRODUCTS.length}/${69 + 15 + 47 + 296}, sections ${m.CATEGORIES.length}`);
 ok(m.CATEGORIES.findIndex(c => c.id === "charcoal") === m.CATEGORIES.findIndex(c => c.id === "heat") + 1, "Charcoal sits right after Heat");
 ok(foil.length === 15 && foil.every(p => p.state === "sale" && p.ship === "pickup_only" && p.weightTbd), "15 foil packs: on sale, pickup or local delivery while their weight is TBD");
-ok(!m.PRODUCTS.some(p => SAMPLE_SKUS.has(p.sku)) && SAMPLE_SKUS.size === 98, "no made-up sample is left in the catalogue (98 kept in the database, switched off)");
+ok(!m.PRODUCTS.some(p => SAMPLE_SKUS.has(p.sku)) && SAMPLE_SKUS.size === 101, "no made-up sample is left in the catalogue (all 101 sample numbers ever issued; 98 are in this database, kept and switched off)");
 ok(ref.PRODUCTS.every(a => SAMPLE_SKUS.has(a.sku)), "every row of the mockup's sample file is in the samples list");
 ok(coal.length === 69 && heat.length === 15 && !heat.some(p => p.details.charcoal), `Charcoal holds the 69 charcoal items; Heat holds the 15 foil packs and no charcoal: ${coal.length}/${heat.length}`);
 // the sections the samples leave empty: still there, answering 200, saying the stock is on its way and the phone, kept out of search
@@ -46,7 +46,8 @@ ok(["bases", "bowls", "hoses", "parts", "cologne", "misc"].every(id => empty.inc
 for (const id of empty) { const s = await get("/shop/" + id); ok(s.r.status === 200 && /stock arriving soon/i.test(s.t) && /tel:\+15192552222/.test(s.t) && /<meta name="robots" content="noindex, nofollow">/.test(s.t) && !/"@type":"(ItemList|Product)"/.test(s.t), `/shop/${id}: 200, says stock arriving soon with the phone, noindex, no product data`); }
 // every switched-off sample's old address goes to its own section, which says what is coming (one request each)
 { const all = [...SAMPLE_SKUS]; let wrong = [];
-  for (const sku of all) { const r = await fetch(B + "/p/" + sku, { redirect: "manual" }); const sec = ref.PRODUCTS.find(a => a.sku === sku)?.cat || { 7: "cologne", 8: "misc" }[sku[4]]; if (r.status !== 301 || !(r.headers.get("location") || "").endsWith("/shop/" + sec)) wrong.push(`${sku}:${r.status}`); }
+  for (const sku of all) { const r = await fetch(B + "/p/" + sku, { redirect: "manual" }); if (["OSS-7005", "OSS-7007", "OSS-7009"].includes(sku)) { if (r.status !== 404) wrong.push(`${sku}:${r.status}`); continue; }   // listed in case a database kept them; this one never had them
+    const sec = ref.PRODUCTS.find(a => a.sku === sku)?.cat || { 7: "cologne", 8: "misc" }[sku[4]]; if (r.status !== 301 || !(r.headers.get("location") || "").endsWith("/shop/" + sec)) wrong.push(`${sku}:${r.status}`); }
   ok(!wrong.length, `every sample's old address redirects to its section (${all.length}): ${wrong.slice(0, 5).join(" ")}`); }
 ok(coal.every(p => p.ship === "pickup_only" && p.details.charcoal === true && p.stock === 10), "every charcoal item is pickup only and starts at 10 in stock");
 ok(coal.filter(p => p.img).length === 28 && coal.every(p => p.img ? p.details.photo === "approved" : p.details.photo === "coming"), "28 charcoal photos, the rest carry photo status coming");

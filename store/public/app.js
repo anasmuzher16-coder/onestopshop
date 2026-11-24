@@ -74,12 +74,17 @@ function fitCart(cart) {
   }
   return { kept, news };
 }
+// A saved cart can hold an item that is no longer sold online at all (the demo's samples, taken off 2026-11-24): its row is
+// gone from the catalogue, so it has no name to show. It is taken out and said once in words (here, and when another tab
+// changes the cart). Read before anything below rewrites the saved cart.
+const SAVED_CART = store.get("cart");
+function goneNote(saved) {
+  const gone = Array.isArray(saved) ? new Set(saved.filter(l => l && typeof l.sku === "string" && /^OSS-\d{4,6}$/.test(l.sku) && !bySku[l.sku]).map(l => l.sku)).size : 0;
+  return gone ? `${gone === 1 ? "One item" : gone + " items"} in your cart ${gone === 1 ? "is" : "are"} no longer sold online, so we took ${gone === 1 ? "it" : "them"} out. Call the counter at 519-255-2222 to ask about ${gone === 1 ? "it" : "them"}.` : null;
+}
 const state = { reach: ["local", "nationwide"].includes(store.get("reach")) ? store.get("reach") : null, whyOpen: false, q: "", note: typeof store.get("note") === "string" ? store.get("note") : "", set: {}, dest: parsePostal(store.get("postal")), cart: cleanCart(store.get("cart")), ship: typeof store.get("ship") === "string" ? store.get("ship") : null, cartNews: [] };
 { const fit = fitCart(state.cart); if (fit.news.length) { state.cart = fit.kept; state.cartNews = fit.news; store.set("cart", state.cart); } }
-// A saved cart can hold an item that is no longer sold online at all (the demo's samples, taken off 2026-11-24): its row is
-// gone from the catalogue, so it has no name to show. It is taken out, said once in words, and the cart is saved without it.
-{ const saved = store.get("cart"), gone = Array.isArray(saved) ? new Set(saved.filter(l => l && typeof l.sku === "string" && /^OSS-\d{4,6}$/.test(l.sku) && !bySku[l.sku]).map(l => l.sku)).size : 0;
-  if (gone) { state.cartNews.push(`${gone === 1 ? "One item" : gone + " items"} in your cart ${gone === 1 ? "is" : "are"} no longer sold online, so we took ${gone === 1 ? "it" : "them"} out. Call the counter at 519-255-2222 to ask about ${gone === 1 ? "it" : "them"}.`); store.set("cart", state.cart); } }
+{ const gone = goneNote(SAVED_CART); if (gone) { state.cartNews.push(gone); store.set("cart", state.cart); } }
 const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const NF_CENTS = new Intl.NumberFormat("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 }), NF_WHOLE = new Intl.NumberFormat("en-CA");   // made once: toLocaleString builds a new formatter on every call
@@ -314,7 +319,7 @@ function viewHome() {
     </div>
   </section>
   <section class="cats" aria-label="Shop by category">
-    ${[...CATEGORIES.filter(c => SHELF.some(p => p.cat === c.id)), ...CATEGORIES.filter(c => !SHELF.some(p => p.cat === c.id))].map((c, i) => { const n = SHELF.filter(p => p.cat === c.id).length;   // sections with stock lead; those still waiting for theirs follow const lead = (c.id === "hookahs" && stars[0]) || SHELF.find(p => p.cat === c.id && !p.dark && p.img) || SHELF.find(p => p.cat === c.id && !p.dark);
+    ${/* sections with stock lead; those still waiting for theirs follow */ [...CATEGORIES.filter(c => SHELF.some(p => p.cat === c.id)), ...CATEGORIES.filter(c => !SHELF.some(p => p.cat === c.id))].map((c, i) => { const n = SHELF.filter(p => p.cat === c.id).length; const lead = (c.id === "hookahs" && stars[0]) || SHELF.find(p => p.cat === c.id && !p.dark && p.img) || SHELF.find(p => p.cat === c.id && !p.dark);
       // a section with nothing in it yet keeps its tile, labelled like the grid's missing photo, and says "Soon" where the count goes
       return lead ? `<a class="cat" data-tone="${c.tone}" href="/shop/${c.id}">${shot(lead, { small: i > 0, use: i ? "cat" : "cat1", cls: "cat__img" })}<span class="cat__name">${c.name}</span><span class="cat__n num">${n}</span></a>`
         : `<a class="cat cat--soon" data-tone="${c.tone}" href="/shop/${c.id}"><span class="cat__ph" aria-hidden="true">On its way</span><span class="cat__name">${c.name}</span><span class="cat__n">Soon<span class="sr">: stock arriving soon</span></span></a>`; }).join("")}
@@ -550,6 +555,13 @@ function setSummary() {
 // A set needs something on sale in at least one of its three main picks; until then the page says the pieces are on their way
 // (src/seo.js setReady is the same rule for the page's title and the sitemap).
 const setReady = () => SLOTS.some(([slot, cat]) => !OPTIONAL.has(slot) && setOpts(cat).length);
+// why no set can be built yet, said from the shelf itself: no shop price yet, sold out, or no stock on the site yet
+function setWhy() {
+  const by = { tbd: [], sold: [], soon: [] }, and = l => l.length > 1 ? l.slice(0, -1).join(", ") + " and " + l.at(-1) : l[0];
+  for (const [slot, cat] of SLOTS) { if (OPTIONAL.has(slot)) continue; const l = inCat(cat), name = (catById[cat]?.name || cat).toLowerCase(); by[!l.length ? "soon" : l.some(forSale) ? "sold" : "tbd"].push(name); }
+  const cap = s => s[0].toUpperCase() + s.slice(1);
+  return [by.tbd.length ? `${cap(and(by.tbd.map(n => n.replace(/s$/, ""))))} prices are on the way.` : "", by.soon.length ? `The shop\u2019s ${and(by.soon)} are arriving soon.` : "", by.sold.length ? `The ${and(by.sold)} are sold out for now.` : ""].filter(Boolean).join(" ");
+}
 function viewSet() {
   const picks = setPicks();
   if (!setReady()) return `
@@ -557,7 +569,7 @@ function viewSet() {
     <h1 class="shophead__h">Build a set</h1>
     <p class="shophead__n">Sets arriving soon</p>
   </section>
-  ${soonShelf({ tone: "ruby", what: "Sets", meta: `Sets, <span class="num">0</span> ready to build`, title: "Sets arriving soon.", lead: "A set is a hookah, a bowl and a hose that go together. Hookah prices are on the way, and the shop’s bowls and hoses are arriving soon. Call the counter and we will help you put one together from the shelf." })}`;
+  ${soonShelf({ tone: "ruby", what: "Sets", meta: `Sets, <span class="num">0</span> ready to build`, title: "Sets arriving soon.", lead: `A set is a hookah, a bowl and a hose that go together. ${setWhy()} Call the counter and we will help you put one together from the shelf.` })}`;
   return `
   <section class="shophead" data-tone="ruby" data-fx="set">
     <h1 class="shophead__h">Build a set</h1>
@@ -667,7 +679,7 @@ const dropOpt = lines => { const c = lines.filter(l => localOnly(l.product)), n 
   return `<label class="opt"><input type="radio" name="ship" value="drop" data-drop-counter><span class="opt__name">Leave the charcoal out, ship the rest<small>Takes out ${n} charcoal ${n === 1 ? "box" : "boxes"} (${money(worth)}). You can put ${n === 1 ? "it" : "them"} back.</small></span><span class="num">Shipping next</span></label>`; };
 function viewCart() {
   const lines = cartLines(), news = state.cartNews.length ? `<div class="cartnews" role="status" data-cart-news>${state.cartNews.map(m => `<p>${esc(m)}</p>`).join("")}${state.dropped?.length ? `<button class="link cartnews__undo" type="button" data-undo-drop>Put the charcoal back</button>` : ""}</div>` : ""; state.newsSeen = state.cartNews.length > 0;
-  if (!lines.length) return `${band("cart", "gilt", "Your cart", "Nothing in it yet.")}<section class="empty">${news}<p class="lead">Start with the <a class="link" href="/shop/hookahs">hookahs</a>, the <a class="link" href="/shop/bowls">bowls</a>, or <a class="link" href="/set">build a set</a>.</p></section>`;
+  if (!lines.length) return `${band("cart", "gilt", "Your cart", "Nothing in it yet.")}<section class="empty">${news}<p class="lead">${(() => { const on = CATEGORIES.filter(c => liveCat(c.id).length).slice(0, 3).map(c => `<a class="link" href="/shop/${c.id}">${esc(c.name.toLowerCase())}</a>`); return on.length ? `Start with the ${on.length > 1 ? on.slice(0, -1).join(", ") + " or the " + on.at(-1) : on[0]}.` : `See <a class="link" href="/shop">everything on the shelf</a>.`; })()}</p></section>`;
   const was = shipChoice(lines); if (state.ship === "local" && !was.canLocal && !was.checking) { state.ship = null; store.set("ship", null); }   // the cart is where a new way of sending it is shown and chosen
   const { parcels, opts, canLocal, checking, localFee, status, pickup, local, chosen, counter, mixed } = shipChoice(lines), sub = lines.reduce((a, l) => a + l.product.price * l.qty, 0);
   const ready = pickup || local || !!chosen, otherWay = carried(lines) ? "You can still ship it or pick it up free." : "You can still pick it up free.";
@@ -734,7 +746,7 @@ function viewShipping() {
     <h2 class="h3">How glass is packed</h2>
     <p>Hookahs ship taken apart. The glass base is double boxed. If anything arrives broken, bring it into the store and talk to the store manager.</p>
     <h2 class="h3">What we ship</h2>
-    <p>Hookahs, bases, bowls, hoses and parts. Charcoal goes by pickup or local delivery only: it is never sent by Canada Post.</p>
+    <p>Everything in the shop except charcoal, once its packed weight is known: until then an item says it is pickup or local delivery for now. Charcoal goes by pickup or local delivery only: it is never sent by Canada Post.</p>
     <h2 class="h3">Pick up</h2>
     <p>Order online and pick up for free at ${SHOP_ADDRESS}. ${directions()} or call <a class="link" href="tel:+15192552222">519-255-2222</a>.</p>
     <h2 class="h3">Returns</h2>
@@ -1167,7 +1179,7 @@ document.addEventListener("click", e => {
 }, true);
 // Another tab changed the cart: take its version, so neither tab can overwrite the other.
 function cartFromStorage() {
-  const fit = fitCart(cleanCart(store.get("cart"))); state.cart = fit.kept; if (fit.news.length) state.cartNews = fit.news;
+  const saved = store.get("cart"), fit = fitCart(cleanCart(saved)), gone = goneNote(saved); state.cart = fit.kept; if (fit.news.length || gone) state.cartNews = [...fit.news, ...(gone ? [gone] : [])]; if (gone) store.set("cart", state.cart);
   const on = route().replace(/^#\/?/, "").split("/")[0], f = $("[data-checkout]"), lines = cartLines();
   if (f && lines.length) { const sc = shipChoice(lines); if (sc.pickup || sc.local || sc.chosen) { f.querySelector(".totals").outerHTML = coTotals(lines, sc); syncChrome(); return; } }   // never rebuild a form someone is typing in
   if (["cart", "checkout", "p"].includes(on)) render(); else syncChrome();
