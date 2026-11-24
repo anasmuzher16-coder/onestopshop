@@ -46,7 +46,9 @@ export async function admin(request, env, url) {
   // a browser says when a request comes from another site (Fetch Metadata); any write that does is refused, sign-in included
   const site = request.headers.get("Sec-Fetch-Site");
   if (method !== "GET" && site && site !== "same-origin") return json({ error: "Wrong origin." }, 403);
-  if ((path === "/login" || path === "/logout") && method === "POST" && (!(request.headers.get("Content-Type") || "").startsWith("application/json") || request.headers.get("X-OSS-Admin") !== "1")) return json({ error: "Missing request marker." }, 400);   // no sign-in or sign-out from a plain form on another site
+  // Sign-in and sign-out take JSON only: a plain form on another site cannot send it, and another site's script
+  // sending it is stopped by the browser's cross-origin check before the request is made.
+  if ((path === "/login" || path === "/logout") && method === "POST" && !(request.headers.get("Content-Type") || "").startsWith("application/json")) return json({ error: "Send JSON." }, 415);
   if (path === "/login" && method === "POST") {
     if (!env.ADMIN_KEY) return json({ error: "The admin passcode has not been set up yet." }, 503);
     const body = await request.json().catch(() => ({}));

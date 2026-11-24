@@ -165,7 +165,7 @@ ok((await A("/me", { as: "staff" })).status === 401, "their open sign-in stops w
 ok((await A("/login", { method: "POST", as: "staff", body: { name, pin } })).status === 401, "and they cannot sign in again");
 ok((await A(`/products/${SKU}/history`)).data.moves.some(m => m.actor === me.actor), "their past changes still carry their name");
 
-ok((await fetch(B + "/api/admin/login", { method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify({ passcode: KEY }) })).status === 400, "sign-in without the request marker (a plain form post) is refused");
+ok((await fetch(B + "/api/admin/login", { method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify({ passcode: KEY }) })).status === 415, "sign-in that is not JSON (a plain form post) is refused");
 // ---- lockout (last: it locks local sign-in for 15 minutes) ----
 const wrongs = []; for (let i = 0; i < 5; i++) wrongs.push((await A("/login", { method: "POST", as: "staff", body: { name: add2.data.name, pin: "00000" + i }, headers: { "CF-Connecting-IP": "10.9.0." + i } })).status);
 const locked = await A("/login", { method: "POST", as: "staff", body: { name: add2.data.name, pin: "730519" }, headers: { "CF-Connecting-IP": "10.9.1.1" } });
