@@ -76,6 +76,10 @@ function fitCart(cart) {
 }
 const state = { reach: ["local", "nationwide"].includes(store.get("reach")) ? store.get("reach") : null, whyOpen: false, q: "", note: typeof store.get("note") === "string" ? store.get("note") : "", set: {}, dest: parsePostal(store.get("postal")), cart: cleanCart(store.get("cart")), ship: typeof store.get("ship") === "string" ? store.get("ship") : null, cartNews: [] };
 { const fit = fitCart(state.cart); if (fit.news.length) { state.cart = fit.kept; state.cartNews = fit.news; store.set("cart", state.cart); } }
+// A saved cart can hold an item that is no longer sold online at all (the demo's samples, taken off 2026-11-24): its row is
+// gone from the catalogue, so it has no name to show. It is taken out, said once in words, and the cart is saved without it.
+{ const saved = store.get("cart"), gone = Array.isArray(saved) ? new Set(saved.filter(l => l && typeof l.sku === "string" && /^OSS-\d{4,6}$/.test(l.sku) && !bySku[l.sku]).map(l => l.sku)).size : 0;
+  if (gone) { state.cartNews.push(`${gone === 1 ? "One item" : gone + " items"} in your cart ${gone === 1 ? "is" : "are"} no longer sold online, so we took ${gone === 1 ? "it" : "them"} out. Call the counter at 519-255-2222 to ask about ${gone === 1 ? "it" : "them"}.`); store.set("cart", state.cart); } }
 const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const NF_CENTS = new Intl.NumberFormat("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 }), NF_WHOLE = new Intl.NumberFormat("en-CA");   // made once: toLocaleString builds a new formatter on every call
@@ -261,6 +265,30 @@ function cardMeta(p) {
 // ---------- views ----------
 // Every page opens with the same band the shop sections have: a flat jewel colour, the title, and room for the page's object.
 const band = (fx, tone, title, note = "") => `<section class="shophead shophead--page" data-tone="${tone}" data-fx="${fx}"><h1 class="shophead__h">${title}</h1>${note ? `<p class="shophead__n">${note}</p>` : ""}</section>`;
+
+// ---------- STOCK ARRIVING SOON (owner, 2026-11-24: "Hide samples, show coming soon") ----------
+// A section, gift list or set with nothing in it shows its empty place on the shelf instead of an empty grid: the first slot
+// of the grid, a jewel tile in the section's colour labelled the way the grid labels a missing photo, with the price gun's
+// label slapped on it ("Stock / Soon", the TBD label). Beside it one plain sentence and the one action, the counter's phone;
+// below it, the sections that do have something on the shelf, counted. No form: the shop answers the phone.
+const SOON_NOUN = { parts: "parts and care pieces", misc: "odds and ends", heat: "heat pieces", cologne: "colognes" };
+const shelfNow = c => { const l = SHELF.filter(p => p.cat === c.id), sale = l.filter(forSale).length; return [c, l.length, sale]; };
+function soonShelf({ tone, what, title = "Stock arriving soon.", lead, meta = `${esc(what)}, <span class="num">0</span> on the shelf` }) {
+  const now = CATEGORIES.map(shelfNow).filter(([, n]) => n);
+  return `<section class="soon" data-tone="${tone}" aria-labelledby="soon-h">
+    <div class="soon__tile tile" aria-hidden="true"><span class="soon__ph">On its way</span><span class="sticker sticker--tbd" style="--r:-7deg"><span class="sticker__k">List</span><span class="sticker__v">TBD</span></span></div>
+    <div class="soon__copy">
+      <p class="tbd soon__what">${meta}</p>
+      <h2 class="soon__h" id="soon-h">${title}</h2>
+      <p class="soon__p">${lead}</p>
+      <div class="soon__acts"><a class="btn" href="tel:+15192552222">Call 519-255-2222</a>${directions()}</div>
+      <p class="soon__open">${openLine()}. ${SHOP_STREET}, Windsor.</p>
+    </div>
+    ${now.length ? `<nav class="soonnow" aria-labelledby="soonnow-h"><h2 class="soonnow__h" id="soonnow-h">On the shelf now</h2>
+      <ul>${now.map(([c, n, sale]) => `<li><a href="/shop/${c.id}" data-tone="${c.tone}"><span class="soonnow__sw" aria-hidden="true"></span><span class="soonnow__n">${esc(c.name)}</span><span class="soonnow__c"><span class="num">${n}</span>${sale ? "" : ` ${TBD("Prices")}`}</span></a></li>`).join("")}</ul></nav>` : ""}
+  </section>`;
+}
+const soonSection = c => soonShelf({ tone: c.tone, what: c.name, lead: `We are putting the shop’s own ${SOON_NOUN[c.id] || c.name.toLowerCase()} online. Until the list is up, call the counter and we will check the shelf for you.` });
 function viewHome() {
   // the first screen and the counter picks: the shop's ticked (in-store) hookahs with their own photo, one per family (public/picks.js, the Worker preloads the same first one)
   const ranked = heroPicks(PRODUCTS, 13), stars = ranked.slice(0, 5), picks = ranked.slice(5, 13);
@@ -286,8 +314,10 @@ function viewHome() {
     </div>
   </section>
   <section class="cats" aria-label="Shop by category">
-    ${CATEGORIES.map((c, i) => { const n = SHELF.filter(p => p.cat === c.id).length; const lead = (c.id === "hookahs" && stars[0]) || SHELF.find(p => p.cat === c.id && !p.dark && p.img) || SHELF.find(p => p.cat === c.id && !p.dark);
-      return `<a class="cat" data-tone="${c.tone}" href="/shop/${c.id}">${shot(lead, { small: i > 0, use: i ? "cat" : "cat1", cls: "cat__img" })}<span class="cat__name">${c.name}</span><span class="cat__n num">${n}</span></a>`; }).join("")}
+    ${[...CATEGORIES.filter(c => SHELF.some(p => p.cat === c.id)), ...CATEGORIES.filter(c => !SHELF.some(p => p.cat === c.id))].map((c, i) => { const n = SHELF.filter(p => p.cat === c.id).length;   // sections with stock lead; those still waiting for theirs follow const lead = (c.id === "hookahs" && stars[0]) || SHELF.find(p => p.cat === c.id && !p.dark && p.img) || SHELF.find(p => p.cat === c.id && !p.dark);
+      // a section with nothing in it yet keeps its tile, labelled like the grid's missing photo, and says "Soon" where the count goes
+      return lead ? `<a class="cat" data-tone="${c.tone}" href="/shop/${c.id}">${shot(lead, { small: i > 0, use: i ? "cat" : "cat1", cls: "cat__img" })}<span class="cat__name">${c.name}</span><span class="cat__n num">${n}</span></a>`
+        : `<a class="cat cat--soon" data-tone="${c.tone}" href="/shop/${c.id}"><span class="cat__ph" aria-hidden="true">On its way</span><span class="cat__name">${c.name}</span><span class="cat__n">Soon<span class="sr">: stock arriving soon</span></span></a>`; }).join("")}
   </section>
   <section class="shelf">
     <header class="shelf__head"><h2 class="h2">Counter picks</h2><a class="link" href="/shop/hookahs">All ${SHELF.filter(p => p.cat === "hookahs").length} hookahs</a></header>
@@ -372,14 +402,14 @@ function bandNote(c, list) {
 }
 function viewShop(cat) {
   const c = catById[cat] || null, list = c ? SHELF.filter(p => p.cat === c.id) : SHELF;
-  const f = c && find.findShop(c.id);   // section filters (find.js); null when a section has nothing to filter by
+  const empty = !!c && !list.length, f = c && !empty && find.findShop(c.id);   // section filters (find.js); null when a section has nothing to filter by
   return `
   <section class="shophead" data-tone="${c ? c.tone : "bone"}" ${c ? `data-cat="${c.id}"` : `data-fx="all"`}>
     <h1 class="shophead__h">${c ? c.name : "Everything"}</h1>
-    <p class="shophead__n">${bandNote(c, list)}</p>
+    <p class="shophead__n">${empty ? "Stock arriving soon" : bandNote(c, list)}</p>
   </section>
   <nav class="chips" aria-label="Categories"><a href="/shop" ${!c ? 'aria-current="page"' : ""}>All</a>${CATEGORIES.map(x => `<a href="/shop/${x.id}" ${c && c.id === x.id ? 'aria-current="page"' : ""}>${x.name}</a>`).join("")}<a href="/gifts/under-50">Gifts</a></nav>
-  ${f ? f.html(() => shopGrid(cat)) : shopGrid(cat)}`;
+  ${empty ? soonSection(c) : f ? f.html(() => shopGrid(cat)) : shopGrid(cat)}`;
 }
 
 // The product page for charcoal: one plain answer about how it is bought, in place of the delivery and shipping rows.
@@ -487,10 +517,11 @@ function viewGifts(kind) {
   return `
   <section class="shophead" data-tone="${under ? "emerald" : "cobalt"}" data-fx="gifts">
     <h1 class="shophead__h">${under ? "Under $50" : "Under $150"}</h1>
-    <p class="shophead__n"><span class="num">${list.length}</span> gifts, packed at the counter</p>
+    <p class="shophead__n">${list.length ? `<span class="num">${list.length}</span> gifts, packed at the counter` : "Gifts arriving soon"}</p>
   </section>
   <nav class="chips chips--on" aria-label="Gifts"><a href="/shop">Everything</a><a href="/gifts/under-50" ${under ? 'aria-current="page"' : ""}>Under $50</a><a href="/gifts/under-150" ${!under ? 'aria-current="page"' : ""}>Under $150</a><a href="/set">The full setup</a></nav>
-  <div class="grid grid--shop">${list.map(card).join("")}</div>`;
+  ${list.length ? `<div class="grid grid--shop">${list.map(card).join("")}</div>`
+    : soonShelf({ tone: under ? "emerald" : "cobalt", what: under ? "Gifts under $50" : "Gifts under $150", title: "Gifts arriving soon.", lead: "Pieces in this price range are on their way to the site. Call the counter and we will check the shelf for you, and pack it as a gift." })}`;
 }
 
 // ---------- build a set ----------
@@ -516,8 +547,17 @@ function setSummary() {
     </dl>
     ${picks.length ? `<button class="btn btn--wide" type="button" data-add-set>Add the set to cart</button>` : `<a class="btn btn--wide" href="/shop">See what is in stock</a>`}`;
 }
+// A set needs something on sale in at least one of its three main picks; until then the page says the pieces are on their way
+// (src/seo.js setReady is the same rule for the page's title and the sitemap).
+const setReady = () => SLOTS.some(([slot, cat]) => !OPTIONAL.has(slot) && setOpts(cat).length);
 function viewSet() {
   const picks = setPicks();
+  if (!setReady()) return `
+  <section class="shophead" data-tone="ruby" data-fx="set">
+    <h1 class="shophead__h">Build a set</h1>
+    <p class="shophead__n">Sets arriving soon</p>
+  </section>
+  ${soonShelf({ tone: "ruby", what: "Sets", meta: `Sets, <span class="num">0</span> ready to build`, title: "Sets arriving soon.", lead: "A set is a hookah, a bowl and a hose that go together. Hookah prices are on the way, and the shop’s bowls and hoses are arriving soon. Call the counter and we will help you put one together from the shelf." })}`;
   return `
   <section class="shophead" data-tone="ruby" data-fx="set">
     <h1 class="shophead__h">Build a set</h1>
@@ -527,7 +567,8 @@ function viewSet() {
     <div class="set__steps">${SLOTS.map(([slot, cat, label], i) => `
       <section class="pick" aria-labelledby="pick-${slot}">
         <h2 class="h3" id="pick-${slot}"><span class="num">${i + 1}</span> ${label}</h2>
-        ${!setOpts(cat).length && slot === "hookah" ? `<p class="pick__none">Hookahs join sets once the shop sets their prices. <a class="link" href="/shop/hookahs">See the hookahs</a></p>` : ""}
+        ${!setOpts(cat).length && slot === "hookah" ? `<p class="pick__none">Hookahs join sets once the shop sets their prices. <a class="link" href="/shop/hookahs">See the hookahs</a></p>`
+          : !setOpts(cat).length && !OPTIONAL.has(slot) ? `<p class="pick__none">${esc(catById[cat]?.name || label)}: stock arriving soon. <a class="link" href="tel:+15192552222">Call the counter</a></p>` : ""}
         <div class="pick__row" role="group" aria-label="${label}">${setOpts(cat).map(p => `<button class="pick__opt" type="button" data-set="${slot}" data-sku="${p.sku}" aria-pressed="${picks[i]?.sku === p.sku}" data-tone="${toneOf(p)}"><span class="tile">${shot(p, { small: true, use: "thumb" })}${sticker(p)}</span><span class="pick__name">${esc(p.name)}</span></button>`).join("")}</div>
       </section>`).join("")}</div>
     <aside class="set__sum" data-set-summary>${setSummary()}</aside>

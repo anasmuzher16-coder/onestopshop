@@ -29,28 +29,31 @@ const mod = await get("/api/catalog-module");
 ok((mod.r.headers.get("content-type") || "").startsWith("text/javascript"), "catalog.js content type");
 const m = await import("data:text/javascript;base64," + Buffer.from(mod.t).toString("base64"));
 const ref = await import("../../site/catalog.js");
-// Charcoal has its own section since 2026-11-24 (69 items). Heat keeps the 15 foil packs and brings back the Heat pieces
-// that were hidden when charcoal moved in on 2026-11-23 (exactly those, from the audit log): the sample ones with a sound photo.
-const FLAWED = ["hookah50", "bowl30", "acc03", "bowl26", "hmd12", "acc06", "hose09", "bowl06"], oldHeat = ref.PRODUCTS.filter(p => p.cat === "heat");
-// Since 2026-11-24 the sample hookahs are retired too, and the real stock is on view: 296 Ace colours (Price TBD), 47 shisha, 15 foil.
+const { SAMPLE_SKUS } = await import("../src/samples.js");
+// Every made-up sample is off since 2026-11-24 (owner: "Hide samples, show coming soon"). What is on view is the real stock:
+// 69 charcoal items, 15 foil packs (Heat), 47 shisha flavours, 296 Ace colours (Price TBD). All ten sections stay; the ones
+// left with nothing say "stock arriving soon".
 const coal = m.PRODUCTS.filter(p => p.cat === "charcoal"), heat = m.PRODUCTS.filter(p => p.cat === "heat"), foil = heat.filter(p => /foil/i.test(p.name));
-const back = oldHeat.filter(a => !FLAWED.includes(a.img)), backIn = heat.filter(p => back.some(a => a.sku === p.sku));
-const kept = ref.PRODUCTS.filter(p => p.cat !== "hookahs" && p.cat !== "heat" && !FLAWED.includes(p.img)).length;
-ok(m.PRODUCTS.length === kept + 12 + 69 + 15 + 47 + 296 + back.length && m.CATEGORIES.length === ref.CATEGORIES.length + 4, `catalogue size ${m.PRODUCTS.length}/${kept + 12 + 69 + 15 + 47 + 296 + back.length}, sections ${m.CATEGORIES.length}`);
+ok(m.PRODUCTS.length === 69 + 15 + 47 + 296 && m.CATEGORIES.length === ref.CATEGORIES.length + 4, `catalogue size ${m.PRODUCTS.length}/${69 + 15 + 47 + 296}, sections ${m.CATEGORIES.length}`);
 ok(m.CATEGORIES.findIndex(c => c.id === "charcoal") === m.CATEGORIES.findIndex(c => c.id === "heat") + 1, "Charcoal sits right after Heat");
 ok(foil.length === 15 && foil.every(p => p.state === "sale" && p.ship === "pickup_only" && p.weightTbd), "15 foil packs: on sale, pickup or local delivery while their weight is TBD");
-ok(!m.PRODUCTS.some(p => ref.PRODUCTS.some(a => a.cat === "hookahs" && a.sku === p.sku)), "no sample hookah is left in the catalogue");
-ok(coal.length === 69 && heat.length === 15 + back.length && backIn.length === back.length && back.length > 0 && !heat.some(p => p.details.charcoal), `Charcoal holds the 69 charcoal items; Heat holds the foil and the ${back.length} Heat pieces brought back, and no charcoal: ${coal.length}/${heat.length}`);
+ok(!m.PRODUCTS.some(p => SAMPLE_SKUS.has(p.sku)) && SAMPLE_SKUS.size === 98, "no made-up sample is left in the catalogue (98 kept in the database, switched off)");
+ok(ref.PRODUCTS.every(a => SAMPLE_SKUS.has(a.sku)), "every row of the mockup's sample file is in the samples list");
+ok(coal.length === 69 && heat.length === 15 && !heat.some(p => p.details.charcoal), `Charcoal holds the 69 charcoal items; Heat holds the 15 foil packs and no charcoal: ${coal.length}/${heat.length}`);
+// the sections the samples leave empty: still there, answering 200, saying the stock is on its way and the phone, kept out of search
+const empty = m.CATEGORIES.filter(c => !m.PRODUCTS.some(p => p.cat === c.id)).map(c => c.id);
+ok(["bases", "bowls", "hoses", "parts", "cologne", "misc"].every(id => empty.includes(id)) && empty.length === 6, "six sections wait for their stock: " + empty.join(","));
+for (const id of empty) { const s = await get("/shop/" + id); ok(s.r.status === 200 && /stock arriving soon/i.test(s.t) && /tel:\+15192552222/.test(s.t) && /<meta name="robots" content="noindex, nofollow">/.test(s.t) && !/"@type":"(ItemList|Product)"/.test(s.t), `/shop/${id}: 200, says stock arriving soon with the phone, noindex, no product data`); }
+// every switched-off sample's old address goes to its own section, which says what is coming (one request each)
+{ const all = [...SAMPLE_SKUS]; let wrong = [];
+  for (const sku of all) { const r = await fetch(B + "/p/" + sku, { redirect: "manual" }); const sec = ref.PRODUCTS.find(a => a.sku === sku)?.cat || { 7: "cologne", 8: "misc" }[sku[4]]; if (r.status !== 301 || !(r.headers.get("location") || "").endsWith("/shop/" + sec)) wrong.push(`${sku}:${r.status}`); }
+  ok(!wrong.length, `every sample's old address redirects to its section (${all.length}): ${wrong.slice(0, 5).join(" ")}`); }
 ok(coal.every(p => p.ship === "pickup_only" && p.details.charcoal === true && p.stock === 10), "every charcoal item is pickup only and starts at 10 in stock");
 ok(coal.filter(p => p.img).length === 28 && coal.every(p => p.img ? p.details.photo === "approved" : p.details.photo === "coming"), "28 charcoal photos, the rest carry photo status coming");
 for (const p of coal.filter(x => x.img)) { const r = await fetch(B + `/img/pc/${p.img}-s.webp`); ok(r.status === 200, `photo ${p.img}-s.webp: ${r.status}`); }
 ok((await fetch(B + "/img/pc/coming-charcoal.svg")).status === 200, "the drawn stand-in is served");
 const coalPage = await get("/p/OSS-9101"); ok(/Pickup in Windsor or local delivery near Windsor\. Not shipped/.test(coalPage.t) && /og:image" content="[^"]+\/img\/share\.jpg"/.test(coalPage.t), "a charcoal page without a photo says pickup or local delivery only and shares the shop image");
-let diff = 0;
-for (const a of ref.PRODUCTS) { if (FLAWED.includes(a.img) || a.cat === "heat" || a.cat === "hookahs") continue; const b = m.PRODUCTS.find(x => x.sku === a.sku); if (!b) { diff++; continue; }
-  for (const k of ["name", "cat", "price", "kg", "box", "glass", "note", "img", "dark"]) if (a[k] !== b[k]) diff++;   // (Heat's pieces brought back are checked above)
-  if ((a.height ?? null) !== (b.height ?? null) || (a.lw ?? null) !== (b.lw ?? null)) diff++; }
-ok(diff === 0, `${diff} product fields differ between the database and the sample file`);
+// (the field-by-field match of the samples against the mockup file went with the samples: none is in the catalogue now)
 for (const [id, a] of Object.entries(ref.BOXES)) { const b = m.BOXES[id]; ok(b && a.l === b.l && a.w === b.w && a.h === b.h && Math.abs(a.tare - b.tare) < 1e-9, "box " + id); }
 // an item on sale whose weight is not known yet (foil; an Ace hookah once priced) is pickup or local delivery until it is (2026-11-24)
 ok(m.PRODUCTS.every(p => (p.cat === "cologne" ? p.ship === "ground_only" : p.cat === "charcoal" || (p.weightTbd && p.state === "sale") ? p.ship === "pickup_only" : p.ship === "standard") && Number.isInteger(p.stock) && p.stock >= 0), "ship class and stock come through");

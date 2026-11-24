@@ -29,7 +29,7 @@ for (const [tag, type, ctx] of [["webkit390", webkit, { viewport: { width: 390, 
     if (tag === "webkit390") { await open("/shop/parts"); t(`${tag} 18 chips are their own layer in a page change`, await p.evaluate(() => getComputedStyle(document.querySelector(".chips")).viewTransitionName) === "chips"); }
     // 19 current page
     if (tag === "chromium1440") {
-      await open("/p/OSS-3001"); t(`${tag} 19 a product marks its section`, await p.locator('.top__nav a[href="/shop/bowls"][aria-current]').count() === 1 || await p.locator(".top__nav a[aria-current]").count() === 1);
+      await open("/p/OSS-9601"); t(`${tag} 19 a product marks its section`, await p.locator('.top__nav a[href="/shop/shisha"][aria-current]').count() === 1 || await p.locator(".top__nav a[aria-current]").count() === 1);
       await open("/gifts/under-150"); t(`${tag} 19 Gifts is marked`, await p.locator('.top__nav a[href="/gifts/under-50"][aria-current]').count() === 1);
       await open("/cart"); t(`${tag} 19 Cart is marked`, await p.locator(".top__cart[aria-current]").count() === 1);
       t(`${tag} 17 nav stays on one line`, await p.evaluate(() => { const n = document.querySelector(".top__nav"); return new Set([...n.children].map(a => Math.round(a.getBoundingClientRect().top))).size === 1; }));

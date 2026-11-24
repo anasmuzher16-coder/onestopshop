@@ -145,6 +145,10 @@ export function jumps(ix, q, { terms } = understand(ix, q)) {
 }
 // a word that names a whole section opens it
 const SECTION_WORDS = { hookahs: ["hookah"], bases: ["base"], bowls: ["bowl"], charcoal: ["charcoal"], heat: ["foil", "heat management"], hoses: ["hose"], parts: ["part", "brush", "cleaner"], cologne: ["cologne"] };
+// a word that names a section with nothing in it yet (its stock is on the way): the page says so and links the section
+export function arriving(ix, q, { terms } = understand(ix, q)) {
+  return ix.CATEGORIES.filter(c => { const w = SECTION_WORDS[c.id]; return w && !ix.PRODUCTS.some(p => p.cat === c.id) && terms.some(t => t.alts.some(x => w.includes(x))); });
+}
 // nothing matched: each word on its own, then the closest shop word
 export function nearest(ix, q) {
   const u = understand(ix, q), words = u.terms.map(t => t.w), alone = [];

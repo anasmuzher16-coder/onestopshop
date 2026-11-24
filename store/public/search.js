@@ -1,6 +1,6 @@
 // The search page: ways in before typing, results grouped by section while typing, and a way forward when nothing
 // matches. The matching lives in search-core.js; app.js calls searchPage() and searchOut().
-import { buildIndex, understand, search, grouped, jumps, nearest, popularBrands } from "./search-core.js";
+import { buildIndex, understand, search, grouped, jumps, nearest, popularBrands, arriving } from "./search-core.js";
 import { heatKind } from "./find-core.js";
 import { DRAWN } from "./find.js";
 
@@ -44,14 +44,16 @@ const toneOf = id => (X.CATEGORIES.find(c => c.id === id) || {}).tone || "bone";
 const has = cat => X.PRODUCTS.some(p => p.cat === cat);
 
 const tone = (id, fallback) => (X.CATEGORIES.find(c => c.id === id) || {}).tone || fallback;
+// on sale and not sold out: a way in only leads somewhere that has something to buy (the samples came off, 2026-11-24)
+const buyable = p => p.state === "sale" && p.stock > 0;
 function ways() {
   const foil = X.PRODUCTS.filter(p => heatKind(p) === "foil").length, flav = X.PRODUCTS.filter(p => p.cat === "shisha").length;
   const all = [
-    ["/set", tone("hookahs", "ruby"), "set", "Starting out", "A hookah, bowl and hose that go together", has("hookahs") || has("bowls")],
+    ["/set", tone("hookahs", "ruby"), "set", "Starting out", "A hookah, bowl and hose that go together", X.PRODUCTS.some(p => ["hookahs", "bowls", "hoses"].includes(p.cat) && buyable(p))],
     ["/shop/charcoal?find=coal", tone("charcoal", "ash"), "coal", "Need coals", "Pick the right box in two taps", X.PRODUCTS.some(p => heatKind(p) === "box")],
     ["/shop/shisha", tone("shisha", "amethyst"), "jar", "Flavours", `${flav} tobacco-free flavours`, flav > 0],
     ["/shop/heat?type=foil", tone("heat", "ember"), "foil", "Foil", `${foil} packs, by size and thickness`, foil > 0],
-    ["/gifts/under-50", "emerald", "gift", "A gift", "Under $50 or under $150, packed at the counter", true],
+    ["/gifts/under-50", "emerald", "gift", "A gift", "Under $50 or under $150, packed at the counter", X.PRODUCTS.some(p => buyable(p) && p.ship !== "pickup_only" && !(p.details && p.details.charcoal) && !p.dark && p.price < 50)],
     ["/shop/parts", tone("parts", "gilt"), "part", "Parts and care", `${X.PRODUCTS.filter(p => p.cat === "parts").length} pieces to fix or clean your setup`, has("parts")],
     ["/shop/cologne", tone("cologne", "amethyst"), "scent", "Smell good", "Cologne and fragrance", has("cologne")],
   ].filter(w => w[5]).slice(0, 6);
@@ -89,9 +91,13 @@ export function searchOut(q) {
   const said = (u.fixed.length ? `<p class="meant">Showing <b>${X.esc(u.fixed.reduce((s, [from, to]) => s.replace(new RegExp("\\b" + from, "i"), to), q.toLowerCase()))}</b>. You typed ${X.esc(u.fixed.map(f => f[0]).join(", "))}.</p>` : "")
     + (u.terms.some(t => t.quick) ? `<p class="meant">Our boxes are not marked quick-light yet. These are the round tablets; the box says if it lights quickly.</p>` : "");
   const pages = u.pages.length ? `<ul class="jumps jumps--pages">${u.pages.map(pageRow).join("")}</ul>` : "";
+  const soon = arriving(IX, q, u), soonNames = soon.map(c => c.name).join(" and ");
+  const soonLink = soon.map(c => `<a class="link" href="/shop/${c.id}">${X.esc(c.name)}</a>`).join(", ");
   if (!hits.length) {
     if (u.pages.length) return said + pages;
     const near = nearest(IX, q);
+    if (soon.length) return `<h2 class="srch__none">${X.esc(soonNames)}: stock arriving soon.</h2><p class="srch__nonep">We are putting the shop’s own list online. Call the counter at <a class="link" href="tel:+15192552222">519-255-2222</a> and we will check the shelf, or see ${soonLink}.</p>
+      <h3 class="srch__h">On the shelf now</h3>${ways()}`;
     return `<h2 class="srch__none">No “${X.esc(q)}” on the shelf.</h2><p class="srch__nonep">${near.alone.length ? "Here is the nearest we have, or ask us to get it in." : near.mean ? "" : "Try one of these, or ask us to get it in."}</p>
       ${near.mean ? `<p class="meant">Did you mean <a class="link" href="/search?q=${encodeURIComponent(near.mean)}">${X.esc(near.mean)}</a>?</p>` : ""}
       ${near.alone.map(a => `<h3 class="srch__h">With just “${X.esc(a.word)}” <span class="num">${a.n}</span></h3>${a.jumps.length ? `<ul class="jumps">${a.jumps.map(jumpRow).join("")}</ul>` : ""}<ul class="rows">${a.hits.map(p => row(p, [a.word])).join("")}</ul>`).join("")}
@@ -99,7 +105,7 @@ export function searchOut(q) {
       <p class="srch__ask">Look through <a class="link" href="/shop">everything</a>, or ask us to stock it: call <a class="link" href="tel:+15192552222">519-255-2222</a>.</p>`;
   }
   const groups = grouped(IX, hits);
-  return `${said}${pages}${js.length ? `<ul class="jumps">${js.map(jumpRow).join("")}</ul>` : ""}
+  return `${said}${soon.length ? `<p class="meant">${X.esc(soonNames)}: stock arriving soon. See ${soonLink}, or call <a class="link" href="tel:+15192552222">519-255-2222</a>.</p>` : ""}${pages}${js.length ? `<ul class="jumps">${js.map(jumpRow).join("")}</ul>` : ""}
     <p class="sr" role="status">${hits.length} ${hits.length === 1 ? "match" : "matches"}</p>
     ${groups.map(g => { const more = g.items.length > 4, coal = g.cat.id === "charcoal";
       return `<section class="rgroup" data-tone="${g.cat.tone}"><div class="rgroup__h"><h2>${X.esc(g.cat.name)}</h2><span class="num">${g.items.length}</span></div>${coal ? `<p class="rgroup__note">Charcoal is pickup or local delivery only.</p>` : ""}

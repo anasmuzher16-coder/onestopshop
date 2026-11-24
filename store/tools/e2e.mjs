@@ -13,7 +13,7 @@ t("home h1", (await p.locator("h1").count()) === 1);
 const cta = await p.locator(".hero__cta .btn").first().boundingBox(), vh = p.viewportSize().height;
 t("hero action inside first screen, above the dock", cta && cta.y + cta.height < vh - 64, JSON.stringify(cta));
 // the hookahs on the home page are Price TBD since 2026-11-24 (not for sale), so the buying walk starts from a section that sells
-await p.goto(base + "shop/bowls", { waitUntil: "networkidle" }); await p.locator('[data-piece]:not(:has(.sticker--tbd)):not(:has(.sticker--sold))').first().tap(); await p.waitForURL(/\/p\//);
+await p.goto(base + "shop/shisha", { waitUntil: "networkidle" }); await p.locator('[data-piece]:not(:has(.sticker--tbd)):not(:has(.sticker--sold))').first().tap(); await p.waitForURL(/\/p\//);
 t("product h1", (await p.locator("h1").count()) === 1);
 const price = cents(await p.locator("[data-stage] .sticker__v").innerText());
 await p.locator(".dock__buy").tap(); await p.waitForTimeout(100);
@@ -51,14 +51,14 @@ for (const r of ["", "shop", "shop/bowls", "p/OSS-9616", "p/NOPE", "nope", "ship
 for (const [r, code] of [["p/NOPE", 404], ["nope", 404], ["shop/bowls", 200]]) { const res = await p.goto(base + r); t("address " + r + " answers " + code, res.status() === code, String(res.status())); }
 await p.goto(base + "#/p/OSS-9616", { waitUntil: "networkidle" });
 t("old #/ link is upgraded to a real address", new URL(p.url()).pathname === "/p/OSS-9616" && (await p.locator("h1").count()) === 1, p.url());
-await p.goto(base + "shop/bowls", { waitUntil: "networkidle" }); await p.locator("[data-piece]").first().tap(); await p.waitForURL(/\/p\//); await p.goBack(); await p.waitForTimeout(700);
-t("back button returns to the category", new URL(p.url()).pathname === "/shop/bowls" && (await p.locator("h1").count()) === 1, p.url());
-await p.goto(base + "shop/bowls", { waitUntil: "networkidle" }); await p.waitForTimeout(700); await p.locator("[data-piece]").first().tap(); await p.waitForURL(/\/p\//); await p.waitForTimeout(900);
+await p.goto(base + "shop/shisha", { waitUntil: "networkidle" }); await p.locator("[data-piece]").first().tap(); await p.waitForURL(/\/p\//); await p.goBack(); await p.waitForTimeout(700);
+t("back button returns to the category", new URL(p.url()).pathname === "/shop/shisha" && (await p.locator("h1").count()) === 1, p.url());
+await p.goto(base + "shop/shisha", { waitUntil: "networkidle" }); await p.waitForTimeout(700); await p.locator("[data-piece]").first().tap(); await p.waitForURL(/\/p\//); await p.waitForTimeout(900);
 if (await p.evaluate(() => "popover" in HTMLElement.prototype)) {
   await p.locator("[data-stage] .shot").tap(); await p.waitForTimeout(500);
   t("photo opens full screen", await p.evaluate(() => !!document.querySelector(".zoom:popover-open")));
   await p.goBack(); await p.waitForTimeout(900);
-  t("Back closes the full-screen photo", await p.evaluate(() => !document.querySelector(".zoom:popover-open")) && new URL(p.url()).pathname === "/shop/bowls", p.url());
+  t("Back closes the full-screen photo", await p.evaluate(() => !document.querySelector(".zoom:popover-open")) && new URL(p.url()).pathname === "/shop/shisha", p.url());
 }
 t("no console errors", errs.length === 0, errs.slice(0, 3).join(" ; "));
 await b.close(); console.log(f ? "FAIL " + f + "/" + n : "PASS " + n + "/" + n); process.exit(f ? 1 : 0);
