@@ -52,6 +52,7 @@ function photoLabel(v) {
   const f = (v && v.facts) || {};
   if (!v.img) return "";
   if (f.photo === "family") return `Shown in ${f.shown_in || "another colour"}${f.photo_upscale ? ". Photo to be upscaled" : ""}`;
+  if (v.details?.photo === "replace") return "Photo to be replaced";   // a stand-in photo of a similar pack (owner, 2026-11-24)
   return f.photo_label === "upscale" || v.details?.photo === "upscale" ? "Photo to be upscaled" : "";   // a single item (charcoal, foil, shisha) says it in its details
 }
 const colourShot = (v, o = {}) => { const l = photoLabel(v); return shot(v, { ...o, alt: o.alt ? (l ? `${o.alt}. ${l}` : o.alt) : "" }) + (l ? `<span class="shot__tag shot__tag--tbd" aria-hidden="true">${esc(l)}</span>` : ""); };
