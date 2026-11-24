@@ -12,7 +12,9 @@ ok(home.r.headers.get("strict-transport-security") === "max-age=31536000", "HSTS
 ok(/og:image" content="[^"]+\/img\/share\.jpg"/.test(home.t), "pages have a default share image");
 ok((await fetch(B + "/img/share.jpg")).status === 200, "the share image exists");
 const prod = await get("/p/OSS-1001"); ok(/og:image" content="[^"]+\/img\/pc\/hookah00\.webp"/.test(prod.t) && !/share\.jpg/.test(prod.t), "a product shares its own photo");
-ok(/<meta name="robots" content="noindex, nofollow">/.test(home.t) && home.r.headers.get("x-robots-tag") === "noindex, nofollow", "the demo stays noindex");
+if (process.env.EXPECT_LIVE === "1") ok(!/name="robots"/.test(home.t) && !home.r.headers.get("x-robots-tag"), "live: pages can be indexed: " + home.r.headers.get("x-robots-tag"));
+else ok(/<meta name="robots" content="noindex, nofollow">/.test(home.t) && home.r.headers.get("x-robots-tag") === "noindex, nofollow", "the demo stays noindex");
+for (const p of ["/constructor", "/toString", "/__proto__"]) ok((await get(p)).r.status === 404, p + " is a real 404");
 const map = await get("/sitemap.xml");
 if (process.env.EXPECT_LIVE === "1") ok(map.r.status === 200 && map.t.includes(`<loc>${B}/shop/hookahs</loc>`) && map.t.includes("/p/OSS-1001</loc>") && !map.t.includes("/cart"), "live: the sitemap lists the shop");
 else ok(map.r.status === 404 && map.r.headers.get("x-robots-tag") === "noindex, nofollow", "demo: no sitemap: " + map.r.status);

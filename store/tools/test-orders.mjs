@@ -39,6 +39,8 @@ ok(got.status === 201 && again.status === 200 && again.data.order?.id === got.da
 // a key is not a way to read or change something else
 const other = await post({ ...who, email: "someone@example.com", method: "pickup", lines: [{ sku: "OSS-8004", qty: 1 }], order_key: k1 });
 ok(other.status === 409 && !other.data.order, "a key with different order details is refused: " + other.status);
+const moved = await post({ ...who, name: "Key Corrected", method: "pickup", lines: [{ sku: "OSS-8004", qty: 1 }], order_key: k1 });
+ok(moved.status === 409 && moved.data.existing_order === a.data.order.id && !moved.data.order, "changed details never replay the old order as a success: " + moved.status);
 ok((await post(pickup("OSS-8004", 1, { order_key: "short" }))).status === 400, "a malformed key is refused");
 ok((await post(pickup("OSS-8004", 1, { order_key: 12345 }))).status === 400, "a key that is not text is refused");
 console.log(f ? `FAIL ${f} of ${n} checks` : `PASS ${n} checks`); process.exit(f ? 1 : 0);

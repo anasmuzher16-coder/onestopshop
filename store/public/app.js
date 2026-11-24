@@ -128,6 +128,7 @@ function viewHome() {
       <div class="hero__slabs" aria-hidden="true">${stars.map((p, i) => `<span data-tone="${SLABS[i]}"></span>`).join("")}</div>
       <p class="hero__word" aria-hidden="true">Hookahs,</p>
       <div class="hero__pieces">${stars.map((p, i) => `<a class="piece" href="/p/${p.sku}" style="--cm:${p.height};--i:${i}" aria-label="${esc(p.name)}, ${whole(p.price)}">${shot(p, { eager: i < 3, use: "slab" })}${sticker(p)}</a>`).join("")}</div>
+      <p class="hero__word hero__word--comma" aria-hidden="true"><span>Hookahs</span>,</p>
     </div>
     <div class="hero__in">
       <h1 class="hero__h"><span class="hero__lead">Hookahs,</span> <span class="hero__rest">and everything that goes with them.</span></h1>
@@ -580,7 +581,7 @@ function shownTotals(lines, sc) {
 }
 function coTotals(lines, sc) {
   const { pickup, local } = sc, t = shownTotals(lines, sc), units = lines.reduce((a, l) => a + l.qty, 0);
-  return `<dl class="totals">
+  return `<dl class="totals" data-total="${t.total}">
         <div><dt>${units} ${units === 1 ? "item" : "items"}</dt><dd class="num">${money(t.subtotal / 100)}</dd></div>
         <div><dt>${pickup ? "Pickup" : local ? "Delivery" : "Shipping"}</dt><dd class="num">${pickup ? "Free" : local ? (t.fee === null ? "Enter your address" : feeText(t.shipping / 100)) : money(t.shipping / 100)}</dd></div>
         <div><dt>${taxLabel(t.prov)}</dt><dd class="num">${money(t.tax / 100)}</dd></div>
@@ -688,9 +689,9 @@ document.addEventListener("submit", async e => {
     if (deliveryFeeNow() === null) return checkDelivery(f, btn);   // show the price first: the next tap places the order
   }
   btn.disabled = true; btn.textContent = "Placing your order"; err.hidden = true;
-  const sent = cartLines(), sig = orderSig(sent, sc), shown = shownTotals(sent, sc);
+  const sent = cartLines(), sig = orderSig(sent, sc), shownTotal = +f.querySelector(".totals").dataset.total;   // the figure on the screen, not a fresh sum: if the rate moved since, the server says so
   try {
-    const r = await fetch("/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ order_key: orderKey(sig + v("email").toLowerCase()), expected_total_cents: shown.total, lines: state.cart, method: pickup ? "pickup" : "ship", service: local ? "local" : chosen && chosen.id, delivery_fee_cents: local ? Math.round(deliveryFeeNow() * 100) : undefined, postal: state.dest && state.dest.full,
+    const r = await fetch("/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ order_key: orderKey(sig + v("email").toLowerCase()), expected_total_cents: shownTotal, lines: state.cart, method: pickup ? "pickup" : "ship", service: local ? "local" : chosen && chosen.id, delivery_fee_cents: local ? Math.round(deliveryFeeNow() * 100) : undefined, postal: state.dest && state.dest.full,
       name: v("name"), email: v("email"), phone: v("phone"), note: state.note, address: { line1: v("line1"), city: v("city") } }) });
     const data = await r.json().catch(() => ({}));
     if (!r.ok) { btn.disabled = false; btn.textContent = "Place order"; if (local && data.delivery) { if (data.delivery === "far") state.farFor = state.dest.full; state.delivery = data.delivery === "ok" ? { key: deliveryKey(), fee_cents: data.base_fee_cents ?? data.fee_cents, due: data.fee_cents, sub: cartCents() } : null; state.refused = data.delivery === "ok" ? null : deliveryKey(); refreshDelivery(f, data.delivery === "ok" ? undefined : deliveryMsg(data.delivery)); if (data.delivery !== "ok") return; } 
@@ -732,7 +733,7 @@ function realPage(a, b, more) {
   if (more) return false; if (!a) return true;
   if (a === "shop") return !b || !!catById[b]; if (a === "p") return !!b; if (a === "gifts") return !b || b === "under-50" || b === "under-150";
   if (a === "order") return !!b && /^W[A-Z0-9]{6}$/.test(b);
-  return !b && a in PLAIN;
+  return !b && Object.hasOwn(PLAIN, a);
 }
 function pageTitle(a, b, real) {
   if (!real || (a === "p" && !bySku[b])) return `Page not found | ${SITE}`; if (!a) return HOME_TITLE;
@@ -741,7 +742,7 @@ function pageTitle(a, b, real) {
 }
 function render() {
   const keep = focusKey(document.activeElement);
-  const [a, b, more] = route().replace(/^#\/?/, "").split("/"), real = realPage(a, b, more);
+  const [a, b, more] = route().replace(/^#\/?/, "").split("/").filter(Boolean), real = realPage(a, b, more);
   if (a === "search") state.q = new URLSearchParams(location.search).get("q") ?? state.q;
   document.title = pageTitle(a, b, real);
   $("#main").innerHTML = !real ? viewMissing() : a === "shop" ? viewShop(b) : a === "p" ? viewProduct(b) : a === "cart" ? viewCart() : a === "shipping" ? viewShipping() : a === "gifts" ? viewGifts(b) : a === "set" ? viewSet() : a === "search" ? viewSearch() : a === "privacy" ? viewPrivacy() : a === "terms" ? viewTerms() : a === "checkout" ? viewCheckout() : a === "order" ? viewOrder(b) : !a ? viewHome() : viewMissing();
@@ -793,3 +794,4 @@ window.addEventListener("routechange", () => {
   if (!navInfo().instant && document.startViewTransition && !matchMedia("(prefers-reduced-motion: reduce)").matches) document.startViewTransition(go); else go();   // a wave is already covering the change
 });
 render();
+if (spotHere()) putScroll(spotHere());   // a reload, or Back from another site, lands where you were

@@ -278,6 +278,7 @@ setNavGate({
     if (w) { // a tap during a wave replaces it, with one history entry; what it replaced never lands
       if (w.path === path) return true;
       const next = replace ? null : waveFor(path); if (!next) { drop(true); return false; }   // back to the page still showing: this band finishes its pass over it
+      if (tooFast(performance.now())) { undo?.(); undo = null; w.path = path; underline(path); return true; }   // too many in a second: this band carries the new page instead of a third one starting
       const under = keeper(); drop(true); clearTimers(); w = null; if (raf) cancelAnimationFrame(raf); raf = 0;   // the new tap plays its own wave over this one, so nothing pops off
       if (play(next, path, under)) return true; hide(); return false;
     }
@@ -285,7 +286,7 @@ setNavGate({
     return true;
   },
   same() {   // a tap back to the page still showing, under a wave heading elsewhere: that page gets its own wave too
-    if (!w?.path) return; const p = location.pathname + location.search, k = sectionOf(p); if (w.path === p) return; if (k === "search" || !W[k] || RM.matches || saveData() || document.hidden || broken) { drop(true); return; }
+    if (!w?.path) return; const p = location.pathname + location.search, k = sectionOf(p); if (w.path === p) return; if (k === "search" || !W[k] || RM.matches || saveData() || document.hidden || broken || tooFast(performance.now())) { drop(true); return; }
     const under = keeper(); drop(true); clearTimers(); w = null; if (raf) cancelAnimationFrame(raf); raf = 0; if (!play(k, p, under)) hide();
   },
   pop() { drop(false); },

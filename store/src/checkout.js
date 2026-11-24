@@ -24,8 +24,15 @@ async function findKeyed(db, key, sameOrder) {
     if (!row) return { id, idem };
     const q = parsed(row.ship_quote);
     if (q.idem !== idem) continue;   // another order happens to hold this code: try the next one
-    if (q.idem_req !== sameOrder) return { changed: true };
-    if (row.status === "pending") { if (Date.now() - Date.parse(row.created_at) < OPEN_MS) return { open: true }; continue; }
+    if (q.idem_req !== sameOrder) return { changed: true, id };
+    if (row.status === "pending") {
+      if (Date.now() - Date.parse(row.created_at + (row.created_at.endsWith("Z") ? "" : "Z")) < OPEN_MS) return { open: true };
+      // the attempt died part way. If it took the stock, it is a real order: finish it. If not, clear it and place it fresh.
+      const sold = await db.prepare("SELECT COUNT(*) AS n FROM stock_moves WHERE ref = ? AND reason = 'sale'").bind(id).first("n");
+      if (sold) { await db.prepare("UPDATE orders SET status = 'paid', updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = ? AND status = 'pending'").bind(id).run(); return { row: { ...row, status: "paid" } }; }
+      await db.batch([db.prepare("DELETE FROM order_items WHERE order_id = ?").bind(id), db.prepare("DELETE FROM orders WHERE id = ? AND status = 'pending'").bind(id)]);
+      return { id, idem };
+    }
     return { row };
   }
   return { id: code(), idem };
@@ -63,11 +70,11 @@ export async function placeOrder(request, env, url) {
   let keyed = null, sameOrder = null;
   if (key) {
     const postal = rates.parsePostal(body.postal)?.full || "";
-    sameOrder = await sha(JSON.stringify([[...want].map(([s, q]) => [s, q]).sort(), method, method === "ship" ? String(body.service || "") : "", method === "ship" ? postal : "", email.toLowerCase()]));
+    sameOrder = await sha(JSON.stringify([[...want].map(([s, q]) => [s, q]).sort(), method, method === "ship" ? String(body.service || "") : "", method === "ship" ? postal : "", email.toLowerCase(), name, phone || "", note || "", ...(method === "ship" ? [String(body.address?.line1 || "").trim().toLowerCase(), String(body.address?.city || "").trim().toLowerCase()] : [])]));
     keyed = await findKeyed(db, key, sameOrder);
     for (let i = 0; keyed.open && i < 3; i++) { await wait(300); keyed = await findKeyed(db, key, sameOrder); }
     if (keyed.open) return stillOpen();
-    if (keyed.changed) return json({ error: "This order changed while it was being placed. Check it, then place it again.", in_progress: false }, 409);
+    if (keyed.changed) return json({ error: `We already have this as order ${keyed.id}. To change its details, call the counter at 519-255-2222.`, existing_order: keyed.id }, 409);
     if (keyed.row) return replay(db, keyed.row);
   }
   // a brake, so nobody can flood the shop with orders

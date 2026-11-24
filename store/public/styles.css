@@ -790,6 +790,15 @@ html.restoring .grid--shop .card{content-visibility:visible}
 /* 28 the hero word's comma stands inside its band, and on a phone the small label keeps clear of the bowl */
 @media (min-width:960px){.hero__word{bottom:.15em}}
 @media (max-width:959px){.piece .sticker{font-size:.92rem;top:var(--s-2);right:var(--s-1)}}
+/* the comma is the one piece of the word that stands in front of the hookahs, so it always reads as a comma */
+.hero__word--comma{pointer-events:none}
+.hero__word--comma span{visibility:hidden}
+/* a label too small for the shop's name keeps a thin ember strip instead of an empty band */
+.sticker:not(.sticker--big){padding-top:.52em}
+.sticker:not(.sticker--big)::before{height:1.25em}
+.sticker:not(.sticker--big)::after{top:.46em}
+@media (min-width:640px){.grid .sticker:not(.sticker--big){padding-top:1.06em} .grid .sticker:not(.sticker--big)::before{height:3em} .grid .sticker:not(.sticker--big)::after{top:1.02em}}
+@media (min-width:960px){.piece .sticker:not(.sticker--big){padding-top:1.06em} .piece .sticker:not(.sticker--big)::before{height:3em} .piece .sticker:not(.sticker--big)::after{top:1.02em}}
 /* the cart says plainly when the shelf changed what it holds: a word and a mark, in the reading order */
 .cartnews{margin:0 0 var(--s-4);font-size:var(--t-14);color:var(--color-strong);font-weight:500}
 .cartnews p{margin:0;padding:var(--s-3) 0;border-top:1px solid var(--color-line)}

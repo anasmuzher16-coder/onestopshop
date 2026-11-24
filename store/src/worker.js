@@ -36,7 +36,7 @@ function describe(path, cat, site) {
   if (a === "gifts" && b && b !== "under-50" && b !== "under-150") return null;
   if (b && a !== "gifts") return null;
   const fixed = { privacy: "Privacy", terms: "Terms of sale", checkout: "Checkout", cart: "Cart", shipping: "Shipping and returns", set: "Build a set", search: "Search", gifts: "Gifts" };
-  if (!fixed[a]) return null;
+  if (!Object.hasOwn(fixed, a)) return null;
   return { ...base, title: `${fixed[a]} | ${site}`, index: ["shipping", "set", "privacy", "terms"].includes(a) };
 }
 
@@ -74,7 +74,7 @@ async function page(request, env, url, ctx) {
   for (const [k, v] of Object.entries(SECURITY)) headers.set(k, v);
   headers.set("Content-Type", "text/html; charset=utf-8");
   headers.set("Cache-Control", "no-cache");
-  if (!(live && meta.index)) headers.set("X-Robots-Tag", "noindex, nofollow");
+  if (!(live && meta.index)) headers.set("X-Robots-Tag", "noindex, nofollow"); else headers.delete("X-Robots-Tag");   // _headers marks everything noindex for the demo; a live, indexable page must drop it
   return new Response(out.body, { status: d ? 200 : 404, headers });
 }
 const esc = s => String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");

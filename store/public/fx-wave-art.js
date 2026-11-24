@@ -4,11 +4,11 @@ export const ART = {
  "kit-all.webp": "94fff8ad25",
  "kit-bowls.webp": "20cecdc5b1",
  "kit-cart.webp": "8c7abace74",
- "kit-gifts.webp": "dc3300d543",
+ "kit-gifts.webp": "34c29b9b92",
  "kit-misc.webp": "b5ddf0d40a",
  "kit-search.webp": "e2acede93f",
  "kit-set.webp": "f68a8e78e2",
- "kit-shipping.webp": "e47bf8373c",
+ "kit-shipping.webp": "cdc096cf8a",
  "parts.webp": "6e6b5d6934",
  "smoke.webp": "14509ba490"
 };
