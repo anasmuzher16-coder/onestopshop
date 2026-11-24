@@ -82,7 +82,7 @@ export function findShop(cat, list = listOf(cat)) {
   return {
     on,
     // phone: the row, the count, the grid. desktop: the rail beside them. The grid is only replaced when something is set.
-    html: grid => `${bar}<div class="fwrap" data-fwrap="${cat}"><aside class="frail" aria-label="Filter ${X.esc(cat)}">${groupsHTML(cat, list, sel)}</aside><div class="fmain">${resultsHTML(cat, list, sel)}${k ? `<div class="fapplied" role="group" aria-label="Filters on">${appliedChips(cat, list, sel)}</div>` : ""}${k ? "" : finderLink(cat)}<div data-fgrid>${on ? gridHTML(cat, list, sel) : grid}</div></div></div>`,
+    html: grid => `${bar}<div class="fwrap" data-fwrap="${cat}"><aside class="frail" aria-label="Filter ${X.esc(cat)}">${X.defer ? X.defer(() => groupsHTML(cat, list, sel)) : groupsHTML(cat, list, sel)}</aside><div class="fmain">${resultsHTML(cat, list, sel)}${k ? `<div class="fapplied" role="group" aria-label="Filters on">${appliedChips(cat, list, sel)}</div>` : ""}${k ? "" : finderLink(cat)}<div data-fgrid>${on ? gridHTML(cat, list, sel) : typeof grid === "function" ? grid() : grid}</div></div></div>`,   // the plain grid is only built when it is shown
   };
 }
 
@@ -153,7 +153,7 @@ function redraw(cat) {
   const wrap = document.querySelector(`[data-fwrap="${cat}"]`), bar = document.querySelector("[data-fbar]");
   if (!wrap || !bar) return X.render();
   const f = findShop(cat); if (!f) return X.render();
-  const tmp = document.createElement("div"); tmp.innerHTML = f.html(X.grid(cat));
+  const tmp = document.createElement("div"); tmp.innerHTML = f.html(() => X.grid(cat));
   const focusKey = document.activeElement?.closest?.("[data-f-toggle],[data-f-sort]");
   const key = focusKey && (focusKey.dataset.fToggle ? `[data-f-toggle="${focusKey.dataset.fToggle}"][data-v="${CSS.escape(focusKey.dataset.v)}"]` : `[data-f-sort="${focusKey.dataset.fSort}"]`);
   const inRail = !!focusKey?.closest(".frail"), group = focusKey?.closest(".fgroup")?.querySelector("[data-f-toggle],[data-f-sort]"), railY = wrap.querySelector(".frail")?.scrollTop || 0;

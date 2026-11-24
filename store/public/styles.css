@@ -161,6 +161,7 @@ body:not([data-route]) .foot{visibility:hidden}
 .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--s-6) var(--s-3)}
 .grid--shop{padding:var(--s-5) var(--gutter) var(--s-16)}
 .grid--shop .card{content-visibility:auto;contain-intrinsic-size:auto 300px}
+.later{min-height:300px}   /* a card still being drawn (app.js, the first screen first): it holds a card's place so the page does not jump */
 .card__a{display:block;text-decoration:none}
 .card__name{font:500 var(--t-14)/1.3 var(--font-ui);color:var(--color-strong);margin:var(--s-2) 0 2px}
 .card__a:hover .card__name{text-decoration:underline;text-underline-offset:.2em}

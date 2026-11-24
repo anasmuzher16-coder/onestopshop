@@ -23,5 +23,13 @@ function scan() {
   all.forEach((t, i) => { if (on[i]) { if (painted && !gun) go(t, 140 + Math.min(k++, 6) * 55); } else { t.dataset.stick = "wait"; io.observe(t); } });
 }
 new MutationObserver(scan).observe(main, { childList: true });
+// cards drawn after the first screen (app.js draws long sections in idle moments) wait for their label like every other card
+// the first screen's cards arrive one task after the swap: on screen they stick on in sequence exactly as scan() does; the rest wait
+addEventListener("oss:cards", e => {
+  if (!io || RM.matches) return; const vh = innerHeight; let k = 0;
+  const ts = e.detail.cards.map(c => c.querySelector(".tile")).filter(t => t && t.querySelector(".sticker") && !t.dataset.stick);
+  const on = e.detail.first ? ts.map(t => { const r = t.closest(".card").getBoundingClientRect(); return r.bottom > 0 && r.top < vh; }) : [];
+  ts.forEach((t, i) => { if (on[i]) { if (painted) go(t, 140 + Math.min(k++, 6) * 55); } else { t.dataset.stick = "wait"; io.observe(t); } });
+});
 scan();
 addEventListener("beforeprint", () => main.querySelectorAll("[data-stick=wait]").forEach(t => t.dataset.stick = "go"));

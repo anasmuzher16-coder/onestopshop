@@ -21,7 +21,8 @@ const stockFor = p => !forSale(p) || isSold(p) ? 0 : Number.isInteger(p.stock) ?
 // Anything not known yet is said plainly, in one quiet style, never guessed and never left blank.
 const TBD = what => `<span class="tbd">${what ? what + " " : ""}TBD</span>`;   // TBD("") when the label beside it already names the fact
 const SHELF = shelfOf(PRODUCTS);   // one card per hookah family; every other item is its own card
-const familyOf = p => p && p.family ? PRODUCTS.filter(x => x.family === p.family) : p ? [p] : [];
+const FAMILIES = new Map(); for (const p of PRODUCTS) if (p.family) { if (!FAMILIES.has(p.family)) FAMILIES.set(p.family, []); FAMILIES.get(p.family).push(p); }   // built once: every card used to filter the whole catalogue for its colours
+const familyOf = p => p && p.family ? FAMILIES.get(p.family) || [p] : p ? [p] : [];
 const GROUPS = [["full_size", "Full size"], ["stem_set", "Stem sets"], ["compact_travel", "Compact and travel"], ["statement", "Statement pieces"]];
 const stemSet = p => !!(p && p.facts && p.facts.includes_base === false);
 // ---------- THE COLOUR SWITCHER: every catalogue colour, a radio group; a colour without its own photo says "Photo coming" ----------
@@ -66,12 +67,15 @@ const state = { reach: ["local", "nationwide"].includes(store.get("reach")) ? st
 { const fit = fitCart(state.cart); if (fit.news.length) { state.cart = fit.kept; state.cartNews = fit.news; store.set("cart", state.cart); } }
 const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-const whole = n => "$" + (Math.round(n * 100) % 100 ? n.toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : Math.round(n).toLocaleString("en-CA")); // cents only when the price has them
+const NF_CENTS = new Intl.NumberFormat("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 }), NF_WHOLE = new Intl.NumberFormat("en-CA");   // made once: toLocaleString builds a new formatter on every call
+const whole = n => "$" + (Math.round(n * 100) % 100 ? NF_CENTS.format(n) : NF_WHOLE.format(Math.round(n))); // cents only when the price has them
 const TONES = ["ember", "teal", "ruby", "cobalt", "gilt", "emerald"];
 const SERIES = { Sultan: "ruby", Mamoun: "gilt", Cairo: "teal", Regent: "cobalt", Stuttgart: "emerald" };
 const seriesOf = p => p.name.split(" ")[0] in SERIES ? p.name.split(" ")[0] : "";
 // Colour is decided, not random: one jewel per series; everything else takes the next jewel along within its category.
-const toneOf = p => p.dark ? "" : p.photo ? "bone" : SERIES[seriesOf(p)] || TONES[PRODUCTS.filter(x => x.cat === p.cat && !seriesOf(x)).indexOf(p) % TONES.length];
+// Worked out once for the whole catalogue (it used to scan every product for every card): the same answer as before, item by item.
+const TONE = new Map(); { const k = Object.create(null); for (const p of PRODUCTS) { const s = seriesOf(p), i = s ? -1 : (k[p.cat] = (k[p.cat] ?? -1) + 1); TONE.set(p, p.dark ? "" : p.photo ? "bone" : s ? SERIES[s] : TONES[i % TONES.length]); } }
+const toneOf = p => TONE.has(p) ? TONE.get(p) : p.dark ? "" : p.photo ? "bone" : SERIES[seriesOf(p)] || TONES[0];
 const place = d => d.city ? d.city : d.fsa;
 const byName = n => PRODUCTS.find(p => p.name === n);
 const inCat = c => SHELF.filter(p => p.cat === c && !p.dark);
@@ -148,7 +152,71 @@ function sticker(p, { big = false } = {}) {
   return `<span class="sticker ${big ? "sticker--big" : ""} ${isSold(p) ? "sticker--sold" : ""}" style="--r:${r}deg"><span class="sticker__v">${isSold(p) ? "Sold" : whole(p.price)}</span></span>`;
 }
 
+// ---------- THE FIRST SCREEN FIRST: a section swap draws the cards you can see, then the rest in idle moments ----------
+// A long section (83 hookah families, 84 Heat items, every piece on Everything) was one 150-650 ms task on a slow phone, in the
+// middle of the wave. While a navigation draws, cards past the first screen leave a sized slot and wait in a queue; the queue is
+// drawn a few cards at a time between frames, never more than ~8 ms of work per turn. Parts of the page nobody sees in the first
+// frame (the desktop filter rail, hidden on a phone) wait the same way. Back to a spot down the list draws through it first.
+// The swap itself stays small: under the wave's full cover it puts in the page with every card as a slot, the section's band and its
+// objects; the cards of the first screen follow in their own task straight after (before the wave starts to leave), the rest in
+// idle moments. Each step is its own task, so none of them holds the wave.
+// How many cards fill the first screen: the grid's columns at this width (styles.css) times the rows that fit, plus one row.
+const firstScreen = () => { const w = innerWidth, cols = w >= 1500 ? 5 : w >= 960 ? 4 : w >= 640 ? 3 : 2; return cols * (Math.ceil(innerHeight / (w / cols * 1.25 + 90)) + 1); };
+let queue = null;     // only while render() draws a section: { q parts waiting: { html(), sku? } }
+let pending = null;   // after the draw, until every waiting part is in: { q, order, slots, at, step, run, first }
+let runs = 0;
 function card(p, i = 9) {
+  if (queue) return `<div class="later" data-later="${queue.q.push({ html: () => cardHTML(p, i), sku: p.sku }) - 1}" aria-hidden="true"></div>`;
+  return cardHTML(p, i);
+}
+// any part of the page that can arrive a moment after the first screen (find.js passes the filter rail through here)
+const defer = make => queue ? `<div class="later--part" data-later="${queue.q.push({ html: make }) - 1}" aria-hidden="true"></div>` : make();
+const idle = window.requestIdleCallback ? f => requestIdleCallback(f, { timeout: 120 }) : f => setTimeout(() => f(null), 16);   // Safari has no idle callback: one short turn per frame
+const soon = (() => { const ch = new MessageChannel(), fns = []; ch.port1.onmessage = () => fns.shift()?.(); return f => { fns.push(f); ch.port2.postMessage(0); }; })();   // the next task, with no timer clamp
+function laterStart(q) {   // called once #main holds the new page; any earlier queue is dropped with the page it belonged to
+  const main = $("#main"), run = ++runs; pending = null;
+  if (!q || !q.q.length) { main.removeAttribute("aria-busy"); return; }
+  const slots = []; for (const s of main.querySelectorAll("[data-later]")) slots[+s.dataset.later] = s;
+  // cards in page order first, then the parts that wait for a quiet moment (the desktop rail)
+  const order = [...q.q.keys()].sort((a, b) => (!q.q[a].sku) - (!q.q[b].sku) || a - b);
+  pending = { q: q.q, order, slots, at: 0, step: 2, run };
+  main.setAttribute("aria-busy", "true");   // screen readers wait for the whole list
+  const first = q.first;
+  soon(() => { if (!pending || pending.run !== run) return; drawLater(0, first - 1, true); if (pending) drain(run); });
+}
+// Draws waiting parts in order for up to `budget` ms, or through position `upto` whatever it costs (the first screen; Back to a spot).
+function drawLater(budget = 8, upto = -1, first = false) {
+  const L = pending; if (!L) return;
+  const t0 = performance.now(), made = [];
+  while (L.at < L.order.length) {
+    // a few parts per parse; the count grows while there is time left, so the cost per card is measured, not guessed
+    const end = Math.min(L.order.length, upto >= L.at ? upto + 1 : L.at + L.step), idx = [];
+    for (let j = L.at; j < end; j++) { const k = L.order[j]; if (L.slots[k] && L.slots[k].isConnected) idx.push(k); }   // a slot a filter redraw has replaced is skipped
+    if (idx.length) {
+      const tpl = document.createElement("template"); tpl.innerHTML = idx.map(k => L.q[k].html() + "<!--/later-->").join("");
+      let i = 0, group = [];   // each part's nodes run up to its marker
+      for (const n of [...tpl.content.childNodes]) {
+        if (n.nodeType === 8 && n.data === "/later") { L.slots[idx[i]].replaceWith(...group); made.push(...group.filter(g => g.nodeType === 1)); group = []; i++; }
+        else group.push(n);
+      }
+    }
+    L.at = end;
+    const used = performance.now() - t0;
+    if (L.at > upto && used >= budget) break;
+    if (used < budget / 3) L.step = Math.min(24, L.step * 2);
+  }
+  const cards = made.filter(m => m.classList.contains("card"));
+  if (cards.length) dispatchEvent(new CustomEvent("oss:cards", { detail: { cards, first } }));   // fx-stick sticks their labels like the rest
+  if (L.at >= L.order.length) { pending = null; $("#main").removeAttribute("aria-busy"); }
+}
+function drain(run) { idle(dl => { if (!pending || pending.run !== run) return; drawLater(dl ? Math.max(4, Math.min(8, dl.timeRemaining())) : 6); if (pending) drain(run); }); }
+// Back to a spot down a long list: the cards through the remembered one (and a screen after it) are drawn before the scroll lands.
+function drawThrough(sku) {
+  if (!pending) return; const L = pending, j = sku ? L.order.findIndex(k => L.q[k].sku === sku) : -1, first = firstScreen();
+  drawLater(0, j >= 0 ? j + first : L.order.length, true);   // no card to aim at: everything, so the remembered height exists
+}
+
+function cardHTML(p, i = 9) {
   const tone = toneOf(p);
   return `
   <article class="card" data-tone="${tone}" ${p.family ? `data-family="${p.sku}"` : ""}>
@@ -285,7 +353,7 @@ function viewShop(cat) {
     <p class="shophead__n">${bandNote(c, list)}</p>
   </section>
   <nav class="chips" aria-label="Categories"><a href="/shop" ${!c ? 'aria-current="page"' : ""}>All</a>${CATEGORIES.map(x => `<a href="/shop/${x.id}" ${c && c.id === x.id ? 'aria-current="page"' : ""}>${x.name}</a>`).join("")}<a href="/gifts/under-50">Gifts</a></nav>
-  ${f ? f.html(shopGrid(cat)) : shopGrid(cat)}`;
+  ${f ? f.html(() => shopGrid(cat)) : shopGrid(cat)}`;
 }
 
 // The product page for charcoal: one plain answer about how it is bought, in place of the delivery and shipping rows.
@@ -999,12 +1067,16 @@ function pageTitle(a, b, real) {
   const name = a === "shop" ? (b ? catById[b].name : "Shop") : a === "p" ? bySku[b].name : a === "gifts" ? "Gifts" : a === "order" ? `Order ${b}` : PLAIN[a];
   return `${name} | ${SITE}`;
 }
-function render() {
+function render({ chunk = false } = {}) {
   const keep = focusKey(document.activeElement);
   const [a, b, more] = route().replace(/^#\/?/, "").split("/").filter(Boolean), real = realPage(a, b, more);
   if (a === "search") state.q = new URLSearchParams(location.search).get("q") ?? state.q;
   document.title = pageTitle(a, b, real);
-  $("#main").innerHTML = !real ? viewMissing() : a === "shop" ? viewShop(b) : a === "p" ? viewProduct(b) : a === "cart" ? viewCart() : a === "shipping" ? viewShipping() : a === "gifts" ? viewGifts(b) : a === "set" ? viewSet() : a === "search" ? viewSearch() : a === "privacy" ? viewPrivacy() : a === "terms" ? viewTerms() : a === "checkout" ? viewCheckout() : a === "order" ? viewOrder(b) : a === "account" ? accountView(band) : !a ? viewHome() : viewMissing();
+  // a long section reached by a tap: the page now, its cards in the tasks after. Short sections draw whole, as before (the Misc
+  // act stamps the labels already on its first screen at the swap, so its cards must be there).
+  queue = chunk && real && a === "shop" && (b ? SHELF.filter(p => p.cat === b).length : SHELF.length) > 24 ? { q: [], first: firstScreen() } : null;   // the window's size read before the page changes, so reading it forces no layout
+  let html, q; try { html = !real ? viewMissing() : a === "shop" ? viewShop(b) : a === "p" ? viewProduct(b) : a === "cart" ? viewCart() : a === "shipping" ? viewShipping() : a === "gifts" ? viewGifts(b) : a === "set" ? viewSet() : a === "search" ? viewSearch() : a === "privacy" ? viewPrivacy() : a === "terms" ? viewTerms() : a === "checkout" ? viewCheckout() : a === "order" ? viewOrder(b) : a === "account" ? accountView(band) : !a ? viewHome() : viewMissing(); } finally { q = queue; queue = null; }
+  $("#main").innerHTML = html; laterStart(q);
   document.body.dataset.route = a || "home";
   syncChrome();
   const chip = $(".chips [aria-current]"); if (chip) chip.parentNode.scrollLeft = chip.offsetLeft - (chip.parentNode.clientWidth - chip.offsetWidth) / 2;   // the section you are in sits centred in the row
@@ -1041,16 +1113,16 @@ addEventListener("pageshow", e => { if (e.persisted) cartFromStorage(); });
 setSpotAnchor(() => { for (const a of $$("#main [data-piece]")) { const r = a.getBoundingClientRect(); if (r.bottom > 80) return { sku: a.dataset.piece, top: Math.round(r.top) }; } return null; });
 function putScroll(spot) {
   const y = typeof spot === "number" ? spot : spot.y || 0, root = document.documentElement, land = () => { scrollTo(0, y); const a = spot.sku && document.querySelector(`#main [data-piece="${spot.sku}"]`); if (a) scrollBy(0, a.getBoundingClientRect().top - spot.top); };
-  root.classList.add("restoring"); land();
+  drawThrough(spot.sku); root.classList.add("restoring"); land();
   requestAnimationFrame(() => { land(); root.classList.remove("restoring"); });
 }
 function go() {
   if (state.newsSeen && !/^#\/cart/.test(route())) { state.cartNews = []; state.newsSeen = false; state.dropped = null; }
   const from = last.match(/^#\/p\/(.+)$/), spot = navInfo().cause === "pop" ? spotHere() : undefined; last = route();
-  render(); if (spot === undefined) scrollTo(0, 0); else putScroll(spot);
+  render({ chunk: true }); if (spot === undefined) scrollTo(0, 0); else putScroll(spot);
   const stage = $("[data-stage]");
   if (stage) { stage.style.viewTransitionName = "piece"; const st = $(".sticker", stage); if (st) st.style.viewTransitionName = "tag"; }
-  else if (from) { const back = $(`[data-piece="${from[1]}"]`), n = back && ($(".tile", back) || back); if (n) { n.style.viewTransitionName = "piece"; const st = $(".sticker", back); if (st) st.style.viewTransitionName = "tag"; const box = n.getBoundingClientRect(); if (spot === undefined || box.bottom < 60 || box.top > innerHeight - 60) n.scrollIntoView({ block: "center" }); } }
+  else if (from) { if (pending && pending.q.some(x => x.sku === from[1])) drawThrough(from[1]); const back = $(`[data-piece="${from[1]}"]`), n = back && ($(".tile", back) || back); if (n) { n.style.viewTransitionName = "piece"; const st = $(".sticker", back); if (st) st.style.viewTransitionName = "tag"; const box = n.getBoundingClientRect(); if (spot === undefined || box.bottom < 60 || box.top > innerHeight - 60) n.scrollIntoView({ block: "center" }); } }
   const sq = $("#q"); if (sq) sq.focus({ preventScroll: true }); else $("#main").focus({ preventScroll: true });
 }
 // 15 the dock's Back is the real Back; from a shared link there is nothing behind it, so it goes to the section
@@ -1060,9 +1132,17 @@ document.addEventListener("click", e => {
 }, true);
 window.addEventListener("routechange", () => {
   if (route() === last) return;
+  // A long section landed by the wave is drawn in the task after the wave's own frame, so the wave's drawing and the page's building
+  // are two tasks, not one. The wave holds its full cover while data-swapping is set (fx-wave.js), so nothing old is ever revealed.
+  const [ra, rb] = route().replace(/^#\/?/, "").split("/").filter(Boolean);
+  if (navInfo().cause === "wave" && ra === "shop" && (rb ? SHELF.filter(p => p.cat === rb).length : SHELF.length) > 24) {
+    const root = document.documentElement; root.dataset.swapping = "";
+    soon(() => { try { if (route() !== last) go(); } finally { delete root.dataset.swapping; } });
+    return;
+  }
   if (!navInfo().instant && document.startViewTransition && !matchMedia("(prefers-reduced-motion: reduce)").matches) document.startViewTransition(go); else go();   // a wave is already covering the change
 });
-find.init({ PRODUCTS, esc, card, render, navigate, grid: shopGrid });
+find.init({ PRODUCTS, esc, card, render, navigate, grid: shopGrid, defer });
 finder.init({ PRODUCTS, CATEGORIES, esc, shot, sticker, setQ: q => { state.q = q; } });
 render();
 if (spotHere()) putScroll(spotHere());   // a reload, or Back from another site, lands where you were

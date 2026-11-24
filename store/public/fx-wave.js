@@ -255,7 +255,8 @@ function paint(now) {
   if (w.phase === "cover") { const p = Math.min(1, (now - w.t0) / o.cover), e = coverEase(p); w.p = p; const u = w.under;   // a wave that was interrupted holds its place underneath until the new one has covered it
     if (u) { gl.disable(gl.BLEND); u.forEach((x, i) => { draw(x, now, x.lastH, x.lastT, null); if (!i) { gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA); } }); }
     try { draw(o, now, -m + e * (1 + 2 * m), -m - .02, A ? e * A.fullCoverFrame : null); } finally { if (u) gl.disable(gl.BLEND); } return p >= 1; }
-  if (!w.rt) unveil(now); const p = Math.min(1, (now - w.rt) / w.rd), e = revealEase(p); w.p = p; draw(o, now, 1 + m + .02, -m - .02 + e * (1 + 2 * m + .04), A ? A.fullCoverFrame + e * (A.frames - 1 - A.fullCoverFrame) : null); return p >= 1;
+  if (!w.rt) { if (document.documentElement.hasAttribute("data-swapping")) { draw(o, now, 1 + m + .02, -m - .02, A ? A.fullCoverFrame : null); return false; } unveil(now); }   // app.js is still putting the new page in (its own task): hold the full cover one frame more
+  const p = Math.min(1, (now - w.rt) / w.rd), e = revealEase(p); w.p = p; draw(o, now, 1 + m + .02, -m - .02 + e * (1 + 2 * m + .04), A ? A.fullCoverFrame + e * (A.frames - 1 - A.fullCoverFrame) : null); return p >= 1;
 }
 // Search: an input focused inside the tap, so an iPhone opens its keyboard; the real field takes the focus over at the swap
 function holdKeyboard() { const i = document.createElement("input"); i.type = "search"; i.tabIndex = -1; i.setAttribute("aria-label", "Search"); i.style.cssText = "position:fixed;left:0;top:0;width:1px;height:1px;opacity:0;font-size:16px;border:0;padding:0;pointer-events:none;z-index:14"; document.body.append(i); i.focus({ preventScroll: true }); proxy = i; }
