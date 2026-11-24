@@ -1,0 +1,72 @@
+// The real stock on view (2026-11-24): Ace hookahs with "Price TBD" can be seen and never bought, the supplier's price is
+// never shown anywhere a shopper can reach, shisha and foil sell, the sample hookahs are gone with their links redirected.
+// node store/tools/test-ace.mjs   (against the running local store; changes stock: reseed afterwards)
+import { readFileSync } from "node:fs";
+const B = process.env.BASE || "http://127.0.0.1:4486";
+const KEY = readFileSync(new URL("../.dev.vars", import.meta.url), "utf8").match(/ADMIN_KEY=(.+)/)[1].trim();
+let n = 0, f = 0; const ok = (c, msg) => { n++; if (!c) { f++; console.log("FAIL", msg); } };
+const post = async body => { const r = await fetch(B + "/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }); return { status: r.status, data: await r.json().catch(() => ({})) }; };
+const who = { name: "Test Shopper", email: "test@example.com" }, to = { postal: "M5V 2T6", address: { line1: "1 Test Street", city: "Toronto" } };
+const master = JSON.parse(readFileSync(new URL("../catalog/suppliers/ace/master.json", import.meta.url), "utf8"));
+const supplier = new Map(); for (const fam of master.families) for (const v of fam.variants) supplier.set(v.sku, fam.supplier_price_cents.v);
+const mod = await (await fetch(B + "/api/catalog-module")).text(), { PRODUCTS: P } = await import("data:text/javascript," + encodeURIComponent(mod));
+const feed = await (await fetch(B + "/api/catalog")).json(), stockOf = async sku => (await (await fetch(B + "/api/catalog")).json()).products.find(p => p.sku === sku)?.stock;
+const ace = P.filter(p => supplier.has(p.sku)), tbd = ace[0];
+
+// 1 on view, never for sale
+ok(ace.length === supplier.size, `every Ace colour is on the site: ${ace.length} of ${supplier.size}`);
+ok(new Set(ace.filter(p => p.lead).map(p => p.family)).size === master.families.length, "one card per Ace family");
+ok(ace.every(p => p.state === "tbd" && p.price === null && p.stock === 0), "every Ace item shows Price TBD: no price, no stock count");
+for (const body of [{ ...who, method: "pickup", lines: [{ sku: tbd.sku, qty: 1 }] }, { ...who, ...to, method: "ship", service: "cp-exp", lines: [{ sku: tbd.sku, qty: 1, price: 1, unit_cents: 100 }] }]) {
+  const r = await post(body); ok(r.status === 409 && r.data.not_for_sale === true, `a TBD item is refused by the server (${body.method}): ${r.status} ${r.data.error || ""}`);
+}
+const shisha = P.find(p => p.cat === "shisha" && p.state === "sale" && p.stock > 1), before = await stockOf(shisha.sku);
+const mixed = await post({ ...who, method: "pickup", lines: [{ sku: shisha.sku, qty: 1 }, { sku: tbd.sku, qty: 1 }] });
+ok(mixed.status === 409 && (await stockOf(shisha.sku)) === before, "a cart mixing a TBD item with a real one is refused whole, and no stock moves");
+ok((await post({ ...who, method: "pickup", lines: [{ sku: "OSS-1001", qty: 1 }] })).status === 409, "a retired sample hookah cannot be ordered");
+// the back office cannot switch a catalogue item on without the shop's own price (the 0005 trigger)
+const login = await fetch(B + "/api/admin/login", { method: "POST", headers: { "Content-Type": "application/json", "X-OSS-Admin": "1" }, body: JSON.stringify({ key: KEY }) });
+const cookie = (login.headers.get("set-cookie") || "").split(";")[0];
+const on = await fetch(B + `/api/admin/products/${tbd.sku}`, { method: "PUT", headers: { "Content-Type": "application/json", "X-OSS-Admin": "1", Cookie: cookie }, body: JSON.stringify({ active: true }) });
+ok(!on.ok, "switching a TBD item on without a price is refused: " + on.status);
+ok((await post({ ...who, method: "pickup", lines: [{ sku: tbd.sku, qty: 1 }] })).status === 409, "and it still cannot be ordered afterwards");
+
+// 2 the supplier's price is nowhere a shopper can reach
+ok(!/supplier/i.test(mod) && !JSON.stringify(feed).includes("supplier"), "no supplier field in the catalogue module or the public feed");
+const leak = (p, cents) => [p.price, p.price_cents].some(v => v != null && Math.round(v * (p.price_cents != null ? 1 : 100)) === cents);
+ok(!ace.some(p => leak(p, supplier.get(p.sku))), "no Ace item carries its supplier price in the catalogue module");
+ok(!feed.products.filter(p => supplier.has(p.sku)).some(p => p.price_cents !== null || p.for_sale), "the public feed gives TBD items no price and marks them not for sale");
+ok(!feed.products.some(p => "facts_known" in p || "details" in p || "availability" in p), "the public feed carries no research notes, photo rights or catalogue facts");
+let pageLeak = 0, offers = 0;
+for (const p of ace.filter(x => x.lead).slice(0, 25)) {
+  const t = await (await fetch(B + "/p/" + p.sku)).text(), c = supplier.get(p.sku); if (!c) continue;
+  const d = (c / 100).toFixed(2), w = String(c / 100);
+  if (t.includes("$" + d) || t.includes(`"price":"${d}"`) || new RegExp(`\\$${w.replace(".", "\\.")}\\b`).test(t)) pageLeak++;
+  if (/"offers"/.test(t)) offers++;
+}
+ok(pageLeak === 0, "no product page (title, description, share tags, structured data) shows the supplier price: " + pageLeak);
+ok(offers === 0, "structured data states no offer for an item without a shop price: " + offers);
+const page = await (await fetch(B + "/p/" + tbd.sku)).text();
+ok(/og:description" content="[^"]*Price TBD/.test(page) && /og:image" content="[^"]+\/img\/pc\/ace\//.test(page), "a TBD item shares its own photo and says Price TBD");
+ok((await fetch(B + "/sitemap.xml")).status === 404, "no sitemap while the shop is not live");
+
+// 3 the sample hookahs are gone, their links land on the section
+const r1 = await fetch(B + "/p/OSS-1001", { redirect: "manual" });
+ok(r1.status === 301 && new URL(r1.headers.get("location")).pathname === "/shop/hookahs", "an old sample hookah link redirects to /shop/hookahs: " + r1.status);
+ok(!P.some(p => /^OSS-1\d{3}$/.test(p.sku)), "no sample hookah is left on the site");
+ok((await fetch(B + "/p/OSS-9999999", { redirect: "manual" })).status === 404, "an unknown item is still a real 404");
+
+// 4 shisha sells like any product; foil sells for pickup or local delivery until its weight is known
+const sh = await post({ ...who, ...to, method: "ship", service: "cp-exp", lines: [{ sku: shisha.sku, qty: 1 }] });
+ok(sh.status === 201 && sh.data.order.subtotal_cents === Math.round(shisha.price * 100), `shisha ships at the shop's price: ${sh.status} ${sh.data.error || ""}`);
+ok(P.filter(p => p.cat === "shisha").length === 47 && P.filter(p => p.cat === "shisha" && p.stock === 0).length === 3, "all 47 shisha flavours are up, 3 sold out");
+const sold = P.find(p => p.cat === "shisha" && p.stock === 0); ok((await post({ ...who, method: "pickup", lines: [{ sku: sold.sku, qty: 1 }] })).status === 409, "a sold-out flavour cannot be ordered");
+const foil = P.filter(p => p.weightTbd); ok(foil.length === 15 && foil.every(p => p.state === "sale" && p.ship === "pickup_only"), "15 foil packs on sale, pickup or local delivery while the weight is TBD");
+ok((await post({ ...who, ...to, method: "ship", service: "cp-exp", lines: [{ sku: foil[0].sku, qty: 1 }] })).data.local_only === true, "foil cannot be sent by a carrier on a made-up weight");
+ok((await post({ ...who, method: "pickup", lines: [{ sku: foil[0].sku, qty: 1 }] })).status === 201, "foil can be picked up");
+
+// 5 bad input is refused before anything else
+for (const bad of [[{ sku: tbd.sku, qty: 0 }], [{ sku: tbd.sku, qty: 1.5 }], [{ sku: { $ne: 1 }, qty: 1 }], [{ sku: "OSS-100024' OR 1=1 --", qty: 1 }]]) {
+  const r = await post({ ...who, method: "pickup", lines: bad }); ok(r.status === 400 || r.status === 409, "odd line refused: " + JSON.stringify(bad) + " " + r.status);
+}
+console.log(`${n - f}/${n} passed`); process.exit(f ? 1 : 0);

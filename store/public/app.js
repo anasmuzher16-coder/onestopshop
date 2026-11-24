@@ -1,6 +1,7 @@
 import { PRODUCTS, CATEGORIES, BOXES } from "/api/catalog-module";
 import { route, navigate, navInfo, spotHere, canGoBack, setQuery, setSpotAnchor } from "./route.js";
 import { parsePostal, pack, quote, money, days, MAX_QTY, fuelOn, orderTotals, taxRate, taxLabel, localArea, localDue, localEta, FREE_LOCAL_CENTS, SHOP_HOURS } from "./rates.js";
+import { shelfOf, ticked, heroPicks } from "./picks.js";
 
 // ---------- state (everything read from storage is validated) ----------
 const bySku = Object.assign(Object.create(null), Object.fromEntries(PRODUCTS.map(p => [p.sku, p])));   // no inherited keys: "constructor" in a saved cart or an address is not a product
@@ -9,8 +10,36 @@ const store = {
   get(k) { try { return JSON.parse(localStorage.getItem("oss:" + k)); } catch { return null; } },
   set(k, v) { try { localStorage.setItem("oss:" + k, JSON.stringify(v)); } catch {} },
 };
-const isSold = p => p.stock === 0;   // stock is the one truth: the server's catalogue decides what has gone
-const stockFor = p => isSold(p) ? 0 : Number.isInteger(p.stock) ? Math.min(MAX_QTY, Math.max(0, p.stock)) : MAX_QTY;   // the most of this piece one cart can hold
+// On view is not the same as for sale: an item waiting for the shop's own price shows "Price TBD" and never reaches the cart.
+const forSale = p => !!p && p.state === "sale";
+const isSold = p => forSale(p) && p.stock === 0;   // stock is the one truth: the server's catalogue decides what has gone
+const stockFor = p => !forSale(p) || isSold(p) ? 0 : Number.isInteger(p.stock) ? Math.min(MAX_QTY, Math.max(0, p.stock)) : MAX_QTY;   // the most of this piece one cart can hold
+// Anything not known yet is said plainly, in one quiet style, never guessed and never left blank.
+const TBD = what => `<span class="tbd">${what ? what + " " : ""}TBD</span>`;   // TBD("") when the label beside it already names the fact
+const SHELF = shelfOf(PRODUCTS);   // one card per hookah family; every other item is its own card
+const familyOf = p => p && p.family ? PRODUCTS.filter(x => x.family === p.family) : p ? [p] : [];
+const GROUPS = [["full_size", "Full size"], ["stem_set", "Stem sets"], ["compact_travel", "Compact and travel"], ["statement", "Statement pieces"]];
+const stemSet = p => !!(p && p.facts && p.facts.includes_base === false);
+// ---------- THE COLOUR SWITCHER: every catalogue colour, a radio group; a colour without its own photo says "Photo coming" ----------
+const ownPhoto = v => !!(v && v.img && (!v.family || v.facts.photo === "own"));
+const photoOf = v => !!(v && v.img);   // its own photo or the family's, labelled
+const colourName = (v, i) => v.colour ? (v.named ? v.colour : `${v.colour}, name TBD`) : `Colour ${i + 1}`;
+// a light chip on the coal ground gets a ring; computed from the chip's own colour so it never disappears into the page
+const lum = hex => { const m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return 0; const c = [0, 2, 4].map(i => parseInt(m[1].slice(i, i + 2), 16) / 255).map(x => x <= .04045 ? x / 12.92 : ((x + .055) / 1.055) ** 2.4); return .2126 * c[0] + .7152 * c[1] + .0722 * c[2]; };
+const chipStyle = v => `--c:${esc(v.chip || "#8a8a8a")}${lum(v.chip) < .03 ? ";--ring:oklch(1 0 0 / .38)" : ""}`;
+function swatchGroup(fam, chosen, { label, card = "", max = 99 } = {}) {
+  const shown = fam.slice(0, max), more = fam.length - shown.length;
+  return `<div class="swatches ${card ? "swatches--card" : ""}" role="radiogroup" aria-label="${esc(label)}">${shown.map((v, i) => `<button class="swatch" type="button" role="radio" data-swatch="${v.sku}" ${card ? `data-card="${card}"` : ""} aria-checked="${v.sku === chosen.sku}" tabindex="${v.sku === chosen.sku ? 0 : -1}" style="${chipStyle(v)}" aria-label="${esc(colourName(v, i))}${photoOf(v) ? "" : ", photo coming"}">${photoOf(v) ? "" : `<i class="swatch__none" aria-hidden="true"></i>`}</button>`).join("")}${more > 0 ? `<a class="swatches__more" href="/p/${fam[0].sku}" aria-label="${more} more colours">+${more}</a>` : ""}</div>`;
+}
+// The photo a colour shows, and its label in the quiet TBD style (owner, 2026-11-24): its own photo ("Photo to be upscaled" when it
+// was enlarged), the family's photo with "Shown in <colour>", or the drawn stand-in with "Photo coming". The label is in the alt text too.
+function photoLabel(v) {
+  const f = (v && v.facts) || {};
+  if (!v.img) return "";
+  if (f.photo === "family") return `Shown in ${f.shown_in || "another colour"}${f.photo_upscale ? ". Photo to be upscaled" : ""}`;
+  return f.photo_label === "upscale" ? "Photo to be upscaled" : "";
+}
+const colourShot = (v, o = {}) => { const l = photoLabel(v); return shot(v, { ...o, alt: o.alt ? (l ? `${o.alt}. ${l}` : o.alt) : "" }) + (l ? `<span class="shot__tag shot__tag--tbd" aria-hidden="true">${esc(l)}</span>` : ""); };
 function cleanCart(x) {
   if (!Array.isArray(x)) return [];
   const qty = new Map();
@@ -22,6 +51,7 @@ function fitCart(cart) {
   const kept = [], news = [];
   for (const l of cart) {
     const p = bySku[l.sku], max = stockFor(p);
+    if (!forSale(p)) { news.push(p.state === "tbd" ? `${p.name} has no shop price yet, so we took it out of your cart.` : `${p.name} is not on sale yet, so we took it out of your cart.`); continue; }
     if (!max) { news.push(`${p.name} has sold, so we took it out of your cart.`); continue; }
     if (l.qty > max) news.push(`We only have ${max} of ${p.name}, so your cart now has ${max}.`);
     kept.push({ sku: l.sku, qty: Math.min(max, l.qty) });
@@ -40,8 +70,8 @@ const seriesOf = p => p.name.split(" ")[0] in SERIES ? p.name.split(" ")[0] : ""
 const toneOf = p => p.dark ? "" : p.photo ? "bone" : SERIES[seriesOf(p)] || TONES[PRODUCTS.filter(x => x.cat === p.cat && !seriesOf(x)).indexOf(p) % TONES.length];
 const place = d => d.city ? d.city : d.fsa;
 const byName = n => PRODUCTS.find(p => p.name === n);
-const inCat = c => PRODUCTS.filter(p => p.cat === c && !p.dark);
-const liveCat = c => inCat(c).filter(p => !isSold(p));   // what we can suggest: nothing is promoted that cannot be bought
+const inCat = c => SHELF.filter(p => p.cat === c && !p.dark);
+const liveCat = c => inCat(c).filter(p => forSale(p) && !isSold(p));   // what we can suggest: nothing is promoted that cannot be bought
 const SHOP_STREET = "760 Wyandotte St E", SHOP_ADDRESS = "760 Wyandotte St E, Windsor, ON N9A 3J4", SHOP_MAP = "https://www.google.com/maps/search/?api=1&query=One%20Stop%20Shop%2C%20760%20Wyandotte%20St%20E%2C%20Windsor%2C%20ON%20N9A%203J4";
 const directions = (label = "Get directions") => `<a class="link" href="${SHOP_MAP}" target="_blank" rel="noopener">${label}</a>`;
 const HOURS = SHOP_HOURS, DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -70,7 +100,7 @@ const cpQuote = lines => state.dest && carried(lines) ? quote(state.dest, pack(l
 const freeNote = sub => sub >= FREE_LOCAL_CENTS ? "Free local delivery: your items are $200 or more before tax." : `Local delivery is free on orders of $200 or more before tax. Add ${money((FREE_LOCAL_CENTS - sub) / 100)} more to get it.`;
 function saveCart() { store.set("cart", state.cart); syncChrome(); }
 function addToCart(sku) {
-  const p = bySku[sku]; if (!p || !stockFor(p)) return;
+  const p = bySku[sku]; if (!forSale(p) || !stockFor(p)) return;   // nothing without a shop price ever reaches the cart
   const l = state.cart.find(x => x.sku === sku), wasMixed = mixedCart();
   if (l) l.qty = Math.min(stockFor(p), l.qty + 1); else state.cart.push({ sku, qty: 1 });
   if (!wasMixed && mixedCart() && state.ship === "pickup") { state.ship = null; store.set("ship", null); }   // a cart that has just become charcoal plus other pieces asks afresh: no earlier pickup choice is carried over
@@ -98,6 +128,9 @@ function shot(p, { small = false, eager = false, use = small ? "card" : "pdp", c
   if (box && box.img) return shot(box, { small, eager, use, cls, alt: alt ? `${alt}, shown with the box it comes from` : "" }) + `<span class="shot__tag" aria-hidden="true">Sold by the roll</span>`;
   // charcoal still waiting for the shop's photo: the drawn box stands in, so the grid never shows a broken picture
   if (!p.img && (isCharcoal(p) || p.cat === "heat")) return `<img class="shot shot--drawn ${cls}" src="img/pc/coming-charcoal.svg" alt="${esc(alt ? alt + ", drawing until the photo is ready" : "")}" width="720" height="900" ${eager ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async"><span class="shot__tag" aria-hidden="true">Photo coming</span>`;
+  // a hookah or a shisha flavour still waiting for its photo: the drawn stand-in, in the same style as the charcoal box
+  const drawn = !p.img && (p.cat === "hookahs" ? "coming-hookah" : p.cat === "shisha" ? "coming-shisha" : "");
+  if (drawn) return `<img class="shot shot--drawn ${cls}" src="img/pc/${drawn}.svg" alt="${esc(alt ? alt + ", drawing until the photo is ready" : "")}" width="720" height="900" ${eager ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async"><span class="shot__tag" aria-hidden="true">Photo coming</span>`;
   if (!p.img) return `<span class="shot shot--none ${cls}" role="img" aria-label="${esc(alt || "Photo coming soon")}">Photo coming soon</span>`; // added in the back office, no photo yet
   const plain = p.dark || p.photo;
   return `<img class="${plain ? "shot shot--photo" : "shot"} ${cls}" src="${imgSrc(p, small)}" ${srcset(p)} ${p.photo ? "" : `sizes="${SIZES[use]}"`} alt="${esc(alt)}" width="${p.dark ? 1080 : 720}" height="${p.dark ? 1080 : 900}" ${eager ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async">`;
@@ -106,77 +139,87 @@ function shot(p, { small = false, eager = false, use = small ? "card" : "pdp", c
 // ---------- THE STICKER (device): the delivered price, slapped on the product ----------
 function sticker(p, { big = false } = {}) {
   const n = parseInt(p.sku.slice(-3), 10), r = ((n * 37) % 23) - 13; // -13..+9 degrees, fixed per product
+  if (p.state === "tbd") return `<span class="sticker sticker--tbd ${big ? "sticker--big" : ""}" style="--r:${r}deg"><span class="sticker__k">Price</span><span class="sticker__v">TBD</span></span>`;   // the price gun's own words until the shop sets its price
+  if (p.state === "soon") return `<span class="sticker sticker--tbd ${big ? "sticker--big" : ""}" style="--r:${r}deg"><span class="sticker__k">Soon</span><span class="sticker__v">${whole(p.price)}</span></span>`;
   return `<span class="sticker ${big ? "sticker--big" : ""} ${isSold(p) ? "sticker--sold" : ""}" style="--r:${r}deg"><span class="sticker__v">${isSold(p) ? "Sold" : whole(p.price)}</span></span>`;
 }
 
 function card(p, i = 9) {
   const tone = toneOf(p);
   return `
-  <article class="card" data-tone="${tone}">
+  <article class="card" data-tone="${tone}" ${p.family ? `data-family="${p.sku}"` : ""}>
     <a class="card__a" href="/p/${p.sku}" data-piece="${p.sku}">
-      <div class="tile ${p.dark || p.photo ? "tile--photo" : ""}">${shot(p, { small: true, eager: i < 2 })}${sticker(p)}</div>
+      <div class="tile ${p.dark || p.photo ? "tile--photo" : ""}">${p.family ? colourShot(p, { small: true, eager: i < 2 }) : shot(p, { small: true, eager: i < 2 })}${sticker(p)}</div>
       <h3 class="card__name">${esc(p.name)}</h3>
     </a>
-    <p class="card__meta">${esc(p.note)}</p>${localOnly(p) ? `<p class="card__pick">Pickup or local delivery only</p>` : ""}
+    ${cardMeta(p)}${localOnly(p) ? `<p class="card__pick">Pickup or local delivery only</p>` : ""}
   </article>`;
+}
+
+// What a card says under the name: the item's own line, or for a hookah family its colours and whether it has a base.
+function cardMeta(p) {
+  if (!p.family) return `<p class="card__meta">${esc(p.note || p.details?.description || (p.facts && p.facts.size) || "")}</p>`;
+  const fam = familyOf(p), bits = [stemSet(p) ? "Stem set, no base" : "", fam.length > 1 ? `${fam.length} colours` : ""].filter(Boolean).join(", ");
+  return `${fam.length > 1 ? swatchGroup(fam, p, { label: `Colours of ${p.name}`, card: p.sku, max: 5 }) : ""}${bits ? `<p class="card__meta card__meta--fam">${bits}</p>` : ""}`;
 }
 
 // ---------- views ----------
 // Every page opens with the same band the shop sections have: a flat jewel colour, the title, and room for the page's object.
 const band = (fx, tone, title, note = "") => `<section class="shophead shophead--page" data-tone="${tone}" data-fx="${fx}"><h1 class="shophead__h">${title}</h1>${note ? `<p class="shophead__n">${note}</p>` : ""}</section>`;
 function viewHome() {
-  const picks = ["Sultan Totem", "Stuttgart Pure, Jade", "Regent Neon Blue", "Cairo Avatar", "Carbon Black", "Mamoun Moagza Copper", "Regent Neon Pink", "Orbit"].map(byName).filter(p => p && !isSold(p));
-  for (const p of liveCat("hookahs")) { if (picks.length >= 8) break; if (!picks.includes(p)) picks.push(p); }   // a sold pick gives its place to the next live hookah
-  const resin = PRODUCTS.filter(p => p.dark);
+  // the first screen and the counter picks: the shop's ticked (in-store) hookahs with their own photo, one per family (public/picks.js, the Worker preloads the same first one)
+  const ranked = heroPicks(PRODUCTS, 13), stars = ranked.slice(0, 5), picks = ranked.slice(5, 13);
+  for (const p of SHELF.filter(x => x.cat === "hookahs" && !x.dark)) { if (picks.length >= 8) break; if (!picks.includes(p) && !stars.includes(p)) picks.push(p); }
+  const resin = SHELF.filter(p => p.dark && forSale(p));
   const SLABS = ["gilt", "cobalt", "ruby", "emerald", "teal"];
-  const ok = p => p && p.cat === "hookahs" && !p.dark && p.img && !isSold(p), named = ["Mamoun Hatshepsut", "Sultan Totem", "Mamoun Cafe Chiller", "Lounge Six", "Mamoun Star"].map(byName).filter(ok);
-  const stars = [...named, ...PRODUCTS.filter(p => ok(p) && !named.includes(p))].slice(0, 5);   // always five live pieces while the shop has them; the grid follows the real count
+  const priceWord = p => p.state === "tbd" ? "price TBD" : whole(p.price);
+  const tall = SHELF.filter(p => p.cat === "hookahs" && p.height && !p.dark && p.img).sort((a, b) => b.height - a.height);   // only measured heights: a guessed height is never drawn
   return `
   <section class="hero">
     <div class="hero__stage">
       <div class="hero__slabs" aria-hidden="true">${stars.map((p, i) => `<span data-tone="${SLABS[i]}"></span>`).join("")}</div>
       <p class="hero__word" aria-hidden="true">Hookahs,</p>
-      <div class="hero__pieces">${stars.map((p, i) => `<a class="piece" href="/p/${p.sku}" style="--cm:${p.height};--i:${i}" aria-label="${esc(p.name)}, ${whole(p.price)}">${shot(p, { eager: i < 3, use: "slab" })}${sticker(p)}</a>`).join("")}</div>
+      <div class="hero__pieces">${stars.map((p, i) => `<a class="piece" href="/p/${p.sku}" style="--cm:${p.height || 72};--i:${i}" aria-label="${esc(p.name)}, ${priceWord(p)}">${shot(p, { eager: i < 3, use: "slab" })}${sticker(p)}</a>`).join("")}</div>
       <p class="hero__word hero__word--comma" aria-hidden="true"><span>Hookahs</span>,</p>
     </div>
     <div class="hero__in">
       <h1 class="hero__h"><span class="hero__lead">Hookahs,</span> <span class="hero__rest">and everything that goes with them.</span></h1>
       <div class="hero__side">
-        <p class="hero__p">Local delivery from $10 near Windsor, free pickup, and shipping across Canada. Egyptian brass, German steel and hand\u2011cut glass.</p>
-        <div class="hero__cta"><a class="btn" href="/shop/hookahs">Shop hookahs</a><a class="btn btn--ghost" href="/shop">All ${PRODUCTS.length} pieces</a></div>
+        <p class="hero__p">Local delivery from $10 near Windsor, free pickup, and shipping across Canada.</p>
+        <div class="hero__cta"><a class="btn" href="/shop/hookahs">Shop hookahs</a><a class="btn btn--ghost" href="/shop">All ${SHELF.length} pieces</a></div>
       </div>
     </div>
   </section>
   <section class="cats" aria-label="Shop by category">
-    ${CATEGORIES.map((c, i) => { const n = PRODUCTS.filter(p => p.cat === c.id).length; const lead = PRODUCTS.find(p => p.cat === c.id && !p.dark && p.img) || PRODUCTS.find(p => p.cat === c.id && !p.dark);
+    ${CATEGORIES.map((c, i) => { const n = SHELF.filter(p => p.cat === c.id).length; const lead = (c.id === "hookahs" && stars[0]) || SHELF.find(p => p.cat === c.id && !p.dark && p.img) || SHELF.find(p => p.cat === c.id && !p.dark);
       return `<a class="cat" data-tone="${c.tone}" href="/shop/${c.id}">${shot(lead, { small: i > 0, use: i ? "cat" : "cat1", cls: "cat__img" })}<span class="cat__name">${c.name}</span><span class="cat__n num">${n}</span></a>`; }).join("")}
   </section>
   <section class="shelf">
-    <header class="shelf__head"><h2 class="h2">Counter picks</h2><a class="link" href="/shop/hookahs">All ${PRODUCTS.filter(p => p.cat === "hookahs").length} hookahs</a></header>
+    <header class="shelf__head"><h2 class="h2">Counter picks</h2><a class="link" href="/shop/hookahs">All ${SHELF.filter(p => p.cat === "hookahs").length} hookahs</a></header>
     <div class="grid">${picks.map((p, i) => card(p, i + 8)).join("")}</div>
   </section>
   <section class="gifts" aria-labelledby="gift-h">
     <header class="shelf__head"><h2 class="h2" id="gift-h">Gifts</h2><p class="gifts__note">Packed at the counter. Add a note in the cart.</p></header>
     <div class="gifts__row">
-      ${[["under-50", "Under $50", "emerald", liveCat("bowls")[0] || inCat("bowls")[0]], ["under-150", "Under $150", "cobalt", canSet(byName("Mamoun Moagza Copper")) || giftList(false)[0] || byName("Mamoun Moagza Copper")], ["set", "The full setup", "ruby", canSet(byName("Mamoun Kamanja Gold")) || liveCat("hookahs")[0] || byName("Mamoun Kamanja Gold")]].map(([id, label, tone, lead]) =>
-        `<a class="gift" data-tone="${tone}" href="${id === "set" ? "/set" : "/gifts/" + id}">${shot(lead, { small: true, use: "cat", cls: "gift__img" })}<span class="gift__name">${label}</span><span class="gift__sub">${id === "set" ? "Hookah, bowl, hose" : giftList(id === "under-50").length + " pieces"}</span></a>`).join("")}
+      ${[["under-50", "Under $50", "emerald", giftList(true)[0] || liveCat("bowls")[0]], ["under-150", "Under $150", "cobalt", giftList(false)[0]], ["set", "The full setup", "ruby", liveCat("hookahs")[0] || liveCat("bowls")[0]]].filter(g => g[3]).map(([id, label, tone, lead]) =>
+        `<a class="gift" data-tone="${tone}" href="${id === "set" ? "/set" : "/gifts/" + id}">${shot(lead, { small: true, use: "cat", cls: "gift__img" })}<span class="gift__name">${label}</span><span class="gift__sub">${id === "set" ? (liveCat("hookahs").length ? "Hookah, bowl, hose" : "Bowl and hose, hookahs once priced") : giftList(id === "under-50").length + " pieces"}</span></a>`).join("")}
     </div>
   </section>
-  <section class="lineup" aria-labelledby="lu-h">
+  ${tall.length >= 3 ? `<section class="lineup" aria-labelledby="lu-h">
     <header class="lineup__head"><h2 class="h2 h2--xl" id="lu-h">Compare heights.</h2><p class="lineup__note">From the shelf, tallest to shortest.</p></header>
     <div class="lineup__row" tabindex="0" role="group" aria-label="Hookahs by height">
-      ${PRODUCTS.filter(p => p.cat === "hookahs" && p.height && !p.dark).sort((a, b) => b.height - a.height).filter((p, i) => i % 3 === 0).map(p =>
+      ${tall.filter((p, i) => tall.length < 12 || i % 3 === 0).map(p =>
         `<a class="lu" href="/p/${p.sku}" style="--cm:${p.height}"><img class="lu__img" src="img/pc/${p.img}-s.webp${V}" ${srcset(p)} sizes="${SIZES.lineup}" alt="" loading="lazy" width="360" height="450"><span class="lu__cm num">${p.height} cm</span><span class="lu__name">${esc(p.name)}</span></a>`).join("")}
     </div>
-  </section>
-  <section class="resin">
+  </section>` : ""}
+  ${resin.length ? `<section class="resin">
     <div class="resin__copy">
       <h2 class="h2 h2--xl">One of one.</h2>
       <p class="lead">Poured resin stems. No two come out of the mould the same, so when one sells, that one is gone.</p>
       <a class="btn" href="/shop/hookahs">See what is left</a>
     </div>
     <div class="resin__row">${resin.map(p => `<a class="resin__item" href="/p/${p.sku}" data-piece="${p.sku}">${shot(p, { use: "resin" })}<span class="resin__name">${esc(p.name)}</span>${sticker(p)}</a>`).join("")}</div>
-  </section>
+  </section>` : ""}
   <section class="pack">
     <div class="pack__copy">
       <h2 class="h2 h2--xl">How we ship glass.</h2>
@@ -204,20 +247,30 @@ function viewHome() {
 }
 
 function viewShop(cat) {
-  const c = catById[cat] || null, list = c ? PRODUCTS.filter(p => p.cat === c.id) : PRODUCTS;
-  const groups = cat === "hookahs" ? [...Object.keys(SERIES).map(k => [k, list.filter(p => seriesOf(p) === k)]), ["More from the shelf", list.filter(p => !seriesOf(p) && !p.dark)], ["One of one", list.filter(p => p.dark)]].filter(g => g[1].length) : [["", list]];
+  const c = catById[cat] || null, list = c ? SHELF.filter(p => p.cat === c.id) : SHELF;
+  // Hookahs: the shop's ticked (in-store) pieces first, then the rest of the catalogue, each grouped by kind
+  const fams = list.filter(p => p.family), byKind = l => GROUPS.map(([k, name]) => [name, l.filter(p => (p.facts.group || "full_size") === k)]).filter(g => g[1].length);
+  const tiers = cat === "hookahs" && fams.length ? [["In the shop", "Ticked in the shop's own catalogue. Count TBD.", byKind(fams.filter(ticked))], ["From the catalogue", "From Ace Hookah\u2019s catalogue. Ask the counter about one.", byKind(fams.filter(p => !ticked(p)))]].filter(t => t[2].length) : null;
+  const groups = tiers ? null : cat === "hookahs" ? [...Object.keys(SERIES).map(k => [k, list.filter(p => seriesOf(p) === k)]), ["More from the shelf", list.filter(p => !seriesOf(p) && !p.dark)], ["One of one", list.filter(p => p.dark)]].filter(g => g[1].length) : [["", list]];
+  const range = items => { const pr = items.filter(forSale).map(x => x.price); return pr.length === items.length && pr.length ? `, ${whole(Math.min(...pr))} to ${whole(Math.max(...pr))}` : ""; };
   return `
   <section class="shophead" data-tone="${c ? c.tone : "bone"}" ${c ? `data-cat="${c.id}"` : `data-fx="all"`}>
     <h1 class="shophead__h">${c ? c.name : "Everything"}</h1>
     <p class="shophead__n"><span class="num">${list.length}</span> ${c && list.length && list.every(localOnly) ? "kinds of charcoal.<br>Pickup or local delivery only." : "pieces"}</p>
   </section>
   <nav class="chips" aria-label="Categories"><a href="/shop" ${!c ? 'aria-current="page"' : ""}>All</a>${CATEGORIES.map(x => `<a href="/shop/${x.id}" ${c && c.id === x.id ? 'aria-current="page"' : ""}>${x.name}</a>`).join("")}<a href="/gifts/under-50">Gifts</a></nav>
-  <div class="grid grid--shop">${groups.map(([name, items]) => (name ? `<h2 class="series" data-tone="${SERIES[name] || ""}">${name} <span class="num">${items.length} pieces, ${whole(Math.min(...items.map(x => x.price)))} to ${whole(Math.max(...items.map(x => x.price)))}</span></h2>` : "") + items.map(card).join("")).join("")}</div>`;
+  ${tiers ? tiers.map(([t, note, gs]) => `<section class="tier" aria-label="${t}"><header class="tier__head"><h2 class="tier__h">${t}</h2><p class="tier__n"><span class="num">${gs.reduce((a, g) => a + g[1].length, 0)}</span> hookahs. ${note}</p></header>
+    <div class="grid grid--shop">${gs.map(([name, items]) => `<h3 class="series">${name} <span class="num">${items.length} ${items.length === 1 ? "piece" : "pieces"}</span></h3>` + items.map(card).join("")).join("")}</div></section>`).join("")
+  : `<div class="grid grid--shop">${groups.map(([name, items]) => (name ? `<h2 class="series" data-tone="${SERIES[name] || ""}">${name} <span class="num">${items.length} pieces${range(items)}</span></h2>` : "") + items.map(card).join("")).join("")}</div>`}`;
 }
 
 // The product page for charcoal: one plain answer about how it is bought, in place of the delivery and shipping rows.
 // The rule sits above the button, so nobody adds it to the cart before reading how it is bought.
-const counterLine = p => `<div class="dline dline--fixed dline--above" role="note"><span class="dline__msg">Pickup or local delivery only</span><span class="dline__sub">Never shipped by Canada Post. Free pickup at ${SHOP_STREET}, or local delivery from $10 near Windsor.</span></div>`;
+const counterLine = p => p.weightTbd && !isCharcoal(p)
+  ? `<div class="dline dline--fixed dline--above" role="note"><span class="dline__msg">Pickup or local delivery for now</span><span class="dline__sub">Shipping TBD: the pack weight is being confirmed. Free pickup at ${SHOP_STREET}, or local delivery from $10 near Windsor.</span></div>`
+  : `<div class="dline dline--fixed dline--above" role="note"><span class="dline__msg">Pickup or local delivery only</span><span class="dline__sub">Never shipped by Canada Post. Free pickup at ${SHOP_STREET}, or local delivery from $10 near Windsor.</span></div>`;
+// a charcoal box's size and count, read from the shop's own line; a size the list leaves blank says so
+const sizeOf = p => { const t = [p.details?.variant, p.name, p.facts?.size].filter(Boolean).join(" "); const m = t.match(/\b\d+(?:\.\d+)?\s?(?:mm|cm|in)\b/i); return m ? m[0] : ""; };
 function counterSpec(p) {
   const d = p.details || {}, box = d.box_sku && bySku[d.box_sku], rolls = PRODUCTS.filter(x => x.details?.box_sku === p.sku);
   return `<section class="spec" aria-labelledby="spec-h">
@@ -227,64 +280,76 @@ function counterSpec(p) {
           ${d.brand ? `<div><dt>Brand</dt><dd>${esc(d.brand)}</dd></div>` : ""}
           ${box ? `<div><dt>From the box</dt><dd><a class="link" href="/p/${box.sku}">${esc(box.name)}</a>, ${whole(box.price)}</dd></div>` : ""}
           ${rolls.map(r => `<div><dt>One roll</dt><dd><a class="link" href="/p/${r.sku}">Single roll</a>, ${whole(r.price)}</dd></div>`).join("")}
-          <div><dt>Getting it</dt><dd>Pickup or local delivery only</dd></div>
+          ${isCharcoal(p) || p.weightTbd ? `<div><dt>Size</dt><dd>${sizeOf(p) ? esc(sizeOf(p)) : TBD("")}</dd></div>` : ""}
+          ${p.facts && "count" in p.facts ? `<div><dt>${isCharcoal(p) ? "Pieces" : "Sheets"}</dt><dd>${p.facts.count ? `<span class="num">${p.facts.count}</span>` : TBD("")}</dd></div>` : ""}
+          ${p.weightTbd ? `<div><dt>Weight</dt><dd>${TBD("")}</dd></div>` : ""}
+          <div><dt>Getting it</dt><dd>${p.weightTbd && !isCharcoal(p) ? `Pickup or local delivery. ${TBD("Shipping")}` : "Pickup or local delivery only"}</dd></div>
           ${!p.img && !p.photo ? `<div><dt>Photo</dt><dd>${box && box.img ? "Shows the box this roll comes from." : "Coming. The drawing stands in until the shop's photo is up."}</dd></div>` : ""}
         </dl>
       </section>`;
 }
+// What is known about an item on view, and what is not yet: unknowns are said as "TBD", never guessed or left out.
+function factsSpec(p, fam) {
+  const f = p.facts || {}, base = f.includes_base === true ? "Included" : f.includes_base === false ? "Not included: stem set, no base" : TBD("");
+  return `<section class="spec" aria-labelledby="spec-h">
+        <h2 class="h3" id="spec-h">Details</h2>
+        <dl class="spec__list">
+          <div><dt>Item</dt><dd class="num">${p.sku}</dd></div>
+          <div><dt>Price</dt><dd>${p.state === "tbd" ? TBD("") : `<span class="num">${whole(p.price)}</span>, coming soon`}</dd></div>
+          ${p.family ? `<div><dt>Base</dt><dd>${base}</dd></div>
+          <div><dt>Height</dt><dd>${f.height_cm ? `<span class="num">${f.height_cm} cm</span>` : TBD("")}</dd></div>
+          ${f.acrylic ? `<div><dt>Material</dt><dd>Acrylic</dd></div>` : ""}
+          ${Array.isArray(f.includes) && f.includes.length ? `<div><dt>Comes with</dt><dd>${esc(f.includes.join(", "))}</dd></div>` : ""}
+          <div><dt>Colours</dt><dd>${fam.length > 1 ? `<span class="num">${fam.length}</span> in the catalogue. ` : ""}${fam.every(v => v.named) ? esc(fam.map(v => v.colour).join(", ")) : TBD("Colour names")}</dd></div>` : ""}
+          <div><dt>Availability</dt><dd>${p.family && ticked(p) ? "In the shop. " : ""}${TBD("Count")}</dd></div>
+          ${!p.img ? `<div><dt>Photo</dt><dd>Coming. The drawing stands in until the photo is ready.</dd></div>` : p.family && f.photo === "family" ? `<div><dt>Photo</dt><dd>Shows another colour of this hookah.</dd></div>` : ""}
+          ${p.family ? `<div><dt>From</dt><dd>Ace Hookah\u2019s October 2026 catalogue</dd></div>` : ""}
+        </dl>
+      </section>`;
+}
 function viewProduct(sku) {
-  const p = bySku[sku];
+  const asked = new URLSearchParams(location.search).get("colour"), base = bySku[sku];
+  const p = base && base.family && bySku[asked] && bySku[asked].family === base.family ? bySku[asked] : base;
   if (!p) return `${band("missing", "ruby", "That one is gone.")}<section class="empty"><p class="lead">It may have sold. <a class="link" href="/shop">See what is on the counter</a>.</p></section>`;
   const c = catById[p.cat], parcels = pack([{ product: p, qty: 1 }]), opts = cpQuote([{ product: p, qty: 1 }]), b = parcels[0];
   const inCart = state.cart.some(l => l.sku === sku);
-  const more = PRODUCTS.filter(x => x.cat === p.cat && x.sku !== sku && !x.dark && !isSold(x)).sort((a, b) => (seriesOf(b) === seriesOf(p)) - (seriesOf(a) === seriesOf(p))).slice(0, 4);
+  const fam = familyOf(p), sale = forSale(p);
+  const more = SHELF.filter(x => x.cat === p.cat && x.sku !== sku && (!p.family || x.family !== p.family) && !x.dark && !isSold(x))
+    .sort((a, b) => p.family ? ((b.facts?.group === p.facts.group) - (a.facts?.group === p.facts.group)) || (ticked(b) - ticked(a)) : (seriesOf(b) === seriesOf(p)) - (seriesOf(a) === seriesOf(p))).slice(0, 4);
   const n = parseInt(p.sku.slice(-3), 10), nth = (c, k) => { const l = liveCat(c); return l.length ? l[(n + k) % l.length] : null; };
   const goes = p.cat === "hookahs" ? [nth("bowls", 0), nth("heat", 1), nth("hoses", 2), nth("parts", 3)].filter(Boolean) : [];
+  // a hookah family's colours: each chip shows its colour and swaps the photo; a name the shop has not confirmed is never stated as fact
+  const chips = fam.length > 1 ? `<p class="swatches__n" id="colour-h">Colour <b data-colour-name ${p.colour ? "" : "hidden"}>${esc(p.colour || "")}</b> <span class="num">${fam.indexOf(p) + 1} of ${fam.length}</span> ${fam.every(v => v.named) ? "" : TBD("Colours")}</p>
+      ${swatchGroup(fam, p, { label: "Colour" })}` : "";
   const sold = isSold(p);
   return `
   <article class="pdp" data-tone="${toneOf(p)}" data-cat="${p.cat}">
-    <div data-stage="${p.sku}" class="pdp__tile tile ${p.dark || p.photo ? "tile--photo" : ""}">${shot(p, { eager: true, alt: p.name })}${sticker(p, { big: true })}</div>
+    <div data-stage="${p.sku}" class="pdp__tile tile ${p.dark || p.photo ? "tile--photo" : ""}">${p.family ? colourShot(p, { eager: true, alt: p.colour ? `${p.name}, ${p.colour}` : p.name }) : shot(p, { eager: true, alt: p.name })}${sticker(p, { big: true })}</div>
     <div class="pdp__info">
       <p class="crumb"><a href="/shop/${p.cat}">${c.name}</a></p>
       <h1 class="pdp__name">${esc(p.name)}</h1>
-      <p class="pdp__note">${esc(p.note)}${p.height ? `. Stands ${p.height} cm.` : "."}</p>
+      ${p.family ? (stemSet(p) ? `<p class="pdp__note">Stem set, no base.</p>` : "") : `<p class="pdp__note">${esc(p.note || p.facts?.size || "")}${p.height ? `. Stands ${p.height} cm.` : p.note || p.facts?.size ? "." : ""}</p>`}
+      ${p.details?.description ? `<p class="pdp__desc">${esc(p.details.description)}</p>` : ""}
+      ${chips}
       ${p.details && p.details.notes ? `<p class="pdp__notes"><span>Notes</span> ${esc(p.details.notes)}</p>` : ""}
       ${localOnly(p) ? counterLine(p) : ""}
-      ${sold ? `<p class="soldline">${p.dark ? "This one has sold. Each resin stem is poured once." : "Sold out for now."}</p><a class="btn btn--ghost btn--call" href="tel:+15192552222">Call the counter</a>`
+      ${!sale ? `<p class="soldline">${p.state === "tbd" ? "Price TBD. The shop is setting its prices now." : "Coming soon."}</p><p class="pdp__avail">${p.family ? (ticked(p) ? `In the shop. ${TBD("Availability")}` : `From Ace Hookah\u2019s catalogue. ${TBD("Availability")}`) : TBD("Availability")}</p><a class="btn btn--ghost btn--call" href="tel:+15192552222">Ask the counter</a>`
+        : sold ? `<p class="soldline">${p.dark ? "This one has sold. Each resin stem is poured once." : "Sold out for now."}</p><a class="btn btn--ghost btn--call" href="tel:+15192552222">Call the counter</a>`
         : inCart ? `<a class="btn btn--wide" href="/cart">In your cart. View cart</a>` : `<button class="btn btn--wide" type="button" data-add="${p.sku}">Add to cart</button>`}
-      ${deliveryLine(p, opts)}
-      <section class="ways" aria-labelledby="ways-h">
+      ${sale ? deliveryLine(p, opts) : ""}
+      ${!sale ? factsSpec(p, fam) : `<section class="ways" aria-labelledby="ways-h">
         <h2 class="h3" id="ways-h">Delivery, shipping and pickup</h2>
         ${opts.length || (state.dest && localOnly(p)) ? `<p class="ways__to">To ${esc(state.dest.full)}${state.dest.city ? ", " + esc(state.dest.city) : ""}. <button class="link" type="button" data-open-postal>Change</button></p>
         <table class="ledger"><thead><tr><th scope="col">Service</th><th scope="col">Arrives</th><th scope="col" class="r">Cost</th></tr></thead>
         <tbody>${localRow(p)}${opts.map(o => `<tr><td>${o.carrier} ${o.service}</td><td>${days(o.days)}</td><td class="r num">${money(o.total)}</td></tr>`).join("")}
         <tr><td>Pick up at ${SHOP_STREET}</td><td>${pickupDay()}</td><td class="r num">Free</td></tr></tbody></table>`
         : `<p class="ways__to">Local delivery from $10 near Windsor. Free pickup. ${localOnly(p) ? "" : p.ship === "ground_only" ? "Ships by ground across Canada." : "Ships across Canada."}</p>`}
-      </section>
-      ${p.cat === "hookahs" ? `<section class="parts" aria-labelledby="parts-h">
-        <h2 class="h3" id="parts-h">The parts</h2>
-        <div class="parts__in">
-          <svg class="parts__fig" viewBox="0 0 150 230" role="img" aria-label="Diagram of a hookah with six numbered parts" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
-            <path d="M52 14h26l-5 20H57z"/><path d="M40 44c0 5 50 5 50 0"/><path d="M62 34v14M68 34v14"/>
-            <path d="M62 48v84M68 48v84M58 72h14M58 100h14"/><path d="M56 132h18v10H56z"/><circle cx="50" cy="137" r="3.5"/>
-            <path d="M74 137h9c16 0 22 14 18 30-3 13 6 22 22 20"/>
-            <path d="M58 142c0 12-22 20-22 44 0 18 12 30 29 30s29-12 29-30c0-24-22-32-22-44"/><path d="M40 188h50" stroke-dasharray="3 4"/>
-            <g class="parts__n" stroke="none" fill="currentColor" font-size="15" font-weight="600" text-anchor="middle">
-              <text x="16" y="28">1</text><text x="16" y="50">2</text><text x="16" y="90">3</text><text x="16" y="141">4</text><text x="134" y="150">5</text><text x="16" y="200">6</text></g>
-            <g stroke-width="1" opacity=".55"><path d="M24 24h26M24 46h14M24 86h36M24 137h20M126 146l-22 8M24 196h12"/></g>
-          </svg>
-          <ol class="parts__list">
-            <li><b>Bowl.</b> Sits on top, under the heat keeper.</li><li><b>Tray.</b> Catches ash and holds the tongs.</li><li><b>Stem.</b> ${esc(p.note)}.</li>
-            <li><b>Purge valve.</b> Clears the base in one breath out.</li><li><b>Hose port.</b> Takes any standard hose.</li><li><b>Base.</b> ${p.glass ? "Glass" : "Acrylic"}, holds the water.</li>
-          </ol>
-        </div>
-        <h2 class="h3 parts__box">How it goes together</h2>
-        <ul class="inbox">${[["1", "Stem"], ["1", p.glass ? "Glass base" : "Base"], ["1", "Tray"], ["1", "Bowl"], ["1", "Hose with handle"], ["1", "Tongs"], ["1 set", "Grommets"]].map(([q, t]) => `<li><span class="num">${q}</span>${t}</li>`).join("")}</ul>
-      </section>` : ""}
-      ${localOnly(p) ? counterSpec(p) : `<section class="spec" aria-labelledby="spec-h">
+      </section>`}
+      ${!sale ? "" : localOnly(p) ? counterSpec(p) : `<section class="spec" aria-labelledby="spec-h">
         <h2 class="h3" id="spec-h">Packed size</h2>
         <dl class="spec__list">
           <div><dt>Item</dt><dd class="num">${p.sku}</dd></div>
+          ${p.facts?.size ? `<div><dt>Size</dt><dd>${esc(p.facts.size)}</dd></div>` : ""}
           <div><dt>Weight, packed</dt><dd class="num">${b.kg} kg</dd></div>
           <div><dt>Box</dt><dd><span class="num">${b.l} \u00d7 ${b.w} \u00d7 ${b.h} cm</span>, ${esc(b.label.toLowerCase())}</dd></div>
           ${opts.length ? `<div><dt>Billed as</dt><dd><span class="num">${opts[0].perParcel[0].billableKg} kg</span>, the larger of weight and box size</dd></div>` : ""}
@@ -293,12 +358,12 @@ function viewProduct(sku) {
       </section>`}
     </div>
   </article>
-  ${goes.length ? `<section class="shelf"><header class="shelf__head"><h2 class="h2">Goes with this</h2><a class="link" href="/set">Build a set</a></header><div class="grid">${goes.map(card).join("")}</div></section>` : ""}
+  ${goes.length ? `<section class="shelf"><header class="shelf__head"><h2 class="h2">Goes with this</h2>${sale ? `<a class="link" href="/set">Build a set</a>` : ""}</header><div class="grid">${goes.map(card).join("")}</div></section>` : ""}
   ${more.length ? `<section class="shelf"><header class="shelf__head"><h2 class="h2">More ${localOnly(p) ? "charcoal" : c.name.toLowerCase()}</h2><a class="link" href="/shop/${p.cat}">All ${localOnly(p) ? "charcoal" : c.name.toLowerCase()}</a></header><div class="grid">${more.map(card).join("")}</div></section>` : ""}`;
 }
 
 // ---------- gifts ----------
-function giftList(under) { return PRODUCTS.filter(p => !p.dark && !isSold(p) && !localOnly(p) && (under ? p.price < 50 : p.price >= 50 && p.price <= 150)).sort((a, b) => b.price - a.price); }
+function giftList(under) { return SHELF.filter(p => forSale(p) && !p.dark && !isSold(p) && !localOnly(p) && (under ? p.price < 50 : p.price >= 50 && p.price <= 150)).sort((a, b) => b.price - a.price); }
 function viewGifts(kind) {
   const under = kind !== "under-150", list = giftList(under);
   return `
@@ -314,9 +379,9 @@ function viewGifts(kind) {
 // The heat section is charcoal now: pickup or local delivery only, so it is an optional pick, never put in a set by default.
 const SLOTS = [["hookah", "hookahs", "The hookah"], ["bowl", "bowls", "A bowl"], ["heat", "heat", "Charcoal, pickup or local delivery only"], ["hose", "hoses", "A hose"]];
 const OPTIONAL = new Set(["heat"]);
-const setOpts = c => inCat(c).filter(p => !isSold(p));   // a set is never offered, or defaulted to, something the shop cannot sell
-const canSet = p => p && !isSold(p) ? p : null;
-function setPicks() { return SLOTS.map(([slot, cat]) => canSet(bySku[state.set[slot]]) || (OPTIONAL.has(slot) ? null : (slot === "hookah" ? canSet(byName("Mamoun Kamanja Gold")) : null) || setOpts(cat)[0] || null)); }
+const setOpts = c => inCat(c).filter(p => forSale(p) && !isSold(p));   // a set is never offered, or defaulted to, something the shop cannot sell (a hookah with "Price TBD" included)
+const canSet = p => forSale(p) && !isSold(p) ? p : null;
+function setPicks() { return SLOTS.map(([slot, cat]) => canSet(bySku[state.set[slot]]) || (OPTIONAL.has(slot) ? null : setOpts(cat)[0] || null)); }
 function setSummary() {
   const picks = setPicks().filter(Boolean), lines = picks.map(product => ({ product, qty: 1 })), parcels = pack(lines), sum = picks.reduce((a, p) => a + p.price, 0);
   const d = state.dest, near = !!d && localArea(d), lq = near && d.complete ? localQ() : null;
@@ -344,6 +409,7 @@ function viewSet() {
     <div class="set__steps">${SLOTS.map(([slot, cat, label], i) => `
       <section class="pick" aria-labelledby="pick-${slot}">
         <h2 class="h3" id="pick-${slot}"><span class="num">${i + 1}</span> ${label}</h2>
+        ${!setOpts(cat).length && slot === "hookah" ? `<p class="pick__none">Hookahs join sets once the shop sets their prices. <a class="link" href="/shop/hookahs">See the hookahs</a></p>` : ""}
         <div class="pick__row" role="group" aria-label="${label}">${setOpts(cat).map(p => `<button class="pick__opt" type="button" data-set="${slot}" data-sku="${p.sku}" aria-pressed="${picks[i]?.sku === p.sku}" data-tone="${toneOf(p)}"><span class="tile">${shot(p, { small: true, use: "thumb" })}${sticker(p)}</span><span class="pick__name">${esc(p.name)}</span></button>`).join("")}</div>
       </section>`).join("")}</div>
     <aside class="set__sum" data-set-summary>${setSummary()}</aside>
@@ -354,7 +420,10 @@ function viewSet() {
 function searchResults() {
   const q = state.q.trim().toLowerCase(), words = q.split(/\s+/).filter(Boolean);
   if (!words.length) return `<p class="lead">Try brass, steel, base, hose, or a name.</p>`;
-  const hits = PRODUCTS.filter(p => { const hay = (p.name + " " + p.note + " " + catById[p.cat].name + " " + p.sku + " " + (p.details?.brand || "") + " " + (p.details?.tags || "")).toLowerCase(); return words.every(w => hay.includes(w)); });
+  // other names people type for the same things, and a hookah family's colours and item numbers
+  const ALSO = { hookahs: "hookah hooka shisha nargile narghile argileh", shisha: "shisha molasses flavour flavor", heat: "charcoal coals coal foil" };
+  const hayOf = p => [p.name, p.note, catById[p.cat].name, ALSO[p.cat] || "", p.details?.brand, p.details?.tags, p.facts?.brand, p.facts?.size, ...familyOf(p).flatMap(v => [v.sku, v.colour]), stemSet(p) ? "stem set" : "", p.family ? (GROUPS.find(g => g[0] === p.facts.group) || [, ""])[1] : ""].filter(Boolean).join(" ").toLowerCase();
+  const hits = SHELF.filter(p => { const hay = hayOf(p); return words.every(w => hay.includes(w)); });
   return hits.length ? `<p class="search__n"><span class="num">${hits.length}</span> ${hits.length === 1 ? "piece" : "pieces"}</p><div class="grid">${hits.map(card).join("")}</div>`
     : `<p class="lead">Nothing matches \u201c${esc(state.q.trim())}\u201d. Look through <a class="link" href="/shop">everything</a>, or call the counter at <a class="link" href="tel:+15192552222">519-255-2222</a> and we will check the shelf.</p>`;
 }
@@ -362,7 +431,7 @@ function viewSearch() {
   return `
   ${band("search", "teal", "Search")}
   <section class="search">
-    <label class="field__label" for="q">Search all ${PRODUCTS.length} pieces</label>
+    <label class="field__label" for="q">Search all ${SHELF.length} pieces</label>
     <input class="field field--text" id="q" type="search" autocomplete="off" enterkeyhint="search" placeholder="Brass, bowl, Sultan" value="${esc(state.q)}">
     <div class="search__out" data-search-out aria-live="polite">${searchResults()}</div>
   </section>`;
@@ -410,7 +479,7 @@ function deliveryNow(subCents = cartCents()) {
   return { key: "ship", msg: `We ship to ${d.full}`, sub: "", act: "Change" };
 }
 function deliveryLine(p, opts) {
-  if (isSold(p)) return "";
+  if (isSold(p) || !forSale(p)) return "";
   let s = deliveryNow(cartCents() + (state.cart.some(l => l.sku === p.sku) ? 0 : toCents(p.price)));
   if (localOnly(p) && (s.key === "far" || s.key === "ship" || s.key === "down")) s = { msg: "This one goes by local delivery or pickup", sub: "Canada Post does not carry it. Pickup is free", act: "Change" };
   else if (state.dest && !opts.length && (s.key === "far" || s.key === "ship" || s.key === "down")) s = { msg: `We cannot price shipping to ${state.dest.full} here`, sub: "Call 519-255-2222, or pickup is free", act: "Change" };
@@ -543,7 +612,7 @@ function syncChrome() {
   dock.classList.toggle("dock--buy", !!prod || ra === "set" || (ra === "cart" && lines.length > 0));
   dock.innerHTML = prod
     ? `<a class="dock__side" href="/shop/${prod.cat}" data-back>Back</a>${state.cart.some(l => l.sku === prod.sku)
-        ? `<a class="dock__buy" href="/cart">In your cart. View cart</a>` : isSold(prod) ? `<a class="dock__buy dock__buy--off" href="/shop/${prod.cat}">Sold. See what is left</a>` : `<button class="dock__buy" type="button" data-add="${prod.sku}">Add to cart <span class="num">${whole(prod.price)}</span></button>`}<a class="dock__side" href="/cart" aria-label="Cart">${count}</a>`
+        ? `<a class="dock__buy" href="/cart">In your cart. View cart</a>` : !forSale(prod) ? `<a class="dock__buy dock__buy--off" href="tel:+15192552222">${prod.state === "tbd" ? "Price TBD. Ask the counter" : "Coming soon. Ask the counter"}</a>` : isSold(prod) ? `<a class="dock__buy dock__buy--off" href="/shop/${prod.cat}">Sold. See what is left</a>` : `<button class="dock__buy" type="button" data-add="${prod.sku}">Add to cart <span class="num">${whole(prod.price)}</span></button>`}<a class="dock__side" href="/cart" aria-label="Cart">${count}</a>`
     : ra === "set"
     ? `<a class="dock__side" href="/shop">Shop</a>${setPicks().some(Boolean) ? `<button class="dock__buy" type="button" data-add-set>Add the set <span class="num">${whole(setPicks().filter(Boolean).reduce((a, p) => a + p.price, 0))}</span></button>` : `<a class="dock__buy dock__buy--off" href="/shop">See what is in stock</a>`}<a class="dock__side" href="/cart" aria-label="Cart">${count}</a>`
     : ra === "cart" && lines.length
@@ -567,6 +636,7 @@ document.addEventListener("click", e => {
   if (e.target.closest("[data-local-off]")) { const o = cpQuote(cartLines())[0] || null; if (state.farFor === state.dest?.full) state.localOff = state.farFor; state.delivery = null; state.ship = o ? o.id : "pickup"; store.set("ship", state.ship); navigate("/cart"); }
   else if (e.target.closest("[data-close-postal]") || e.target === sheet) sheet.close();
   const add = e.target.closest("[data-add]"); if (add) { addToCart(add.dataset.add); render(); }
+  const sw = e.target.closest("[data-swatch]"); if (sw) { e.preventDefault(); pickColour(sw, false); }
   const q = e.target.closest("[data-qty]"); if (q) setQty(q.dataset.qty, +q.dataset.n);
   const pk = e.target.closest("[data-set]");
   if (pk) { const off = OPTIONAL.has(pk.dataset.set) && state.set[pk.dataset.set] === pk.dataset.sku;   // tapping the chosen charcoal again takes it back out
@@ -578,6 +648,46 @@ document.addEventListener("click", e => {
     state.ship = null; store.set("ship", null); saveCart(); render(); const s = $("[data-pickup-choice]"); if (s) s.focus({ preventScroll: true });
   }
 });
+// A colour swaps the photo where it was chosen (the product page or its card). The new picture is decoded before it shows,
+// so there is no blank frame, and it lands in the same box, so nothing moves.
+function paintColour(tile, v, alt) {
+  const old = tile.querySelector(":scope > .shot"); if (!old) return;
+  const frag = document.createElement("template"); frag.innerHTML = colourShot(v, { eager: true, small: !tile.matches("[data-stage]"), alt });
+  const img = frag.content.querySelector(".shot"), tag = frag.content.querySelector(".shot__tag");
+  tile.querySelectorAll(":scope > .shot__tag").forEach(t => t.remove());
+  const done = () => { if (!old.isConnected) return; img.classList.add("shot--in"); old.after(img); if (tag) img.after(tag);
+    requestAnimationFrame(() => { img.classList.add("is-on"); const end = () => { old.remove(); img.classList.remove("shot--in", "is-on"); }; if (matchMedia("(prefers-reduced-motion: reduce)").matches) end(); else setTimeout(end, 280); }); };
+  (img.decode ? img.decode() : Promise.resolve()).then(done, done);
+}
+function pickColour(btn, focus) {
+  const v = bySku[btn.dataset.swatch]; if (!v) return;
+  const group = btn.closest("[role=radiogroup]");
+  $$("[role=radio]", group).forEach(b => { const on = b === btn; b.setAttribute("aria-checked", String(on)); b.tabIndex = on ? 0 : -1; });
+  if (focus) btn.focus();
+  const card = btn.dataset.card && btn.closest("[data-family]");
+  if (card) {   // the card's photo and its link follow the colour
+    paintColour($(".tile", card), v, ""); const a = $(".card__a", card); a.href = `/p/${btn.dataset.card}?colour=${v.sku}`; a.dataset.piece = btn.dataset.card;
+    return;
+  }
+  const stage = $("[data-stage]"); if (!stage) return;
+  paintColour(stage, v, v.colour ? `${v.name}, ${v.colour}` : v.name);
+  const name = $("[data-colour-name]"); if (name) { name.textContent = v.colour || ""; name.hidden = !v.colour; name.nextElementSibling.textContent = `${familyOf(v).indexOf(v) + 1} of ${familyOf(v).length}`; }
+  // the address and the share link name the colour; the page itself is the same piece, so history gets no new entry
+  const u = new URL(location.href); u.searchParams.set("colour", v.sku); history.replaceState(history.state, "", u.pathname + u.search);
+}
+// Arrow keys move through the colours like any radio group; Home and End jump to the ends.
+document.addEventListener("keydown", e => {
+  const btn = e.target.closest?.("[role=radio][data-swatch]"); if (!btn) return;
+  const all = $$("[role=radio]", btn.closest("[role=radiogroup]")), i = all.indexOf(btn);
+  const to = { ArrowRight: i + 1, ArrowDown: i + 1, ArrowLeft: i - 1, ArrowUp: i - 1, Home: 0, End: all.length - 1 }[e.key];
+  if (to === undefined) return; e.preventDefault(); pickColour(all[(to + all.length) % all.length], true);
+});
+// each colour's photo is fetched quietly once the product page is up, so a tap shows it at once
+function preloadColours() {
+  const stage = $("[data-stage]"), v = stage && bySku[stage.dataset.stage]; if (!v || !v.family) return;
+  const go = () => familyOf(v).filter(ownPhoto).forEach(x => { const im = new Image(); im.decoding = "async"; im.src = `img/pc/${x.img}-m.webp${V}`; });
+  if (window.requestIdleCallback) requestIdleCallback(go, { timeout: 1500 }); else setTimeout(go, 400);
+}
 document.addEventListener("input", e => {
   if (e.target.id === "q") { state.q = e.target.value; setQuery(state.q.trim()); $("[data-search-out]").innerHTML = searchResults(); }
   if (e.target.matches("[data-note]")) { state.note = e.target.value; store.set("note", state.note); }
@@ -812,6 +922,7 @@ function render() {
   const chip = $(".chips [aria-current]"); if (chip) chip.parentNode.scrollLeft = chip.offsetLeft - (chip.parentNode.clientWidth - chip.offsetWidth) / 2;   // the section you are in sits centred in the row
   if (keep) { const el = document.querySelector(keep); if (el) el.focus({ preventScroll: true }); }
   priceLocal();
+  preloadColours();
 }
 let last = route();
 document.addEventListener("click", e => {

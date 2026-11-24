@@ -34,7 +34,7 @@ function describe(path, cat, site) {
   if (a === "p") {
     const p = cat.products.find(x => x.sku === b); if (!p) return null;
     const said = sellable(p) ? money(p.price_cents) : p.price_cents > 0 ? `${money(p.price_cents)}, coming soon` : "Price TBD";   // no shop price yet: nothing else stands in for it
-    return { title: `${p.name} | ${site}`, desc: `${p.note ? p.note + ". " : ""}${said}. ${counterRow(p) ? "Pickup in Windsor or local delivery near Windsor. Not shipped." : "Shipped across Canada or free pickup in Windsor."}`, index: true, product: p };
+    return { title: `${p.name} | ${site}`, desc: `${p.note ? p.note + ". " : ""}${said}.${!sellable(p) ? "" : counterRow(p) ? " Pickup in Windsor or local delivery near Windsor. Not shipped." : " Shipped across Canada or free pickup in Windsor."}`, index: true, product: p };
   }
   if (a === "order") return b && /^W[A-Z0-9]{6}$/.test(b) ? { ...base, title: `Order ${b} | ${site}`, index: false } : null;
   if (a === "gifts" && b && b !== "under-50" && b !== "under-150") return null;

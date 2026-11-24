@@ -14,7 +14,7 @@ export async function loadCatalog(db) {
 export const sellable = p => !!p && p.active === 1 && p.price_cents > 0;
 const parse = s => { try { const v = JSON.parse(s || "{}"); return v && typeof v === "object" ? v : {}; } catch { return {}; } };
 // What a shopper may see of a catalogue item's facts. Unknown stays null and is shown as "TBD", never guessed.
-const FACT_KEYS = ["includes_base", "height_cm", "acrylic", "includes", "group", "stamp", "photo", "photo_hex", "colour_confirmed", "count", "size", "brand", "shape", "weight_g"];
+const FACT_KEYS = ["includes_base", "height_cm", "acrylic", "includes", "group", "stamp", "photo", "photo_hex", "colour_confirmed", "photo_label", "shown_in", "photo_upscale", "count", "size", "brand", "shape", "weight_g"];
 function shownFacts(p) {
   const f = parse(p.facts_known), out = {};
   for (const k of FACT_KEYS) if (k in f) out[k] = f[k];
@@ -65,14 +65,16 @@ export function toStorefront(cat) {
     const coal = !!details.charcoal; delete details.photo_rights; delete details.photo_rejected; delete details.source_lines;   // shop-only notes stay in the back office
     const sale = sellable(p), facts = p.family ? shownFacts(p) : {};
     // a catalogue item whose pack weight is not known yet cannot be priced for a carrier: pickup or local delivery until it is
-    const weightTbd = !!p.family && !grouped(p) && "weight_g" in facts && facts.weight_g == null;
+    const weightTbd = !!p.family && !grouped(p) && "weight_g" in facts && facts.weight_g == null && p.weight_g <= 1;   // 1 g is the import's placeholder; a weight the shop has entered is used
     return { sku: p.sku, name: p.name, cat: p.category_id,
       // "sale": can go in the cart. "soon": priced and on view, not sold yet (shisha until its certificates). "tbd": waiting for the shop's price.
       state: sale ? "sale" : p.price_cents > 0 ? "soon" : "tbd",
-      price: p.price_cents > 0 ? p.price_cents / 100 : null, kg: p.weight_g / 1000, box: p.box_id, glass: !!p.glass,
+      price: p.price_cents > 0 ? p.price_cents / 100 : null,
+      // a weight set later in the master file (facts) replaces the import's 1 g placeholder, and shipping switches on by itself
+      kg: (p.weight_g <= 1 && facts.weight_g > 0 ? facts.weight_g : p.weight_g) / 1000, box: p.box_id, glass: !!p.glass,
       height: p.height_cm, note: p.note, ...(p.photo_ver ? { img: `/api/photo/${p.sku}?v=${p.photo_ver}`, photo: true, dark: false } : { img: p.img, dark: !!p.img_dark, lw: p.img_lw ?? undefined }),
       ship: coal || weightTbd ? "pickup_only" : p.ship_class, stock: sale ? p.stock : 0, details,
-      ...(p.family && !grouped(p) ? { facts } : {}),
+      ...(p.family && !grouped(p) ? { facts, ...(weightTbd ? { weightTbd: true } : {}) } : {}),
       ...(grouped(p) ? { family: p.family, lead: lead[p.family].sku === p.sku, colour: details.colour || p.variant_label || "", named: !!details.colour || facts.colour_confirmed === true, chip: facts.photo_hex || p.swatch_hex || null, facts,
         counted: p.availability === "counted", ...(weightTbd ? { weightTbd: true } : {}) } : {}) };
   });
