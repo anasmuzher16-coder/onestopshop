@@ -1,7 +1,7 @@
 // A full copy of the shop's records as one JSON document: products, stock history, orders, emails, the change log.
 // Used by the "Download a backup" link in the back office and by the nightly job. Uploaded photos are not
 // included (they are large); the product rows that point at them are.
-const TABLES = ["categories", "boxes", "products", "stock_moves", "orders", "order_items", "emails", "audit_log"];
+const TABLES = ["categories", "boxes", "products", "stock_moves", "orders", "order_items", "emails", "audit_log", "refunds", "pay_events"];
 export async function snapshot(db) {
   const res = await db.batch(TABLES.map(t => db.prepare(`SELECT * FROM ${t}`)));
   const tables = {}; TABLES.forEach((t, i) => { tables[t] = res[i].results; });

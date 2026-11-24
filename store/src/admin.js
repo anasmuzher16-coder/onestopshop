@@ -1,6 +1,7 @@
 import { orderShipped, pickupReady, writeEmail } from "./email.js";
 import { snapshot } from "./backup.js";
 import { CHARCOAL } from "./catalog.js";
+import { adminPay } from "./pay.js";
 // The shop's back office: sign-in, shop numbers, stock and orders. Every route here needs the admin cookie,
 // and every write also needs a same-site JSON request, so another website cannot trigger one.
 const json = (body, status = 200, headers = {}) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", ...headers } });
@@ -172,7 +173,7 @@ export async function admin(request, env, url) {
   }
 
   if (path === "/orders" && method === "GET") {
-    const r = await db.prepare("SELECT o.id, o.status, o.method, o.name, o.total_cents, o.tax_province, o.ship_service, o.tracking, o.created_at, (SELECT SUM(qty) FROM order_items i WHERE i.order_id = o.id) AS units FROM orders o ORDER BY o.created_at DESC LIMIT 200").all();
+    const r = await db.prepare("SELECT o.id, o.status, o.method, o.name, o.total_cents, o.pay_method, o.pay_status, o.tax_province, o.ship_service, o.tracking, o.created_at, (SELECT SUM(qty) FROM order_items i WHERE i.order_id = o.id) AS units FROM orders o ORDER BY o.created_at DESC LIMIT 200").all();
     return json({ orders: r.results });
   }
   if ((m = path.match(/^\/orders\/([A-Z0-9]{3,12})$/)) && method === "GET") {
@@ -182,9 +183,11 @@ export async function admin(request, env, url) {
     return json({ order: o.results[0], items: i.results, emails: mail.results });
   }
   if ((m = path.match(/^\/orders\/([A-Z0-9]{3,12})\/status$/)) && method === "POST") {
-    const body = await request.json().catch(() => ({})), o = await db.prepare("SELECT status, method FROM orders WHERE id = ?").bind(m[1]).first();
+    const body = await request.json().catch(() => ({})), o = await db.prepare("SELECT status, method, pay_status FROM orders WHERE id = ?").bind(m[1]).first();
     if (!o) return json({ error: "No such order." }, 404);
-    const next = { paid: o.method === "pickup" ? ["ready"] : ["packed"], packed: ["shipped"], ready: ["collected"] }[o.status] || [];
+    // a pay-at-counter pickup can be got ready before it is paid, but never handed over unpaid
+    const next = { paid: o.method === "pickup" ? ["ready"] : ["packed"], packed: ["shipped"], ready: ["collected"], pending: o.pay_status === "pay_at_pickup" ? ["ready"] : [] }[o.status] || [];
+    if (body.status === "collected" && o.pay_status === "pay_at_pickup") return json({ error: "Take the payment first, then mark it paid." }, 409);
     if (!next.includes(body.status)) return json({ error: "That step is not available for this order." }, 409);
     await db.batch([db.prepare("UPDATE orders SET status = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = ? AND status = ?").bind(body.status, m[1], o.status), audit("order.status", m[1], { status: o.status }, { status: body.status })]);
     if (body.status === "shipped" || body.status === "ready") {
@@ -194,6 +197,8 @@ export async function admin(request, env, url) {
     }
     return json({ ok: true, status: body.status });
   }
+  if ((m = path.match(/^\/orders\/([A-Z0-9]{3,12})\/(refund|paid)$/)) && method === "POST") return adminPay(request, env, m[1], m[2], actor);   // src/pay.js
+  if ((m = path.match(/^\/orders\/([A-Z0-9]{3,12})\/refunds$/)) && method === "GET") return json({ refunds: (await db.prepare("SELECT amount_cents, status, reason, actor, detail, at FROM refunds WHERE order_id = ? ORDER BY id").bind(m[1]).all()).results });
   if ((m = path.match(/^\/emails\/(\d{1,9})$/)) && method === "GET") {
     const e = await db.prepare("SELECT id, kind, recipient, subject, html, status, detail, at FROM emails WHERE id = ?").bind(+m[1]).first();
     return e ? json({ email: e }) : json({ error: "No such email." }, 404);

@@ -535,6 +535,9 @@ html:not(.hero-seen) .piece .sticker{animation-timing-function:linear(0,.25 6%,.
 .co__set legend{padding:0;margin-bottom:var(--s-2)}
 .co__set .field{margin-bottom:var(--s-3)}
 .co__p{margin:0 0 var(--s-2);color:var(--color-text)}
+.co__back{margin:0;padding-bottom:var(--s-4);border-bottom:1px solid var(--color-line);color:var(--color-text)}
+.co__back b{color:var(--color-strong);font-weight:700}
+.co .totals{margin-top:0}   /* the form's own gap already separates it */
 .done__tag{display:inline-flex;align-items:baseline;gap:var(--s-2);margin:0 0 var(--s-4);padding:6px 12px 4px;background:var(--white);color:var(--ink);border-bottom:4px solid var(--ember);transform:rotate(-2deg);font-size:var(--t-12);letter-spacing:.09em;text-transform:uppercase}
 .done__tag b{font:400 1.5rem/1 var(--font-display);letter-spacing:.02em}
 .done__lines{list-style:none;margin:var(--s-6) 0;padding:0;border-bottom:1px solid var(--color-line)}

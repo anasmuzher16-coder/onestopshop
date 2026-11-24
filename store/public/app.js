@@ -618,7 +618,7 @@ document.addEventListener("toggle", e => { if (e.target.matches && e.target.matc
 function focusKey(el) {
   if (!el || el === document.body) return null;
   for (const k of ["data-qty", "data-add"]) if (el.hasAttribute(k)) return `[${k}="${el.getAttribute(k)}"]` + (el.dataset.n ? `[aria-label="${el.getAttribute("aria-label")}"]` : "");
-  if (el.name === "ship") return `input[name="ship"][value="${el.value}"]`;
+  if (el.name === "ship" || el.name === "pay") return `input[name="${el.name}"][value="${el.value}"]`;
   return null;
 }
 // ---------- checkout and confirmation ----------
@@ -654,6 +654,39 @@ function orderKey(sig) {
   return key;
 }
 function orderKeyDone() { state.orderKey = null; try { sessionStorage.removeItem("oss:order-key"); } catch {} }
+// ---------- paying ----------
+// Card goes to Stripe's own page (the card number never touches this site). Pickup can also pay at the counter.
+// The server says whether card payment is switched on, in a meta tag it writes on every page.
+const CARD_ON = document.querySelector('meta[name="oss-pay"]')?.content === "card";
+const payWay = sc => !sc.pickup ? "card" : !CARD_ON ? "at_pickup" : state.pay === "at_pickup" ? "at_pickup" : "card";
+const payLabel = (sc, total) => sc.local && deliveryFeeNow() === null ? "Check delivery price" : payWay(sc) === "card" ? `Pay ${money(total / 100)}` : "Place order";
+function payBlock(sc, total) {
+  if (!sc.pickup) return `<fieldset class="co__set co__pay"><legend class="h3">Payment</legend><p class="co__p">${CARD_ON ? "By card on the next page. Apple Pay and Google Pay work there too." : "Card payment is not switched on yet. Choose pickup to pay at the counter, or call 519-255-2222."}</p></fieldset>`;
+  if (!CARD_ON) return `<fieldset class="co__set co__pay"><legend class="h3">Payment</legend><p class="co__p">At the counter when you pick it up.</p></fieldset>`;
+  const way = payWay(sc), opt = (v, name, small, right) => `<label class="opt"><input type="radio" name="pay" value="${v}" ${way === v ? "checked" : ""}><span class="opt__name">${name}<small>${small}</small></span><span class="num">${right}</span></label>`;
+  return `<fieldset class="co__set co__pay"><legend class="h3">Payment</legend><div class="opts">
+    ${opt("card", "Pay now by card", "Card, Apple Pay or Google Pay", "Now")}
+    ${opt("at_pickup", "Pay at the counter", "When you pick it up", "At pickup")}</div></fieldset>`;
+}
+// What the order page knows about the payment, kept with the order on this device only.
+const paidKey = id => "oss:order:" + id;
+function savePaid(o) { try { sessionStorage.setItem(paidKey(o.id), JSON.stringify(o)); } catch {} }
+function clearCartAfterOrder() { orderKeyDone(); state.priced = null; state.cart = []; saveCart(); state.delivery = null; state.refused = null; state.form = {}; state.note = ""; store.set("note", ""); state.pay = null; try { sessionStorage.removeItem("oss:co-form"); } catch {} }
+// After Stripe sends the shopper back: ask the shop until the signed webhook has landed (usually a second or two).
+async function watchPayment(o) {
+  if (state.watching === o.id) return; state.watching = o.id;
+  for (let i = 0; i < 20 && o.pay?.status === "awaiting"; i++) {
+    try { const r = await fetch("/api/pay/status?session=" + encodeURIComponent(o.pay.session)); if (r.ok) { const d = await r.json(); if (d.pay && d.pay !== "awaiting") o.pay.status = d.pay; } } catch {}
+    if (o.pay.status !== "awaiting") break;
+    await new Promise(w => setTimeout(w, i < 5 ? 1500 : 3000));
+  }
+  if (o.pay.status === "awaiting") o.pay.slow = true;
+  if (o.pay.status === "paid") { for (const i of o.items) if (bySku[i.sku]) bySku[i.sku].stock = Math.max(0, bySku[i.sku].stock - i.qty); clearCartAfterOrder(); }
+  savePaid(o); state.watching = null;
+  // the words change in place: the page is not redrawn, so nothing on it jumps or plays its entrance again
+  const [a, b] = route().replace(/^#\/?/, "").split("/").filter(Boolean), m = $("#main");
+  if (a === "order" && b === o.id) { const w = payWords(o), h = m.querySelector("[data-pay-head]"), l = m.querySelector("[data-pay-state]"), d = m.querySelector("[data-pay-door]"); if (h && l && d) { h.textContent = w.head; l.innerHTML = w.lead; l.dataset.payState = o.pay.status; d.textContent = w.door; } else render(); }
+}
 function viewCheckout() {
   const lines = cartLines();
   if (!lines.length) return viewCart();
@@ -661,12 +694,15 @@ function viewCheckout() {
   if (!state.ship && !chosen && (sc.status === "far" || sc.status === "down")) return `${band("checkout", "emerald", "One step back.")}<section class="empty"><p class="lead">${sc.status === "far" ? `${esc(state.dest.full)} is past our 25 km delivery area.` : "We cannot check delivery right now."} You can still <a class="link" href="/cart">${carried(lines) ? "ship it or pick it up free" : "pick it up free"}</a>.</p></section>`;
   if (sc.checking && !pickup && !chosen && !local) return `${band("checkout", "emerald", "Checkout")}<section class="empty"><p class="lead" role="status">Checking delivery to ${esc(state.dest.full)}.</p></section>`;
   if (!pickup && !local && !chosen) return `${band("checkout", "emerald", "One step back.")}<section class="empty"><p class="lead">Choose shipping or pickup in <a class="link" href="/cart">your cart</a> first.</p></section>`;
+  if (!state.form?.name) try { const kept = JSON.parse(sessionStorage.getItem("oss:co-form")); if (kept) state.form = { ...kept, ...(state.form || {}) }; } catch {}
   const f = state.form || {}, quoted = local && deliveryFeeNow() !== null;
+  const back = new URLSearchParams(location.search).get("unpaid"), unpaid = back && /^W[A-Z0-9]{6}$/.test(back) ? `<p class="co__back" role="status"><b>Payment not finished.</b> Nothing was charged. Your items are held for 30 minutes.</p>` : "";
   const field = (id, label, attrs, hint = "") => `<label class="field__label" for="co-${id}">${label}${hint ? ` <span class="fine">${hint}</span>` : ""}</label><input class="field" id="co-${id}" name="${id}" value="${esc(f[id] || "")}" ${attrs}>`;
   return `
   ${band("checkout", "emerald", "Checkout", `<a href="/cart">Back to the cart</a>`)}
   <section class="cart checkout">
     <form class="co" data-checkout novalidate>
+      ${unpaid}
       <fieldset class="co__set"><legend class="h3">Who it is for</legend>
         ${field("name", "Full name", 'autocomplete="name" maxlength="80" required')}
         ${field("email", "Email", 'type="email" autocomplete="email" inputmode="email" maxlength="120" required', local ? "for the receipt" : pickup ? "for the receipt and the ready-for-pickup note" : "for the receipt and tracking")}
@@ -681,41 +717,61 @@ function viewCheckout() {
         ${local ? `<p class="co__p">Local delivery from our Windsor shop. ${localEta()}. <a class="link" href="/cart">Change</a></p><p class="co__p">${freeNote(cartCents(lines))}</p><div class="co__p" role="status" data-deliv-msg>${quoted ? `Good news, we deliver to ${esc(state.dest.full)}.` : ""}</div><p class="fine">Address check by <a class="link" href="https://www.geoapify.com/" rel="noopener">Geoapify</a>. Map data from OpenStreetMap contributors.</p>`
           : `<p class="co__p">${chosen.carrier} ${chosen.service}, ${days(chosen.days)}. <a class="link" href="/cart">Change</a></p>`}</fieldset>`}
       ${sc.counter ? `<p class="co__p co__coal"><b class="line__pick">Pickup or local delivery only</b> ${lines.filter(l => localOnly(l.product)).map(l => esc(l.product.name)).join(", ")}</p>` : ""}
+      ${payBlock(sc, shownTotals(lines, sc).total)}
       ${coTotals(lines, sc)}
       <p class="field__err" role="alert" data-co-err hidden></p>
-      <button class="btn btn--wide" type="submit" ${!pickup && !state.dest.complete ? "disabled" : ""}>${local && !quoted ? "Check delivery price" : "Place order"}</button>
-      <p class="fine">This store is still in build. Placing an order here takes no payment: it goes to the shop's back office as a demo order.</p>
+      <button class="btn btn--wide" type="submit" ${(!pickup && !state.dest.complete) || (!pickup && !CARD_ON) ? "disabled" : ""}>${payLabel(sc, shownTotals(lines, sc).total)}</button>
+      ${CARD_ON ? `<p class="fine" data-pay-fine ${payWay(sc) === "card" ? "" : "hidden"}>Payment is taken by Stripe. We never see your card number.</p>` : ""}
     </form>
   </section>`;
+}
+// the heading and one line say where the money stands; nothing says paid until the shop has Stripe's signed word
+function payWords(o) {
+  const p = o.pay || {}, first = esc(o.name.split(" ")[0]), closed = p.status === "expired" || p.status === "failed";
+  return {
+    head: closed ? "This payment did not go through." : p.method === "card" && p.status !== "paid" ? `One moment, ${first}.` : `Thank you, ${first}.`,
+    lead: closed ? `Nothing was charged. <a class="link" href="/cart">Your cart</a> is still here.`
+      : p.method === "at_pickup" ? `Pay at the counter when you pick it up. We email ${esc(o.email)} when it is ready.`
+      : p.status === "paid" ? `Paid. Your receipt is on its way to ${esc(o.email)}. ${o.method === "pickup" ? "We email you again when it is ready." : o.service === "Local delivery" ? "Our driver calls before coming." : "The tracking number follows when it ships."}`
+      : p.slow ? `Your payment is still being confirmed. The receipt comes to ${esc(o.email)} as soon as it is.`
+      : "Confirming your payment. This page updates by itself.",
+    door: p.status === "paid" ? "Paid" : p.method === "at_pickup" ? "To pay at pickup" : "Total",
+  };
 }
 function viewOrder(id) {
   let o = null; try { o = JSON.parse(sessionStorage.getItem("oss:order:" + id)); } catch { o = null; }
   if (!o) return `${band("missing", "ruby", "We cannot show that order.")}<section class="empty"><p class="lead">Order details only open on the phone or computer that placed the order. To ask about one, call the counter at <a class="link" href="tel:+15192552222">519-255-2222</a>.</p><p class="lead"><a class="link" href="/shop">See what is on the counter</a>.</p></section>`;
-  const c = n => money(n / 100);
+  const c = n => money(n / 100), p = o.pay || {}, first = esc(o.name.split(" ")[0]);
+  if (p.method === "card" && p.status === "awaiting" && p.session && !p.slow) watchPayment(o);
+  const { head, lead, door } = payWords(o);
   return `
   <section class="cart done">
     <p class="done__tag"><span>Order</span> <b class="num">${esc(o.id)}</b></p>
-    <h1 class="h2 h2--xl">Thank you, ${esc(o.name.split(" ")[0])}.</h1>
-    <p class="lead">Test order. No payment is taken, and nothing will be packed or sent.</p>
-    <p class="fine">${o.method === "pickup" ? `You chose free pickup at ${SHOP_ADDRESS}. ${directions()}` : o.service === "Local delivery" ? `You chose local delivery.${o.eta ? " On a real order: " + esc(o.eta) + "." : ""}` : `You chose ${esc(o.service)}.`}</p>
+    <h1 class="h2 h2--xl" data-pay-head>${head}</h1>
+    <p class="lead" role="status" aria-live="polite" data-pay-state="${esc(p.status || "")}">${lead}</p>
+    <p class="fine">${o.method === "pickup" ? `Pickup at ${SHOP_ADDRESS}. ${directions()}` : o.service === "Local delivery" ? `Local delivery.${o.eta ? " " + esc(o.eta) + "." : ""}` : `${esc(o.service)}.`}</p>
     <ul class="done__lines">${o.items.map(i => `<li><span><b class="num">${i.qty}</b> &times; ${esc(i.name)}</span><span class="num">${c(i.unit_cents * i.qty)}</span></li>`).join("")}</ul>
     <dl class="totals">
       <div><dt>Items</dt><dd class="num">${c(o.subtotal_cents)}</dd></div>
       <div><dt>${o.method === "pickup" ? "Pickup" : o.service === "Local delivery" ? "Delivery" : "Shipping"}</dt><dd class="num">${o.method === "pickup" || (o.service === "Local delivery" && !o.shipping_cents) ? "Free" : c(o.shipping_cents)}</dd></div>
       <div><dt>${esc(o.tax_label)}</dt><dd class="num">${c(o.tax_cents)}</dd></div>
-      <div class="totals__door"><dt>Total</dt><dd class="num">${c(o.total_cents)}</dd></div>
+      <div class="totals__door"><dt data-pay-door>${door}</dt><dd class="num">${c(o.total_cents)}</dd></div>
     </dl>
     ${o.address ? `<p class="fine">Going to ${esc(o.address.line1)}, ${esc(o.address.city)}, ${esc(o.address.province)} ${esc(o.address.postal)}.</p>` : ""}
-    <p class="fine">Demo order: no payment was taken.</p>
     <a class="btn btn--wide" href="/shop">Keep looking</a>
   </section>`;
 }
+document.addEventListener("change", e => {   // the choice changes the button and the small print in place; the form is never rebuilt
+  const f = e.target.name === "pay" && e.target.closest("[data-checkout]"); if (!f) return;
+  state.pay = e.target.value; const lines = cartLines(), sc = shipChoice(lines);
+  f.querySelector('button[type="submit"]').textContent = payLabel(sc, shownTotals(lines, sc).total); f.querySelector("[data-pay-fine]").hidden = payWay(sc) !== "card";
+});
 document.addEventListener("input", e => { const f = e.target.closest("[data-checkout]"); if (f && e.target.name) { state.form = state.form || {}; state.form[e.target.name] = e.target.value; if ((e.target.name === "line1" || e.target.name === "city") && f.querySelector("[data-deliv-msg]")) refreshDelivery(f); } });
 function refreshDelivery(f, msg) {
   const lines = cartLines(), sc = shipChoice(lines), quoted = deliveryFeeNow() !== null, box = f.querySelector("[data-deliv-msg]"), btn = f.querySelector('button[type="submit"]');
   f.querySelector(".totals").outerHTML = coTotals(lines, sc);
   if (box) box.innerHTML = msg !== undefined ? msg : quoted ? `Good news, we deliver to ${esc(state.dest.full)}.` : "";
-  btn.textContent = quoted ? "Place order" : "Check delivery price";
+  btn.textContent = payLabel(sc, shownTotals(lines, sc).total);
 }
 const deliveryMsg = status => {
   const can = carried(cartLines()), way = can ? "See shipping and pickup" : "See pickup", btn = w => `<button class="link" type="button" data-local-off>${w}</button>`, other = can ? "You can still ship it or pick it up free." : "You can still pick it up free.";
@@ -747,24 +803,29 @@ document.addEventListener("submit", async e => {
     state.form = { ...(state.form || {}), line1: v("line1"), city: v("city") }; err.hidden = true;
     if (deliveryFeeNow() === null) return checkDelivery(f, btn);   // show the price first: the next tap places the order
   }
-  btn.disabled = true; btn.textContent = "Placing your order"; err.hidden = true;
+  const pay = payWay(sc), label = payLabel(sc, +f.querySelector(".totals").dataset.total);
+  btn.disabled = true; btn.textContent = pay === "card" ? "Opening secure payment" : "Placing your order"; err.hidden = true;
   const sent = cartLines(), sig = orderSig(sent, sc), shownTotal = +f.querySelector(".totals").dataset.total;   // the figure on the screen, not a fresh sum: if the rate moved since, the server says so
   try {
-    const r = await fetch("/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ order_key: orderKey(sig + v("email").toLowerCase()), expected_total_cents: shownTotal, lines: state.cart, method: pickup ? "pickup" : "ship", service: local ? "local" : chosen && chosen.id, delivery_fee_cents: local ? Math.round(deliveryFeeNow() * 100) : undefined, postal: state.dest && state.dest.full,
-      name: v("name"), email: v("email"), phone: v("phone"), note: state.note, address: { line1: v("line1"), city: v("city") } }) });
+    const r = await fetch("/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ order_key: orderKey(sig + pay + v("email").toLowerCase()), expected_total_cents: shownTotal, lines: state.cart, method: pickup ? "pickup" : "ship", service: local ? "local" : chosen && chosen.id, delivery_fee_cents: local ? Math.round(deliveryFeeNow() * 100) : undefined, postal: state.dest && state.dest.full,
+      name: v("name"), email: v("email"), phone: v("phone"), note: state.note, address: { line1: v("line1"), city: v("city") }, pay }) });
     const data = await r.json().catch(() => ({}));
-    if (!r.ok) { btn.disabled = false; btn.textContent = "Place order"; if (local && data.delivery) { if (data.delivery === "far") state.farFor = state.dest.full; state.delivery = data.delivery === "ok" ? { key: deliveryKey(), fee_cents: data.base_fee_cents ?? data.fee_cents, due: data.fee_cents, sub: cartCents() } : null; state.refused = data.delivery === "ok" ? null : deliveryKey(); refreshDelivery(f, data.delivery === "ok" ? undefined : deliveryMsg(data.delivery)); if (data.delivery !== "ok") return; } 
+    if (!r.ok) { btn.disabled = false; btn.textContent = label; if (local && data.delivery) { if (data.delivery === "far") state.farFor = state.dest.full; state.delivery = data.delivery === "ok" ? { key: deliveryKey(), fee_cents: data.base_fee_cents ?? data.fee_cents, due: data.fee_cents, sub: cartCents() } : null; state.refused = data.delivery === "ok" ? null : deliveryKey(); refreshDelivery(f, data.delivery === "ok" ? undefined : deliveryMsg(data.delivery)); if (data.delivery !== "ok") return; } 
       if (data.local_only) { state.cartNews = [data.error]; state.ship = null; store.set("ship", null); navigate("/cart"); return; }   // an out-of-date page offered a carrier: back to the cart, where the real choices are
-      if (data.repriced) { state.priced = { sig, ...data.repriced }; f.querySelector(".totals").outerHTML = coTotals(sent, sc); }
+      if (data.repriced) { state.priced = { sig, ...data.repriced }; f.querySelector(".totals").outerHTML = coTotals(sent, sc); btn.textContent = payLabel(sc, data.repriced.total_cents); }
       if (typeof data.stock === "number" && bySku[data.sku]) {   // the shelf changed: the cart is put right and says what happened
         bySku[data.sku].stock = data.stock; const fit = fitCart(state.cart); state.cart = fit.kept; state.cartNews = fit.news.length ? fit.news : [data.error]; state.priced = null; saveCart(); navigate("/cart"); return;
       }
       return fail(data.error || "That did not go through. Please try again.", data.field); }
-    try { sessionStorage.setItem("oss:order:" + data.order.id, JSON.stringify(data.order)); } catch {}
-    if (!data.replayed) for (const i of data.order.items) if (bySku[i.sku]) bySku[i.sku].stock = Math.max(0, bySku[i.sku].stock - i.qty);
-    orderKeyDone(); state.priced = null; state.cart = []; saveCart(); state.delivery = null; state.refused = null; state.form = {}; state.note = ""; store.set("note", "");
-    navigate("/order/" + data.order.id, true);
-  } catch { btn.disabled = false; btn.textContent = "Place order"; fail("We could not reach the shop. Check your connection and try again."); }
+    const o = { ...data.order, pay: data.pay || {} }; savePaid(o);
+    if (o.pay.status === "awaiting" && o.pay.url) {   // keep what they typed: if they come back from Stripe unpaid, the form is filled and the same order resumes
+      try { sessionStorage.setItem("oss:co-form", JSON.stringify({ ...(state.form || {}), name: v("name"), email: v("email"), phone: v("phone"), line1: v("line1"), city: v("city") })); } catch {}
+      location.assign(o.pay.url); return; }   // to Stripe; the cart stays until the payment is confirmed
+    if (o.pay.status === "paid") { clearCartAfterOrder(); navigate("/order/" + o.id, true); return; }   // a retry of an order already paid
+    if (!data.replayed) for (const i of o.items) if (bySku[i.sku]) bySku[i.sku].stock = Math.max(0, bySku[i.sku].stock - i.qty);
+    clearCartAfterOrder();
+    navigate("/order/" + o.id, true);
+  } catch { btn.disabled = false; btn.textContent = label; fail("We could not reach the shop. Check your connection and try again."); }
 });
 // ---------- the small print ----------
 const DRAFT = `<p class="done__tag"><span>Draft</span> <b>for the shop to review</b></p>`;

@@ -176,6 +176,10 @@ button.row__main:hover .row__name,.order:hover .row__name{text-decoration:underl
 .mailrow:hover span:first-child{text-decoration:underline;text-underline-offset:.2em}
 .fineprint{font-size:var(--t-12);color:var(--color-muted);margin-top:var(--s-2)}
 .fineprint a{color:var(--color-strong)}
+/* refund to the card: amount and button on one line, the limit under it */
+.refund{display:grid;gap:var(--s-2);padding-top:var(--s-4);border-top:1px solid var(--color-line)}
+.refund__row{display:flex;gap:var(--s-3)}
+.refund__row .field{flex:1;min-width:0}
 .mail{display:block;width:100%;height:420px;border:1px solid var(--color-line);border-radius:var(--radius);background:#f4f0e8;margin-top:var(--s-2)}
 /* Delivery card: address and phone, readable at arm's length, one tap to call or map. */
 .drop{display:grid;gap:var(--s-2);padding:var(--s-4);background:var(--color-raised);border-radius:var(--radius)}

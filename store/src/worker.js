@@ -3,6 +3,7 @@
 import { loadCatalog, shopCatalog, dropCatalog, catalogModule, counterRow, CHARCOAL } from "./catalog.js";
 import { admin, photo } from "./admin.js";
 import { placeOrder } from "./checkout.js";
+import { webhook, payStatus, sweep, cardReady } from "./pay.js";
 import { deliveryRoute } from "./delivery.js";
 import { nightly } from "./backup.js";
 
@@ -48,7 +49,7 @@ async function page(request, env, url, ctx) {
   const live = env.LIVE === "1";
   const canonical = url.origin + (url.pathname.replace(/\/+$/, "") || "/");
   const shell = await env.ASSETS.fetch(new URL("/index.html", url));
-  const extra = [`<link rel="canonical" href="${canonical}">`,
+  const extra = [`<link rel="canonical" href="${canonical}">`, `<meta name="oss-pay" content="${cardReady(env) ? "card" : "off"}">`,
     `<meta property="og:type" content="${meta.product ? "product" : "website"}">`, `<meta property="og:site_name" content="${esc(site)}">`,
     `<meta property="og:title" content="${esc(meta.title)}">`, `<meta property="og:description" content="${esc(meta.desc)}">`, `<meta property="og:url" content="${canonical}">`];
   if (meta.product) {
@@ -94,7 +95,7 @@ function sitemap(cat, url) {
 
 export default {
   // every night: a full copy of the shop's records into the backup bucket
-  async scheduled(event, env, ctx) { ctx.waitUntil(nightly(env)); },
+  async scheduled(event, env, ctx) { ctx.waitUntil(event.cron === "*/10 * * * *" ? sweep(env).then(r => console.log(JSON.stringify({ at: "pay-sweep", ...r }))) : nightly(env)); },   // every 10 minutes: unpaid orders checked with Stripe
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const path = url.pathname;
@@ -116,6 +117,8 @@ export default {
       if (path.startsWith("/api/admin/")) { const r = await admin(request, env, url); if (request.method !== "GET" && r.ok) dropCatalog(ctx); return r; } // a change in the back office shows in the shop at once
       if (path === "/api/orders") { if (request.method !== "POST") return json({ error: "Method not allowed" }, 405); const r = await placeOrder(request, env, url); if (r.ok) dropCatalog(ctx); return r; }
       if (path === "/api/delivery") return await deliveryRoute(request, env, url);
+      if (path === "/api/pay/webhook") { const r = await webhook(request, env); if (r.ok) dropCatalog(ctx); return r; }   // Stripe calls this; the signature is the only way in
+      if (path === "/api/pay/status") return await payStatus(request, env, url);
       const ph = path.match(/^\/api\/photo\/(OSS-\d{4,6})$/); if (ph && request.method === "GET") return await photo(env, ph[1]);
       if (path.startsWith("/api/")) return json({ error: "Not found" }, 404);
       if (path === "/admin" || path.startsWith("/admin/")) {

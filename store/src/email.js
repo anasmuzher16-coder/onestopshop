@@ -18,13 +18,16 @@ ${rows.length ? `<table role="presentation" width="100%" cellpadding="0" cellspa
 const lines = items => items.map(i => [`${i.qty} &times; ${esc(i.name)}`, money(i.unit_cents * i.qty)]);
 const plain = (heading, intro, rows, foot) => [heading, "", intro, "", ...rows.map(r => `${String(r[0]).replace(/&times;/g, "x").replace(/&amp;/g, "&")}  ${r[1]}`), "", foot].join("\n").replace(/<[^>]+>/g, "");
 
-export function orderPlaced(site, o, items) {
+// how: "paid" (written only after Stripe's signed webhook) or "at_pickup" (nothing paid yet: pay at the counter).
+export function orderPlaced(site, o, items, how = "at_pickup") {
+  const paid = how === "paid";
   const rows = [...lines(items), ["Items", money(o.subtotal_cents)], [o.method === "pickup" ? "Pickup at the counter" : o.ship_service === "Local delivery" ? "Local delivery" : `Shipping, ${esc(o.ship_service || "")}`, o.method === "pickup" || (o.ship_service === "Local delivery" && !o.shipping_cents) ? "Free" : money(o.shipping_cents)],
-    [`Tax, ${esc(o.tax_province || "")}`, money(o.tax_cents)], ["Total", money(o.total_cents), true]];
-  const heading = `Order ${esc(o.id)} is in`, first = esc(String(o.name).split(" ")[0]);
-  const intro = `Thank you, ${first}. This is a test order: no payment was taken, and nothing will be packed or sent.`;   // restore the real wording when payments are connected
+    [`Tax, ${esc(o.tax_province || "")}`, money(o.tax_cents)], [paid ? "Paid by card" : "To pay at pickup", money(o.total_cents), true]];
+  const heading = paid ? `Order ${esc(o.id)} is paid` : `Order ${esc(o.id)} is in`, first = esc(String(o.name).split(" ")[0]);
+  const next = o.method === "pickup" ? "We email you when it is ready to pick up." : o.ship_service === "Local delivery" ? "Our driver calls before coming." : "We email the tracking number when it ships.";
+  const intro = paid ? `Thank you, ${first}. Your payment went through. ${next}` : `Thank you, ${first}. You pay at the counter when you pick it up. ${next}`;
   const foot = "Questions? Reply to this email or call the counter at 519-255-2222.";
-  return { kind: "order_placed", subject: `Your ${site} order ${o.id}`, html: frame(site, heading, intro, rows, foot), body: plain(heading, intro, rows, foot) };
+  return { kind: "order_placed", subject: paid ? `Receipt for your ${site} order ${o.id}` : `Your ${site} order ${o.id}`, html: frame(site, heading, intro, rows, foot), body: plain(heading, intro, rows, foot) };
 }
 export function orderShipped(site, o, items) {
   const heading = `Order ${esc(o.id)} is on its way`, intro = o.ship_service === "Local delivery" ? "It is out for delivery from our Windsor shop. The driver will call if they need you." : `It left the shop by ${esc(o.ship_service || "Canada Post")}.${o.tracking ? ` Tracking number: <b>${esc(o.tracking)}</b>.` : " The tracking number follows as soon as the carrier scans it."}`;

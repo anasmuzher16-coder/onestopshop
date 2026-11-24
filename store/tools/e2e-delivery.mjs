@@ -3,6 +3,8 @@
 import { createRequire } from "node:module"; import { readFileSync } from "node:fs";
 const pw = createRequire("C:/dev/puckempire-arena/package.json")("playwright");
 const B = process.env.BASE || "http://127.0.0.1:4420", shots = process.argv[2], KEY = readFileSync(new URL("../.dev.vars", import.meta.url), "utf8").match(/ADMIN_KEY=(.+)/)[1].trim();
+// Card orders go to Stripe's page (the local stand-in, tools/fake-stripe.mjs): pay there, come back, wait for the signed webhook.
+const payThrough = async (p, timeout = 15000) => { await p.waitForURL(u => /\/pay\/cs_/.test(String(u)) || /\/order\/W[A-Z0-9]{6}$/.test(String(u)), { timeout }); if (/\/pay\/cs_/.test(p.url())) { await p.locator("[data-fake-pay]").click(); await p.waitForURL(/\/order\/W[A-Z0-9]{6}$/, { timeout }); await p.waitForSelector('[data-pay-state="paid"]', { timeout }); } };
 let n = 0, f = 0; const t = (name, c, extra = "") => { n++; if (!c) { f++; console.log("FAIL", name, extra); } };
 let run = Date.now() % 100000;
 // Each engine buys five of the test piece, so make sure the sample shelf has enough before starting.
@@ -55,7 +57,7 @@ for (const [engine, w, h, mobile] of [["chromium", 390, 844, true], ["webkit", 3
     await p.goto(B + "/checkout", { waitUntil: "networkidle" }); await p.waitForSelector("[data-checkout]");
     t(`${tag} $200 or more shows Free at checkout`, /Delivery\s*Free/.test(await p.locator(".totals").innerText()));
     await p.fill("#co-name", "Dee Livery"); await p.fill("#co-email", "dee@example.com"); await p.fill("#co-city", "Windsor"); await p.fill("#co-line1", `7 D3000 ${run} St`); await p.fill("#co-phone", "519-555-0101");
-    await press(p.locator('[data-checkout] button[type="submit"]')); await p.waitForURL(/\/order\/W[A-Z0-9]{6}$/, { timeout: 15000 }); await p.waitForTimeout(500);
+    await press(p.locator('[data-checkout] button[type="submit"]')); await payThrough(p, 15000); await p.waitForTimeout(500);
     t(`${tag} order page shows Free and arrival wording`, /Delivery\s*Free/.test(await p.locator(".totals").innerText()) && /Arrives /.test(await p.locator("#main").innerText()));
     // after hours: Sunday 8 pm in Windsor, the shop closed at 7
     // A separate context: a frozen clock must not leak into the rest of the journey.
@@ -91,7 +93,7 @@ for (const [engine, w, h, mobile] of [["chromium", 390, 844, true], ["webkit", 3
     await p.waitForTimeout(500); await snap("cart");
     await p.goto(B + "/checkout", { waitUntil: "networkidle" }); await p.waitForSelector("[data-checkout]");
     const go = p.locator('[data-checkout] button[type="submit"]');
-    t(`${tag} checkout already shows the exact fee`, /\$10\.00/.test(await p.locator(".totals").innerText()) && /Place order/.test(await go.innerText()));
+    t(`${tag} checkout already shows the exact fee`, /\$10\.00/.test(await p.locator(".totals").innerText()) && /^Pay \$/.test(await go.innerText()));
     await p.fill("#co-name", "Dee Livery"); await p.fill("#co-email", "dee@example.com"); await p.fill("#co-city", "Windsor"); await p.fill("#co-line1", `7 D30000 ${run} St`); await p.fill("#co-phone", "519-555-0101");
     await press(go); await p.waitForSelector("[data-local-off]");
     t(`${tag} an address past 25 km is refused plainly`, /past our 25 km/.test(await p.locator("[data-deliv-msg]").innerText()));
@@ -102,7 +104,7 @@ for (const [engine, w, h, mobile] of [["chromium", 390, 844, true], ["webkit", 3
     t(`${tag} no sideways scroll`, await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
     await snap("checkout");
     const final = await p.locator(".totals__door dd").innerText();
-    await press(go); await p.waitForURL(/\/order\/W[A-Z0-9]{6}$/, { timeout: 15000 }); await p.waitForTimeout(900);
+    await press(go); await payThrough(p, 15000); await p.waitForTimeout(900);
     t(`${tag} confirmation total matches`, (await p.locator(".totals__door dd").innerText()) === final);
     t(`${tag} no tracking promise`, !/tracking/i.test(await p.locator("#main").innerText()));
     await snap("done");
