@@ -52,7 +52,10 @@ async function stripe(env, method, path, params, idem) {
 export async function openCheckout(env, origin, o) {
   const db = env.DB, items = (await db.prepare("SELECT sku, name, qty, unit_cents FROM order_items WHERE order_id = ? ORDER BY sku").bind(o.id).all()).results;
   const line = (name, cents, qty) => ({ quantity: qty, price_data: { currency: "cad", unit_amount: cents, product_data: { name } } });
-  const lines = items.map(i => line(i.name, i.unit_cents, i.qty));
+  // a points reward comes off the items (tax was worked out after it): Stripe takes no negative lines, so the items
+  // go as one line already reduced, and the page still adds up to exactly the order's total
+  const itemCents = items.reduce((t, i) => t + i.unit_cents * i.qty, 0), reward = o.reward_cents || 0;
+  const lines = reward > 0 ? (itemCents - reward > 0 ? [line(`Items, less a ${(reward / 100).toFixed(2)} points reward`, itemCents - reward, 1)] : []) : items.map(i => line(i.name, i.unit_cents, i.qty));
   if (o.shipping_cents > 0) lines.push(line(o.ship_service === "Local delivery" ? "Local delivery" : `Shipping, ${o.ship_service || "Canada Post"}`, o.shipping_cents, 1));
   if (o.tax_cents > 0) lines.push(line(rates.taxLabel(o.tax_province), o.tax_cents, 1));
   const sum = lines.reduce((a, l) => a + l.price_data.unit_amount * l.quantity, 0);

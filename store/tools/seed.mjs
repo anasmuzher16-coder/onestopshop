@@ -3,7 +3,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { BOXES, CATEGORIES, PRODUCTS } from "../../site/catalog.js";
 const q = v => v === null || v === undefined ? "NULL" : typeof v === "number" ? String(v) : "'" + String(v).replace(/'/g, "''") + "'";
-const out = ["DELETE FROM emails; DELETE FROM sessions; DELETE FROM login_attempts; DELETE FROM product_photos; DELETE FROM audit_log; DELETE FROM stock_moves; DELETE FROM order_items; DELETE FROM orders; DELETE FROM products; DELETE FROM boxes; DELETE FROM categories;"];
+const out = ["DELETE FROM emails; DELETE FROM sessions; DELETE FROM login_attempts; DELETE FROM product_photos; DELETE FROM audit_log; DELETE FROM stock_moves; DELETE FROM order_items; DELETE FROM orders; DELETE FROM products; DELETE FROM boxes; DELETE FROM categories; DELETE FROM loyalty_ledger; DELETE FROM favourites; DELETE FROM stock_alerts; DELETE FROM customer_sessions; DELETE FROM sign_in_codes; DELETE FROM account_attempts; DELETE FROM marketing_consents; DELETE FROM customers; DELETE FROM account_settings;"];
 CATEGORIES.forEach((c, i) => out.push(`INSERT INTO categories (id,name,tone,sort) VALUES (${q(c.id)},${q(c.name)},${q(c.tone)},${i});`));
 for (const [id, b] of Object.entries(BOXES)) out.push(`INSERT INTO boxes (id,label,l_cm,w_cm,h_cm,tare_g) VALUES (${q(id)},${q(b.label)},${b.l},${b.w},${b.h},${Math.round(b.tare * 1000)});`);
 PRODUCTS.forEach((p, i) => {

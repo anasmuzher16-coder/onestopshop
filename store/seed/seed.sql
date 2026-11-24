@@ -1,4 +1,4 @@
-DELETE FROM emails; DELETE FROM sessions; DELETE FROM login_attempts; DELETE FROM product_photos; DELETE FROM audit_log; DELETE FROM stock_moves; DELETE FROM order_items; DELETE FROM orders; DELETE FROM products; DELETE FROM boxes; DELETE FROM categories;
+DELETE FROM emails; DELETE FROM sessions; DELETE FROM login_attempts; DELETE FROM product_photos; DELETE FROM audit_log; DELETE FROM stock_moves; DELETE FROM order_items; DELETE FROM orders; DELETE FROM products; DELETE FROM boxes; DELETE FROM categories; DELETE FROM loyalty_ledger; DELETE FROM favourites; DELETE FROM stock_alerts; DELETE FROM customer_sessions; DELETE FROM sign_in_codes; DELETE FROM account_attempts; DELETE FROM marketing_consents; DELETE FROM customers; DELETE FROM account_settings;
 INSERT INTO categories (id,name,tone,sort) VALUES ('hookahs','Hookahs','ruby',0);
 INSERT INTO categories (id,name,tone,sort) VALUES ('bases','Bases','teal',1);
 INSERT INTO categories (id,name,tone,sort) VALUES ('bowls','Bowls','cobalt',2);

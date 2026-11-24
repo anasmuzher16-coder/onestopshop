@@ -1,0 +1,130 @@
+/* Accounts, sign-in and points (branch accounts-loyalty). Idea: THE COUNTER REMEMBERS YOU. Device: THE USUAL LABEL,
+   cut from the price-gun sticker's stock (white, ember ONE STOP band, dashed perforation) with a row of punched
+   holes for points. Only tokens from tokens.css. Design: store/docs/ACCOUNTS-LOYALTY.md. */
+
+/* label inks: purpose tokens over the raw ramp (tokens.css) */
+:root{--color-label:var(--white);--color-label-ink:var(--ink);--color-label-muted:oklch(0.32 0.012 50);--color-label-fine:oklch(0.40 0.012 50);
+  --color-perf:oklch(0.16 0.012 50 / .35);--color-hole-ring:oklch(0.16 0.012 50 / .55);--color-hole-coming:oklch(0.16 0.012 50 / .70)}
+[hidden]{display:none !important}   /* a form step that is hidden stays hidden, whatever display its class sets */
+
+/* header: Sign in / Account */
+.top__acct{margin-left:auto;flex:none;min-height:44px;display:inline-flex;align-items:center;text-decoration:none;font-size:var(--t-14);font-weight:500;color:var(--color-text)}
+.top__acct:hover,body[data-route="account"] .top__acct{color:var(--color-strong)}
+body[data-route="account"] .top__acct{box-shadow:0 2px 0 var(--color-strong)}
+@media (min-width:960px){.top__acct{margin-left:0}}
+
+/* the page */
+.acct{padding:var(--s-6) var(--gutter) var(--s-16);max-width:760px;margin:0 auto}
+@media (min-width:960px){.acct{margin:0}}
+.acct__who{margin:0 0 var(--s-6);font-size:var(--t-14);color:var(--color-muted);overflow-wrap:anywhere}
+.acct__who b{color:var(--color-strong);font-weight:500}
+.acct__in{max-width:440px}
+.acct__lead{font-size:var(--t-16);line-height:1.5;margin:0 0 var(--s-6);max-width:46ch;text-wrap:pretty}
+.acct__sent{margin:0 0 var(--s-4);overflow-wrap:anywhere}
+.acct__sent b{color:var(--color-strong);font-weight:500}
+.acct__form{display:grid;gap:var(--s-2);margin:0 0 var(--s-4)}
+.acct__form .field{margin-bottom:var(--s-3)}
+.acct__form .btn{justify-self:start}
+.acct__form .btn--wide{justify-self:stretch}
+select.field{appearance:none;background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),linear-gradient(-45deg,transparent 50%,currentColor 50%);background-position:calc(100% - 22px) 50%,calc(100% - 16px) 50%;background-size:6px 6px;background-repeat:no-repeat;padding-right:var(--s-12)}
+.field--code{font-size:1.75rem;letter-spacing:.32em;text-align:center;font-variant-numeric:tabular-nums}
+.acct__row{display:flex;flex-wrap:wrap;gap:var(--s-2) var(--s-8);align-items:center;margin:var(--s-2) 0 0}
+.acct__sec{margin-top:var(--s-12);padding-top:var(--s-6);border-top:1px solid var(--color-line)}
+.acct__p,.acct__empty{margin:0 0 var(--s-4);max-width:60ch}
+.acct__empty{color:var(--color-muted)}
+.acct__empty b{color:var(--color-text);font-weight:500}
+.check{display:flex;gap:var(--s-3);align-items:flex-start;min-height:44px;padding:var(--s-2) 0;margin:0 0 var(--s-2);cursor:pointer}
+.check input{width:22px;height:22px;margin:1px 0 0;flex:none;accent-color:var(--ember)}
+.check input:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px}
+.acct__del{margin-top:var(--s-8)}
+.acct__del summary{display:inline-flex;align-items:center;min-height:44px;cursor:pointer;font-size:var(--t-14);color:var(--color-muted);text-decoration:underline;text-underline-offset:.22em}
+.acct__del[open] summary{color:var(--color-strong)}
+.acct__del .acct__p{margin-top:var(--s-3)}
+.btn--danger{box-shadow:inset 0 0 0 2px var(--ember)}
+
+/* THE USUAL LABEL */
+.label{max-width:520px;background:var(--color-label);color:var(--color-label-ink);border-radius:var(--radius);overflow:hidden;box-shadow:0 2px 0 oklch(0 0 0 / .35),0 12px 24px -12px oklch(0 0 0 / .6)}   /* the sticker's contact shadow, without its tilt, so the button stays square */
+.label__band{display:flex;justify-content:space-between;align-items:center;gap:var(--s-4);padding:var(--s-2) var(--s-4);background:var(--ember);color:var(--white);font:600 var(--t-12)/1.5 var(--font-ui);letter-spacing:.09em;text-transform:uppercase}
+.label__band span:first-child{font:400 1.125rem/1 var(--font-display);letter-spacing:.03em;padding-top:.14em}
+.label__body{position:relative;padding:var(--s-5) var(--s-4) var(--s-4)}
+.label__body::before{content:"";position:absolute;left:var(--s-2);right:var(--s-2);top:var(--s-1);border-top:1px dashed var(--color-perf)}   /* the perforation */
+.label__h{margin:0 0 var(--s-3);font:600 var(--t-14)/1.4 var(--font-ui);color:var(--color-label-ink)}
+.label__items{list-style:none;margin:0 0 var(--s-4);padding:0}
+.label__items li{display:flex;gap:var(--s-3);align-items:baseline;padding:var(--s-2) 0;border-top:1px dashed var(--color-perf)}
+.label__items .num{min-width:2ch;font-weight:600;font-variant-numeric:tabular-nums}
+.label__gone{margin-left:auto;font-size:var(--t-12);font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--color-label-fine);white-space:nowrap}
+.label__total{display:flex;justify-content:space-between;align-items:baseline;margin:0 0 var(--s-4);padding-top:var(--s-3);border-top:2px solid var(--color-label-ink)}
+.label__total span{font-size:var(--t-14);font-weight:600}
+.label__total b{font:400 2.6rem/1 var(--font-display);padding-top:.1em;font-variant-numeric:tabular-nums}
+.label .link{color:var(--color-label-ink)}
+.label .btn:focus-visible{outline:2px solid var(--color-label-ink);outline-offset:2px}
+.label__pts{margin-top:var(--s-5);padding-top:var(--s-4);border-top:1px dashed var(--color-perf)}
+.label__big{margin:var(--s-4) 0 var(--s-1);font:400 1.75rem/1.05 var(--font-display);padding-top:.08em}
+.label__p{margin:0 0 var(--s-2);font-size:var(--t-14);line-height:1.45;color:var(--color-label-muted)}
+.label__fine{margin:var(--s-3) 0 0;font-size:var(--t-12);color:var(--color-label-fine)}
+.label .num{font-variant-numeric:tabular-nums}
+
+/* the punch row: ten holes, one tenth of the reward each. Punched through to the coal, or dashed while on the way. */
+.punch{display:flex;gap:var(--s-2);list-style:none;margin:0;padding:0}
+.punch__h{flex:1 1 0;max-width:28px;aspect-ratio:1;border-radius:50%;box-shadow:inset 0 0 0 2px var(--color-hole-ring)}
+.punch__h.is-in{background:var(--coal-0);box-shadow:inset 0 2px 3px oklch(0 0 0 / .65)}
+.punch__h.is-coming{box-shadow:none;outline:2px dashed var(--color-hole-coming);outline-offset:-2px}
+@media (prefers-reduced-motion:no-preference){.label .punch__h.is-new{animation:punch-in 200ms var(--ease-enter) 320ms backwards}}
+@keyframes punch-in{from{transform:scale(1.4);opacity:0}}
+
+/* the same row, smaller, at checkout and on the confirmation */
+.co__pts{display:grid;gap:var(--s-2);margin:var(--s-2) 0 0;font-size:var(--t-14);color:var(--color-text)}
+.co__pts .punch{width:max-content;gap:var(--s-2);padding:var(--s-2) var(--s-3) var(--s-2) var(--s-12);background:linear-gradient(90deg,var(--ember) 0 var(--s-8),var(--color-label) var(--s-8));border-radius:var(--radius)}
+.co__pts .punch__h{width:12px;flex:none}
+.co__acct{margin:0;font-size:var(--t-14);color:var(--color-muted)}
+.co__reward{font-weight:500;color:var(--color-strong)}
+.totals__reward dd{color:var(--color-strong)}
+
+/* orders: a ledger, status as a word with a glyph */
+.ords{list-style:none;margin:0;padding:0}
+.ord{display:grid;grid-template-columns:1fr auto;grid-template-areas:"when total" "what what" "again again";gap:var(--s-1) var(--s-4);padding:var(--s-4) 0;border-top:1px solid var(--color-line)}
+.ord__when{grid-area:when;margin:0;font-size:var(--t-14);color:var(--color-muted)}
+.ord__what{grid-area:what;min-width:0}
+.ord__items{list-style:none;margin:0;padding:0;color:var(--color-text);overflow-wrap:anywhere}
+.ord__items li{padding:1px 0}
+.ord__items b{color:var(--color-strong);font-weight:500;margin-right:var(--s-1)}
+.ord__status.is-done{color:var(--color-muted);font-weight:500}
+.ord__meta{display:flex;flex-wrap:wrap;gap:var(--s-1) var(--s-3);margin:var(--s-1) 0 0;font-size:var(--t-12);color:var(--color-muted)}
+.ord__status{font-weight:600;color:var(--color-text)}
+.ord__total{grid-area:total;margin:0;font-weight:600;color:var(--color-strong);font-variant-numeric:tabular-nums}
+.ord__again{grid-area:again;justify-self:start;margin-top:var(--s-2);min-height:44px}
+.ord__none{display:inline-flex;align-items:center;font-size:var(--t-14);color:var(--color-muted)}
+@media (min-width:640px){
+  .ord{grid-template-columns:96px 1fr auto auto;grid-template-areas:"when what total again";align-items:start;gap:var(--s-4)}
+  .ord__when,.ord__total{padding-top:2px}
+  .ord__again{margin-top:0;justify-self:end;min-height:44px;padding:0 var(--s-4)}
+}
+
+/* saved items and alerts */
+.saved{list-style:none;margin:0;padding:0}
+.saved__i{display:flex;flex-wrap:wrap;align-items:center;gap:0 var(--s-5);padding:var(--s-2) 0;border-top:1px solid var(--color-line);min-height:56px}
+.saved__name{flex:1 1 55%;padding:var(--s-2) 0;color:var(--color-strong);font-weight:500;text-decoration:none;overflow-wrap:anywhere}
+.saved__name:hover{text-decoration:underline}
+.saved__price{color:var(--color-text);font-variant-numeric:tabular-nums}
+.saved__st{font-size:var(--t-14);color:var(--color-muted)}
+.saved__x{color:var(--color-muted)}
+
+/* Save and Email me, on a product: the glyph is a punch hole, filled once saved. Instant: a frequent control. */
+.keep{display:flex;flex-wrap:wrap;gap:0 var(--s-6);margin:var(--s-2) 0}
+.keep__b{display:inline-flex;align-items:center;gap:var(--s-2);min-height:44px;padding:0;background:none;border:0;cursor:pointer;color:var(--color-strong);font:500 var(--t-14)/1.2 var(--font-ui);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.22em}
+.keep__b::before{content:"";flex:none;width:16px;height:16px;border-radius:50%;outline:2px dashed currentColor;outline-offset:-2px}
+.keep__b[aria-pressed="true"]{text-decoration:none}
+.keep__b[aria-pressed="true"]::before{outline:0;background:var(--color-bg);box-shadow:inset 0 2px 3px oklch(0 0 0 / .8),0 0 0 2px currentColor}
+.keep__b:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px}
+/* typed details read as typed: the shop's field style sets labels in display caps, which is wrong for names and emails */
+.acct .field--text{font-size:var(--t-18)}
+/* wide screens: two zones. The usual label holds a sticky rail on the left; the ledger and settings read beside it. */
+@media (min-width:960px){
+  .acct--two{display:grid;grid-template-columns:minmax(340px,440px) minmax(0,640px);column-gap:var(--s-16);max-width:none;align-items:start}
+  .acct__rail{position:sticky;top:calc(76px + var(--s-6))}
+  .acct--two .acct__main > .acct__sec:first-child{margin-top:0;padding-top:0;border-top:0}
+  .acct--two .acct__main{padding-top:calc(var(--t-14) * 1.5 + var(--s-6))}
+}
+.co__pts p{margin:0}
+/* an email is typed data: never set it in the display caps the shop uses for field labels */
+.co input[type=email],.acct input[type=email]{text-transform:none;letter-spacing:0}

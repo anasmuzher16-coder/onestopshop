@@ -1,6 +1,7 @@
 import { PRODUCTS, CATEGORIES, BOXES } from "/api/catalog-module";
 import { route, navigate, navInfo, spotHere, canGoBack, setQuery, setSpotAnchor } from "./route.js";
 import { parsePostal, pack, quote, money, days, MAX_QTY, fuelOn, orderTotals, taxRate, taxLabel, localArea, localDue, localEta, FREE_LOCAL_CENTS, SHOP_HOURS } from "./rates.js";
+import { accountView, afterRender, rewardCents, rewardRow, rewardFlag, rewardGone } from "./account.js";
 
 // ---------- state (everything read from storage is validated) ----------
 const bySku = Object.assign(Object.create(null), Object.fromEntries(PRODUCTS.map(p => [p.sku, p])));   // no inherited keys: "constructor" in a saved cart or an address is not a product
@@ -630,17 +631,18 @@ const deliveryFeeNow = () => {
   return localDue(base, cartCents()) / 100;
 };   // the same free-over-$200 rule the server applies
 // What this exact order is: the same lines, way of sending and destination always give the same words.
-const orderSig = (lines, sc) => JSON.stringify([lines.map(l => [l.product.sku, l.qty]).sort(), sc.pickup ? "pickup" : "ship", sc.pickup ? "" : sc.local ? "local" : sc.chosen?.id || "", sc.pickup ? "" : state.dest?.full || ""]);
+const orderSig = (lines, sc) => JSON.stringify([lines.map(l => [l.product.sku, l.qty]).sort(), sc.pickup ? "pickup" : "ship", sc.pickup ? "" : sc.local ? "local" : sc.chosen?.id || "", sc.pickup ? "" : state.dest?.full || "", rewardFlag()]);
 // The figures the shopper is shown, in cents, by the server's own sum. If the server has re-priced this exact order, its figures win.
 function shownTotals(lines, sc) {
   const fee = sc.local ? deliveryFeeNow() : null, prov = sc.pickup || sc.local ? "ON" : state.dest.prov, p = state.priced?.sig === orderSig(lines, sc) ? state.priced : null;
-  return { fee, prov, ...(p ? { subtotal: p.subtotal_cents, shipping: p.shipping_cents, tax: p.tax_cents, total: p.total_cents } : orderTotals(cartCents(lines), sc.pickup ? 0 : sc.local ? toCents(fee || 0) : toCents(sc.chosen.total), prov)) };
+  const sub = cartCents(lines), reward = p ? p.reward_cents || 0 : rewardCents(sub);   // a points reward comes off the items before tax, as the server does it
+  return { fee, prov, reward, ...(p ? { subtotal: p.subtotal_cents, shipping: p.shipping_cents, tax: p.tax_cents, total: p.total_cents } : { ...orderTotals(sub - reward, sc.pickup ? 0 : sc.local ? toCents(fee || 0) : toCents(sc.chosen.total), prov), subtotal: sub }) };
 }
 function coTotals(lines, sc) {
   const { pickup, local } = sc, t = shownTotals(lines, sc), units = lines.reduce((a, l) => a + l.qty, 0);
   return `<dl class="totals" data-total="${t.total}">
         <div><dt>${units} ${units === 1 ? "item" : "items"}</dt><dd class="num">${money(t.subtotal / 100)}</dd></div>
-        <div><dt>${pickup ? "Pickup" : local ? "Delivery" : "Shipping"}</dt><dd class="num">${pickup ? "Free" : local ? (t.fee === null ? "Enter your address" : feeText(t.shipping / 100)) : money(t.shipping / 100)}</dd></div>
+        ${rewardRow(t.reward)}<div><dt>${pickup ? "Pickup" : local ? "Delivery" : "Shipping"}</dt><dd class="num">${pickup ? "Free" : local ? (t.fee === null ? "Enter your address" : feeText(t.shipping / 100)) : money(t.shipping / 100)}</dd></div>
         <div><dt>${taxLabel(t.prov)}</dt><dd class="num">${money(t.tax / 100)}</dd></div>
         <div class="totals__door"><dt>${local && t.fee === null ? "Total before delivery" : "Total"}</dt><dd class="num">${money(t.total / 100)}</dd></div>
       </dl>`;
@@ -807,11 +809,12 @@ document.addEventListener("submit", async e => {
   btn.disabled = true; btn.textContent = pay === "card" ? "Opening secure payment" : "Placing your order"; err.hidden = true;
   const sent = cartLines(), sig = orderSig(sent, sc), shownTotal = +f.querySelector(".totals").dataset.total;   // the figure on the screen, not a fresh sum: if the rate moved since, the server says so
   try {
-    const r = await fetch("/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ order_key: orderKey(sig + pay + v("email").toLowerCase()), expected_total_cents: shownTotal, lines: state.cart, method: pickup ? "pickup" : "ship", service: local ? "local" : chosen && chosen.id, delivery_fee_cents: local ? Math.round(deliveryFeeNow() * 100) : undefined, postal: state.dest && state.dest.full,
+    const r = await fetch("/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ order_key: orderKey(sig + pay + v("email").toLowerCase()), expected_total_cents: shownTotal, use_reward: rewardCents(cartCents(sent)) > 0, lines: state.cart, method: pickup ? "pickup" : "ship", service: local ? "local" : chosen && chosen.id, delivery_fee_cents: local ? Math.round(deliveryFeeNow() * 100) : undefined, postal: state.dest && state.dest.full,
       name: v("name"), email: v("email"), phone: v("phone"), note: state.note, address: { line1: v("line1"), city: v("city") }, pay }) });
     const data = await r.json().catch(() => ({}));
     if (!r.ok) { btn.disabled = false; btn.textContent = label; if (local && data.delivery) { if (data.delivery === "far") state.farFor = state.dest.full; state.delivery = data.delivery === "ok" ? { key: deliveryKey(), fee_cents: data.base_fee_cents ?? data.fee_cents, due: data.fee_cents, sub: cartCents() } : null; state.refused = data.delivery === "ok" ? null : deliveryKey(); refreshDelivery(f, data.delivery === "ok" ? undefined : deliveryMsg(data.delivery)); if (data.delivery !== "ok") return; } 
       if (data.local_only) { state.cartNews = [data.error]; state.ship = null; store.set("ship", null); navigate("/cart"); return; }   // an out-of-date page offered a carrier: back to the cart, where the real choices are
+      if (data.reward_gone) { rewardGone(); state.priced = null; f.querySelector(".totals").outerHTML = coTotals(sent, sc); btn.textContent = payLabel(sc, +f.querySelector(".totals").dataset.total); return fail(data.error); }   // the points were spent elsewhere: the full price is shown before anything is placed
       if (data.repriced) { state.priced = { sig, ...data.repriced }; f.querySelector(".totals").outerHTML = coTotals(sent, sc); btn.textContent = payLabel(sc, data.repriced.total_cents); }
       if (typeof data.stock === "number" && bySku[data.sku]) {   // the shelf changed: the cart is put right and says what happened
         bySku[data.sku].stock = data.stock; const fit = fitCart(state.cart); state.cart = fit.kept; state.cartNews = fit.news.length ? fit.news : [data.error]; state.priced = null; saveCart(); navigate("/cart"); return;
@@ -834,6 +837,7 @@ const viewPrivacy = () => doc("Privacy", "What we collect when you order, why, a
   ["What we collect", ["Your name, email, phone number if you give it, and delivery address, so we can send your order and answer questions about it.", "Your card details go straight to the payment company. We never see or store the card number."]],
   ["What we do not do", ["We do not sell or rent your details. We do not use advertising trackers. Visit counts on this site use no cookies and do not identify you."]],
   ["Who else sees it", ["The carrier or our driver gets your name, phone number and address to deliver the order. For local delivery, your address goes to our map service, Geoapify, to work out the distance. The payment company gets what it needs to take the payment. Our hosting company stores the order on our behalf."]],
+  ["If you make an account", ["You sign in with a code we email you. We keep your email, the details you choose to save, your saved items, back-in-stock requests, your charcoal reminder choice and any points, so they are there next time. A cookie keeps you signed in for up to 30 days. You can delete the account yourself from the account page at any time."]],
   ["How long we keep it", ["Order records are kept for six years, because tax law requires it. After that they are deleted."]],
   ["Your choices", ["You can ask to see what we hold about you, to correct it, or to have it deleted where the law allows. Email or call the counter and we will answer within 30 days.", "Marketing emails are only sent if you ask for them, and every one has an unsubscribe link."]],
   ["Who to ask", ["The person responsible for privacy at the shop is the manager. Call 519-255-2222."]],
@@ -849,7 +853,7 @@ const viewTerms = () => doc("Terms of sale", "The plain rules for buying from us
   ["If something is wrong with the order", ["If we cannot ship within 30 days of the date promised, you can cancel for a full refund."]],
 ]);
 const viewMissing = () => `${band("missing", "ruby", "Nothing at this address.")}<section class="empty"><p class="lead">The link may be old. <a class="link" href="/shop">See what is on the counter</a>.</p></section>`;
-const SITE = "One Stop Shop", HOME_TITLE = document.title, PLAIN = { cart: "Cart", shipping: "Shipping and returns", set: "Build a set", search: "Search", privacy: "Privacy", terms: "Terms of sale", checkout: "Checkout" };
+const SITE = "One Stop Shop", HOME_TITLE = document.title, PLAIN = { account: "Your account", cart: "Cart", shipping: "Shipping and returns", set: "Build a set", search: "Search", privacy: "Privacy", terms: "Terms of sale", checkout: "Checkout" };
 // The same addresses the server answers. Anything else is the missing page, never a page that merely looks right.
 function realPage(a, b, more) {
   if (more) return false; if (!a) return true;
@@ -867,12 +871,13 @@ function render() {
   const [a, b, more] = route().replace(/^#\/?/, "").split("/").filter(Boolean), real = realPage(a, b, more);
   if (a === "search") state.q = new URLSearchParams(location.search).get("q") ?? state.q;
   document.title = pageTitle(a, b, real);
-  $("#main").innerHTML = !real ? viewMissing() : a === "shop" ? viewShop(b) : a === "p" ? viewProduct(b) : a === "cart" ? viewCart() : a === "shipping" ? viewShipping() : a === "gifts" ? viewGifts(b) : a === "set" ? viewSet() : a === "search" ? viewSearch() : a === "privacy" ? viewPrivacy() : a === "terms" ? viewTerms() : a === "checkout" ? viewCheckout() : a === "order" ? viewOrder(b) : !a ? viewHome() : viewMissing();
+  $("#main").innerHTML = !real ? viewMissing() : a === "shop" ? viewShop(b) : a === "p" ? viewProduct(b) : a === "cart" ? viewCart() : a === "shipping" ? viewShipping() : a === "gifts" ? viewGifts(b) : a === "set" ? viewSet() : a === "search" ? viewSearch() : a === "privacy" ? viewPrivacy() : a === "terms" ? viewTerms() : a === "checkout" ? viewCheckout() : a === "order" ? viewOrder(b) : a === "account" ? accountView(band) : !a ? viewHome() : viewMissing();
   document.body.dataset.route = a || "home";
   syncChrome();
   const chip = $(".chips [aria-current]"); if (chip) chip.parentNode.scrollLeft = chip.offsetLeft - (chip.parentNode.clientWidth - chip.offsetWidth) / 2;   // the section you are in sits centred in the row
   if (keep) { const el = document.querySelector(keep); if (el) el.focus({ preventScroll: true }); }
   priceLocal();
+  if (real) afterRender(a, b);   // the account pieces: Save on a product, prefill and points at checkout
 }
 let last = route();
 document.addEventListener("click", e => {
@@ -888,6 +893,13 @@ function cartFromStorage() {
   if (f && lines.length) { const sc = shipChoice(lines); if (sc.pickup || sc.local || sc.chosen) { f.querySelector(".totals").outerHTML = coTotals(lines, sc); syncChrome(); return; } }   // never rebuild a form someone is typing in
   if (["cart", "checkout", "p"].includes(on)) render(); else syncChrome();
 }
+// The account changed the cart (Buy again), or signed in, or the points reward was switched at checkout.
+addEventListener("oss:cart", e => {   // Buy again: the usual's pickup choice comes along, and the cart says what was left off
+  if (store.get("ship") === "pickup") state.ship = "pickup";
+  cartFromStorage(); if (e.detail && e.detail.news) state.cartNews = e.detail.news;
+});
+const refreshCo = () => { const f = $("[data-checkout]"), lines = cartLines(); if (!f || !lines.length) return; const sc = shipChoice(lines); if (sc.pickup || sc.local || sc.chosen) f.querySelector(".totals").outerHTML = coTotals(lines, sc); };
+addEventListener("oss:account", refreshCo); addEventListener("oss:totals", refreshCo);
 addEventListener("storage", e => { if (e.key === null || e.key === "oss:cart") cartFromStorage(); });
 addEventListener("pageshow", e => { if (e.persisted) cartFromStorage(); });
 // Long lists skip drawing what is off screen, so their height is a guess until they are drawn: draw it all for one frame to land exactly.
