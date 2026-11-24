@@ -80,7 +80,7 @@ export function searchOut(q) {
   if (!IX) return "";
   q = String(q || "").trim(); if (!q) return before();
   const u = understand(IX, q), hits = search(IX, q, u), words = u.terms.flatMap(t => t.alts.flatMap(a => a.split(" "))), js = jumps(IX, q, u);
-  const said = (u.fixed.length ? `<p class="meant">Showing <b>${X.esc(u.terms.map(t => t.w).join(" "))}</b>. You typed ${X.esc(u.fixed.map(f => f[0]).join(", "))}.</p>` : "")
+  const said = (u.fixed.length ? `<p class="meant">Showing <b>${X.esc(u.fixed.reduce((s, [from, to]) => s.replace(new RegExp("\\b" + from, "i"), to), q.toLowerCase()))}</b>. You typed ${X.esc(u.fixed.map(f => f[0]).join(", "))}.</p>` : "")
     + (u.terms.some(t => t.quick) ? `<p class="meant">Our boxes are not marked quick-light yet. These are the round tablets; the box says if it lights quickly.</p>` : "");
   const pages = u.pages.length ? `<ul class="jumps jumps--pages">${u.pages.map(pageRow).join("")}</ul>` : "";
   if (!hits.length) {

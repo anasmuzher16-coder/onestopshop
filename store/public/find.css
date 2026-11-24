@@ -54,7 +54,7 @@
 .fsheet[open]{display:grid;grid-template-rows:auto minmax(0,1fr) auto;animation:sheet-in var(--dur-state) var(--ease-enter)}
 .fsheet::backdrop{background:oklch(0.1 0.01 50 / .72)}
 .fsheet__head{display:flex;justify-content:space-between;align-items:center;gap:var(--s-4);padding:var(--s-5) var(--gutter) var(--s-3)}
-.fsheet__h{margin:0;font:400 var(--t-d1)/1 var(--font-display);color:var(--color-strong);padding-top:.08em}
+.fsheet__h{outline:none;margin:0;font:400 var(--t-d1)/1 var(--font-display);color:var(--color-strong);padding-top:.08em}
 .fsheet__x{display:grid;place-items:center;width:44px;height:44px;margin-right:-12px;border:0;background:none;color:var(--color-strong);cursor:pointer}
 .fsheet__body{overflow-y:auto;overscroll-behavior:contain;padding:0 var(--gutter) var(--s-4)}
 .fsheet__foot{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:var(--s-4);padding:var(--s-3) var(--gutter) calc(var(--s-3) + env(safe-area-inset-bottom));border-top:1px solid var(--color-line)}

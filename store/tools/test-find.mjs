@@ -70,8 +70,8 @@ if (b) try {
   const want = F.apply("heat", heat, { shape: ["cube"], made: ["coconut"] }).length;
   ok(await p.locator(".grid--shop .card").count() === want, "address filters the grid on load");
   ok(/Filter\s*2/.test(await p.locator(".fbar__btn").innerText()), "Filter button counts 2");
-  ok(await p.locator('.qchip[aria-pressed="true"]').count() === 2, "applied filters lead the chip row");
-  await p.locator('.qchip[aria-pressed="true"]').first().click();
+  ok(await p.locator('.fbar .qchip[aria-pressed="true"]').count() === 2, "applied filters lead the chip row");
+  await p.locator('.fbar .qchip[aria-pressed="true"]').first().click();
   ok(!/shape=/.test(new URL(p.url()).search) && /made=coconut/.test(new URL(p.url()).search), "removing a chip updates the address: " + p.url());
   await p.locator(".fbar__btn").click(); await p.waitForSelector(".fsheet[open]");
   const btn = p.locator("[data-f-apply]"), before = await btn.innerText();

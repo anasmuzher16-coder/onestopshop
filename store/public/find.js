@@ -51,10 +51,11 @@ function groupHTML(cat, list, sel, g) {
     <div class="${g.drawn ? "fshapes" : "frows"}">${opts.map(row).join("")}</div>
     ${many ? `<button class="fmore" type="button" data-f-more="${g.key}">All ${opts.length} ${g.key === "brand" ? "brands" : "sizes"}</button>` : ""}${note ? `<p class="fnote">${note}</p>` : ""}</fieldset>`;
 }
-function groupsHTML(cat, list, sel) {
+function groupsHTML(cat, list, sel, sortLast = false) {
   const sorts = sortsFor(cat, list);
-  return (sorts.length < 2 ? "" : `<fieldset class="fgroup"><legend class="fgroup__h">Sort</legend><div class="frows" role="radiogroup" aria-label="Sort">${sorts.map(([v, label]) => `<button class="frow frow--radio" type="button" role="radio" aria-checked="${(sel.sort || "") === v}" data-f-sort="${v}"><span class="frow__box"></span><span class="frow__l">${label}</span></button>`).join("")}</div></fieldset>`)
-    + groupsFor(cat, list).map(g => groupHTML(cat, list, sel, g)).join("");
+  const sort = (sorts.length < 2 ? "" : `<fieldset class="fgroup"><legend class="fgroup__h">Sort</legend><div class="frows" role="radiogroup" aria-label="Sort">${sorts.map(([v, label]) => `<button class="frow frow--radio" type="button" role="radio" aria-checked="${(sel.sort || "") === v}" data-f-sort="${v}"><span class="frow__box"></span><span class="frow__l">${label}</span></button>`).join("")}</div></fieldset>`);
+  const groups = groupsFor(cat, list).map(g => groupHTML(cat, list, sel, g)).join("");
+  return sortLast ? groups + sort : sort + groups;   // the sheet leads with the filters, so what is already set shows first
 }
 function finderLink(cat) {
   return cat === "heat" ? `<button class="finderlink" type="button" data-f-finder aria-haspopup="dialog">${DRAWN.cube}<span>What coal do I need?<small>Two questions, then the right boxes</small></span>${ARROW}</button>` : "";
@@ -98,15 +99,15 @@ function sheetEl() {
 }
 function drawSheet(cat) {
   const list = listOf(cat), n = apply(cat, list, draft).length, s = sheetEl(), y = s.querySelector(".fsheet__body")?.scrollTop || 0;
-  s.innerHTML = `<div class="fsheet__head"><h2 class="fsheet__h" id="fsheet-h">Filter</h2><button class="fsheet__x" type="button" data-f-close aria-label="Close">${CLOSE}</button></div>
-    <div class="fsheet__body">${groupsHTML(cat, list, draft)}</div>
+  s.innerHTML = `<div class="fsheet__head"><h2 class="fsheet__h" id="fsheet-h" tabindex="-1">Filter</h2><button class="fsheet__x" type="button" data-f-close aria-label="Close">${CLOSE}</button></div>
+    <div class="fsheet__body">${groupsHTML(cat, list, draft, true)}</div>
     <div class="fsheet__foot"><button class="link" type="button" data-f-clear>Clear all</button><button class="btn" type="button" data-f-apply ${n ? "" : "disabled"}>${n ? `Show ${n} ${noun(cat, n)}` : "Nothing matches"}</button></div>`;
   s.querySelector(".fsheet__body").scrollTop = y;
 }
 function openSheet(cat) {
   draft = readSel(cat, listOf(cat), location.search); drawSheet(cat);
   const s = sheetEl(); s.dataset.cat = cat; document.documentElement.classList.add("fsheet-open"); s.showModal();
-  s.querySelector("[data-f-close]").focus();
+  s.querySelector("#fsheet-h").focus();
 }
 
 // ---------- the coal finder: two questions that set ordinary filters ----------
