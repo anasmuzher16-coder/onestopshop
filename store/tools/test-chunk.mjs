@@ -1,4 +1,4 @@
-﻿// The section swap in steps (app.js "the first screen first"), in Chromium and WebKit, against a running local store:
+// The section swap in steps (app.js "the first screen first"), in Chromium and WebKit, against a running local store:
 // after an in-site tap on a long section the cards fill in with none lost, duplicated or reordered (same as a direct load),
 // aria-busy and the wave's hold (data-swapping) are cleared, the desktop filter rail is in with the first screen, the first
 // screen's cards are in before the wave leaves, and Back to a card far down the list lands on that card.
@@ -14,7 +14,7 @@ const skus = p => p.evaluate(() => [...document.querySelectorAll("#main .card [d
 const watchLeave = (p, sel) => p.evaluate(sel => { window.__atLeave = null; let seen = false; new MutationObserver((m, o) => { const on = document.documentElement.hasAttribute("data-swapping"); if (on) seen = true; else if (seen) { window.__atLeave = document.querySelectorAll(sel).length; o.disconnect(); } }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-swapping"] }); }, sel);
 for (const eng of [chromium, webkit]) {
   const b = await eng.launch(); const p = await b.newPage({ viewport: { width: 390, height: 844 } }); const errs = []; p.on("pageerror", e => errs.push(e.message));
-  for (const sec of ["hookahs", "heat", "shisha"]) {
+  for (const sec of ["hookahs", "charcoal", "shisha"]) {
     await p.goto(B + "/shop/misc", { waitUntil: "load" }); await p.waitForTimeout(700);
     await watchLeave(p, "#main .card");
     await tap(p, "/shop/" + sec);
@@ -38,8 +38,29 @@ for (const eng of [chromium, webkit]) {
 { const b = await chromium.launch(), p = await b.newPage({ viewport: { width: 1440, height: 900 } });
   await p.goto(B + "/shop/misc", { waitUntil: "load" }); await p.waitForTimeout(700);
   await watchLeave(p, "#main .frail [data-f-toggle]");
-  await tap(p, "/shop/heat"); await filled(p, "heat");
+  await tap(p, "/shop/charcoal"); await filled(p, "charcoal");
   const rail = await p.evaluate(() => window.__atLeave);
   ok(rail === null || rail > 0, "1440: the filter rail is in before the wave leaves (" + rail + " options)");
   await b.close(); }
+// A single item's photo marked to be upscaled (charcoal, foil, shisha carry it as details.photo) shows the same quiet label as
+// the Ace colours, on its card and its page; a photo state the page has no use for never reaches the storefront.
+if (process.env.PERSIST) {
+  const { execFileSync } = await import("node:child_process"), { fileURLToPath } = await import("node:url");
+  const sql = cmd => execFileSync("cmd", ["/c", "npx", "wrangler", "d1", "execute", "onestopshop", "--local", "--persist-to", process.env.PERSIST, "--command", `"${cmd}"`], { cwd: fileURLToPath(new URL("..", import.meta.url)), stdio: "pipe" });
+  const mod = async () => import("data:text/javascript;base64," + Buffer.from(await (await fetch(B + "/api/catalog-module")).text()).toString("base64"));
+  const P0 = (await mod()).PRODUCTS.filter(p => p.cat === "charcoal" && p.img && p.state === "sale"), up = P0[0], other = P0[1];
+  sql(`UPDATE products SET details = json_set(details, '$.photo', 'upscale') WHERE sku = '${up.sku}'; UPDATE products SET details = json_set(details, '$.photo', 'rejected, from a rival site') WHERE sku = '${other.sku}'`);
+  // a save in the back office clears the shop's copy of the catalogue
+  const login = await fetch(B + "/api/admin/login", { method: "POST", headers: { "Content-Type": "application/json", "X-OSS-Admin": "1" }, body: JSON.stringify({ passcode: process.env.ADMIN_KEY || "int-local-only" }) }), ck = (login.headers.get("set-cookie") || "").split(";")[0];
+  await fetch(B + "/api/admin/products/" + up.sku, { method: "PUT", headers: { "Content-Type": "application/json", "X-OSS-Admin": "1", Cookie: ck }, body: JSON.stringify({ low_stock_at: 1 }) });
+  const P1 = (await mod()).PRODUCTS, a = P1.find(p => p.sku === up.sku), z = P1.find(p => p.sku === other.sku);
+  ok(a.details.photo === "upscale" && !("photo" in z.details), "the storefront gets 'upscale', never another photo note: " + JSON.stringify(z.details.photo));
+  const b = await chromium.launch(), p = await b.newPage({ viewport: { width: 390, height: 844 } });
+  await p.goto(B + "/shop/charcoal", { waitUntil: "load" }); await p.waitForTimeout(800);
+  const onCard = await p.evaluate(s => document.querySelector(`#main a[data-piece="${s}"] .shot__tag--tbd`)?.textContent || "", up.sku);
+  await p.goto(B + "/p/" + up.sku, { waitUntil: "load" }); await p.waitForTimeout(600);
+  const onPage = await p.evaluate(() => document.querySelector("[data-stage] .shot__tag--tbd")?.textContent || ""), alt = await p.evaluate(() => document.querySelector("[data-stage] img")?.alt || "");
+  ok(onCard === "Photo to be upscaled" && onPage === "Photo to be upscaled" && /Photo to be upscaled/.test(alt), `a single item's photo to be upscaled is labelled on its card and its page: "${onCard}" "${onPage}"`);
+  await b.close();
+}
 console.log(f ? `FAIL ${f} of ${n} checks` : `PASS ${n} checks`); process.exit(f ? 1 : 0);

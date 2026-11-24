@@ -23,7 +23,7 @@ const money = cents => "$" + (cents / 100).toLocaleString("en-CA", { minimumFrac
 // What each page says about itself. Returns null for an address that does not exist.
 function describe(path, cat, site) {
   const [a, b, extra] = path.split("/").filter(Boolean);
-  const base = { title: `${site} | Hookahs and accessories, Windsor, shipped across Canada`, desc: "Hookahs, bases, bowls and hoses from our Windsor counter. Shipped anywhere in Canada.", index: true };
+  const base = { title: `${site} | Hookahs and accessories, Windsor, shipped across Canada`, desc: "Hookahs, bases, bowls and hoses from our Windsor counter. Shipped across Canada except Quebec, for now.", index: true };
   if (!a) return base;
   if (extra) return null;
   if (a === "shop") {
@@ -32,12 +32,12 @@ function describe(path, cat, site) {
     const list = cat.products.filter(p => p.category_id === c.id), n = new Set(list.map(p => p.family && p.family.startsWith("ace-") ? p.family : p.sku)).size, counter = n && list.every(counterRow);
     // nothing in this section can be bought yet: say what stage it is at, never "in stock"
     if (n && !list.some(sellable)) return { title: `${c.name} | ${site}`, desc: list.some(p => p.price_cents > 0) ? `${n} ${c.name.toLowerCase()} coming soon to our Windsor counter.` : `${n} ${c.name.toLowerCase()} from the catalogue. Shop prices are on the way.`, index: true };
-    return { title: `${c.name} | ${site}`, desc: counter ? `${n} ${c.id === CHARCOAL ? "kinds of hookah charcoal and foil" : c.name.toLowerCase()} at our Windsor counter. Pickup or local delivery only.` : `${n} ${c.name.toLowerCase()} in stock at our Windsor counter, shipped anywhere in Canada.`, index: true };
+    return { title: `${c.name} | ${site}`, desc: counter ? `${n} ${c.id === CHARCOAL ? "kinds of hookah charcoal" : c.name.toLowerCase()} at our Windsor counter. Pickup or local delivery only.` : `${n} ${c.name.toLowerCase()} in stock at our Windsor counter, shipped across Canada except Quebec, for now.`, index: true };
   }
   if (a === "p") {
     const p = cat.products.find(x => x.sku === b); if (!p) return null;
     const said = sellable(p) ? money(p.price_cents) : p.price_cents > 0 ? `${money(p.price_cents)}, coming soon` : "Price TBD";   // no shop price yet: nothing else stands in for it
-    return { title: `${p.name} | ${site}`, desc: `${(() => { try { const d = JSON.parse(p.details || "{}").description; return d ? d + " " : p.note ? p.note + ". " : ""; } catch { return p.note ? p.note + ". " : ""; } })()}${said}.${!sellable(p) ? "" : counterRow(p) ? " Pickup in Windsor or local delivery near Windsor. Not shipped." : " Shipped across Canada or free pickup in Windsor."}`, index: true, product: p };
+    return { title: `${p.name} | ${site}`, desc: `${(() => { try { const d = JSON.parse(p.details || "{}").description; return d ? d + " " : p.note ? p.note + ". " : ""; } catch { return p.note ? p.note + ". " : ""; } })()}${said}.${!sellable(p) ? "" : counterRow(p) ? " Pickup in Windsor or local delivery near Windsor. Not shipped." : " Shipped across Canada except Quebec, or free pickup in Windsor."}`, index: true, product: p };
   }
   if (a === "order") return b && /^W[A-Z0-9]{6}$/.test(b) ? { ...base, title: `Order ${b} | ${site}`, index: false } : null;
   if (a === "gifts" && b && b !== "under-50" && b !== "under-150") return null;
@@ -54,6 +54,18 @@ async function retiredTo(env, path) {
   if (!/^OSS-1\d{3}$/.test(m[1])) return null;   // only the retired sample hookahs; anything else the shop switches off is a plain 404
   const row = await env.DB.prepare("SELECT p.category_id FROM products p JOIN categories c ON c.id = p.category_id WHERE p.sku = ?1 AND p.active = 0 AND p.listed = 0 AND p.supplier_id IS NULL AND c.active = 1").bind(m[1]).first();
   return row ? `/shop/${row.category_id}` : null;
+}
+// Charcoal left Heat for its own section (2026-11-24). Old links to the charcoal side of Heat (the coal finder, its boxes,
+// rolls, shapes, piece counts, sizes and makes, the old search jumps and business cards) go to the same view in Charcoal,
+// with the same filters. Plain /shop/heat and its foil filters stay where they are.
+const COAL_KEYS = new Set(["find", "shape", "n", "made", "mm"]);
+function charcoalMoved(url) {
+  if (url.pathname.replace(/\/+$/, "") !== "/shop/heat" || !url.search) return null;
+  const q = url.searchParams, type = (q.get("type") || "").split(",").filter(Boolean);
+  const coal = [...q.keys()].some(k => COAL_KEYS.has(k)) || (type.length && type.every(t => t === "box" || t === "roll"));
+  if (!coal || type.includes("foil")) return null;
+  const out = new URLSearchParams(); for (const [k, v] of q) if (k === "type" || k === "sort" || k === "brand" || COAL_KEYS.has(k)) out.append(k, v);
+  const s = out.toString(); return "/shop/charcoal" + (s ? "?" + s.replace(/%2C/gi, ",") : "");
 }
 async function page(request, env, url, ctx) {
   const cat = await shopCatalog(env, ctx);
@@ -167,6 +179,7 @@ export default {
         return new Response(sitemap(await shopCatalog(env, ctx), url), { headers: { "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "public, max-age=3600" } });
       }
       if (path === "/index.html") return Response.redirect(url.origin + "/", 301);
+      { const to = charcoalMoved(url); if (to) return new Response(null, { status: 301, headers: { ...SECURITY, Location: url.origin + to, "Cache-Control": "public, max-age=86400" } }); }
       const lower = path.match(/^\/p\/([A-Za-z]+-\d+)\/?$/); if (lower && lower[1] !== lower[1].toUpperCase()) return Response.redirect(`${url.origin}/p/${lower[1].toUpperCase()}`, 301);   // an item number typed in small letters
       if (/\.[a-z0-9]{2,5}$/i.test(path)) return env.ASSETS.fetch(request); // a file that is not there: plain 404
       if (request.method !== "GET" && request.method !== "HEAD") return new Response("Method not allowed", { status: 405 });

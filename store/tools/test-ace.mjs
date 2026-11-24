@@ -52,9 +52,10 @@ const page = await (await fetch(B + "/p/" + tbd.sku)).text();
 ok(/og:description" content="[^"]*Price TBD/.test(page) && /og:image" content="[^"]+\/img\/pc\/ace\//.test(page), "a TBD item shares its own photo and says Price TBD");
 ok((await fetch(B + "/sitemap.xml")).status === 404, "no sitemap while the shop is not live");
 
-const foilPage = await (await fetch(B + "/p/OSS-9301")).text(), heatPage = await (await fetch(B + "/shop/heat")).text();
+const foilPage = await (await fetch(B + "/p/OSS-9301")).text(), coalPage = await (await fetch(B + "/shop/charcoal")).text(), heatPage = await (await fetch(B + "/shop/heat")).text();
 ok(/og:description" content="[^"]*Not shipped/.test(foilPage) && !/Shipped across Canada/.test(foilPage), "a foil page says pickup or local delivery, never shipped, while its weight is TBD");
-ok(/name="description" content="[^"]*Pickup or local delivery only/.test(heatPage), "the Heat section still says pickup or local delivery only");
+ok(/name="description" content="69 kinds of hookah charcoal[^"]*Pickup or local delivery only/.test(coalPage), "the Charcoal section says pickup or local delivery only");
+ok(!/name="description" content="[^"]*Pickup or local delivery only/.test(heatPage), "Heat no longer says it all: its heat management pieces ship");
 const shPage = await (await fetch(B + "/shop/shisha")).text(); ok(/content="47 shisha/.test(shPage), "the shisha section counts its 47 flavours");
 // 3 the sample hookahs are gone, their links land on the section
 const r1 = await fetch(B + "/p/OSS-1001", { redirect: "manual" });

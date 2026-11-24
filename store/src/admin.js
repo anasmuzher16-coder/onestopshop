@@ -29,7 +29,7 @@ export async function signedIn(request, env) {
 const LOCKED = "Too many wrong tries. Wait 15 minutes and try again.";
 const cleanOp = v => typeof v === "string" && /^[A-Za-z0-9-]{16,64}$/.test(v) ? v : null;   // a tap's own key, so a repeat counts once
 const log = (event, fields) => console.log(JSON.stringify({ at: "admin", event, ...fields }));   // never a PIN, passcode or token
-const CHARCOAL_ITEM = "(p.category_id = 'heat' OR p.details LIKE '%\"charcoal\":true%')";
+const CHARCOAL_ITEM = `(p.category_id = '${CHARCOAL}' OR p.details LIKE '%"charcoal":true%')`;   // Heat (foil, heat management) is not charcoal since 2026-11-24
 // A product added to the charcoal section, and any charcoal item saved later, is stored as charcoal, pickup or local delivery only, whatever the form sent.
 // (The storefront and checkout enforce the same from the section alone; this keeps the stored row honest too.)
 function charcoalRules(out, was) {
@@ -186,7 +186,7 @@ export async function admin(request, env, url) {
       const base = "details" in out ? JSON.parse(out.details) : { ...had }; if (out.colour) base.colour = out.colour; else delete base.colour;
       out.details = JSON.stringify(base); delete out.colour;
     }
-    if (had.charcoal) charcoalRules(out, had);   // charcoal stays charcoal; retired Heat pieces are never turned into it
+    if (had.charcoal || out.category_id === CHARCOAL) charcoalRules(out, had);   // charcoal stays charcoal; retired Heat pieces are never turned into it
     const cols = Object.keys(out); if (!cols.length) return json({ ok: true });
     const was = {}; for (const k of cols) was[k] = before[k];
     try { await db.batch([db.prepare(`UPDATE products SET ${cols.map(k => k + " = ?").join(", ")}, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE sku = ?`).bind(...cols.map(k => out[k]), m[1]), audit("product.edit", m[1], was, out)]); }
@@ -334,7 +334,7 @@ export async function admin(request, env, url) {
   if ((m = path.match(/^\/orders\/([A-Z0-9]{3,12})\/refunds$/)) && method === "GET") return json({ refunds: (await db.prepare("SELECT amount_cents, status, reason, actor, detail, at FROM refunds WHERE order_id = ? ORDER BY id").bind(m[1]).all()).results });
   if ((m = path.match(/^\/emails\/(\d{1,9})$/)) && method === "GET") {
     // only order and stock emails open here: a customer's sign-in code (and their account mail) is theirs, never the back office's
-    const e = await db.prepare("SELECT id, kind, recipient, subject, html, status, detail, at FROM emails WHERE id = ? AND kind IN ('order_placed','order_shipped','pickup_ready','low_stock')").bind(+m[1]).first();
+    const e = await db.prepare("SELECT id, kind, recipient, subject, html, status, detail, at FROM emails WHERE id = ? AND kind IN ('order_placed','order_shipped','pickup_ready','low_stock','new_order')").bind(+m[1]).first();
     return e ? json({ email: e }) : json({ error: "No such email." }, 404);
   }
   // ---- owner only: staff, settings, the monthly report ----
@@ -342,6 +342,9 @@ export async function admin(request, env, url) {
     const r = await db.prepare(`SELECT st.id, st.name, st.created_at, st.created_by, (SELECT MAX(at) FROM login_attempts a WHERE a.staff_id = st.id AND a.ok = 1) AS last_in FROM staff st WHERE st.active = 1 ORDER BY lower(st.name)`).all();
     return json({ staff: r.results });
   }
+  // Every PIN is hashed with the PIN_PEPPER secret (src/staff.js). A PIN set before the pepper exists would be hashed with the
+  // fallback and stop working the moment the pepper is created, so on the live site no PIN is set until it exists.
+  if (env.LIVE === "1" && !env.PIN_PEPPER && method === "POST" && (path === "/staff" || /^\/staff\/\d{1,9}\/pin$/.test(path))) return json({ error: "Create the PIN_PEPPER secret first (docs/BACKEND-NOTES.md), then add staff." }, 503);
   if (path === "/staff" && method === "POST") {
     const body = await request.json().catch(() => ({})), name = cleanName(body.name), bad = pinProblem(body.pin);
     if (!name) return json({ error: "Give a first name, letters only, up to 30.", field: "name" }, 400);

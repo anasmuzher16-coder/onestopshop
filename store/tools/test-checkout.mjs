@@ -68,19 +68,19 @@ const lost = orders.filter(o => o.status === "pending" && !["awaiting", "pay_at_
 
 // CHARCOAL (owner, 2026-11-24): pickup or our own local delivery only, never Canada Post or any carrier, and no age or ID
 // step anywhere a customer can see (staff check ID in person).
-const cat = await (await fetch(B + "/api/catalog")).json(), coal = cat.products.filter(p => p.category_id === "heat" && JSON.parse(p.details).charcoal === true), foilFeed = cat.products.filter(p => p.category_id === "heat" && !JSON.parse(p.details).charcoal);
+const cat = await (await fetch(B + "/api/catalog")).json(), coal = cat.products.filter(p => p.category_id === "charcoal" && JSON.parse(p.details).charcoal === true), foilFeed = cat.products.filter(p => p.category_id === "heat" && /foil/i.test(p.name));
 const coalSku = "OSS-9104", c0 = await stockOf(coalSku);
-ok(coal.length === 69 && coal.every(p => p.ship_class === "pickup_only"), "the heat section holds the shop's 69 charcoal items, all pickup or local delivery only: " + coal.length);
-ok(foilFeed.length === 15 && foilFeed.every(p => p.for_sale), "and its 15 foil packs (since 2026-11-24): " + foilFeed.length);
-ok(!cat.products.some(p => /^OSS-40/.test(p.sku)), "the old Heat pieces are off the shelf");
+ok(coal.length === 69 && coal.every(p => p.ship_class === "pickup_only"), "the Charcoal section holds the shop's 69 charcoal items, all pickup or local delivery only: " + coal.length);
+ok(foilFeed.length === 15 && foilFeed.every(p => p.for_sale), "and Heat its 15 foil packs (since 2026-11-24): " + foilFeed.length);
+{ const back = cat.products.filter(p => /^OSS-40/.test(p.sku)); ok(back.length > 0 && back.every(p => p.category_id === "heat" && p.ship_class === "standard" && !JSON.parse(p.details || "{}").charcoal), "the Heat pieces hidden when charcoal moved in are back in Heat, shippable and not charcoal: " + back.map(p => p.sku).join(",")); }
 ok(coal.every(p => p.stock === 10), "every charcoal item starts at 10 in stock");
 // regression: no carrier service, on its own or mixed in, ever turns charcoal into a shipped order
 const carrierIds = [...new Set(quote(parsePostal("M5V 2T6"), pack([{ product: PRODUCTS.find(p => p.sku === "OSS-1001"), qty: 1 }]), fuelOn().pct).map(o => o.id))];
 ok(carrierIds.length >= 2, "the carrier services to try: " + carrierIds.join(","));
-// an item moved into Heat in the back office is charcoal by its section, with or without the flag (breaker, 2026-11-24)
+// an item moved into Charcoal in the back office is charcoal by its section, with or without the flag (breaker, 2026-11-24)
 { const was = cat.products.find(p => p.sku === "OSS-8003").category_id, put = c => fetch(B + "/api/admin/products/OSS-8003", { method: "PUT", headers: { "Content-Type": "application/json", "X-OSS-Admin": "1", Cookie: cookie }, body: JSON.stringify({ category_id: c }) });
-  const mv = await put("heat"), moved = await post({ ...who, ...to, method: "ship", service: carrierIds[0], lines: [{ sku: "OSS-8003", qty: 1 }] });
-  ok(mv.status === 200 && moved.status === 409 && moved.data.local_only === true, `an item moved into Heat cannot go by carrier: ${mv.status} ${moved.status}`);
+  const mv = await put("charcoal"), moved = await post({ ...who, ...to, method: "ship", service: carrierIds[0], lines: [{ sku: "OSS-8003", qty: 1 }] });
+  ok(mv.status === 200 && moved.status === 409 && moved.data.local_only === true, `an item moved into Charcoal cannot go by carrier: ${mv.status} ${moved.status}`);
   await put(was); }
 for (const service of [...carrierIds, "cp-nope", undefined]) {
   const r = await post({ ...who, ...to, method: "ship", service, lines: [{ sku: coalSku, qty: 1 }] });
@@ -96,11 +96,11 @@ ok(coalOk.status === 201 && coalOk.data.order.method === "pickup", "charcoal pic
 ok(coalOk.data.order?.subtotal_cents === 1199 + 2195, "charcoal is charged the shop's price: " + coalOk.data.order?.subtotal_cents);
 ok(!/\bage\b|photo id|legal age|age_/i.test(JSON.stringify(coalOk.data)), "the order answer says nothing about age or ID");if (coalOk.status === 201) {
   const seen = await (await fetch(B + "/api/admin/orders/" + coalOk.data.order.id, { headers: { Cookie: cookie } })).json();
-  ok(seen.items.some(i => i.category_id === "heat"), "the back office can tell a charcoal order (for its staff-only ID note)");
+  ok(seen.items.some(i => i.category_id === "charcoal"), "the back office can tell a charcoal order (for its staff-only ID note)");
   if (coalOk.data.pay?.url) await fetch(coalOk.data.pay.url, { method: "POST", redirect: "manual" });   // paid on the Stripe stand-in first
   await fetch(B + "/api/admin/orders/" + coalOk.data.order.id + "/status", { method: "POST", headers: { "Content-Type": "application/json", "X-OSS-Admin": "1", Cookie: cookie }, body: JSON.stringify({ status: "ready" }) });
   const mails = (await (await fetch(B + "/api/admin/orders/" + coalOk.data.order.id, { headers: { Cookie: cookie } })).json()).emails;
-  ok(mails.length === 2, "the receipt and the ready-for-pickup email are written: " + mails.map(m => m.kind).join(","));
+  ok(mails.length === 3 && ["order_placed", "new_order", "pickup_ready"].every(k => mails.some(m => m.kind === k)), "the receipt, the shop's new-order note and the ready-for-pickup email are written: " + mails.map(m => m.kind).join(","));
   for (const m of mails) { const e = (await (await fetch(B + "/api/admin/emails/" + m.id, { headers: { Cookie: cookie } })).json()).email; ok(!/\bID\b/.test(e.html + e.subject) && !/photo id|\bage\b|adult/i.test(e.html + e.subject), `the customer's ${m.kind} email says nothing about age or ID`); }
 }
 const mod = await (await fetch(B + "/api/catalog-module")).text();
@@ -110,13 +110,13 @@ const put = await fetch(B + "/api/admin/products/" + coalSku, { method: "PUT", h
 const after = (await (await fetch(B + "/api/catalog")).json()).products.find(p => p.sku === coalSku);
 ok(put.ok && JSON.parse(after.details).charcoal === true && JSON.parse(after.details).photo === "approved", "an admin save keeps the charcoal mark and photo status");
 // charcoal added in the back office, even sent as "standard" with no details, takes the pickup rule from its section
-const made = await (await fetch(B + "/api/admin/products", { method: "POST", headers: { "Content-Type": "application/json", "X-OSS-Admin": "1", Cookie: cookie }, body: JSON.stringify({ name: "Back office charcoal", category_id: "heat", price_cents: 1500, weight_g: 1000, box_id: "XS", ship_class: "standard", details: {}, stock: 5 }) })).json();
+const made = await (await fetch(B + "/api/admin/products", { method: "POST", headers: { "Content-Type": "application/json", "X-OSS-Admin": "1", Cookie: cookie }, body: JSON.stringify({ name: "Back office charcoal", category_id: "charcoal", price_cents: 1500, weight_g: 1000, box_id: "XS", ship_class: "standard", details: {}, stock: 5 }) })).json();
 const madeRow = (await (await fetch(B + "/api/catalog")).json()).products.find(p => p.sku === made.sku);
 ok(madeRow && madeRow.ship_class === "pickup_only" && JSON.parse(madeRow.details).charcoal === true, "charcoal added in the back office is stored as pickup only: " + made.sku);
 ok((await post({ ...who, ...to, method: "ship", service: "cp-exp", lines: [{ sku: made.sku, qty: 1 }] })).status === 409, "back-office charcoal cannot be shipped");
 await fetch(B + "/api/admin/products/" + made.sku, { method: "PUT", headers: { "Content-Type": "application/json", "X-OSS-Admin": "1", Cookie: cookie }, body: JSON.stringify({ ship_class: "standard" }) });
 ok((await post({ ...who, ...to, method: "ship", service: "cp-exp", lines: [{ sku: made.sku, qty: 1 }] })).status === 409, "switching it to standard in the back office still cannot ship it");
-// a retired Heat piece saved in the back office stays what it was: never turned into charcoal (the rollback brings these back)
+// a Heat piece saved in the back office stays what it was: never turned into charcoal
 await fetch(B + "/api/admin/products/OSS-4009", { method: "PUT", headers: { "Content-Type": "application/json", "X-OSS-Admin": "1", Cookie: cookie }, body: JSON.stringify({ note: "Hammered copper and steel", details: {} }) });
 const old = (await (await fetch(B + "/api/admin/products", { headers: { Cookie: cookie } })).json()).products.find(p => p.sku === "OSS-4009");
-ok(old && old.ship_class === "standard" && !JSON.parse(old.details || "{}").charcoal, "a retired Heat piece saved in the back office is not made charcoal: " + (old && old.ship_class));console.log(f ? `FAIL ${f} of ${n} checks` : `PASS ${n} checks`); process.exit(f ? 1 : 0);
+ok(old && old.ship_class === "standard" && !JSON.parse(old.details || "{}").charcoal, "a Heat piece saved in the back office is not made charcoal: " + (old && old.ship_class));console.log(f ? `FAIL ${f} of ${n} checks` : `PASS ${n} checks`); process.exit(f ? 1 : 0);

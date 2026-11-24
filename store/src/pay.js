@@ -7,7 +7,7 @@
 //  - stock taken for an unpaid order comes back exactly once, when Stripe says the page expired or payment failed;
 //  - every call that creates something at Stripe carries an Idempotency-Key, so a retry can never charge twice.
 import * as rates from "../public/rates-core.js";
-import { orderPlaced, lowStock, writeEmail } from "./email.js";
+import { orderPlaced, newOrder, lowStock, writeEmail } from "./email.js";
 
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" } });
 const NOW = "strftime('%Y-%m-%dT%H:%M:%SZ','now')";
@@ -123,6 +123,8 @@ export async function receipt(env, id, how) {
   const items = (await db.prepare("SELECT sku, name, qty, unit_cents FROM order_items WHERE order_id = ? ORDER BY sku").bind(id).all()).results;
   const site = env.SITE_NAME || "One Stop Shop", q = (() => { try { return JSON.parse(o.ship_quote || "{}"); } catch { return {}; } })();
   await writeEmail(env, id, o.email, orderPlaced(site, { ...o, eta: q.eta ?? null }, items, how));
+  // the shop hears about it too: held in the outbox (back office) until the mail service and OWNER_EMAIL are set
+  await writeEmail(env, id, env.OWNER_EMAIL || "the shop", newOrder(site, o, items, how));
   const low = await db.prepare(`SELECT name, stock FROM products WHERE active = 1 AND stock <= low_stock_at AND sku IN (${items.map(() => "?").join(",") || "''"}) ORDER BY stock, name`).bind(...items.map(i => i.sku)).all();
   if (low.results.length) await writeEmail(env, id, env.OWNER_EMAIL || "the shop", lowStock(site, low.results));
 }

@@ -25,6 +25,7 @@ for (const [engine, w, h, mobile] of [["chromium", 390, 844, true], ["webkit", 3
     await p.goto(B + "/shop/hookahs", { waitUntil: "networkidle" }); await p.waitForTimeout(600);
     const opts = p.locator(".dchoose__opt");
     t(`${tag} chooser shows LOCAL and NATIONWIDE`, await opts.count() === 2 && await opts.nth(0).isVisible() && /LOCAL DELIVERY/i.test(await opts.nth(0).innerText()) && /NATIONWIDE DELIVERY/i.test(await opts.nth(1).innerText()));
+    t(`${tag} nationwide says Canada except Quebec, not anywhere in Canada`, /except Quebec/i.test(await opts.nth(1).innerText()) && !/anywhere in Canada(?! except)/i.test(await p.locator("body").innerText()));
     const geo = await p.evaluate(() => ({ strip: document.querySelector(".dstrip").getBoundingClientRect().bottom, card: document.querySelector(".card").getBoundingClientRect().top, sizes: [...document.querySelectorAll(".dchoose__opt,.dstrip__x")].map(e => { const r = e.getBoundingClientRect(); return Math.min(r.width, r.height); }), wide: document.documentElement.scrollWidth <= innerWidth, cls: window.__cls ?? 0, pos: getComputedStyle(document.querySelector(".dstrip")).position }));
     t(`${tag} chooser is above the products, in the page flow`, geo.strip <= geo.card && geo.pos === "relative", JSON.stringify(geo));
     t(`${tag} chooser targets are at least 44px`, geo.sizes.every(s => s >= 44), geo.sizes.join(","));

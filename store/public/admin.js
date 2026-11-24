@@ -251,7 +251,7 @@ function viewOrders() {
 }
 async function orderSheet(id) {
   const { order: o, items, emails = [], trail = [] } = await api("/orders/" + id), k = ORDER_STATE[o.status][0], label = stateLabel(o), next = NEXT(o);
-  const charcoal = items.some(i => i.category_id === "heat" || /"charcoal":true/.test(i.details || "")), canCancel = ["paid", "packed", "ready"].includes(o.status) || (o.status === "pending" && o.pay_status === "pay_at_pickup"), wait = waitDays(o), units = items.reduce((a, i) => a + i.qty, 0), src = pj(o.source_detail);
+  const charcoal = items.some(i => i.category_id === "charcoal" || /"charcoal":true/.test(i.details || "")), canCancel = ["paid", "packed", "ready"].includes(o.status) || (o.status === "pending" && o.pay_status === "pay_at_pickup"), wait = waitDays(o), units = items.reduce((a, i) => a + i.qty, 0), src = pj(o.source_detail);
   sheet.innerHTML = `<div class="sheet__in" data-ordersheet="${o.id}">
     <div class="sheet__top"><div><p class="meta">Order ${o.id} &middot; ${when(o.created_at)}</p><h2 class="h2" style="margin:0">${esc(o.name)}</h2><span class="state ${k}">${label}</span></div><button class="sheet__x" type="button" data-close>Close</button></div>
     ${dropCard(o)}
@@ -278,7 +278,7 @@ async function orderSheet(id) {
   if (!sheet.open) sheet.showModal();
 }
 
-const MAIL = { order_placed: "Order received", order_shipped: "Shipped", pickup_ready: "Ready for pickup", low_stock: "Low stock note to the shop" };
+const MAIL = { order_placed: "Order received", order_shipped: "Shipped", pickup_ready: "Ready for pickup", low_stock: "Low stock note to the shop", new_order: "New order note to the shop" };
 async function mailView(id) {
   const box = $("[data-mailview]", sheet); if (!box) return;
   const { email: e } = await api("/emails/" + id);

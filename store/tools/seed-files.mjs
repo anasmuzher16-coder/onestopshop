@@ -14,6 +14,7 @@ export const SEED_FILES = [
                                                  // also the 3 unpriced Titanium rolls, kept off (catalog.py seed ... --category charcoal)
   "catalog/live/on-view-2026-11-24.sql",        // the on-view switch: samples off, shisha and foil on
   "catalog/out/descriptions.sql",               // the writer's descriptions
+  "catalog/live/charcoal-section-2026-11-24.sql", // Charcoal its own section; Heat keeps foil and gets its old pieces back
 ];
 export const seedPath = f => fileURLToPath(new URL(f, STORE));
 

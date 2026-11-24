@@ -69,6 +69,7 @@ for (let d = 34; d >= 0; d--) {
 out.push("UPDATE products SET active = 0 WHERE img IN ('hookah50','bowl30','acc03','bowl26','hmd12','acc06','hose09','bowl06'); -- cut-outs with holes eaten into them: off the shelf until the shop's own photos replace them");
 // Heat becomes charcoal (owner, 2026-11-23: "All the charcoals are going to replace what's currently in the heat
 // section"). The old Heat pieces are hidden, not deleted: their rows, stock and history stay, so they can come back.
+out.push(`INSERT INTO audit_log (actor, action, target, before, after) SELECT 'owner', 'charcoal-2026-11-23:retire', sku, '{"active":1}', '{"active":0}' FROM products WHERE category_id = 'heat' AND active = 1; -- the same record the live step kept, so the Charcoal section step (2026-11-24) brings back exactly these`);
 out.push("UPDATE products SET active = 0 WHERE category_id = 'heat'; -- retired 2026-11-23, replaced by the shop's charcoal");
 // The sample hookahs are switched off, never deleted (sample orders point at them); Ace Hookah's catalogue replaces them
 // (owner, 2026-11-24). Their old addresses redirect to /shop/hookahs. The Ace rows come from store/catalog (seed-ace.sql).

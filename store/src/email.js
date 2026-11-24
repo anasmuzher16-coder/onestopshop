@@ -39,6 +39,13 @@ export function pickupReady(site, o, items) {
   const foot = "We hold pickup orders for 14 days. Call 519-255-2222 if you need longer.";
   return { kind: "pickup_ready", subject: `Your ${site} order ${o.id} is ready for pickup`, html: frame(site, heading, intro, lines(items), foot), body: plain(heading, intro, lines(items), foot) };
 }
+// To the shop (OWNER_EMAIL): a new order to get ready. Short, so it reads on a phone at the counter.
+export function newOrder(site, o, items, how = "at_pickup") {
+  const paid = how === "paid", way = o.method === "pickup" ? "Pickup at the counter" : o.ship_service === "Local delivery" ? "Local delivery" : `Shipping, ${esc(o.ship_service || "")}`;
+  const rows = [...lines(items), ["How", way], [paid ? "Paid by card" : "To pay at pickup", money(o.total_cents), true]];
+  const heading = `New order ${esc(o.id)}`, intro = `${esc(o.name)}${o.phone ? `, ${esc(o.phone)}` : ""}. ${paid ? "Paid by card." : "Pays at the counter."} Open it in the back office to get it ready.`;
+  return { kind: "new_order", subject: `${site}: new order ${o.id}, ${money(o.total_cents)}${paid ? "" : ", pay at pickup"}`, html: frame(site, heading, intro, rows, "Sent to the shop for every new order."), body: plain(heading, intro, rows, "") };
+}
 export function lowStock(site, list) {
   const rows = list.map(p => [esc(p.name), p.stock <= 0 ? "Out" : `${p.stock} left`]);
   const heading = list.length === 1 ? `${esc(list[0].name)} is running low` : `${list.length} products are running low`, intro = "After the last order, these are at or under the level you asked to be warned at.";

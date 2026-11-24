@@ -28,6 +28,8 @@ ok((second.r.headers.get("set-cookie") || "").split(";")[0] !== cookie, "every s
 let d = (await call("/api/admin/orders/" + pick.data.order.id)).data;
 ok(d.emails.some(e => e.kind === "order_placed" && e.recipient === "pat@example.com" && e.status === "held"), "order email is written and marked as not sent (no mail service connected)");
 ok(d.emails.some(e => e.kind === "low_stock" && e.status === "held"), "selling the last one writes a low-stock note for the shop");
+{ const no = d.emails.filter(e => e.kind === "new_order"), body = no[0] ? (await call("/api/admin/emails/" + no[0].id)).data.email : null;
+  ok(no.length === 1 && no[0].recipient !== "pat@example.com" && no[0].status === "held" && body && body.subject.includes(pick.data.order.id) && /back office/.test(body.html), "the shop gets one new-order note for it, held in the outbox until mail is set up: " + (no[0] && no[0].recipient)); }
 await call(`/api/admin/orders/${pick.data.order.id}/status`, { method: "POST", body: { status: "ready" } });
 d = (await call("/api/admin/orders/" + pick.data.order.id)).data;
 const ready = d.emails.find(e => e.kind === "pickup_ready"); ok(!!ready, "marking it ready writes the pickup email");

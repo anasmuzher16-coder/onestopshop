@@ -33,6 +33,11 @@ the place in the code that follows it. "Follow-up" items are known gaps left for
   written down before it is checked, so a burst of simultaneous tries on separate Workers is counted in full.
   The owner's passcode is held only by the per-address limit, so other people's wrong PINs cannot lock the owner
   out. Obvious PINs are refused. On the live site, staff sign-in refuses to run without `PIN_PEPPER`.
+- **Create `PIN_PEPPER` before any staff account exists** (`npx wrangler secret put PIN_PEPPER`, a long random value
+  kept in Bitwarden, never in the repo). Every PIN hash is made with it when it is set (checked in test-backoffice:
+  a hash made with it fails without it). A PIN set before it existed was made with the `ADMIN_KEY` fallback and stops
+  working the moment the pepper is created; changing or losing the pepper does the same to every PIN, and the owner
+  must set each PIN again. So on the live site, adding staff or setting a PIN is refused until `PIN_PEPPER` exists.
 - One generic answer for a wrong name or a wrong PIN, and the same PBKDF2 work either way (a dummy hash).
 - Secrets compared with `crypto.subtle.timingSafeEqual` over SHA-256 digests (Workers best practices).
 - Sessions: 32 random bytes from `crypto.getRandomValues`, stored only as a SHA-256 hash; a new token at every

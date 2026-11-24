@@ -5,7 +5,7 @@
 import { readFileSync } from "node:fs";
 import { cleanSource } from "../src/source.js";
 import { share, monthStart, monthOf, reportCsv } from "../src/report.js";
-import { pinProblem } from "../src/staff.js";
+import { pinProblem, hashPin, checkPin } from "../src/staff.js";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
@@ -35,6 +35,9 @@ ok(cleanSource({ referrer: "http://a\"onmouseover=x'b&c.com/" }).detail === "{}"
 ok(share(100000, 500) === 5000 && share(12345, 500) === 617 && share(12350, 500) === 618 && share(-12350, 500) === -618 && share(0, 500) === 0, "5% share rounds once, half away from zero, in whole cents");
 ok(new Date(monthStart(2026, 11)).toISOString() === "2026-11-01T04:00:00.000Z" && new Date(monthStart(2026, 12)).toISOString() === "2026-12-01T05:00:00.000Z" && new Date(monthStart(2026, 3)).toISOString() === "2026-03-01T05:00:00.000Z", "months start at midnight Windsor time, summer and winter");
 ok(monthOf("2026-11") === "2026-11" && monthOf("2026-13") === null && monthOf("1999-01") === null && monthOf("2026-1") === null && /^\d{4}-\d\d$/.test(monthOf()), "month input is checked");
+{ // the pepper: PIN_PEPPER is used when set (a hash made with it fails without it, and the fallback key cannot stand in for it)
+  const withP = { PIN_PEPPER: "pepper-a", ADMIN_KEY: "k", PIN_ROUNDS: "10000" }, noP = { ADMIN_KEY: "k", PIN_ROUNDS: "10000" }, h = await hashPin(withP, "482913");
+  ok(await checkPin(withP, "482913", h) && !(await checkPin(noP, "482913", h)) && !(await checkPin({ ...withP, PIN_PEPPER: "pepper-b" }, "482913", h)), "staff PINs are hashed with PIN_PEPPER when it is set"); }
 ok(pinProblem("482913") === null && pinProblem("123456") && pinProblem("111111") && pinProblem("12345") && pinProblem("abcdef") && pinProblem(482913), "PIN rules: 6 digits, not an obvious one");
 const csv = reportCsv({ month: "2026-11", timezone: "America/Toronto", rows: [{ line: "sale", at: "2026-11-02T15:00:00Z", id: "=cmd", status: "paid", method: "pickup", source: "+x", subtotal_cents: 1000, shipping_cents: 0, tax_cents: 130, total_cents: 1130 }], sales: { orders: 1, subtotal: 1000, delivery: 0, tax: 130, total: 1130 }, refunds: { orders: 0, subtotal: 0, delivery: 0, tax: 0, total: 0 }, net: { orders: 1, subtotal: 1000, delivery: 0, tax: 130, total: 1130 }, studio: { rate_bp: 500, basis_label: "subtotal before tax and delivery", basis_cents: 1000, share_cents: 50 } });
 ok(csv.includes('"\'=cmd"') && csv.includes('"\'+x"') && csv.includes('"-0.00"') === false && csv.includes('"10.00"'), "CSV cells that a spreadsheet would run as formulas are defused");

@@ -44,6 +44,7 @@ const { sign } = await import("./fixtures/stripe-webhooks.mjs");
 const swap = await fetch(B + "/api/pay/webhook", { method: "POST", headers: { "Stripe-Signature": sign(body) }, body: tamperedBody });
 ok(swap.status === 400, "a body changed after signing is refused");
 ok((await order(t.data.order.id)).order.status === "pending", "after the forgeries the order is still unpaid");
+ok(!(await order(t.data.order.id)).emails.some(e => e.kind === "new_order"), "an unpaid card order sends the shop no new-order note");
 const cheap = await hook(B, completed(ts, { amount_total: 100 }));
 ok(cheap.status === 200 && cheap.data.result === "mismatch" && (await order(t.data.order.id)).order.status === "pending", "a signed event for the wrong amount does not pay the order");
 const otherSession = await hook(B, completed({ ...ts, id: "cs_test_notours000000" }));
@@ -61,6 +62,7 @@ ok(again.data.result === "repeat" && pi.data.result !== "paid", "a second comple
 const replayEv = completed(ts, { payment_intent: o1.order.pay_intent }); await hook(B, replayEv); const r2 = await hook(B, replayEv);
 ok(r2.data.repeat === true, "the very same event id is recognised as a repeat");
 ok((await order(t.data.order.id)).emails.filter(e => e.kind === "order_placed").length === 1, "still one receipt after four deliveries");
+ok((await order(t.data.order.id)).emails.filter(e => e.kind === "new_order").length === 1, "the shop gets one new-order note for a card order, once it is paid, however often Stripe calls");
 const lateExpire = await hook(B, expired(ts));
 ok(lateExpire.data.result === "repeat" && (await stockOf("OSS-2001")) === s0 - 1, "an expiry after payment puts no stock back");
 ok(await status(ts.id) === "paid", "the order page's status call says paid");
