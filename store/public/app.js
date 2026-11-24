@@ -833,7 +833,10 @@ function cartFromStorage() {
   if (["cart", "checkout", "p"].includes(on)) render(); else syncChrome();
 }
 // The account changed the cart (Buy again), or signed in, or the points reward was switched at checkout.
-addEventListener("oss:cart", cartFromStorage);
+addEventListener("oss:cart", e => {   // Buy again: the usual's pickup choice comes along, and the cart says what was left off
+  if (store.get("ship") === "pickup") state.ship = "pickup";
+  cartFromStorage(); if (e.detail && e.detail.news) state.cartNews = e.detail.news;
+});
 const refreshCo = () => { const f = $("[data-checkout]"), lines = cartLines(); if (!f || !lines.length) return; const sc = shipChoice(lines); if (sc.pickup || sc.local || sc.chosen) f.querySelector(".totals").outerHTML = coTotals(lines, sc); };
 addEventListener("oss:account", refreshCo); addEventListener("oss:totals", refreshCo);
 addEventListener("storage", e => { if (e.key === null || e.key === "oss:cart") cartFromStorage(); });

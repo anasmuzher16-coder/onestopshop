@@ -38,9 +38,15 @@ export const rewardRow = cents => cents ? `<div class="totals__reward"><dt>Point
 export function rewardGone() { choice.reward = false; sess.set("use-reward", false); loadMe(true); }
 
 // ---------- the usual label: the device ----------
-function punches(l) {   // ten holes, each a tenth of the reward. Counted points are punched through; points on their way are dashed.
-  const per = l.reward_points / 10, full = Math.min(10, Math.floor(Math.max(0, l.points) / per)), coming = Math.min(10 - full, Math.ceil(l.coming / per));
-  return `<ol class="punch" aria-hidden="true">${Array.from({ length: 10 }, (_, i) => `<li class="punch__h${i < full ? " is-in" : i < full + coming ? " is-coming" : ""}${i === full - 1 ? " is-new" : ""}"></li>`).join("")}</ol>`;
+// Ten holes, each a tenth of the reward. Counted points are punched through; points on their way are dashed.
+// With a reward ready, the row shows the next card, so progress never hides behind a full row.
+// The newest hole presses in only when the count grew since this device last saw it.
+function punches(l, press = false) {
+  const per = l.reward_points / 10, have = Math.max(0, l.points) - (l.can_redeem ? l.reward_points : 0);
+  const full = Math.min(10, Math.floor(have / per)), coming = Math.min(10 - full, Math.ceil(l.coming / per));
+  let fresh = false;
+  if (press) { let seen = null; try { seen = JSON.parse(localStorage.getItem("oss:punches")); } catch {} fresh = typeof seen === "number" && full > seen; try { localStorage.setItem("oss:punches", JSON.stringify(full)); } catch {} }
+  return `<ol class="punch" aria-hidden="true">${Array.from({ length: 10 }, (_, i) => `<li class="punch__h${i < full ? " is-in" : i < full + coming ? " is-coming" : ""}${fresh && i === full - 1 ? " is-new" : ""}"></li>`).join("")}</ol>`;
 }
 function pointsWords(l) {
   const left = Math.max(0, l.reward_points - l.points);
@@ -59,7 +65,7 @@ function usualLabel(o) {
         <p class="label__total"><span>Total</span> <b class="num">${money(o.total_cents)}</b></p>
         ${can.length ? `<button class="btn btn--wide" type="button" data-again="${esc(o.id)}">${gone ? `Add the ${can.length} ${can.length === 1 ? "item" : "items"} still in stock` : "Buy again"}</button>` : `<p class="label__p">Everything in it has sold out. <a class="link" href="/shop">See what is on the counter</a>.</p>`}`
       : `<h2 class="label__h" id="usual-h">Nothing here yet</h2><p class="label__p">Your first order lands on this label, ready to buy again in one tap.</p><a class="btn btn--wide" href="/shop/heat">Shop charcoal</a>`}
-      ${l ? `<div class="label__pts" aria-label="Points">${punches(l)}${pointsWords(l)}<p class="label__fine">${l.points_per_dollar === 1 ? "1 point" : `${l.points_per_dollar} points`} for every dollar of items. Points never expire.</p></div>` : ""}
+      ${l ? `<div class="label__pts" aria-label="Points">${punches(l, true)}${pointsWords(l)}<p class="label__fine">${l.points_per_dollar === 1 ? "1 point" : `${l.points_per_dollar} points`} for every dollar of items. Points never expire.</p></div>` : ""}
     </div>
   </article>`;
 }
@@ -98,7 +104,7 @@ function orderRow(o) {
   const can = o.items.filter(i => bySku[i.sku] && bySku[i.sku].stock !== 0).length, n = o.items.reduce((a, i) => a + i.qty, 0);
   return `<li class="ord">
     <p class="ord__when num">${esc(day(o.created_at))}</p>
-    <div class="ord__what"><p class="ord__items">${o.items.map(i => `${i.qty} &times; ${esc(i.name)}`).join(", ")}</p>
+    <div class="ord__what"><ul class="ord__items">${o.items.map(i => `<li><b class="num">${i.qty} &times;</b> ${esc(i.name)}</li>`).join("")}</ul>
       <p class="ord__meta"><span class="ord__status${DONE.has(o.status) ? " is-done" : ""}">${WORD[o.status] || esc(o.status)}</span> <span class="num">${esc(o.id)}</span> <span class="num">${n} ${n === 1 ? "item" : "items"}</span>${o.points && o.points.earn && L() ? ` <span class="num">${o.points.earn} pts</span>` : ""}</p></div>
     <p class="ord__total num">${money(o.total_cents)}</p>
     ${can ? `<button class="btn btn--ghost ord__again" type="button" data-again="${esc(o.id)}">Buy again</button>` : `<span class="ord__again ord__none">Sold out</span>`}
@@ -193,8 +199,9 @@ function buyAgain(id) {
     const p = bySku[i.sku]; if (!p || p.stock === 0) continue;
     const l = cart.find(x => x && x.sku === i.sku); if (l) l.qty += i.qty; else cart.push({ sku: i.sku, qty: i.qty });
   }
-  try { localStorage.setItem("oss:cart", JSON.stringify(cart)); } catch {}
-  dispatchEvent(new Event("oss:cart"));   // app.js reads it back, holds each line to the stock left and says what changed
+  const left = o.items.filter(i => !bySku[i.sku] || bySku[i.sku].stock === 0).map(i => i.name);
+  try { localStorage.setItem("oss:cart", JSON.stringify(cart)); if (o.method === "pickup") localStorage.setItem("oss:ship", JSON.stringify("pickup")); } catch {}   // the counter remembers how you collect
+  dispatchEvent(new CustomEvent("oss:cart", { detail: { news: [`Your usual is in your cart.${left.length ? ` ${left.join(", ")} ${left.length === 1 ? "has" : "have"} sold out, so we left ${left.length === 1 ? "it" : "them"} off.` : ""}`] } }));   // app.js reads it back, holds each line to the stock left and says what changed
   navigate("/cart");
 }
 
@@ -268,10 +275,11 @@ function productKeep(sku) {
   at.insertAdjacentHTML("afterend", `<div class="keep"><button class="keep__b" type="button" data-keep="fav" data-sku="${sku}" aria-pressed="${fav}"></button>${p.stock === 0 ? `<button class="keep__b" type="button" data-keep="alert" data-sku="${sku}" aria-pressed="${al}"></button>` : ""}</div>`);
   $$(".keep [data-keep]", info).forEach(keepWords);
 }
+const earnNow = l => { let cart = []; try { cart = JSON.parse(localStorage.getItem("oss:cart")) || []; } catch {} const sub = cart.reduce((a, x) => a + (bySku[x.sku] ? Math.round(bySku[x.sku].price * 100) * x.qty : 0), 0); return Math.floor(Math.max(0, sub - rewardCents(sub)) / 100) * l.points_per_dollar; };
 function checkoutBits() {
   const f = $("[data-checkout]"); if (!f) return;
   const l = L(), box = $("[data-acct-co]", f);
-  const html = signedIn() ? (l ? `${l.can_redeem ? `<label class="check co__reward"><input type="checkbox" data-use-reward ${choice.reward ? "checked" : ""}> <span>Use my ${money(l.reward_cents)} points reward</span></label>` : ""}<div class="co__pts">${punches(l)}<p>This order earns points, counted once it is picked up or delivered. <a class="link" href="/account">Your card</a></p></div>` : "")
+  const html = signedIn() ? (l ? `${l.can_redeem ? `<label class="check co__reward"><input type="checkbox" data-use-reward ${choice.reward ? "checked" : ""}> <span>Use my ${money(l.reward_cents)} points reward</span></label>` : ""}<div class="co__pts">${punches(l)}<p>This order earns <b class="num">${earnNow(l)}</b> points, counted once it is picked up or delivered. <a class="link" href="/account">Your card</a></p></div>` : "")
     : `<p class="co__p co__acct"><a class="link" href="/account?next=%2Fcheckout">Sign in</a> to fill this in for you${l ? " and collect points" : ""}. Or just carry on as a guest.</p>`;
   if (box) box.innerHTML = html; else { const t = $(".totals", f); if (t) t.insertAdjacentHTML("beforebegin", `<div data-acct-co>${html}</div>`); }
   if (!signedIn()) return;
@@ -304,4 +312,5 @@ export function afterRender(a, b) {
   });
 }
 addEventListener("oss:account", () => { if (location.pathname === "/checkout") checkoutBits(); });
+addEventListener("oss:totals", () => { const b = $("[data-acct-co] .co__pts b.num"), l = L(); if (b && l) b.textContent = earnNow(l); });   // the points this order earns follow the reward switch
 loadMe();
