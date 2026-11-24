@@ -28,8 +28,11 @@ the place in the code that follows it. "Follow-up" items are known gaps left for
   600,000 for PBKDF2-SHA256; Workers refuse more than 100,000 (workerd#1346), so the pepper (a Worker secret,
   `PIN_PEPPER`, falling back to `ADMIN_KEY`) carries the rest: a stolen database alone cannot be guessed offline.
 - A 6-digit PIN is weak by itself (OWASP calls anything under 8 characters weak), so online guessing is capped:
-  5 wrong tries from one address, 5 on one name from anywhere (names that do not exist lock the same way, so a lock
-  does not reveal who works there), or 40 in total, lock sign-in for 15 minutes. Obvious PINs are refused.
+  more than 5 tries from one address, 5 on one name from anywhere (names that do not exist lock the same way, so a
+  lock does not reveal who works there), or 40 staff tries in total, lock sign-in for 15 minutes. Each try is
+  written down before it is checked, so a burst of simultaneous tries on separate Workers is counted in full.
+  The owner's passcode is held only by the per-address limit, so other people's wrong PINs cannot lock the owner
+  out. Obvious PINs are refused. On the live site, staff sign-in refuses to run without `PIN_PEPPER`.
 - One generic answer for a wrong name or a wrong PIN, and the same PBKDF2 work either way (a dummy hash).
 - Secrets compared with `crypto.subtle.timingSafeEqual` over SHA-256 digests (Workers best practices).
 - Sessions: 32 random bytes from `crypto.getRandomValues`, stored only as a SHA-256 hash; a new token at every
@@ -80,8 +83,10 @@ the place in the code that follows it. "Follow-up" items are known gaps left for
 
 ## Follow-ups (not done here)
 - Cookie name `__Host-oss_admin` (OWASP): changing it signs everyone out and the existing tests pin the name.
-- The 40-failures global lock can be used to keep the owner out for 15 minutes; a per-address allow for the shop's
-  own connection, or Cloudflare rate limiting rules, would fix it.
+- Anyone can lock one staff name for 15 minutes by guessing it (that is the price of the per-name lock). Cloudflare
+  rate limiting rules on /api/admin/login would blunt this further.
+- PBKDF2 at 100,000 rounds measured about 100 ms of CPU in Node. The Workers Free plan allows 10 ms per request,
+  so confirm the plan before staff sign in (REMOTE-STEPS step 5 gives the fallback).
 - Today's day totals still use a fixed 5-hour offset (`LOCAL` in admin.js); the monthly report uses real Windsor time.
 - Refunds after shipping or collection (a "refunded" step with an amount) are not built; the report counts any order
   marked refunded on its update date.

@@ -10,10 +10,12 @@ async function api(path, opts = {}) {
   if (opts.body !== undefined) { init.headers["X-OSS-Admin"] = "1"; if (opts.raw) { init.headers["Content-Type"] = opts.type; init.body = opts.body; } else { init.headers["Content-Type"] = "application/json"; init.body = JSON.stringify(opts.body); } }
   const r = await fetch("/api/admin" + path, init), data = await r.json().catch(() => ({}));
   if (r.status === 401 && path !== "/login") { state.in = false; gate(); throw new Error("signed out"); }
-  if (!r.ok) throw Object.assign(new Error(data.error || "That did not work. Try again."), { data });
+  if (!r.ok) throw Object.assign(new Error(data.error || "That did not work. Try again."), { data, status: r.status });
   return data;
 }
-const state = { in: false, tab: "home", products: [], categories: [], boxes: [], orders: [], q: "", cat: "all", oflt: "todo" };
+const state = { in: false, tab: "home", products: [], categories: [], boxes: [], orders: [], q: "", cat: "all", oflt: "todo", me: { actor: "", owner: false }, smode: "adjust", recvRef: "", counted: new Set(), month: null, ownerGate: (() => { try { return localStorage.getItem("oss:gate") !== "staff"; } catch { return true; } })() };   // this device remembers how it last signed in; a new device starts with the owner passcode
+const opKey = () => crypto.randomUUID();   // one key per tap: a repeat of the same tap counts once
+const who = a => a === "owner" ? "Owner" : a === "store" ? "Website" : a === "seed" ? "Setup" : String(a || "").replace(/ #\d+$/, "");
 const catOf = id => state.categories.find(c => c.id === id) || { name: id, tone: "bone" };
 const thumbSrc = p => p.photo_ver ? `/api/photo/${p.sku}?v=${p.photo_ver}` : p.img ? `img/pc/${p.img}${p.img_dark ? "" : "-s"}.webp` : /"charcoal":true/.test(p.details || "") ? "img/pc/coming-charcoal.svg" : "";   // charcoal with no photo yet: the drawn stand-in
 const thumb = (p, tone) => { const src = thumbSrc(p); return src ? `<img class="thumb" data-tone="${esc(tone)}" src="${esc(src)}" alt="" loading="lazy" width="52" height="64">` : `<span class="thumb" data-tone="${esc(tone)}"></span>`; };
@@ -23,17 +25,23 @@ const when = iso => { const d = new Date(iso), now = new Date(), days = Math.flo
 // ---------- sign in ----------
 function gate() {
   $("[data-tabs]").hidden = true; $("[data-end]").hidden = true;
+  $("[data-office]").hidden = true;
+  const owner = state.ownerGate;
   main.innerHTML = `<form class="gate" data-login novalidate>
     <p class="meta">One Stop Shop</p><h1 class="h1">Back office</h1>
-    <label class="field"><span>Passcode</span><input class="input" id="passcode" name="passcode" type="password" autocomplete="current-password" required></label>
+    ${owner ? `<label class="field"><span>Owner passcode</span><input class="input" id="passcode" name="passcode" type="password" autocomplete="current-password" required></label>`
+      : `<label class="field"><span>Your name</span><input class="input" id="staffname" name="staffname" autocomplete="username" autocapitalize="words" spellcheck="false" maxlength="30" required></label>
+    <label class="field"><span>PIN, 6 digits</span><input class="input input--pin num" id="pin" name="pin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="current-password" required></label>`}
     <p class="err" role="alert" data-err></p>
-    <button class="btn" type="submit">Sign in</button></form>`;
-  $("#passcode").focus();
+    <button class="btn" type="submit">Sign in</button>
+    <button class="gate__swap" type="button" data-gate-swap>${owner ? "Sign in with your name and PIN" : "Owner? Use the passcode"}</button></form>`;
+  $(owner ? "#passcode" : "#staffname").focus();
 }
 document.addEventListener("submit", async e => {
   const f = e.target.closest("[data-login]"); if (!f) return; e.preventDefault();
-  try { await api("/login", { method: "POST", body: { passcode: f.passcode.value } }); state.in = true; await boot(); }
-  catch (err) { $("[data-err]", f).textContent = err.message; }
+  const btn = $('button[type="submit"]', f); btn.disabled = true;
+  try { await api("/login", { method: "POST", body: state.ownerGate ? { passcode: f.passcode.value } : { name: f.staffname.value, pin: f.pin.value } }); state.in = true; try { localStorage.setItem("oss:gate", state.ownerGate ? "owner" : "staff"); } catch {} await boot(); }
+  catch (err) { $("[data-err]", f).textContent = err.message; btn.disabled = false; if (f.pin) { f.pin.value = ""; f.pin.focus(); } }
 });
 
 // ---------- Today ----------
@@ -58,7 +66,7 @@ function viewHome(s) {
     <section><h2 class="h2">Needs you</h2><div class="needs">
       ${need(todo.to_pack, todo.to_pack === 1 ? "order to pack" : "orders to pack", "Open orders", "orders:todo")}
       ${need(todo.to_ship, todo.to_ship === 1 ? "packed order to send" : "packed orders to send", "Open orders", "orders:todo")}
-      ${need(todo.waiting_pickup, "waiting for pickup", "Open orders", "orders:todo")}
+      ${need(todo.waiting_pickup, "waiting for pickup", todo.pickup_overdue ? `${todo.pickup_overdue} waiting 3 days or more` : "Open orders", "orders:todo")}
       ${need(low, low === 1 ? "product low or out" : "products low or out", "Open stock", "stock:low")}</div></section>
     <section><h2 class="h2">Sales, last 30 days</h2>
       <div class="chart" role="img" aria-label="Daily sales for the last 30 days. Best day ${money(max, true)}.">${days.map((d, i) => `<i style="--h:${Math.round(d.cents / max * 100)};--i:${i}" class="${i === 29 ? "now" : i >= 23 ? "wk" : ""}" title="${fmt(d.day)}: ${money(d.cents, true)}"></i>`).join("")}</div>
@@ -94,12 +102,48 @@ function stockList() {
   const q = state.q.trim().toLowerCase();
   return state.products.filter(p => (state.cat === "all" || (state.cat === "low" ? p.active && p.stock <= p.low_stock_at : p.category_id === state.cat)) && (!q || (p.name + " " + p.sku).toLowerCase().includes(q)));
 }
+// Count and Receive: one number per row, typed on the phone's number pad. Enter (Next) saves the row and moves to the
+// next one, so a shelf can be counted without lifting a thumb off the keypad.
+function tallyRow(p) {
+  const c = catOf(p.category_id), count = state.smode === "count", done = count && state.counted.has(p.sku);
+  return `<div class="row tally ${p.active ? "" : "off"}" data-sku="${p.sku}">${thumb(p, c.tone)}
+    <span class="row__main"><span class="row__name">${esc(p.name)}</span><span class="row__meta">${p.sku} &middot; <span data-was>${count ? "On record" : "Now"} <b class="num">${p.stock}</b></span></span><span class="tally__say" data-say aria-live="polite">${done ? "Counted" : ""}</span></span>
+    <label class="tally__box"><span class="sr">${count ? "Counted on the shelf" : "Arrived"}, ${esc(p.name)}</span>${count ? "" : `<span class="tally__plus" aria-hidden="true">+</span>`}<input class="tally__in num" data-tally inputmode="numeric" pattern="[0-9]*" enterkeyhint="next" autocomplete="off" maxlength="5" placeholder="${count ? p.stock : ""}" data-seen="${p.stock}"></label></div>`;
+}
+const modeChip = (id, label) => `<button class="seg__b" type="button" data-smode="${id}" aria-pressed="${state.smode === id}">${label}</button>`;
+const MODE_HELP = { adjust: "", count: "Type what is on the shelf and press Next. The difference is saved as a count, with your name.", receive: "Type how many came in and press Next. Each one is added and saved with your name." };
 function viewStock() {
-  const list = stockList(), chip = (id, label) => `<button class="chip" type="button" data-cat="${id}" aria-pressed="${state.cat === id}">${esc(label)}</button>`;
-  return `<div class="tools"><h1 class="h1">Stock</h1>
-    <div class="tools__top"><input class="input" id="q" type="search" placeholder="Search stock" value="${esc(state.q)}" aria-label="Search stock"><button class="btn" type="button" data-new>Add product</button></div>
-    <div class="chips" role="group" aria-label="Section">${chip("all", "All " + state.products.length)}${chip("low", "Low or out")}${state.categories.map(c => chip(c.id, c.name)).join("")}</div></div>
-    <div class="rows" data-rows>${list.map(stockRow).join("") || `<p class="empty">Nothing matches. Clear the search or pick another section.</p>`}</div>`;
+  const list = stockList(), chip = (id, label) => `<button class="chip" type="button" data-cat="${id}" aria-pressed="${state.cat === id}">${esc(label)}</button>`, tally = state.smode !== "adjust";
+  const progress = state.smode === "count" ? `<p class="tally__progress num" data-progress>${state.counted.size} counted this session</p>` : "";
+  return `<div class="tools"><div class="tools__head"><h1 class="h1">Stock</h1><div class="seg" role="group" aria-label="What you are doing">${modeChip("adjust", "Adjust")}${modeChip("count", "Count")}${modeChip("receive", "Receive")}</div></div>
+    ${tally ? `<p class="tools__help">${MODE_HELP[state.smode]}</p>` : ""}
+    ${state.smode === "receive" ? `<label class="field tools__ref"><span>Delivery note or invoice number, optional</span><input class="input" id="recvref" value="${esc(state.recvRef)}" maxlength="60" autocomplete="off"></label>` : ""}
+    <div class="tools__top"><input class="input" id="q" type="search" placeholder="Search stock" value="${esc(state.q)}" aria-label="Search stock">${tally ? "" : `<button class="btn" type="button" data-new>Add product</button>`}</div>
+    <div class="chips" role="group" aria-label="Section">${chip("all", "All " + state.products.length)}${chip("low", "Low or out")}${state.categories.map(c => chip(c.id, c.name)).join("")}</div>${progress}</div>
+    <div class="rows" data-rows>${rowsHtml(list)}</div>`;
+}
+const rowsHtml = list => list.map(state.smode === "adjust" ? stockRow : tallyRow).join("") || `<p class="empty">Nothing matches. Clear the search or pick another section.</p>`;
+async function saveTally(input) {
+  const row = input.closest("[data-sku]"), p = state.products.find(x => x.sku === row.dataset.sku), say = $("[data-say]", row), raw = input.value.trim();
+  if (raw === "" || input.dataset.busy) return true;
+  if (!/^\d{1,5}$/.test(raw)) { say.textContent = "Numbers only"; say.className = "tally__say bad"; return false; }
+  const n = +raw, count = state.smode === "count";
+  if (!count && n === 0) { input.value = ""; return true; }
+  input.dataset.busy = "1"; say.textContent = "Saving"; say.className = "tally__say";
+  try {
+    const op = input.dataset.op || (input.dataset.op = opKey());
+    const r = count ? await api(`/products/${p.sku}/count`, { method: "POST", body: { counted: n, seen: +input.dataset.seen, op } })
+      : await api(`/products/${p.sku}/receive`, { method: "POST", body: { qty: n, ref: state.recvRef, op } });
+    p.stock = r.stock; delete input.dataset.op; input.dataset.seen = r.stock;
+    if (count) { state.counted.add(p.sku); const d = r.delta; say.textContent = d === null || d === undefined ? "Counted" : d === 0 ? "Counted, matches" : `Counted, ${d > 0 ? "+" : "−"}${Math.abs(d)}`; say.className = "tally__say " + (d ? "diff" : "ok"); input.value = ""; input.placeholder = r.stock; const pg = $("[data-progress]"); if (pg) pg.textContent = `${state.counted.size} counted this session`; }
+    else { say.textContent = `+${n} in, now ${r.stock}`; say.className = "tally__say ok"; input.value = ""; }
+    $("[data-was] b", row).textContent = r.stock;
+    return true;
+  } catch (er) {
+    if (er.status && er.status < 500) delete input.dataset.op;   // a lost answer keeps its key: tapping again cannot add the delivery twice
+    if (er.data && typeof er.data.stock === "number") { p.stock = er.data.stock; input.dataset.seen = er.data.stock; $("[data-was] b", row).textContent = er.data.stock; input.placeholder = count ? er.data.stock : ""; }
+    say.textContent = er.message; say.className = "tally__say bad"; return false;
+  } finally { delete input.dataset.busy; }
 }
 function editSheet(p) {
   const isNew = !p, d = p ? JSON.parse(p.details || "{}") : {}, c = p ? catOf(p.category_id) : state.categories[0];
@@ -125,10 +169,12 @@ function editSheet(p) {
     <label class="check"><input type="checkbox" name="active" ${p.active ? "checked" : ""}> Show in the store</label>
     <p class="err" role="alert" data-err></p>
     <div class="sheet__act"><button class="btn" type="submit">${isNew ? "Add product" : "Save"}</button><button class="btn btn--ghost" type="button" data-close>Cancel</button></div>
-    ${isNew ? "" : `<section><h3 class="meta" style="margin-bottom:var(--s-2)">Stock history</h3><div class="hist" data-hist><div><span>Loading</span></div></div></section>`}</form>`;
+    ${isNew ? "" : `<section><h3 class="meta" style="margin-bottom:var(--s-2)">Stock history</h3><div class="hist" data-hist><div><span>Loading</span></div></div></section><section><h3 class="meta" style="margin-bottom:var(--s-2)">Edits</h3><div class="hist" data-changes><div><span>None yet.</span></div></div></section>`}</form>`;
   sheet.showModal();
-  if (!isNew) api(`/products/${p.sku}/history`).then(r => { const h = $("[data-hist]", sheet); if (h) h.innerHTML = r.moves.map(m => `<div><span>${esc(m.reason[0].toUpperCase() + m.reason.slice(1))}, ${when(m.at)}</span><b class="num">${m.delta > 0 ? "+" : ""}${m.delta}</b></div>`).join("") || `<div><span>No changes yet.</span></div>`; }).catch(() => {});
+  if (!isNew) api(`/products/${p.sku}/history`).then(r => { const h = $("[data-hist]", sheet); if (h) h.innerHTML = r.moves.map(m => `<div><span>${esc(MOVE[m.reason] ? MOVE[m.reason](m) : m.reason)}, ${esc(who(m.actor))}, ${when(m.at)}</span><b class="num">${m.delta > 0 ? "+" : ""}${m.delta}</b></div>`).join("") || `<div><span>No changes yet.</span></div>`;
+    const c = $("[data-changes]", sheet); if (c && r.changes && r.changes.length) c.innerHTML = trailHtml(r.changes); }).catch(() => {});
 }
+const MOVE = { count: m => m.delta ? "Counted" : "Counted, matched", received: m => "Received" + (m.ref ? ` (${m.ref})` : ""), sale: m => `Sold, order ${m.ref || ""}`, released: m => /^W/.test(m.ref || "") ? `Back from cancelled order ${m.ref}` : "Put back", correction: () => "Adjusted", damaged: () => "Damaged", return: () => "Returned" };
 const cents = v => { const n = Math.round(parseFloat(String(v).replace(/[$,\s]/g, "")) * 100); return Number.isFinite(n) ? n : null; };
 document.addEventListener("submit", async e => {
   const f = e.target.closest("[data-product]"); if (!f) return; e.preventDefault();
@@ -172,27 +218,45 @@ const dropCard = o => {
     ${a.line1 ? `<p class="drop__addr">${esc(a.line1)}<br>${esc(a.city)}, ${esc(a.province)} ${esc(a.postal)}</p>` : ""}${from ? `<p class="drop__from">${from}</p>` : ""}
     <div class="drop__act">${o.phone ? `<a class="btn" href="tel:${esc(String(o.phone).replace(/[^\d+]/g, ""))}">Call ${esc(o.phone)}</a>` : ""}${where ? `<a class="btn btn--ghost" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(where)}" target="_blank" rel="noopener">Open in Maps</a>` : ""}</div></section>`;
 };
+const waitDays = o => o.status === "ready" && (o.ready_at || o.updated_at) ? Math.floor((Date.now() - Date.parse(o.ready_at || o.updated_at)) / 864e5) : 0;
+const REASON = { no_show: "Not picked up", customer: "Customer asked", other: "Other" };
+const pj = s => { try { return JSON.parse(s || "{}") || {}; } catch { return {}; } };
+const FIELD = { price_cents: "price", cost_cents: "cost", low_stock_at: "warning level", category_id: "section", ship_class: "shipping", note: "description", weight_g: "weight", box_id: "box" };
+const ACTION = { "order.status": a => `Marked ${(pj(a.after).status || "").replace("ready", "ready for pickup")}`, "order.cancel": a => `Cancelled: ${(REASON[pj(a.after).reason] || "").toLowerCase()}`, "order.id_check": a => pj(a.after).checked ? "ID checked" : "ID tick removed",
+  "product.edit": a => `Edited ${Object.keys(pj(a.after)).map(k => FIELD[k] || k.replace(/_/g, " ")).join(", ")}`, "product.create": () => "Added to the store", "product.photo": () => "New photo" };
+const trailHtml = list => list.map(a => `<div><span>${esc((ACTION[a.action] || (() => a.action))(a))}, ${esc(who(a.actor))}</span><span class="num">${when(a.at)}</span></div>`).join("");
 const NEXT = o => ({ paid: o.method === "pickup" ? ["ready", "Mark ready for pickup"] : ["packed", "Mark packed"], packed: ["shipped", isLocal(o) ? "Mark out for delivery" : "Mark shipped"], ready: ["collected", "Mark collected"] }[o.status]);
 function viewOrders() {
   const todo = o => ["paid", "packed", "ready"].includes(o.status), list = state.orders.filter(o => state.oflt === "all" || (state.oflt === "todo" ? todo(o) : !todo(o)));
   const chip = (id, label) => `<button class="chip" type="button" data-oflt="${id}" aria-pressed="${state.oflt === id}">${label}</button>`;
   return `<div class="tools"><h1 class="h1">Orders<span class="sample">Sample orders</span></h1><div class="chips" role="group" aria-label="Filter">${chip("todo", "To do " + state.orders.filter(todo).length)}${chip("done", "Finished")}${chip("all", "All " + state.orders.length)}</div></div>
-    <div class="rows">${list.map(o => { const k = ORDER_STATE[o.status][0], label = stateLabel(o); return `<button class="row order" type="button" data-order="${o.id}"><span class="row__main"><span class="row__name">${esc(o.name)}</span><span class="row__meta">${o.id} &middot; ${when(o.created_at)} &middot; ${o.units} ${o.units === 1 ? "item" : "items"} &middot; ${o.method === "pickup" ? "Pickup" : isLocal(o) ? "Delivery" : esc(o.tax_province || "")}</span></span><span class="order__r"><b class="num">${money(o.total_cents)}</b><span class="state ${k}">${label}</span></span></button>`; }).join("") || `<p class="empty">Nothing waiting. New orders show up here.</p>`}</div>`;
+    <div class="rows">${list.map(o => { const k = ORDER_STATE[o.status][0], label = stateLabel(o); return `<button class="row order" type="button" data-order="${o.id}"><span class="row__main"><span class="row__name">${esc(o.name)}</span><span class="row__meta">${o.id} &middot; ${when(o.created_at)} &middot; ${o.units} ${o.units === 1 ? "item" : "items"} &middot; ${o.method === "pickup" ? "Pickup" : isLocal(o) ? "Delivery" : esc(o.tax_province || "")}${waitDays(o) >= 3 ? ` &middot; <b class="wait">waiting ${waitDays(o)} days</b>` : ""}</span></span><span class="order__r"><b class="num">${money(o.total_cents)}</b><span class="state ${k}">${label}</span></span></button>`; }).join("") || `<p class="empty">Nothing waiting. New orders show up here.</p>`}</div>`;
 }
 async function orderSheet(id) {
-  const { order: o, items, emails = [] } = await api("/orders/" + id), k = ORDER_STATE[o.status][0], label = stateLabel(o), next = NEXT(o);
+  const { order: o, items, emails = [], trail = [] } = await api("/orders/" + id), k = ORDER_STATE[o.status][0], label = stateLabel(o), next = NEXT(o);
+  const charcoal = items.some(i => i.category_id === "heat" || /"charcoal":true/.test(i.details || "")), canCancel = ["paid", "packed", "ready"].includes(o.status), wait = waitDays(o), units = items.reduce((a, i) => a + i.qty, 0), src = pj(o.source_detail);
   sheet.innerHTML = `<div class="sheet__in" data-ordersheet="${o.id}">
     <div class="sheet__top"><div><p class="meta">Order ${o.id} &middot; ${when(o.created_at)}</p><h2 class="h2" style="margin:0">${esc(o.name)}</h2><span class="state ${k}">${label}</span></div><button class="sheet__x" type="button" data-close>Close</button></div>
     ${dropCard(o)}
-    ${items.some(i => i.category_id === "heat" || /"charcoal":true/.test(i.details || "")) ? `<p class="fineprint" data-staff-note>Charcoal order. Check ID if the customer looks young.</p>` : ""}
+    ${wait >= 3 ? `<p class="remind" data-remind><b>Waiting ${wait} days.</b> A friendly call usually does it. We hold pickups for 14 days.</p>` : ""}
+    ${o.status === "cancelled" ? `<p class="remind"><b>Cancelled${o.cancel_reason ? ", " + esc(REASON[o.cancel_reason].toLowerCase()) : ""}.</b> ${o.cancelled_by ? `By ${esc(who(o.cancelled_by))}, ${when(o.cancelled_at)}.` : ""} ${o.cancel_note ? esc(o.cancel_note) : ""}${o.cancelled_by ? " The stock went back on the shelf." : ""}</p>` : ""}
+    ${charcoal ? `<div class="idcheck" data-staff-note><p>Charcoal order. Check ID if the customer looks young.</p><label class="check"><input type="checkbox" data-idcheck ${o.id_checked_at ? "checked" : ""}> ID checked</label><p class="fineprint">${o.id_checked_at ? `By ${esc(who(o.id_checked_by))}, ${when(o.id_checked_at)}. ` : ""}Staff only: customers never see this.</p></div>` : ""}
     <div class="rows items">${items.map(i => `<div class="row">${thumb(i, catOf((state.products.find(p => p.sku === i.sku) || {}).category_id).tone)}<span class="row__main"><span class="row__name">${esc(i.name)}</span><span class="row__meta">${i.sku}${i.box_id ? " &middot; box " + esc(i.box_id) : ""}</span></span><span class="num"><b style="color:var(--color-strong)">${i.qty}</b> &times; ${money(i.unit_cents)}</span></div>`).join("")}</div>
     <dl class="facts"><div><dt>Items</dt><dd class="num">${money(o.subtotal_cents)}</dd></div><div><dt>${o.method === "pickup" ? "Pickup at the counter" : isLocal(o) ? "Local delivery" : "Shipping, " + esc(o.ship_service || "")}</dt><dd class="num">${o.method === "pickup" || (isLocal(o) && !o.shipping_cents) ? "Free" : money(o.shipping_cents)}</dd></div>
       <div><dt>Tax, ${esc(o.tax_province || "")}</dt><dd class="num">${money(o.tax_cents)}</dd></div><div><dt><b style="color:var(--color-strong)">Total paid</b></dt><dd class="num"><b>${money(o.total_cents)}</b></dd></div>
-      ${o.tracking ? `<div><dt>Tracking</dt><dd class="num">${esc(o.tracking)}</dd></div>` : ""}${dropInfo(o)}</dl>
+      ${o.tracking ? `<div><dt>Tracking</dt><dd class="num">${esc(o.tracking)}</dd></div>` : ""}${dropInfo(o)}
+      <div><dt>Found us through</dt><dd>${esc(o.source || "Not recorded")}${src.landing && src.landing !== "/" ? `, first page ${esc(src.landing)}` : ""}</dd></div></dl>
+    ${trail.length ? `<section><h3 class="meta" style="margin-bottom:var(--s-2)">Who did what</h3><div class="hist">${trailHtml(trail)}</div></section>` : ""}
     <section><h3 class="meta" style="margin-bottom:var(--s-2)">Emails to the customer</h3><div class="hist">${emails.map(e => `<button class="mailrow" type="button" data-mail="${e.id}"><span>${esc(MAIL[e.kind] || e.kind)}, ${when(e.at)}</span><span class="state ${e.status === "sent" ? "done" : e.status === "failed" ? "out" : "low"}">${e.status === "sent" ? "Sent" : e.status === "failed" ? "Failed" : "Written, not sent"}</span></button>`).join("") || `<div><span>None yet.</span></div>`}</div>
       ${emails.some(e => e.status === "held") ? `<p class="fineprint">Emails are written and kept here. They start sending once the shop's mail service is connected.</p>` : ""}<div data-mailview></div></section>
     <p class="err" role="alert" data-err></p>
-    <div class="sheet__act">${next ? `<button class="btn" type="button" data-next="${next[0]}">${next[1]}</button>` : ""}<button class="btn btn--ghost" type="button" data-close>Close</button></div></div>`;
+    <div class="sheet__act">${next ? `<button class="btn" type="button" data-next="${next[0]}">${next[1]}</button>` : ""}<button class="btn btn--ghost" type="button" data-close>Close</button></div>
+    ${canCancel ? `<details class="cancel"><summary>Cancel this order</summary><form data-cancel novalidate>
+      <fieldset class="cancel__why"><legend class="meta">Why</legend>${Object.entries(REASON).map(([v, l]) => `<label class="check"><input type="radio" name="reason" value="${v}"> ${l}</label>`).join("")}</fieldset>
+      <label class="field"><span>Note (needed for Other)</span><input class="input" name="note" maxlength="200" autocomplete="off"></label>
+      <p class="fineprint">The order stays on record, marked cancelled with your name. Nothing is emailed to the customer.</p>
+      <p class="err" role="alert" data-cerr></p>
+      <button class="btn btn--danger" type="submit">Cancel ${o.id} and put ${units} ${units === 1 ? "item" : "items"} back</button></form></details>` : ""}</div>`;
   if (!sheet.open) sheet.showModal();
 }
 
@@ -202,6 +266,36 @@ async function mailView(id) {
   const { email: e } = await api("/emails/" + id);
   box.innerHTML = `<p class="fineprint" style="margin-top:var(--s-4)">To ${esc(e.recipient)} &middot; ${esc(e.subject)}</p><iframe class="mail" title="Email preview" sandbox=""></iframe>`;
   $("iframe", box).srcdoc = e.html; // sandboxed: the preview cannot run scripts or touch the back office
+}
+// ---------- Office (owner only): the monthly report, the 5% basis, the team ----------
+const shiftMonth = (mo, d) => { const [y, m] = mo.split("-").map(Number), t = new Date(Date.UTC(y, m - 1 + d, 1)); return t.toISOString().slice(0, 7); };
+const monthName = mo => new Date(mo + "-15T12:00:00Z").toLocaleDateString("en-CA", { month: "long", year: "numeric", timeZone: "UTC" });
+function viewOffice(r, staff, settings) {
+  const s = r.studio, mo = r.month, thisMonth = new Date(Date.now() - 5 * 36e5).toISOString().slice(0, 7), pct = (s.rate_bp / 100).toLocaleString("en-CA");
+  const line = (label, n, c, cls = "") => `<tr class="${cls}"><td>${label}</td><td class="r num">${n}</td><td class="r num">${money(c)}</td></tr>`;
+  const smax = Math.max(1, ...r.sources.map(x => x.subtotal));
+  return `<div class="office">
+    <section class="hero wide"><div class="month"><button class="month__b" type="button" data-month="${shiftMonth(mo, -1)}" aria-label="Month before">&larr;</button><p class="meta" aria-live="polite">${monthName(mo)}</p>${mo < thisMonth ? `<button class="month__b" type="button" data-month="${shiftMonth(mo, 1)}" aria-label="Next month">&rarr;</button>` : `<span class="month__b" aria-hidden="true"></span>`}</div>
+      <h1 class="hero__fig num"><sup>$</sup>${money(s.share_cents).slice(1)}</h1>
+      <p class="hero__sub">studio share: ${pct}% of the ${esc(s.basis_label)}, ${money(s.basis_cents)}</p>
+      <p class="fineprint">The basis waits on the owner's written confirmation. Set by ${esc(who(s.basis_set_by))}${s.basis_set_at ? ", " + when(s.basis_set_at) : ""}.</p></section>
+    <section><h2 class="h2">Online sales</h2><table class="ledger"><thead><tr><th scope="col">${monthName(mo)}</th><th scope="col" class="r">Orders</th><th scope="col" class="r">Items, before tax and delivery</th></tr></thead><tbody>
+      ${line("Paid orders", r.sales.orders, r.sales.subtotal)}
+      ${line("Cancelled or refunded", r.refunds.orders, -r.refunds.subtotal, r.refunds.orders ? "minus" : "")}
+      ${line("<b>Net</b>", r.net.orders, r.net.subtotal, "net")}</tbody></table>
+      <dl class="facts"><div><dt>Delivery and shipping charged, net</dt><dd class="num">${money(r.net.delivery)}</dd></div><div><dt>Tax collected, net</dt><dd class="num">${money(r.net.tax)}</dd></div><div><dt>Total paid by customers, net</dt><dd class="num">${money(r.net.total)}</dd></div></dl>
+      <p class="fineprint"><a href="/api/admin/report.csv?month=${mo}" download>Download ${monthName(mo)} as a spreadsheet (CSV)</a>: every order and refund line, the totals and the share.</p></section>
+    <section><h2 class="h2">Where orders came from</h2>${r.sources.map(x => `<div class="prov src"><b>${esc(x.source)}</b><span style="--w:${Math.round(Math.max(0, x.subtotal) / smax * 100)}"></span><i class="num">${x.orders}</i><i class="num">${money(x.subtotal, true)}</i></div>`).join("") || `<p class="empty">No online orders in ${monthName(mo)}.</p>`}
+      <p class="fineprint">From the first visit's link: ?src=card on the business card, utm_source=gbp on Google, or the site that sent them.</p></section>
+    <section><h2 class="h2">Studio share basis</h2><fieldset class="basis"><legend class="sr">What the studio share is worked out on</legend>
+      <label class="check"><input type="radio" name="basis" value="subtotal" data-basis ${settings.studio_share_basis !== "total" ? "checked" : ""}> Items subtotal, before tax and delivery</label>
+      <label class="check"><input type="radio" name="basis" value="total" data-basis ${settings.studio_share_basis === "total" ? "checked" : ""}> Full total paid, with tax and delivery</label></fieldset></section>
+    <section class="wide team"><h2 class="h2">Team</h2>
+      <div class="rows">${staff.map(p => `<div class="row staff"><span class="row__main"><span class="row__name">${esc(p.name)}</span><span class="row__meta">${p.last_in ? "Last in " + when(p.last_in) : "Not signed in yet"} &middot; added ${when(p.created_at)}</span></span><span class="staff__act"><button class="bar__link" type="button" data-repin="${p.id}" data-name="${esc(p.name)}">New PIN</button><button class="bar__link" type="button" data-unstaff="${p.id}" data-name="${esc(p.name)}">Remove</button></span></div>`).join("") || `<p class="empty">No staff yet. Add the first person below; they sign in with their name and PIN.</p>`}</div>
+      <form class="addstaff" data-addstaff novalidate><label class="field"><span>First name</span><input class="input" name="sname" maxlength="30" autocomplete="off" required></label>
+        <label class="field"><span>PIN, 6 digits</span><input class="input num" name="spin" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="new-password" required></label>
+        <button class="btn" type="submit">Add</button><p class="err" role="alert" data-err></p></form>
+      <p class="fineprint">Every stock count, price change and order step is saved with the name of whoever made it. Removing someone ends their sign-in at once.</p></section></div>`;
 }
 // ---------- shell ----------
 async function loadProducts() { const r = await api("/products"); state.products = r.products; state.categories = r.categories; state.boxes = r.boxes; }
@@ -214,11 +308,14 @@ async function render() {
   chrome();
   if (state.tab === "stock") main.innerHTML = viewStock();
   else if (state.tab === "orders") main.innerHTML = viewOrders();
+  else if (state.tab === "office" && state.me.owner) { const [r, st, se] = await Promise.all([api("/report?month=" + (state.month || "")), api("/staff"), api("/settings")]); state.month = r.month; if (state.tab === "office") main.innerHTML = viewOffice(r, st.staff, se.settings); }
   else { const s = await api("/summary"); if (state.tab === "home") main.innerHTML = viewHome(s); }
 }
 async function boot() {
   try { await Promise.all([loadProducts(), loadOrders()]); } catch { return; }
-  state.in = true; $("[data-tabs]").hidden = false; $("[data-end]").hidden = false; await render();
+  try { state.me = await api("/me"); } catch { return; }
+  state.in = true; $("[data-tabs]").hidden = false; $("[data-end]").hidden = false; $("[data-office]").hidden = !state.me.owner; $("[data-tabs]").classList.toggle("tabs--4", state.me.owner);
+  $("[data-who]").textContent = who(state.me.actor); if (!state.me.owner && state.tab === "office") state.tab = "home"; await render();
 }
 document.addEventListener("click", async e => {
   const t = e.target;
@@ -228,23 +325,56 @@ document.addEventListener("click", async e => {
   if ((el = t.closest("[data-cat]"))) { state.cat = el.dataset.cat; return render(); }
   if ((el = t.closest("[data-oflt]"))) { state.oflt = el.dataset.oflt; return render(); }
   if (t.closest("[data-new]")) return editSheet(null);
+  if ((el = t.closest("[data-smode]"))) { state.smode = el.dataset.smode; await render(); return; }
+  if (t.closest("[data-gate-swap]")) { state.ownerGate = !state.ownerGate; return gate(); }
+  if ((el = t.closest("[data-month]"))) { state.month = el.dataset.month; return render(); }
+  if ((el = t.closest("[data-unstaff]"))) { const n = el.dataset.name; if (!confirm(`Remove ${n}? Their sign-in stops now. Their past changes keep their name.`)) return; try { await api(`/staff/${el.dataset.unstaff}`, { method: "DELETE", body: {} }); toast(`${n} removed.`); render(); } catch (er) { toast(er.message); } return; }
+  if ((el = t.closest("[data-repin]"))) { const pin = prompt(`New 6-digit PIN for ${el.dataset.name}`); if (pin === null) return; try { await api(`/staff/${el.dataset.repin}/pin`, { method: "POST", body: { pin: pin.trim() } }); toast("PIN changed. Their old sign-ins ended."); } catch (er) { toast(er.message); } return; }
   if ((el = t.closest("[data-edit]"))) return editSheet(state.products.find(p => p.sku === el.dataset.edit));
   if ((el = t.closest("[data-order]"))) return orderSheet(el.dataset.order).catch(er => toast(er.message));
   if ((el = t.closest("[data-mail]"))) return mailView(el.dataset.mail).catch(er => toast(er.message));
   if (t.closest("[data-close]")) return sheet.close();
-  if (t.closest("[data-logout]")) { await api("/logout", { method: "POST", body: {} }).catch(() => {}); state.in = false; return gate(); }
+  if (t.closest("[data-logout]")) { await api("/logout", { method: "POST", body: {} }).catch(() => {}); state.in = false; state.tab = "home"; state.smode = "adjust"; state.counted = new Set(); state.month = null; sheet.open && sheet.close(); return gate(); }   // the next person starts fresh
   if ((el = t.closest("[data-next]"))) { const id = el.closest("[data-ordersheet]").dataset.ordersheet; el.disabled = true;
     try { await api(`/orders/${id}/status`, { method: "POST", body: { status: el.dataset.next } }); await loadOrders(); await orderSheet(id); render(); toast("Order updated."); } catch (er) { $("[data-err]", sheet).textContent = er.message; el.disabled = false; } return; }
   if ((el = t.closest("[data-step]"))) {
     const row = el.closest("[data-sku]"), p = state.products.find(x => x.sku === row.dataset.sku), delta = +el.dataset.step, before = p.stock;
     if (p.stock + delta < 0) return;
     p.stock += delta; paintRow(row, p); // show it at once, then confirm with the store
-    try { const r = await api(`/products/${p.sku}/stock`, { method: "POST", body: { delta, reason: "correction" } }); p.stock = r.stock; paintRow(row, p); }
+    try { const r = await api(`/products/${p.sku}/stock`, { method: "POST", body: { delta, reason: "correction", op: opKey() } }); p.stock = r.stock; paintRow(row, p); }
     catch (er) { p.stock = er.data && typeof er.data.stock === "number" ? er.data.stock : before; paintRow(row, p); toast(er.message); }
   }
 });
 function paintRow(row, p) { const [k, label] = stockState(p), s = $("[data-state]", row); $("output", row).textContent = p.stock; s.className = "state " + k; s.textContent = label; $('[data-step="-1"]', row).disabled = p.stock <= 0; }
-let qT; document.addEventListener("input", e => { if (e.target.id !== "q") return; state.q = e.target.value; clearTimeout(qT); qT = setTimeout(() => { const rows = $("[data-rows]"); if (rows) rows.innerHTML = stockList().map(stockRow).join("") || `<p class="empty">Nothing matches. Clear the search or pick another section.</p>`; }, 80); });
+let qT; document.addEventListener("input", e => { if (e.target.id !== "q") return; state.q = e.target.value; clearTimeout(qT); qT = setTimeout(() => { const rows = $("[data-rows]"); if (rows) rows.innerHTML = rowsHtml(stockList()); }, 80); });
 sheet.addEventListener("click", e => { if (e.target === sheet) sheet.close(); });
+document.addEventListener("keydown", async e => {
+  if (e.key !== "Enter" || !e.target.matches("[data-tally]")) return; e.preventDefault();
+  const ok = await saveTally(e.target); if (!ok) return;
+  const all = $$("[data-tally]"), next = all[all.indexOf(e.target) + 1]; if (next) next.focus(); else e.target.blur();
+});
+document.addEventListener("focusout", e => { if (e.target.matches("[data-tally]") && e.target.value.trim() && !e.target.dataset.busy) saveTally(e.target); });
+document.addEventListener("change", async e => {
+  if (e.target.id === "recvref") { state.recvRef = e.target.value.trim(); return; }
+  if (e.target.matches("[data-basis]")) { try { await api("/settings", { method: "PUT", body: { studio_share_basis: e.target.value } }); toast("Saved. The report is worked out again."); render(); } catch (er) { toast(er.message); } return; }
+  if (!e.target.matches("[data-idcheck]")) return;
+  const id = e.target.closest("[data-ordersheet]").dataset.ordersheet, on = e.target.checked; e.target.disabled = true;
+  try { await api(`/orders/${id}/id-check`, { method: "POST", body: { checked: on } }); await orderSheet(id); } catch (er) { e.target.checked = !on; e.target.disabled = false; toast(er.message); }
+});
+document.addEventListener("submit", async e => {
+  const f = e.target.closest("[data-cancel]"); if (!f) return; e.preventDefault();
+  const id = f.closest("[data-ordersheet]").dataset.ordersheet, err = $("[data-cerr]", f), reason = (f.querySelector('input[name="reason"]:checked') || {}).value;
+  if (!reason) return err.textContent = "Pick why it is cancelled.";
+  if (reason === "other" && !f.note.value.trim()) return err.textContent = "Say why in a few words.";
+  const btn = $('button[type="submit"]', f); btn.disabled = true; f.dataset.op = f.dataset.op || opKey();
+  try { const r = await api(`/orders/${id}/cancel`, { method: "POST", body: { reason, note: f.note.value, op: f.dataset.op } }); await Promise.all([loadOrders(), loadProducts()]); await orderSheet(id); render(); toast(r.replayed ? "Already cancelled." : "Cancelled. The stock is back on the shelf."); }
+  catch (er) { err.textContent = er.message; btn.disabled = false; }
+});
+document.addEventListener("submit", async e => {
+  const f = e.target.closest("[data-addstaff]"); if (!f) return; e.preventDefault();
+  const err = $("[data-err]", f), btn = $('button[type="submit"]', f); btn.disabled = true;
+  try { const r = await api("/staff", { method: "POST", body: { name: f.sname.value, pin: f.spin.value } }); toast(`${r.name} can sign in now.`); render(); }
+  catch (er) { err.textContent = er.message; btn.disabled = false; }
+});
 
 api("/products").then(() => boot()).catch(() => { if (!state.in) gate(); });
