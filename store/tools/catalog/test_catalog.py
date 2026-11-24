@@ -20,13 +20,17 @@ MIG = C.STORE / "migrations"
 
 
 def fresh_db(path: Path, with_0005=True):
+    # every migration in order (the seed clears the account and back-office tables too), the two catalogue ones only
+    # when asked: a database without them is what the import must refuse
     con = sqlite3.connect(path, isolation_level=None)
-    for f in ("0001_init.sql", "0002_photos.sql", "0003_emails_sessions.sql"):
-        con.executescript((MIG / f).read_text(encoding="utf-8"))
+    catalogue = ("0005_catalog.sql", "0006_listed.sql")
+    for f in sorted(p.name for p in MIG.glob("0*.sql")):
+        if f not in catalogue:
+            con.executescript((MIG / f).read_text(encoding="utf-8"))
     con.executescript((C.STORE / "seed" / "seed.sql").read_text(encoding="utf-8"))
     if with_0005:
-        con.executescript((MIG / "0005_catalog.sql").read_text(encoding="utf-8"))
-        con.executescript((MIG / "0006_listed.sql").read_text(encoding="utf-8"))
+        for f in catalogue:
+            con.executescript((MIG / f).read_text(encoding="utf-8"))
     return con
 
 

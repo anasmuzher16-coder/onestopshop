@@ -66,7 +66,7 @@ tick); pages 26, 36 and 57 are `stamped` with `needs_shop` because a small secon
 Ace group (Full size, Stem set, Compact and travel, Statement piece) is a written rule (`rule v1`), to confirm.
 
 Photo status: `ready`; `CHECK` (enlarged past 1.25x: ask Ace for the original); `hand_crop` (products touch, needs a
-drawn crop); `needs_original` (enlarged past 2x: held back, never shipped); `family_hero_only` (no photo of this colour, the family's main photo stands in); `none`;
+drawn crop); `needs_original` (enlarged past 2x). Owner ruling 2026-11-24: `CHECK`, `needs_original` and `hand_crop` photos all go up as the main photo with "Photo to be upscaled"; `family_hero_only` (no photo of this colour, the family's main photo stands in); `none`;
 `needs_store_photo` (charcoal and foil).
 
 ## SKUs: OSS-SSNNNN

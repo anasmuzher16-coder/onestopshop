@@ -47,9 +47,9 @@ def build_ace(reg, pdf: Path, photos_manifest, day):
     hero = {}     # family -> img name of its hero shot
     if photos_manifest:
         for im in photos_manifest.get("images", []):
-            if im.get("variant_key") and im.get("status") in ("ready", "CHECK"):
+            if im.get("variant_key") and im.get("status") in USABLE_PHOTO:
                 assign.setdefault(im["variant_key"], im)
-            if im.get("role") == "hero" and im.get("status") in ("ready", "CHECK"):
+            if im.get("role") == "hero" and im.get("status") in USABLE_PHOTO:
                 hero.setdefault(im["family_id"], im["out"])
     live = set()
     out = []
@@ -209,7 +209,9 @@ def public_group(f):
     return src_ace.group_for(f["supplier_ref"]["v"], None, tags)[0]
 
 
-USABLE_PHOTO = ("ready", "CHECK")   # held, hand-crop and gallery-only images are never a main photo
+USABLE_PHOTO = ("ready", "CHECK", "needs_original", "hand_crop")   # gallery-only images are never a main photo
+# owner, 2026-11-24: blurry or over-enlarged (CHECK), held (needs_original) and hand-crop photos go up labelled "Photo to be upscaled"
+UPSCALE_PHOTO = ("CHECK", "needs_original", "hand_crop")
 
 
 def hero_colour(f):
@@ -224,14 +226,14 @@ def hero_colour(f):
 
 def photo_labels(m):
     """Every Ace photo that goes up with a label (owner, 2026-11-24), so the shop can replace it later:
-    upscale = enlarged past 1.25x (CHECK), shown with "Photo to be upscaled";
+    upscale = enlarged past 1.25x (CHECK), held past 2x, or a hand crop, shown with "Photo to be upscaled";
     shown_in = a colour with no photo of its own, shown with its family's photo and "Shown in <colour>"."""
     out = []
     for f in m["families"]:
         shown, _ = hero_colour(f)
         for v in f["variants"]:
             st = v["photo"]["status"]
-            if st == "CHECK":
+            if st in UPSCALE_PHOTO:
                 out.append({"sku": v["sku"], "family": f["family_id"], "photo_status": "upscale", "img": v["photo"]["img"]})
             elif st == "family_hero_only" and v["photo"]["img"]:
                 out.append({"sku": v["sku"], "family": f["family_id"], "photo_status": "shown_in", "img": v["photo"]["img"], "shown_in": shown or None})
@@ -273,13 +275,13 @@ def desired_rows(supplier: str, m):
             st = v["photo"]["status"]
             facts["photo"] = "own" if st in USABLE_PHOTO and v["photo"]["img"] else ("family" if st == "family_hero_only" and v["photo"]["img"] else "none")
             # the label the photo carries on the site (owner, 2026-11-24): "Photo to be upscaled", or "Shown in <colour>"
-            if facts["photo"] == "own" and st == "CHECK":
+            if facts["photo"] == "own" and st in UPSCALE_PHOTO:
                 facts["photo_label"] = "upscale"
             elif facts["photo"] == "family":
                 shown, hst = hero_colour(f)
                 facts["photo_label"] = "shown_in"
                 facts["shown_in"] = shown or None
-                if hst == "CHECK":
+                if hst in UPSCALE_PHOTO:
                     facts["photo_upscale"] = True
             facts["colour_confirmed"] = bool(shop["colour_confirmed"]["v"])   # a photo's guess is shown as "Colours TBD", never as fact
             if facts["photo"] == "own" and v["photo"]["img"] in hexes:

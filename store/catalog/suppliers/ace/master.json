@@ -2470,13 +2470,13 @@
       "src": "pdf:ace-2026-10#p32:colour square 1 fill (chip colour only; never a colour name)"
      },
      "colour": {
-      "v": null,
-      "src": null
+      "v": "bronze",
+      "src": "photo:ace/ace-connoisseur-bronze (p32 xref 3006), dominant colour; human-confirm"
      },
      "photo": {
-      "img": null,
-      "status": "none",
-      "src": null
+      "img": "ace/ace-connoisseur-bronze",
+      "status": "hand_crop",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
      },
      "shop": {
       "price_cents": {
@@ -2739,13 +2739,13 @@
       "src": "pdf:ace-2026-10#p35:colour square 1 fill (chip colour only; never a colour name)"
      },
      "colour": {
-      "v": null,
-      "src": null
+      "v": "yellow",
+      "src": "photo:ace/ace-techno-yellow (p35 xref 3113), dominant colour; human-confirm"
      },
      "photo": {
-      "img": null,
-      "status": "none",
-      "src": null
+      "img": "ace/ace-techno-yellow",
+      "status": "needs_original",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
      },
      "shop": {
       "price_cents": {
@@ -2786,13 +2786,13 @@
       "src": "pdf:ace-2026-10#p35:colour square 2 fill (chip colour only; never a colour name)"
      },
      "colour": {
-      "v": null,
-      "src": null
+      "v": "red",
+      "src": "photo:ace/ace-techno-red (p35 xref 3113), dominant colour; human-confirm"
      },
      "photo": {
-      "img": null,
-      "status": "none",
-      "src": null
+      "img": "ace/ace-techno-red",
+      "status": "needs_original",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
      },
      "shop": {
       "price_cents": {
@@ -2833,13 +2833,13 @@
       "src": "pdf:ace-2026-10#p35:colour square 3 fill (chip colour only; never a colour name)"
      },
      "colour": {
-      "v": null,
-      "src": null
+      "v": "blue",
+      "src": "photo:ace/ace-techno-blue (p35 xref 3113), dominant colour; human-confirm"
      },
      "photo": {
-      "img": null,
-      "status": "none",
-      "src": null
+      "img": "ace/ace-techno-blue",
+      "status": "needs_original",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
      },
      "shop": {
       "price_cents": {
@@ -2880,13 +2880,13 @@
       "src": "pdf:ace-2026-10#p35:colour square 4 fill (chip colour only; never a colour name)"
      },
      "colour": {
-      "v": null,
-      "src": null
+      "v": "black",
+      "src": "photo:ace/ace-techno-black (p35 xref 3113), dominant colour; human-confirm"
      },
      "photo": {
-      "img": null,
-      "status": "none",
-      "src": null
+      "img": "ace/ace-techno-black",
+      "status": "needs_original",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
      },
      "shop": {
       "price_cents": {
@@ -2931,9 +2931,9 @@
       "src": null
      },
      "photo": {
-      "img": null,
-      "status": "none",
-      "src": null
+      "img": "ace/ace-techno-grey",
+      "status": "family_hero_only",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
      },
      "shop": {
       "price_cents": {
@@ -2974,13 +2974,13 @@
       "src": "pdf:ace-2026-10#p35:colour square 6 fill (chip colour only; never a colour name)"
      },
      "colour": {
-      "v": null,
-      "src": null
+      "v": "grey",
+      "src": "photo:ace/ace-techno-grey (p35 xref 3113), dominant colour; human-confirm"
      },
      "photo": {
-      "img": null,
-      "status": "none",
-      "src": null
+      "img": "ace/ace-techno-grey",
+      "status": "needs_original",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
      },
      "shop": {
       "price_cents": {
@@ -5732,9 +5732,9 @@
       "src": null
      },
      "photo": {
-      "img": null,
-      "status": "none",
-      "src": null
+      "img": "ace/ace-makloud-gold-gold",
+      "status": "family_hero_only",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
      },
      "shop": {
       "price_cents": {
@@ -5779,9 +5779,9 @@
       "src": null
      },
      "photo": {
-      "img": null,
-      "status": "none",
-      "src": null
+      "img": "ace/ace-makloud-gold-gold",
+      "status": "family_hero_only",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
      },
      "shop": {
       "price_cents": {
@@ -5826,9 +5826,9 @@
       "src": null
      },
      "photo": {
-      "img": null,
-      "status": "none",
-      "src": null
+      "img": "ace/ace-makloud-gold-gold",
+      "status": "family_hero_only",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
      },
      "shop": {
       "price_cents": {
@@ -5873,9 +5873,9 @@
       "src": null
      },
      "photo": {
-      "img": null,
-      "status": "none",
-      "src": null
+      "img": "ace/ace-makloud-gold-gold",
+      "status": "family_hero_only",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
      },
      "shop": {
       "price_cents": {
@@ -5916,13 +5916,13 @@
       "src": "pdf:ace-2026-10#p76:colour square 5 fill (chip colour only; never a colour name)"
      },
      "colour": {
-      "v": null,
-      "src": null
+      "v": "gold",
+      "src": "photo:ace/ace-makloud-gold-gold (p76 xref 4697), dominant colour; human-confirm"
      },
      "photo": {
-      "img": null,
-      "status": "none",
-      "src": null
+      "img": "ace/ace-makloud-gold-gold",
+      "status": "hand_crop",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
      },
      "shop": {
       "price_cents": {
@@ -6553,12 +6553,12 @@
       "src": "pdf:ace-2026-10#p5:colour square 1 fill (chip colour only; never a colour name)"
      },
      "colour": {
-      "v": null,
-      "src": null
+      "v": "bronze",
+      "src": "photo:ace/ace-alpha-oro-bronze (p5 xref 1997), dominant colour; human-confirm"
      },
      "photo": {
-      "img": "ace/ace-alpha-oro-black",
-      "status": "family_hero_only",
+      "img": "ace/ace-alpha-oro-bronze",
+      "status": "needs_original",
       "src": "photo manifest store/catalog/suppliers/ace/photos.json"
      },
      "shop": {
@@ -10719,13 +10719,13 @@
       "src": null
      },
      "colour": {
-      "v": null,
-      "src": null
+      "v": "black",
+      "src": "photo:ace/ace-pluton-stainless-black (p41 xref 3316), dominant colour; human-confirm"
      },
      "photo": {
-      "img": null,
-      "status": "none",
-      "src": null
+      "img": "ace/ace-pluton-stainless-black",
+      "status": "needs_original",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
      },
      "shop": {
       "price_cents": {
@@ -12072,13 +12072,13 @@
       "src": "pdf:ace-2026-10#p50:colour square 1 fill (chip colour only; never a colour name)"
      },
      "colour": {
-      "v": null,
-      "src": null
+      "v": "orange",
+      "src": "photo:ace/ace-spider-p50-orange (p50 xref 3658), dominant colour; human-confirm"
      },
      "photo": {
-      "img": null,
-      "status": "none",
-      "src": null
+      "img": "ace/ace-spider-p50-orange",
+      "status": "needs_original",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
      },
      "shop": {
       "price_cents": {
@@ -12119,13 +12119,13 @@
       "src": "pdf:ace-2026-10#p50:colour square 2 fill (chip colour only; never a colour name)"
      },
      "colour": {
-      "v": null,
-      "src": null
+      "v": "red",
+      "src": "photo:ace/ace-spider-p50-red-2 (p50 xref 3658), dominant colour; human-confirm"
      },
      "photo": {
-      "img": null,
-      "status": "none",
-      "src": null
+      "img": "ace/ace-spider-p50-red-2",
+      "status": "needs_original",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
      },
      "shop": {
       "price_cents": {
@@ -12166,13 +12166,13 @@
       "src": "pdf:ace-2026-10#p50:colour square 3 fill (chip colour only; never a colour name)"
      },
      "colour": {
-      "v": null,
-      "src": null
+      "v": "blue",
+      "src": "photo:ace/ace-spider-p50-blue (p50 xref 3658), dominant colour; human-confirm"
      },
      "photo": {
-      "img": null,
-      "status": "none",
-      "src": null
+      "img": "ace/ace-spider-p50-blue",
+      "status": "needs_original",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
      },
      "shop": {
       "price_cents": {
@@ -12213,13 +12213,13 @@
       "src": "pdf:ace-2026-10#p50:colour square 4 fill (chip colour only; never a colour name)"
      },
      "colour": {
-      "v": null,
-      "src": null
+      "v": "red",
+      "src": "photo:ace/ace-spider-p50-red (p50 xref 3658), dominant colour; human-confirm"
      },
      "photo": {
-      "img": null,
-      "status": "none",
-      "src": null
+      "img": "ace/ace-spider-p50-red",
+      "status": "needs_original",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
      },
      "shop": {
       "price_cents": {
@@ -12260,13 +12260,13 @@
       "src": "pdf:ace-2026-10#p50:colour square 5 fill (chip colour only; never a colour name)"
      },
      "colour": {
-      "v": null,
-      "src": null
+      "v": "grey",
+      "src": "photo:ace/ace-spider-p50-grey (p50 xref 3658), dominant colour; human-confirm"
      },
      "photo": {
-      "img": null,
-      "status": "none",
-      "src": null
+      "img": "ace/ace-spider-p50-grey",
+      "status": "needs_original",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
      },
      "shop": {
       "price_cents": {
@@ -13132,13 +13132,13 @@
       "src": "pdf:ace-2026-10#p54:colour square 1 fill (chip colour only; never a colour name)"
      },
      "colour": {
-      "v": null,
-      "src": null
+      "v": "gold",
+      "src": "photo:ace/ace-2304-baby-gold (p54 xref 3817), dominant colour; human-confirm"
      },
      "photo": {
-      "img": null,
-      "status": "none",
-      "src": null
+      "img": "ace/ace-2304-baby-gold",
+      "status": "needs_original",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
      },
      "shop": {
       "price_cents": {
@@ -13179,13 +13179,13 @@
       "src": "pdf:ace-2026-10#p54:colour square 2 fill (chip colour only; never a colour name)"
      },
      "colour": {
-      "v": null,
-      "src": null
+      "v": "teal",
+      "src": "photo:ace/ace-2304-baby-teal (p54 xref 3817), dominant colour; human-confirm"
      },
      "photo": {
-      "img": null,
-      "status": "none",
-      "src": null
+      "img": "ace/ace-2304-baby-teal",
+      "status": "hand_crop",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
      },
      "shop": {
       "price_cents": {
@@ -13226,13 +13226,13 @@
       "src": "pdf:ace-2026-10#p54:colour square 3 fill (chip colour only; never a colour name)"
      },
      "colour": {
-      "v": null,
-      "src": null
+      "v": "grey",
+      "src": "photo:ace/ace-2304-baby-grey (p54 xref 3817), dominant colour; human-confirm"
      },
      "photo": {
-      "img": null,
-      "status": "none",
-      "src": null
+      "img": "ace/ace-2304-baby-grey",
+      "status": "needs_original",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
      },
      "shop": {
       "price_cents": {
@@ -13273,13 +13273,13 @@
       "src": "pdf:ace-2026-10#p54:colour square 4 fill (chip colour only; never a colour name)"
      },
      "colour": {
-      "v": null,
-      "src": null
+      "v": "red",
+      "src": "photo:ace/ace-2304-baby-red (p54 xref 3817), dominant colour; human-confirm"
      },
      "photo": {
-      "img": null,
-      "status": "none",
-      "src": null
+      "img": "ace/ace-2304-baby-red",
+      "status": "needs_original",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
      },
      "shop": {
       "price_cents": {
@@ -13324,9 +13324,9 @@
       "src": null
      },
      "photo": {
-      "img": null,
-      "status": "none",
-      "src": null
+      "img": "ace/ace-2304-baby-grey",
+      "status": "family_hero_only",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
      },
      "shop": {
       "price_cents": {
@@ -14813,9 +14813,9 @@
       "src": null
      },
      "photo": {
-      "img": null,
-      "status": "none",
-      "src": null
+      "img": "ace/ace-214-st3-black-2",
+      "status": "family_hero_only",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
      },
      "shop": {
       "price_cents": {
@@ -14856,13 +14856,13 @@
       "src": "pdf:ace-2026-10#p63:colour square 2 fill (chip colour only; never a colour name)"
      },
      "colour": {
-      "v": null,
-      "src": null
+      "v": "red",
+      "src": "photo:ace/ace-214-st3-red (p63 xref 4220), dominant colour; human-confirm"
      },
      "photo": {
-      "img": null,
-      "status": "none",
-      "src": null
+      "img": "ace/ace-214-st3-red",
+      "status": "needs_original",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
      },
      "shop": {
       "price_cents": {
@@ -14903,13 +14903,13 @@
       "src": "pdf:ace-2026-10#p63:colour square 3 fill (chip colour only; never a colour name)"
      },
      "colour": {
-      "v": null,
-      "src": null
+      "v": "black",
+      "src": "photo:ace/ace-214-st3-black-3 (p63 xref 4220), dominant colour; human-confirm"
      },
      "photo": {
-      "img": null,
-      "status": "none",
-      "src": null
+      "img": "ace/ace-214-st3-black-3",
+      "status": "needs_original",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
      },
      "shop": {
       "price_cents": {
@@ -14950,13 +14950,13 @@
       "src": "pdf:ace-2026-10#p63:colour square 4 fill (chip colour only; never a colour name)"
      },
      "colour": {
-      "v": null,
-      "src": null
+      "v": "blue",
+      "src": "photo:ace/ace-214-st3-blue (p63 xref 4220), dominant colour; human-confirm"
      },
      "photo": {
-      "img": null,
-      "status": "none",
-      "src": null
+      "img": "ace/ace-214-st3-blue",
+      "status": "needs_original",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
      },
      "shop": {
       "price_cents": {
@@ -15049,13 +15049,13 @@
       "src": "pdf:ace-2026-10#p64:colour square 1 fill (chip colour only; never a colour name)"
      },
      "colour": {
-      "v": null,
-      "src": null
+      "v": "gold",
+      "src": "photo:ace/ace-spider-p64-gold-3 (p64 xref 4242), dominant colour; human-confirm"
      },
      "photo": {
-      "img": null,
-      "status": "none",
-      "src": null
+      "img": "ace/ace-spider-p64-gold-3",
+      "status": "needs_original",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
      },
      "shop": {
       "price_cents": {
@@ -15100,9 +15100,9 @@
       "src": null
      },
      "photo": {
-      "img": null,
-      "status": "none",
-      "src": null
+      "img": "ace/ace-spider-p64-gold",
+      "status": "family_hero_only",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
      },
      "shop": {
       "price_cents": {
@@ -15143,13 +15143,13 @@
       "src": "pdf:ace-2026-10#p64:colour square 3 fill (chip colour only; never a colour name)"
      },
      "colour": {
-      "v": null,
-      "src": null
+      "v": "black",
+      "src": "photo:ace/ace-spider-p64-black (p64 xref 4242), dominant colour; human-confirm"
      },
      "photo": {
-      "img": null,
-      "status": "none",
-      "src": null
+      "img": "ace/ace-spider-p64-black",
+      "status": "needs_original",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
      },
      "shop": {
       "price_cents": {
@@ -15194,9 +15194,9 @@
       "src": null
      },
      "photo": {
-      "img": null,
-      "status": "none",
-      "src": null
+      "img": "ace/ace-spider-p64-gold",
+      "status": "family_hero_only",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
      },
      "shop": {
       "price_cents": {
@@ -16071,9 +16071,9 @@
       "src": null
      },
      "photo": {
-      "img": null,
-      "status": "none",
-      "src": null
+      "img": "ace/ace-embery-blue",
+      "status": "family_hero_only",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
      },
      "shop": {
       "price_cents": {
@@ -16118,9 +16118,9 @@
       "src": null
      },
      "photo": {
-      "img": null,
-      "status": "none",
-      "src": null
+      "img": "ace/ace-embery-blue",
+      "status": "family_hero_only",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
      },
      "shop": {
       "price_cents": {
@@ -16165,9 +16165,9 @@
       "src": null
      },
      "photo": {
-      "img": null,
-      "status": "none",
-      "src": null
+      "img": "ace/ace-embery-blue",
+      "status": "family_hero_only",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
      },
      "shop": {
       "price_cents": {
@@ -16208,13 +16208,13 @@
       "src": "pdf:ace-2026-10#p72:colour square 4 fill (chip colour only; never a colour name)"
      },
      "colour": {
-      "v": null,
-      "src": null
+      "v": "blue",
+      "src": "photo:ace/ace-embery-blue (p72 xref 4547), dominant colour; human-confirm"
      },
      "photo": {
-      "img": null,
-      "status": "none",
-      "src": null
+      "img": "ace/ace-embery-blue",
+      "status": "needs_original",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
      },
      "shop": {
       "price_cents": {
@@ -16259,9 +16259,9 @@
       "src": null
      },
      "photo": {
-      "img": null,
-      "status": "none",
-      "src": null
+      "img": "ace/ace-embery-blue",
+      "status": "family_hero_only",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
      },
      "shop": {
       "price_cents": {
@@ -16844,9 +16844,9 @@
       "src": null
      },
      "photo": {
-      "img": null,
-      "status": "none",
-      "src": null
+      "img": "ace/ace-el-bomber-mid-night-red",
+      "status": "family_hero_only",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
      },
      "shop": {
       "price_cents": {
@@ -16891,9 +16891,9 @@
       "src": null
      },
      "photo": {
-      "img": null,
-      "status": "none",
-      "src": null
+      "img": "ace/ace-el-bomber-mid-night-red",
+      "status": "family_hero_only",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
      },
      "shop": {
       "price_cents": {
@@ -16938,9 +16938,9 @@
       "src": null
      },
      "photo": {
-      "img": null,
-      "status": "none",
-      "src": null
+      "img": "ace/ace-el-bomber-mid-night-red",
+      "status": "family_hero_only",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
      },
      "shop": {
       "price_cents": {
@@ -16981,13 +16981,13 @@
       "src": "pdf:ace-2026-10#p77:colour square 4 fill (chip colour only; never a colour name)"
      },
      "colour": {
-      "v": null,
-      "src": null
+      "v": "red",
+      "src": "photo:ace/ace-el-bomber-mid-night-red (p77 xref 4737), dominant colour; human-confirm"
      },
      "photo": {
-      "img": null,
-      "status": "none",
-      "src": null
+      "img": "ace/ace-el-bomber-mid-night-red",
+      "status": "hand_crop",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
      },
      "shop": {
       "price_cents": {
@@ -17032,9 +17032,9 @@
       "src": null
      },
      "photo": {
-      "img": null,
-      "status": "none",
-      "src": null
+      "img": "ace/ace-el-bomber-mid-night-red",
+      "status": "family_hero_only",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
      },
      "shop": {
       "price_cents": {
@@ -18051,9 +18051,9 @@
       "src": null
      },
      "photo": {
-      "img": null,
-      "status": "none",
-      "src": null
+      "img": "ace/ace-l-acrylic-silver",
+      "status": "family_hero_only",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
      },
      "shop": {
       "price_cents": {
@@ -18098,9 +18098,9 @@
       "src": null
      },
      "photo": {
-      "img": null,
-      "status": "none",
-      "src": null
+      "img": "ace/ace-l-acrylic-silver",
+      "status": "family_hero_only",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
      },
      "shop": {
       "price_cents": {
@@ -18145,9 +18145,9 @@
       "src": null
      },
      "photo": {
-      "img": null,
-      "status": "none",
-      "src": null
+      "img": "ace/ace-l-acrylic-silver",
+      "status": "family_hero_only",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
      },
      "shop": {
       "price_cents": {
@@ -18188,13 +18188,13 @@
       "src": "pdf:ace-2026-10#p82:colour square 4 fill (chip colour only; never a colour name)"
      },
      "colour": {
-      "v": null,
-      "src": null
+      "v": "silver",
+      "src": "photo:ace/ace-l-acrylic-silver (p82 xref 4919), dominant colour; human-confirm"
      },
      "photo": {
-      "img": null,
-      "status": "none",
-      "src": null
+      "img": "ace/ace-l-acrylic-silver",
+      "status": "needs_original",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
      },
      "shop": {
       "price_cents": {
@@ -18289,13 +18289,13 @@
       "src": "pdf:ace-2026-10#p83:colour square 1 fill (chip colour only; never a colour name)"
      },
      "colour": {
-      "v": null,
-      "src": null
+      "v": "bronze",
+      "src": "photo:ace/ace-2210-mr-bronze (p83 xref 4947), dominant colour; human-confirm"
      },
      "photo": {
-      "img": null,
-      "status": "none",
-      "src": null
+      "img": "ace/ace-2210-mr-bronze",
+      "status": "hand_crop",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
      },
      "shop": {
       "price_cents": {
@@ -18340,9 +18340,9 @@
       "src": null
      },
      "photo": {
-      "img": null,
-      "status": "none",
-      "src": null
+      "img": "ace/ace-2210-mr-bronze",
+      "status": "family_hero_only",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
      },
      "shop": {
       "price_cents": {
@@ -18387,9 +18387,9 @@
       "src": null
      },
      "photo": {
-      "img": null,
-      "status": "none",
-      "src": null
+      "img": "ace/ace-2210-mr-bronze",
+      "status": "family_hero_only",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
      },
      "shop": {
       "price_cents": {
@@ -18482,12 +18482,12 @@
       "src": "pdf:ace-2026-10#p84:colour square 1 fill (chip colour only; never a colour name)"
      },
      "colour": {
-      "v": null,
-      "src": null
+      "v": "black",
+      "src": "photo:ace/ace-gravity-black (p84 xref 4984), dominant colour; human-confirm"
      },
      "photo": {
-      "img": "ace/ace-gravity-gold",
-      "status": "family_hero_only",
+      "img": "ace/ace-gravity-black",
+      "status": "hand_crop",
       "src": "photo manifest store/catalog/suppliers/ace/photos.json"
      },
      "shop": {
@@ -18759,11 +18759,54 @@
    "img": "ace/ace-flash-bang-amotion-black-2"
   },
   {
+   "sku": "OSS-100101",
+   "family": "ace-connoisseur",
+   "photo_status": "upscale",
+   "img": "ace/ace-connoisseur-bronze"
+  },
+  {
    "sku": "OSS-100102",
    "family": "ace-d-207-connoisseur",
    "photo_status": "shown_in",
    "img": "ace/ace-d-207-connoisseur-gold",
    "shown_in": "gold"
+  },
+  {
+   "sku": "OSS-100107",
+   "family": "ace-techno",
+   "photo_status": "upscale",
+   "img": "ace/ace-techno-yellow"
+  },
+  {
+   "sku": "OSS-100108",
+   "family": "ace-techno",
+   "photo_status": "upscale",
+   "img": "ace/ace-techno-red"
+  },
+  {
+   "sku": "OSS-100109",
+   "family": "ace-techno",
+   "photo_status": "upscale",
+   "img": "ace/ace-techno-blue"
+  },
+  {
+   "sku": "OSS-100110",
+   "family": "ace-techno",
+   "photo_status": "upscale",
+   "img": "ace/ace-techno-black"
+  },
+  {
+   "sku": "OSS-100111",
+   "family": "ace-techno",
+   "photo_status": "shown_in",
+   "img": "ace/ace-techno-grey",
+   "shown_in": "grey"
+  },
+  {
+   "sku": "OSS-100112",
+   "family": "ace-techno",
+   "photo_status": "upscale",
+   "img": "ace/ace-techno-grey"
   },
   {
    "sku": "OSS-100113",
@@ -18879,6 +18922,40 @@
    "shown_in": null
   },
   {
+   "sku": "OSS-100262",
+   "family": "ace-makloud-gold",
+   "photo_status": "shown_in",
+   "img": "ace/ace-makloud-gold-gold",
+   "shown_in": "gold"
+  },
+  {
+   "sku": "OSS-100263",
+   "family": "ace-makloud-gold",
+   "photo_status": "shown_in",
+   "img": "ace/ace-makloud-gold-gold",
+   "shown_in": "gold"
+  },
+  {
+   "sku": "OSS-100264",
+   "family": "ace-makloud-gold",
+   "photo_status": "shown_in",
+   "img": "ace/ace-makloud-gold-gold",
+   "shown_in": "gold"
+  },
+  {
+   "sku": "OSS-100265",
+   "family": "ace-makloud-gold",
+   "photo_status": "shown_in",
+   "img": "ace/ace-makloud-gold-gold",
+   "shown_in": "gold"
+  },
+  {
+   "sku": "OSS-100266",
+   "family": "ace-makloud-gold",
+   "photo_status": "upscale",
+   "img": "ace/ace-makloud-gold-gold"
+  },
+  {
    "sku": "OSS-100001",
    "family": "ace-alpha-x-ss-jocker",
    "photo_status": "shown_in",
@@ -18928,9 +19005,8 @@
   {
    "sku": "OSS-100009",
    "family": "ace-alpha-oro",
-   "photo_status": "shown_in",
-   "img": "ace/ace-alpha-oro-black",
-   "shown_in": "black"
+   "photo_status": "upscale",
+   "img": "ace/ace-alpha-oro-bronze"
   },
   {
    "sku": "OSS-100011",
@@ -19144,6 +19220,12 @@
    "shown_in": "orange"
   },
   {
+   "sku": "OSS-100129",
+   "family": "ace-pluton-stainless",
+   "photo_status": "upscale",
+   "img": "ace/ace-pluton-stainless-black"
+  },
+  {
    "sku": "OSS-100135",
    "family": "ace-d-38",
    "photo_status": "shown_in",
@@ -19170,6 +19252,36 @@
    "photo_status": "shown_in",
    "img": "ace/ace-d-38-pink",
    "shown_in": "pink"
+  },
+  {
+   "sku": "OSS-100155",
+   "family": "ace-spider-p50",
+   "photo_status": "upscale",
+   "img": "ace/ace-spider-p50-orange"
+  },
+  {
+   "sku": "OSS-100156",
+   "family": "ace-spider-p50",
+   "photo_status": "upscale",
+   "img": "ace/ace-spider-p50-red-2"
+  },
+  {
+   "sku": "OSS-100157",
+   "family": "ace-spider-p50",
+   "photo_status": "upscale",
+   "img": "ace/ace-spider-p50-blue"
+  },
+  {
+   "sku": "OSS-100158",
+   "family": "ace-spider-p50",
+   "photo_status": "upscale",
+   "img": "ace/ace-spider-p50-red"
+  },
+  {
+   "sku": "OSS-100159",
+   "family": "ace-spider-p50",
+   "photo_status": "upscale",
+   "img": "ace/ace-spider-p50-grey"
   },
   {
    "sku": "OSS-100161",
@@ -19210,6 +19322,37 @@
    "photo_status": "shown_in",
    "img": "ace/ace-elbomber-sansara-black",
    "shown_in": "black"
+  },
+  {
+   "sku": "OSS-100173",
+   "family": "ace-2304-baby",
+   "photo_status": "upscale",
+   "img": "ace/ace-2304-baby-gold"
+  },
+  {
+   "sku": "OSS-100174",
+   "family": "ace-2304-baby",
+   "photo_status": "upscale",
+   "img": "ace/ace-2304-baby-teal"
+  },
+  {
+   "sku": "OSS-100175",
+   "family": "ace-2304-baby",
+   "photo_status": "upscale",
+   "img": "ace/ace-2304-baby-grey"
+  },
+  {
+   "sku": "OSS-100176",
+   "family": "ace-2304-baby",
+   "photo_status": "upscale",
+   "img": "ace/ace-2304-baby-red"
+  },
+  {
+   "sku": "OSS-100177",
+   "family": "ace-2304-baby",
+   "photo_status": "shown_in",
+   "img": "ace/ace-2304-baby-grey",
+   "shown_in": "grey"
   },
   {
    "sku": "OSS-100179",
@@ -19261,6 +19404,57 @@
    "shown_in": "black"
   },
   {
+   "sku": "OSS-100216",
+   "family": "ace-214-st3",
+   "photo_status": "shown_in",
+   "img": "ace/ace-214-st3-black-2",
+   "shown_in": null
+  },
+  {
+   "sku": "OSS-100217",
+   "family": "ace-214-st3",
+   "photo_status": "upscale",
+   "img": "ace/ace-214-st3-red"
+  },
+  {
+   "sku": "OSS-100218",
+   "family": "ace-214-st3",
+   "photo_status": "upscale",
+   "img": "ace/ace-214-st3-black-3"
+  },
+  {
+   "sku": "OSS-100219",
+   "family": "ace-214-st3",
+   "photo_status": "upscale",
+   "img": "ace/ace-214-st3-blue"
+  },
+  {
+   "sku": "OSS-100220",
+   "family": "ace-spider-p64",
+   "photo_status": "upscale",
+   "img": "ace/ace-spider-p64-gold-3"
+  },
+  {
+   "sku": "OSS-100221",
+   "family": "ace-spider-p64",
+   "photo_status": "shown_in",
+   "img": "ace/ace-spider-p64-gold",
+   "shown_in": null
+  },
+  {
+   "sku": "OSS-100222",
+   "family": "ace-spider-p64",
+   "photo_status": "upscale",
+   "img": "ace/ace-spider-p64-black"
+  },
+  {
+   "sku": "OSS-100223",
+   "family": "ace-spider-p64",
+   "photo_status": "shown_in",
+   "img": "ace/ace-spider-p64-gold",
+   "shown_in": null
+  },
+  {
    "sku": "OSS-100224",
    "family": "ace-scorpion",
    "photo_status": "upscale",
@@ -19293,6 +19487,40 @@
    "photo_status": "shown_in",
    "img": "ace/ace-luka-y08-grey",
    "shown_in": "grey"
+  },
+  {
+   "sku": "OSS-100247",
+   "family": "ace-embery",
+   "photo_status": "shown_in",
+   "img": "ace/ace-embery-blue",
+   "shown_in": "blue"
+  },
+  {
+   "sku": "OSS-100248",
+   "family": "ace-embery",
+   "photo_status": "shown_in",
+   "img": "ace/ace-embery-blue",
+   "shown_in": "blue"
+  },
+  {
+   "sku": "OSS-100249",
+   "family": "ace-embery",
+   "photo_status": "shown_in",
+   "img": "ace/ace-embery-blue",
+   "shown_in": "blue"
+  },
+  {
+   "sku": "OSS-100250",
+   "family": "ace-embery",
+   "photo_status": "upscale",
+   "img": "ace/ace-embery-blue"
+  },
+  {
+   "sku": "OSS-100251",
+   "family": "ace-embery",
+   "photo_status": "shown_in",
+   "img": "ace/ace-embery-blue",
+   "shown_in": "blue"
   },
   {
    "sku": "OSS-100252",
@@ -19348,6 +19576,40 @@
    "shown_in": null
   },
   {
+   "sku": "OSS-100267",
+   "family": "ace-el-bomber-mid-night",
+   "photo_status": "shown_in",
+   "img": "ace/ace-el-bomber-mid-night-red",
+   "shown_in": "red"
+  },
+  {
+   "sku": "OSS-100268",
+   "family": "ace-el-bomber-mid-night",
+   "photo_status": "shown_in",
+   "img": "ace/ace-el-bomber-mid-night-red",
+   "shown_in": "red"
+  },
+  {
+   "sku": "OSS-100269",
+   "family": "ace-el-bomber-mid-night",
+   "photo_status": "shown_in",
+   "img": "ace/ace-el-bomber-mid-night-red",
+   "shown_in": "red"
+  },
+  {
+   "sku": "OSS-100270",
+   "family": "ace-el-bomber-mid-night",
+   "photo_status": "upscale",
+   "img": "ace/ace-el-bomber-mid-night-red"
+  },
+  {
+   "sku": "OSS-100271",
+   "family": "ace-el-bomber-mid-night",
+   "photo_status": "shown_in",
+   "img": "ace/ace-el-bomber-mid-night-red",
+   "shown_in": "red"
+  },
+  {
    "sku": "OSS-100273",
    "family": "ace-uniun",
    "photo_status": "shown_in",
@@ -19369,11 +19631,57 @@
    "shown_in": "yellow"
   },
   {
+   "sku": "OSS-100287",
+   "family": "ace-l-acrylic",
+   "photo_status": "shown_in",
+   "img": "ace/ace-l-acrylic-silver",
+   "shown_in": "silver"
+  },
+  {
+   "sku": "OSS-100288",
+   "family": "ace-l-acrylic",
+   "photo_status": "shown_in",
+   "img": "ace/ace-l-acrylic-silver",
+   "shown_in": "silver"
+  },
+  {
+   "sku": "OSS-100289",
+   "family": "ace-l-acrylic",
+   "photo_status": "shown_in",
+   "img": "ace/ace-l-acrylic-silver",
+   "shown_in": "silver"
+  },
+  {
+   "sku": "OSS-100290",
+   "family": "ace-l-acrylic",
+   "photo_status": "upscale",
+   "img": "ace/ace-l-acrylic-silver"
+  },
+  {
+   "sku": "OSS-100291",
+   "family": "ace-2210-mr",
+   "photo_status": "upscale",
+   "img": "ace/ace-2210-mr-bronze"
+  },
+  {
+   "sku": "OSS-100292",
+   "family": "ace-2210-mr",
+   "photo_status": "shown_in",
+   "img": "ace/ace-2210-mr-bronze",
+   "shown_in": "bronze"
+  },
+  {
+   "sku": "OSS-100293",
+   "family": "ace-2210-mr",
+   "photo_status": "shown_in",
+   "img": "ace/ace-2210-mr-bronze",
+   "shown_in": "bronze"
+  },
+  {
    "sku": "OSS-100294",
    "family": "ace-gravity",
-   "photo_status": "shown_in",
-   "img": "ace/ace-gravity-gold",
-   "shown_in": "gold"
+   "photo_status": "upscale",
+   "img": "ace/ace-gravity-black"
   },
   {
    "sku": "OSS-100296",

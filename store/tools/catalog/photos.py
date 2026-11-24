@@ -30,7 +30,10 @@ import src_ace  # noqa: E402
 W, H, PROD_H, FOOT, MAXW = 720, 900, 810, 45, 630
 SIZES = (("", (720, 900), 86), ("-m", (540, 675), 84), ("-s", (360, 450), 82))
 CHECK_SCALE = 1.25   # plan: gentle resize up to 1.25x is fine; above it a person looks (CHECK)
-HOLD_SCALE = 2.0     # design review 2026-11-24: 2.2x Techno shots showed JPEG blocks at 720; never shipped
+HOLD_SCALE = 2.0     # design review 2026-11-24: 2.2x Techno shots showed JPEG blocks at 720 (status needs_original)
+# Owner ruling 2026-11-24: blurry or over-enlarged photos (CHECK, held, hand-crop) still go up as the main photo, each with a
+# small "Photo to be upscaled" label, so nothing sits without a picture while better originals are awaited.
+SHOWN = ("ready", "CHECK", "needs_original", "hand_crop")
 PUBLIC = C.STORE / "public" / "img" / "pc" / "ace"
 FONTS = C.STORE / "public" / "fonts"
 
@@ -358,20 +361,21 @@ def run(pdf: Path, work: Path, publish: bool):
                 items.append({"page": r["page"], "xref": xref, "family_id": f["family_id"], "class": cls, "note": note,
                               "src_px": [int(rgb.shape[1]), int(rgb.shape[0])], "crop": list(bb), "scale": round(s, 3),
                               "colour": name, "rgb": list(rep) if rep else None, "status": status, "tmp": str(tmp)})
-        # pair colour photos with the page's colour variants
-        usable = [it for it in items if it["status"] in ("ready", "CHECK")]
+        # pair colour photos with the page's colour variants. Held (enlarged past 2x) and hand-crop images go up too, as the
+        # main photo with "Photo to be upscaled" (owner, 2026-11-24); the family's hero prefers a clean one when it has one.
+        usable = [it for it in items if it["status"] in SHOWN]
         got = match(usable, f["variants"])
         key_to_sku = {v["key"]: v["sku"] for v in f["variants"]}
         names_used = {}
-        hero = min(usable, key=lambda it: (it["class"] != "colour", it["scale"])) if usable else None
+        hero = min(usable, key=lambda it: (it["status"] not in ("ready", "CHECK"), it["class"] != "colour", it["scale"])) if usable else None
         for i, it in enumerate(usable):
             k = got.get(i)
             it["variant_key"] = k
             it["sku"] = key_to_sku.get(k)
             it["role"] = "hero" if it is hero else ("colour" if k else "unmatched")
         for it in items:
-            if it["status"] in ("hand_crop", "gallery_only", "needs_original"):
-                it["role"] = {"hand_crop": "hand_crop", "gallery_only": "gallery", "needs_original": "needs_original"}[it["status"]]
+            if it["status"] == "gallery_only":
+                it["role"] = "gallery"
                 it["variant_key"] = it["sku"] = None
             cname = it.get("colour") or "x"
             base = f"{f['family_id']}-{cname}"
@@ -381,7 +385,7 @@ def run(pdf: Path, work: Path, publish: bool):
             it["file"] = it["tmp"] + "-s.webp"
             images.append(it)
     # publish: only the images a product row will show (matched to a colour, or the family's hero)
-    shipped = [im for im in images if im.get("status") in ("ready", "CHECK") and im.get("role") in ("hero", "colour")]
+    shipped = [im for im in images if im.get("status") in SHOWN and im.get("role") in ("hero", "colour")]
     if publish:
         PUBLIC.mkdir(parents=True, exist_ok=True)
         want = set()

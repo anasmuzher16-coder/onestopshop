@@ -434,7 +434,7 @@
    "xref": 2383,
    "family_id": "ace-egy-xme-1",
    "class": "group",
-   "role": "hand_crop",
+   "role": "unmatched",
    "crop": [
     28,
     42,
@@ -492,7 +492,7 @@
    "xref": 2417,
    "family_id": "ace-egy-xme3",
    "class": "group",
-   "role": "hand_crop",
+   "role": "unmatched",
    "crop": [
     27,
     65,
@@ -1114,7 +1114,7 @@
    "xref": 3006,
    "family_id": "ace-connoisseur",
    "class": "group",
-   "role": "hand_crop",
+   "role": "hero",
    "crop": [
     234,
     153,
@@ -1132,8 +1132,8 @@
     79,
     49
    ],
-   "variant_key": null,
-   "sku": null,
+   "variant_key": "ace-connoisseur##a6a6a6",
+   "sku": "OSS-100101",
    "status": "hand_crop",
    "out": "ace/ace-connoisseur-bronze",
    "note": "OVERLAP: 3 products touch in Ace's photo, needs a hand crop"
@@ -1172,7 +1172,7 @@
    "xref": 3113,
    "family_id": "ace-techno",
    "class": "group",
-   "role": "needs_original",
+   "role": "colour",
    "crop": [
     6,
     11,
@@ -1190,8 +1190,8 @@
     18,
     29
    ],
-   "variant_key": null,
-   "sku": null,
+   "variant_key": "ace-techno##ff1616",
+   "sku": "OSS-100108",
    "status": "needs_original",
    "out": "ace/ace-techno-red",
    "note": "enlarged 2.20x from a small source: needs Ace's original"
@@ -1201,7 +1201,7 @@
    "xref": 3113,
    "family_id": "ace-techno",
    "class": "group",
-   "role": "needs_original",
+   "role": "colour",
    "crop": [
     174,
     13,
@@ -1219,8 +1219,8 @@
     53,
     58
    ],
-   "variant_key": null,
-   "sku": null,
+   "variant_key": "ace-techno##000000",
+   "sku": "OSS-100110",
    "status": "needs_original",
    "out": "ace/ace-techno-black",
    "note": "enlarged 2.21x from a small source: needs Ace's original"
@@ -1230,7 +1230,7 @@
    "xref": 3113,
    "family_id": "ace-techno",
    "class": "group",
-   "role": "needs_original",
+   "role": "hero",
    "crop": [
     333,
     12,
@@ -1248,8 +1248,8 @@
     140,
     148
    ],
-   "variant_key": null,
-   "sku": null,
+   "variant_key": "ace-techno##a6a6a6",
+   "sku": "OSS-100112",
    "status": "needs_original",
    "out": "ace/ace-techno-grey",
    "note": "enlarged 2.19x from a small source: needs Ace's original"
@@ -1259,7 +1259,7 @@
    "xref": 3113,
    "family_id": "ace-techno",
    "class": "group",
-   "role": "needs_original",
+   "role": "colour",
    "crop": [
     487,
     13,
@@ -1277,8 +1277,8 @@
     187,
     64
    ],
-   "variant_key": null,
-   "sku": null,
+   "variant_key": "ace-techno##ffde59",
+   "sku": "OSS-100107",
    "status": "needs_original",
    "out": "ace/ace-techno-yellow",
    "note": "enlarged 2.21x from a small source: needs Ace's original"
@@ -1288,7 +1288,7 @@
    "xref": 3113,
    "family_id": "ace-techno",
    "class": "group",
-   "role": "needs_original",
+   "role": "colour",
    "crop": [
     642,
     14,
@@ -1306,8 +1306,8 @@
     137,
     212
    ],
-   "variant_key": null,
-   "sku": null,
+   "variant_key": "ace-techno##5271ff",
+   "sku": "OSS-100109",
    "status": "needs_original",
    "out": "ace/ace-techno-blue",
    "note": "enlarged 2.21x from a small source: needs Ace's original"
@@ -2457,7 +2457,7 @@
    "xref": 4697,
    "family_id": "ace-makloud-gold",
    "class": "colour",
-   "role": "hand_crop",
+   "role": "hero",
    "crop": [
     21,
     36,
@@ -2475,8 +2475,8 @@
     108,
     60
    ],
-   "variant_key": null,
-   "sku": null,
+   "variant_key": "ace-makloud-gold##a6a6a6",
+   "sku": "OSS-100266",
    "status": "hand_crop",
    "out": "ace/ace-makloud-gold-gold",
    "note": "person checked: the wooden box stands in front of the base and is joined to it in the mask"
@@ -2735,7 +2735,7 @@
    "xref": 1997,
    "family_id": "ace-alpha-oro",
    "class": "colour",
-   "role": "needs_original",
+   "role": "colour",
    "crop": [
     110,
     31,
@@ -2753,8 +2753,8 @@
     171,
     108
    ],
-   "variant_key": null,
-   "sku": null,
+   "variant_key": "ace-alpha-oro##ff914d",
+   "sku": "OSS-100009",
    "status": "needs_original",
    "out": "ace/ace-alpha-oro-bronze",
    "note": "enlarged 2.40x from a small source: needs Ace's original"
@@ -3726,7 +3726,7 @@
    "xref": 2713,
    "family_id": "ace-misha-rebel",
    "class": "group",
-   "role": "needs_original",
+   "role": "unmatched",
    "crop": [
     276,
     213,
@@ -4215,7 +4215,7 @@
    "xref": 3316,
    "family_id": "ace-pluton-stainless",
    "class": "colour",
-   "role": "needs_original",
+   "role": "hero",
    "crop": [
     401,
     196,
@@ -4233,8 +4233,8 @@
     84,
     81
    ],
-   "variant_key": null,
-   "sku": null,
+   "variant_key": "ace-pluton-stainless#one",
+   "sku": "OSS-100129",
    "status": "needs_original",
    "out": "ace/ace-pluton-stainless-black",
    "note": "enlarged 2.42x from a small source: needs Ace's original"
@@ -4696,7 +4696,7 @@
    "xref": 3658,
    "family_id": "ace-spider-p50",
    "class": "group",
-   "role": "needs_original",
+   "role": "colour",
    "crop": [
     80,
     79,
@@ -4714,8 +4714,8 @@
     133,
     64
    ],
-   "variant_key": null,
-   "sku": null,
+   "variant_key": "ace-spider-p50##ff914d",
+   "sku": "OSS-100155",
    "status": "needs_original",
    "out": "ace/ace-spider-p50-orange",
    "note": "enlarged 3.13x from a small source: needs Ace's original"
@@ -4725,7 +4725,7 @@
    "xref": 3658,
    "family_id": "ace-spider-p50",
    "class": "group",
-   "role": "needs_original",
+   "role": "colour",
    "crop": [
     92,
     437,
@@ -4743,8 +4743,8 @@
     106,
     117
    ],
-   "variant_key": null,
-   "sku": null,
+   "variant_key": "ace-spider-p50##a6a6a6",
+   "sku": "OSS-100159",
    "status": "needs_original",
    "out": "ace/ace-spider-p50-grey",
    "note": "enlarged 3.01x from a small source: needs Ace's original"
@@ -4754,7 +4754,7 @@
    "xref": 3658,
    "family_id": "ace-spider-p50",
    "class": "group",
-   "role": "needs_original",
+   "role": "colour",
    "crop": [
     331,
     75,
@@ -4772,8 +4772,8 @@
     41,
     64
    ],
-   "variant_key": null,
-   "sku": null,
+   "variant_key": "ace-spider-p50##000000",
+   "sku": "OSS-100158",
    "status": "needs_original",
    "out": "ace/ace-spider-p50-red",
    "note": "enlarged 3.06x from a small source: needs Ace's original"
@@ -4783,7 +4783,7 @@
    "xref": 3658,
    "family_id": "ace-spider-p50",
    "class": "group",
-   "role": "needs_original",
+   "role": "colour",
    "crop": [
     331,
     438,
@@ -4801,8 +4801,8 @@
     52,
     50
    ],
-   "variant_key": null,
-   "sku": null,
+   "variant_key": "ace-spider-p50##ff1616",
+   "sku": "OSS-100156",
    "status": "needs_original",
    "out": "ace/ace-spider-p50-red-2",
    "note": "enlarged 2.99x from a small source: needs Ace's original"
@@ -4812,7 +4812,7 @@
    "xref": 3658,
    "family_id": "ace-spider-p50",
    "class": "group",
-   "role": "needs_original",
+   "role": "hero",
    "crop": [
     566,
     438,
@@ -4830,8 +4830,8 @@
     71,
     139
    ],
-   "variant_key": null,
-   "sku": null,
+   "variant_key": "ace-spider-p50##5271ff",
+   "sku": "OSS-100157",
    "status": "needs_original",
    "out": "ace/ace-spider-p50-blue",
    "note": "enlarged 2.96x from a small source: needs Ace's original"
@@ -4841,7 +4841,7 @@
    "xref": 3658,
    "family_id": "ace-spider-p50",
    "class": "group",
-   "role": "needs_original",
+   "role": "unmatched",
    "crop": [
     571,
     81,
@@ -5036,7 +5036,7 @@
    "xref": 3817,
    "family_id": "ace-2304-baby",
    "class": "group",
-   "role": "needs_original",
+   "role": "hero",
    "crop": [
     14,
     200,
@@ -5054,8 +5054,8 @@
     124,
     123
    ],
-   "variant_key": null,
-   "sku": null,
+   "variant_key": "ace-2304-baby##a6a6a6",
+   "sku": "OSS-100175",
    "status": "needs_original",
    "out": "ace/ace-2304-baby-grey",
    "note": "enlarged 2.04x from a small source: needs Ace's original"
@@ -5065,7 +5065,7 @@
    "xref": 3817,
    "family_id": "ace-2304-baby",
    "class": "group",
-   "role": "needs_original",
+   "role": "colour",
    "crop": [
     170,
     200,
@@ -5083,8 +5083,8 @@
     65,
     75
    ],
-   "variant_key": null,
-   "sku": null,
+   "variant_key": "ace-2304-baby##ff1616",
+   "sku": "OSS-100176",
    "status": "needs_original",
    "out": "ace/ace-2304-baby-red",
    "note": "enlarged 2.04x from a small source: needs Ace's original"
@@ -5094,7 +5094,7 @@
    "xref": 3817,
    "family_id": "ace-2304-baby",
    "class": "group",
-   "role": "hand_crop",
+   "role": "colour",
    "crop": [
     326,
     200,
@@ -5112,8 +5112,8 @@
     128,
     133
    ],
-   "variant_key": null,
-   "sku": null,
+   "variant_key": "ace-2304-baby##000000",
+   "sku": "OSS-100174",
    "status": "hand_crop",
    "out": "ace/ace-2304-baby-teal",
    "note": "person checked: two hookahs (teal and green) touch in Ace's photo"
@@ -5123,7 +5123,7 @@
    "xref": 3817,
    "family_id": "ace-2304-baby",
    "class": "group",
-   "role": "needs_original",
+   "role": "colour",
    "crop": [
     638,
     200,
@@ -5141,8 +5141,8 @@
     122,
     27
    ],
-   "variant_key": null,
-   "sku": null,
+   "variant_key": "ace-2304-baby##ff914d",
+   "sku": "OSS-100173",
    "status": "needs_original",
    "out": "ace/ace-2304-baby-gold",
    "note": "enlarged 2.04x from a small source: needs Ace's original"
@@ -5641,7 +5641,7 @@
    "xref": 4220,
    "family_id": "ace-214-st3",
    "class": "group",
-   "role": "needs_original",
+   "role": "unmatched",
    "crop": [
     119,
     408,
@@ -5670,7 +5670,7 @@
    "xref": 4220,
    "family_id": "ace-214-st3",
    "class": "group",
-   "role": "needs_original",
+   "role": "unmatched",
    "crop": [
     121,
     56,
@@ -5699,7 +5699,7 @@
    "xref": 4220,
    "family_id": "ace-214-st3",
    "class": "group",
-   "role": "needs_original",
+   "role": "colour",
    "crop": [
     333,
     56,
@@ -5717,8 +5717,8 @@
     33,
     42
    ],
-   "variant_key": null,
-   "sku": null,
+   "variant_key": "ace-214-st3##ff1616",
+   "sku": "OSS-100217",
    "status": "needs_original",
    "out": "ace/ace-214-st3-red",
    "note": "enlarged 2.62x from a small source: needs Ace's original"
@@ -5728,7 +5728,7 @@
    "xref": 4220,
    "family_id": "ace-214-st3",
    "class": "group",
-   "role": "needs_original",
+   "role": "hero",
    "crop": [
     334,
     407,
@@ -5757,7 +5757,7 @@
    "xref": 4220,
    "family_id": "ace-214-st3",
    "class": "group",
-   "role": "needs_original",
+   "role": "colour",
    "crop": [
     561,
     56,
@@ -5775,8 +5775,8 @@
     53,
     55
    ],
-   "variant_key": null,
-   "sku": null,
+   "variant_key": "ace-214-st3##000000",
+   "sku": "OSS-100218",
    "status": "needs_original",
    "out": "ace/ace-214-st3-black-3",
    "note": "enlarged 2.62x from a small source: needs Ace's original"
@@ -5786,7 +5786,7 @@
    "xref": 4220,
    "family_id": "ace-214-st3",
    "class": "group",
-   "role": "needs_original",
+   "role": "colour",
    "crop": [
     561,
     410,
@@ -5804,8 +5804,8 @@
     72,
     179
    ],
-   "variant_key": null,
-   "sku": null,
+   "variant_key": "ace-214-st3##5271ff",
+   "sku": "OSS-100219",
    "status": "needs_original",
    "out": "ace/ace-214-st3-blue",
    "note": "enlarged 2.62x from a small source: needs Ace's original"
@@ -5865,7 +5865,7 @@
    "xref": 4242,
    "family_id": "ace-spider-p64",
    "class": "group",
-   "role": "needs_original",
+   "role": "hero",
    "crop": [
     92,
     419,
@@ -5894,7 +5894,7 @@
    "xref": 4242,
    "family_id": "ace-spider-p64",
    "class": "group",
-   "role": "needs_original",
+   "role": "unmatched",
    "crop": [
     104,
     57,
@@ -5923,7 +5923,7 @@
    "xref": 4242,
    "family_id": "ace-spider-p64",
    "class": "group",
-   "role": "needs_original",
+   "role": "unmatched",
    "crop": [
     333,
     63,
@@ -5952,7 +5952,7 @@
    "xref": 4242,
    "family_id": "ace-spider-p64",
    "class": "group",
-   "role": "needs_original",
+   "role": "colour",
    "crop": [
     333,
     419,
@@ -5970,8 +5970,8 @@
     87,
     72
    ],
-   "variant_key": null,
-   "sku": null,
+   "variant_key": "ace-spider-p64##000000",
+   "sku": "OSS-100222",
    "status": "needs_original",
    "out": "ace/ace-spider-p64-black",
    "note": "enlarged 2.56x from a small source: needs Ace's original"
@@ -5981,7 +5981,7 @@
    "xref": 4242,
    "family_id": "ace-spider-p64",
    "class": "group",
-   "role": "needs_original",
+   "role": "colour",
    "crop": [
     575,
     64,
@@ -5999,8 +5999,8 @@
     154,
     103
    ],
-   "variant_key": null,
-   "sku": null,
+   "variant_key": "ace-spider-p64##ffde59",
+   "sku": "OSS-100220",
    "status": "needs_original",
    "out": "ace/ace-spider-p64-gold-3",
    "note": "enlarged 2.57x from a small source: needs Ace's original"
@@ -6010,7 +6010,7 @@
    "xref": 4242,
    "family_id": "ace-spider-p64",
    "class": "group",
-   "role": "needs_original",
+   "role": "unmatched",
    "crop": [
     577,
     418,
@@ -6487,7 +6487,7 @@
    "xref": 4547,
    "family_id": "ace-embery",
    "class": "colour",
-   "role": "needs_original",
+   "role": "hero",
    "crop": [
     39,
     240,
@@ -6505,8 +6505,8 @@
     32,
     78
    ],
-   "variant_key": null,
-   "sku": null,
+   "variant_key": "ace-embery##000000",
+   "sku": "OSS-100250",
    "status": "needs_original",
    "out": "ace/ace-embery-blue",
    "note": "enlarged 3.86x from a small source: needs Ace's original"
@@ -6715,7 +6715,7 @@
    "xref": 4737,
    "family_id": "ace-el-bomber-mid-night",
    "class": "group",
-   "role": "hand_crop",
+   "role": "hero",
    "crop": [
     398,
     241,
@@ -6733,8 +6733,8 @@
     34,
     63
    ],
-   "variant_key": null,
-   "sku": null,
+   "variant_key": "ace-el-bomber-mid-night##000000",
+   "sku": "OSS-100270",
    "status": "hand_crop",
    "out": "ace/ace-el-bomber-mid-night-red",
    "note": "OVERLAP: 3 products touch in Ace's photo, needs a hand crop"
@@ -6923,7 +6923,7 @@
    "xref": 4919,
    "family_id": "ace-l-acrylic",
    "class": "colour",
-   "role": "needs_original",
+   "role": "hero",
    "crop": [
     271,
     185,
@@ -6941,8 +6941,8 @@
     126,
     142
    ],
-   "variant_key": null,
-   "sku": null,
+   "variant_key": "ace-l-acrylic##000000",
+   "sku": "OSS-100290",
    "status": "needs_original",
    "out": "ace/ace-l-acrylic-silver",
    "note": "enlarged 2.09x from a small source: needs Ace's original"
@@ -6952,7 +6952,7 @@
    "xref": 4947,
    "family_id": "ace-2210-mr",
    "class": "colour",
-   "role": "hand_crop",
+   "role": "hero",
    "crop": [
     0,
     47,
@@ -6970,8 +6970,8 @@
     94,
     68
    ],
-   "variant_key": null,
-   "sku": null,
+   "variant_key": "ace-2210-mr##000000",
+   "sku": "OSS-100291",
    "status": "hand_crop",
    "out": "ace/ace-2210-mr-bronze",
    "note": "person checked: two hookahs (red and bronze) touch in Ace's photo"
@@ -6981,7 +6981,7 @@
    "xref": 4984,
    "family_id": "ace-gravity",
    "class": "group",
-   "role": "hand_crop",
+   "role": "colour",
    "crop": [
     43,
     180,
@@ -6999,8 +6999,8 @@
     66,
     66
    ],
-   "variant_key": null,
-   "sku": null,
+   "variant_key": "ace-gravity##000000",
+   "sku": "OSS-100294",
    "status": "hand_crop",
    "out": "ace/ace-gravity-black",
    "note": "OVERLAP: 2 products touch in Ace's photo, needs a hand crop"
@@ -7010,7 +7010,7 @@
    "xref": 4984,
    "family_id": "ace-gravity",
    "class": "group",
-   "role": "needs_original",
+   "role": "unmatched",
    "crop": [
     222,
     105,
