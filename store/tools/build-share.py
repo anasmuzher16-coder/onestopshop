@@ -11,8 +11,8 @@ Run it after any photo rebuild (catalog/photos.py --publish, or a new file in pu
 store/tools/test-seo.mjs fails when a photo on disk no longer matches its version, so a forgotten run is caught.
 
 The card (docs/SEO.md, "Share images"): the shop's chassis is fixed, the product is the one thing that changes.
-Coal ground, the wordmark with SHOP on the counter sticker (the site's device, as in the favicon), the address, and
-the product standing on the bone tile it sits on in the shop. No price and no product name: prices change in the back
+The product stands on the bone tile and shelf it sits on in the shop, the shop's price-gun label (the site's device:
+styles.css .sticker, the favicon) is stuck on the tile's corner, and a coal band carries the address. No price and no product name: prices change in the back
 office and an image cannot follow them; the preview prints the page title beside it.
 """
 from __future__ import annotations
