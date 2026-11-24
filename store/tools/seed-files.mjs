@@ -10,6 +10,8 @@ export const SEED_FILES = [
   "catalog/out/seed-ace.sql",                   // Ace, Price TBD (store/tools/catalog/catalog.py seed)
   "catalog/out/seed-shisha.sql",                // shisha flavours
   "catalog/out/seed-charcoal-foil-foil.sql",    // foil only (catalog.py seed --supplier charcoal-foil --category foil)
+  "catalog/out/seed-charcoal-foil-charcoal.sql", // charcoal's catalogue facts (shape, material, brand) onto the rows already in seed.sql;
+                                                 // also the 3 unpriced Titanium rolls, kept off (catalog.py seed ... --category charcoal)
   "catalog/live/on-view-2026-11-24.sql",        // the on-view switch: samples off, shisha and foil on
   "catalog/out/descriptions.sql",               // the writer's descriptions
 ];
