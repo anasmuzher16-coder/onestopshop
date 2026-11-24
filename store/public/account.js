@@ -17,7 +17,7 @@ const DONE = new Set(["shipped", "collected"]);
 // ---------- talking to the shop ----------
 let me = null, meWait = null, orders = null;
 const call = async (path, body, method = "POST") => {
-  try { const r = await fetch("/api/account" + path, { method, headers: { "Content-Type": "application/json", "X-OSS-Account": "1" }, body: JSON.stringify(body || {}) }); return { ok: r.ok, status: r.status, data: await r.json().catch(() => ({})) }; }
+  try { const r = await fetch("/api/account" + path, { method, headers: { "Content-Type": "application/json", "X-OSS-Account": "1" }, body: method === "GET" ? undefined : JSON.stringify(body || {}) }); return { ok: r.ok, status: r.status, data: await r.json().catch(() => ({})) }; }
   catch { return { ok: false, status: 0, data: { error: "We could not reach the shop. Check your connection and try again." } }; }
 };
 export function loadMe(force) {
@@ -57,7 +57,7 @@ function usualLabel(o) {
       ${o ? `<h2 class="label__h" id="usual-h">Your last order, ${esc(day(o.created_at))}</h2>
         <ul class="label__items">${items.map(i => `<li><span class="num">${i.qty}</span> <span>${esc(i.name)}</span>${bySku[i.sku] && bySku[i.sku].stock !== 0 ? "" : ` <span class="label__gone">sold out</span>`}</li>`).join("")}</ul>
         <p class="label__total"><span>Total</span> <b class="num">${money(o.total_cents)}</b></p>
-        ${can.length ? `<button class="btn btn--wide" type="button" data-again="${esc(o.id)}">${gone ? `Add the ${can.length} still in stock to cart` : "Buy again"}</button>` : `<p class="label__p">Everything in it has sold out. <a class="link" href="/shop">See what is on the counter</a>.</p>`}`
+        ${can.length ? `<button class="btn btn--wide" type="button" data-again="${esc(o.id)}">${gone ? `Add the ${can.length} ${can.length === 1 ? "item" : "items"} still in stock` : "Buy again"}</button>` : `<p class="label__p">Everything in it has sold out. <a class="link" href="/shop">See what is on the counter</a>.</p>`}`
       : `<h2 class="label__h" id="usual-h">Nothing here yet</h2><p class="label__p">Your first order lands on this label, ready to buy again in one tap.</p><a class="btn btn--wide" href="/shop/heat">Shop charcoal</a>`}
       ${l ? `<div class="label__pts" aria-label="Points">${punches(l)}${pointsWords(l)}<p class="label__fine">${l.points_per_dollar === 1 ? "1 point" : `${l.points_per_dollar} points`} for every dollar of items. Points never expire.</p></div>` : ""}
     </div>
@@ -74,7 +74,7 @@ function signInForm(err = "") {
     <p class="acct__lead">No password. We email you a 6-digit code. Your orders, saved items and reminders are kept here.</p>
     <form class="acct__form" data-code-form novalidate ${sent ? "hidden" : ""}>
       <label class="field__label" for="acct-email">Email</label>
-      <input class="field" id="acct-email" name="email" type="email" autocomplete="email" inputmode="email" maxlength="120" required value="${esc(wantEmail)}">
+      <input class="field field--text" id="acct-email" name="email" type="email" autocomplete="email" inputmode="email" maxlength="120" required value="${esc(wantEmail)}">
       <button class="btn btn--wide" type="submit">Email me a code</button>
     </form>
     <form class="acct__form" data-verify-form novalidate ${sent ? "" : "hidden"}>
@@ -127,7 +127,7 @@ function reminderBox(r) {
   </form>`;
 }
 function detailsForm(c) {
-  const a = c.address || {}, f = (id, label, val, attrs, hint = "") => `<label class="field__label" for="acct-${id}">${label}${hint ? ` <span class="fine">${hint}</span>` : ""}</label><input class="field" id="acct-${id}" name="${id}" value="${esc(val || "")}" ${attrs}>`;
+  const a = c.address || {}, f = (id, label, val, attrs, hint = "") => `<label class="field__label" for="acct-${id}">${label}${hint ? ` <span class="fine">${hint}</span>` : ""}</label><input class="field field--text" id="acct-${id}" name="${id}" value="${esc(val || "")}" ${attrs}>`;
   return `<form class="acct__form" data-details-form novalidate>
     ${f("name", "Full name", c.name, 'autocomplete="name" maxlength="80"')}
     ${f("phone", "Phone", c.phone, 'type="tel" autocomplete="tel" inputmode="tel" maxlength="30"', "for local delivery")}
@@ -140,8 +140,8 @@ function detailsForm(c) {
 }
 function accountBody() {
   const m = me, c = m.customer, last = orders && orders[0];
-  return `<p class="acct__who">Signed in as <b>${esc(c.email)}</b></p>
-    ${usualLabel(last)}
+  return `<div class="acct__rail"><p class="acct__who">Signed in as <b>${esc(c.email)}</b></p>
+    ${usualLabel(last)}</div><div class="acct__main">
     <section class="acct__sec" aria-labelledby="ord-h"><h2 class="h3" id="ord-h">Orders</h2>
       ${orders && orders.length ? `<ol class="ords">${orders.map(orderRow).join("")}</ol>` : `<p class="acct__empty">No orders yet. Orders you place while signed in, and earlier ones with this email, show here.</p>`}</section>
     <section class="acct__sec" aria-labelledby="sav-h"><h2 class="h3" id="sav-h">Saved</h2>${savedList(m.favourites, m.alerts)}</section>
@@ -153,7 +153,7 @@ function accountBody() {
       <p class="acct__row"><button class="btn btn--ghost" type="button" data-sign-out>Sign out</button><button class="link" type="button" data-sign-out-all>Sign out on every device</button></p>
       <details class="acct__del"><summary>Delete my account</summary>
         <p class="acct__p">This removes your sign-in, saved details, saved items, alerts, reminder and points. Your past orders stay in the shop's sales records, which tax law says we keep for six years. It cannot be undone.</p>
-        <button class="btn btn--ghost btn--danger" type="button" data-delete>Delete my account</button></details></section>`;
+        <button class="btn btn--ghost btn--danger" type="button" data-delete>Delete my account</button></details></section></div>`;
 }
 async function drawAccount() {
   const root = $("[data-acct]"); if (!root) return;
@@ -174,7 +174,7 @@ async function drawAccount() {
   if (!$("[data-acct]")) return;
   fill(accountBody());
 }
-function fill(html) { const root = $("[data-acct]"); if (!root) return; root.innerHTML = html; root.removeAttribute("aria-busy"); }
+function fill(html) { const root = $("[data-acct]"); if (!root) return; root.innerHTML = html; root.removeAttribute("aria-busy"); root.classList.toggle("acct--two", !!root.querySelector(".acct__rail")); }
 const err = (msg, sel = "[data-acct-err]") => { const e = $(sel); if (e) { e.textContent = msg; e.hidden = !msg; } };
 async function signedInNow(d) {
   me = d.me; orders = null; sess.set("code-to", null); sess.set("link", null); chrome(); dispatchEvent(new Event("oss:account"));
@@ -271,7 +271,7 @@ function productKeep(sku) {
 function checkoutBits() {
   const f = $("[data-checkout]"); if (!f) return;
   const l = L(), box = $("[data-acct-co]", f);
-  const html = signedIn() ? (l ? `${l.can_redeem ? `<label class="check co__reward"><input type="checkbox" data-use-reward ${choice.reward ? "checked" : ""}> <span>Use my ${money(l.reward_cents)} points reward</span></label>` : ""}<p class="co__pts">${punches(l)}<span>This order earns points, counted once it is picked up or delivered. <a class="link" href="/account">Your card</a></span></p>` : "")
+  const html = signedIn() ? (l ? `${l.can_redeem ? `<label class="check co__reward"><input type="checkbox" data-use-reward ${choice.reward ? "checked" : ""}> <span>Use my ${money(l.reward_cents)} points reward</span></label>` : ""}<div class="co__pts">${punches(l)}<p>This order earns points, counted once it is picked up or delivered. <a class="link" href="/account">Your card</a></p></div>` : "")
     : `<p class="co__p co__acct"><a class="link" href="/account?next=%2Fcheckout">Sign in</a> to fill this in for you${l ? " and collect points" : ""}. Or just carry on as a guest.</p>`;
   if (box) box.innerHTML = html; else { const t = $(".totals", f); if (t) t.insertAdjacentHTML("beforebegin", `<div data-acct-co>${html}</div>`); }
   if (!signedIn()) return;
@@ -285,7 +285,7 @@ function orderBits(id) {
   let o = null; try { o = JSON.parse(sessionStorage.getItem("oss:order:" + id)); } catch {}
   if (!o) return;
   const l = L(), at = $(".done__lines", box); if (!at) return;
-  const html = o.account ? (l && o.points ? `<p class="co__pts" data-acct-done>${punches({ ...l, coming: l.coming })}<span><b class="num">${o.points}</b> points on the way. They count once the order is ${o.method === "pickup" ? "picked up" : "delivered"}.</span></p>` : `<p class="fine" data-acct-done>This order is in <a class="link" href="/account">your account</a>, ready to buy again.</p>`)
+  const html = o.account ? (l && o.points ? `<div class="co__pts" data-acct-done>${punches(l)}<p><b class="num">${o.points}</b> points on the way. They count once the order is ${o.method === "pickup" ? "picked up" : "delivered"}.</p></div>` : `<p class="fine" data-acct-done>This order is in <a class="link" href="/account">your account</a>, ready to buy again.</p>`)
     : `<p class="fine" data-acct-done>Next time in one tap: <a class="link" href="/account" data-sign-in-as="${esc(o.email || "")}">sign in with this email</a> and this order will be in your account.</p>`;
   at.insertAdjacentHTML("afterend", html);
 }
