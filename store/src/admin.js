@@ -323,7 +323,8 @@ export async function admin(request, env, url) {
   }
   if ((m = path.match(/^\/orders\/([A-Z0-9]{3,12})\/refunds$/)) && method === "GET") return json({ refunds: (await db.prepare("SELECT amount_cents, status, reason, actor, detail, at FROM refunds WHERE order_id = ? ORDER BY id").bind(m[1]).all()).results });
   if ((m = path.match(/^\/emails\/(\d{1,9})$/)) && method === "GET") {
-    const e = await db.prepare("SELECT id, kind, recipient, subject, html, status, detail, at FROM emails WHERE id = ?").bind(+m[1]).first();
+    // only order and stock emails open here: a customer's sign-in code (and their account mail) is theirs, never the back office's
+    const e = await db.prepare("SELECT id, kind, recipient, subject, html, status, detail, at FROM emails WHERE id = ? AND kind IN ('order_placed','order_shipped','pickup_ready','low_stock')").bind(+m[1]).first();
     return e ? json({ email: e }) : json({ error: "No such email." }, 404);
   }
   // ---- owner only: staff, settings, the monthly report ----

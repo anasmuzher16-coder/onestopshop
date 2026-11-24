@@ -210,10 +210,17 @@ const e1 = await order({ name: "Erin", email: erinEmail, method: "pickup", lines
 await adm(`/orders/${e1.data.order.id}/status`, "POST", { status: "ready" }); await adm(`/orders/${e1.data.order.id}/status`, "POST", { status: "collected" });
 ok((await points(erin)).points === e1pts, "a card order paid through Stripe and collected earns its points: " + e1pts);
 const paid1 = sql(`SELECT paid_cents FROM orders WHERE id = '${e1.data.order.id}'`)[0].paid_cents, half = Math.floor(paid1 / 2);
+const rep0 = (await adm("/report")).data.refunds;
 const rf1 = await adm(`/orders/${e1.data.order.id}/refund`, "POST", { op: opKey(), amount_cents: half });
+const rep1 = (await adm("/report")).data.refunds;
+ok(rep1.total === rep0.total + half && rep1.orders === rep0.orders, `the monthly report takes a part refund off the month, without counting a whole refunded order: ${rep0.total} -> ${rep1.total}`);
 ok(rf1.status === 200 && (await points(erin)).points === Math.floor(e1pts * (paid1 - half) / paid1), `a part refund takes back its share of the points: ${(await points(erin)).points} of ${e1pts}`);
 const rf2 = await adm(`/orders/${e1.data.order.id}/refund`, "POST", { op: opKey() });
 ok(rf2.status === 200 && rf2.data.order?.status === "refunded" && (await points(erin)).points === 0, "refunding the rest through the back office takes every point back");
+const rep2 = (await adm("/report")).data.refunds;
+ok(rep2.total === rep0.total + paid1 && rep2.orders === rep0.orders + 1, "once fully refunded, the report holds the whole amount and one refunded order");
+const signMail = sql(`SELECT id FROM emails WHERE kind = 'sign_in' ORDER BY id DESC LIMIT 1`)[0];
+ok(signMail && (await adm(`/emails/${signMail.id}`)).status === 404, "the back office cannot open a customer's sign-in email");
 const e2 = await order({ name: "Erin", email: erinEmail, method: "pickup", lines: [{ sku: mid.sku, qty: 1 }] }, erin), e2pts = Math.floor(mid.price_cents / 100);
 ok((await points(erin)).coming === e2pts, "a paid order's points are on the way");
 const cx = await adm(`/orders/${e2.data.order.id}/cancel`, "POST", { op: opKey(), reason: "customer" });

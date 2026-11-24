@@ -87,6 +87,7 @@ export async function loyaltyAdmin(request, env, url, signedIn) {
   if (!(request.headers.get("Content-Type") || "").startsWith("application/json")) return json({ error: "Send JSON." }, 415);
   if (request.headers.get("X-OSS-Admin") !== "1") return json({ error: "Missing request marker." }, 400);
   const origin = request.headers.get("Origin"); if (origin && origin !== url.origin) return json({ error: "Wrong origin." }, 403);
+  const site = request.headers.get("Sec-Fetch-Site"); if (site && site !== "same-origin") return json({ error: "Wrong origin." }, 403);   // the same Fetch Metadata check as every other back-office write
   const body = await request.json().catch(() => null); if (!body || typeof body !== "object") return json({ error: "That could not be read." }, 400);
   const before = await loyaltySettings(db), next = { ...before };
   if ("on" in body) { if (typeof body.on !== "boolean") return json({ error: "Check: on." }, 400); next.on = body.on; }

@@ -3,7 +3,7 @@
 //
 // How a month is counted (ledger style, so a closed month's sales never change later):
 //   sales     = every order placed in the month that took money (see SOLD), on its order date
-//   refunds   = every order cancelled or refunded in the month, on the day it was cancelled, as a minus line
+//   refunds   = money given back in the month, on the day: each card refund (part or whole), or a cancelled order, as a minus line
 //   net       = sales - refunds
 //   studio share = rate x net, on the basis in settings: "subtotal" (items, before tax and delivery, the default)
 //                  or "total" (everything the customer paid). The owner still has to confirm the basis in writing.
@@ -28,20 +28,29 @@ export async function report(db, month, withRows = false) {
   // a sale is an order that took money (card paid by webhook, or paid at the counter). A card page that closed unpaid,
   // or a pay-at-counter pickup nobody collected, never counts, so it never shows as a refund either.
   const SOLD = "(status <> 'pending' AND (pay_status IS NULL OR pay_status IN ('paid','refunded','part_refunded')))";
+  // what came back, on the day it came back: a card refund (whole or part) from the refunds table, split across items,
+  // delivery and tax in the order's own proportions; a cancelled or till-refunded order with no card refund, whole.
+  // An order counts as one refunded order only when the last of its refunds empties it.
+  const REFUND_LINES = `SELECT id, status, method, source, ${REFUND_AT} AS at, subtotal_cents AS subtotal, shipping_cents AS delivery, tax_cents AS tax, total_cents AS total, 1 AS whole
+      FROM orders WHERE ${SOLD} AND status IN ('cancelled','refunded') AND NOT EXISTS (SELECT 1 FROM refunds r WHERE r.order_id = orders.id AND r.status = 'succeeded')
+    UNION ALL SELECT o.id, o.status, o.method, o.source, r.updated_at, r.amount_cents * o.subtotal_cents / o.total_cents, r.amount_cents * o.shipping_cents / o.total_cents,
+      r.amount_cents - r.amount_cents * o.subtotal_cents / o.total_cents - r.amount_cents * o.shipping_cents / o.total_cents, r.amount_cents,
+      CASE WHEN o.refunded_cents >= o.paid_cents AND r.id = (SELECT MAX(id) FROM refunds x WHERE x.order_id = o.id AND x.status = 'succeeded') THEN 1 ELSE 0 END
+      FROM refunds r JOIN orders o ON o.id = r.order_id WHERE r.status = 'succeeded' AND o.total_cents > 0`;
   const q = [
     db.prepare(`SELECT COUNT(*) AS orders, COALESCE(SUM(subtotal_cents),0) AS subtotal, COALESCE(SUM(shipping_cents),0) AS delivery, COALESCE(SUM(tax_cents),0) AS tax, COALESCE(SUM(total_cents),0) AS total
       FROM orders WHERE created_at >= ?1 AND created_at < ?2 AND ${SOLD}`).bind(from, to),
-    db.prepare(`SELECT COUNT(*) AS orders, COALESCE(SUM(subtotal_cents),0) AS subtotal, COALESCE(SUM(shipping_cents),0) AS delivery, COALESCE(SUM(tax_cents),0) AS tax, COALESCE(SUM(total_cents),0) AS total
-      FROM orders WHERE ${SOLD} AND status IN ('cancelled','refunded') AND ${REFUND_AT} >= ?1 AND ${REFUND_AT} < ?2`).bind(from, to),
+    db.prepare(`SELECT * FROM (${REFUND_LINES}) WHERE at >= ?1 AND at < ?2 ORDER BY at, id`).bind(from, to),
     db.prepare(`SELECT COALESCE(source, 'not recorded') AS source, COUNT(*) AS orders, SUM(subtotal_cents) AS subtotal FROM orders WHERE created_at >= ?1 AND created_at < ?2 AND ${SOLD} GROUP BY 1 ORDER BY subtotal DESC, source`).bind(from, to),
     db.prepare("SELECT key, value, updated_by, updated_at FROM settings WHERE key IN ('studio_share_basis','studio_share_bp')"),
   ];
   if (withRows) q.push(
     db.prepare(`SELECT 'sale' AS line, id, status, method, source, created_at AS at, subtotal_cents, shipping_cents, tax_cents, total_cents FROM orders WHERE created_at >= ?1 AND created_at < ?2 AND ${SOLD}
-      UNION ALL SELECT 'refund', id, status, method, source, ${REFUND_AT}, -subtotal_cents, -shipping_cents, -tax_cents, -total_cents FROM orders WHERE ${SOLD} AND status IN ('cancelled','refunded') AND ${REFUND_AT} >= ?1 AND ${REFUND_AT} < ?2
+      UNION ALL SELECT 'refund', id, status, method, source, at, -subtotal, -delivery, -tax, -total FROM (${REFUND_LINES}) WHERE at >= ?1 AND at < ?2
       ORDER BY at, id`).bind(from, to));
   const res = await db.batch(q);
-  const sales = res[0].results[0], refunds = res[1].results[0], set = Object.fromEntries(res[3].results.map(r => [r.key, r]));
+  const sales = res[0].results[0], set = Object.fromEntries(res[3].results.map(r => [r.key, r]));
+  const refunds = res[1].results.reduce((t, l) => ({ orders: t.orders + l.whole, subtotal: t.subtotal + l.subtotal, delivery: t.delivery + l.delivery, tax: t.tax + l.tax, total: t.total + l.total }), { orders: 0, subtotal: 0, delivery: 0, tax: 0, total: 0 });
   const basis = set.studio_share_basis?.value === "total" ? "total" : "subtotal", bp = Math.max(0, Math.min(10000, parseInt(set.studio_share_bp?.value ?? "500", 10) || 0));
   const net = { orders: sales.orders - refunds.orders, subtotal: sales.subtotal - refunds.subtotal, delivery: sales.delivery - refunds.delivery, tax: sales.tax - refunds.tax, total: sales.total - refunds.total };
   const basisCents = net[basis];

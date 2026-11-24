@@ -89,7 +89,7 @@ export async function releaseHeld(db, id, why) {
   const held = (await db.prepare("SELECT sku, -SUM(delta) AS qty FROM stock_moves WHERE ref = ? AND reason IN ('sale','released') GROUP BY sku HAVING -SUM(delta) > 0").bind(id).all()).results;
   const ours = "EXISTS (SELECT 1 FROM orders WHERE id = ?3 AND release_op = ?4)";
   const res = await db.batch([
-    db.prepare(`UPDATE orders SET status = 'cancelled', pay_status = ?1, release_op = ?2, pay_url = NULL, updated_at = ${NOW} WHERE id = ?3 AND status = 'pending' AND pay_status = 'awaiting' AND release_op IS NULL`).bind(why, op, id),
+    db.prepare(`UPDATE orders SET status = 'cancelled', pay_status = ?1, release_op = ?2, pay_url = NULL, cancelled_at = ${NOW}, updated_at = ${NOW} WHERE id = ?3 AND status = 'pending' AND pay_status = 'awaiting' AND release_op IS NULL`).bind(why, op, id),
     ...held.flatMap(h => [
       db.prepare(`UPDATE products SET stock = stock + ?1, updated_at = ${NOW} WHERE sku = ?2 AND ${ours}`).bind(h.qty, h.sku, id, op),
       db.prepare(`INSERT INTO stock_moves (sku, delta, reason, ref, actor) SELECT ?2, ?1, 'released', ?3, 'payments' WHERE ${ours}`).bind(h.qty, h.sku, id, op),

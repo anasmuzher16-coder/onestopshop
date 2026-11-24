@@ -74,6 +74,11 @@ ok(coal.every(p => p.stock === 10), "every charcoal item starts at 10 in stock")
 // regression: no carrier service, on its own or mixed in, ever turns charcoal into a shipped order
 const carrierIds = [...new Set(quote(parsePostal("M5V 2T6"), pack([{ product: PRODUCTS.find(p => p.sku === "OSS-1001"), qty: 1 }]), fuelOn().pct).map(o => o.id))];
 ok(carrierIds.length >= 2, "the carrier services to try: " + carrierIds.join(","));
+// an item moved into Heat in the back office is charcoal by its section, with or without the flag (breaker, 2026-11-24)
+{ const was = cat.products.find(p => p.sku === "OSS-8003").category_id, put = c => fetch(B + "/api/admin/products/OSS-8003", { method: "PUT", headers: { "Content-Type": "application/json", "X-OSS-Admin": "1", Cookie: cookie }, body: JSON.stringify({ category_id: c }) });
+  const mv = await put("heat"), moved = await post({ ...who, ...to, method: "ship", service: carrierIds[0], lines: [{ sku: "OSS-8003", qty: 1 }] });
+  ok(mv.status === 200 && moved.status === 409 && moved.data.local_only === true, `an item moved into Heat cannot go by carrier: ${mv.status} ${moved.status}`);
+  await put(was); }
 for (const service of [...carrierIds, "cp-nope", undefined]) {
   const r = await post({ ...who, ...to, method: "ship", service, lines: [{ sku: coalSku, qty: 1 }] });
   ok(r.status === 409 && /cannot be shipped/.test(r.data.error || "") && !r.data.order, `charcoal cannot be shipped by ${service}: ${r.status}`);

@@ -66,6 +66,9 @@ export function toStorefront(cat) {
   for (const p of cat.products) if (grouped(p)) { const own = parse(p.facts_known).photo === "own"; if (!lead[p.family] || (own && !lead[p.family].own)) lead[p.family] = { sku: p.sku, own }; }
   const PRODUCTS = cat.products.map(p => {
     const details = parse(p.details);
+    // charcoal by its flag, or by its section: anything in Heat that is not foil is charcoal, so moving an item into Heat in the
+    // back office can never leave it shippable by a carrier (breaker, 2026-11-24)
+    if (p.category_id === CHARCOAL && !String(p.family || "").startsWith("foil-")) details.charcoal = true;
     const coal = !!details.charcoal; delete details.photo_rights; delete details.photo_rejected; delete details.source_lines;   // shop-only notes stay in the back office
     const sale = sellable(p), facts = p.family ? shownFacts(p) : {};
     // a catalogue item whose pack weight is not known yet cannot be priced for a carrier: pickup or local delivery until it is
@@ -91,7 +94,6 @@ export function toStorefront(cat) {
 export const CHARCOAL = "heat";
 // Storefront products: charcoal (always pickup or local delivery, never a carrier).
 export const isCharcoal = p => !!(p && p.details && p.details.charcoal);
-// Raw database rows (page titles and descriptions): pickup or local delivery only, never shipped.
 export const counterRow = p => { if (!p) return false; if (p.ship_class === "pickup_only" || weightUnknown(p)) return true; try { return !!JSON.parse(p.details || "{}").charcoal; } catch { return false; } };
 export function catalogModule(cat) {
   const { BOXES, CATEGORIES, PRODUCTS } = toStorefront(cat);
