@@ -805,14 +805,14 @@ document.addEventListener("submit", async e => {
   }
   const pay = payWay(sc), label = payLabel(sc, +f.querySelector(".totals").dataset.total);
   btn.disabled = true; btn.textContent = pay === "card" ? "Opening secure payment" : "Placing your order"; err.hidden = true;
-  const sent = cartLines(), sig = orderSig(sent, sc) + pay, shownTotal = +f.querySelector(".totals").dataset.total;   // the figure on the screen, not a fresh sum: if the rate moved since, the server says so
+  const sent = cartLines(), sig = orderSig(sent, sc), shownTotal = +f.querySelector(".totals").dataset.total;   // the figure on the screen, not a fresh sum: if the rate moved since, the server says so
   try {
-    const r = await fetch("/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ order_key: orderKey(sig + v("email").toLowerCase()), expected_total_cents: shownTotal, lines: state.cart, method: pickup ? "pickup" : "ship", service: local ? "local" : chosen && chosen.id, delivery_fee_cents: local ? Math.round(deliveryFeeNow() * 100) : undefined, postal: state.dest && state.dest.full,
+    const r = await fetch("/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ order_key: orderKey(sig + pay + v("email").toLowerCase()), expected_total_cents: shownTotal, lines: state.cart, method: pickup ? "pickup" : "ship", service: local ? "local" : chosen && chosen.id, delivery_fee_cents: local ? Math.round(deliveryFeeNow() * 100) : undefined, postal: state.dest && state.dest.full,
       name: v("name"), email: v("email"), phone: v("phone"), note: state.note, address: { line1: v("line1"), city: v("city") }, pay }) });
     const data = await r.json().catch(() => ({}));
     if (!r.ok) { btn.disabled = false; btn.textContent = label; if (local && data.delivery) { if (data.delivery === "far") state.farFor = state.dest.full; state.delivery = data.delivery === "ok" ? { key: deliveryKey(), fee_cents: data.base_fee_cents ?? data.fee_cents, due: data.fee_cents, sub: cartCents() } : null; state.refused = data.delivery === "ok" ? null : deliveryKey(); refreshDelivery(f, data.delivery === "ok" ? undefined : deliveryMsg(data.delivery)); if (data.delivery !== "ok") return; } 
       if (data.local_only) { state.cartNews = [data.error]; state.ship = null; store.set("ship", null); navigate("/cart"); return; }   // an out-of-date page offered a carrier: back to the cart, where the real choices are
-      if (data.repriced) { state.priced = { sig, ...data.repriced }; f.querySelector(".totals").outerHTML = coTotals(sent, sc); }
+      if (data.repriced) { state.priced = { sig, ...data.repriced }; f.querySelector(".totals").outerHTML = coTotals(sent, sc); btn.textContent = payLabel(sc, data.repriced.total_cents); }
       if (typeof data.stock === "number" && bySku[data.sku]) {   // the shelf changed: the cart is put right and says what happened
         bySku[data.sku].stock = data.stock; const fit = fitCart(state.cart); state.cart = fit.kept; state.cartNews = fit.news.length ? fit.news : [data.error]; state.priced = null; saveCart(); navigate("/cart"); return;
       }

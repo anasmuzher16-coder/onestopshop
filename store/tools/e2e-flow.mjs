@@ -84,6 +84,7 @@ try {
   t("both new orders are waiting in the back office", await p.locator(`[data-order="${id1}"]`).count() === 1 && await p.locator(`[data-order="${id2}"]`).count() === 1);
   await p.locator(`[data-order="${id3}"]`).tap(); await p.waitForSelector("dialog[open] [data-next]");
   t("staff, and only staff, get a discreet ID note on the charcoal order", /Check ID if the customer looks young/.test(await p.locator("dialog[open]").innerText()));
+  t("a card-paid order shows it is paid and offers a refund to the card", /Payment\s*Paid, card/.test(await p.locator("dialog[open]").innerText()) && await p.locator("dialog[open] [data-refundform]").count() === 1);
   await p.locator("dialog[open] .sheet__act [data-close]").tap(); await p.waitForTimeout(200);
   await p.locator(`[data-order="${id1}"]`).tap(); await p.waitForSelector("dialog[open] [data-next]"); await snap("flow-admin-order");
   await p.locator("[data-next]").tap(); await p.waitForFunction(() => /Mark shipped/.test(document.querySelector("dialog[open] [data-next]")?.textContent || ""), null, { timeout: 8000 });

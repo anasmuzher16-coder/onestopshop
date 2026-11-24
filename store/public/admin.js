@@ -123,7 +123,6 @@ function editSheet(p) {
     ${isNew ? `<label class="field"><span>How many on the shelf now</span><input class="input num" name="stock" inputmode="numeric" value="0"></label>` : ""}
     <label class="check"><input type="checkbox" name="glass" ${p.glass ? "checked" : ""}> Glass, pack with care</label>
     <label class="check"><input type="checkbox" name="active" ${p.active ? "checked" : ""}> Show in the store</label>
-    ${payActs(o)}
     <p class="err" role="alert" data-err></p>
     <div class="sheet__act"><button class="btn" type="submit">${isNew ? "Add product" : "Save"}</button><button class="btn btn--ghost" type="button" data-close>Cancel</button></div>
     ${isNew ? "" : `<section><h3 class="meta" style="margin-bottom:var(--s-2)">Stock history</h3><div class="hist" data-hist><div><span>Loading</span></div></div></section>`}</form>`;
@@ -198,6 +197,7 @@ async function orderSheet(id) {
       ${payFacts(o)}${o.tracking ? `<div><dt>Tracking</dt><dd class="num">${esc(o.tracking)}</dd></div>` : ""}${dropInfo(o)}</dl>
     <section><h3 class="meta" style="margin-bottom:var(--s-2)">Emails to the customer</h3><div class="hist">${emails.map(e => `<button class="mailrow" type="button" data-mail="${e.id}"><span>${esc(MAIL[e.kind] || e.kind)}, ${when(e.at)}</span><span class="state ${e.status === "sent" ? "done" : e.status === "failed" ? "out" : "low"}">${e.status === "sent" ? "Sent" : e.status === "failed" ? "Failed" : "Written, not sent"}</span></button>`).join("") || `<div><span>None yet.</span></div>`}</div>
       ${emails.some(e => e.status === "held") ? `<p class="fineprint">Emails are written and kept here. They start sending once the shop's mail service is connected.</p>` : ""}<div data-mailview></div></section>
+    ${payActs(o)}
     <p class="err" role="alert" data-err></p>
     <div class="sheet__act">${next ? `<button class="btn" type="button" data-next="${next[0]}">${next[1]}</button>` : ""}<button class="btn btn--ghost" type="button" data-close>Close</button></div></div>`;
   if (!sheet.open) sheet.showModal();
