@@ -29,7 +29,7 @@ STORE = Path(__file__).resolve().parent.parent
 PC, OUT, VERS = STORE / "public/img/pc", STORE / "public/img/share", STORE / "src/img-versions.json"
 HOME_OUT = STORE / "public/img/share.jpg"           # the shop's own card (home, sections, items with no photo)
 W, H, U = 1200, 630, 8                              # the card, and the 8 px unit every measure below is a multiple of
-CARD = 6                                            # bump when the card's design changes: every share image is redrawn
+CARD = 7                                            # bump when the card's design changes: every share image is redrawn
 
 
 def oklch(l, c, h):
@@ -77,6 +77,22 @@ CX = 85 * U                                        # 680: the product's centre, 
 FLOOR, FOOT = 65 * U, 71 * U                       # feet stand at y 520; the coal band starts at 568
 BOX_W, BOX_H = 50 * U, 54 * U                      # 400 x 432: the longer side of every product is fitted to this box
 SHELF = oklch(.86, .03, 78)                        # one step darker than the tile: the shelf the pieces stand on
+PALE_TILE, PALE_SHELF = oklch(.56, .016, 60), oklch(.50, .016, 60)   # coal-3, the site's own field grey, for pale pieces
+
+
+def lum(c):
+    f = lambda v: (v / 255) / 12.92 if v / 255 <= .04045 else ((v / 255 + .055) / 1.055) ** 2.4
+    return .2126 * f(c[0]) + .7152 * f(c[1]) + .0722 * f(c[2])
+
+
+def contrast(piece, ground):
+    """WCAG contrast between the piece's typical (median) opaque colour and the ground: computed, not guessed."""
+    px = [p[:3] for p in piece.resize((max(1, piece.width // 4), max(1, piece.height // 4))).getdata() if p[3] > 200]
+    if not px:
+        return 21
+    med = tuple(sorted(c[i] for c in px)[len(px) // 2] for i in range(3))
+    a, b = lum(med), lum(ground)
+    return (max(a, b) + .05) / (min(a, b) + .05)
 _FACES = {}
 
 
@@ -121,10 +137,15 @@ def fit(im, w, h):
 
 
 def stand(card_im, piece, cx):
-    """Puts a piece on the shelf at x = cx, feet on the floor line, with a soft contact shadow under it."""
+    """Puts a piece on the shelf at x = cx, feet on the floor line, with a soft contact shadow under the part that
+    actually touches it (an angled piece rests on one end, not on the middle of its box)."""
     sh = Image.new("L", card_im.size, 0)
-    sw = min(piece.width * .9, 45 * U)
-    ImageDraw.Draw(sh).ellipse([cx - sw / 2, FLOOR - 1.5 * U, cx + sw / 2, FLOOR + 1.5 * U], fill=110)
+    a = piece.getchannel("A")
+    foot = a.crop((0, max(0, piece.height - max(6, piece.height // 12)), piece.width, piece.height)).point(lambda v: 255 if v > 128 else 0).getbbox()
+    x0 = round(cx - piece.width / 2)
+    l, r = (x0 + foot[0], x0 + foot[2]) if foot else (x0, x0 + piece.width)
+    pad = max(2 * U, (r - l) * .1)
+    ImageDraw.Draw(sh).ellipse([l - pad, FLOOR - 1.5 * U, r + pad, FLOOR + 1.5 * U], fill=110)
     sh = sh.filter(ImageFilter.GaussianBlur(10))
     card_im.paste(Image.new("RGB", card_im.size, COAL0), (0, 0), sh)
     card_im.paste(piece, (round(cx - piece.width / 2), FLOOR - piece.height), piece)
@@ -133,9 +154,9 @@ def stand(card_im, piece, cx):
 def label():
     """The shop's price-gun label (styles.css .sticker; the favicon): white stock, the ember band carrying ONE STOP,
     a perforation line, and SHOP in ink where the price would be. No price: an image cannot follow the back office."""
-    em = 4 * U                                     # 1em of the site's label, in px
-    band, pad = round(1.02 * em) + 2 * U, 3 * U
-    word = face("lalezar", 13 * U)
+    em = 3 * U                                     # 1em of the site's label, in px
+    band, pad = round(1.02 * em) + 2 * U, 2 * U + 4
+    word = face("lalezar", 10 * U)
     wb = word.getbbox("SHOP")
     lw = wb[2] - wb[0] + 2 * pad
     lh = band + U + (wb[3] - wb[1]) + 2 * pad
@@ -145,7 +166,7 @@ def label():
     d.rounded_rectangle([0, 0, lw - 1, lh - 1], radius=r, fill=WHITE)
     d.rounded_rectangle([0, 0, lw - 1, band + r], radius=r, fill=EMBER)
     d.rectangle([0, band, lw - 1, band + r], fill=WHITE)
-    bpx = 2 * U + 4
+    bpx = 2 * U
     band_font = face("readex", bpx, 600)
     text, track = "ONE STOP", .14 * bpx
     tw = sum(band_font.getlength(c) for c in text) + track * (len(text) - 1)
@@ -169,7 +190,19 @@ def label():
     return out
 
 
-LABEL_X, LABEL_R, LABEL_B = SAFE0 + 2 * U - 37, 76 * U, 28 * U   # label stock from x 301; its corner reaches x ~600, y ~220
+_LAB = None
+
+
+def label_box():
+    """The label image and where its white stock actually is (measured from its pixels, shadow excluded)."""
+    global _LAB
+    if _LAB is None:
+        lab = label()
+        _LAB = (lab, lab.getchannel("A").point(lambda v: 255 if v > 200 else 0).getbbox())
+    return _LAB
+
+
+LABEL_LEFT, LABEL_TOP = SAFE0 + 3 * U, 3 * U                     # the stock's left edge: 24 px inside the square (rounded preview corners)
 RIGHT = SAFE1 - 2 * U                                            # 899: nothing past the square's right edge, less a margin
 
 
@@ -179,6 +212,8 @@ def place(piece):
     if piece.height < 18 * U:                                   # very flat (a stem, a mouthpiece): at least 144 px tall
         piece = fit(piece, 2 * (RIGHT - CX) + 10 * U, 18 * U)   # ... within the square, centred under the label
         return piece, (SAFE0 + RIGHT) // 2 + U
+    lab, b = label_box()
+    LABEL_R, LABEL_B = LABEL_LEFT + b[2] - b[0], LABEL_TOP + b[3] - b[1]
     if FLOOR - piece.height < LABEL_B:                          # its top reaches the label's height: start right of it
         room = RIGHT - LABEL_R
         if piece.width > room:
@@ -191,9 +226,13 @@ def card(stem):
     pieces = [cutout(s_) for s_ in (HOME if stem == "home" else [stem])]
     if any(p is None for p in pieces):
         return None
-    im = Image.new("RGB", (W, H), BONELT)
+    lab, b = label_box()
+    LABEL_R, LABEL_B = LABEL_LEFT + b[2] - b[0], LABEL_TOP + b[3] - b[1]
+    # a pale piece (white rubber, clear glass) would vanish on bone: it gets the darker tile step instead
+    tile, shelf = (BONELT, SHELF) if contrast(pieces[0], BONELT) >= 1.5 else (PALE_TILE, PALE_SHELF)
+    im = Image.new("RGB", (W, H), tile)
     d = ImageDraw.Draw(im)
-    d.rectangle([0, FLOOR - 4 * U, W, FOOT], fill=SHELF)       # the shelf, the full width
+    d.rectangle([0, FLOOR - 4 * U, W, FOOT], fill=shelf)       # the shelf, the full width
     if stem == "home":     # three pieces at one scale below the label, overlapping a little, the middle one in front
         pieces = [fit(p, BOX_W, FLOOR - LABEL_B - 2 * U) for p in pieces]
         gap = 18 * U
@@ -202,8 +241,7 @@ def card(stem):
     else:
         piece, cx = place(fit(pieces[0], BOX_W, BOX_H))
         stand(im, piece, cx)
-    lab = label()
-    im.paste(lab, (LABEL_X, -U), lab)                        # inside the top-left corner of the safe square
+    im.paste(lab, (LABEL_LEFT - b[0], LABEL_TOP - b[1]), lab)   # inside the top-left corner of the safe square
     # the foot: the address, the one fact every preview carries, in the site's text face
     d.rectangle([0, FOOT, W, H], fill=COAL0)
     small = face("readex", 3 * U + 4, 500)
