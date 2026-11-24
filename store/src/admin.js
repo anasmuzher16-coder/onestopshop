@@ -186,7 +186,9 @@ export async function admin(request, env, url) {
       const base = "details" in out ? JSON.parse(out.details) : { ...had }; if (out.colour) base.colour = out.colour; else delete base.colour;
       out.details = JSON.stringify(base); delete out.colour;
     }
-    if (had.charcoal || out.category_id === CHARCOAL || isCharcoalRow(before)) charcoalRules(out, had);   // also an item from the charcoal list, wherever it is moved   // charcoal stays charcoal; retired Heat pieces are never turned into it
+    // charcoal stays charcoal, an item from the charcoal list too, wherever it is moved. An ordinary item moved into Charcoal is
+    // charcoal by its section while it is there (src/catalog.js), and goes back to what it was if it is moved out again.
+    if (had.charcoal || isCharcoalRow(before)) charcoalRules(out, had);
     const cols = Object.keys(out); if (!cols.length) return json({ ok: true });
     const was = {}; for (const k of cols) was[k] = before[k];
     try { await db.batch([db.prepare(`UPDATE products SET ${cols.map(k => k + " = ?").join(", ")}, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE sku = ?`).bind(...cols.map(k => out[k]), m[1]), audit("product.edit", m[1], was, out)]); }

@@ -36,6 +36,8 @@ ok(share(100000, 500) === 5000 && share(12345, 500) === 617 && share(12350, 500)
 ok(new Date(monthStart(2026, 11)).toISOString() === "2026-11-01T04:00:00.000Z" && new Date(monthStart(2026, 12)).toISOString() === "2026-12-01T05:00:00.000Z" && new Date(monthStart(2026, 3)).toISOString() === "2026-03-01T05:00:00.000Z", "months start at midnight Windsor time, summer and winter");
 ok(monthOf("2026-11") === "2026-11" && monthOf("2026-13") === null && monthOf("1999-01") === null && monthOf("2026-1") === null && /^\d{4}-\d\d$/.test(monthOf()), "month input is checked");
 { // the pepper: PIN_PEPPER is used when set (a hash made with it fails without it, and the fallback key cannot stand in for it)
+  // Node has no crypto.subtle.timingSafeEqual (a Workers extension): a plain stand-in here, in the test only
+  if (!crypto.subtle.timingSafeEqual) crypto.subtle.timingSafeEqual = (a, b) => Buffer.compare(Buffer.from(a), Buffer.from(b)) === 0;
   const withP = { PIN_PEPPER: "pepper-a", ADMIN_KEY: "k", PIN_ROUNDS: "10000" }, noP = { ADMIN_KEY: "k", PIN_ROUNDS: "10000" }, h = await hashPin(withP, "482913");
   ok(await checkPin(withP, "482913", h) && !(await checkPin(noP, "482913", h)) && !(await checkPin({ ...withP, PIN_PEPPER: "pepper-b" }, "482913", h)), "staff PINs are hashed with PIN_PEPPER when it is set"); }
 ok(pinProblem("482913") === null && pinProblem("123456") && pinProblem("111111") && pinProblem("12345") && pinProblem("abcdef") && pinProblem(482913), "PIN rules: 6 digits, not an obvious one");

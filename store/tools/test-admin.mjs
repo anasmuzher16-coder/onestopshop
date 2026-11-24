@@ -32,7 +32,7 @@ ok(s.value.units > 0 && s.value.retail_cents > s.value.cost_cents, "stock value 
 const list = (await call("/products")).data; const p = list.products.find(x => x.sku === "OSS-8004"), start = p.stock;
 // every product the seed files insert (samples kept but switched off, charcoal, foil, shisha, Ace colours), counted from the seed itself; Shisha is the ninth section
 const SEEDED = seededProductCount();
-ok(list.products.length === SEEDED && list.categories.length === 9, `catalogue ${list.products.length} products (seed has ${SEEDED}), ${list.categories.length} sections`);
+ok(list.products.length === SEEDED && list.categories.length === 10 && list.categories.some(c => c.id === "charcoal"), `catalogue ${list.products.length} products (seed has ${SEEDED}), ${list.categories.length} sections`);
 const up = await call("/products/OSS-8004/stock", { method: "POST", body: { delta: 3, reason: "received" } }); ok(up.data.stock === start + 3, "stock +3");
 const dn = await call("/products/OSS-8004/stock", { method: "POST", body: { delta: -3, reason: "correction" } }); ok(dn.data.stock === start, "stock -3");
 const neg = await call("/products/OSS-8004/stock", { method: "POST", body: { delta: -(start + 1) } }); ok(neg.status === 409 && neg.data.stock === start, "stock cannot go below zero: " + neg.status);
