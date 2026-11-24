@@ -1,10 +1,10 @@
 // The emails the store writes: order received, shipped, ready for pickup, and a low-stock note to the shop.
 // Each one is saved in the database first. It is sent only when a mail service is connected (RESEND_API_KEY and
 // EMAIL_FROM set); until then it is kept as "held", so nothing claims to have been sent when it was not.
-const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+export const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const money = c => "$" + (c / 100).toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-function frame(site, heading, intro, rows, foot) {
+export function frame(site, heading, intro, rows, foot) {
   const row = ([a, b, strong]) => `<tr><td style="padding:10px 0;border-top:1px solid #e3ddd2;${strong ? "font-weight:700;" : ""}">${a}</td><td align="right" style="padding:10px 0;border-top:1px solid #e3ddd2;white-space:nowrap;${strong ? "font-weight:700;font-size:18px;" : ""}">${b}</td></tr>`;
   return `<!doctype html><html lang="en"><body style="margin:0;background:#f4f0e8;font-family:Arial,Helvetica,sans-serif;color:#1b1713;line-height:1.5">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f0e8"><tr><td align="center" style="padding:24px 12px">
@@ -16,10 +16,10 @@ ${rows.length ? `<table role="presentation" width="100%" cellpadding="0" cellspa
 </table></td></tr></table></body></html>`;
 }
 const lines = items => items.map(i => [`${i.qty} &times; ${esc(i.name)}`, money(i.unit_cents * i.qty)]);
-const plain = (heading, intro, rows, foot) => [heading, "", intro, "", ...rows.map(r => `${String(r[0]).replace(/&times;/g, "x").replace(/&amp;/g, "&")}  ${r[1]}`), "", foot].join("\n").replace(/<[^>]+>/g, "");
+export const plain =(heading, intro, rows, foot) => [heading, "", intro, "", ...rows.map(r => `${String(r[0]).replace(/&times;/g, "x").replace(/&amp;/g, "&")}  ${r[1]}`), "", foot].join("\n").replace(/<[^>]+>/g, "");
 
 export function orderPlaced(site, o, items) {
-  const rows = [...lines(items), ["Items", money(o.subtotal_cents)], [o.method === "pickup" ? "Pickup at the counter" : o.ship_service === "Local delivery" ? "Local delivery" : `Shipping, ${esc(o.ship_service || "")}`, o.method === "pickup" || (o.ship_service === "Local delivery" && !o.shipping_cents) ? "Free" : money(o.shipping_cents)],
+  const rows = [...lines(items), ["Items", money(o.subtotal_cents)], ...(o.reward_cents ? [["Points reward", "−" + money(o.reward_cents)]] : []), [o.method === "pickup" ? "Pickup at the counter" : o.ship_service === "Local delivery" ? "Local delivery" : `Shipping, ${esc(o.ship_service || "")}`, o.method === "pickup" || (o.ship_service === "Local delivery" && !o.shipping_cents) ? "Free" : money(o.shipping_cents)],
     [`Tax, ${esc(o.tax_province || "")}`, money(o.tax_cents)], ["Total", money(o.total_cents), true]];
   const heading = `Order ${esc(o.id)} is in`, first = esc(String(o.name).split(" ")[0]);
   const intro = `Thank you, ${first}. This is a test order: no payment was taken, and nothing will be packed or sent.`;   // restore the real wording when payments are connected

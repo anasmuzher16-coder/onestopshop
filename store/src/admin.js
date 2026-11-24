@@ -9,7 +9,7 @@ const hex = buf => [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, 
 const sha = async s => hex(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)));
 const cookieToken = request => ((request.headers.get("Cookie") || "").match(/(?:^|;\s*)oss_admin=([a-f0-9]{64})/) || [])[1];
 function same(a, b) { if (a.length !== b.length) return false; let d = 0; for (let i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i); return d === 0; }
-async function signedIn(request, env) {
+export async function signedIn(request, env) {
   // each sign-in is its own random token, kept only as a hash, and it expires by itself
   const t = cookieToken(request); if (!t) return false;
   return !!(await env.DB.prepare("SELECT 1 AS ok FROM sessions WHERE token_hash = ? AND expires_at > strftime('%Y-%m-%dT%H:%M:%SZ','now')").bind(await sha(t)).first("ok"));

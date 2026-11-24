@@ -5,6 +5,8 @@ import * as rates from "../public/rates-core.js";
 import { loadCatalog, toStorefront, isCharcoal } from "./catalog.js";
 import { orderPlaced, lowStock, writeEmail } from "./email.js";
 import { deliveryQuote } from "./delivery.js";
+import { customerFrom } from "./account.js";
+import { orderLoyalty, orderLoyaltyStatements } from "./loyalty.js";
 
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" } });
 const text = (v, max) => typeof v === "string" && v.trim().length > 0 && v.trim().length <= max ? v.trim() : null;
@@ -39,7 +41,7 @@ async function findKeyed(db, key, sameOrder) {
 }
 async function replay(db, row) {
   const items = (await db.prepare("SELECT sku, name, qty, unit_cents FROM order_items WHERE order_id = ? ORDER BY sku").bind(row.id).all()).results, q = parsed(row.ship_quote), a = parsed(row.address);
-  return json({ ok: true, replayed: true, order: { id: row.id, method: row.method, name: row.name, email: row.email, service: row.ship_service, province: row.tax_province, subtotal_cents: row.subtotal_cents, shipping_cents: row.shipping_cents, tax_cents: row.tax_cents, total_cents: row.total_cents,
+  return json({ ok: true, replayed: true, order: { id: row.id, method: row.method, name: row.name, email: row.email, service: row.ship_service, province: row.tax_province, subtotal_cents: row.subtotal_cents, reward_cents: row.reward_cents || 0, shipping_cents: row.shipping_cents, tax_cents: row.tax_cents, total_cents: row.total_cents,
     tax_label: rates.taxLabel(row.tax_province), days: q.days ?? null, eta: q.eta ?? null, address: row.method === "ship" ? { demo: true, line1: a.line1, city: a.city, province: a.province, postal: a.postal } : null, items } });
 }
 const stillOpen = () => json({ error: "Your order is still going through. Wait a moment, then tap Place order again.", in_progress: true }, 409);
@@ -119,22 +121,33 @@ export async function placeOrder(request, env, url) {
     address = { demo: true, line1, city, province, postal: dest.full };
     }
   }
-  const { tax, total } = rates.orderTotals(subtotal, shipping, province);
+  // signed in: the order joins the account; with points on, a reward the customer asked for comes off the items before tax
+  const customer = await customerFrom(request, env), loy = await orderLoyalty(db, customer, body.use_reward === true, subtotal);
+  if (loy.refused) { const t = rates.orderTotals(subtotal, shipping, province); return json({ error: "Your points reward is not available on this order. Check the new total, then place your order.", reward_gone: true, repriced: { subtotal_cents: subtotal, shipping_cents: shipping, tax_cents: t.tax, total_cents: t.total } }, 409); }
+  const { tax, total } = rates.orderTotals(subtotal - loy.reward_cents, shipping, province);
   // the shopper agreed to a figure: if ours is different, nothing is placed and they are shown the new one
   if (body.expected_total_cents !== undefined && body.expected_total_cents !== total) return json({ error: `The total is now ${rates.money(total / 100)}. Check it, then place your order.`, repriced: { subtotal_cents: subtotal, shipping_cents: shipping, tax_cents: tax, total_cents: total } }, 409);
   if (key) quote = { ...quote, idem: keyed.idem, idem_req: sameOrder };
 
   // 1 write the order as pending  2 take the stock, one guarded step per item  3 confirm, or put everything back
-  const id = key ? keyed.id : code();
-  try { await db.batch([
+  const id = key ? keyed.id : code(), acct = orderLoyaltyStatements(db, id, customer, loy);
+  let first;
+  try { first = await db.batch([
     db.prepare("INSERT INTO orders (id, status, method, email, name, phone, address, subtotal_cents, shipping_cents, tax_cents, total_cents, tax_province, ship_service, ship_quote, payment_ref) VALUES (?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'DEMO')")
       .bind(id, method, email, name, phone, JSON.stringify({ ...address, ...(note ? { note } : {}) }), subtotal, shipping, tax, total, province, service, JSON.stringify(quote)),
     ...lines.map(l => db.prepare("INSERT INTO order_items (order_id, sku, name, qty, unit_cents) VALUES (?,?,?,?,?)").bind(id, l.product.sku, l.product.name, l.qty, cents(l.product.price))),
+    ...acct.statements,
   ]); } catch (e) {   // two copies of one retry at the same moment: the database let one through
     if (!key || !/UNIQUE|constraint/i.test(String(e && e.message))) throw e;
     let again = await findKeyed(db, key, sameOrder);
     for (let i = 0; again.open && i < 3; i++) { await wait(300); again = await findKeyed(db, key, sameOrder); }
     return again.row ? replay(db, again.row) : stillOpen();
+  }
+  // the reward's points were spent by another order a moment ago: nothing is placed, the shopper sees the full price
+  if (acct.redeemAt >= 0 && !first[1 + lines.length + acct.redeemAt].meta.changes) {
+    await db.batch([db.prepare("DELETE FROM loyalty_ledger WHERE order_id = ?").bind(id), db.prepare("DELETE FROM order_items WHERE order_id = ?").bind(id), db.prepare("DELETE FROM orders WHERE id = ?").bind(id)]);
+    const t = rates.orderTotals(subtotal, shipping, province);
+    return json({ error: "Your points reward is not available on this order. Check the new total, then place your order.", reward_gone: true, repriced: { subtotal_cents: subtotal, shipping_cents: shipping, tax_cents: t.tax, total_cents: t.total } }, 409);
   }
   const took = await db.batch(lines.flatMap(l => [
     db.prepare("UPDATE products SET stock = stock - ?1, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE sku = ?2 AND stock >= ?1").bind(l.qty, l.product.sku),
@@ -145,7 +158,7 @@ export async function placeOrder(request, env, url) {
     const got = lines.filter((l, i) => took[i * 2].meta.changes);
     await db.batch([
       ...got.flatMap(l => [db.prepare("UPDATE products SET stock = stock + ? WHERE sku = ?").bind(l.qty, l.product.sku), db.prepare("INSERT INTO stock_moves (sku, delta, reason, ref, actor) VALUES (?, ?, 'released', ?, 'store')").bind(l.product.sku, l.qty, id)]),
-      db.prepare("DELETE FROM order_items WHERE order_id = ?").bind(id), db.prepare("DELETE FROM orders WHERE id = ?").bind(id),
+      db.prepare("DELETE FROM loyalty_ledger WHERE order_id = ?").bind(id), db.prepare("DELETE FROM order_items WHERE order_id = ?").bind(id), db.prepare("DELETE FROM orders WHERE id = ?").bind(id),
     ]);
     const left = await db.prepare("SELECT stock FROM products WHERE sku = ?").bind(failed[0].product.sku).first("stock");
     return json({ error: `${failed[0].product.name} sold out while you were checking out.`, sku: failed[0].product.sku, stock: left ?? 0 }, 409);
@@ -153,10 +166,10 @@ export async function placeOrder(request, env, url) {
   await db.prepare("UPDATE orders SET status = 'paid', updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = ?").bind(id).run();
   // the receipt to the shopper, and a note to the shop if this order took anything down to its warning level
   const site = env.SITE_NAME || "One Stop Shop", sold = lines.map(l => ({ name: l.product.name, qty: l.qty, unit_cents: cents(l.product.price) }));
-  await writeEmail(env, id, email, orderPlaced(site, { id, name, method, ship_service: service, subtotal_cents: subtotal, shipping_cents: shipping, tax_cents: tax, total_cents: total, tax_province: province, eta }, sold));
+  await writeEmail(env, id, email, orderPlaced(site, { id, name, method, ship_service: service, subtotal_cents: subtotal, reward_cents: loy.reward_cents, shipping_cents: shipping, tax_cents: tax, total_cents: total, tax_province: province, eta }, sold));
   const low = await db.prepare(`SELECT name, stock FROM products WHERE active = 1 AND stock <= low_stock_at AND sku IN (${lines.map(() => "?").join(",")}) ORDER BY stock, name`).bind(...lines.map(l => l.product.sku)).all();
   if (low.results.length) await writeEmail(env, id, env.OWNER_EMAIL || "the shop", lowStock(site, low.results));
-  return json({ ok: true, order: { id, method, name, email, service, province, subtotal_cents: subtotal, shipping_cents: shipping, tax_cents: tax, total_cents: total,
+  return json({ ok: true, order: { id, method, name, email, service, province, subtotal_cents: subtotal, reward_cents: loy.reward_cents, points: loy.earn, account: !!customer, shipping_cents: shipping, tax_cents: tax, total_cents: total,
     tax_label: rates.taxLabel(province), days: quote.days ?? null, eta, address: method === "ship" ? address : null,
     items: lines.map(l => ({ sku: l.product.sku, name: l.product.name, qty: l.qty, unit_cents: cents(l.product.price) })) } }, 201);
 }

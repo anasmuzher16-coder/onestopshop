@@ -1,7 +1,9 @@
 // One Stop Shop store Worker. Answers the page routes (each with its own title, description and a real 404),
 // serves the catalogue from the database, and passes every other request to the static files.
 import { loadCatalog, shopCatalog, dropCatalog, catalogModule, counterRow, CHARCOAL } from "./catalog.js";
-import { admin, photo } from "./admin.js";
+import { admin, photo, signedIn } from "./admin.js";
+import { accountRoute, stockAlerts, restockReminders } from "./account.js";
+import { loyaltyAdmin } from "./loyalty.js";
 import { placeOrder } from "./checkout.js";
 import { deliveryRoute } from "./delivery.js";
 import { nightly } from "./backup.js";
@@ -35,7 +37,7 @@ function describe(path, cat, site) {
   if (a === "order") return b && /^W[A-Z0-9]{6}$/.test(b) ? { ...base, title: `Order ${b} | ${site}`, index: false } : null;
   if (a === "gifts" && b && b !== "under-50" && b !== "under-150") return null;
   if (b && a !== "gifts") return null;
-  const fixed = { privacy: "Privacy", terms: "Terms of sale", checkout: "Checkout", cart: "Cart", shipping: "Shipping and returns", set: "Build a set", search: "Search", gifts: "Gifts" };
+  const fixed = { account: "Your account", privacy: "Privacy", terms: "Terms of sale", checkout: "Checkout", cart: "Cart", shipping: "Shipping and returns", set: "Build a set", search: "Search", gifts: "Gifts" };
   if (!Object.hasOwn(fixed, a)) return null;
   return { ...base, title: `${fixed[a]} | ${site}`, index: ["shipping", "set", "privacy", "terms"].includes(a) };
 }
@@ -75,6 +77,7 @@ async function page(request, env, url, ctx) {
   for (const [k, v] of Object.entries(SECURITY)) headers.set(k, v);
   headers.set("Content-Type", "text/html; charset=utf-8");
   headers.set("Cache-Control", "no-cache");
+  if (url.pathname.startsWith("/account")) headers.set("Referrer-Policy", "no-referrer");   // sign-in and unsubscribe links never leak onward
   if (!(live && meta.index)) headers.set("X-Robots-Tag", "noindex, nofollow"); else headers.delete("X-Robots-Tag");   // _headers marks everything noindex for the demo; a live, indexable page must drop it
   return new Response(out.body, { status: d ? 200 : 404, headers });
 }
@@ -94,7 +97,7 @@ function sitemap(cat, url) {
 
 export default {
   // every night: a full copy of the shop's records into the backup bucket
-  async scheduled(event, env, ctx) { ctx.waitUntil(nightly(env)); },
+  async scheduled(event, env, ctx) { ctx.waitUntil(nightly(env)); ctx.waitUntil(stockAlerts(env).then(() => restockReminders(env))); },   // and the customers' alerts and charcoal reminders
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const path = url.pathname;
@@ -113,7 +116,9 @@ export default {
         if (request.method !== "GET") return json({ error: "Method not allowed" }, 405);
         return json(await loadCatalog(env.DB));
       }
-      if (path.startsWith("/api/admin/")) { const r = await admin(request, env, url); if (request.method !== "GET" && r.ok) dropCatalog(ctx); return r; } // a change in the back office shows in the shop at once
+      if (path === "/api/admin/loyalty") return await loyaltyAdmin(request, env, url, signedIn);
+      if (path.startsWith("/api/admin/")) { const r = await admin(request, env, url); if (request.method !== "GET" && r.ok) { dropCatalog(ctx); ctx.waitUntil(stockAlerts(env, url.origin)); } return r; } // a change in the back office shows in the shop at once; anything back in stock emails whoever asked
+      if (path.startsWith("/api/account/")) return await accountRoute(request, env, url);
       if (path === "/api/orders") { if (request.method !== "POST") return json({ error: "Method not allowed" }, 405); const r = await placeOrder(request, env, url); if (r.ok) dropCatalog(ctx); return r; }
       if (path === "/api/delivery") return await deliveryRoute(request, env, url);
       const ph = path.match(/^\/api\/photo\/(OSS-\d{4,6})$/); if (ph && request.method === "GET") return await photo(env, ph[1]);
