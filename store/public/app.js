@@ -118,13 +118,14 @@ const bestFor = p => cpQuote([{ product: p, qty: 1 }])[0] || null;
 
 // ---------- images ----------
 const V = "?v=1794615693"; // bumped on every photo rebuild so no phone keeps an old copy
-const imgSrc = (p, small) => p.photo ? (p.img[0] === "/" ? p.img : `img/${p.img}.webp`) : `img/pc/${p.img}${small && !p.dark ? "-s" : ""}.webp${V}`;
+const vq = p => p.iv ? "?v=" + p.iv : V;   // each photo's own version (store/src/img-versions.json): changing one photo re-downloads only that one
+const imgSrc = (p, small) => p.photo ? (p.img[0] === "/" ? p.img : `img/${p.img}.webp`) : `img/pc/${p.img}${small && !p.dark ? "-s" : ""}.webp${vq(p)}`;
 const SIZES = { card: "(min-width:1500px) 18vw, (min-width:960px) 22vw, (min-width:640px) 30vw, 46vw", pdp: "(min-width:960px) 50vw, 100vw",
   thumb: "96px", slab: "(min-width:960px) 42vw, 58vw", lineup: "(min-width:960px) 370px, 240px", cat: "(min-width:960px) 24vw, 44vw", cat1: "(min-width:960px) 42vw, 44vw", resin: "(min-width:960px) 28vw, (min-width:640px) 40vw, 72vw" };
 function srcset(p) {
   if (p.photo) return "";
-  if (p.dark) return `srcset="img/pc/${p.img}.webp${V} 800w${p.lw ? `, img/pc/${p.img}-l.webp${V} ${p.lw}w` : ""}"`;
-  return `srcset="img/pc/${p.img}-s.webp${V} 360w, img/pc/${p.img}-m.webp${V} 540w, img/pc/${p.img}.webp${V} 720w${p.lw ? `, img/pc/${p.img}-l.webp${V} ${p.lw}w` : ""}"`;
+  if (p.dark) return `srcset="img/pc/${p.img}.webp${vq(p)} 800w${p.lw ? `, img/pc/${p.img}-l.webp${vq(p)} ${p.lw}w` : ""}"`;
+  return `srcset="img/pc/${p.img}-s.webp${vq(p)} 360w, img/pc/${p.img}-m.webp${vq(p)} 540w, img/pc/${p.img}.webp${vq(p)} 720w${p.lw ? `, img/pc/${p.img}-l.webp${vq(p)} ${p.lw}w` : ""}"`;
 }
 function shot(p, { small = false, eager = false, use = small ? "card" : "pdp", cls = "", alt = "" } = {}) {
   // a single roll with no photo of its own shows the box it is sold from, and says so
@@ -214,7 +215,7 @@ function viewHome() {
     <header class="lineup__head"><h2 class="h2 h2--xl" id="lu-h">Compare heights.</h2><p class="lineup__note">From the shelf, tallest to shortest.</p></header>
     <div class="lineup__row" tabindex="0" role="group" aria-label="Hookahs by height">
       ${tall.filter((p, i) => tall.length < 12 || i % 3 === 0).map(p =>
-        `<a class="lu" href="/p/${p.sku}" style="--cm:${p.height}"><img class="lu__img" src="img/pc/${p.img}-s.webp${V}" ${srcset(p)} sizes="${SIZES.lineup}" alt="" loading="lazy" width="360" height="450"><span class="lu__cm num">${p.height} cm</span><span class="lu__name">${esc(p.name)}</span></a>`).join("")}
+        `<a class="lu" href="/p/${p.sku}" style="--cm:${p.height}"><img class="lu__img" src="img/pc/${p.img}-s.webp${vq(p)}" ${srcset(p)} sizes="${SIZES.lineup}" alt="" loading="lazy" width="360" height="450"><span class="lu__cm num">${p.height} cm</span><span class="lu__name">${esc(p.name)}</span></a>`).join("")}
     </div>
   </section>` : ""}
   ${resin.length ? `<section class="resin">
@@ -697,7 +698,7 @@ document.addEventListener("keydown", e => {
 // each colour's photo is fetched quietly once the product page is up, so a tap shows it at once
 function preloadColours() {
   const stage = $("[data-stage]"), v = stage && bySku[stage.dataset.stage]; if (!v || !v.family) return;
-  const go = () => familyOf(v).filter(ownPhoto).forEach(x => { const im = new Image(); im.decoding = "async"; im.src = `img/pc/${x.img}-m.webp${V}`; });
+  const go = () => familyOf(v).filter(ownPhoto).forEach(x => { const im = new Image(); im.decoding = "async"; im.src = `img/pc/${x.img}-m.webp${vq(x)}`; });
   // fetched the moment a hand or a key reaches the chips, or a few seconds after the page has settled, so the colours
   // never compete with the page's own first pictures and its smoke
   let done = false; const once = () => { if (done) return; done = true; go(); };

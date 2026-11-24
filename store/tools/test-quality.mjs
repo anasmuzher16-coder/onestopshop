@@ -11,7 +11,7 @@ ok(/<noscript>[\s\S]*519-255-2222[\s\S]*760 Wyandotte[\s\S]*Monday to Saturday 1
 ok(home.r.headers.get("strict-transport-security") === "max-age=31536000", "HSTS one year, no subdomains: " + home.r.headers.get("strict-transport-security"));
 ok(/og:image" content="[^"]+\/img\/share\.jpg"/.test(home.t), "pages have a default share image");
 ok((await fetch(B + "/img/share.jpg")).status === 200, "the share image exists");
-const prod = await get("/p/OSS-9601"); ok(/og:image" content="[^"]+\/img\/pc\/oss-9601\.webp"/.test(prod.t) && !/share\.jpg/.test(prod.t), "a product shares its own photo");
+const prod = await get("/p/OSS-9601"); ok(/og:image" content="[^"]+\/img\/share\/oss-9601\.jpg\?v=[0-9a-f]+"/.test(prod.t) && !/share\.jpg/.test(prod.t), "a product shares its own photo (its own 1200 x 630 card, not the shop's)");
 if (process.env.EXPECT_LIVE === "1") ok(!/name="robots"/.test(home.t) && !home.r.headers.get("x-robots-tag"), "live: pages can be indexed: " + home.r.headers.get("x-robots-tag"));
 else ok(/<meta name="robots" content="noindex, nofollow">/.test(home.t) && home.r.headers.get("x-robots-tag") === "noindex, nofollow", "the demo stays noindex");
 for (const p of ["/constructor", "/toString", "/__proto__"]) ok((await get(p)).r.status === 404, p + " is a real 404");

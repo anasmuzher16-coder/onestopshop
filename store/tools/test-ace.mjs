@@ -49,7 +49,7 @@ for (const p of ace.filter(x => x.lead).slice(0, 25)) {
 ok(pageLeak === 0, "no product page (title, description, share tags, structured data) shows the supplier price: " + pageLeak);
 ok(offers === 0, "structured data states no offer for an item without a shop price: " + offers);
 const page = await (await fetch(B + "/p/" + tbd.sku)).text();
-ok(/og:description" content="[^"]*Price TBD/.test(page) && /og:image" content="[^"]+\/img\/pc\/ace\//.test(page), "a TBD item shares its own photo and says Price TBD");
+ok(/og:description" content="[^"]*Price TBD/.test(page) && /og:image" content="[^"]+\/img\/share\/ace\//.test(page), "a TBD item shares its own photo and says Price TBD");
 ok((await fetch(B + "/sitemap.xml")).status === 404, "no sitemap while the shop is not live");
 
 const foilPage = await (await fetch(B + "/p/OSS-9301")).text(), heatPage = await (await fetch(B + "/shop/heat")).text();
