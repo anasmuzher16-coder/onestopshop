@@ -56,6 +56,7 @@ ok(ls.status === 200 && ls.data.owner === false && /HttpOnly/.test(ls.r.headers.
 const me = (await A("/me", { as: "staff" })).data; ok(me.owner === false && me.actor.startsWith(name + " #"), "staff session is named: " + me.actor);
 for (const p of ["/staff", "/settings", "/report", "/report.csv", "/backup"]) ok((await A(p, { as: "staff" })).status === 403, "staff cannot open " + p);
 ok((await A("/staff/" + add.data.id, { method: "DELETE", body: {}, as: "staff" })).status === 403, "staff cannot remove staff");
+ok((await A("/orders/WAAAAAA/counter-refund", { method: "POST", body: { op: uuid(), reason: "x" }, as: "staff" })).status === 403 && (await A("/orders/WAAAAAA/refund", { method: "POST", body: { op: uuid() }, as: "staff" })).status === 403, "staff cannot record or make a refund: money back is the owner's");
 ok((await A("/products/OSS-8004/stock", { method: "POST", body: { delta: 1 }, headers: { "Sec-Fetch-Site": "cross-site" } })).status === 403, "a write the browser marks cross-site is refused");
 ok((await A("/login", { method: "POST", as: "staff", body: { passcode: KEY }, headers: { "Sec-Fetch-Site": "cross-site" } })).status === 403, "a sign-in from another site is refused");
 
@@ -82,8 +83,16 @@ ok((await A(`/products/OSS-8003/stock`, { method: "POST", as: "staff", body: { d
 const hist = (await A(`/products/${SKU}/history`, { as: "staff" })).data;
 const mine = hist.moves.filter(m => m.actor === me.actor);
 ok(mine.some(m => m.reason === "count" && m.delta === 4 && m.ref === "counted " + (s0 + 4)) && mine.some(m => m.reason === "received" && m.delta === 6 && m.ref === "INV-2291") && mine.filter(m => m.reason === "received").length === 1 && mine.filter(m => m.reason === "count").length === 3, "history names who counted and received, once each");
-await A(`/products/${SKU}`, { method: "PUT", as: "staff", body: { price_cents: 5500 } });
-ok((await A(`/products/${SKU}/history`)).data.changes.some(c => c.action === "product.edit" && c.actor === me.actor && c.after.includes("5500")), "a price change records who made it");
+// prices are the shop's: only the owner sets them (owner, 2026-11-24); staff keep every other edit
+const price0 = (await prod(SKU)).price_cents;
+const staffPrice = await A(`/products/${SKU}`, { method: "PUT", as: "staff", body: { price_cents: price0 + 100, note: "staff tried a price" } });
+ok(staffPrice.status === 403 && (await prod(SKU)).price_cents === price0 && !(await A(`/products/${SKU}/history`)).data.changes.some(c => c.actor === me.actor && (c.after || "").includes("staff tried a price")), "staff cannot change a price, and nothing else in that save goes through: " + staffPrice.status);
+ok((await A(`/products/${SKU}`, { method: "PUT", as: "staff", body: { cost_cents: 123 } })).status === 403, "staff cannot change the private cost either");
+ok((await A("/products", { method: "POST", as: "staff", body: { name: "Staff item", category_id: "misc", price_cents: 100, weight_g: 10, box_id: "S" } })).status === 403, "staff cannot add a product (a new product carries a price)");
+const staffNote = await A(`/products/${SKU}`, { method: "PUT", as: "staff", body: { price_cents: price0, low_stock_at: (await prod(SKU)).low_stock_at } });
+ok(staffNote.status === 200 && (await prod(SKU)).price_cents === price0, "staff can still save the form with the price unchanged");
+await A(`/products/${SKU}`, { method: "PUT", body: { price_cents: 5500 } });
+ok((await A(`/products/${SKU}/history`)).data.changes.some(c => c.action === "product.edit" && c.actor === "owner" && c.after.includes("5500")), "a price change records who made it");
 await A(`/products/${SKU}`, { method: "PUT", body: { price_cents: 5400 } });
 
 // ---- orders: source, cancel with restock, the ID tick ----

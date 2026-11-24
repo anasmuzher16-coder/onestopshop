@@ -146,6 +146,12 @@ export async function admin(request, env, url) {
   };
   const audit = (action, target, before, after) => db.prepare("INSERT INTO audit_log (actor, action, target, before, after) VALUES (?,?,?,?,?)").bind(actor, action, target, before ? JSON.stringify(before) : null, after ? JSON.stringify(after) : null);
 
+  // Prices are the shop's, so the owner sets them (owner, 2026-11-24). Staff keep the daily work: counting, receiving,
+  // names, photos, the on/off switch. A new product always carries a price, so adding one is the owner's too.
+  // Checked here, on the server, for every request (OWASP Authorization Cheat Sheet: deny by default, enforce server side).
+  const PRICE_FIELDS = ["price_cents", "cost_cents"];
+  const NOT_YOURS = "Only the owner can change prices. Ask the owner, or sign in with the owner passcode.";
+  if (path === "/products" && method === "POST" && !session.owner) { log("forbidden", { actor, path }); return json({ error: "Only the owner can add products, because a new product needs the shop's price." }, 403); }
   if (path === "/products" && method === "POST") {
     const body = await request.json().catch(() => ({}));
     const { out, bad } = await fields({ ship_class: "standard", note: "", low_stock_at: 1, ...body });
@@ -168,6 +174,10 @@ export async function admin(request, env, url) {
     const before = await db.prepare("SELECT * FROM products WHERE sku = ?").bind(m[1]).first(); if (!before) return json({ error: "No such product." }, 404);
     const { out, bad } = await fields(await request.json().catch(() => ({})));
     if (bad.length) return json({ error: "Check: " + bad.join(", ") + "." }, 400);
+    if (!session.owner) {   // the edit form sends every field back; an unchanged price from staff is fine, a changed one is refused whole
+      if (PRICE_FIELDS.some(k => k in out && out[k] !== before[k])) { log("forbidden", { actor, path, field: "price" }); return json({ error: NOT_YOURS }, 403); }
+      for (const k of PRICE_FIELDS) delete out[k];
+    }
     // The form edits only the cologne fields. Everything else in details (the charcoal mark, photo status, brand,
     // source lines, a roll's box) is kept, so saving a charcoal item in the back office never erases its rules.
     let had = {}; try { had = JSON.parse(before.details || "{}"); } catch {}
@@ -317,8 +327,8 @@ export async function admin(request, env, url) {
     }
     return json({ ok: true, status: body.status });
   }
-  if ((m = path.match(/^\/orders\/([A-Z0-9]{3,12})\/(refund|paid)$/)) && method === "POST") {   // src/pay.js
-    if (m[2] === "refund" && !session.owner) { log("forbidden", { actor, path }); return json({ error: "Only the owner can refund to a card." }, 403); }   // money back is the owner's call; staff take counter payments
+  if ((m = path.match(/^\/orders\/([A-Z0-9]{3,12})\/(refund|paid|counter-refund)$/)) && method === "POST") {   // src/pay.js
+    if (m[2] !== "paid" && !session.owner) { log("forbidden", { actor, path }); return json({ error: m[2] === "refund" ? "Only the owner can refund to a card." : "Only the owner can record a refund." }, 403); }   // money back is the owner's call; staff take counter payments
     return adminPay(request, env, m[1], m[2], actor);
   }
   if ((m = path.match(/^\/orders\/([A-Z0-9]{3,12})\/refunds$/)) && method === "GET") return json({ refunds: (await db.prepare("SELECT amount_cents, status, reason, actor, detail, at FROM refunds WHERE order_id = ? ORDER BY id").bind(m[1]).all()).results });

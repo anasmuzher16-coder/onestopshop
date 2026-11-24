@@ -38,6 +38,7 @@ main{padding:var(--s-6) var(--gutter) var(--s-16);max-width:1240px;margin:0 auto
 .input{width:100%;min-height:48px;padding:0 var(--s-3);background:var(--coal-1);border:1px solid var(--color-field);border-radius:var(--radius);color:var(--color-strong)}
 textarea.input{padding:var(--s-3);min-height:84px;resize:vertical}
 .input:focus{border-color:var(--white);outline:0}
+.input[readonly]{background:none;border-style:dashed;color:var(--color-muted)}   /* shown, not editable here (a price for staff): the same field, its fill taken away */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:.5em;min-height:48px;padding:0 var(--s-5);background:var(--color-action);color:var(--color-on-action);border-radius:var(--radius);font-weight:600;text-decoration:none}
 .btn:hover{background:var(--color-action-press)}
 .btn--ghost{background:none;border:1px solid var(--color-field);color:var(--color-strong)}
