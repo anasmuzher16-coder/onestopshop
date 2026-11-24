@@ -11,15 +11,37 @@ const text = (v, max) => typeof v === "string" && v.trim().length > 0 && v.trim(
 const cents = n => Math.round(n * 100);
 const code = () => { const a = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789", b = crypto.getRandomValues(new Uint8Array(6)); return "W" + [...b].map(x => a[x % a.length]).join(""); };
 
+const sha = async s => [...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)))].map(b => b.toString(16).padStart(2, "0")).join("");
+const codeFrom = hex => "W" + Array.from({ length: 6 }, (_, i) => "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[parseInt(hex.slice(i * 2, i * 2 + 2), 16) % 32]).join("");
+const wait = ms => new Promise(f => setTimeout(f, ms));
+const parsed = s => { try { return JSON.parse(s || "{}"); } catch { return {}; } };
+const OPEN_MS = 120000;   // an attempt still unfinished after this long died part way; it no longer blocks a new one
+// The order a retry refers to. The order code comes from the shopper's key, so the database's own unique id stops a second copy, with no new table.
+async function findKeyed(db, key, sameOrder) {
+  const idem = await sha("key:" + key);
+  for (let i = 0; i < 4; i++) {
+    const id = codeFrom(await sha(`id:${i}:${key}`)), row = await db.prepare("SELECT * FROM orders WHERE id = ?").bind(id).first();
+    if (!row) return { id, idem };
+    const q = parsed(row.ship_quote);
+    if (q.idem !== idem) continue;   // another order happens to hold this code: try the next one
+    if (q.idem_req !== sameOrder) return { changed: true };
+    if (row.status === "pending") { if (Date.now() - Date.parse(row.created_at) < OPEN_MS) return { open: true }; continue; }
+    return { row };
+  }
+  return { id: code(), idem };
+}
+async function replay(db, row) {
+  const items = (await db.prepare("SELECT sku, name, qty, unit_cents FROM order_items WHERE order_id = ? ORDER BY sku").bind(row.id).all()).results, q = parsed(row.ship_quote), a = parsed(row.address);
+  return json({ ok: true, replayed: true, order: { id: row.id, method: row.method, name: row.name, email: row.email, service: row.ship_service, province: row.tax_province, subtotal_cents: row.subtotal_cents, shipping_cents: row.shipping_cents, tax_cents: row.tax_cents, total_cents: row.total_cents,
+    tax_label: rates.taxLabel(row.tax_province), days: q.days ?? null, eta: q.eta ?? null, address: row.method === "ship" ? { demo: true, line1: a.line1, city: a.city, province: a.province, postal: a.postal } : null, items } });
+}
+const stillOpen = () => json({ error: "Your order is still going through. Wait a moment, then tap Place order again.", in_progress: true }, 409);
+
 export async function placeOrder(request, env, url) {
   if (!(request.headers.get("Content-Type") || "").startsWith("application/json")) return json({ error: "Send JSON." }, 415);
   const origin = request.headers.get("Origin"); if (origin && origin !== url.origin) return json({ error: "Wrong origin." }, 403);
   const body = await request.json().catch(() => null); if (!body || typeof body !== "object") return json({ error: "That order could not be read." }, 400);
   const db = env.DB;
-  // a brake, so nobody can flood the shop with orders
-  const recent = await db.prepare("SELECT COUNT(*) AS n FROM orders WHERE created_at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 minute')").first("n");
-  if (recent >= 12) return json({ error: "The shop is busy. Try again in a minute." }, 429);
-
   const name = text(body.name, 80), email = text(body.email, 120), phone = body.phone ? text(String(body.phone), 30) : null, note = body.note ? text(String(body.note), 240) : null;
   if (!name) return json({ error: "Tell us the name for the order.", field: "name" }, 400);
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return json({ error: "That email address does not look right.", field: "email" }, 400);
@@ -35,10 +57,27 @@ export async function placeOrder(request, env, url) {
     if (!l || typeof l.sku !== "string" || !(qty >= 1 && qty <= rates.MAX_QTY)) return json({ error: "Something in the cart could not be read. Refresh and try again." }, 400);
     want.set(l.sku, (want.get(l.sku) || 0) + qty);
   }
+  // a retry of an order that already went through gets that order back, before stock or the brake can refuse it
+  const key = body.order_key === undefined ? null : typeof body.order_key === "string" && /^[A-Za-z0-9-]{16,64}$/.test(body.order_key) ? body.order_key : false;
+  if (key === false) return json({ error: "That order could not be read. Refresh and try again." }, 400);
+  let keyed = null, sameOrder = null;
+  if (key) {
+    const postal = rates.parsePostal(body.postal)?.full || "";
+    sameOrder = await sha(JSON.stringify([[...want].map(([s, q]) => [s, q]).sort(), method, method === "ship" ? String(body.service || "") : "", method === "ship" ? postal : "", email.toLowerCase()]));
+    keyed = await findKeyed(db, key, sameOrder);
+    for (let i = 0; keyed.open && i < 3; i++) { await wait(300); keyed = await findKeyed(db, key, sameOrder); }
+    if (keyed.open) return stillOpen();
+    if (keyed.changed) return json({ error: "This order changed while it was being placed. Check it, then place it again.", in_progress: false }, 409);
+    if (keyed.row) return replay(db, keyed.row);
+  }
+  // a brake, so nobody can flood the shop with orders
+  const recent = await db.prepare("SELECT COUNT(*) AS n FROM orders WHERE created_at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 minute')").first("n");
+  if (recent >= 12) return json({ error: "The shop is busy. Try again in a minute." }, 429);
+
   const lines = [];
   for (const [sku, qty] of want) {
     const p = bySku[sku];
-    if (!p) return json({ error: "One of the items is no longer sold. Remove it and try again.", sku }, 409);
+    if (!p) return json({ error: "One of the items is no longer sold. Remove it and try again.", sku, stock: 0 }, 409);
     if (p.stock < qty) return json({ error: p.stock ? `Only ${p.stock} left of ${p.name}.` : `${p.name} has just sold out.`, sku, stock: p.stock }, 409);
     if (method === "ship" && body.service !== "local" && p.ship === "pickup_only") return json({ error: `${p.name} is pickup only.`, sku }, 409);
     lines.push({ product: p, qty });
@@ -58,9 +97,10 @@ export async function placeOrder(request, env, url) {
       if (d.status !== "ok") return json({ error: d.status === "far" ? `${dest.full} is past our 25 km delivery area. ${other}` : d.status === "down" ? `Delivery cannot be checked right now. ${other}` : "We could not confirm that address. Check the street number and postal code.", field: "line1", delivery: d.status }, 409);
       const due = rates.localDue(d.fee_cents, subtotal);   // $200.00 of items before tax delivers free
       if (body.delivery_fee_cents !== due) return json({ error: `Delivery to this address is ${due ? "$" + due / 100 : "free"}. Check the new total, then place your order.`, delivery: "ok", fee_cents: due, base_fee_cents: d.fee_cents }, 409);
-      shipping = due; service = "Local delivery"; province = "ON"; eta = rates.localEta(); quote = { id: "local", metres: d.metres, shop: d.shop, base_fee_cents: d.fee_cents, ...(d.confirm ? { confirm_address: true } : {}) };
+      shipping = due; service = "Local delivery"; province = "ON"; eta = rates.localEta(); quote = { id: "local", eta, metres: d.metres, shop: d.shop, base_fee_cents: d.fee_cents, ...(d.confirm ? { confirm_address: true } : {}) };
       address = { demo: true, line1, city, province, postal: dest.full };
     } else {
+    if (rates.fuelOn().stale) console.error(JSON.stringify({ at: "checkout", problem: "Canada Post fuel rate is out of date: add this week's row to FUEL_WEEKS in rates-core.js", using: rates.fuelOn().week }));
     const parcels = rates.pack(lines), opts = rates.quote(dest, parcels);
     if (!opts.length) return json({ error: "One of these boxes is over the carrier's 30 kg limit. Call the counter and we will quote it by hand." }, 409);
     const chosen = opts.find(o => o.id === body.service);
@@ -70,15 +110,23 @@ export async function placeOrder(request, env, url) {
     address = { demo: true, line1, city, province, postal: dest.full };
     }
   }
-  const tax = Math.round((subtotal + shipping) * rates.taxRate(province)), total = subtotal + shipping + tax;
+  const { tax, total } = rates.orderTotals(subtotal, shipping, province);
+  // the shopper agreed to a figure: if ours is different, nothing is placed and they are shown the new one
+  if (body.expected_total_cents !== undefined && body.expected_total_cents !== total) return json({ error: `The total is now ${rates.money(total / 100)}. Check it, then place your order.`, repriced: { subtotal_cents: subtotal, shipping_cents: shipping, tax_cents: tax, total_cents: total } }, 409);
+  if (key) quote = { ...quote, idem: keyed.idem, idem_req: sameOrder };
 
   // 1 write the order as pending  2 take the stock, one guarded step per item  3 confirm, or put everything back
-  const id = code();
-  await db.batch([
+  const id = key ? keyed.id : code();
+  try { await db.batch([
     db.prepare("INSERT INTO orders (id, status, method, email, name, phone, address, subtotal_cents, shipping_cents, tax_cents, total_cents, tax_province, ship_service, ship_quote, payment_ref) VALUES (?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'DEMO')")
       .bind(id, method, email, name, phone, JSON.stringify({ ...address, ...(note ? { note } : {}) }), subtotal, shipping, tax, total, province, service, JSON.stringify(quote)),
     ...lines.map(l => db.prepare("INSERT INTO order_items (order_id, sku, name, qty, unit_cents) VALUES (?,?,?,?,?)").bind(id, l.product.sku, l.product.name, l.qty, cents(l.product.price))),
-  ]);
+  ]); } catch (e) {   // two copies of one retry at the same moment: the database let one through
+    if (!key || !/UNIQUE|constraint/i.test(String(e && e.message))) throw e;
+    let again = await findKeyed(db, key, sameOrder);
+    for (let i = 0; again.open && i < 3; i++) { await wait(300); again = await findKeyed(db, key, sameOrder); }
+    return again.row ? replay(db, again.row) : stillOpen();
+  }
   const took = await db.batch(lines.flatMap(l => [
     db.prepare("UPDATE products SET stock = stock - ?1, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE sku = ?2 AND stock >= ?1").bind(l.qty, l.product.sku),
     db.prepare("INSERT INTO stock_moves (sku, delta, reason, ref, actor) SELECT ?2, -?1, 'sale', ?3, 'store' WHERE changes() = 1").bind(l.qty, l.product.sku, id),
@@ -90,7 +138,8 @@ export async function placeOrder(request, env, url) {
       ...got.flatMap(l => [db.prepare("UPDATE products SET stock = stock + ? WHERE sku = ?").bind(l.qty, l.product.sku), db.prepare("INSERT INTO stock_moves (sku, delta, reason, ref, actor) VALUES (?, ?, 'released', ?, 'store')").bind(l.product.sku, l.qty, id)]),
       db.prepare("DELETE FROM order_items WHERE order_id = ?").bind(id), db.prepare("DELETE FROM orders WHERE id = ?").bind(id),
     ]);
-    return json({ error: `${failed[0].product.name} sold out while you were checking out.`, sku: failed[0].product.sku }, 409);
+    const left = await db.prepare("SELECT stock FROM products WHERE sku = ?").bind(failed[0].product.sku).first("stock");
+    return json({ error: `${failed[0].product.name} sold out while you were checking out.`, sku: failed[0].product.sku, stock: left ?? 0 }, 409);
   }
   await db.prepare("UPDATE orders SET status = 'paid', updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = ?").bind(id).run();
   // the receipt to the shopper, and a note to the shop if this order took anything down to its warning level

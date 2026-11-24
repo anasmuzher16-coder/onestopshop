@@ -218,8 +218,8 @@ UPDATE products SET stock=0, low_stock_at=1, cost_cents=26975 WHERE sku='OSS-100
 UPDATE stock_moves SET delta=0 WHERE sku='OSS-1005' AND actor='seed';
 UPDATE products SET stock=1, low_stock_at=1, cost_cents=25367 WHERE sku='OSS-1007';
 UPDATE stock_moves SET delta=1 WHERE sku='OSS-1007' AND actor='seed';
-UPDATE products SET stock=1, low_stock_at=1, cost_cents=25746 WHERE sku='OSS-1008';
-UPDATE stock_moves SET delta=1 WHERE sku='OSS-1008' AND actor='seed';
+UPDATE products SET stock=0, low_stock_at=1, cost_cents=25746 WHERE sku='OSS-1008';
+UPDATE stock_moves SET delta=0 WHERE sku='OSS-1008' AND actor='seed';
 UPDATE products SET stock=4, low_stock_at=1, cost_cents=26270 WHERE sku='OSS-1010';
 UPDATE stock_moves SET delta=4 WHERE sku='OSS-1010' AND actor='seed';
 UPDATE products SET stock=2, low_stock_at=1, cost_cents=32685 WHERE sku='OSS-1012';

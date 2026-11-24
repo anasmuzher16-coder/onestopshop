@@ -1,17 +1,35 @@
 import { PRODUCTS, CATEGORIES, BOXES } from "/api/catalog-module";
 import { route, navigate, navInfo } from "./route.js";
-import { parsePostal, pack, quote, money, days, MAX_QTY, fuelOn, taxRate, taxLabel, localArea, localDue, localEta, FREE_LOCAL_CENTS, SHOP_HOURS } from "./rates.js";
+import { parsePostal, pack, quote, money, days, MAX_QTY, fuelOn, orderTotals, taxRate, taxLabel, localArea, localDue, localEta, FREE_LOCAL_CENTS, SHOP_HOURS } from "./rates.js";
 
 // ---------- state (everything read from storage is validated) ----------
-const bySku = Object.fromEntries(PRODUCTS.map(p => [p.sku, p]));
-const catById = Object.fromEntries(CATEGORIES.map(c => [c.id, c]));
+const bySku = Object.assign(Object.create(null), Object.fromEntries(PRODUCTS.map(p => [p.sku, p])));   // no inherited keys: "constructor" in a saved cart or an address is not a product
+const catById = Object.assign(Object.create(null), Object.fromEntries(CATEGORIES.map(c => [c.id, c])));
 const store = {
   get(k) { try { return JSON.parse(localStorage.getItem("oss:" + k)); } catch { return null; } },
   set(k, v) { try { localStorage.setItem("oss:" + k, JSON.stringify(v)); } catch {} },
 };
-const cleanCart = x => Array.isArray(x)
-  ? x.filter(l => l && bySku[l.sku] && Number.isInteger(l.qty) && l.qty > 0).map(l => ({ sku: l.sku, qty: Math.min(MAX_QTY, l.qty) })) : [];
-const state = { reach: ["local", "nationwide"].includes(store.get("reach")) ? store.get("reach") : null, whyOpen: false, q: "", note: typeof store.get("note") === "string" ? store.get("note") : "", set: {}, dest: parsePostal(store.get("postal")), cart: cleanCart(store.get("cart")), ship: typeof store.get("ship") === "string" ? store.get("ship") : null };
+const isSold = p => p.stock === 0;   // stock is the one truth: the server's catalogue decides what has gone
+const stockFor = p => isSold(p) ? 0 : Number.isInteger(p.stock) ? Math.min(MAX_QTY, Math.max(0, p.stock)) : MAX_QTY;   // the most of this piece one cart can hold
+function cleanCart(x) {
+  if (!Array.isArray(x)) return [];
+  const qty = new Map();
+  for (const l of x) if (l && typeof l.sku === "string" && bySku[l.sku] && Number.isInteger(l.qty) && l.qty > 0) qty.set(l.sku, (qty.get(l.sku) || 0) + l.qty);
+  return [...qty].map(([sku, n]) => ({ sku, qty: Math.min(MAX_QTY, n) }));
+}
+// Holds a cart to what the shop has, and says in words what had to change.
+function fitCart(cart) {
+  const kept = [], news = [];
+  for (const l of cart) {
+    const p = bySku[l.sku], max = stockFor(p);
+    if (!max) { news.push(`${p.name} has sold, so we took it out of your cart.`); continue; }
+    if (l.qty > max) news.push(`We only have ${max} of ${p.name}, so your cart now has ${max}.`);
+    kept.push({ sku: l.sku, qty: Math.min(max, l.qty) });
+  }
+  return { kept, news };
+}
+const state = { reach: ["local", "nationwide"].includes(store.get("reach")) ? store.get("reach") : null, whyOpen: false, q: "", note: typeof store.get("note") === "string" ? store.get("note") : "", set: {}, dest: parsePostal(store.get("postal")), cart: cleanCart(store.get("cart")), ship: typeof store.get("ship") === "string" ? store.get("ship") : null, cartNews: [] };
+{ const fit = fitCart(state.cart); if (fit.news.length) { state.cart = fit.kept; state.cartNews = fit.news; store.set("cart", state.cart); } }
 const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const whole = n => "$" + (Math.round(n * 100) % 100 ? n.toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : Math.round(n).toLocaleString("en-CA")); // cents only when the price has them
@@ -22,9 +40,8 @@ const seriesOf = p => p.name.split(" ")[0] in SERIES ? p.name.split(" ")[0] : ""
 const toneOf = p => p.dark ? "" : p.photo ? "bone" : SERIES[seriesOf(p)] || TONES[PRODUCTS.filter(x => x.cat === p.cat && !seriesOf(x)).indexOf(p) % TONES.length];
 const place = d => d.city ? d.city : d.fsa;
 const byName = n => PRODUCTS.find(p => p.name === n);
-const SOLD = new Set(["Resin Bishop, Clear Blue"]); // mockup: one of the one-of-one stems has sold
-const isSold = p => SOLD.has(p.name) || p.stock === 0; // a one-off that has gone, or anything the shop has none of
 const inCat = c => PRODUCTS.filter(p => p.cat === c && !p.dark);
+const liveCat = c => inCat(c).filter(p => !isSold(p));   // what we can suggest: nothing is promoted that cannot be bought
 const SHOP_STREET = "760 Wyandotte St E", SHOP_ADDRESS = "760 Wyandotte St E, Windsor, ON N9A 3J4", SHOP_MAP = "https://www.google.com/maps/search/?api=1&query=One%20Stop%20Shop%2C%20760%20Wyandotte%20St%20E%2C%20Windsor%2C%20ON%20N9A%203J4";
 const directions = (label = "Get directions") => `<a class="link" href="${SHOP_MAP}" target="_blank" rel="noopener">${label}</a>`;
 const HOURS = SHOP_HOURS, DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -38,6 +55,8 @@ function openLine() {
   return t >= o && t < c ? `Open now until ${h12(c)}` : t < o ? `Opens today at ${h12(o)}` : `Closed now. Opens ${DAYS[(day + 1) % 7]} at ${h12(next[0])}`;
 }
 
+const pickupDay = () => { const { day, t } = nowInWindsor(); return t >= HOURS[day][1] ? "Tomorrow" : "Today"; };   // after closing, the counter's next chance is tomorrow
+const pickupReady = () => pickupDay() === "Today" ? "Ready the same day" : "Ready tomorrow";
 const cartLines = () => state.cart.map(l => ({ product: bySku[l.sku], qty: l.qty }));
 const cartCount = () => state.cart.reduce((a, l) => a + l.qty, 0);
 const toCents = n => Math.round(n * 100);
@@ -49,13 +68,13 @@ const cpQuote = lines => state.dest && carried(lines) ? quote(state.dest, pack(l
 const freeNote = sub => sub >= FREE_LOCAL_CENTS ? "Free local delivery: your items are $200 or more before tax." : `Local delivery is free on orders of $200 or more before tax. Add ${money((FREE_LOCAL_CENTS - sub) / 100)} more to get it.`;
 function saveCart() { store.set("cart", state.cart); syncChrome(); }
 function addToCart(sku) {
-  if (!bySku[sku] || isSold(bySku[sku])) return;
+  const p = bySku[sku]; if (!p || !stockFor(p)) return;
   const l = state.cart.find(x => x.sku === sku);
-  if (l) l.qty = Math.min(MAX_QTY, l.qty + 1); else state.cart.push({ sku, qty: 1 });
+  if (l) l.qty = Math.min(stockFor(p), l.qty + 1); else state.cart.push({ sku, qty: 1 });
   saveCart();
 }
 function setQty(sku, qty) {
-  state.cart = cleanCart(state.cart.map(l => l.sku === sku ? { ...l, qty } : l)); saveCart(); render();
+  const p = bySku[sku]; state.cart = cleanCart(state.cart.map(l => l.sku === sku ? { ...l, qty: p ? Math.min(stockFor(p), qty) : qty } : l)); saveCart(); render();
 }
 const bestFor = p => cpQuote([{ product: p, qty: 1 }])[0] || null;
 
@@ -97,7 +116,8 @@ function card(p, i = 9) {
 // Every page opens with the same band the shop sections have: a flat jewel colour, the title, and room for the page's object.
 const band = (fx, tone, title, note = "") => `<section class="shophead shophead--page" data-tone="${tone}" data-fx="${fx}"><h1 class="shophead__h">${title}</h1>${note ? `<p class="shophead__n">${note}</p>` : ""}</section>`;
 function viewHome() {
-  const picks = ["Sultan Totem", "Stuttgart Pure, Jade", "Regent Neon Blue", "Cairo Avatar", "Carbon Black", "Mamoun Moagza Copper", "Regent Neon Pink", "Orbit"].map(n => PRODUCTS.find(p => p.name === n)).filter(Boolean).slice(0, 8);
+  const picks = ["Sultan Totem", "Stuttgart Pure, Jade", "Regent Neon Blue", "Cairo Avatar", "Carbon Black", "Mamoun Moagza Copper", "Regent Neon Pink", "Orbit"].map(byName).filter(p => p && !isSold(p));
+  for (const p of liveCat("hookahs")) { if (picks.length >= 8) break; if (!picks.includes(p)) picks.push(p); }   // a sold pick gives its place to the next live hookah
   const resin = PRODUCTS.filter(p => p.dark);
   const SLABS = ["gilt", "cobalt", "ruby", "emerald", "teal"];
   const ok = p => p && p.cat === "hookahs" && !p.dark && p.img && !isSold(p), named = ["Mamoun Hatshepsut", "Sultan Totem", "Mamoun Cafe Chiller", "Lounge Six", "Mamoun Star"].map(byName).filter(ok);
@@ -128,8 +148,8 @@ function viewHome() {
   <section class="gifts" aria-labelledby="gift-h">
     <header class="shelf__head"><h2 class="h2" id="gift-h">Gifts</h2><p class="gifts__note">Packed at the counter. Add a note in the cart.</p></header>
     <div class="gifts__row">
-      ${[["under-50", "Under $50", "emerald", inCat("bowls")[0]], ["under-150", "Under $150", "cobalt", byName("Mamoun Moagza Copper")], ["set", "The full setup", "ruby", byName("Mamoun Kamanja Gold")]].map(([id, label, tone, lead]) =>
-        `<a class="gift" data-tone="${tone}" href="${id === "set" ? "/set" : "/gifts/" + id}">${shot(lead, { small: true, use: "cat", cls: "gift__img" })}<span class="gift__name">${label}</span><span class="gift__sub">${id === "set" ? "Hookah, bowl, heat keeper, hose" : PRODUCTS.filter(p => !p.dark && (id === "under-50" ? p.price < 50 : p.price >= 50 && p.price <= 150)).length + " pieces"}</span></a>`).join("")}
+      ${[["under-50", "Under $50", "emerald", liveCat("bowls")[0] || inCat("bowls")[0]], ["under-150", "Under $150", "cobalt", canSet(byName("Mamoun Moagza Copper")) || giftList(false)[0] || byName("Mamoun Moagza Copper")], ["set", "The full setup", "ruby", canSet(byName("Mamoun Kamanja Gold")) || liveCat("hookahs")[0] || byName("Mamoun Kamanja Gold")]].map(([id, label, tone, lead]) =>
+        `<a class="gift" data-tone="${tone}" href="${id === "set" ? "/set" : "/gifts/" + id}">${shot(lead, { small: true, use: "cat", cls: "gift__img" })}<span class="gift__name">${label}</span><span class="gift__sub">${id === "set" ? "Hookah, bowl, heat keeper, hose" : giftList(id === "under-50").length + " pieces"}</span></a>`).join("")}
     </div>
   </section>
   <section class="lineup" aria-labelledby="lu-h">
@@ -153,7 +173,7 @@ function viewHome() {
       <ul class="pack__list">
         <li><b>Taken apart.</b> Stem, base and tray are wrapped separately so nothing long carries the weight.</li>
         <li><b>Double boxed.</b> The base sits in its own box inside the shipping box.</li>
-        <li><b>Covered.</b> Glass orders over $100 ship with signature and full coverage.</li>
+        <li><b>Covered.</b> A glass box worth over $100 ships with signature and full coverage.</li>
       </ul>
       <a class="link" href="/shipping">How shipping works</a>
     </div>
@@ -190,9 +210,9 @@ function viewProduct(sku) {
   if (!p) return `${band("missing", "ruby", "That one is gone.")}<section class="empty"><p class="lead">It may have sold. <a class="link" href="/shop">See what is on the counter</a>.</p></section>`;
   const c = catById[p.cat], parcels = pack([{ product: p, qty: 1 }]), opts = cpQuote([{ product: p, qty: 1 }]), b = parcels[0];
   const inCart = state.cart.some(l => l.sku === sku);
-  const more = PRODUCTS.filter(x => x.cat === p.cat && x.sku !== sku && !x.dark).sort((a, b) => (seriesOf(b) === seriesOf(p)) - (seriesOf(a) === seriesOf(p))).slice(0, 4);
-  const n = parseInt(p.sku.slice(-3), 10), nth = (c, k) => { const l = inCat(c); return l[(n + k) % l.length]; };
-  const goes = p.cat === "hookahs" ? [nth("bowls", 0), nth("heat", 1), nth("hoses", 2), nth("parts", 3)] : [];
+  const more = PRODUCTS.filter(x => x.cat === p.cat && x.sku !== sku && !x.dark && !isSold(x)).sort((a, b) => (seriesOf(b) === seriesOf(p)) - (seriesOf(a) === seriesOf(p))).slice(0, 4);
+  const n = parseInt(p.sku.slice(-3), 10), nth = (c, k) => { const l = liveCat(c); return l.length ? l[(n + k) % l.length] : null; };
+  const goes = p.cat === "hookahs" ? [nth("bowls", 0), nth("heat", 1), nth("hoses", 2), nth("parts", 3)].filter(Boolean) : [];
   const sold = isSold(p);
   return `
   <article class="pdp" data-tone="${toneOf(p)}" data-cat="${p.cat}">
@@ -202,7 +222,7 @@ function viewProduct(sku) {
       <h1 class="pdp__name">${esc(p.name)}</h1>
       <p class="pdp__note">${esc(p.note)}${p.height ? `. Stands ${p.height} cm.` : "."}</p>
       ${p.details && p.details.notes ? `<p class="pdp__notes"><span>Notes</span> ${esc(p.details.notes)}</p>` : ""}
-      ${sold ? `<p class="soldline">${SOLD.has(p.name) ? "This one has sold. Each resin stem is poured once." : "Sold out for now."}</p><a class="btn btn--ghost btn--call" href="tel:+15192552222">Call the counter</a>`
+      ${sold ? `<p class="soldline">${p.dark ? "This one has sold. Each resin stem is poured once." : "Sold out for now."}</p><a class="btn btn--ghost btn--call" href="tel:+15192552222">Call the counter</a>`
         : inCart ? `<a class="btn btn--wide" href="/cart">In your cart. View cart</a>` : `<button class="btn btn--wide" type="button" data-add="${p.sku}">Add to cart</button>`}
       ${deliveryLine(p, opts)}
       <section class="ways" aria-labelledby="ways-h">
@@ -210,7 +230,7 @@ function viewProduct(sku) {
         ${opts.length || (state.dest && p.ship === "pickup_only") ? `<p class="ways__to">To ${esc(state.dest.full)}${state.dest.city ? ", " + esc(state.dest.city) : ""}. <button class="link" type="button" data-open-postal>Change</button></p>
         <table class="ledger"><thead><tr><th scope="col">Service</th><th scope="col">Arrives</th><th scope="col" class="r">Cost</th></tr></thead>
         <tbody>${localRow(p)}${opts.map(o => `<tr><td>${o.carrier} ${o.service}</td><td>${days(o.days)}</td><td class="r num">${money(o.total)}</td></tr>`).join("")}
-        <tr><td>Pick up at ${SHOP_STREET}</td><td>Today</td><td class="r num">Free</td></tr></tbody></table>`
+        <tr><td>Pick up at ${SHOP_STREET}</td><td>${pickupDay()}</td><td class="r num">Free</td></tr></tbody></table>`
         : `<p class="ways__to">Local delivery from $10 near Windsor. Free pickup. ${p.ship === "pickup_only" ? "Not sent by Canada Post." : p.ship === "ground_only" ? "Ships by ground across Canada." : "Ships across Canada."}</p><button class="btn btn--ghost btn--wide" type="button" data-open-postal>Check delivery to my postal code</button>`}
       </section>
       ${p.cat === "hookahs" ? `<section class="parts" aria-labelledby="parts-h">
@@ -250,8 +270,9 @@ function viewProduct(sku) {
 }
 
 // ---------- gifts ----------
+function giftList(under) { return PRODUCTS.filter(p => !p.dark && !isSold(p) && (under ? p.price < 50 : p.price >= 50 && p.price <= 150)).sort((a, b) => b.price - a.price); }
 function viewGifts(kind) {
-  const under = kind === "under-50", list = PRODUCTS.filter(p => !p.dark && (under ? p.price < 50 : p.price >= 50 && p.price <= 150)).sort((a, b) => b.price - a.price);
+  const under = kind === "under-50", list = giftList(under);
   return `
   <section class="shophead" data-tone="${under ? "emerald" : "cobalt"}" data-fx="gifts">
     <h1 class="shophead__h">${under ? "Under $50" : "Under $150"}</h1>
@@ -268,13 +289,15 @@ const canSet = p => p && !isSold(p) ? p : null;
 function setPicks() { return SLOTS.map(([slot, cat]) => canSet(bySku[state.set[slot]]) || (slot === "hookah" ? canSet(byName("Mamoun Kamanja Gold")) : null) || setOpts(cat)[0] || null); }
 function setSummary() {
   const picks = setPicks().filter(Boolean), lines = picks.map(product => ({ product, qty: 1 })), parcels = pack(lines), sum = picks.reduce((a, p) => a + p.price, 0);
-  const q = cpQuote(lines)[0] || null;
+  const d = state.dest, near = !!d && localArea(d), lq = near && d.complete ? localQ() : null;
+  const localVal = !near ? null : !d.complete ? `<button class="link" type="button" data-open-postal>Add full postal code</button>` : !lq || lq.status === "checking" ? "Checking" : lq.status === "ok" ? `<span class="num">${feeText(localDue(lq.fee_cents, cartCents(lines)) / 100)}</span>` : lq.status === "far" || lq.status === "down" ? null : "At checkout";
+  const q = localVal === null ? cpQuote(lines)[0] || null : null;
   return `
     <h2 class="h3">Your set</h2>
     <ul class="setlines">${picks.map(p => `<li><span>${esc(p.name)}</span><span class="num">${money(p.price)}</span></li>`).join("")}</ul>
     <dl class="totals">
       <div><dt>Ships as</dt><dd>${parcels.length} ${parcels.length === 1 ? "box" : "boxes"}, <span class="num">${parcels.reduce((a, b) => a + b.kg, 0).toFixed(1)} kg</span></dd></div>
-      <div><dt>Shipping${q ? " to " + esc(state.dest.full) : ""}</dt><dd>${q ? `<span class="num">${money(q.total)}</span>` : state.dest && !carried(lines) ? "Local delivery or pickup" : `<button class="link" type="button" data-open-postal>Add postal code</button>`}</dd></div>
+      <div><dt>${localVal !== null ? "Delivery to " + esc(d.full) : "Shipping" + (q ? " to " + esc(state.dest.full) : "")}</dt><dd>${localVal !== null ? localVal : q ? `<span class="num">${money(q.total)}</span>` : state.dest && !carried(lines) ? "Local delivery or pickup" : `<button class="link" type="button" data-open-postal>Add postal code</button>`}</dd></div>
       <div class="totals__door"><dt>Set price</dt><dd class="num">${money(sum)}</dd></div>
     </dl>
     ${picks.length ? `<button class="btn btn--wide" type="button" data-add-set>Add the set to cart</button>` : `<a class="btn btn--wide" href="/shop">See what is in stock</a>`}`;
@@ -331,6 +354,7 @@ async function priceLocal() {
     if (box && !btn.disabled) { if (a.status === "ok") refreshDelivery(f); else if (a.status === "far" || a.status === "down") { if (a.status === "far") state.farFor = postal; box.innerHTML = deliveryMsg(a.status); } }
     return;
   }
+  if (on === "set") { const s = $("[data-set-summary]"); if (s) s.innerHTML = setSummary(); syncChrome(); return; }
   if (["cart", "p", "checkout"].includes(on)) {
     const note = document.activeElement?.matches?.("[data-note]") ? document.activeElement : null, at = note ? [note.selectionStart, note.selectionEnd] : null;
     render();
@@ -389,8 +413,8 @@ function shipChoice(lines) {
   return { parcels, opts, canLocal, checking, localFee, status: near && q ? q.status : null, pickup, local, chosen: pickup || local || waiting || state.ship === "local" ? null : opts.find(o => o.id === state.ship) || opts[0] || null };
 }
 function viewCart() {
-  const lines = cartLines();
-  if (!lines.length) return `${band("cart", "gilt", "Your cart", "Nothing in it yet.")}<section class="empty"><p class="lead">Start with the <a class="link" href="/shop/hookahs">hookahs</a>, the <a class="link" href="/shop/bowls">bowls</a>, or <a class="link" href="/set">build a set</a>.</p></section>`;
+  const lines = cartLines(), news = state.cartNews.length ? `<div class="cartnews" role="status" data-cart-news>${state.cartNews.map(m => `<p>${esc(m)}</p>`).join("")}</div>` : ""; state.newsSeen = state.cartNews.length > 0;
+  if (!lines.length) return `${band("cart", "gilt", "Your cart", "Nothing in it yet.")}<section class="empty">${news}<p class="lead">Start with the <a class="link" href="/shop/hookahs">hookahs</a>, the <a class="link" href="/shop/bowls">bowls</a>, or <a class="link" href="/set">build a set</a>.</p></section>`;
   const was = shipChoice(lines); if (state.ship === "local" && !was.canLocal && !was.checking) { state.ship = null; store.set("ship", null); }   // the cart is where a new way of sending it is shown and chosen
   const { parcels, opts, canLocal, checking, localFee, status, pickup, local, chosen } = shipChoice(lines), sub = lines.reduce((a, l) => a + l.product.price * l.qty, 0);
   const ready = pickup || local || !!chosen, otherWay = carried(lines) ? "You can still ship it or pick it up free." : "You can still pick it up free.";
@@ -402,11 +426,12 @@ function viewCart() {
   return `
   ${band("cart", "gilt", "Your cart", `<span class="num">${lines.reduce((a, l) => a + l.qty, 0)}</span> ${lines.reduce((a, l) => a + l.qty, 0) === 1 ? "piece" : "pieces"}, packed at the counter`)}
   <section class="cart">
+    ${news}
     <ul class="lines">${lines.map(({ product: p, qty }) => `
       <li class="line" data-tone="${toneOf(p)}">
         <a class="line__tile tile ${p.dark || p.photo ? "tile--photo" : ""}" href="/p/${p.sku}">${shot(p, { small: true, use: "thumb" })}</a>
-        <div class="line__body"><a class="line__name" href="/p/${p.sku}">${esc(p.name)}</a><p class="line__meta num">${p.sku} &middot; ${p.kg} kg</p>
-          <div class="qty"><button type="button" aria-label="One less ${esc(p.name)}" data-qty="${p.sku}" data-n="${qty - 1}">&minus;</button><span class="num" aria-live="polite">${qty}</span><button type="button" aria-label="One more ${esc(p.name)}" data-qty="${p.sku}" data-n="${qty + 1}" ${qty >= MAX_QTY ? "disabled" : ""}>+</button></div></div>
+        <div class="line__body"><a class="line__name" href="/p/${p.sku}">${esc(p.name)}</a><p class="line__meta num">${p.sku} &middot; ${p.kg} kg${qty >= stockFor(p) && stockFor(p) < MAX_QTY ? ` &middot; only ${stockFor(p)} in stock` : ""}</p>
+          <div class="qty"><button type="button" aria-label="One less ${esc(p.name)}" data-qty="${p.sku}" data-n="${qty - 1}">&minus;</button><span class="num" aria-live="polite">${qty}</span><button type="button" aria-label="One more ${esc(p.name)}" data-qty="${p.sku}" data-n="${qty + 1}" ${qty >= stockFor(p) ? "disabled" : ""}>+</button></div></div>
         <p class="line__price num">${money(p.price * qty)}</p>
       </li>`).join("")}</ul>
     <section class="cartship">
@@ -418,14 +443,14 @@ function viewCart() {
       ${tooHeavy ? `<p class="note">One of these boxes is over the 30 kg carrier limit. Call the counter at 519-255-2222 and we will quote it by hand.</p>` : ""}
       ${opts.length || canLocal ? `<fieldset class="opts"><legend>Getting it to ${esc(state.dest.full)} <button class="link" type="button" data-open-postal>Change</button></legend>
         ${canLocal ? `<label class="opt"><input type="radio" name="ship" value="local" ${local ? "checked" : ""}><span class="opt__name">Local delivery<small>${localFee !== null ? localEta() : "We price it from your street address at checkout"}</small></span><span class="num">${localFee !== null ? feeText(localFee) : "At checkout"}</span></label>` : ""}
-        <label class="opt"><input type="radio" name="ship" value="pickup" ${pickup ? "checked" : ""}><span class="opt__name">Pick up at the Windsor counter<small>${SHOP_STREET}, Windsor. Ready the same day</small></span><span class="num">Free</span></label>
+        <label class="opt"><input type="radio" name="ship" value="pickup" ${pickup ? "checked" : ""}><span class="opt__name">Pick up at the Windsor counter<small>${SHOP_STREET}, Windsor. ${pickupReady()}</small></span><span class="num">Free</span></label>
         ${opts.map(o => `<label class="opt"><input type="radio" name="ship" value="${o.id}" ${chosen && o.id === chosen.id ? "checked" : ""}><span class="opt__name">${o.carrier} ${o.service}<small>${days(o.days)}</small></span><span class="num">${money(o.total)}</span></label>`).join("")}
       </fieldset>
       ${canLocal ? `<p class="note" data-free-note>${freeNote(cartCents(lines))}</p>` : ""}
       ${chosen ? `<details class="why" ${state.whyOpen ? "open" : ""}><summary>What makes up ${money(chosen.total)}</summary><dl>
         ${chosen.perParcel.map((p, i) => `<div><dt>Box ${i + 1}, billed at ${p.billableKg} kg</dt><dd class="num">${money(p.freight)}</dd></div>`).join("")}
         ${chosen.cover ? `<div><dt>Glass coverage and signature</dt><dd class="num">${money(chosen.cover)}</dd></div>` : ""}
-        <div><dt>Carrier fuel charge, ${(fuelOn().pct * 100).toFixed(1)}%, the rate posted for ${fuelOn().week}</dt><dd class="num">${money(chosen.fuel)}</dd></div></dl></details>` : ""}` : `<fieldset class="opts"><legend>Or skip shipping</legend><label class="opt"><input type="radio" name="ship" value="pickup" ${pickup ? "checked" : ""}><span class="opt__name">Pick up at the Windsor counter<small>${SHOP_STREET}, Windsor. Ready the same day</small></span><span class="num">Free</span></label></fieldset>`}
+        <div><dt>Carrier fuel charge, ${(fuelOn().pct * 100).toFixed(1)}%, ${fuelOn().stale ? "the last rate we have, for" : "the rate posted for"} ${fuelOn().week}</dt><dd class="num">${money(chosen.fuel)}</dd></div></dl></details>` : ""}` : `<fieldset class="opts"><legend>Or skip shipping</legend><label class="opt"><input type="radio" name="ship" value="pickup" ${pickup ? "checked" : ""}><span class="opt__name">Pick up at the Windsor counter<small>${SHOP_STREET}, Windsor. ${pickupReady()}</small></span><span class="num">Free</span></label></fieldset>`}
     </section>
     <div class="giftnote"><label class="field__label" for="note">Gift note <span class="fine">optional, written on a card in the box</span></label>
       <textarea class="field field--text field--area" id="note" data-note maxlength="240" rows="2" placeholder="Happy birthday, from all of us">${esc(state.note)}</textarea></div>
@@ -520,6 +545,10 @@ $("[data-postal-form]").addEventListener("submit", e => {
   if (state.localQ?.status === "down") state.localQ = null;   // a new try after the map service was unavailable
   const chose = state.sheetMode;
   if (chose) { state.reach = chose; store.set("reach", chose); state.ship = null; store.set("ship", null); }
+  else if (d.full !== state.dest?.full && localArea(d)) {   // "nationwide" and a carrier were chosen for the old address: a Windsor shopper must see local delivery first
+    if (state.reach === "nationwide") { state.reach = null; store.set("reach", null); }
+    if (state.ship && state.ship !== "pickup") { state.ship = null; store.set("ship", null); }
+  }
   state.dest = d; store.set("postal", d.full); sheet.close(); render();
   if (chose) $("#main").focus({ preventScroll: true });
 });
@@ -540,16 +569,31 @@ const deliveryFeeNow = () => {
   if (told && told.key === deliveryKey() && told.sub === cartCents() && Number.isFinite(told.due)) return told.due / 100;   // the server has spoken for this exact cart: its figure wins over ours
   return localDue(base, cartCents()) / 100;
 };   // the same free-over-$200 rule the server applies
+// What this exact order is: the same lines, way of sending and destination always give the same words.
+const orderSig = (lines, sc) => JSON.stringify([lines.map(l => [l.product.sku, l.qty]).sort(), sc.pickup ? "pickup" : "ship", sc.pickup ? "" : sc.local ? "local" : sc.chosen?.id || "", sc.pickup ? "" : state.dest?.full || ""]);
+// The figures the shopper is shown, in cents, by the server's own sum. If the server has re-priced this exact order, its figures win.
+function shownTotals(lines, sc) {
+  const fee = sc.local ? deliveryFeeNow() : null, prov = sc.pickup || sc.local ? "ON" : state.dest.prov, p = state.priced?.sig === orderSig(lines, sc) ? state.priced : null;
+  return { fee, prov, ...(p ? { subtotal: p.subtotal_cents, shipping: p.shipping_cents, tax: p.tax_cents, total: p.total_cents } : orderTotals(cartCents(lines), sc.pickup ? 0 : sc.local ? toCents(fee || 0) : toCents(sc.chosen.total), prov)) };
+}
 function coTotals(lines, sc) {
-  const { pickup, local, chosen } = sc, fee = local ? deliveryFeeNow() : null, sub = lines.reduce((a, l) => a + l.product.price * l.qty, 0), ship = pickup ? 0 : local ? fee || 0 : chosen.total, prov = pickup || local ? "ON" : state.dest.prov;
-  const tax = Math.round((sub + ship) * taxRate(prov) * 100) / 100, units = lines.reduce((a, l) => a + l.qty, 0);
+  const { pickup, local } = sc, t = shownTotals(lines, sc), units = lines.reduce((a, l) => a + l.qty, 0);
   return `<dl class="totals">
-        <div><dt>${units} ${units === 1 ? "item" : "items"}</dt><dd class="num">${money(sub)}</dd></div>
-        <div><dt>${pickup ? "Pickup" : local ? "Delivery" : "Shipping"}</dt><dd class="num">${pickup ? "Free" : local ? (fee === null ? "Enter your address" : feeText(fee)) : money(ship)}</dd></div>
-        <div><dt>${taxLabel(prov)}</dt><dd class="num">${money(tax)}</dd></div>
-        <div class="totals__door"><dt>${local && fee === null ? "Total before delivery" : "Total"}</dt><dd class="num">${money(sub + ship + tax)}</dd></div>
+        <div><dt>${units} ${units === 1 ? "item" : "items"}</dt><dd class="num">${money(t.subtotal / 100)}</dd></div>
+        <div><dt>${pickup ? "Pickup" : local ? "Delivery" : "Shipping"}</dt><dd class="num">${pickup ? "Free" : local ? (t.fee === null ? "Enter your address" : feeText(t.shipping / 100)) : money(t.shipping / 100)}</dd></div>
+        <div><dt>${taxLabel(t.prov)}</dt><dd class="num">${money(t.tax / 100)}</dd></div>
+        <div class="totals__door"><dt>${local && t.fee === null ? "Total before delivery" : "Total"}</dt><dd class="num">${money(t.total / 100)}</dd></div>
       </dl>`;
 }
+// One key per order attempt. A retry after a lost answer sends the same key, so the shop can never make the order twice.
+function orderKey(sig) {
+  let k = state.orderKey; if (!k) try { k = JSON.parse(sessionStorage.getItem("oss:order-key")); } catch {}
+  if (k?.sig === sig && typeof k.key === "string") return state.orderKey = k, k.key;
+  const key = crypto.randomUUID ? crypto.randomUUID() : [...crypto.getRandomValues(new Uint8Array(16))].map(b => b.toString(16).padStart(2, "0")).join("");
+  state.orderKey = { sig, key }; try { sessionStorage.setItem("oss:order-key", JSON.stringify(state.orderKey)); } catch {}
+  return key;
+}
+function orderKeyDone() { state.orderKey = null; try { sessionStorage.removeItem("oss:order-key"); } catch {} }
 function viewCheckout() {
   const lines = cartLines();
   if (!lines.length) return viewCart();
@@ -568,7 +612,7 @@ function viewCheckout() {
         ${field("email", "Email", 'type="email" autocomplete="email" inputmode="email" maxlength="120" required', local ? "for the receipt" : "for the receipt and tracking")}
         ${field("phone", "Phone", `type="tel" autocomplete="tel" inputmode="tel" maxlength="30"${local ? " required" : ""}`, local ? "so the driver can reach you" : "optional")}
       </fieldset>
-      ${pickup ? `<fieldset class="co__set"><legend class="h3">Pickup</legend><p class="co__p">At ${SHOP_ADDRESS}. We email you when it is ready, usually the same day. Bring the order number. ${directions()}</p></fieldset>`
+      ${pickup ? `<fieldset class="co__set"><legend class="h3">Pickup</legend><p class="co__p">At ${SHOP_ADDRESS}. We email you when it is ready, usually ${pickupDay() === "Today" ? "the same day" : "tomorrow"}. Bring the order number. ${directions()}</p></fieldset>`
         : `<fieldset class="co__set"><legend class="h3">Where it is going</legend>
         ${field("line1", "Street address", 'autocomplete="address-line1" maxlength="120" required')}
         ${field("city", "City or town", 'autocomplete="address-level2" maxlength="60" required')}
@@ -585,7 +629,7 @@ function viewCheckout() {
 }
 function viewOrder(id) {
   let o = null; try { o = JSON.parse(sessionStorage.getItem("oss:order:" + id)); } catch { o = null; }
-  if (!o) return `<section class="empty"><h1 class="h2 h2--xl">Order ${esc(id)}</h1><p class="lead">Test order. No payment is taken, and nothing will be packed or sent.</p><p class="lead"><a class="link" href="/shop">Back to the shop</a>.</p></section>`;
+  if (!o) return `${band("missing", "ruby", "We cannot show that order.")}<section class="empty"><p class="lead">Order details only open on the phone or computer that placed the order. To ask about one, call the counter at <a class="link" href="tel:+15192552222">519-255-2222</a>.</p><p class="lead"><a class="link" href="/shop">See what is on the counter</a>.</p></section>`;
   const c = n => money(n / 100);
   return `
   <section class="cart done">
@@ -642,14 +686,20 @@ document.addEventListener("submit", async e => {
     if (deliveryFeeNow() === null) return checkDelivery(f, btn);   // show the price first: the next tap places the order
   }
   btn.disabled = true; btn.textContent = "Placing your order"; err.hidden = true;
+  const sent = cartLines(), sig = orderSig(sent, sc), shown = shownTotals(sent, sc);
   try {
-    const r = await fetch("/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ lines: state.cart, method: pickup ? "pickup" : "ship", service: local ? "local" : chosen && chosen.id, delivery_fee_cents: local ? Math.round(deliveryFeeNow() * 100) : undefined, postal: state.dest && state.dest.full,
+    const r = await fetch("/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ order_key: orderKey(sig + v("email").toLowerCase()), expected_total_cents: shown.total, lines: state.cart, method: pickup ? "pickup" : "ship", service: local ? "local" : chosen && chosen.id, delivery_fee_cents: local ? Math.round(deliveryFeeNow() * 100) : undefined, postal: state.dest && state.dest.full,
       name: v("name"), email: v("email"), phone: v("phone"), note: state.note, address: { line1: v("line1"), city: v("city") } }) });
     const data = await r.json().catch(() => ({}));
-    if (!r.ok) { btn.disabled = false; btn.textContent = "Place order"; if (local && data.delivery) { if (data.delivery === "far") state.farFor = state.dest.full; state.delivery = data.delivery === "ok" ? { key: deliveryKey(), fee_cents: data.base_fee_cents ?? data.fee_cents, due: data.fee_cents, sub: cartCents() } : null; state.refused = data.delivery === "ok" ? null : deliveryKey(); refreshDelivery(f, data.delivery === "ok" ? undefined : deliveryMsg(data.delivery)); if (data.delivery !== "ok") return; } if (typeof data.stock === "number" && bySku[data.sku]) bySku[data.sku].stock = data.stock; return fail(data.error || "That did not go through. Please try again.", data.field); }
+    if (!r.ok) { btn.disabled = false; btn.textContent = "Place order"; if (local && data.delivery) { if (data.delivery === "far") state.farFor = state.dest.full; state.delivery = data.delivery === "ok" ? { key: deliveryKey(), fee_cents: data.base_fee_cents ?? data.fee_cents, due: data.fee_cents, sub: cartCents() } : null; state.refused = data.delivery === "ok" ? null : deliveryKey(); refreshDelivery(f, data.delivery === "ok" ? undefined : deliveryMsg(data.delivery)); if (data.delivery !== "ok") return; } 
+      if (data.repriced) { state.priced = { sig, ...data.repriced }; f.querySelector(".totals").outerHTML = coTotals(sent, sc); }
+      if (typeof data.stock === "number" && bySku[data.sku]) {   // the shelf changed: the cart is put right and says what happened
+        bySku[data.sku].stock = data.stock; const fit = fitCart(state.cart); state.cart = fit.kept; state.cartNews = fit.news.length ? fit.news : [data.error]; state.priced = null; saveCart(); navigate("/cart"); return;
+      }
+      return fail(data.error || "That did not go through. Please try again.", data.field); }
     try { sessionStorage.setItem("oss:order:" + data.order.id, JSON.stringify(data.order)); } catch {}
-    for (const i of data.order.items) if (bySku[i.sku]) bySku[i.sku].stock = Math.max(0, bySku[i.sku].stock - i.qty);
-    state.cart = []; saveCart(); state.delivery = null; state.refused = null; state.form = {}; state.note = ""; store.set("note", "");
+    if (!data.replayed) for (const i of data.order.items) if (bySku[i.sku]) bySku[i.sku].stock = Math.max(0, bySku[i.sku].stock - i.qty);
+    orderKeyDone(); state.priced = null; state.cart = []; saveCart(); state.delivery = null; state.refused = null; state.form = {}; state.note = ""; store.set("note", "");
     navigate("/order/" + data.order.id, true);
   } catch { btn.disabled = false; btn.textContent = "Place order"; fail("We could not reach the shop. Check your connection and try again."); }
 });
@@ -691,7 +741,17 @@ document.addEventListener("click", e => {
   const n = $(".tile", a) || a; n.style.viewTransitionName = "piece";
   $$(".sticker").forEach(x => x.style.viewTransitionName = ""); const st = $(".sticker", a); if (st) st.style.viewTransitionName = "tag";
 }, true);
+// Another tab changed the cart: take its version, so neither tab can overwrite the other.
+function cartFromStorage() {
+  const fit = fitCart(cleanCart(store.get("cart"))); state.cart = fit.kept; if (fit.news.length) state.cartNews = fit.news;
+  const on = route().replace(/^#\/?/, "").split("/")[0], f = $("[data-checkout]"), lines = cartLines();
+  if (f && lines.length) { const sc = shipChoice(lines); if (sc.pickup || sc.local || sc.chosen) { f.querySelector(".totals").outerHTML = coTotals(lines, sc); syncChrome(); return; } }   // never rebuild a form someone is typing in
+  if (["cart", "checkout", "p"].includes(on)) render(); else syncChrome();
+}
+addEventListener("storage", e => { if (e.key === null || e.key === "oss:cart") cartFromStorage(); });
+addEventListener("pageshow", e => { if (e.persisted) cartFromStorage(); });
 function go() {
+  if (state.newsSeen && !/^#\/cart/.test(route())) { state.cartNews = []; state.newsSeen = false; }
   const from = last.match(/^#\/p\/(.+)$/); last = route();
   render(); scrollTo(0, 0);
   const stage = $("[data-stage]");

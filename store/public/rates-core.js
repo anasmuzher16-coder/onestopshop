@@ -118,13 +118,18 @@ function packAll(lines) {
 // FUEL: Canada Post's published domestic fuel surcharge, relief rate, for the week shown. It changes
 // weekly (canadapost.ca/fuelsurcharge), which is why production must read it from the Rating API.
 // Each row is one published week; the newest row that has started is the one in force. Add next week's
-// row when Canada Post posts it. Source read 2026-11-15: both rows below.
+// row when Canada Post posts it. Rows 1 and 2 read 2026-11-15; row 3 read 2026-11-23 from
+// canadapost-postescanada.ca/cpc/en/support/kb/sending/rates-dimensions/fuel-surcharges-on-mail-and-parcels (Domestic, 45.50%, 38.60% with relief).
 const FUEL_WEEKS = [
   { from: "2026-11-09", pct: 0.412, week: "Nov 9 to Nov 15, 2026" },
   { from: "2026-11-16", pct: 0.399, week: "Nov 16 to Nov 22, 2026" },
+  { from: "2026-11-23", pct: 0.386, week: "Nov 23 to Nov 29, 2026" },
 ];
-export const fuelOn = (day = new Date().toLocaleDateString("en-CA", { timeZone: "America/Toronto" })) =>
-  FUEL_WEEKS.filter(w => w.from <= day).pop() || FUEL_WEEKS[0];
+// stale: the newest row's week has ended. The last posted rate is still used, but the cart says so and the server logs it.
+export const fuelOn = (day = new Date().toLocaleDateString("en-CA", { timeZone: "America/Toronto" })) => {
+  const row = FUEL_WEEKS.filter(w => w.from <= day).pop() || FUEL_WEEKS[0], last = FUEL_WEEKS[FUEL_WEEKS.length - 1];
+  return { ...row, stale: row === last && Date.parse(day + "T00:00:00Z") > Date.parse(last.from + "T00:00:00Z") + 6 * 864e5 };
+};
 export const FUEL = fuelOn();
 export const RATE_CARD = {
   divisor: 5000,        // cm3 per kg, Priority / Xpresspost / Expedited (Canada Post "How to cube an item")
@@ -196,4 +201,6 @@ export const money = n => (n < 0 ? "-$" : "$") + Math.abs(n).toLocaleString("en-
 // Saskatchewan, Manitoba and Quebec is charged once the shop is registered there.
 const HST = { ON: 0.13, NB: 0.15, NL: 0.15, PE: 0.15, NS: 0.14 };
 export const taxRate = prov => HST[prov] ?? 0.05;
+// The one sum for an order's money, in whole cents, used by the checkout page and the server alike.
+export const orderTotals = (subtotal, shipping, prov) => { const tax = Math.round((subtotal + shipping) * taxRate(prov)); return { subtotal, shipping, tax, total: subtotal + shipping + tax }; };
 export const taxLabel = prov => `${HST[prov] ? "HST" : "GST"} ${Math.round(taxRate(prov) * 100)}%`;

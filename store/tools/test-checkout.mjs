@@ -4,6 +4,7 @@
 import { readFileSync } from "node:fs";
 import { parsePostal, pack, quote } from "../../site/rates.js";
 import { PRODUCTS } from "../../site/catalog.js";
+import { fuelOn } from "../public/rates-core.js";   // the fuel rate changes weekly: the sample engine is given this week's, so it still checks packing and rates
 const B = process.env.BASE || "http://127.0.0.1:4420";
 const KEY = readFileSync(new URL("../.dev.vars", import.meta.url), "utf8").match(/ADMIN_KEY=(.+)/)[1].trim();
 let n = 0, f = 0; const ok = (c, msg) => { n++; if (!c) { f++; console.log("FAIL", msg); } };
@@ -12,7 +13,7 @@ const stockOf = async sku => (await (await fetch(B + "/api/catalog")).json()).pr
 const who = { name: "Test Shopper", email: "test@example.com" }, to = { postal: "M5V 2T6", address: { line1: "1 Test Street", city: "Toronto" } };
 
 // a hookah to Toronto: shipping must equal the mockup's verified engine, tax must be Ontario HST on items plus shipping
-const hk = PRODUCTS.find(p => p.sku === "OSS-1001"), ref = quote(parsePostal("M5V 2T6"), pack([{ product: hk, qty: 1 }])).find(o => o.id === "cp-exp");
+const hk = PRODUCTS.find(p => p.sku === "OSS-1001"), ref = quote(parsePostal("M5V 2T6"), pack([{ product: hk, qty: 1 }]), fuelOn().pct).find(o => o.id === "cp-exp");
 const before = await stockOf("OSS-1001");
 const a = await post({ ...who, ...to, method: "ship", service: "cp-exp", lines: [{ sku: "OSS-1001", qty: 1, price: 1, unit_cents: 1 }], total_cents: 1 });
 ok(a.status === 201, "ship order placed: " + a.status + " " + (a.data.error || ""));

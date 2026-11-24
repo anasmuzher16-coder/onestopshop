@@ -41,7 +41,7 @@ for (const e of extra) {
 let seed = 20261114; const rnd = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
 const all = [...PRODUCTS.map(p => ({ sku: p.sku, name: p.name, cents: Math.round(p.price * 100) })), ...extra.map(e => ({ sku: e.sku, name: e.name, cents: e.cents }))];
 for (const p of PRODUCTS) {
-  const st = p.dark ? 1 : p.cat === "hookahs" ? Math.floor(rnd() * 5) : Math.floor(rnd() * 14);
+  const st = p.sku === "OSS-1008" ? 0 : p.dark ? 1 : p.cat === "hookahs" ? Math.floor(rnd() * 5) : Math.floor(rnd() * 14);
   out.push(`UPDATE products SET stock=${st}, low_stock_at=${p.cat === "hookahs" ? 1 : 3}, cost_cents=${Math.round(p.price * 100 * (0.45 + rnd() * 0.15))} WHERE sku=${q(p.sku)};`);
   out.push(`UPDATE stock_moves SET delta=${st} WHERE sku=${q(p.sku)} AND actor='seed';`);
 }
