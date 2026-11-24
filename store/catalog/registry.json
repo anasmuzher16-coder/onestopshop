@@ -1,0 +1,2758 @@
+{
+ "schema": "oss-sku-registry/1",
+ "rule": "OSS-SSNNNN: SS = supplier block, NNNN = sequence. A number is never changed, never reused, and stays here after it is retired. Legacy 4-digit numbers are kept as they are.",
+ "blocks": {
+  "10": "ace",
+  "20": "charcoal-foil",
+  "30": "shisha"
+ },
+ "next": {
+  "10": 297,
+  "20": 1,
+  "30": 1
+ },
+ "skus": {
+  "OSS-100001": {
+   "supplier": "ace",
+   "key": "ace-alpha-x-ss-jocker##c16ad5",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100002": {
+   "supplier": "ace",
+   "key": "ace-alpha-x-ss-jocker##ff1616",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100003": {
+   "supplier": "ace",
+   "key": "ace-houston-polar-night##ff914d",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100004": {
+   "supplier": "ace",
+   "key": "ace-houston-polar-night##ff1616",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100005": {
+   "supplier": "ace",
+   "key": "ace-houston-polar-night##5271ff",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100006": {
+   "supplier": "ace",
+   "key": "ace-houston-polar-night##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100007": {
+   "supplier": "ace",
+   "key": "ace-houston-polar-night##a6a6a6",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100008": {
+   "supplier": "ace",
+   "key": "ace-alpha-x-reverse##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100009": {
+   "supplier": "ace",
+   "key": "ace-alpha-oro##ff914d",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100010": {
+   "supplier": "ace",
+   "key": "ace-alpha-oro##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100011": {
+   "supplier": "ace",
+   "key": "ace-alpha-oro##a6a6a6",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100012": {
+   "supplier": "ace",
+   "key": "ace-245-bubble##ff3131",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100013": {
+   "supplier": "ace",
+   "key": "ace-245-bubble##5271ff",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100014": {
+   "supplier": "ace",
+   "key": "ace-245-bubble##a6e147",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100015": {
+   "supplier": "ace",
+   "key": "ace-245-bubble##5ce1e6",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100016": {
+   "supplier": "ace",
+   "key": "ace-2601-lucas##ff3131",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100017": {
+   "supplier": "ace",
+   "key": "ace-2601-lucas##5271ff",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100018": {
+   "supplier": "ace",
+   "key": "ace-2601-lucas##a6e147",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100019": {
+   "supplier": "ace",
+   "key": "ace-2601-lucas##5ce1e6",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100020": {
+   "supplier": "ace",
+   "key": "ace-mark-2506##ff3131",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100021": {
+   "supplier": "ace",
+   "key": "ace-mark-2506##5271ff",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100022": {
+   "supplier": "ace",
+   "key": "ace-mark-2506##a6e147",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100023": {
+   "supplier": "ace",
+   "key": "ace-mark-2506##5ce1e6",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100024": {
+   "supplier": "ace",
+   "key": "ace-dmx##ff914d",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100025": {
+   "supplier": "ace",
+   "key": "ace-dmx##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100026": {
+   "supplier": "ace",
+   "key": "ace-dmx##a6a6a6",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100027": {
+   "supplier": "ace",
+   "key": "ace-dmx##ff1616",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100028": {
+   "supplier": "ace",
+   "key": "ace-dmx##5271ff",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100029": {
+   "supplier": "ace",
+   "key": "ace-isac-ace#one",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100030": {
+   "supplier": "ace",
+   "key": "ace-247-john-master##ff914d",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100031": {
+   "supplier": "ace",
+   "key": "ace-247-john-master##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100032": {
+   "supplier": "ace",
+   "key": "ace-247-john-master##a6a6a6",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100033": {
+   "supplier": "ace",
+   "key": "ace-2506-el-t##ff914d",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100034": {
+   "supplier": "ace",
+   "key": "ace-2506-el-t##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100035": {
+   "supplier": "ace",
+   "key": "ace-2506-el-t##a6a6a6",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100036": {
+   "supplier": "ace",
+   "key": "ace-mazeace-2605##ff914d",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100037": {
+   "supplier": "ace",
+   "key": "ace-mazeace-2605##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100038": {
+   "supplier": "ace",
+   "key": "ace-mazeace-2605##a6a6a6",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100039": {
+   "supplier": "ace",
+   "key": "ace-lotus##ffde59",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100040": {
+   "supplier": "ace",
+   "key": "ace-lotus##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100041": {
+   "supplier": "ace",
+   "key": "ace-lotus##a6a6a6",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100042": {
+   "supplier": "ace",
+   "key": "ace-egy-xme-1##ff914d",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100043": {
+   "supplier": "ace",
+   "key": "ace-egy-xme-1##c16ad5",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100044": {
+   "supplier": "ace",
+   "key": "ace-egy-xme-1##a6a6a6",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100045": {
+   "supplier": "ace",
+   "key": "ace-egy-xme3##ff914d",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100046": {
+   "supplier": "ace",
+   "key": "ace-egy-xme3##c16ad5",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100047": {
+   "supplier": "ace",
+   "key": "ace-egy-xme3##a6a6a6",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100048": {
+   "supplier": "ace",
+   "key": "ace-egy-93##ff914d",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100049": {
+   "supplier": "ace",
+   "key": "ace-egy-93##c16ad5",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100050": {
+   "supplier": "ace",
+   "key": "ace-egy-93##a6a6a6",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100051": {
+   "supplier": "ace",
+   "key": "ace-egy-m2-with-briefcase##ff914d",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100052": {
+   "supplier": "ace",
+   "key": "ace-na-grani-model-2##ff914d",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100053": {
+   "supplier": "ace",
+   "key": "ace-na-grani-model-2##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100054": {
+   "supplier": "ace",
+   "key": "ace-na-grani-model-2##a6a6a6",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100055": {
+   "supplier": "ace",
+   "key": "ace-na-grani-model-1##ff914d",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100056": {
+   "supplier": "ace",
+   "key": "ace-na-grani-model-1##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100057": {
+   "supplier": "ace",
+   "key": "ace-na-grani-model-1##a6a6a6",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100058": {
+   "supplier": "ace",
+   "key": "ace-mattpear-classic##ff914d",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100059": {
+   "supplier": "ace",
+   "key": "ace-mattpear-classic##ff1616",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100060": {
+   "supplier": "ace",
+   "key": "ace-mattpear-classic##5271ff",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100061": {
+   "supplier": "ace",
+   "key": "ace-mattpear-classic##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100062": {
+   "supplier": "ace",
+   "key": "ace-mattpear-classic##a6a6a6",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100063": {
+   "supplier": "ace",
+   "key": "ace-darkside-neo##ff914d",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100064": {
+   "supplier": "ace",
+   "key": "ace-darkside-neo##ff1616",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100065": {
+   "supplier": "ace",
+   "key": "ace-darkside-neo##5271ff",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100066": {
+   "supplier": "ace",
+   "key": "ace-darkside-neo##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100067": {
+   "supplier": "ace",
+   "key": "ace-darkside-neo##a6a6a6",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100068": {
+   "supplier": "ace",
+   "key": "ace-dosha##ff914d",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100069": {
+   "supplier": "ace",
+   "key": "ace-dosha##ff1616",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100070": {
+   "supplier": "ace",
+   "key": "ace-dosha##5271ff",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100071": {
+   "supplier": "ace",
+   "key": "ace-dosha##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100072": {
+   "supplier": "ace",
+   "key": "ace-dosha##a6a6a6",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100073": {
+   "supplier": "ace",
+   "key": "ace-misha-rebel#one",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100074": {
+   "supplier": "ace",
+   "key": "ace-panda##ff914d",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100075": {
+   "supplier": "ace",
+   "key": "ace-panda##ff1616",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100076": {
+   "supplier": "ace",
+   "key": "ace-panda##5271ff",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100077": {
+   "supplier": "ace",
+   "key": "ace-panda##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100078": {
+   "supplier": "ace",
+   "key": "ace-panda##a6a6a6",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100079": {
+   "supplier": "ace",
+   "key": "ace-tsar-molotov##a6a6a6",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100080": {
+   "supplier": "ace",
+   "key": "ace-tsar-molotov##ff1616",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100081": {
+   "supplier": "ace",
+   "key": "ace-tsar-molotov##5271ff",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100082": {
+   "supplier": "ace",
+   "key": "ace-tsar-molotov##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100083": {
+   "supplier": "ace",
+   "key": "ace-tsar-molotov##ffde59",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100084": {
+   "supplier": "ace",
+   "key": "ace-tsar-molotov##a6e147",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100085": {
+   "supplier": "ace",
+   "key": "ace-tsar-ultimate-gold##a6a6a6",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100086": {
+   "supplier": "ace",
+   "key": "ace-tsar-ultimate-gold##ffde59",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100087": {
+   "supplier": "ace",
+   "key": "ace-tsar-alexander#one",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100088": {
+   "supplier": "ace",
+   "key": "ace-tsar-h-one##ff914d",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100089": {
+   "supplier": "ace",
+   "key": "ace-tsar-h-one##ff1616",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100090": {
+   "supplier": "ace",
+   "key": "ace-tsar-h-one##5271ff",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100091": {
+   "supplier": "ace",
+   "key": "ace-tsar-h-one##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100092": {
+   "supplier": "ace",
+   "key": "ace-tsar-h-one##a6a6a6",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100093": {
+   "supplier": "ace",
+   "key": "ace-flash-bang-amotion##ffde59",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100094": {
+   "supplier": "ace",
+   "key": "ace-flash-bang-amotion##ff1616",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100095": {
+   "supplier": "ace",
+   "key": "ace-flash-bang-amotion##5271ff",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100096": {
+   "supplier": "ace",
+   "key": "ace-flash-bang-amotion##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100097": {
+   "supplier": "ace",
+   "key": "ace-amotion-pedal-rx##ffde59",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100098": {
+   "supplier": "ace",
+   "key": "ace-amotion-pedal-rx##ff1616",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100099": {
+   "supplier": "ace",
+   "key": "ace-amotion-pedal-rx##5271ff",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100100": {
+   "supplier": "ace",
+   "key": "ace-amotion-pedal-rx##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100101": {
+   "supplier": "ace",
+   "key": "ace-connoisseur##a6a6a6",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100102": {
+   "supplier": "ace",
+   "key": "ace-d-207-connoisseur##ffde59",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100103": {
+   "supplier": "ace",
+   "key": "ace-d-207-connoisseur##a6a6a6",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100104": {
+   "supplier": "ace",
+   "key": "ace-gold-wing##ff914d",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100105": {
+   "supplier": "ace",
+   "key": "ace-gold-wing##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100106": {
+   "supplier": "ace",
+   "key": "ace-gold-wing##a6a6a6",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100107": {
+   "supplier": "ace",
+   "key": "ace-techno##ffde59",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100108": {
+   "supplier": "ace",
+   "key": "ace-techno##ff1616",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100109": {
+   "supplier": "ace",
+   "key": "ace-techno##5271ff",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100110": {
+   "supplier": "ace",
+   "key": "ace-techno##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100111": {
+   "supplier": "ace",
+   "key": "ace-techno##c16ad5",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100112": {
+   "supplier": "ace",
+   "key": "ace-techno##a6a6a6",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100113": {
+   "supplier": "ace",
+   "key": "ace-gun##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100114": {
+   "supplier": "ace",
+   "key": "ace-gun##a6a6a6",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100115": {
+   "supplier": "ace",
+   "key": "ace-gun##ffde59",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100116": {
+   "supplier": "ace",
+   "key": "ace-baseball-bat##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100117": {
+   "supplier": "ace",
+   "key": "ace-baseball-bat##ffde59",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100118": {
+   "supplier": "ace",
+   "key": "ace-2508-xm##ffde59",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100119": {
+   "supplier": "ace",
+   "key": "ace-2508-xm##ff1616",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100120": {
+   "supplier": "ace",
+   "key": "ace-2508-xm##5271ff",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100121": {
+   "supplier": "ace",
+   "key": "ace-2508-xm##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100122": {
+   "supplier": "ace",
+   "key": "ace-247-mini##ffde59",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100123": {
+   "supplier": "ace",
+   "key": "ace-247-mini##ff1616",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100124": {
+   "supplier": "ace",
+   "key": "ace-247-mini##5271ff",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100125": {
+   "supplier": "ace",
+   "key": "ace-247-mini##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100126": {
+   "supplier": "ace",
+   "key": "ace-glass##a6e147",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100127": {
+   "supplier": "ace",
+   "key": "ace-glass##c16ad5",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100128": {
+   "supplier": "ace",
+   "key": "ace-glass##a6a6a6",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100129": {
+   "supplier": "ace",
+   "key": "ace-pluton-stainless#one",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100130": {
+   "supplier": "ace",
+   "key": "ace-car##ff914d",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100131": {
+   "supplier": "ace",
+   "key": "ace-car##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100132": {
+   "supplier": "ace",
+   "key": "ace-car##a6a6a6",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100133": {
+   "supplier": "ace",
+   "key": "ace-car##ff1616",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100134": {
+   "supplier": "ace",
+   "key": "ace-car##5271ff",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100135": {
+   "supplier": "ace",
+   "key": "ace-d-38##ff914d",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100136": {
+   "supplier": "ace",
+   "key": "ace-d-38##ff1616",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100137": {
+   "supplier": "ace",
+   "key": "ace-d-38##5271ff",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100138": {
+   "supplier": "ace",
+   "key": "ace-d-38##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100139": {
+   "supplier": "ace",
+   "key": "ace-d-38##a6a6a6",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100140": {
+   "supplier": "ace",
+   "key": "ace-2-hose-ace-shisha##ffde59",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100141": {
+   "supplier": "ace",
+   "key": "ace-2-hose-ace-shisha##ff1616",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100142": {
+   "supplier": "ace",
+   "key": "ace-2-hose-ace-shisha##5271ff",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100143": {
+   "supplier": "ace",
+   "key": "ace-2-hose-ace-shisha##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100144": {
+   "supplier": "ace",
+   "key": "ace-dragon##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100145": {
+   "supplier": "ace",
+   "key": "ace-246-knight##ff3131",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100146": {
+   "supplier": "ace",
+   "key": "ace-246-knight##5271ff",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100147": {
+   "supplier": "ace",
+   "key": "ace-246-knight##a6e147",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100148": {
+   "supplier": "ace",
+   "key": "ace-246-knight##5ce1e6",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100149": {
+   "supplier": "ace",
+   "key": "ace-hitchner-c##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100150": {
+   "supplier": "ace",
+   "key": "ace-rose##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100151": {
+   "supplier": "ace",
+   "key": "ace-245-doll##ff3131",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100152": {
+   "supplier": "ace",
+   "key": "ace-245-doll##5271ff",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100153": {
+   "supplier": "ace",
+   "key": "ace-245-doll##a6e147",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100154": {
+   "supplier": "ace",
+   "key": "ace-245-doll##5ce1e6",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100155": {
+   "supplier": "ace",
+   "key": "ace-spider-p50##ff914d",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100156": {
+   "supplier": "ace",
+   "key": "ace-spider-p50##ff1616",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100157": {
+   "supplier": "ace",
+   "key": "ace-spider-p50##5271ff",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100158": {
+   "supplier": "ace",
+   "key": "ace-spider-p50##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100159": {
+   "supplier": "ace",
+   "key": "ace-spider-p50##a6a6a6",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100160": {
+   "supplier": "ace",
+   "key": "ace-demeter-diamond##ff914d",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100161": {
+   "supplier": "ace",
+   "key": "ace-demeter-diamond##ff1616",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100162": {
+   "supplier": "ace",
+   "key": "ace-demeter-diamond##5271ff",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100163": {
+   "supplier": "ace",
+   "key": "ace-demeter-diamond##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100164": {
+   "supplier": "ace",
+   "key": "ace-demeter-diamond##a6a6a6",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100165": {
+   "supplier": "ace",
+   "key": "ace-elbomber-sansara##ff914d",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100166": {
+   "supplier": "ace",
+   "key": "ace-elbomber-sansara##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100167": {
+   "supplier": "ace",
+   "key": "ace-elbomber-sansara##a6a6a6",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100168": {
+   "supplier": "ace",
+   "key": "ace-yoto-camera##ff914d",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100169": {
+   "supplier": "ace",
+   "key": "ace-yoto-camera##ff1616",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100170": {
+   "supplier": "ace",
+   "key": "ace-yoto-camera##5271ff",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100171": {
+   "supplier": "ace",
+   "key": "ace-yoto-camera##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100172": {
+   "supplier": "ace",
+   "key": "ace-yoto-camera##a6a6a6",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100173": {
+   "supplier": "ace",
+   "key": "ace-2304-baby##ff914d",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100174": {
+   "supplier": "ace",
+   "key": "ace-2304-baby##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100175": {
+   "supplier": "ace",
+   "key": "ace-2304-baby##a6a6a6",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100176": {
+   "supplier": "ace",
+   "key": "ace-2304-baby##ff1616",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100177": {
+   "supplier": "ace",
+   "key": "ace-2304-baby##5271ff",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100178": {
+   "supplier": "ace",
+   "key": "ace-245-titi##ffde59",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100179": {
+   "supplier": "ace",
+   "key": "ace-245-titi##ff1616",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100180": {
+   "supplier": "ace",
+   "key": "ace-245-titi##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100181": {
+   "supplier": "ace",
+   "key": "ace-245-titi##5271ff",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100182": {
+   "supplier": "ace",
+   "key": "ace-2312-mahir-ace##ff914d",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100183": {
+   "supplier": "ace",
+   "key": "ace-2312-mahir-ace##ff1616",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100184": {
+   "supplier": "ace",
+   "key": "ace-2312-mahir-ace##5271ff",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100185": {
+   "supplier": "ace",
+   "key": "ace-2312-mahir-ace##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100186": {
+   "supplier": "ace",
+   "key": "ace-2312-mahir-ace##a6a6a6",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100187": {
+   "supplier": "ace",
+   "key": "ace-2504-train##ffde59",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100188": {
+   "supplier": "ace",
+   "key": "ace-2504-train##ff1616",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100189": {
+   "supplier": "ace",
+   "key": "ace-2504-train##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100190": {
+   "supplier": "ace",
+   "key": "ace-2504-train##5271ff",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100191": {
+   "supplier": "ace",
+   "key": "ace-247-new-g##ff914d",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100192": {
+   "supplier": "ace",
+   "key": "ace-247-new-g##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100193": {
+   "supplier": "ace",
+   "key": "ace-247-new-g##a6a6a6",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100194": {
+   "supplier": "ace",
+   "key": "ace-247-new-g##ff1616",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100195": {
+   "supplier": "ace",
+   "key": "ace-247-new-g##5271ff",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100196": {
+   "supplier": "ace",
+   "key": "ace-247-cutie##ff914d",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100197": {
+   "supplier": "ace",
+   "key": "ace-247-cutie##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100198": {
+   "supplier": "ace",
+   "key": "ace-247-cutie##a6a6a6",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100199": {
+   "supplier": "ace",
+   "key": "ace-247-cutie##ff1616",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100200": {
+   "supplier": "ace",
+   "key": "ace-247-cutie##5271ff",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100201": {
+   "supplier": "ace",
+   "key": "ace-245-hickory##ff914d",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100202": {
+   "supplier": "ace",
+   "key": "ace-245-hickory##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100203": {
+   "supplier": "ace",
+   "key": "ace-245-hickory##a6a6a6",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100204": {
+   "supplier": "ace",
+   "key": "ace-245-hickory##ff1616",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100205": {
+   "supplier": "ace",
+   "key": "ace-245-hickory##5271ff",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100206": {
+   "supplier": "ace",
+   "key": "ace-hector-with-bag##ff914d",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100207": {
+   "supplier": "ace",
+   "key": "ace-hector-with-bag##ff1616",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100208": {
+   "supplier": "ace",
+   "key": "ace-hector-with-bag##5271ff",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100209": {
+   "supplier": "ace",
+   "key": "ace-hector-with-bag##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100210": {
+   "supplier": "ace",
+   "key": "ace-hector-with-bag##a6a6a6",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100211": {
+   "supplier": "ace",
+   "key": "ace-243-aira##ff914d",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100212": {
+   "supplier": "ace",
+   "key": "ace-243-aira##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100213": {
+   "supplier": "ace",
+   "key": "ace-243-aira##a6a6a6",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100214": {
+   "supplier": "ace",
+   "key": "ace-243-aira##ff1616",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100215": {
+   "supplier": "ace",
+   "key": "ace-243-aira##5271ff",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100216": {
+   "supplier": "ace",
+   "key": "ace-214-st3##ffde59",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100217": {
+   "supplier": "ace",
+   "key": "ace-214-st3##ff1616",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100218": {
+   "supplier": "ace",
+   "key": "ace-214-st3##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100219": {
+   "supplier": "ace",
+   "key": "ace-214-st3##5271ff",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100220": {
+   "supplier": "ace",
+   "key": "ace-spider-p64##ffde59",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100221": {
+   "supplier": "ace",
+   "key": "ace-spider-p64##ff1616",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100222": {
+   "supplier": "ace",
+   "key": "ace-spider-p64##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100223": {
+   "supplier": "ace",
+   "key": "ace-spider-p64##5271ff",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100224": {
+   "supplier": "ace",
+   "key": "ace-scorpion##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100225": {
+   "supplier": "ace",
+   "key": "ace-jelly-fish##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100226": {
+   "supplier": "ace",
+   "key": "ace-ufo##ff914d",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100227": {
+   "supplier": "ace",
+   "key": "ace-ufo##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100228": {
+   "supplier": "ace",
+   "key": "ace-ufo##a6a6a6",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100229": {
+   "supplier": "ace",
+   "key": "ace-ufo##ff1616",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100230": {
+   "supplier": "ace",
+   "key": "ace-ufo##5271ff",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100231": {
+   "supplier": "ace",
+   "key": "ace-226-wood##ff914d",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100232": {
+   "supplier": "ace",
+   "key": "ace-226-wood##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100233": {
+   "supplier": "ace",
+   "key": "ace-226-wood##a6a6a6",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100234": {
+   "supplier": "ace",
+   "key": "ace-226-wood##ff1616",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100235": {
+   "supplier": "ace",
+   "key": "ace-226-wood##5271ff",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100236": {
+   "supplier": "ace",
+   "key": "ace-luka-y08##ff914d",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100237": {
+   "supplier": "ace",
+   "key": "ace-luka-y08##ff1616",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100238": {
+   "supplier": "ace",
+   "key": "ace-luka-y08##5271ff",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100239": {
+   "supplier": "ace",
+   "key": "ace-luka-y08##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100240": {
+   "supplier": "ace",
+   "key": "ace-luka-y08##a6a6a6",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100241": {
+   "supplier": "ace",
+   "key": "ace-techno-minimal##ff914d",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100242": {
+   "supplier": "ace",
+   "key": "ace-techno-minimal##ff1616",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100243": {
+   "supplier": "ace",
+   "key": "ace-techno-minimal##5271ff",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100244": {
+   "supplier": "ace",
+   "key": "ace-techno-minimal##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100245": {
+   "supplier": "ace",
+   "key": "ace-techno-minimal##a6a6a6",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100246": {
+   "supplier": "ace",
+   "key": "ace-geometry##ffde59",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100247": {
+   "supplier": "ace",
+   "key": "ace-embery##ff914d",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100248": {
+   "supplier": "ace",
+   "key": "ace-embery##ff1616",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100249": {
+   "supplier": "ace",
+   "key": "ace-embery##5271ff",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100250": {
+   "supplier": "ace",
+   "key": "ace-embery##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100251": {
+   "supplier": "ace",
+   "key": "ace-embery##a6a6a6",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100252": {
+   "supplier": "ace",
+   "key": "ace-chaos-pro-saber##ffde59",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100253": {
+   "supplier": "ace",
+   "key": "ace-chaos-pro-saber##ff1616",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100254": {
+   "supplier": "ace",
+   "key": "ace-chaos-pro-saber##5271ff",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100255": {
+   "supplier": "ace",
+   "key": "ace-chaos-pro-saber##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100256": {
+   "supplier": "ace",
+   "key": "ace-elements-pro-big-size##ffde59",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100257": {
+   "supplier": "ace",
+   "key": "ace-elements-pro-big-size##ff1616",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100258": {
+   "supplier": "ace",
+   "key": "ace-elements-pro-big-size##5271ff",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100259": {
+   "supplier": "ace",
+   "key": "ace-elements-pro-big-size##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100260": {
+   "supplier": "ace",
+   "key": "ace-maklaud##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100261": {
+   "supplier": "ace",
+   "key": "ace-maklaud##ffde59",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100262": {
+   "supplier": "ace",
+   "key": "ace-makloud-gold##ff914d",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100263": {
+   "supplier": "ace",
+   "key": "ace-makloud-gold##ff1616",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100264": {
+   "supplier": "ace",
+   "key": "ace-makloud-gold##5271ff",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100265": {
+   "supplier": "ace",
+   "key": "ace-makloud-gold##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100266": {
+   "supplier": "ace",
+   "key": "ace-makloud-gold##a6a6a6",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100267": {
+   "supplier": "ace",
+   "key": "ace-el-bomber-mid-night##ff914d",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100268": {
+   "supplier": "ace",
+   "key": "ace-el-bomber-mid-night##ff1616",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100269": {
+   "supplier": "ace",
+   "key": "ace-el-bomber-mid-night##5271ff",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100270": {
+   "supplier": "ace",
+   "key": "ace-el-bomber-mid-night##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100271": {
+   "supplier": "ace",
+   "key": "ace-el-bomber-mid-night##a6a6a6",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100272": {
+   "supplier": "ace",
+   "key": "ace-uniun##ffde59",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100273": {
+   "supplier": "ace",
+   "key": "ace-uniun##ff1616",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100274": {
+   "supplier": "ace",
+   "key": "ace-uniun##5271ff",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100275": {
+   "supplier": "ace",
+   "key": "ace-uniun##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100276": {
+   "supplier": "ace",
+   "key": "ace-acrylic-squre-box##a6a6a6",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100277": {
+   "supplier": "ace",
+   "key": "ace-acrylic-squre-box##ff1616",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100278": {
+   "supplier": "ace",
+   "key": "ace-acrylic-squre-box##5271ff",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100279": {
+   "supplier": "ace",
+   "key": "ace-youto-v-acrylic##ffde59",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100280": {
+   "supplier": "ace",
+   "key": "ace-youto-v-acrylic##ff1616",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100281": {
+   "supplier": "ace",
+   "key": "ace-youto-v-acrylic##5271ff",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100282": {
+   "supplier": "ace",
+   "key": "ace-youto-v-acrylic##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100283": {
+   "supplier": "ace",
+   "key": "ace-x-acrylic##ffde59",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100284": {
+   "supplier": "ace",
+   "key": "ace-x-acrylic##ff1616",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100285": {
+   "supplier": "ace",
+   "key": "ace-x-acrylic##5271ff",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100286": {
+   "supplier": "ace",
+   "key": "ace-x-acrylic##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100287": {
+   "supplier": "ace",
+   "key": "ace-l-acrylic##ffde59",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100288": {
+   "supplier": "ace",
+   "key": "ace-l-acrylic##ff1616",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100289": {
+   "supplier": "ace",
+   "key": "ace-l-acrylic##5271ff",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100290": {
+   "supplier": "ace",
+   "key": "ace-l-acrylic##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100291": {
+   "supplier": "ace",
+   "key": "ace-2210-mr##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100292": {
+   "supplier": "ace",
+   "key": "ace-2210-mr##ff1616",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100293": {
+   "supplier": "ace",
+   "key": "ace-2210-mr##a6e147",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100294": {
+   "supplier": "ace",
+   "key": "ace-gravity##000000",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100295": {
+   "supplier": "ace",
+   "key": "ace-gravity##a6e147",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-100296": {
+   "supplier": "ace",
+   "key": "ace-gravity##5271ff",
+   "status": "active",
+   "assigned": "2026-11-24"
+  },
+  "OSS-9301": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9301",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9302": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9302",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9303": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9303",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9304": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9304",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9305": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9305",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9306": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9306",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9307": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9307",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9308": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9308",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9309": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9309",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9310": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9310",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9311": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9311",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9312": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9312",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9313": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9313",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9314": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9314",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9315": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9315",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9101": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9101",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9102": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9102",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9103": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9103",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9104": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9104",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9105": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9105",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9106": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9106",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9107": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9107",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9108": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9108",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9109": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9109",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9110": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9110",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9111": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9111",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9112": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9112",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9113": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9113",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9114": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9114",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9115": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9115",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9116": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9116",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9117": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9117",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9118": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9118",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9119": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9119",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9120": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9120",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9121": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9121",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9122": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9122",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9123": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9123",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9124": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9124",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9125": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9125",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9126": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9126",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9127": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9127",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9128": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9128",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9129": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9129",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9130": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9130",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9131": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9131",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9132": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9132",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9133": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9133",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9134": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9134",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9135": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9135",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9136": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9136",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9138": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9138",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9139": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9139",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9140": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9140",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9141": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9141",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9142": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9142",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9143": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9143",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9144": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9144",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9145": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9145",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9146": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9146",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9147": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9147",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9148": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9148",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9149": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9149",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9150": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9150",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9151": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9151",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9152": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9152",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9153": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9153",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9154": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9154",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9155": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9155",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9156": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9156",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9157": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9157",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9158": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9158",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9160": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9160",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9161": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9161",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9162": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9162",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9501": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9501",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9502": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9502",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9503": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9503",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9504": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9504",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9505": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9505",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9506": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9506",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9507": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9507",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9508": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9508",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9509": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9509",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9510": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9510",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9511": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9511",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9512": {
+   "supplier": "charcoal-foil",
+   "key": "legacy:OSS-9512",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9137": {
+   "supplier": "charcoal-foil",
+   "key": "retired:OSS-9137",
+   "status": "retired",
+   "assigned": "2026-11-24",
+   "legacy": true,
+   "history": [
+    {
+     "at": "2026-11-24",
+     "event": "retired",
+     "why": "merged into OSS-9105"
+    }
+   ]
+  },
+  "OSS-9159": {
+   "supplier": "charcoal-foil",
+   "key": "retired:OSS-9159",
+   "status": "retired",
+   "assigned": "2026-11-24",
+   "legacy": true,
+   "history": [
+    {
+     "at": "2026-11-24",
+     "event": "retired",
+     "why": "merged into OSS-9142"
+    }
+   ]
+  },
+  "OSS-9601": {
+   "supplier": "shisha",
+   "key": "legacy:OSS-9601",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9602": {
+   "supplier": "shisha",
+   "key": "legacy:OSS-9602",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9603": {
+   "supplier": "shisha",
+   "key": "legacy:OSS-9603",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9604": {
+   "supplier": "shisha",
+   "key": "legacy:OSS-9604",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9605": {
+   "supplier": "shisha",
+   "key": "legacy:OSS-9605",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9606": {
+   "supplier": "shisha",
+   "key": "legacy:OSS-9606",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9607": {
+   "supplier": "shisha",
+   "key": "legacy:OSS-9607",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9608": {
+   "supplier": "shisha",
+   "key": "legacy:OSS-9608",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9609": {
+   "supplier": "shisha",
+   "key": "legacy:OSS-9609",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9610": {
+   "supplier": "shisha",
+   "key": "legacy:OSS-9610",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9611": {
+   "supplier": "shisha",
+   "key": "legacy:OSS-9611",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9612": {
+   "supplier": "shisha",
+   "key": "legacy:OSS-9612",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9613": {
+   "supplier": "shisha",
+   "key": "legacy:OSS-9613",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9614": {
+   "supplier": "shisha",
+   "key": "legacy:OSS-9614",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9615": {
+   "supplier": "shisha",
+   "key": "legacy:OSS-9615",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9616": {
+   "supplier": "shisha",
+   "key": "legacy:OSS-9616",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9621": {
+   "supplier": "shisha",
+   "key": "legacy:OSS-9621",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9622": {
+   "supplier": "shisha",
+   "key": "legacy:OSS-9622",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9623": {
+   "supplier": "shisha",
+   "key": "legacy:OSS-9623",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9624": {
+   "supplier": "shisha",
+   "key": "legacy:OSS-9624",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9625": {
+   "supplier": "shisha",
+   "key": "legacy:OSS-9625",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9626": {
+   "supplier": "shisha",
+   "key": "legacy:OSS-9626",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9627": {
+   "supplier": "shisha",
+   "key": "legacy:OSS-9627",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9628": {
+   "supplier": "shisha",
+   "key": "legacy:OSS-9628",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9629": {
+   "supplier": "shisha",
+   "key": "legacy:OSS-9629",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9630": {
+   "supplier": "shisha",
+   "key": "legacy:OSS-9630",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9631": {
+   "supplier": "shisha",
+   "key": "legacy:OSS-9631",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9632": {
+   "supplier": "shisha",
+   "key": "legacy:OSS-9632",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9633": {
+   "supplier": "shisha",
+   "key": "legacy:OSS-9633",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9641": {
+   "supplier": "shisha",
+   "key": "legacy:OSS-9641",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9642": {
+   "supplier": "shisha",
+   "key": "legacy:OSS-9642",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9643": {
+   "supplier": "shisha",
+   "key": "legacy:OSS-9643",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9644": {
+   "supplier": "shisha",
+   "key": "legacy:OSS-9644",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9645": {
+   "supplier": "shisha",
+   "key": "legacy:OSS-9645",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9646": {
+   "supplier": "shisha",
+   "key": "legacy:OSS-9646",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9647": {
+   "supplier": "shisha",
+   "key": "legacy:OSS-9647",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9648": {
+   "supplier": "shisha",
+   "key": "legacy:OSS-9648",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9649": {
+   "supplier": "shisha",
+   "key": "legacy:OSS-9649",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9650": {
+   "supplier": "shisha",
+   "key": "legacy:OSS-9650",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9661": {
+   "supplier": "shisha",
+   "key": "legacy:OSS-9661",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9662": {
+   "supplier": "shisha",
+   "key": "legacy:OSS-9662",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9663": {
+   "supplier": "shisha",
+   "key": "legacy:OSS-9663",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9664": {
+   "supplier": "shisha",
+   "key": "legacy:OSS-9664",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9671": {
+   "supplier": "shisha",
+   "key": "legacy:OSS-9671",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9681": {
+   "supplier": "shisha",
+   "key": "legacy:OSS-9681",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9682": {
+   "supplier": "shisha",
+   "key": "legacy:OSS-9682",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  },
+  "OSS-9683": {
+   "supplier": "shisha",
+   "key": "legacy:OSS-9683",
+   "status": "active",
+   "assigned": "2026-11-24",
+   "legacy": true
+  }
+ }
+}

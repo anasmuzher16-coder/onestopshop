@@ -1,0 +1,2482 @@
+{
+ "schema": "oss-catalog/1",
+ "supplier": {
+  "id": "shisha",
+  "name": "Tobacco-free shisha",
+  "sku_block": "OSS-30NNNN",
+  "credit": ""
+ },
+ "sources": [
+  {
+   "id": "oss-shisha-2026-11-24",
+   "kind": "verified intake",
+   "file": "shisha/catalogue.json",
+   "sha256": "7ed55d57c622da3355022a0cbafe0f8bb5c4fffb67791fa09e3f2222952e5403",
+   "prepared": "2026-11-24",
+   "original_list": "source-shisha-2026-11-24.txt"
+  }
+ ],
+ "rulings": [
+  "prices are the shop's own, before tax",
+  "stock starts at 10, sold-out at 0",
+  "every item stays off until the legal check and each supplier's lab certificate (not legal advice)",
+  "no health claims; 'tobacco-free, nicotine-free' only with the certificate behind it"
+ ],
+ "families": [
+  {
+   "family_id": "shisha-zanobia-herbal-molasses",
+   "category": "shisha",
+   "supplier_ref": {
+    "v": "Zanobia Herbal Molasses",
+    "src": "list:oss-shisha-2026-11-24#lines 5, 6:text"
+   },
+   "supplier_price_cents": {
+    "v": null,
+    "src": null
+   },
+   "price_basis": {
+    "v": "shop shelf price, before tax",
+    "src": "list:oss-shisha-2026-11-24#lines 5, 6:'plus tax'"
+   },
+   "facts": {
+    "brand": {
+     "v": "Zanobia",
+     "src": "list:oss-shisha-2026-11-24#lines 5, 6:text"
+    },
+    "size": {
+     "v": "250 g",
+     "src": "intake:Source line 5 (250G); packs read 'Net Weight 250g'"
+    },
+    "line": {
+     "v": "Herbal Molasses / Melasse aux herbes (printed)",
+     "src": "intake:shisha/catalogue.json (pack or retailer)"
+    },
+    "base": {
+     "v": "Herbal: pack prints 'Herbal Molasses'; ingredients not seen on any pack image",
+     "src": "intake:shisha/catalogue.json"
+    },
+    "maker": {
+     "v": "Not found. zanobia.ae is a UAE distributor (Zanobia coal, hookahs, other brands' tobacco); no Zanobia-made molasses there",
+     "src": "intake:shisha/catalogue.json"
+    },
+    "package": {
+     "v": "Plastic tub (two pack designs seen: black tub with flavour name, and camo tub with art)",
+     "src": "intake:shisha/catalogue.json"
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    },
+    "fulfilment": {
+     "v": "to confirm",
+     "src": "intake: fulfilment CONFIRM"
+    }
+   },
+   "flags": [
+    "Off until the legal check and the supplier's lab certificate (tobacco-free, nicotine-free)"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-9601",
+     "key": "legacy:OSS-9601",
+     "label": {
+      "v": "Double Apple",
+      "src": "list:oss-shisha-2026-11-24#lines 5, 6:text"
+     },
+     "photo": {
+      "img": null,
+      "status": "approved_not_published",
+      "src": "intake:shisha/photos/site-ready/oss-9601.webp (APPROVED (pending independent check); Retailer image: permission needed)"
+     },
+     "flags": [],
+     "shop": {
+      "price_cents": {
+       "v": 1299,
+       "src": "shop:price list source-shisha-2026-11-24.txt lines 5, 6"
+      },
+      "display_name": {
+       "v": "Zanobia Herbal Molasses Double Apple, 250 g",
+       "src": "shop:intake display name (VERIFIED x3)"
+      },
+      "stock": {
+       "v": 10,
+       "src": "shop:ruling 2026-11-24 via Jamal: start every item at 10, sold-out at 0"
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the legal check is done and the supplier's lab certificate is on file (plan section 6 and 8)"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": true,
+       "src": "shop:list (sold out marked in the source)"
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-9602",
+     "key": "legacy:OSS-9602",
+     "label": {
+      "v": "Blueberry Mint (Wee lists 'Blueberry With Mint')",
+      "src": "list:oss-shisha-2026-11-24#lines 5, 7:text"
+     },
+     "photo": {
+      "img": null,
+      "status": "approved_not_published",
+      "src": "intake:shisha/photos/site-ready/oss-9602.webp (APPROVED (pending independent check); Retailer image: permission needed)"
+     },
+     "flags": [
+      "Flavour name not legible on the pack image; identified by art and three retailer listings"
+     ],
+     "shop": {
+      "price_cents": {
+       "v": 1299,
+       "src": "shop:price list source-shisha-2026-11-24.txt lines 5, 7"
+      },
+      "display_name": {
+       "v": "Zanobia Herbal Molasses Blueberry Mint, 250 g",
+       "src": "shop:intake display name (VERIFIED x3)"
+      },
+      "stock": {
+       "v": 10,
+       "src": "shop:ruling 2026-11-24 via Jamal: start every item at 10, sold-out at 0"
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the legal check is done and the supplier's lab certificate is on file (plan section 6 and 8)"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": true,
+       "src": "shop:list (sold out marked in the source)"
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-9603",
+     "key": "legacy:OSS-9603",
+     "label": {
+      "v": "Orange-Mint",
+      "src": "list:oss-shisha-2026-11-24#lines 5, 8:text"
+     },
+     "photo": {
+      "img": null,
+      "status": "approved_not_published",
+      "src": "intake:shisha/photos/site-ready/oss-9603.webp (APPROVED (pending independent check); Retailer image: permission needed)"
+     },
+     "flags": [],
+     "shop": {
+      "price_cents": {
+       "v": 1299,
+       "src": "shop:price list source-shisha-2026-11-24.txt lines 5, 8"
+      },
+      "display_name": {
+       "v": "Zanobia Herbal Molasses Orange Mint, 250 g",
+       "src": "shop:intake display name (VERIFIED x3)"
+      },
+      "stock": {
+       "v": 10,
+       "src": "shop:ruling 2026-11-24 via Jamal: start every item at 10, sold-out at 0"
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the legal check is done and the supplier's lab certificate is on file (plan section 6 and 8)"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": true,
+       "src": "shop:list (sold out marked in the source)"
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-9604",
+     "key": "legacy:OSS-9604",
+     "label": {
+      "v": "Watermelon-Mint",
+      "src": "list:oss-shisha-2026-11-24#lines 5, 9:text"
+     },
+     "photo": {
+      "img": null,
+      "status": "needs_store_photo",
+      "src": "no photo"
+     },
+     "flags": [
+      "Photo held: only clean image is the 'Premium Molasses' pack; the Herbal pack image carries a Shisha Mart watermark",
+      "TWO PACKS: the Wee and MyHookah photo prints 'Premium Molasses', not 'Herbal Molasses'. It may be a different (possibly tobacco) line. Confirm the shop's tub says Herbal Molasses."
+     ],
+     "shop": {
+      "price_cents": {
+       "v": 1299,
+       "src": "shop:price list source-shisha-2026-11-24.txt lines 5, 9"
+      },
+      "display_name": {
+       "v": "Zanobia Herbal Molasses Watermelon Mint, 250 g",
+       "src": "shop:intake display name (VERIFIED x2)"
+      },
+      "stock": {
+       "v": 10,
+       "src": "shop:ruling 2026-11-24 via Jamal: start every item at 10, sold-out at 0"
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the legal check is done and the supplier's lab certificate is on file (plan section 6 and 8)"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": true,
+       "src": "shop:list (sold out marked in the source)"
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-9605",
+     "key": "legacy:OSS-9605",
+     "label": {
+      "v": "Mint",
+      "src": "list:oss-shisha-2026-11-24#lines 5, 10:text"
+     },
+     "photo": {
+      "img": null,
+      "status": "approved_not_published",
+      "src": "intake:shisha/photos/site-ready/oss-9605.webp (APPROVED (pending independent check); Retailer image: permission needed)"
+     },
+     "flags": [],
+     "shop": {
+      "price_cents": {
+       "v": 1299,
+       "src": "shop:price list source-shisha-2026-11-24.txt lines 5, 10"
+      },
+      "display_name": {
+       "v": "Zanobia Herbal Molasses Mint, 250 g",
+       "src": "shop:intake display name (VERIFIED x3)"
+      },
+      "stock": {
+       "v": 10,
+       "src": "shop:ruling 2026-11-24 via Jamal: start every item at 10, sold-out at 0"
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the legal check is done and the supplier's lab certificate is on file (plan section 6 and 8)"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": true,
+       "src": "shop:list (sold out marked in the source)"
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-9606",
+     "key": "legacy:OSS-9606",
+     "label": {
+      "v": "Peach",
+      "src": "list:oss-shisha-2026-11-24#lines 5, 11:text"
+     },
+     "photo": {
+      "img": null,
+      "status": "approved_not_published",
+      "src": "intake:shisha/photos/site-ready/oss-9606.webp (APPROVED (pending independent check); Retailer image: permission needed)"
+     },
+     "flags": [],
+     "shop": {
+      "price_cents": {
+       "v": 1299,
+       "src": "shop:price list source-shisha-2026-11-24.txt lines 5, 11"
+      },
+      "display_name": {
+       "v": "Zanobia Herbal Molasses Peach, 250 g",
+       "src": "shop:intake display name (VERIFIED x3)"
+      },
+      "stock": {
+       "v": 10,
+       "src": "shop:ruling 2026-11-24 via Jamal: start every item at 10, sold-out at 0"
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the legal check is done and the supplier's lab certificate is on file (plan section 6 and 8)"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": true,
+       "src": "shop:list (sold out marked in the source)"
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-9607",
+     "key": "legacy:OSS-9607",
+     "label": {
+      "v": "Paan Masala (retailer spelling; pack spelling not seen)",
+      "src": "list:oss-shisha-2026-11-24#lines 5, 12:text"
+     },
+     "photo": {
+      "img": null,
+      "status": "needs_store_photo",
+      "src": "no photo"
+     },
+     "flags": [
+      "Pack spelling unknown: shop 'Pan masala', retailer 'Paan Masala'",
+      "Photo held: name not legible and the betel art could also be Paan Raas"
+     ],
+     "shop": {
+      "price_cents": {
+       "v": 1299,
+       "src": "shop:price list source-shisha-2026-11-24.txt lines 5, 12"
+      },
+      "display_name": {
+       "v": "Zanobia Herbal Molasses Pan Masala, 250 g",
+       "src": "shop:intake display name (VERIFIED x1)"
+      },
+      "stock": {
+       "v": 10,
+       "src": "shop:ruling 2026-11-24 via Jamal: start every item at 10, sold-out at 0"
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the legal check is done and the supplier's lab certificate is on file (plan section 6 and 8)"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": true,
+       "src": "shop:list (sold out marked in the source)"
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-9608",
+     "key": "legacy:OSS-9608",
+     "label": {
+      "v": "Mixed Fruits",
+      "src": "list:oss-shisha-2026-11-24#lines 5, 13:text"
+     },
+     "photo": {
+      "img": null,
+      "status": "approved_not_published",
+      "src": "intake:shisha/photos/site-ready/oss-9608.webp (APPROVED (pending independent check); Retailer image: permission needed)"
+     },
+     "flags": [
+      "Pack prints 'MIXED FRUITS' (plural); shop wrote 'Mixed fruit'",
+      "Weight digit blurred on the image (250g or 290g)"
+     ],
+     "shop": {
+      "price_cents": {
+       "v": 1299,
+       "src": "shop:price list source-shisha-2026-11-24.txt lines 5, 13"
+      },
+      "display_name": {
+       "v": "Zanobia Herbal Molasses Mixed Fruits, 250 g",
+       "src": "shop:intake display name (VERIFIED x2)"
+      },
+      "stock": {
+       "v": 10,
+       "src": "shop:ruling 2026-11-24 via Jamal: start every item at 10, sold-out at 0"
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the legal check is done and the supplier's lab certificate is on file (plan section 6 and 8)"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": true,
+       "src": "shop:list (sold out marked in the source)"
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-9609",
+     "key": "legacy:OSS-9609",
+     "label": {
+      "v": "Triple Threat (retailer)",
+      "src": "list:oss-shisha-2026-11-24#lines 5, 14:text"
+     },
+     "photo": {
+      "img": null,
+      "status": "needs_store_photo",
+      "src": "no photo"
+     },
+     "flags": [
+      "Photo held: name not legible; different pack generation (clear lid)"
+     ],
+     "shop": {
+      "price_cents": {
+       "v": 1299,
+       "src": "shop:price list source-shisha-2026-11-24.txt lines 5, 14"
+      },
+      "display_name": {
+       "v": "Zanobia Herbal Molasses Triple Threat, 250 g",
+       "src": "shop:intake display name (VERIFIED x1)"
+      },
+      "stock": {
+       "v": 10,
+       "src": "shop:ruling 2026-11-24 via Jamal: start every item at 10, sold-out at 0"
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the legal check is done and the supplier's lab certificate is on file (plan section 6 and 8)"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": true,
+       "src": "shop:list (sold out marked in the source)"
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-9610",
+     "key": "legacy:OSS-9610",
+     "label": {
+      "v": "Strawberry",
+      "src": "list:oss-shisha-2026-11-24#lines 5, 15:text"
+     },
+     "photo": {
+      "img": null,
+      "status": "approved_not_published",
+      "src": "intake:shisha/photos/site-ready/oss-9610.webp (APPROVED (pending independent check); Retailer image: permission needed)"
+     },
+     "flags": [],
+     "shop": {
+      "price_cents": {
+       "v": 1299,
+       "src": "shop:price list source-shisha-2026-11-24.txt lines 5, 15"
+      },
+      "display_name": {
+       "v": "Zanobia Herbal Molasses Strawberry, 250 g",
+       "src": "shop:intake display name (VERIFIED x2)"
+      },
+      "stock": {
+       "v": 10,
+       "src": "shop:ruling 2026-11-24 via Jamal: start every item at 10, sold-out at 0"
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the legal check is done and the supplier's lab certificate is on file (plan section 6 and 8)"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": true,
+       "src": "shop:list (sold out marked in the source)"
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-9611",
+     "key": "legacy:OSS-9611",
+     "label": {
+      "v": "Paan Raas (retailer spelling; pack not seen)",
+      "src": "list:oss-shisha-2026-11-24#lines 5, 16:text"
+     },
+     "photo": {
+      "img": null,
+      "status": "needs_store_photo",
+      "src": "no photo"
+     },
+     "flags": [
+      "Pack spelling unknown: shop 'Pan raas', retailer 'Paan Raas'"
+     ],
+     "shop": {
+      "price_cents": {
+       "v": 1299,
+       "src": "shop:price list source-shisha-2026-11-24.txt lines 5, 16"
+      },
+      "display_name": {
+       "v": "Zanobia Herbal Molasses Pan Raas, 250 g",
+       "src": "shop:intake display name (VERIFIED x1)"
+      },
+      "stock": {
+       "v": 10,
+       "src": "shop:ruling 2026-11-24 via Jamal: start every item at 10, sold-out at 0"
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the legal check is done and the supplier's lab certificate is on file (plan section 6 and 8)"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": true,
+       "src": "shop:list (sold out marked in the source)"
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-9612",
+     "key": "legacy:OSS-9612",
+     "label": {
+      "v": "Gum-Mint",
+      "src": "list:oss-shisha-2026-11-24#lines 5, 17:text"
+     },
+     "photo": {
+      "img": null,
+      "status": "approved_not_published",
+      "src": "intake:shisha/photos/site-ready/oss-9612.webp (APPROVED (pending independent check); Retailer image: permission needed)"
+     },
+     "flags": [],
+     "shop": {
+      "price_cents": {
+       "v": 1299,
+       "src": "shop:price list source-shisha-2026-11-24.txt lines 5, 17"
+      },
+      "display_name": {
+       "v": "Zanobia Herbal Molasses Gum Mint, 250 g",
+       "src": "shop:intake display name (VERIFIED x3)"
+      },
+      "stock": {
+       "v": 10,
+       "src": "shop:ruling 2026-11-24 via Jamal: start every item at 10, sold-out at 0"
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the legal check is done and the supplier's lab certificate is on file (plan section 6 and 8)"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": true,
+       "src": "shop:list (sold out marked in the source)"
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-9613",
+     "key": "legacy:OSS-9613",
+     "label": {
+      "v": "Love 99 (MyHookah 'Love99')",
+      "src": "list:oss-shisha-2026-11-24#lines 5, 18:text"
+     },
+     "photo": {
+      "img": null,
+      "status": "approved_not_published",
+      "src": "intake:shisha/photos/site-ready/oss-9613.webp (APPROVED (pending independent check); Retailer image: permission needed)"
+     },
+     "flags": [],
+     "shop": {
+      "price_cents": {
+       "v": 1299,
+       "src": "shop:price list source-shisha-2026-11-24.txt lines 5, 18"
+      },
+      "display_name": {
+       "v": "Zanobia Herbal Molasses Love 99, 250 g",
+       "src": "shop:intake display name (VERIFIED x2)"
+      },
+      "stock": {
+       "v": 10,
+       "src": "shop:ruling 2026-11-24 via Jamal: start every item at 10, sold-out at 0"
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the legal check is done and the supplier's lab certificate is on file (plan section 6 and 8)"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": true,
+       "src": "shop:list (sold out marked in the source)"
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-9614",
+     "key": "legacy:OSS-9614",
+     "label": {
+      "v": "Lemon-Mint",
+      "src": "list:oss-shisha-2026-11-24#lines 5, 19:text"
+     },
+     "photo": {
+      "img": null,
+      "status": "approved_not_published",
+      "src": "intake:shisha/photos/site-ready/oss-9614.webp (APPROVED (pending independent check); Retailer image: permission needed)"
+     },
+     "flags": [],
+     "shop": {
+      "price_cents": {
+       "v": 1299,
+       "src": "shop:price list source-shisha-2026-11-24.txt lines 5, 19"
+      },
+      "display_name": {
+       "v": "Zanobia Herbal Molasses Lemon Mint, 250 g",
+       "src": "shop:intake display name (VERIFIED x3)"
+      },
+      "stock": {
+       "v": 10,
+       "src": "shop:ruling 2026-11-24 via Jamal: start every item at 10, sold-out at 0"
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the legal check is done and the supplier's lab certificate is on file (plan section 6 and 8)"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": true,
+       "src": "shop:list (sold out marked in the source)"
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-9615",
+     "key": "legacy:OSS-9615",
+     "label": {
+      "v": "Lady Like",
+      "src": "list:oss-shisha-2026-11-24#lines 5, 20:text"
+     },
+     "photo": {
+      "img": null,
+      "status": "approved_not_published",
+      "src": "intake:shisha/photos/site-ready/oss-9615.webp (APPROVED (pending independent check); Retailer image: permission needed)"
+     },
+     "flags": [
+      "Identified by emblem and two retailer listings (MyHookah image file is named 'LadyLover')"
+     ],
+     "shop": {
+      "price_cents": {
+       "v": 1299,
+       "src": "shop:price list source-shisha-2026-11-24.txt lines 5, 20"
+      },
+      "display_name": {
+       "v": "Zanobia Herbal Molasses Lady Like, 250 g",
+       "src": "shop:intake display name (VERIFIED x2)"
+      },
+      "stock": {
+       "v": 10,
+       "src": "shop:ruling 2026-11-24 via Jamal: start every item at 10, sold-out at 0"
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the legal check is done and the supplier's lab certificate is on file (plan section 6 and 8)"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": true,
+       "src": "shop:list (sold out marked in the source)"
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-9616",
+     "key": "legacy:OSS-9616",
+     "label": {
+      "v": "English Master",
+      "src": "list:oss-shisha-2026-11-24#lines 5, 21:text"
+     },
+     "photo": {
+      "img": null,
+      "status": "approved_not_published",
+      "src": "intake:shisha/photos/site-ready/oss-9616.webp (APPROVED (pending independent check); Retailer image: permission needed)"
+     },
+     "flags": [
+      "Identified by emblem and one retailer listing",
+      "Sold out in the source"
+     ],
+     "shop": {
+      "price_cents": {
+       "v": 1299,
+       "src": "shop:price list source-shisha-2026-11-24.txt lines 5, 21"
+      },
+      "display_name": {
+       "v": "Zanobia Herbal Molasses English Master, 250 g",
+       "src": "shop:intake display name (VERIFIED x1)"
+      },
+      "stock": {
+       "v": 0,
+       "src": "shop:ruling 2026-11-24 via Jamal: start every item at 10, sold-out at 0"
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the legal check is done and the supplier's lab certificate is on file (plan section 6 and 8)"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": false,
+       "src": "shop:list (sold out marked in the source)"
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "shisha-tanya-herbal-hookah-molasses",
+   "category": "shisha",
+   "supplier_ref": {
+    "v": "Tanya Herbal Hookah Molasses",
+    "src": "list:oss-shisha-2026-11-24#lines 23, 24:text"
+   },
+   "supplier_price_cents": {
+    "v": null,
+    "src": null
+   },
+   "price_basis": {
+    "v": "shop shelf price, before tax",
+    "src": "list:oss-shisha-2026-11-24#lines 23, 24:'plus tax'"
+   },
+   "facts": {
+    "brand": {
+     "v": "Tanya",
+     "src": "list:oss-shisha-2026-11-24#lines 23, 24:text"
+    },
+    "size": {
+     "v": "250 g",
+     "src": "intake:Source line 23 (250g); maker 250 g range"
+    },
+    "line": {
+     "v": "Herbal Hookah Molasses, 250 g (maker); pack prints 'Premium Fruit Molasses'",
+     "src": "intake:shisha/catalogue.json (pack or retailer)"
+    },
+    "base": {
+     "v": "Herbal molasses (maker); pack prints 'Premium Fruit Molasses'; ingredients not published on the maker page",
+     "src": "intake:shisha/catalogue.json"
+    },
+    "maker": {
+     "v": "Tanya Nargile, Turkey (tanyanargile.com.tr)",
+     "src": "intake:shisha/catalogue.json"
+    },
+    "package": {
+     "v": "Round black jar (maker image)",
+     "src": "intake:shisha/catalogue.json"
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    },
+    "fulfilment": {
+     "v": "to confirm",
+     "src": "intake: fulfilment CONFIRM"
+    }
+   },
+   "flags": [
+    "Off until the legal check and the supplier's lab certificate (tobacco-free, nicotine-free)"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-9621",
+     "key": "legacy:OSS-9621",
+     "label": {
+      "v": "Paris Romance (maker page title); jar prints 'PARIS ROMANCTIC'",
+      "src": "list:oss-shisha-2026-11-24#lines 23, 24:text"
+     },
+     "photo": {
+      "img": null,
+      "status": "approved_not_published",
+      "src": "intake:shisha/photos/site-ready/oss-9621.webp (APPROVED (pending independent check); Maker image: permission needed (no reuse licence found))"
+     },
+     "flags": [
+      "Spelling differs everywhere: shop 'Paris romanitic', jar 'PARIS ROMANCTIC', maker 'Paris Romance', file name 'Paris-Romantic'. Site name uses 'Paris Romantic'; confirm against the shop's jar"
+     ],
+     "shop": {
+      "price_cents": {
+       "v": 1299,
+       "src": "shop:price list source-shisha-2026-11-24.txt lines 23, 24"
+      },
+      "display_name": {
+       "v": "Tanya Herbal Molasses Paris Romantic, 250 g",
+       "src": "shop:intake display name (VERIFIED x1)"
+      },
+      "stock": {
+       "v": 10,
+       "src": "shop:ruling 2026-11-24 via Jamal: start every item at 10, sold-out at 0"
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the legal check is done and the supplier's lab certificate is on file (plan section 6 and 8)"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": true,
+       "src": "shop:list (sold out marked in the source)"
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-9622",
+     "key": "legacy:OSS-9622",
+     "label": {
+      "v": "Lemon Mint",
+      "src": "list:oss-shisha-2026-11-24#lines 23, 25:text"
+     },
+     "photo": {
+      "img": null,
+      "status": "approved_not_published",
+      "src": "intake:shisha/photos/site-ready/oss-9622.webp (APPROVED (pending independent check); Maker image: permission needed (no reuse licence found))"
+     },
+     "flags": [],
+     "shop": {
+      "price_cents": {
+       "v": 1299,
+       "src": "shop:price list source-shisha-2026-11-24.txt lines 23, 25"
+      },
+      "display_name": {
+       "v": "Tanya Herbal Molasses Lemon Mint, 250 g",
+       "src": "shop:intake display name (VERIFIED x3)"
+      },
+      "stock": {
+       "v": 10,
+       "src": "shop:ruling 2026-11-24 via Jamal: start every item at 10, sold-out at 0"
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the legal check is done and the supplier's lab certificate is on file (plan section 6 and 8)"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": true,
+       "src": "shop:list (sold out marked in the source)"
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-9623",
+     "key": "legacy:OSS-9623",
+     "label": {
+      "v": "Cane Mint",
+      "src": "list:oss-shisha-2026-11-24#lines 23, 26:text"
+     },
+     "photo": {
+      "img": null,
+      "status": "approved_not_published",
+      "src": "intake:shisha/photos/site-ready/oss-9623.webp (APPROVED (pending independent check); Maker image: permission needed (no reuse licence found))"
+     },
+     "flags": [],
+     "shop": {
+      "price_cents": {
+       "v": 1299,
+       "src": "shop:price list source-shisha-2026-11-24.txt lines 23, 26"
+      },
+      "display_name": {
+       "v": "Tanya Herbal Molasses Cane Mint, 250 g",
+       "src": "shop:intake display name (VERIFIED x2)"
+      },
+      "stock": {
+       "v": 10,
+       "src": "shop:ruling 2026-11-24 via Jamal: start every item at 10, sold-out at 0"
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the legal check is done and the supplier's lab certificate is on file (plan section 6 and 8)"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": true,
+       "src": "shop:list (sold out marked in the source)"
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-9624",
+     "key": "legacy:OSS-9624",
+     "label": {
+      "v": "Blueberry",
+      "src": "list:oss-shisha-2026-11-24#lines 23, 27:text"
+     },
+     "photo": {
+      "img": null,
+      "status": "approved_not_published",
+      "src": "intake:shisha/photos/site-ready/oss-9624.webp (APPROVED (pending independent check); Maker image: permission needed (no reuse licence found))"
+     },
+     "flags": [],
+     "shop": {
+      "price_cents": {
+       "v": 1299,
+       "src": "shop:price list source-shisha-2026-11-24.txt lines 23, 27"
+      },
+      "display_name": {
+       "v": "Tanya Herbal Molasses Blueberry, 250 g",
+       "src": "shop:intake display name (VERIFIED x2)"
+      },
+      "stock": {
+       "v": 10,
+       "src": "shop:ruling 2026-11-24 via Jamal: start every item at 10, sold-out at 0"
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the legal check is done and the supplier's lab certificate is on file (plan section 6 and 8)"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": true,
+       "src": "shop:list (sold out marked in the source)"
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-9625",
+     "key": "legacy:OSS-9625",
+     "label": {
+      "v": "Zeus",
+      "src": "list:oss-shisha-2026-11-24#lines 23, 28:text"
+     },
+     "photo": {
+      "img": null,
+      "status": "approved_not_published",
+      "src": "intake:shisha/photos/site-ready/oss-9625.webp (APPROVED (pending independent check); Maker image: permission needed (no reuse licence found))"
+     },
+     "flags": [],
+     "shop": {
+      "price_cents": {
+       "v": 1299,
+       "src": "shop:price list source-shisha-2026-11-24.txt lines 23, 28"
+      },
+      "display_name": {
+       "v": "Tanya Herbal Molasses Zeus, 250 g",
+       "src": "shop:intake display name (VERIFIED x1)"
+      },
+      "stock": {
+       "v": 10,
+       "src": "shop:ruling 2026-11-24 via Jamal: start every item at 10, sold-out at 0"
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the legal check is done and the supplier's lab certificate is on file (plan section 6 and 8)"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": true,
+       "src": "shop:list (sold out marked in the source)"
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-9626",
+     "key": "legacy:OSS-9626",
+     "label": {
+      "v": "Mi Amor",
+      "src": "list:oss-shisha-2026-11-24#lines 23, 29:text"
+     },
+     "photo": {
+      "img": null,
+      "status": "approved_not_published",
+      "src": "intake:shisha/photos/site-ready/oss-9626.webp (APPROVED (pending independent check); Maker image: permission needed (no reuse licence found))"
+     },
+     "flags": [
+      "Adalya (a tobacco brand) also sells a 'Mi Amor'; ours must be the Tanya jar"
+     ],
+     "shop": {
+      "price_cents": {
+       "v": 1299,
+       "src": "shop:price list source-shisha-2026-11-24.txt lines 23, 29"
+      },
+      "display_name": {
+       "v": "Tanya Herbal Molasses Mi Amor, 250 g",
+       "src": "shop:intake display name (VERIFIED x1)"
+      },
+      "stock": {
+       "v": 10,
+       "src": "shop:ruling 2026-11-24 via Jamal: start every item at 10, sold-out at 0"
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the legal check is done and the supplier's lab certificate is on file (plan section 6 and 8)"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": true,
+       "src": "shop:list (sold out marked in the source)"
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-9627",
+     "key": "legacy:OSS-9627",
+     "label": {
+      "v": "Pineapple",
+      "src": "list:oss-shisha-2026-11-24#lines 23, 30:text"
+     },
+     "photo": {
+      "img": null,
+      "status": "approved_not_published",
+      "src": "intake:shisha/photos/site-ready/oss-9627.webp (APPROVED (pending independent check); Maker image: permission needed (no reuse licence found))"
+     },
+     "flags": [],
+     "shop": {
+      "price_cents": {
+       "v": 1299,
+       "src": "shop:price list source-shisha-2026-11-24.txt lines 23, 30"
+      },
+      "display_name": {
+       "v": "Tanya Herbal Molasses Pineapple, 250 g",
+       "src": "shop:intake display name (VERIFIED x3)"
+      },
+      "stock": {
+       "v": 10,
+       "src": "shop:ruling 2026-11-24 via Jamal: start every item at 10, sold-out at 0"
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the legal check is done and the supplier's lab certificate is on file (plan section 6 and 8)"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": true,
+       "src": "shop:list (sold out marked in the source)"
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-9628",
+     "key": "legacy:OSS-9628",
+     "label": {
+      "v": "White Gummy Bear",
+      "src": "list:oss-shisha-2026-11-24#lines 23, 31:text"
+     },
+     "photo": {
+      "img": null,
+      "status": "approved_not_published",
+      "src": "intake:shisha/photos/site-ready/oss-9628.webp (APPROVED (pending independent check); Maker image: permission needed (no reuse licence found))"
+     },
+     "flags": [],
+     "shop": {
+      "price_cents": {
+       "v": 1299,
+       "src": "shop:price list source-shisha-2026-11-24.txt lines 23, 31"
+      },
+      "display_name": {
+       "v": "Tanya Herbal Molasses White Gummy Bear, 250 g",
+       "src": "shop:intake display name (VERIFIED x2)"
+      },
+      "stock": {
+       "v": 10,
+       "src": "shop:ruling 2026-11-24 via Jamal: start every item at 10, sold-out at 0"
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the legal check is done and the supplier's lab certificate is on file (plan section 6 and 8)"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": true,
+       "src": "shop:list (sold out marked in the source)"
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-9629",
+     "key": "legacy:OSS-9629",
+     "label": {
+      "v": "Passion Fruit",
+      "src": "list:oss-shisha-2026-11-24#lines 23, 32:text"
+     },
+     "photo": {
+      "img": null,
+      "status": "approved_not_published",
+      "src": "intake:shisha/photos/site-ready/oss-9629.webp (APPROVED (pending independent check); Maker image: permission needed (no reuse licence found))"
+     },
+     "flags": [
+      "Tanya also makes 'Passion Fruit Mint'; the shop wrote Passion fruit"
+     ],
+     "shop": {
+      "price_cents": {
+       "v": 1299,
+       "src": "shop:price list source-shisha-2026-11-24.txt lines 23, 32"
+      },
+      "display_name": {
+       "v": "Tanya Herbal Molasses Passion Fruit, 250 g",
+       "src": "shop:intake display name (VERIFIED x1)"
+      },
+      "stock": {
+       "v": 10,
+       "src": "shop:ruling 2026-11-24 via Jamal: start every item at 10, sold-out at 0"
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the legal check is done and the supplier's lab certificate is on file (plan section 6 and 8)"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": true,
+       "src": "shop:list (sold out marked in the source)"
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-9630",
+     "key": "legacy:OSS-9630",
+     "label": {
+      "v": "Melon",
+      "src": "list:oss-shisha-2026-11-24#lines 23, 33:text"
+     },
+     "photo": {
+      "img": null,
+      "status": "approved_not_published",
+      "src": "intake:shisha/photos/site-ready/oss-9630.webp (APPROVED (pending independent check); Maker image: permission needed (no reuse licence found))"
+     },
+     "flags": [
+      "Tanya also makes 'Double Melon'; the shop wrote Melon"
+     ],
+     "shop": {
+      "price_cents": {
+       "v": 1299,
+       "src": "shop:price list source-shisha-2026-11-24.txt lines 23, 33"
+      },
+      "display_name": {
+       "v": "Tanya Herbal Molasses Melon, 250 g",
+       "src": "shop:intake display name (VERIFIED x1)"
+      },
+      "stock": {
+       "v": 10,
+       "src": "shop:ruling 2026-11-24 via Jamal: start every item at 10, sold-out at 0"
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the legal check is done and the supplier's lab certificate is on file (plan section 6 and 8)"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": true,
+       "src": "shop:list (sold out marked in the source)"
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-9631",
+     "key": "legacy:OSS-9631",
+     "label": {
+      "v": "Tutti Frutti (jar); maker page title 'Mixed Fruit'",
+      "src": "list:oss-shisha-2026-11-24#lines 23, 34:text"
+     },
+     "photo": {
+      "img": null,
+      "status": "approved_not_published",
+      "src": "intake:shisha/photos/site-ready/oss-9631.webp (APPROVED (pending independent check); Maker image: permission needed (no reuse licence found))"
+     },
+     "flags": [
+      "Shop wrote 'Tutti fruit I'; the jar prints 'TUTTI FRUTTI'"
+     ],
+     "shop": {
+      "price_cents": {
+       "v": 1299,
+       "src": "shop:price list source-shisha-2026-11-24.txt lines 23, 34"
+      },
+      "display_name": {
+       "v": "Tanya Herbal Molasses Tutti Frutti, 250 g",
+       "src": "shop:intake display name (VERIFIED x1)"
+      },
+      "stock": {
+       "v": 10,
+       "src": "shop:ruling 2026-11-24 via Jamal: start every item at 10, sold-out at 0"
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the legal check is done and the supplier's lab certificate is on file (plan section 6 and 8)"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": true,
+       "src": "shop:list (sold out marked in the source)"
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-9632",
+     "key": "legacy:OSS-9632",
+     "label": {
+      "v": "Sex On The Beach",
+      "src": "list:oss-shisha-2026-11-24#lines 23, 35:text"
+     },
+     "photo": {
+      "img": null,
+      "status": "approved_not_published",
+      "src": "intake:shisha/photos/site-ready/oss-9632.webp (APPROVED (pending independent check); Maker image: permission needed (no reuse licence found))"
+     },
+     "flags": [],
+     "shop": {
+      "price_cents": {
+       "v": 1299,
+       "src": "shop:price list source-shisha-2026-11-24.txt lines 23, 35"
+      },
+      "display_name": {
+       "v": "Tanya Herbal Molasses Sex On The Beach, 250 g",
+       "src": "shop:intake display name (VERIFIED x2)"
+      },
+      "stock": {
+       "v": 10,
+       "src": "shop:ruling 2026-11-24 via Jamal: start every item at 10, sold-out at 0"
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the legal check is done and the supplier's lab certificate is on file (plan section 6 and 8)"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": true,
+       "src": "shop:list (sold out marked in the source)"
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-9633",
+     "key": "legacy:OSS-9633",
+     "label": {
+      "v": "Blueberry Mint",
+      "src": "list:oss-shisha-2026-11-24#lines 23, 36:text"
+     },
+     "photo": {
+      "img": null,
+      "status": "approved_not_published",
+      "src": "intake:shisha/photos/site-ready/oss-9633.webp (APPROVED (pending independent check); Maker image: permission needed (no reuse licence found))"
+     },
+     "flags": [],
+     "shop": {
+      "price_cents": {
+       "v": 1299,
+       "src": "shop:price list source-shisha-2026-11-24.txt lines 23, 36"
+      },
+      "display_name": {
+       "v": "Tanya Herbal Molasses Blueberry Mint, 250 g",
+       "src": "shop:intake display name (VERIFIED x2)"
+      },
+      "stock": {
+       "v": 10,
+       "src": "shop:ruling 2026-11-24 via Jamal: start every item at 10, sold-out at 0"
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the legal check is done and the supplier's lab certificate is on file (plan section 6 and 8)"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": true,
+       "src": "shop:list (sold out marked in the source)"
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "shisha-laziz-herbal-molasses",
+   "category": "shisha",
+   "supplier_ref": {
+    "v": "Laziz Herbal Molasses",
+    "src": "list:oss-shisha-2026-11-24#lines 38, 39:text"
+   },
+   "supplier_price_cents": {
+    "v": null,
+    "src": null
+   },
+   "price_basis": {
+    "v": "shop shelf price, before tax",
+    "src": "list:oss-shisha-2026-11-24#lines 38, 39:'plus tax'"
+   },
+   "facts": {
+    "brand": {
+     "v": "Laziz",
+     "src": "list:oss-shisha-2026-11-24#lines 38, 39:text"
+    },
+    "size": {
+     "v": "250 g",
+     "src": "intake:Source line 38 (250g); retailer listings 250 g"
+    },
+    "line": {
+     "v": "Laziz Herbal (non-tobacco) molasses",
+     "src": "intake:shisha/catalogue.json (pack or retailer)"
+    },
+    "base": {
+     "v": "Herbal: 'premium herbal blend' (retailer); ingredients not seen",
+     "src": "intake:shisha/catalogue.json"
+    },
+    "maker": {
+     "v": "Not found",
+     "src": "intake:shisha/catalogue.json"
+    },
+    "package": {
+     "v": "Round tin (retailer pack art)",
+     "src": "intake:shisha/catalogue.json"
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    },
+    "fulfilment": {
+     "v": "to confirm",
+     "src": "intake: fulfilment CONFIRM"
+    }
+   },
+   "flags": [
+    "Off until the legal check and the supplier's lab certificate (tobacco-free, nicotine-free)"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-9641",
+     "key": "legacy:OSS-9641",
+     "label": {
+      "v": "Cherry",
+      "src": "list:oss-shisha-2026-11-24#lines 38, 39:text"
+     },
+     "photo": {
+      "img": null,
+      "status": "needs_store_photo",
+      "src": "no photo"
+     },
+     "flags": [],
+     "shop": {
+      "price_cents": {
+       "v": 1299,
+       "src": "shop:price list source-shisha-2026-11-24.txt lines 38, 39"
+      },
+      "display_name": {
+       "v": "Laziz Herbal Molasses Cherry, 250 g",
+       "src": "shop:intake display name (VERIFIED x1)"
+      },
+      "stock": {
+       "v": 10,
+       "src": "shop:ruling 2026-11-24 via Jamal: start every item at 10, sold-out at 0"
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the legal check is done and the supplier's lab certificate is on file (plan section 6 and 8)"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": true,
+       "src": "shop:list (sold out marked in the source)"
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-9642",
+     "key": "legacy:OSS-9642",
+     "label": {
+      "v": "Blackberry",
+      "src": "list:oss-shisha-2026-11-24#lines 38, 40:text"
+     },
+     "photo": {
+      "img": null,
+      "status": "needs_store_photo",
+      "src": "no photo"
+     },
+     "flags": [],
+     "shop": {
+      "price_cents": {
+       "v": 1299,
+       "src": "shop:price list source-shisha-2026-11-24.txt lines 38, 40"
+      },
+      "display_name": {
+       "v": "Laziz Herbal Molasses Blackberry, 250 g",
+       "src": "shop:intake display name (VERIFIED x1)"
+      },
+      "stock": {
+       "v": 10,
+       "src": "shop:ruling 2026-11-24 via Jamal: start every item at 10, sold-out at 0"
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the legal check is done and the supplier's lab certificate is on file (plan section 6 and 8)"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": true,
+       "src": "shop:list (sold out marked in the source)"
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-9643",
+     "key": "legacy:OSS-9643",
+     "label": {
+      "v": "Three Way Berries (pack art caption 'Three-way Berries')",
+      "src": "list:oss-shisha-2026-11-24#lines 38, 41:text"
+     },
+     "photo": {
+      "img": null,
+      "status": "needs_store_photo",
+      "src": "no photo"
+     },
+     "flags": [],
+     "shop": {
+      "price_cents": {
+       "v": 1299,
+       "src": "shop:price list source-shisha-2026-11-24.txt lines 38, 41"
+      },
+      "display_name": {
+       "v": "Laziz Herbal Molasses Three Way Berries, 250 g",
+       "src": "shop:intake display name (VERIFIED x2)"
+      },
+      "stock": {
+       "v": 10,
+       "src": "shop:ruling 2026-11-24 via Jamal: start every item at 10, sold-out at 0"
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the legal check is done and the supplier's lab certificate is on file (plan section 6 and 8)"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": true,
+       "src": "shop:list (sold out marked in the source)"
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-9644",
+     "key": "legacy:OSS-9644",
+     "label": {
+      "v": "Mint",
+      "src": "list:oss-shisha-2026-11-24#lines 38, 42:text"
+     },
+     "photo": {
+      "img": null,
+      "status": "needs_store_photo",
+      "src": "no photo"
+     },
+     "flags": [],
+     "shop": {
+      "price_cents": {
+       "v": 1299,
+       "src": "shop:price list source-shisha-2026-11-24.txt lines 38, 42"
+      },
+      "display_name": {
+       "v": "Laziz Herbal Molasses Mint, 250 g",
+       "src": "shop:intake display name (VERIFIED x2)"
+      },
+      "stock": {
+       "v": 10,
+       "src": "shop:ruling 2026-11-24 via Jamal: start every item at 10, sold-out at 0"
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the legal check is done and the supplier's lab certificate is on file (plan section 6 and 8)"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": true,
+       "src": "shop:list (sold out marked in the source)"
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-9645",
+     "key": "legacy:OSS-9645",
+     "label": {
+      "v": "Honeydew (not confirmed)",
+      "src": "list:oss-shisha-2026-11-24#lines 38, 43:text"
+     },
+     "photo": {
+      "img": null,
+      "status": "needs_store_photo",
+      "src": "no photo"
+     },
+     "flags": [
+      "UNVERIFIED: no opened page lists a Laziz Honeydew"
+     ],
+     "shop": {
+      "price_cents": {
+       "v": 1299,
+       "src": "shop:price list source-shisha-2026-11-24.txt lines 38, 43"
+      },
+      "display_name": {
+       "v": "Laziz Herbal Molasses Honeydew, 250 g",
+       "src": "shop:intake display name (UNVERIFIED)"
+      },
+      "stock": {
+       "v": 10,
+       "src": "shop:ruling 2026-11-24 via Jamal: start every item at 10, sold-out at 0"
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the legal check is done and the supplier's lab certificate is on file (plan section 6 and 8)"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": true,
+       "src": "shop:list (sold out marked in the source)"
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-9646",
+     "key": "legacy:OSS-9646",
+     "label": {
+      "v": "Lemon Ice",
+      "src": "list:oss-shisha-2026-11-24#lines 38, 44:text"
+     },
+     "photo": {
+      "img": null,
+      "status": "needs_store_photo",
+      "src": "no photo"
+     },
+     "flags": [],
+     "shop": {
+      "price_cents": {
+       "v": 1299,
+       "src": "shop:price list source-shisha-2026-11-24.txt lines 38, 44"
+      },
+      "display_name": {
+       "v": "Laziz Herbal Molasses Lemon Ice, 250 g",
+       "src": "shop:intake display name (VERIFIED x2)"
+      },
+      "stock": {
+       "v": 10,
+       "src": "shop:ruling 2026-11-24 via Jamal: start every item at 10, sold-out at 0"
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the legal check is done and the supplier's lab certificate is on file (plan section 6 and 8)"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": true,
+       "src": "shop:list (sold out marked in the source)"
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-9647",
+     "key": "legacy:OSS-9647",
+     "label": {
+      "v": "Margarita Lemon (MyHookah option says 'Margarita Lime')",
+      "src": "list:oss-shisha-2026-11-24#lines 38, 45:text"
+     },
+     "photo": {
+      "img": null,
+      "status": "needs_store_photo",
+      "src": "no photo"
+     },
+     "flags": [],
+     "shop": {
+      "price_cents": {
+       "v": 1299,
+       "src": "shop:price list source-shisha-2026-11-24.txt lines 38, 45"
+      },
+      "display_name": {
+       "v": "Laziz Herbal Molasses Margarita Lemon, 250 g",
+       "src": "shop:intake display name (VERIFIED x2)"
+      },
+      "stock": {
+       "v": 10,
+       "src": "shop:ruling 2026-11-24 via Jamal: start every item at 10, sold-out at 0"
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the legal check is done and the supplier's lab certificate is on file (plan section 6 and 8)"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": true,
+       "src": "shop:list (sold out marked in the source)"
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-9648",
+     "key": "legacy:OSS-9648",
+     "label": {
+      "v": "Vanilla",
+      "src": "list:oss-shisha-2026-11-24#lines 38, 46:text"
+     },
+     "photo": {
+      "img": null,
+      "status": "needs_store_photo",
+      "src": "no photo"
+     },
+     "flags": [],
+     "shop": {
+      "price_cents": {
+       "v": 1299,
+       "src": "shop:price list source-shisha-2026-11-24.txt lines 38, 46"
+      },
+      "display_name": {
+       "v": "Laziz Herbal Molasses Vanilla, 250 g",
+       "src": "shop:intake display name (VERIFIED x1)"
+      },
+      "stock": {
+       "v": 10,
+       "src": "shop:ruling 2026-11-24 via Jamal: start every item at 10, sold-out at 0"
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the legal check is done and the supplier's lab certificate is on file (plan section 6 and 8)"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": true,
+       "src": "shop:list (sold out marked in the source)"
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-9649",
+     "key": "legacy:OSS-9649",
+     "label": {
+      "v": "Guava",
+      "src": "list:oss-shisha-2026-11-24#lines 38, 47:text"
+     },
+     "photo": {
+      "img": null,
+      "status": "needs_store_photo",
+      "src": "no photo"
+     },
+     "flags": [
+      "Shop spelled it 'Gauva'",
+      "Sold out in the source"
+     ],
+     "shop": {
+      "price_cents": {
+       "v": 1299,
+       "src": "shop:price list source-shisha-2026-11-24.txt lines 38, 47"
+      },
+      "display_name": {
+       "v": "Laziz Herbal Molasses Guava, 250 g",
+       "src": "shop:intake display name (VERIFIED x1)"
+      },
+      "stock": {
+       "v": 0,
+       "src": "shop:ruling 2026-11-24 via Jamal: start every item at 10, sold-out at 0"
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the legal check is done and the supplier's lab certificate is on file (plan section 6 and 8)"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": false,
+       "src": "shop:list (sold out marked in the source)"
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-9650",
+     "key": "legacy:OSS-9650",
+     "label": {
+      "v": "Grape Mint",
+      "src": "list:oss-shisha-2026-11-24#lines 38, 48:text"
+     },
+     "photo": {
+      "img": null,
+      "status": "needs_store_photo",
+      "src": "no photo"
+     },
+     "flags": [
+      "Sold out in the source"
+     ],
+     "shop": {
+      "price_cents": {
+       "v": 1299,
+       "src": "shop:price list source-shisha-2026-11-24.txt lines 38, 48"
+      },
+      "display_name": {
+       "v": "Laziz Herbal Molasses Grape Mint, 250 g",
+       "src": "shop:intake display name (VERIFIED x2)"
+      },
+      "stock": {
+       "v": 0,
+       "src": "shop:ruling 2026-11-24 via Jamal: start every item at 10, sold-out at 0"
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the legal check is done and the supplier's lab certificate is on file (plan section 6 and 8)"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": false,
+       "src": "shop:list (sold out marked in the source)"
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "shisha-karizma-herbal-molasses",
+   "category": "shisha",
+   "supplier_ref": {
+    "v": "Karizma Herbal Molasses",
+    "src": "list:oss-shisha-2026-11-24#lines 50, 51:text"
+   },
+   "supplier_price_cents": {
+    "v": null,
+    "src": null
+   },
+   "price_basis": {
+    "v": "shop shelf price, before tax",
+    "src": "list:oss-shisha-2026-11-24#lines 50, 51:'plus tax'"
+   },
+   "facts": {
+    "brand": {
+     "v": "Karizma",
+     "src": "list:oss-shisha-2026-11-24#lines 50, 51:text"
+    },
+    "size": {
+     "v": "250 g",
+     "src": "intake:Owner, 2026-11-24: 250 g tub (source line 50 states no size)"
+    },
+    "line": {
+     "v": "Karizma Herbal Molasses (printed on pack images)",
+     "src": "intake:shisha/catalogue.json (pack or retailer)"
+    },
+    "base": {
+     "v": "Herbal: '100% plant leaves' (retailer claim, not seen on pack)",
+     "src": "intake:shisha/catalogue.json"
+    },
+    "maker": {
+     "v": "Everest Tobacco Factory, Amman, Jordan (retailer statement only, not confirmed)",
+     "src": "intake:shisha/catalogue.json"
+    },
+    "package": {
+     "v": "Tub (owner). Pack images seen are a square black-and-gold box printed 'KARIZMA HERBAL MOLASSES': confirm it is the same",
+     "src": "intake:shisha/catalogue.json"
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    },
+    "fulfilment": {
+     "v": "to confirm",
+     "src": "intake: fulfilment CONFIRM"
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: TOBACCO-LINE RISK: some US retailers file Karizma Guava and Mango 250 g under 'Karizma Hookah Tobacco' (search results, pages not opened: iconhookah.com, thehookahlab.com); hookahjunkie.com titles its 250 g page 'Karizma Shisha Tobacco' while its image shows 'HERBAL MOLASSES'. Confirm the shop's tubs say Herbal Molasses.",
+    "Off until the legal check and the supplier's lab certificate (tobacco-free, nicotine-free)"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-9661",
+     "key": "legacy:OSS-9661",
+     "label": {
+      "v": "Guava",
+      "src": "list:oss-shisha-2026-11-24#lines 50, 51:text"
+     },
+     "photo": {
+      "img": null,
+      "status": "needs_store_photo",
+      "src": "no photo"
+     },
+     "flags": [
+      "TOBACCO-LINE RISK: some US retailers file Karizma Guava and Mango 250 g under 'Karizma Hookah Tobacco' (search results, pages not opened: iconhookah.com, thehookahlab.com); hookahjunkie.com titles its 250 g page 'Karizma Shisha Tobacco' while its image shows 'HERBAL MOLASSES'. Confirm the shop's tubs say Herbal Molasses."
+     ],
+     "shop": {
+      "price_cents": {
+       "v": 999,
+       "src": "shop:price list source-shisha-2026-11-24.txt lines 50, 51"
+      },
+      "display_name": {
+       "v": "Karizma Herbal Molasses Guava, 250 g",
+       "src": "shop:intake display name (VERIFIED x1)"
+      },
+      "stock": {
+       "v": 10,
+       "src": "shop:ruling 2026-11-24 via Jamal: start every item at 10, sold-out at 0"
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the legal check is done and the supplier's lab certificate is on file (plan section 6 and 8)"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": true,
+       "src": "shop:list (sold out marked in the source)"
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-9662",
+     "key": "legacy:OSS-9662",
+     "label": {
+      "v": "Mango",
+      "src": "list:oss-shisha-2026-11-24#lines 50, 52:text"
+     },
+     "photo": {
+      "img": null,
+      "status": "needs_store_photo",
+      "src": "no photo"
+     },
+     "flags": [
+      "TOBACCO-LINE RISK: some US retailers file Karizma Guava and Mango 250 g under 'Karizma Hookah Tobacco' (search results, pages not opened: iconhookah.com, thehookahlab.com); hookahjunkie.com titles its 250 g page 'Karizma Shisha Tobacco' while its image shows 'HERBAL MOLASSES'. Confirm the shop's tubs say Herbal Molasses."
+     ],
+     "shop": {
+      "price_cents": {
+       "v": 999,
+       "src": "shop:price list source-shisha-2026-11-24.txt lines 50, 52"
+      },
+      "display_name": {
+       "v": "Karizma Herbal Molasses Mango, 250 g",
+       "src": "shop:intake display name (VERIFIED x1)"
+      },
+      "stock": {
+       "v": 10,
+       "src": "shop:ruling 2026-11-24 via Jamal: start every item at 10, sold-out at 0"
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the legal check is done and the supplier's lab certificate is on file (plan section 6 and 8)"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": true,
+       "src": "shop:list (sold out marked in the source)"
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-9663",
+     "key": "legacy:OSS-9663",
+     "label": {
+      "v": "Not found in 250 g (50 g 'Cinnamon Gum' exists in the 'For Her' 5 x 50 g pack)",
+      "src": "list:oss-shisha-2026-11-24#lines 50, 53:text"
+     },
+     "photo": {
+      "img": null,
+      "status": "needs_store_photo",
+      "src": "no photo"
+     },
+     "flags": [
+      "UNVERIFIED",
+      "NO 250 g HERBAL KARIZMA GUM CINNAMON FOUND. It appears only as a 50 g herbal pack flavour. Confirm the shop's tub: brand, size and that it says Herbal."
+     ],
+     "shop": {
+      "price_cents": {
+       "v": 999,
+       "src": "shop:price list source-shisha-2026-11-24.txt lines 50, 53"
+      },
+      "display_name": {
+       "v": "Karizma Herbal Molasses Gum Cinnamon, 250 g",
+       "src": "shop:intake display name (UNVERIFIED)"
+      },
+      "stock": {
+       "v": 10,
+       "src": "shop:ruling 2026-11-24 via Jamal: start every item at 10, sold-out at 0"
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the legal check is done and the supplier's lab certificate is on file (plan section 6 and 8)"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": true,
+       "src": "shop:list (sold out marked in the source)"
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-9664",
+     "key": "legacy:OSS-9664",
+     "label": {
+      "v": "Grapefruit",
+      "src": "list:oss-shisha-2026-11-24#lines 50, 54:text"
+     },
+     "photo": {
+      "img": null,
+      "status": "needs_store_photo",
+      "src": "no photo"
+     },
+     "flags": [
+      "TOBACCO-LINE RISK: some US retailers file Karizma Guava and Mango 250 g under 'Karizma Hookah Tobacco' (search results, pages not opened: iconhookah.com, thehookahlab.com); hookahjunkie.com titles its 250 g page 'Karizma Shisha Tobacco' while its image shows 'HERBAL MOLASSES'. Confirm the shop's tubs say Herbal Molasses."
+     ],
+     "shop": {
+      "price_cents": {
+       "v": 999,
+       "src": "shop:price list source-shisha-2026-11-24.txt lines 50, 54"
+      },
+      "display_name": {
+       "v": "Karizma Herbal Molasses Grapefruit, 250 g",
+       "src": "shop:intake display name (VERIFIED x1)"
+      },
+      "stock": {
+       "v": 10,
+       "src": "shop:ruling 2026-11-24 via Jamal: start every item at 10, sold-out at 0"
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the legal check is done and the supplier's lab certificate is on file (plan section 6 and 8)"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": true,
+       "src": "shop:list (sold out marked in the source)"
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "shisha-sultana-herbal-molasses",
+   "category": "shisha",
+   "supplier_ref": {
+    "v": "Sultana Herbal Molasses",
+    "src": "list:oss-shisha-2026-11-24#lines 58, 59:text"
+   },
+   "supplier_price_cents": {
+    "v": null,
+    "src": null
+   },
+   "price_basis": {
+    "v": "shop shelf price, before tax",
+    "src": "list:oss-shisha-2026-11-24#lines 58, 59:'plus tax'"
+   },
+   "facts": {
+    "brand": {
+     "v": "Sultana",
+     "src": "list:oss-shisha-2026-11-24#lines 58, 59:text"
+    },
+    "size": {
+     "v": "250 g",
+     "src": "intake:Source line 58 (250g); distributor code HM-SUL250-OM"
+    },
+    "line": {
+     "v": "Sultana Herbal Molasses (distributor listing)",
+     "src": "intake:shisha/catalogue.json (pack or retailer)"
+    },
+    "base": {
+     "v": "Herbal (distributor title); ingredients not seen",
+     "src": "intake:shisha/catalogue.json"
+    },
+    "maker": {
+     "v": "Not found (distributor: Golden Gate Inc.)",
+     "src": "intake:shisha/catalogue.json"
+    },
+    "package": {
+     "v": "Round clear jar, white screw lid",
+     "src": "intake:shisha/catalogue.json"
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    },
+    "fulfilment": {
+     "v": "to confirm",
+     "src": "intake: fulfilment CONFIRM"
+    }
+   },
+   "flags": [
+    "Off until the legal check and the supplier's lab certificate (tobacco-free, nicotine-free)"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-9671",
+     "key": "legacy:OSS-9671",
+     "label": {
+      "v": "Orange Mint / Menthe l'Orange",
+      "src": "list:oss-shisha-2026-11-24#lines 58, 59:text"
+     },
+     "photo": {
+      "img": null,
+      "status": "needs_store_photo",
+      "src": "no photo"
+     },
+     "flags": [],
+     "shop": {
+      "price_cents": {
+       "v": 999,
+       "src": "shop:price list source-shisha-2026-11-24.txt lines 58, 59"
+      },
+      "display_name": {
+       "v": "Sultana Herbal Molasses Orange Mint, 250 g",
+       "src": "shop:intake display name (VERIFIED x1)"
+      },
+      "stock": {
+       "v": 10,
+       "src": "shop:ruling 2026-11-24 via Jamal: start every item at 10, sold-out at 0"
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the legal check is done and the supplier's lab certificate is on file (plan section 6 and 8)"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": true,
+       "src": "shop:list (sold out marked in the source)"
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "shisha-majalis-herbal-molasses",
+   "category": "shisha",
+   "supplier_ref": {
+    "v": "Majalis Herbal Molasses",
+    "src": "list:oss-shisha-2026-11-24#lines 61, 62:text"
+   },
+   "supplier_price_cents": {
+    "v": null,
+    "src": null
+   },
+   "price_basis": {
+    "v": "shop shelf price, before tax",
+    "src": "list:oss-shisha-2026-11-24#lines 61, 62:'plus tax'"
+   },
+   "facts": {
+    "brand": {
+     "v": "Majalis",
+     "src": "list:oss-shisha-2026-11-24#lines 61, 62:text"
+    },
+    "size": {
+     "v": "250 g",
+     "src": "intake:Source line 61 (250g); retailer 250 g"
+    },
+    "line": {
+     "v": "Majalis Herbal Molasses 'Endless Flavour' 250 g (retailer)",
+     "src": "intake:shisha/catalogue.json (pack or retailer)"
+    },
+    "base": {
+     "v": "Herbal: 'herbs, fruit extracts' (retailer); made in Jordan (retailer)",
+     "src": "intake:shisha/catalogue.json"
+    },
+    "maker": {
+     "v": "Not found",
+     "src": "intake:shisha/catalogue.json"
+    },
+    "package": {
+     "v": "Not seen",
+     "src": "intake:shisha/catalogue.json"
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    },
+    "fulfilment": {
+     "v": "to confirm",
+     "src": "intake: fulfilment CONFIRM"
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: TOBACCO-LINE RISK: a US trademark 'MAJALIS HOOKAH TOBACCO' (filed 2024-09-13, goods: tobacco, molasses tobacco) exists per a search result (trademarks.justia.com, not opened). No Majalis tobacco product was found for sale, but confirm the shop's tubs say Herbal.",
+    "Off until the legal check and the supplier's lab certificate (tobacco-free, nicotine-free)"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-9681",
+     "key": "legacy:OSS-9681",
+     "label": {
+      "v": "Mint",
+      "src": "list:oss-shisha-2026-11-24#lines 61, 62:text"
+     },
+     "photo": {
+      "img": null,
+      "status": "needs_store_photo",
+      "src": "no photo"
+     },
+     "flags": [
+      "TOBACCO-LINE RISK: a US trademark 'MAJALIS HOOKAH TOBACCO' (filed 2024-09-13, goods: tobacco, molasses tobacco) exists per a search result (trademarks.justia.com, not opened). No Majalis tobacco product was found for sale, but confirm the shop's tubs say Herbal."
+     ],
+     "shop": {
+      "price_cents": {
+       "v": 1199,
+       "src": "shop:price list source-shisha-2026-11-24.txt lines 61, 62"
+      },
+      "display_name": {
+       "v": "Majalis Herbal Molasses Mint, 250 g",
+       "src": "shop:intake display name (VERIFIED x1)"
+      },
+      "stock": {
+       "v": 10,
+       "src": "shop:ruling 2026-11-24 via Jamal: start every item at 10, sold-out at 0"
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the legal check is done and the supplier's lab certificate is on file (plan section 6 and 8)"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": true,
+       "src": "shop:list (sold out marked in the source)"
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-9682",
+     "key": "legacy:OSS-9682",
+     "label": {
+      "v": "Lemon Mint",
+      "src": "list:oss-shisha-2026-11-24#lines 61, 63:text"
+     },
+     "photo": {
+      "img": null,
+      "status": "needs_store_photo",
+      "src": "no photo"
+     },
+     "flags": [
+      "TOBACCO-LINE RISK: a US trademark 'MAJALIS HOOKAH TOBACCO' (filed 2024-09-13, goods: tobacco, molasses tobacco) exists per a search result (trademarks.justia.com, not opened). No Majalis tobacco product was found for sale, but confirm the shop's tubs say Herbal."
+     ],
+     "shop": {
+      "price_cents": {
+       "v": 1199,
+       "src": "shop:price list source-shisha-2026-11-24.txt lines 61, 63"
+      },
+      "display_name": {
+       "v": "Majalis Herbal Molasses Lemon Mint, 250 g",
+       "src": "shop:intake display name (VERIFIED x1)"
+      },
+      "stock": {
+       "v": 10,
+       "src": "shop:ruling 2026-11-24 via Jamal: start every item at 10, sold-out at 0"
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the legal check is done and the supplier's lab certificate is on file (plan section 6 and 8)"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": true,
+       "src": "shop:list (sold out marked in the source)"
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-9683",
+     "key": "legacy:OSS-9683",
+     "label": {
+      "v": "69 (retailer option 'Majalis 69')",
+      "src": "list:oss-shisha-2026-11-24#lines 61, 64, 65:text"
+     },
+     "photo": {
+      "img": null,
+      "status": "needs_store_photo",
+      "src": "no photo"
+     },
+     "flags": [
+      "Name confirmed by the owner (source line 65)",
+      "TOBACCO-LINE RISK: a US trademark 'MAJALIS HOOKAH TOBACCO' (filed 2024-09-13, goods: tobacco, molasses tobacco) exists per a search result (trademarks.justia.com, not opened). No Majalis tobacco product was found for sale, but confirm the shop's tubs say Herbal."
+     ],
+     "shop": {
+      "price_cents": {
+       "v": 1199,
+       "src": "shop:price list source-shisha-2026-11-24.txt lines 61, 64, 65"
+      },
+      "display_name": {
+       "v": "Majalis Herbal Molasses 69, 250 g",
+       "src": "shop:intake display name (VERIFIED x1)"
+      },
+      "stock": {
+       "v": 10,
+       "src": "shop:ruling 2026-11-24 via Jamal: start every item at 10, sold-out at 0"
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the legal check is done and the supplier's lab certificate is on file (plan section 6 and 8)"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": true,
+       "src": "shop:list (sold out marked in the source)"
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  }
+ ],
+ "retired": {},
+ "shop_answers": []
+}

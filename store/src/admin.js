@@ -105,7 +105,7 @@ export async function admin(request, env, url) {
     for (const k of ["name", "category_id", "price_cents", "weight_g", "box_id"]) if (!(k in out)) bad.push(k.replace(/_.*/, ""));
     if (bad.length) return json({ error: "Check: " + [...new Set(bad)].join(", ") + "." }, 400);
     const prefix = { hookahs: 1, bases: 2, bowls: 3, heat: 4, hoses: 5, parts: 6, cologne: 7, misc: 8 }[out.category_id] || 9;
-    const last = await db.prepare("SELECT MAX(CAST(substr(sku, 5) AS INTEGER)) AS n FROM products WHERE sku LIKE ?").bind(`OSS-${prefix}%`).first("n");
+    const last = await db.prepare("SELECT MAX(CAST(substr(sku, 5) AS INTEGER)) AS n FROM products WHERE sku LIKE ? AND length(sku) = 8").bind(`OSS-${prefix}%`).first("n"); // 4-digit numbers only: OSS-SSNNNN catalogue numbers belong to store/catalog/registry.json
     const sku = "OSS-" + String(Math.max(prefix * 1000, last || 0) + 1);
     const cols = Object.keys(out), stock = clampInt(body.stock ?? 0, 0, 99999) ?? 0;
     const stmts = [db.prepare(`INSERT INTO products (sku, sort, stock, ${cols.join(", ")}) VALUES (?, 9999, ?, ${cols.map(() => "?").join(", ")})`).bind(sku, stock, ...cols.map(k => out[k])), audit("product.create", sku, null, out)];
