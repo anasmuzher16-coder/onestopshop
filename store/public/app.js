@@ -519,7 +519,8 @@ function shipChoice(lines) {
   const checking = near && (!q || q.status === "checking"), canLocal = near && !!q && (q.status === "ok" || q.status === "address" || q.status === "unsure");
   const localFee = canLocal && q.status === "ok" ? localDue(q.fee_cents, cartCents(lines)) / 100 : null;
   const wantsLocal = state.ship === "local" || (!state.ship && !counter && state.reach !== "nationwide");   // someone who chose nationwide is never defaulted onto local delivery; a cart with charcoal chooses for itself
-  const pickup = state.ship === "pickup", local = !pickup && canLocal && wantsLocal, waiting = checking && wantsLocal;
+  // a cart holding shisha (paid at the counter until the card company approves it) is a pickup, whatever was chosen before
+  const pickup = state.ship === "pickup" || counterPayIn(lines).length > 0, local = !pickup && canLocal && wantsLocal, waiting = checking && wantsLocal;
   return { parcels, opts, canLocal, checking, localFee, status: near && q ? q.status : null, pickup, local, counter, mixed, chosen: pickup || local || waiting || state.ship === "local" ? null : opts.find(o => o.id === state.ship) || opts[0] || null };
 }
 // On a phone the dock asks for the postal code, so the page does not ask a second time. Crossing the width puts the right one back.

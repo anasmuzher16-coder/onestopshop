@@ -1,7 +1,7 @@
 /* One Stop Shop, direction 2. Mobile first: base rules are the 390 layout; min-width queries scale up.
    Components reference purpose tokens only (tokens.css). */
 *,*::before,*::after{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%;text-size-adjust:100%;scroll-padding-top:72px}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;scroll-padding-top:72px;background:var(--color-bg)}   /* the page ground never shows through a gap */
 body{margin:0;min-height:100svh;display:flex;flex-direction:column;background:var(--color-bg);color:var(--color-text);font:400 var(--t-16)/1.5 var(--font-ui);
   font-kerning:normal;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased;padding-bottom:calc(var(--bar-h) + env(safe-area-inset-bottom))}
 img{display:block;max-width:100%;height:auto}
@@ -715,7 +715,7 @@ html.pour-still.pour-mist body::before{background-image:url(img/mist-still.webp)
    keep room for it, and the line under the title stops short of it. Decided in CSS so nothing moves when effects load. */
 @media (max-width:520px){
   .shophead[data-cat="parts"],.shophead[data-fx="set"],.shophead[data-fx="gifts"],.shophead[data-fx="docs"],.shophead[data-fx="missing"],.shophead[data-fx="all"],.shophead[data-fx="cart"]{padding-bottom:calc(var(--s-5) + 26px)}
-  .shophead[data-fx] .shophead__n,.shophead[data-cat="parts"] .shophead__n{max-width:calc(100% - 132px)}
+  .shophead[data-fx] .shophead__n,.shophead[data-cat="parts"] .shophead__n,.shophead[data-cat="heat"] .shophead__n{max-width:calc(100% - 132px)}   /* Heat names charcoal and foil: the line stops short of the burner */
   .shophead[data-fx]{min-height:124px}
   .shophead[data-fx="missing"]{padding-bottom:calc(var(--s-5) + 60px)}
 }
