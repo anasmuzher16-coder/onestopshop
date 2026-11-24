@@ -31,10 +31,20 @@ const photoOf = v => !!(v && v.img);   // its own photo or the family's, labelle
 const colourName = (v, i) => v.colour ? (v.named ? v.colour : `${v.colour}, name TBD`) : `Colour ${i + 1}`;
 // a light chip on the coal ground gets a ring; computed from the chip's own colour so it never disappears into the page
 const lum = hex => { const m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return 0; const c = [0, 2, 4].map(i => parseInt(m[1].slice(i, i + 2), 16) / 255).map(x => x <= .04045 ? x / 12.92 : ((x + .055) / 1.055) ** 2.4); return .2126 * c[0] + .7152 * c[1] + .0722 * c[2]; };
-const chipStyle = v => `--c:${esc(v.chip || "#8a8a8a")}${lum(v.chip) < .03 ? ";--ring:oklch(1 0 0 / .38)" : ""}`;
-function swatchGroup(fam, chosen, { label, card = "", max = 99 } = {}) {
-  const shown = fam.slice(0, max), more = fam.length - shown.length;
-  return `<div class="swatches ${card ? "swatches--card" : ""}" role="radiogroup" aria-label="${esc(label)}">${shown.map((v, i) => `<button class="swatch" type="button" role="radio" data-swatch="${v.sku}" ${card ? `data-card="${card}"` : ""} aria-checked="${v.sku === chosen.sku}" tabindex="${v.sku === chosen.sku ? 0 : -1}" style="${chipStyle(v)}" aria-label="${esc(colourName(v, i))}${photoOf(v) ? "" : ", photo coming"}"></button>`).join("")}${more > 0 ? `<a class="swatches__more" href="/p/${fam[0].sku}" aria-label="${more} more colours">+${more}</a>` : ""}</div>`;
+const chipStyle = v => `--c:${esc(v.chip || "#8a8a8a")}${lum(v.chip) < .1 ? ";--ring:oklch(1 0 0 / .36)" : ""}`;   // a dark chip (charcoal, mid grey and darker) gets a light inner ring, so it never sinks into the coal
+// THE COLOUR SWITCHER on a card: every chip has a 44 px target, and the row never runs past the card. How many targets fit
+// is the card's own width (a container query, styles.css): when the colours do not all fit, the last place becomes "+N",
+// N being exactly the colours not shown at that width. The "+N" for each possible width is written once, here, and CSS shows
+// the one that fits, so nothing is measured while a section is drawn. Up to 8 places on the widest card.
+const SW_MAX = 8;
+function swatchGroup(fam, chosen, { label, card = "" } = {}) {
+  const chip = (v, i) => `<button class="swatch" type="button" role="radio" data-swatch="${v.sku}" ${card ? `data-card="${card}"` : ""} aria-checked="${v.sku === chosen.sku}" tabindex="${v.sku === chosen.sku ? 0 : -1}" style="${chipStyle(v)}" aria-label="${esc(colourName(v, i))}${photoOf(v) ? "" : ", photo coming"}">${photoOf(v) ? "" : `<span class="swatch__none" aria-hidden="true"></span>`}</button>`;
+  if (!card) return `<div class="swatches" role="radiogroup" aria-label="${esc(label)}">${fam.map(chip).join("")}</div>`;   // the product page wraps: every colour shows
+  // the chosen colour always shows on the card: it leads the row when it would otherwise be hidden
+  const at = fam.findIndex(v => v.sku === chosen.sku), row = at > 0 ? [fam[at], ...fam.slice(0, at), ...fam.slice(at + 1)] : fam, n = row.length;
+  const over = [], more = [];
+  for (let k = 2; k <= SW_MAX; k++) if (n > k) { over.push("o" + k); more.push(`<a class="swatches__more" data-k="${k}" href="/p/${card}" aria-label="${n - k + 1} more ${n - k + 1 === 1 ? "colour" : "colours"} of ${esc(label.replace(/^Colours of /, ""))}"><span class="num">+${n - k + 1}</span></a>`); }
+  return `<div class="swatchbox ${over.join(" ")}"><div class="swatches swatches--card" role="radiogroup" aria-label="${esc(label)}">${row.map(v => chip(v, fam.indexOf(v))).join("")}</div>${more.join("")}</div>`;
 }
 // The photo a colour shows, and its label in the quiet TBD style (owner, 2026-11-24): its own photo ("Photo to be upscaled" when it
 // was enlarged), the family's photo with "Shown in <colour>", or the drawn stand-in with "Photo coming". The label is in the alt text too.
@@ -42,7 +52,7 @@ function photoLabel(v) {
   const f = (v && v.facts) || {};
   if (!v.img) return "";
   if (f.photo === "family") return `Shown in ${f.shown_in || "another colour"}${f.photo_upscale ? ". Photo to be upscaled" : ""}`;
-  return f.photo_label === "upscale" ? "Photo to be upscaled" : "";
+  return f.photo_label === "upscale" || v.details?.photo === "upscale" ? "Photo to be upscaled" : "";   // a single item (charcoal, foil, shisha) says it in its details
 }
 const colourShot = (v, o = {}) => { const l = photoLabel(v); return shot(v, { ...o, alt: o.alt ? (l ? `${o.alt}. ${l}` : o.alt) : "" }) + (l ? `<span class="shot__tag shot__tag--tbd" aria-hidden="true">${esc(l)}</span>` : ""); };
 function cleanCart(x) {
@@ -57,7 +67,7 @@ function fitCart(cart) {
   for (const l of cart) {
     const p = bySku[l.sku], max = stockFor(p);
     if (!forSale(p)) { news.push(p.state === "tbd" ? `${p.name} has no shop price yet, so we took it out of your cart.` : `${p.name} is not on sale yet, so we took it out of your cart.`); continue; }
-    if (!max) { news.push(`${p.name} has sold, so we took it out of your cart.`); continue; }
+    if (!max) { news.push(`${p.name} has sold out, so we took it out of your cart.`); continue; }
     if (l.qty > max) news.push(`We only have ${max} of ${p.name}, so your cart now has ${max}.`);
     kept.push({ sku: l.sku, qty: Math.min(max, l.qty) });
   }
@@ -152,7 +162,7 @@ function sticker(p, { big = false } = {}) {
   const n = parseInt(p.sku.slice(-3), 10), r = ((n * 37) % 23) - 13; // -13..+9 degrees, fixed per product
   if (p.state === "tbd") return `<span class="sticker sticker--tbd ${big ? "sticker--big" : ""}" style="--r:${r}deg"><span class="sticker__k">Price</span><span class="sticker__v">TBD</span></span>`;   // the price gun's own words until the shop sets its price
   if (p.state === "soon") return `<span class="sticker sticker--tbd ${big ? "sticker--big" : ""}" style="--r:${r}deg"><span class="sticker__k">Soon</span><span class="sticker__v">${whole(p.price)}</span></span>`;
-  return `<span class="sticker ${big ? "sticker--big" : ""} ${isSold(p) ? "sticker--sold" : ""}" style="--r:${r}deg"><span class="sticker__v">${isSold(p) ? "Sold" : whole(p.price)}</span></span>`;
+  return `<span class="sticker ${big ? "sticker--big" : ""} ${isSold(p) ? "sticker--sold" : ""}" style="--r:${r}deg"><span class="sticker__v">${isSold(p) ? "Sold out" : whole(p.price)}</span></span>`;
 }
 
 // ---------- THE FIRST SCREEN FIRST: a section swap draws the cards you can see, then the rest in idle moments ----------
@@ -231,7 +241,7 @@ function cardHTML(p, i = 9) {
   return `
   <article class="card" data-tone="${tone}" ${p.family ? `data-family="${p.sku}"` : ""}>
     <a class="card__a" href="/p/${p.sku}" data-piece="${p.sku}">
-      <div class="tile ${p.dark || p.photo ? "tile--photo" : ""}">${p.family ? colourShot(p, { small: true, eager: i < 2 }) : shot(p, { small: true, eager: i < 2 })}${sticker(p)}</div>
+      <div class="tile ${p.dark || p.photo ? "tile--photo" : ""}">${colourShot(p, { small: true, eager: i < 2 })}${sticker(p)}</div>
       <h3 class="card__name">${esc(p.name)}</h3>
     </a>
     ${cardMeta(p)}${localOnly(p) ? `<p class="card__pick">Pickup or local delivery only</p>` : ""}
@@ -243,7 +253,7 @@ function cardMeta(p) {
   const desc = p.details?.description;   // one line on the card, the whole of it on the product page
   if (!p.family) return `<p class="card__meta ${desc ? "card__meta--one" : ""}">${esc(desc || p.note || (p.facts && p.facts.size) || "")}</p>`;
   const fam = familyOf(p), bits = stemSet(p) ? "Stem set, no base" : "";   // the chips carry the colour count
-  return `${desc ? `<p class="card__meta card__meta--one">${esc(desc)}</p>` : ""}${fam.length > 1 ? swatchGroup(fam, p, { label: `Colours of ${p.name}`, card: p.sku, max: 5 }) : ""}${bits ? `<p class="card__meta card__meta--fam">${bits}</p>` : ""}`;
+  return `${desc ? `<p class="card__meta card__meta--one">${esc(desc)}</p>` : ""}${fam.length > 1 ? swatchGroup(fam, p, { label: `Colours of ${p.name}`, card: p.sku }) : ""}${bits ? `<p class="card__meta card__meta--fam">${bits}</p>` : ""}`;
 }
 
 // ---------- views ----------
@@ -268,7 +278,7 @@ function viewHome() {
     <div class="hero__in">
       <h1 class="hero__h"><span class="hero__lead">Hookahs,</span> <span class="hero__rest">and everything that goes with them.</span></h1>
       <div class="hero__side">
-        <p class="hero__p">Local delivery from $10 near Windsor, free pickup, and shipping across Canada.</p>
+        <p class="hero__p">Local delivery from $10 near Windsor, free pickup, and shipping across Canada except Quebec, for now.</p>
         <div class="hero__cta"><a class="btn" href="/shop/hookahs">Shop hookahs</a><a class="btn btn--ghost" href="/shop">All ${SHELF.length} pieces</a></div>
       </div>
     </div>
@@ -346,9 +356,13 @@ const plural = (n, one, many) => `<span class="num">${n}</span> ${n === 1 ? one 
 function bandNote(c, list) {
   if (!c) return plural(list.length, "piece", "pieces");
   const local = list.length && list.every(localOnly) ? ".<br>Pickup or local delivery only." : "";
-  if (c.id === "heat") {
-    const coal = list.filter(isCharcoal).length, other = list.length - coal;
-    return [coal ? plural(coal, "kind of charcoal", "kinds of charcoal") : "", other ? plural(other, list.filter(p => !isCharcoal(p)).every(p => /foil/i.test(p.name)) ? "foil pack" : "piece", list.filter(p => !isCharcoal(p)).every(p => /foil/i.test(p.name)) ? "foil packs" : "pieces") : ""].filter(Boolean).join(" and ") + local;
+  if (c.id === "charcoal") {   // its own section since 2026-11-24: boxes and the single rolls cut from them
+    const rolls = list.filter(p => p.details?.box_sku).length, boxes = list.length - rolls;
+    return [boxes ? plural(boxes, "box of charcoal", "boxes of charcoal") : "", rolls ? plural(rolls, "single roll", "single rolls") : ""].filter(Boolean).join(" and ") + local;
+  }
+  if (c.id === "heat") {   // foil, and the heat management pieces back on the shelf
+    const foil = list.filter(p => /foil/i.test(p.name)).length, other = list.length - foil;
+    return [foil ? plural(foil, "foil pack", "foil packs") : "", other ? plural(other, "heat piece", "heat pieces") : ""].filter(Boolean).join(" and ") + local;
   }
   if (c.id === "hookahs") return plural(list.length, "hookah", "hookahs") + local;
   if (c.id === "shisha") return plural(list.length, "flavour", "flavours") + local;
@@ -412,21 +426,21 @@ function factsSpec(p, fam) {
 function viewProduct(sku) {
   const asked = new URLSearchParams(location.search).get("colour"), base = bySku[sku];
   const p = base && base.family && bySku[asked] && bySku[asked].family === base.family ? bySku[asked] : base;
-  if (!p) return `${band("missing", "ruby", "That one is gone.")}<section class="empty"><p class="lead">It may have sold. <a class="link" href="/shop">See what is on the counter</a>.</p></section>`;
+  if (!p) return `${band("missing", "ruby", "That one is gone.")}<section class="empty"><p class="lead">It may have sold out. <a class="link" href="/shop">See what is on the counter</a>.</p></section>`;
   const c = catById[p.cat], parcels = pack([{ product: p, qty: 1 }]), opts = cpQuote([{ product: p, qty: 1 }]), b = parcels[0];
   const inCart = state.cart.some(l => l.sku === p.sku);   // the colour chosen, not the address's first colour
   const fam = familyOf(p), sale = forSale(p);
   const more = SHELF.filter(x => x.cat === p.cat && x.sku !== sku && (!p.family || x.family !== p.family) && !x.dark && !isSold(x))
     .sort((a, b) => p.family ? ((b.facts?.group === p.facts.group) - (a.facts?.group === p.facts.group)) || (ticked(b) - ticked(a)) : (seriesOf(b) === seriesOf(p)) - (seriesOf(a) === seriesOf(p))).slice(0, 4);
   const n = parseInt(p.sku.slice(-3), 10), nth = (c, k) => { const l = liveCat(c); return l.length ? l[(n + k) % l.length] : null; };
-  const goes = p.cat === "hookahs" ? [nth("bowls", 0), nth("heat", 1), nth("hoses", 2), nth("parts", 3)].filter(Boolean) : [];
+  const goes = p.cat === "hookahs" ? [nth("bowls", 0), nth("charcoal", 1), nth("hoses", 2), nth("parts", 3)].filter(Boolean) : [];
   // a hookah family's colours: each chip shows its colour and swaps the photo; a name the shop has not confirmed is never stated as fact
   const chips = fam.length > 1 ? `<p class="swatches__n" id="colour-h">Colour <b data-colour-name ${p.colour ? "" : "hidden"}>${esc(p.colour || "")}</b> <span class="num">${fam.indexOf(p) + 1} of ${fam.length}</span> ${fam.every(v => v.named) ? "" : TBD("Colours")}</p>
       ${swatchGroup(fam, p, { label: "Colour" })}` : "";
   const sold = isSold(p);
   return `
   <article class="pdp" data-tone="${toneOf(p)}" data-cat="${p.cat}">
-    <div data-stage="${p.sku}" class="pdp__tile tile ${p.dark || p.photo ? "tile--photo" : ""}">${p.family ? colourShot(p, { eager: true, alt: p.colour ? `${p.name}, ${p.colour}` : p.name }) : shot(p, { eager: true, alt: p.name })}${sticker(p, { big: true })}</div>
+    <div data-stage="${p.sku}" class="pdp__tile tile ${p.dark || p.photo ? "tile--photo" : ""}">${p.family ? colourShot(p, { eager: true, alt: p.colour ? `${p.name}, ${p.colour}` : p.name }) : colourShot(p, { eager: true, alt: p.name })}${sticker(p, { big: true })}</div>
     <div class="pdp__info">
       <p class="crumb"><a href="/shop/${p.cat}">${c.name}</a></p>
       <h1 class="pdp__name">${esc(p.name)}</h1>
@@ -445,7 +459,7 @@ function viewProduct(sku) {
         <table class="ledger"><thead><tr><th scope="col">Service</th><th scope="col">Arrives</th><th scope="col" class="r">Cost</th></tr></thead>
         <tbody>${localRow(p)}${opts.map(o => `<tr><td>${o.carrier} ${o.service}</td><td>${days(o.days)}</td><td class="r num">${money(o.total)}</td></tr>`).join("")}
         <tr><td>Pick up at ${SHOP_STREET}</td><td>${pickupDay()}</td><td class="r num">Free</td></tr></tbody></table>`
-        : `<p class="ways__to">Local delivery from $10 near Windsor. Free pickup. ${localOnly(p) ? "" : p.ship === "ground_only" ? "Ships by ground across Canada." : "Ships across Canada."}</p>`}
+        : `<p class="ways__to">Local delivery from $10 near Windsor. Free pickup. ${localOnly(p) ? "" : p.ship === "ground_only" ? "Ships by ground across Canada, except Quebec for now." : "Ships across Canada, except Quebec for now."}</p>`}
       </section>`}
       ${!sale ? "" : localOnly(p) ? counterSpec(p) : `<section class="spec" aria-labelledby="spec-h">
         <h2 class="h3" id="spec-h">Packed size</h2>
@@ -479,7 +493,7 @@ function viewGifts(kind) {
 
 // ---------- build a set ----------
 // The heat section is charcoal now: pickup or local delivery only, so it is an optional pick, never put in a set by default.
-const SLOTS = [["hookah", "hookahs", "The hookah"], ["bowl", "bowls", "A bowl"], ["heat", "heat", "Charcoal, pickup or local delivery only"], ["hose", "hoses", "A hose"]];
+const SLOTS = [["hookah", "hookahs", "The hookah"], ["bowl", "bowls", "A bowl"], ["heat", "charcoal", "Charcoal, pickup or local delivery only"], ["hose", "hoses", "A hose"]];
 const OPTIONAL = new Set(["heat"]);
 const setOpts = c => inCat(c).filter(p => forSale(p) && !isSold(p));   // a set is never offered, or defaulted to, something the shop cannot sell (a hookah with "Price TBD" included)
 const canSet = p => forSale(p) && !isSold(p) ? p : null;
@@ -548,7 +562,7 @@ async function priceLocal() {
 }
 // What we can honestly say about delivery right now. The strip and the product line both read this, so they never disagree.
 function deliveryNow(subCents = cartCents()) {
-  const d = state.dest, from = "Local delivery from $10 near Windsor", either = "It ships across Canada, or pickup is free";
+  const d = state.dest, from = "Local delivery from $10 near Windsor", either = "It ships across Canada except Quebec, or pickup is free";
   if (!d) return { key: "none", msg: from, sub: "", act: "Check your postal code" };
   const far = { key: "far", msg: `${d.full} is past our delivery area`, sub: either, act: "Change" };
   if (localArea(d) && !d.complete) return { key: "partial", msg: from, sub: "", act: "Add your full postal code" };
@@ -665,7 +679,7 @@ function viewCart() {
 
 function viewShipping() {
   return `
-  ${band("shipping", "cobalt", "Shipping", "From Windsor across Canada.")}
+  ${band("shipping", "cobalt", "Shipping", "From Windsor across Canada, except Quebec for now.")}
   <section class="reading">
     <p class="lead">We pack every order at the counter in Windsor and ship to every province and territory except Quebec, for now: the site is in English only, and we will ship there once it is also in French. Pickup in Windsor is open to everyone.</p>
     <h2 class="h3">Local delivery</h2>
@@ -701,7 +715,7 @@ function syncChrome() {
   dock.classList.toggle("dock--buy", !!prod || ra === "set" || (ra === "cart" && lines.length > 0));
   dock.innerHTML = prod
     ? `<a class="dock__side" href="/shop/${prod.cat}" data-back>Back</a>${state.cart.some(l => l.sku === prod.sku)
-        ? `<a class="dock__buy" href="/cart">In your cart. View cart</a>` : !forSale(prod) ? `<a class="dock__buy dock__buy--off" href="tel:+15192552222">Ask the counter</a>` : isSold(prod) ? `<a class="dock__buy dock__buy--off" href="/shop/${prod.cat}">Sold. See what is left</a>` : `<button class="dock__buy" type="button" data-add="${prod.sku}">Add to cart <span class="num">${whole(prod.price)}</span></button>`}<a class="dock__side" href="/cart" aria-label="Cart">${count}</a>`
+        ? `<a class="dock__buy" href="/cart">In your cart. View cart</a>` : !forSale(prod) ? `<a class="dock__buy dock__buy--off" href="tel:+15192552222">Ask the counter</a>` : isSold(prod) ? `<a class="dock__buy dock__buy--off" href="/shop/${prod.cat}">Sold out. See what is left</a>` : `<button class="dock__buy" type="button" data-add="${prod.sku}">Add to cart <span class="num">${whole(prod.price)}</span></button>`}<a class="dock__side" href="/cart" aria-label="Cart">${count}</a>`
     : ra === "set"
     ? `<a class="dock__side" href="/shop">Shop</a>${setPicks().some(Boolean) ? `<button class="dock__buy" type="button" data-add-set>Add the set <span class="num">${whole(setPicks().filter(Boolean).reduce((a, p) => a + p.price, 0))}</span></button>` : `<a class="dock__buy dock__buy--off" href="/shop">See what is in stock</a>`}<a class="dock__side" href="/cart" aria-label="Cart">${count}</a>`
     : ra === "cart" && lines.length
@@ -714,7 +728,7 @@ const sheetH = $("#sheet-h"), sheetP = $(".sheet__p", sheet), sheetGo = $('butto
 const SHEET_WORDS = {
   plain: { h: sheetH.textContent, p: sheetP.textContent, go: sheetGo.textContent },
   local: { h: "Where should we deliver?", p: "Local delivery is $10 up to 10 km and $15 up to 25 km from our Windsor shop. Free on orders of $200 or more before tax.", go: "Check local delivery" },
-  nationwide: { h: "Where should we ship it?", p: "We ship anywhere in Canada by Canada Post. Enter your postal code to see the prices.", go: "See shipping prices" },
+  nationwide: { h: "Where should we ship it?", p: "We ship across Canada by Canada Post, except to Quebec for now. Enter your postal code to see the prices.", go: "See shipping prices" },
 };
 function sheetWords(mode) { const w = SHEET_WORDS[mode || "plain"]; state.sheetMode = mode || null; sheetH.textContent = w.h; sheetP.textContent = w.p; sheetGo.textContent = w.go; }
 function openSheet(mode) { sheetWords(mode); state.sheetFell = false; postalInput.value = state.dest ? state.dest.full : ""; postalErr.textContent = postalBad; postalErr.hidden = true; postalInput.removeAttribute("aria-invalid"); sheet.showModal(); postalInput.focus(); postalInput.select(); }
@@ -770,7 +784,7 @@ function pickColour(btn, focus) {
 // Arrow keys move through the colours like any radio group; Home and End jump to the ends.
 document.addEventListener("keydown", e => {
   const btn = e.target.closest?.("[role=radio][data-swatch]"); if (!btn) return;
-  const all = $$("[role=radio]", btn.closest("[role=radiogroup]")), i = all.indexOf(btn);
+  const all = $$("[role=radio]", btn.closest("[role=radiogroup]")).filter(b => b.getClientRects().length), i = all.indexOf(btn);   // only the colours the card has room to show
   const to = { ArrowRight: i + 1, ArrowDown: i + 1, ArrowLeft: i - 1, ArrowUp: i - 1, Home: 0, End: all.length - 1 }[e.key];
   if (to === undefined) return; e.preventDefault(); pickColour(all[(to + all.length) % all.length], true);
 });
@@ -806,7 +820,7 @@ $("[data-postal-form]").addEventListener("submit", e => {
   const refuse = msg => { postalErr.textContent = msg; postalErr.hidden = false; postalInput.setAttribute("aria-invalid", "true"); postalInput.focus(); };
   if (!d) return refuse(postalBad);
   if (state.sheetFell && localArea(d)) { sheetWords("local"); state.sheetFell = false; }   // they corrected a mistyped code: they still asked for local delivery
-  if (state.sheetMode === "local" && !localArea(d)) { sheetWords("nationwide"); state.sheetFell = true; return refuse(`${d.full} is past our local delivery area. We can ship it to you anywhere in Canada.`); }
+  if (state.sheetMode === "local" && !localArea(d)) { sheetWords("nationwide"); state.sheetFell = true; return refuse(`${d.full} is past our local delivery area. We can ship it to you anywhere in Canada except Quebec.`); }
   if (state.sheetMode === "local" && !d.complete) return refuse("Enter the full postal code, like N9A 1A1, so we can check the distance.");
   if (state.localQ?.status === "down") state.localQ = null;   // a new try after the map service was unavailable
   const chose = state.sheetMode;
@@ -1129,7 +1143,9 @@ setSpotAnchor(() => { for (const a of $$("#main [data-piece]")) { const r = a.ge
 function putScroll(spot) {
   const y = typeof spot === "number" ? spot : spot.y || 0, root = document.documentElement, land = () => { scrollTo(0, y); const a = spot.sku && document.querySelector(`#main [data-piece="${spot.sku}"]`); if (a) scrollBy(0, a.getBoundingClientRect().top - spot.top); };
   drawThrough(spot.sku); root.classList.add("restoring"); land();
-  requestAnimationFrame(() => { land(); root.classList.remove("restoring"); });
+  // cards off screen fall back to a guessed height once drawing stops (WebKit keeps no remembered size): the guess is set to a real card's
+  // height first, so leaving the restoring state cannot move the page
+  requestAnimationFrame(() => { land(); const c = document.querySelector("#main .grid--shop .card"); if (c && c.offsetHeight) root.style.setProperty("--card-h", c.offsetHeight + "px"); root.classList.remove("restoring"); });
 }
 function go() {
   if (state.newsSeen && !/^#\/cart/.test(route())) { state.cartNews = []; state.newsSeen = false; state.dropped = null; }

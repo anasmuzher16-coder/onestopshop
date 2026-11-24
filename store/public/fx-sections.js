@@ -4,6 +4,7 @@
 //   hookahs  it is drawn on (coals, bubbles); smoke rolls in       cologne  the pump is pressed twice; the bottle kicks
 //   bases    the third ice cube is dropped in; it splashes         bowls    tongs set the third coal on the foil; it flares
 //   heat     the coals take; the lid is let down on them           hoses    tossed down coiled; the handle bounces
+//   charcoal the sixth cube is set on the stack; it catches from below
 //   parts    the kit is set down on the counter, piece by piece      misc     the price gun labels a pair of sunglasses
 // Timing: T0 is when the page change has landed; each act says in its own notes when its contact is. A tap on the
 // band plays a short version with no page change to wait for (a tap while anything is still moving is left alone,
@@ -41,6 +42,11 @@ function fit(layer, o) {
   const L = band.getBoundingClientRect(), range = document.createRange(); range.selectNodeContents(h1);
   const T = range.getBoundingClientRect(), box = o.getBoundingClientRect(), size = box.width, gutter = L.right - box.right;
   const beside = L.right - gutter - T.right - 10;
+  // a solid object (the charcoal stack, dark from edge to edge) also keeps clear of the line under the title: where that line
+  // runs under it, it rises into the room beside the title, above the line, instead of standing behind the words
+  const note = o.classList.contains("fx-obj--clear") && band.querySelector(".shophead__n");
+  if (note && beside >= 64) { const nr = document.createRange(); nr.selectNodeContents(note); const N = nr.getBoundingClientRect();
+    if (N.width && N.right > box.left + box.width * .14 && N.top < box.bottom) { const h = Math.floor(Math.min(beside, N.top - L.top - 8)); if (h >= 64) { o.style.cssText = `height:${h}px;top:4px;translate:none`; return; } } }
   if (beside >= size) return;
   if (beside >= Math.max(72, size * .6)) { o.style.height = Math.floor(beside) + "px"; return; } // still big enough to read beside the title
   // the title's box, not its tall line box; a title with no tails (g, j, p, q, y) leaves a little more room under it
@@ -328,6 +334,35 @@ const FX = {
     all(".hsloth").forEach(g => play(g, [{ opacity: 0, easing: STATE }, { opacity: .7 }], 560, S + 300));
     play(lid, [{ transform: OPEN, easing: STATE }, { transform: OPEN, offset: .52, easing: STRIKE }, { transform: up(0, 0), offset: .8, easing: STATE }, { transform: up(-2, 1.4), offset: .87, easing: STATE }, { transform: up(0, -.5), offset: .94, easing: STATE }, { transform: up(0, 0) }], (C - S) / .8, S);
     sit(C); glow(C, 1, 1700);
+  },
+  charcoal(layer, go, host, re) {
+    // Six coconut charcoal cubes stacked 3-2-1 on the counter (2026-11-24). The sixth is set down on top from above the
+    // band; the stack takes its weight; then it catches from below, where it sits on the others: the seams of light creep
+    // along its bottom and up its corners one after another, its front warms, a crack opens, its top goes to ash and two
+    // sparks lift off. At rest it is lit, so with motion off it is simply there, burning. On a tap it flares again.
+    const o = obj(layer, OBJ.charcoal, "fx-obj--clear"), q = c => o.querySelector(c), all = c => [...o.querySelectorAll(c)], lit = q(".lit");
+    const breathe = (at, lo = .55, ms = 1400) => all(".run").forEach((r, i) => play(r, [{ opacity: 1, easing: SINE }, { opacity: lo, offset: .45, easing: SINE }, { opacity: 1 }], ms, at + i * 60, "none"));
+    const sparks = at => all(".spk").forEach((s, i) => { const dx = [-2.4, 1.2, 3, -1, 2][i] || 0, up = 10 + i * 3;
+      play(s, [{ opacity: 0, transform: "translate(0px,0px)", easing: "cubic-bezier(.2,.7,.4,1)" }, { opacity: 1, transform: `translate(${dx * .3}px,${-up * .3}px)`, offset: .18 }, { opacity: 0, transform: `translate(${dx}px,${-up}px)` }], 900, at + i * 140, "none"); });
+    idle(layer, () => breathe(0));
+    if (!go) return;
+    if (re) {   // a tap: the lit cube is nudged, it flares and throws two sparks
+      const S = T0 - 100;
+      play(lit, [{ transform: "translate(0px,0px)", easing: STATE }, { transform: "translate(0px,-2.2px)", offset: .35, easing: STRIKE }, { transform: "translate(0px,0px)", offset: .7, easing: ENTER }, { transform: "translate(0px,0px)" }], 300, S, "none");
+      breathe(S + 200, .35, 900); play(q(".crack"), [{ opacity: 1, easing: ENTER }, { opacity: .4, offset: .3, easing: STATE }, { opacity: 1 }], 600, S + 200, "none"); sparks(S + 260);
+      return;
+    }
+    const F = 300, C = Math.max(T0, F), S = C - F;   // F: the fall. C: it is down on the stack
+    play(lit, [{ transform: "translate(0px,-64px)", opacity: 0, easing: "cubic-bezier(.45,0,.85,.55)" }, { opacity: 1, offset: .3 },
+      { transform: "translate(0px,0px)", opacity: 1, offset: F / (F + 220), easing: ENTER }, { transform: "translate(0px,-1.4px)", offset: (F + 80) / (F + 220), easing: STATE }, { transform: "translate(0px,0px)", opacity: 1 }], F + 220, S);
+    play(q(".stack"), [{ transform: "scale(1,1)", easing: ENTER }, { transform: "scale(1.012,.978)", offset: .3, easing: SINE }, { transform: "scale(1,1)" }], 260, C, "none");   // the stack takes the weight
+    // it catches: cold until it is down, then the burn creeps round it, the front warms, the crack opens, the top goes to ash
+    all(".run").forEach((r, i) => play(r, [{ opacity: 0, easing: STATE }, { opacity: 1 }], 320, C + 120 + [0, 90, 170, 250, 340][i]));
+    play(q(".warm"), [{ opacity: 0, easing: STATE }, { opacity: 1 }], 640, C + 220);
+    play(q(".rim"), [{ opacity: 0, easing: STATE }, { opacity: .75 }], 640, C + 300);   // its light reaches the cubes it sits on
+    play(q(".crack"), [{ opacity: 0, easing: ENTER }, { opacity: 1 }], 260, C + 560);
+    play(q(".cash"), [{ opacity: 0, easing: STATE }, { opacity: .9 }], 720, C + 420);
+    sparks(C + 640);
   },
   hoses(layer, go, host, re) {
     // A wrapped hose lying coiled on the counter: steel connector at one end, two loose turns, its wooden handle lying
@@ -941,6 +976,7 @@ const ACT = {
   },
 };
 ACT.shisha = ACT.bowls;
+ACT.charcoal = ACT.heat;   // a charcoal product page (its own section since 2026-11-24): the coals catch, as they did when charcoal lived in Heat
 function piece(layer, go, host, cat) {
   if (!go) return;
   let hit = T0; const born = performance.now();
