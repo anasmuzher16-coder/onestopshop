@@ -112,10 +112,10 @@ export function searchAll(q, cat) {
   const u = understand(IX, q), words = u.terms.flatMap(t => t.alts.flatMap(a => a.split(" ")));
   return `<p class="meant"><a class="link" href="/search?q=${encodeURIComponent(q)}">All sections</a></p><section class="rgroup" data-tone="${c.tone}"><div class="rgroup__h"><h2>${X.esc(c.name)}</h2><span class="num">${hits.length}</span></div><ul class="rows">${hits.map(p => row(p, words)).join("")}</ul></section>`;
 }
-const GLASS = `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="8.5" cy="8.5" r="6"/><path d="M13 13l5 5"/></svg>`;
+const LENS = `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="8.5" cy="8.5" r="6"/><path d="M13 13l5 5"/></svg>`;
 export function searchPage(q, inCat) {
   return `<section class="shophead shophead--ask" data-tone="teal" data-fx="search"><h1 class="shophead__h">What are you after?</h1>
-    <form class="srch__box" role="search" data-search-form action="/search"><label class="sr" for="q">Search the shop</label>${GLASS}
+    <form class="srch__box" role="search" data-search-form action="/search"><label class="sr" for="q">Search the shop</label>${LENS}
     <input class="field" id="q" name="q" type="search" autocomplete="off" enterkeyhint="search" placeholder="Type a name or a brand" value="${X.esc(q)}"></form></section>
     <section class="srch"><div class="search__out" data-search-out aria-live="polite">${inCat && q ? searchAll(q, inCat) : searchOut(q)}</div></section>`;
 }
