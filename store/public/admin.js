@@ -108,7 +108,7 @@ function tallyRow(p) {
   const c = catOf(p.category_id), count = state.smode === "count", done = count && state.counted.has(p.sku);
   return `<div class="row tally ${p.active ? "" : "off"}" data-sku="${p.sku}">${thumb(p, c.tone)}
     <span class="row__main"><span class="row__name">${esc(p.name)}</span><span class="row__meta">${p.sku} &middot; <span data-was>${count ? "On record" : "Now"} <b class="num">${p.stock}</b></span></span><span class="tally__say" data-say aria-live="polite">${done ? "Counted" : ""}</span></span>
-    <label class="tally__box"><span class="sr">${count ? "Counted on the shelf" : "Arrived"}, ${esc(p.name)}</span>${count ? "" : `<span class="tally__plus" aria-hidden="true">+</span>`}<input class="tally__in num" data-tally inputmode="numeric" pattern="[0-9]*" enterkeyhint="next" autocomplete="off" maxlength="5" placeholder="${count ? p.stock : ""}" data-seen="${p.stock}"></label></div>`;
+    <label class="tally__box"><span class="sr">${count ? "Counted on the shelf" : "Arrived"}, ${esc(p.name)}</span>${count ? "" : `<span class="tally__plus" aria-hidden="true">+</span>`}<input class="tally__in num" data-tally inputmode="numeric" pattern="[0-9]*" enterkeyhint="next" autocomplete="off" maxlength="5" data-seen="${p.stock}"></label></div>`;
 }
 const modeChip = (id, label) => `<button class="seg__b" type="button" data-smode="${id}" aria-pressed="${state.smode === id}">${label}</button>`;
 const MODE_HELP = { adjust: "", count: "Type what is on the shelf and press Next. The difference is saved as a count, with your name.", receive: "Type how many came in and press Next. Each one is added and saved with your name." };
@@ -125,7 +125,8 @@ function viewStock() {
 const rowsHtml = list => list.map(state.smode === "adjust" ? stockRow : tallyRow).join("") || `<p class="empty">Nothing matches. Clear the search or pick another section.</p>`;
 async function saveTally(input) {
   const row = input.closest("[data-sku]"), p = state.products.find(x => x.sku === row.dataset.sku), say = $("[data-say]", row), raw = input.value.trim();
-  if (raw === "" || input.dataset.busy) return true;
+  if (input.dataset.busy) return true;
+  if (raw === "") { if (state.smode === "count" && !state.counted.has(p.sku)) { say.textContent = "Not counted"; say.className = "tally__say skip"; } return true; }
   if (!/^\d{1,5}$/.test(raw)) { say.textContent = "Numbers only"; say.className = "tally__say bad"; return false; }
   const n = +raw, count = state.smode === "count";
   if (!count && n === 0) { input.value = ""; return true; }
@@ -135,13 +136,13 @@ async function saveTally(input) {
     const r = count ? await api(`/products/${p.sku}/count`, { method: "POST", body: { counted: n, seen: +input.dataset.seen, op } })
       : await api(`/products/${p.sku}/receive`, { method: "POST", body: { qty: n, ref: state.recvRef, op } });
     p.stock = r.stock; delete input.dataset.op; input.dataset.seen = r.stock;
-    if (count) { state.counted.add(p.sku); const d = r.delta; say.textContent = d === null || d === undefined ? "Counted" : d === 0 ? "Counted, matches" : `Counted, ${d > 0 ? "+" : "−"}${Math.abs(d)}`; say.className = "tally__say " + (d ? "diff" : "ok"); input.value = ""; input.placeholder = r.stock; const pg = $("[data-progress]"); if (pg) pg.textContent = `${state.counted.size} counted this session`; }
+    if (count) { state.counted.add(p.sku); const d = r.delta; say.textContent = d === null || d === undefined ? "Counted" : d === 0 ? "Counted, matches" : `Counted, ${d > 0 ? "+" : "−"}${Math.abs(d)}`; say.className = "tally__say " + (d ? "diff" : "ok"); input.value = ""; const pg = $("[data-progress]"); if (pg) pg.textContent = `${state.counted.size} counted this session`; }
     else { say.textContent = `+${n} in, now ${r.stock}`; say.className = "tally__say ok"; input.value = ""; }
     $("[data-was] b", row).textContent = r.stock;
     return true;
   } catch (er) {
     if (er.status && er.status < 500) delete input.dataset.op;   // a lost answer keeps its key: tapping again cannot add the delivery twice
-    if (er.data && typeof er.data.stock === "number") { p.stock = er.data.stock; input.dataset.seen = er.data.stock; $("[data-was] b", row).textContent = er.data.stock; input.placeholder = count ? er.data.stock : ""; }
+    if (er.data && typeof er.data.stock === "number") { p.stock = er.data.stock; input.dataset.seen = er.data.stock; $("[data-was] b", row).textContent = er.data.stock;  }
     say.textContent = er.message; say.className = "tally__say bad"; return false;
   } finally { delete input.dataset.busy; }
 }
@@ -216,7 +217,7 @@ const dropCard = o => {
   const title = o.method === "pickup" ? "Picking up" : isLocal(o) ? "Deliver to" : "Ship to";
   return `<section class="drop" aria-label="${title}"><p class="meta">${title}</p>
     ${a.line1 ? `<p class="drop__addr">${esc(a.line1)}<br>${esc(a.city)}, ${esc(a.province)} ${esc(a.postal)}</p>` : ""}${from ? `<p class="drop__from">${from}</p>` : ""}
-    <div class="drop__act">${o.phone ? `<a class="btn" href="tel:${esc(String(o.phone).replace(/[^\d+]/g, ""))}">Call ${esc(o.phone)}</a>` : ""}${where ? `<a class="btn btn--ghost" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(where)}" target="_blank" rel="noopener">Open in Maps</a>` : ""}</div></section>`;
+    <div class="drop__act">${o.phone ? `<a class="btn${o.method === "pickup" ? " btn--ghost" : ""}" href="tel:${esc(String(o.phone).replace(/[^\d+]/g, ""))}">Call ${esc(o.phone)}</a>` : ""}${where ? `<a class="btn btn--ghost" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(where)}" target="_blank" rel="noopener">Open in Maps</a>` : ""}</div></section>`;
 };
 const waitDays = o => o.status === "ready" && (o.ready_at || o.updated_at) ? Math.floor((Date.now() - Date.parse(o.ready_at || o.updated_at)) / 864e5) : 0;
 const REASON = { no_show: "Not picked up", customer: "Customer asked", other: "Other" };
@@ -230,7 +231,7 @@ function viewOrders() {
   const todo = o => ["paid", "packed", "ready"].includes(o.status), list = state.orders.filter(o => state.oflt === "all" || (state.oflt === "todo" ? todo(o) : !todo(o)));
   const chip = (id, label) => `<button class="chip" type="button" data-oflt="${id}" aria-pressed="${state.oflt === id}">${label}</button>`;
   return `<div class="tools"><h1 class="h1">Orders<span class="sample">Sample orders</span></h1><div class="chips" role="group" aria-label="Filter">${chip("todo", "To do " + state.orders.filter(todo).length)}${chip("done", "Finished")}${chip("all", "All " + state.orders.length)}</div></div>
-    <div class="rows">${list.map(o => { const k = ORDER_STATE[o.status][0], label = stateLabel(o); return `<button class="row order" type="button" data-order="${o.id}"><span class="row__main"><span class="row__name">${esc(o.name)}</span><span class="row__meta">${o.id} &middot; ${when(o.created_at)} &middot; ${o.units} ${o.units === 1 ? "item" : "items"} &middot; ${o.method === "pickup" ? "Pickup" : isLocal(o) ? "Delivery" : esc(o.tax_province || "")}${waitDays(o) >= 3 ? ` &middot; <b class="wait">waiting ${waitDays(o)} days</b>` : ""}</span></span><span class="order__r"><b class="num">${money(o.total_cents)}</b><span class="state ${k}">${label}</span></span></button>`; }).join("") || `<p class="empty">Nothing waiting. New orders show up here.</p>`}</div>`;
+    <div class="rows">${list.map(o => { const k = ORDER_STATE[o.status][0], label = stateLabel(o); return `<button class="row order" type="button" data-order="${o.id}"><span class="row__main"><span class="row__name">${esc(o.name)}</span><span class="row__meta">${o.id} &middot; ${when(o.created_at)} &middot; ${o.units} ${o.units === 1 ? "item" : "items"} &middot; ${o.method === "pickup" ? "Pickup" : isLocal(o) ? "Delivery" : esc(o.tax_province || "")}</span></span><span class="order__r"><b class="num">${money(o.total_cents)}</b><span class="state ${k}">${label}</span>${waitDays(o) >= 3 ? `<b class="wait">Waiting ${waitDays(o)} days</b>` : ""}</span></button>`; }).join("") || `<p class="empty">Nothing waiting. New orders show up here.</p>`}</div>`;
 }
 async function orderSheet(id) {
   const { order: o, items, emails = [], trail = [] } = await api("/orders/" + id), k = ORDER_STATE[o.status][0], label = stateLabel(o), next = NEXT(o);
@@ -276,8 +277,9 @@ function viewOffice(r, staff, settings) {
   const smax = Math.max(1, ...r.sources.map(x => x.subtotal));
   return `<div class="office">
     <section class="hero wide"><div class="month"><button class="month__b" type="button" data-month="${shiftMonth(mo, -1)}" aria-label="Month before">&larr;</button><p class="meta" aria-live="polite">${monthName(mo)}</p>${mo < thisMonth ? `<button class="month__b" type="button" data-month="${shiftMonth(mo, 1)}" aria-label="Next month">&rarr;</button>` : `<span class="month__b" aria-hidden="true"></span>`}</div>
-      <h1 class="hero__fig num"><sup>$</sup>${money(s.share_cents).slice(1)}</h1>
-      <p class="hero__sub">studio share: ${pct}% of the ${esc(s.basis_label)}, ${money(s.basis_cents)}</p>
+      <h1 class="hero__fig num">${r.net.subtotal < 0 ? "&minus;" : ""}<sup>$</sup>${money(Math.abs(r.net.subtotal), true).slice(1)}</h1>
+      <p class="hero__sub">net online sales, before tax and delivery</p>
+      <div class="share"><p class="meta">Studio share</p><b class="num">${money(s.share_cents)}</b><small>${pct}% of the ${esc(s.basis_label)}, ${money(s.basis_cents)}</small></div>
       <p class="fineprint">The basis waits on the owner's written confirmation. Set by ${esc(who(s.basis_set_by))}${s.basis_set_at ? ", " + when(s.basis_set_at).replace(/\.$/, "") : ""}.</p></section>
     <section><h2 class="h2">Online sales</h2><p class="fineprint office__note">Subtotal is the items, before tax and delivery. Sales count on the order date, cancels on the day they happen.</p><table class="ledger"><thead><tr><th scope="col">${monthName(mo)}</th><th scope="col" class="r">Orders</th><th scope="col" class="r">Subtotal</th></tr></thead><tbody>
       ${line("Paid orders", r.sales.orders, r.sales.subtotal)}
@@ -289,7 +291,8 @@ function viewOffice(r, staff, settings) {
       <p class="fineprint">From the first visit's link: ?src=card on the business card, utm_source=gbp on Google, or the site that sent them.</p></section>
     <section><h2 class="h2">Studio share basis</h2><fieldset class="basis"><legend class="sr">What the studio share is worked out on</legend>
       <label class="check"><input type="radio" name="basis" value="subtotal" data-basis ${settings.studio_share_basis !== "total" ? "checked" : ""}> Items subtotal, before tax and delivery</label>
-      <label class="check"><input type="radio" name="basis" value="total" data-basis ${settings.studio_share_basis === "total" ? "checked" : ""}> Full total paid, with tax and delivery</label></fieldset></section>
+      <label class="check"><input type="radio" name="basis" value="total" data-basis ${settings.studio_share_basis === "total" ? "checked" : ""}> Full total paid, with tax and delivery</label></fieldset>
+      <button class="btn btn--ghost" type="button" data-savebasis hidden>Save the new basis</button><p class="fineprint">Change it only when the owner has confirmed the basis in writing. Each change is logged with your name.</p></section>
     <section class="wide team"><h2 class="h2">Team</h2>
       <div class="rows">${staff.map(p => `<div class="row staff"><span class="row__main"><span class="row__name">${esc(p.name)}</span><span class="row__meta">${p.last_in ? "Last in " + when(p.last_in) : "Not signed in yet"} &middot; added ${when(p.created_at)}</span></span><span class="staff__act"><button class="bar__link" type="button" data-repin="${p.id}" data-name="${esc(p.name)}">New PIN</button><button class="bar__link" type="button" data-unstaff="${p.id}" data-name="${esc(p.name)}">Remove</button></span></div>`).join("") || `<p class="empty">No staff yet. Add the first person below; they sign in with their name and PIN.</p>`}</div>
       <form class="addstaff" data-addstaff novalidate><label class="field"><span>First name</span><input class="input" name="sname" maxlength="30" autocomplete="off" required></label>
@@ -327,6 +330,7 @@ document.addEventListener("click", async e => {
   if (t.closest("[data-new]")) return editSheet(null);
   if ((el = t.closest("[data-smode]"))) { state.smode = el.dataset.smode; await render(); return; }
   if (t.closest("[data-gate-swap]")) { state.ownerGate = !state.ownerGate; return gate(); }
+  if ((el = t.closest("[data-savebasis]"))) { const v = ($('input[name="basis"]:checked') || {}).value; el.disabled = true; try { await api("/settings", { method: "PUT", body: { studio_share_basis: v } }); toast("Saved. The report is worked out again."); render(); } catch (er) { toast(er.message); el.disabled = false; } return; }
   if ((el = t.closest("[data-month]"))) { state.month = el.dataset.month; return render(); }
   if ((el = t.closest("[data-unstaff]"))) { const n = el.dataset.name; if (!confirm(`Remove ${n}? Their sign-in stops now. Their past changes keep their name.`)) return; try { await api(`/staff/${el.dataset.unstaff}`, { method: "DELETE", body: {} }); toast(`${n} removed.`); render(); } catch (er) { toast(er.message); } return; }
   if ((el = t.closest("[data-repin]"))) { const pin = prompt(`New 6-digit PIN for ${el.dataset.name}`); if (pin === null) return; try { await api(`/staff/${el.dataset.repin}/pin`, { method: "POST", body: { pin: pin.trim() } }); toast("PIN changed. Their old sign-ins ended."); } catch (er) { toast(er.message); } return; }
@@ -356,7 +360,7 @@ document.addEventListener("keydown", async e => {
 document.addEventListener("focusout", e => { if (e.target.matches("[data-tally]") && e.target.value.trim() && !e.target.dataset.busy) saveTally(e.target); });
 document.addEventListener("change", async e => {
   if (e.target.id === "recvref") { state.recvRef = e.target.value.trim(); return; }
-  if (e.target.matches("[data-basis]")) { try { await api("/settings", { method: "PUT", body: { studio_share_basis: e.target.value } }); toast("Saved. The report is worked out again."); render(); } catch (er) { toast(er.message); } return; }
+  if (e.target.matches("[data-basis]")) { const b = $("[data-savebasis]"); if (b) b.hidden = false; return; }
   if (!e.target.matches("[data-idcheck]")) return;
   const id = e.target.closest("[data-ordersheet]").dataset.ordersheet, on = e.target.checked; e.target.disabled = true;
   try { await api(`/orders/${id}/id-check`, { method: "POST", body: { checked: on } }); await orderSheet(id); } catch (er) { e.target.checked = !on; e.target.disabled = false; toast(er.message); }
