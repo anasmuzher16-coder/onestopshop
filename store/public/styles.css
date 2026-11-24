@@ -692,6 +692,12 @@ html.pour-still.pour-mist body::before{background-image:url(img/mist-still.webp)
 .fx .p0{transform-box:view-box;transform-origin:20px 68.4px}
 .fx .p1{transform-box:view-box;transform-origin:54px 68.5px}
 .fx .p2{transform-box:view-box;transform-origin:85.5px 68.5px}
+/* 08b the page objects in the same material language as the section objects: steel, brass, navy, kraft, paper, one red */
+.fx .o.c{opacity:1}
+.fx .m-st{fill:#c9d0da} .fx .m-sh{fill:#98a2b2} .fx .m-n{fill:#333d58} .fx .m-d{fill:#232b42} .fx .m-g{fill:#e8c465} .fx .m-gd{fill:#b58d36}
+.fx .m-bn{fill:#f4ecdc} .fx .m-bs{fill:#d8cdb8} .fx .m-w{fill:#fff} .fx .m-r{fill:#e0261c} .fx .m-rd{fill:#a81f18} .fx .m-k{fill:#c99a63} .fx .m-kd{fill:#a67a48} .fx .m-kh{fill:#e2bd8e}
+.fx .m-sn{stroke:#333d58} .fx .m-bd{fill:#bdb097} .fx .m-pe{stroke:#a89c84;stroke-width:1}
+.fx .o.c .ink{stroke:#333d58}
 /* Parts on a phone: the long title leaves no room beside it, so the band gives the parts room under it, whole */
 /* On a phone a long title leaves no room beside it, so the object sits whole under the end of the title: those bands
    keep room for it, and the line under the title stops short of it. Decided in CSS so nothing moves when effects load. */
@@ -769,6 +775,21 @@ html.restoring .grid--shop .card{content-visibility:visible}
   .top__cart{flex:none}
   .top__cart[aria-current]{color:var(--color-strong);box-shadow:0 2px 0 var(--color-strong)}
 }
+/* no JavaScript: the ways to reach the shop are still on the page */
+.nojs{padding:var(--s-12) var(--gutter)}
+/* 25 the label's shop name only prints where it can be read; on small labels the ember header stays, without the words */
+.sticker::before{content:""}
+.pdp__tile .sticker::before{content:"ONE STOP"}
+@media (min-width:640px){.grid .sticker::before{content:"ONE STOP";font-size:8px;line-height:3}}
+@media (min-width:960px){.piece .sticker::before{content:"ONE STOP";font-size:8px;line-height:3}
+  .shophead[data-cat="bowls"] .fx-obj{top:43%}}   /* the bowl sits higher, so its stem reads as a stem running off the band, not a stub */
+/* 26 on a phone the dock asks for the postal code, so the page does not ask again */
+@media (max-width:959px){.cartship__ask,#checkout-why{display:none}}
+/* 27 utility pages start on the same left edge as their title */
+.cart,.reading,.empty{margin:0}
+/* 28 the hero word's comma stands inside its band, and on a phone the small label keeps clear of the bowl */
+@media (min-width:960px){.hero__word{bottom:.15em}}
+@media (max-width:959px){.piece .sticker{font-size:.92rem;top:var(--s-2);right:var(--s-1)}}
 /* the cart says plainly when the shelf changed what it holds: a word and a mark, in the reading order */
 .cartnews{margin:0 0 var(--s-4);font-size:var(--t-14);color:var(--color-strong);font-weight:500}
 .cartnews p{margin:0;padding:var(--s-3) 0;border-top:1px solid var(--color-line)}

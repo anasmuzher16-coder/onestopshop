@@ -12,6 +12,7 @@ const SECURITY = {
   "Referrer-Policy": "strict-origin-when-cross-origin",
   "X-Frame-Options": "DENY",
   "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+  "Strict-Transport-Security": "max-age=31536000",
 };
 const money = cents => "$" + (cents / 100).toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -57,7 +58,9 @@ async function page(request, env, url, ctx) {
       offers: { "@type": "Offer", price: (p.price_cents / 100).toFixed(2), priceCurrency: "CAD", url: canonical, availability: "https://schema.org/" + (p.stock > 0 ? "InStock" : "OutOfStock") } };
     extra.push(`<script type="application/ld+json">${JSON.stringify(ld).replace(/</g, "\\u003c")}</script>`);
   }
+  else extra.push(`<meta property="og:image" content="${url.origin}/img/share.jpg">`, `<meta property="og:image:width" content="1200">`, `<meta property="og:image:height" content="630">`, `<meta name="twitter:card" content="summary_large_image">`);
   if (url.pathname === "/") {   // what search engines and maps read about the shop
+    const hero = heroFirst(cat); if (hero) extra.push(heroPreload(hero));   // the picture the first screen is waiting for
     const ld = { "@context": "https://schema.org", "@type": "Store", name: site, url: url.origin, telephone: "+1-519-255-2222", address: { "@type": "PostalAddress", streetAddress: "760 Wyandotte St E", addressLocality: "Windsor", addressRegion: "ON", postalCode: "N9A 3J4", addressCountry: "CA" }, geo: { "@type": "GeoCoordinates", latitude: 42.3179407, longitude: -83.0263116 }, openingHours: ["Mo-Sa 10:00-21:00", "Su 11:00-19:00"], sameAs: ["https://www.instagram.com/one1_stop_shop/", "https://www.tiktok.com/@onestopshop6"] };
     extra.push(`<script type="application/ld+json">${JSON.stringify(ld).replace(/</g, "\\u003c")}</script>`);
   }
@@ -75,6 +78,18 @@ async function page(request, env, url, ctx) {
   return new Response(out.body, { status: d ? 200 : 404, headers });
 }
 const esc = s => String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+// The first hookah in the home hero, picked the way the page picks it, with the same image list, so the browser reuses this download.
+const HERO = ["Mamoun Hatshepsut", "Sultan Totem", "Mamoun Cafe Chiller", "Lounge Six", "Mamoun Star"], IMG_V = "?v=1794615693";   // IMG_V matches V in public/app.js
+function heroFirst(cat) {
+  const ok = p => p && p.category_id === "hookahs" && !p.img_dark && p.img && !p.photo_ver && p.stock !== 0;
+  return HERO.map(n => cat.products.find(p => p.name === n)).find(ok) || cat.products.find(ok) || null;
+}
+const heroPreload = p => { const u = s => `img/pc/${p.img}${s}.webp${IMG_V}`; return `<link rel="preload" as="image" fetchpriority="high" href="${u("")}" imagesrcset="${u("-s")} 360w, ${u("-m")} 540w, ${u("")} 720w${p.img_lw ? `, ${u("-l")} ${p.img_lw}w` : ""}" imagesizes="(min-width:960px) 42vw, 58vw">`; };
+// The sitemap exists only once the shop is live: the demo stays out of search engines.
+function sitemap(cat, url) {
+  const paths = ["/", "/shop", ...cat.categories.map(c => `/shop/${c.id}`), "/gifts/under-50", "/gifts/under-150", "/set", "/shipping", "/privacy", "/terms", ...cat.products.map(p => `/p/${p.sku}`)];
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${paths.map(p => `<url><loc>${esc(url.origin + p)}</loc></url>`).join("\n")}\n</urlset>\n`;
+}
 
 export default {
   // every night: a full copy of the shop's records into the backup bucket
@@ -109,6 +124,10 @@ export default {
         headers.set("Content-Security-Policy", SECURITY["Content-Security-Policy"].replace("img-src 'self' data:", "img-src 'self' data: blob:"));
         headers.set("X-Robots-Tag", "noindex, nofollow"); headers.set("Cache-Control", "no-cache");
         return new Response(shell.body, { status: 200, headers });
+      }
+      if (path === "/sitemap.xml") {
+        if (env.LIVE !== "1") return new Response("Not found", { status: 404, headers: { "Content-Type": "text/plain; charset=utf-8", "X-Robots-Tag": "noindex, nofollow" } });
+        return new Response(sitemap(await shopCatalog(env, ctx), url), { headers: { "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "public, max-age=3600" } });
       }
       if (path === "/index.html") return Response.redirect(url.origin + "/", 301);
       const lower = path.match(/^\/p\/([A-Za-z]+-\d+)\/?$/); if (lower && lower[1] !== lower[1].toUpperCase()) return Response.redirect(`${url.origin}/p/${lower[1].toUpperCase()}`, 301);   // an item number typed in small letters

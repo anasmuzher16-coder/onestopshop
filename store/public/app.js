@@ -231,7 +231,7 @@ function viewProduct(sku) {
         <table class="ledger"><thead><tr><th scope="col">Service</th><th scope="col">Arrives</th><th scope="col" class="r">Cost</th></tr></thead>
         <tbody>${localRow(p)}${opts.map(o => `<tr><td>${o.carrier} ${o.service}</td><td>${days(o.days)}</td><td class="r num">${money(o.total)}</td></tr>`).join("")}
         <tr><td>Pick up at ${SHOP_STREET}</td><td>${pickupDay()}</td><td class="r num">Free</td></tr></tbody></table>`
-        : `<p class="ways__to">Local delivery from $10 near Windsor. Free pickup. ${p.ship === "pickup_only" ? "Not sent by Canada Post." : p.ship === "ground_only" ? "Ships by ground across Canada." : "Ships across Canada."}</p><button class="btn btn--ghost btn--wide" type="button" data-open-postal>Check delivery to my postal code</button>`}
+        : `<p class="ways__to">Local delivery from $10 near Windsor. Free pickup. ${p.ship === "pickup_only" ? "Not sent by Canada Post." : p.ship === "ground_only" ? "Ships by ground across Canada." : "Ships across Canada."}</p>`}
       </section>
       ${p.cat === "hookahs" ? `<section class="parts" aria-labelledby="parts-h">
         <h2 class="h3" id="parts-h">The parts</h2>
@@ -387,7 +387,7 @@ function deliveryLine(p, opts) {
 }
 function syncDelivery() {
   const box = $("[data-delivery-strip]"), btn = $(".dstrip__btn", box), on = route().replace(/^#\/?/, "").split("/")[0], answered = !!state.reach || (!!state.dest && (state.dest.complete || !localArea(state.dest))),
-    choosing = on === "shop" && !answered && !store.get("choose-off"), show = choosing || (!["cart", "checkout", "order", "shop"].includes(on) && !answered && !store.get("strip-off"));   // gone once we have their answer, or once they close it. The product page and cart can still take one
+    choosing = on === "shop" && !answered && !store.get("choose-off"), show = choosing || (!["cart", "checkout", "order", "shop", "p"].includes(on) && !answered && !store.get("strip-off"));   // gone once we have their answer, or once they close it. The product page and cart can still take one
   box.hidden = !show; box.dataset.mode = choosing ? "choose" : "slim"; btn.hidden = choosing; $(".dchoose", box).hidden = !choosing;
   btn.toggleAttribute("data-open-postal", show && !choosing);   // a hidden strip must never be the control that opens the sheet
   if (!show || choosing) return;
@@ -429,7 +429,7 @@ function viewCart() {
     ${news}
     <ul class="lines">${lines.map(({ product: p, qty }) => `
       <li class="line" data-tone="${toneOf(p)}">
-        <a class="line__tile tile ${p.dark || p.photo ? "tile--photo" : ""}" href="/p/${p.sku}">${shot(p, { small: true, use: "thumb" })}</a>
+        <a class="line__tile tile ${p.dark || p.photo ? "tile--photo" : ""}" href="/p/${p.sku}" aria-label="${esc(p.name)}">${shot(p, { small: true, use: "thumb" })}</a>
         <div class="line__body"><a class="line__name" href="/p/${p.sku}">${esc(p.name)}</a><p class="line__meta num">${p.sku} &middot; ${p.kg} kg${qty >= stockFor(p) && stockFor(p) < MAX_QTY ? ` &middot; only ${stockFor(p)} in stock` : ""}</p>
           <div class="qty"><button type="button" aria-label="One less ${esc(p.name)}" data-qty="${p.sku}" data-n="${qty - 1}">&minus;</button><span class="num" aria-live="polite">${qty}</span><button type="button" aria-label="One more ${esc(p.name)}" data-qty="${p.sku}" data-n="${qty + 1}" ${qty >= stockFor(p) ? "disabled" : ""}>+</button></div></div>
         <p class="line__price num">${money(p.price * qty)}</p>
@@ -437,7 +437,7 @@ function viewCart() {
     <section class="cartship">
       <h2 class="h3">How we pack it</h2>
       <ol class="boxes">${parcels.map(p => `<li><span class="num">${p.l} \u00d7 ${p.w} \u00d7 ${p.h} cm, ${p.kg} kg</span> ${esc(p.label.toLowerCase())}, ${p.items.length} ${p.items.length === 1 ? "item" : "items"}</li>`).join("")}</ol>
-      ${!state.dest ? `<button class="btn btn--wide" type="button" data-open-postal>Check delivery to my postal code</button>` : ""}
+      ${!state.dest ? `<button class="btn btn--wide cartship__ask" type="button" data-open-postal>Check delivery to my postal code</button>` : ""}
       ${localNote}
       ${state.dest && !carried(lines) ? `<p class="note">One piece here does not go by Canada Post. ${canLocal ? "Choose local delivery or free pickup." : "Pickup at the Windsor counter is free."}</p>` : ""}
       ${tooHeavy ? `<p class="note">One of these boxes is over the 30 kg carrier limit. Call the counter at 519-255-2222 and we will quote it by hand.</p>` : ""}

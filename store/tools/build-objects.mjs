@@ -1,7 +1,7 @@
 // Builds public/fx-objects.js from the illustrator's final drawings (council2/illustrator/objects-r5.txt, copied to
 // tools/objects-r5.txt). Eight section objects drawn in colour in a 100 x 100 box. node store/tools/build-objects.mjs
 import { readFileSync, writeFileSync } from "node:fs";
-const src = readFileSync(new URL("./objects-r5.txt", import.meta.url), "utf8") + "\n" + readFileSync(new URL("./objects-pages.txt", import.meta.url), "utf8"), out = {}; // the eight sections, then the nine pages
+const src = (readFileSync(new URL("./objects-r5.txt", import.meta.url), "utf8") + "\n" + readFileSync(new URL("./objects-pages.txt", import.meta.url), "utf8")).replace(/\r\n/g, "\n"), out = {}; // the eight sections, then the nine pages
 for (const m of src.matchAll(/^### (\w+)\s*\n```html\n([\s\S]*?)\n```/gm)) out[m[1]] = m[2].trim();
 const names = Object.keys(out); if (names.length !== 17) throw new Error("expected 17 drawings, found " + names.join(","));
 writeFileSync(new URL("../public/fx-objects.js", import.meta.url),

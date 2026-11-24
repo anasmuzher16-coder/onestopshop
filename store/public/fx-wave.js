@@ -1,4 +1,5 @@
 import { commitNav, setNavGate } from "./route.js";
+import { ART } from "./fx-wave-art.js";
 // THE DRAW. Moving between the main sections pulls that section's own material across the counter: a designed leading edge, an
 // opaque body that hides the page change, and a wake that leaves along the same bearing. One lazy WebGL2 canvas, z-index 15 (over the
 // page and chips, under the top bar and dock), never takes a tap. If anything is wrong it steps aside and the normal transition runs.
@@ -158,9 +159,14 @@ const prog = key => progs[key] || (progs[key] = build(key === "flip" ? FLIP : HE
 // THE SLOT for the baked art. A new bake only changes its entry here: file, grid, cell size, full-cover frame, and optionally flow (a same-grid RG map) with flowMax (its reach in cell UV).
 const BOOKS = { parts: { file: "parts.webp", mip: true }, bowls: { file: "kit-bowls.webp", mip: true }, misc: { file: "kit-misc.webp", mip: true }, set: { file: "kit-set.webp", mip: true }, shipping: { file: "kit-shipping.webp", mip: true }, search: { file: "kit-search.webp", mip: true }, cart: { file: "kit-cart.webp", mip: true }, gifts: { file: "kit-gifts.webp", mip: true }, all: { file: "kit-all.webp", mip: true } };   // empty: smoke and fire are drawn in their shaders now, so nothing extra downloads
 // the flipbooks are asked for when the browser is idle, never on Save-Data or reduced motion
+const FIRST_BOOKS = ["all", "cart", "search"];   // what the dock and the hero reach first; the other six wait for the shopper's first touch, scroll or key
 function loadAtlas() {
-  if (atlas || saveData() || RM.matches) return; atlas = {};
-  for (const k in BOOKS) { const B = BOOKS[k], im = new Image(); im.decoding = "async"; im.src = "img/wave/" + B.file + "?v=3";   /* images cache for a day: bump this whenever the art changes */
+  if (atlas || saveData() || RM.matches) return; atlas = {}; loadBooks(FIRST_BOOKS);
+  const evs = ["pointerdown", "touchstart", "keydown", "scroll", "click"], rest = () => { evs.forEach(e => removeEventListener(e, rest, true)); loadBooks(Object.keys(BOOKS).filter(k => !FIRST_BOOKS.includes(k))); };
+  evs.forEach(e => addEventListener(e, rest, { passive: true, capture: true }));
+}
+function loadBooks(keys) {
+  for (const k of keys) { const B = BOOKS[k], im = new Image(); im.decoding = "async"; im.src = "img/wave/" + B.file + "?v=" + (ART[B.file] || "0");   /* the version is the file's own hash, from tools/build-wave-art.mjs */
     const fl = B.flow ? new Image() : null; if (fl) { fl.decoding = "async"; fl.src = "img/wave/" + B.flow; }
     Promise.all([im.decode(), fl?.decode()]).then(() => { atlas[k] = B; imgs[k] = im; if (fl) imgs[k + ":flow"] = fl; }).catch(() => {}); }   // decoded off the main thread, so the tap never pays for it
 }
@@ -247,8 +253,11 @@ function finish() { const pending = w?.path; if (w?.n >= 2 && w.sum / w.n > 40 &
 function abort() { const pending = w?.path; clearTimers(); w = null; hide(); undo = null; if (pending) commitNav(pending, proxy ? "wave" : "push"); dropKeyboard(); }
 function lostGL() { gl = null; if (cv) cv.remove(); cv = null; progs = {}; tex = {}; noise = null; vao = null; if (w) abort(); }
 
+// Never more than two full-screen colour changes in any second, however fast someone taps: past that the plain page change runs.
+const starts = [], tooFast = t => { while (starts.length && t - starts[0] > 1000) starts.shift(); return starts.length >= 2; };
 function play(key, path, under = null) {
-  if (!glInit()) return false;
+  if (tooFast(performance.now())) return false;
+  if (!glInit()) return false; starts.push(performance.now());
   const base = W[key], o = { ...base, cover: base.c ?? 300, ms: base.ms ?? 480, t0: performance.now() }; if (base.atlas && atlas?.[base.atlas] && imgs[base.atlas]) o.atlasOn = atlas[base.atlas];
   if (key === "gifts") o.p = pageTone(path);
   if (key === "home" && lastD) o.d = [-lastD[0], -lastD[1]];   // home leaves the way you came

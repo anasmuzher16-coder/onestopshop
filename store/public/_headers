@@ -1,9 +1,10 @@
 /*
   X-Robots-Tag: noindex, nofollow
+  Strict-Transport-Security: max-age=31536000
 /*.js
-  Cache-Control: public, max-age=300, stale-while-revalidate=604800
+  Cache-Control: public, max-age=300, must-revalidate
 /*.css
-  Cache-Control: public, max-age=300, stale-while-revalidate=604800
+  Cache-Control: public, max-age=300, must-revalidate
 /img/*
   Cache-Control: public, max-age=86400, stale-while-revalidate=604800
 /img/pc/*
