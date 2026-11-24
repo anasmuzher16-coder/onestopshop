@@ -256,6 +256,10 @@ ok((await adm("/report")).data.refunds.total === rep5.total + half5 && (await po
 const cr2 = await adm(`/orders/${e5id}/counter-refund`, "POST", { op: opKey(), reason: "the rest returned" });
 const rep6 = (await adm("/report")).data.refunds;
 ok(cr2.status === 200 && cr2.data.order?.status === "refunded" && (await points(erin)).points === 100 && rep6.total === rep5.total + paid5 && rep6.orders === rep5.orders + 1, "the rest refunded at the counter: the order is refunded, every point it earned is gone, the report holds it whole");
+const e6 = await order({ name: "Erin", email: erinEmail, method: "pickup", pay: "at_pickup", lines: [{ sku: mid.sku, qty: 1 }] }, erin), e6id = e6.data.order.id;
+for (const step of [["status", { status: "ready" }], ["paid", {}], ["cancel", { op: opKey(), reason: "customer" }]]) await adm(`/orders/${e6id}/${step[0]}`, "POST", step[1]);
+const rep7 = (await adm("/report")).data.refunds;
+ok((await adm(`/orders/${e6id}/counter-refund`, "POST", { op: opKey(), reason: "returned" })).status === 409 && (await adm("/report")).data.refunds.total === rep7.total, "a cancelled order takes no counter refund: the report already counts it given back, and stays as it was");
 ok((await adm(`/orders/${e5id}`)).data.trail.some(a => a.action === "order.counter_refund" && a.actor === "owner"), "the counter refund is in the order's history with who recorded it");
 
 // ---- 8. sign out, sign out everywhere, delete

@@ -106,7 +106,7 @@ const localOnly = p => !!p && (p.ship === "pickup_only" || isCharcoal(p));
 const carried = lines => !lines.some(l => localOnly(l.product));
 // No shipping to Quebec until the site has a French version (Charter of the French Language; plan section 8). The server refuses it too.
 const toQuebec = () => !!(state.dest && state.dest.prov === "QC");
-const QC_NOTE = "We do not ship to Quebec yet: the site is in English only for now. Pickup in Windsor is free, or call 519-255-2222.";
+const QC_NOTE = "<b>Not shipping to Quebec yet.</b> The site is in English only for now. Pickup in Windsor is free, or call <a class=\"link tel\" href=\"tel:+15192552222\">519-255-2222</a>.";
 const cpQuote = lines => state.dest && carried(lines) && !toQuebec() ? quote(state.dest, pack(lines)) : [];
 const freeNote = sub => sub >= FREE_LOCAL_CENTS ? "Free local delivery: your items are $200 or more before tax." : `Local delivery is free on orders of $200 or more before tax. Add ${money((FREE_LOCAL_CENTS - sub) / 100)} more to get it.`;
 function saveCart() { store.set("cart", state.cart); syncChrome(); }
@@ -180,12 +180,18 @@ function laterStart(q) {   // called once #main holds the new page; any earlier 
   const main = $("#main"), run = ++runs; pending = null;
   if (!q || !q.q.length) { main.removeAttribute("aria-busy"); return; }
   const slots = []; for (const s of main.querySelectorAll("[data-later]")) slots[+s.dataset.later] = s;
-  // cards in page order first, then the parts that wait for a quiet moment (the desktop rail)
-  const order = [...q.q.keys()].sort((a, b) => (!q.q[a].sku) - (!q.q[b].sku) || a - b);
+  // The first screen: on a desktop the filter rail is part of it (find.css shows it from 960 px), so it goes first and is drawn
+  // with the first cards; on a phone the rail is hidden and waits until the cards are in.
+  const parts = q.q.filter(x => !x.sku).length, partsFirst = q.wide;
+  const order = [...q.q.keys()].sort((a, b) => (partsFirst ? (!q.q[b].sku) - (!q.q[a].sku) : (!q.q[a].sku) - (!q.q[b].sku)) || a - b);
   pending = { q: q.q, order, slots, at: 0, step: 2, run };
   main.setAttribute("aria-busy", "true");   // screen readers wait for the whole list
-  const first = q.first;
-  soon(() => { if (!pending || pending.run !== run) return; drawLater(0, first - 1, true); if (pending) drain(run); });
+  const upto = q.first - 1 + (partsFirst ? parts : 0);
+  setTimeout(() => { if (runs === run) delete document.documentElement.dataset.swapping; }, 400);   // never hold the wave longer than this after the page is in
+  soon(() => {
+    try { if (pending && pending.run === run) { drawLater(0, upto, true); if (pending) drain(run); } }
+    finally { delete document.documentElement.dataset.swapping; }   // the wave may leave now: the first screen is in
+  });
 }
 // Draws waiting parts in order for up to `budget` ms, or through position `upto` whatever it costs (the first screen; Back to a spot).
 function drawLater(budget = 8, upto = -1, first = false) {
@@ -216,7 +222,8 @@ function drain(run) { idle(dl => { if (!pending || pending.run !== run) return; 
 // Back to a spot down a long list: the cards through the remembered one (and a screen after it) are drawn before the scroll lands.
 function drawThrough(sku) {
   if (!pending) return; const L = pending, j = sku ? L.order.findIndex(k => L.q[k].sku === sku) : -1, first = firstScreen();
-  drawLater(0, j >= 0 ? j + first : L.order.length, true);   // no card to aim at: everything, so the remembered height exists
+  drawLater(0, j >= 0 ? j + first : L.order.length, false);   // no card to aim at: everything, so the remembered height exists. Not "first":
+  // the scroll has not landed yet, so these labels wait for their cards to come into view, as on any Back
 }
 
 function cardHTML(p, i = 9) {
@@ -428,7 +435,7 @@ function viewProduct(sku) {
       ${chips}
       ${p.details && p.details.notes ? `<p class="pdp__notes"><span>Notes</span> ${esc(p.details.notes)}</p>` : ""}
       ${localOnly(p) ? counterLine(p) : ""}
-      ${!sale ? `${p.state === "tbd" ? "" : `<p class="soldline">Coming soon.</p>`}<p class="pdp__avail">${p.family ? (ticked(p) ? `In the shop. ${TBD("Availability")}` : `From Ace Hookah\u2019s catalogue. ${TBD("Availability")}`) : TBD("Availability")}</p><a class="btn btn--ghost btn--call" href="tel:+15192552222">Ask the counter</a>`
+      ${!sale ? `${p.state === "tbd" ? `<p class="pdp__avail">${TBD("Price")} The shop sets it. Call <a class="link tel" href="tel:+15192552222">519-255-2222</a> to ask.</p>` : `<p class="soldline">Coming soon.</p>`}<p class="pdp__avail">${p.family ? (ticked(p) ? `In the shop. ${TBD("Availability")}` : `From Ace Hookah\u2019s catalogue. ${TBD("Availability")}`) : TBD("Availability")}</p><a class="btn btn--ghost btn--call" href="tel:+15192552222">Ask the counter</a>`
         : sold ? `<p class="soldline">${p.dark ? "This one has sold. Each resin stem is poured once." : "Sold out for now."}</p><a class="btn btn--ghost btn--call" href="tel:+15192552222">Call the counter</a>`
         : inCart ? `<a class="btn btn--wide" href="/cart">In your cart. View cart</a>` : `<button class="btn btn--wide" type="button" data-add="${p.sku}">Add to cart</button>`}
       ${sale ? deliveryLine(p, opts) : ""}
@@ -1082,7 +1089,7 @@ function render({ chunk = false } = {}) {
   document.title = pageTitle(a, b, real);
   // a long section reached by a tap: the page now, its cards in the tasks after. Short sections draw whole, as before (the Misc
   // act stamps the labels already on its first screen at the swap, so its cards must be there).
-  queue = chunk && real && a === "shop" && (b ? SHELF.filter(p => p.cat === b).length : SHELF.length) > 24 ? { q: [], first: firstScreen() } : null;   // the window's size read before the page changes, so reading it forces no layout
+  queue = chunk && real && a === "shop" && (b ? SHELF.filter(p => p.cat === b).length : SHELF.length) > 24 ? { q: [], first: firstScreen(), wide: innerWidth >= 960 } : null;   // the window's size read before the page changes, so reading it forces no layout
   let html, q; try { html = !real ? viewMissing() : a === "shop" ? viewShop(b) : a === "p" ? viewProduct(b) : a === "cart" ? viewCart() : a === "shipping" ? viewShipping() : a === "gifts" ? viewGifts(b) : a === "set" ? viewSet() : a === "search" ? viewSearch() : a === "privacy" ? viewPrivacy() : a === "terms" ? viewTerms() : a === "checkout" ? viewCheckout() : a === "order" ? viewOrder(b) : a === "account" ? accountView(band) : !a ? viewHome() : viewMissing(); } finally { q = queue; queue = null; }
   $("#main").innerHTML = html; laterStart(q);
   document.body.dataset.route = a || "home";
@@ -1145,7 +1152,10 @@ window.addEventListener("routechange", () => {
   const [ra, rb] = route().replace(/^#\/?/, "").split("/").filter(Boolean);
   if (navInfo().cause === "wave" && ra === "shop" && (rb ? SHELF.filter(p => p.cat === rb).length : SHELF.length) > 24) {
     const root = document.documentElement; root.dataset.swapping = "";
-    soon(() => { try { if (route() !== last) go(); } finally { delete root.dataset.swapping; } });
+    // data-swapping stays on until the first screen's cards are in (laterStart clears it); with no chunked draw after all it is
+    // cleared here, and a timer makes sure the wave is never held longer than 400 ms whatever happens
+    soon(() => { try { if (route() !== last) go(); } finally { if (!pending) delete root.dataset.swapping; } });
+    setTimeout(() => delete root.dataset.swapping, 1500);
     return;
   }
   if (!navInfo().instant && document.startViewTransition && !matchMedia("(prefers-reduced-motion: reduce)").matches) document.startViewTransition(go); else go();   // a wave is already covering the change

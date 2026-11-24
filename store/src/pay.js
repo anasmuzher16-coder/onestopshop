@@ -273,6 +273,8 @@ async function counterRefund(db, o, body, actor) {
   if (!op) return json({ error: "Refresh the page and try again." }, 400);
   const prior = await db.prepare("SELECT order_id, amount_cents, status, detail FROM refunds WHERE op = ?").bind(op).first();
   if (prior) return prior.order_id === id && prior.detail === "counter" ? json({ ok: true, refund: { amount_cents: prior.amount_cents, status: prior.status }, replayed: true }) : json({ error: "That refund could not be read." }, 409);
+  // a cancelled order is already counted as given back in full on its cancel day: a till refund on it would rewrite a past month
+  if (o.status === "cancelled") return json({ error: "This order was cancelled, so the report already counts it as given back in full." }, 409);
   if (o.pay_method !== "at_pickup" || !["paid", "part_refunded"].includes(o.pay_status)) return json({ error: o.pay_method === "card" ? "This was paid by card. Refund it to the card." : "Only an order paid at the counter can have a counter refund recorded." }, 409);
   const reason = typeof body.reason === "string" ? body.reason.trim().slice(0, 200) : "";
   if (!reason) return json({ error: "Say why in a few words, for example: returned, faulty." }, 400);
@@ -282,7 +284,7 @@ async function counterRefund(db, o, body, actor) {
   if (amount > left) return json({ error: `Only ${(left / 100).toFixed(2)} is left to refund on this order.`, left_cents: left }, 409);
   let res; try { res = await db.batch([
     db.prepare(`INSERT INTO refunds (op, order_id, amount_cents, status, reason, actor, detail) SELECT ?1, ?2, ?3, 'succeeded', ?4, ?5, 'counter'
-      WHERE EXISTS (SELECT 1 FROM orders WHERE id = ?2 AND pay_method = 'at_pickup' AND pay_status IN ('paid','part_refunded'))
+      WHERE EXISTS (SELECT 1 FROM orders WHERE id = ?2 AND pay_method = 'at_pickup' AND pay_status IN ('paid','part_refunded') AND status <> 'cancelled')
       AND (SELECT paid_cents FROM orders WHERE id = ?2) - (SELECT COALESCE(SUM(amount_cents),0) FROM refunds WHERE order_id = ?2 AND status != 'failed') >= ?3`).bind(op, id, amount, reason, actor),
     db.prepare(`UPDATE orders SET refunded_cents = refunded_cents + ?1, pay_status = CASE WHEN refunded_cents + ?1 >= paid_cents THEN 'refunded' ELSE 'part_refunded' END,
       status = CASE WHEN refunded_cents + ?1 >= paid_cents THEN 'refunded' ELSE status END, updated_at = ${NOW} WHERE id = ?2 AND changes() = 1`).bind(amount, id),

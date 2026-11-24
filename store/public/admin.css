@@ -92,7 +92,7 @@ textarea.input{padding:var(--s-3);min-height:84px;resize:vertical}
 .chip[aria-pressed="true"]{background:var(--bone);border-color:var(--bone);color:var(--ink);font-weight:600}
 .rows{border-bottom:1px solid var(--color-line)}
 .row{display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:var(--s-3);align-items:center;padding:10px 0;border-top:1px solid var(--color-line)}
-.row.off{opacity:.55}
+.row.off .thumb{opacity:.45} .row.off .row__name{color:var(--color-muted)}   /* off the site: the photo fades and the name steps down; the words stay readable (WCAG 1.4.3) */
 .thumb{width:52px;height:64px;background:var(--tile,var(--coal-2));border-radius:2px;object-fit:contain;display:block}
 .row__main{min-width:0;text-align:left;display:grid;gap:2px;min-height:44px;align-content:center}
 .row__name{color:var(--color-strong);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

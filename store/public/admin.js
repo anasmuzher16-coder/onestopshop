@@ -237,12 +237,12 @@ const payFacts = o => !o.pay_status ? "" : `<div><dt>Payment</dt><dd>${PAY[o.pay
 const payActs = o => o.pay_status === "pay_at_pickup" ? `<button class="btn" type="button" data-markpaid>Mark paid at the counter</button>`
   : o.pay_method === "card" && ["paid", "part_refunded"].includes(o.pay_status) && state.me.owner ? `<form class="refund" data-refundform><label class="meta" for="rf-amt">Refund to the card</label><div class="refund__row"><input class="field num" id="rf-amt" name="amount" inputmode="decimal" value="${((o.paid_cents - (o.refunded_cents || 0)) / 100).toFixed(2)}" aria-describedby="rf-note"><button class="btn btn--ghost" type="submit">Refund</button></div><p class="fineprint" id="rf-note">Up to ${money(o.paid_cents - (o.refunded_cents || 0))}. Stock is not put back: count returns in with the stock button.</p></form>`
   : o.pay_method === "card" && ["paid", "part_refunded"].includes(o.pay_status) ? `<p class="fineprint">Refunds to the card are done by the owner.</p>`
-  : o.pay_method === "at_pickup" && ["paid", "part_refunded"].includes(o.pay_status) && state.me.owner ? `<form class="refund" data-tillrefund novalidate><p class="meta">Refund given at the counter</p>
+  : o.pay_method === "at_pickup" && ["paid", "part_refunded"].includes(o.pay_status) && o.status !== "cancelled" && state.me.owner ? `<form class="refund" data-tillrefund novalidate><p class="meta">Refund given at the counter</p>
       <div class="refund__row"><label class="field"><span>Amount given back, $</span><input class="input num" name="amount" inputmode="decimal" value="${((o.paid_cents - (o.refunded_cents || 0)) / 100).toFixed(2)}" aria-describedby="tr-note"></label></div>
       <label class="field"><span>Why</span><input class="input" name="why" maxlength="200" placeholder="Returned, faulty" aria-describedby="tr-note"></label>
       <button class="btn btn--ghost" type="submit">Record the refund</button>
       <p class="fineprint" id="tr-note">For money already given back at the till. Up to ${money(o.paid_cents - (o.refunded_cents || 0))}. It comes off the monthly report and takes back the customer's points. Count returned items in with the stock button.</p></form>`
-  : o.pay_method === "at_pickup" && ["paid", "part_refunded"].includes(o.pay_status) ? `<p class="fineprint">Refunds given at the counter are recorded by the owner.</p>` : "";
+  : o.pay_method === "at_pickup" && ["paid", "part_refunded"].includes(o.pay_status) && o.status !== "cancelled" ? `<p class="fineprint">Refunds given at the counter are recorded by the owner.</p>` : "";
 function viewOrders() {
   const todo = isTodo, list = state.orders.filter(o => state.oflt === "all" || (state.oflt === "todo" ? todo(o) : !todo(o)));
   const chip = (id, label) => `<button class="chip" type="button" data-oflt="${id}" aria-pressed="${state.oflt === id}">${label}</button>`;
