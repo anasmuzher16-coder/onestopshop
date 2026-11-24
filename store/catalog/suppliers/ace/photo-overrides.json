@@ -1,0 +1,15 @@
+{
+ "about": "Decisions a person made by looking at the contact sheets. Key: p<page>-x<xref> for a whole image, p<page>-x<xref>-<n> for the n-th piece cut from it (left to right). role gallery = never a product photo; role hand_crop = needs a hand-drawn crop before it can ship.",
+ "checked": "2026-11-24, ace-stamped-all-coal.jpg",
+ "images": {
+  "p75-x4668": {"role": "gallery", "class": "lifestyle", "why": "a gloved hand holds the hookah"},
+  "p76-x4697": {"role": "hand_crop", "why": "the wooden box stands in front of the base and is joined to it in the mask"},
+  "p15-x2383-0": {"role": "hand_crop", "why": "the carry case is joined to the hookah in the mask"},
+  "p16-x2417-0": {"role": "hand_crop", "why": "the carry case is joined to the hookah in the mask"},
+  "p25-x2753-0": {"role": "gallery", "why": "the box with two stems in front of it"},
+  "p32-x3006-0": {"role": "gallery", "why": "a display panel and tray, not the hookah"},
+  "p40-x3291-0": {"role": "gallery", "why": "the open carry case"},
+  "p54-x3817-2": {"role": "hand_crop", "why": "two hookahs (teal and green) touch in Ace's photo"},
+  "p83-x4947-0": {"role": "hand_crop", "why": "two hookahs (red and bronze) touch in Ace's photo"}
+ }
+}

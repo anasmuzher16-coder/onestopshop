@@ -1,0 +1,7096 @@
+{
+ "schema": "oss-photos/1",
+ "source": {
+  "id": "ace-2026-10",
+  "kind": "pdf",
+  "file": "8dbd1ba4-ACE_HOOKAH_October_2026.pdf",
+  "sha256": "569b9fe06ca7a352ebe12742252c623820d31bc811781bb6b6f6d0d035120c2e",
+  "pages": 84,
+  "products": 83,
+  "edition": "October 2026",
+  "received": "2026-11-23"
+ },
+ "frame": {
+  "w": 720,
+  "h": 900,
+  "product_h": 810,
+  "foot": 45,
+  "max_w": 630,
+  "resample": "Lanczos",
+  "webp_method": 4,
+  "check_above_scale": 1.25,
+  "ai_upscaling": false
+ },
+ "published_dir": "store/public/img/pc/ace",
+ "images": [
+  {
+   "page": 9,
+   "xref": 2174,
+   "family_id": "ace-dmx",
+   "class": "colour",
+   "role": "hero",
+   "crop": [
+    254,
+    32,
+    542,
+    764
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.107,
+   "colour": "blue",
+   "rgb": [
+    57,
+    95,
+    154
+   ],
+   "variant_key": "ace-dmx##a6a6a6",
+   "sku": "OSS-100026",
+   "status": "ready",
+   "out": "ace/ace-dmx-blue",
+   "note": "single product"
+  },
+  {
+   "page": 9,
+   "xref": 2172,
+   "family_id": "ace-dmx",
+   "class": "colour",
+   "role": "unmatched",
+   "crop": [
+    254,
+    32,
+    542,
+    764
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.107,
+   "colour": "green",
+   "rgb": [
+    24,
+    143,
+    80
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "ready",
+   "out": "ace/ace-dmx-green",
+   "note": "single product"
+  },
+  {
+   "page": 9,
+   "xref": 2168,
+   "family_id": "ace-dmx",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    254,
+    32,
+    543,
+    764
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.107,
+   "colour": "red",
+   "rgb": [
+    197,
+    87,
+    84
+   ],
+   "variant_key": "ace-dmx##ff914d",
+   "sku": "OSS-100024",
+   "status": "ready",
+   "out": "ace/ace-dmx-red",
+   "note": "single product"
+  },
+  {
+   "page": 9,
+   "xref": 2170,
+   "family_id": "ace-dmx",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    254,
+    32,
+    542,
+    764
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.107,
+   "colour": "black",
+   "rgb": [
+    81,
+    77,
+    74
+   ],
+   "variant_key": "ace-dmx##000000",
+   "sku": "OSS-100025",
+   "status": "ready",
+   "out": "ace/ace-dmx-black",
+   "note": "single product"
+  },
+  {
+   "page": 10,
+   "xref": 2202,
+   "family_id": "ace-isac-ace",
+   "class": "colour",
+   "role": "hero",
+   "crop": [
+    252,
+    46,
+    545,
+    758
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.138,
+   "colour": "black",
+   "rgb": [
+    64,
+    64,
+    69
+   ],
+   "variant_key": "ace-isac-ace#one",
+   "sku": "OSS-100029",
+   "status": "ready",
+   "out": "ace/ace-isac-ace-black",
+   "note": "single product"
+  },
+  {
+   "page": 10,
+   "xref": 2196,
+   "family_id": "ace-isac-ace",
+   "class": "colour",
+   "role": "unmatched",
+   "crop": [
+    252,
+    46,
+    545,
+    758
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.138,
+   "colour": "blue",
+   "rgb": [
+    7,
+    57,
+    126
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "ready",
+   "out": "ace/ace-isac-ace-blue",
+   "note": "single product"
+  },
+  {
+   "page": 10,
+   "xref": 2200,
+   "family_id": "ace-isac-ace",
+   "class": "colour",
+   "role": "unmatched",
+   "crop": [
+    252,
+    46,
+    545,
+    758
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.138,
+   "colour": "red",
+   "rgb": [
+    160,
+    18,
+    23
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "ready",
+   "out": "ace/ace-isac-ace-red",
+   "note": "single product"
+  },
+  {
+   "page": 10,
+   "xref": 2198,
+   "family_id": "ace-isac-ace",
+   "class": "colour",
+   "role": "unmatched",
+   "crop": [
+    252,
+    46,
+    545,
+    758
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.138,
+   "colour": "black",
+   "rgb": [
+    31,
+    30,
+    36
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "ready",
+   "out": "ace/ace-isac-ace-black-2",
+   "note": "single product"
+  },
+  {
+   "page": 12,
+   "xref": 2271,
+   "family_id": "ace-2506-el-t",
+   "class": "group",
+   "role": "unmatched",
+   "crop": [
+    203,
+    239,
+    262,
+    735
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.633,
+   "colour": "blue",
+   "rgb": [
+    19,
+    145,
+    213
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "CHECK",
+   "out": "ace/ace-2506-el-t-blue",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 12,
+   "xref": 2271,
+   "family_id": "ace-2506-el-t",
+   "class": "group",
+   "role": "hero",
+   "crop": [
+    303,
+    55,
+    524,
+    768
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.136,
+   "colour": "blue",
+   "rgb": [
+    7,
+    96,
+    143
+   ],
+   "variant_key": "ace-2506-el-t##a6a6a6",
+   "sku": "OSS-100035",
+   "status": "ready",
+   "out": "ace/ace-2506-el-t-blue-2",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 12,
+   "xref": 2273,
+   "family_id": "ace-2506-el-t",
+   "class": "group",
+   "role": "unmatched",
+   "crop": [
+    203,
+    239,
+    262,
+    735
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.633,
+   "colour": "red",
+   "rgb": [
+    231,
+    31,
+    22
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "CHECK",
+   "out": "ace/ace-2506-el-t-red",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 12,
+   "xref": 2273,
+   "family_id": "ace-2506-el-t",
+   "class": "group",
+   "role": "unmatched",
+   "crop": [
+    303,
+    55,
+    525,
+    768
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.136,
+   "colour": "red",
+   "rgb": [
+    156,
+    13,
+    10
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "ready",
+   "out": "ace/ace-2506-el-t-red-2",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 12,
+   "xref": 2275,
+   "family_id": "ace-2506-el-t",
+   "class": "group",
+   "role": "colour",
+   "crop": [
+    203,
+    239,
+    261,
+    735
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.633,
+   "colour": "yellow",
+   "rgb": [
+    233,
+    167,
+    30
+   ],
+   "variant_key": "ace-2506-el-t##ff914d",
+   "sku": "OSS-100033",
+   "status": "CHECK",
+   "out": "ace/ace-2506-el-t-yellow",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 12,
+   "xref": 2275,
+   "family_id": "ace-2506-el-t",
+   "class": "group",
+   "role": "unmatched",
+   "crop": [
+    303,
+    55,
+    524,
+    768
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.136,
+   "colour": "orange",
+   "rgb": [
+    162,
+    107,
+    12
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "ready",
+   "out": "ace/ace-2506-el-t-orange",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 15,
+   "xref": 2383,
+   "family_id": "ace-egy-xme-1",
+   "class": "group",
+   "role": "hand_crop",
+   "crop": [
+    28,
+    42,
+    523,
+    769
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.114,
+   "colour": "black",
+   "rgb": [
+    61,
+    57,
+    54
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "hand_crop",
+   "out": "ace/ace-egy-xme-1-black",
+   "note": "person checked: the carry case is joined to the hookah in the mask"
+  },
+  {
+   "page": 15,
+   "xref": 2383,
+   "family_id": "ace-egy-xme-1",
+   "class": "group",
+   "role": "hero",
+   "crop": [
+    518,
+    43,
+    785,
+    768
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.117,
+   "colour": "gold",
+   "rgb": [
+    107,
+    85,
+    47
+   ],
+   "variant_key": "ace-egy-xme-1##a6a6a6",
+   "sku": "OSS-100044",
+   "status": "ready",
+   "out": "ace/ace-egy-xme-1-gold",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 16,
+   "xref": 2417,
+   "family_id": "ace-egy-xme3",
+   "class": "group",
+   "role": "hand_crop",
+   "crop": [
+    27,
+    65,
+    521,
+    770
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.149,
+   "colour": "black",
+   "rgb": [
+    60,
+    56,
+    52
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "hand_crop",
+   "out": "ace/ace-egy-xme3-black",
+   "note": "person checked: the carry case is joined to the hookah in the mask"
+  },
+  {
+   "page": 16,
+   "xref": 2417,
+   "family_id": "ace-egy-xme3",
+   "class": "group",
+   "role": "hero",
+   "crop": [
+    518,
+    65,
+    789,
+    770
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.149,
+   "colour": "gold",
+   "rgb": [
+    115,
+    90,
+    48
+   ],
+   "variant_key": "ace-egy-xme3##a6a6a6",
+   "sku": "OSS-100047",
+   "status": "ready",
+   "out": "ace/ace-egy-xme3-gold",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 25,
+   "xref": 2753,
+   "family_id": "ace-panda",
+   "class": "group",
+   "role": "gallery",
+   "crop": [
+    54,
+    15,
+    463,
+    773
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.069,
+   "colour": "black",
+   "rgb": [
+    75,
+    77,
+    79
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "gallery_only",
+   "out": "ace/ace-panda-black",
+   "note": "person checked: the box with two stems in front of it"
+  },
+  {
+   "page": 25,
+   "xref": 2753,
+   "family_id": "ace-panda",
+   "class": "group",
+   "role": "hero",
+   "crop": [
+    463,
+    11,
+    625,
+    662
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.244,
+   "colour": "black",
+   "rgb": [
+    77,
+    77,
+    81
+   ],
+   "variant_key": "ace-panda##000000",
+   "sku": "OSS-100077",
+   "status": "ready",
+   "out": "ace/ace-panda-black-2",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 26,
+   "xref": 2805,
+   "family_id": "ace-tsar-molotov",
+   "class": "kit",
+   "role": "gallery",
+   "crop": [
+    184,
+    42,
+    599,
+    765
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.12,
+   "colour": null,
+   "rgb": null,
+   "variant_key": null,
+   "sku": null,
+   "status": "gallery_only",
+   "out": null,
+   "note": "packaging box"
+  },
+  {
+   "page": 26,
+   "xref": 2781,
+   "family_id": "ace-tsar-molotov",
+   "class": "colour",
+   "role": "hero",
+   "crop": [
+    238,
+    103,
+    755,
+    732
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.219,
+   "colour": "blue",
+   "rgb": [
+    6,
+    99,
+    153
+   ],
+   "variant_key": "ace-tsar-molotov##5271ff",
+   "sku": "OSS-100081",
+   "status": "ready",
+   "out": "ace/ace-tsar-molotov-blue",
+   "note": "single product, 1 loose piece(s) left out"
+  },
+  {
+   "page": 26,
+   "xref": 2783,
+   "family_id": "ace-tsar-molotov",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    241,
+    109,
+    720,
+    732
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.3,
+   "colour": "white",
+   "rgb": [
+    165,
+    165,
+    166
+   ],
+   "variant_key": "ace-tsar-molotov##a6a6a6",
+   "sku": "OSS-100079",
+   "status": "CHECK",
+   "out": "ace/ace-tsar-molotov-white",
+   "note": "single product, 1 loose piece(s) left out"
+  },
+  {
+   "page": 26,
+   "xref": 2785,
+   "family_id": "ace-tsar-molotov",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    239,
+    99,
+    755,
+    731
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.221,
+   "colour": "black",
+   "rgb": [
+    83,
+    84,
+    89
+   ],
+   "variant_key": "ace-tsar-molotov##000000",
+   "sku": "OSS-100082",
+   "status": "ready",
+   "out": "ace/ace-tsar-molotov-black",
+   "note": "single product, 1 loose piece(s) left out"
+  },
+  {
+   "page": 27,
+   "xref": 2840,
+   "family_id": "ace-tsar-ultimate-gold",
+   "class": "kit",
+   "role": "gallery",
+   "crop": [
+    0,
+    0,
+    800,
+    800
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 0.787,
+   "colour": null,
+   "rgb": null,
+   "variant_key": null,
+   "sku": null,
+   "status": "gallery_only",
+   "out": null,
+   "note": "wide spread, not one standing product"
+  },
+  {
+   "page": 27,
+   "xref": 2836,
+   "family_id": "ace-tsar-ultimate-gold",
+   "class": "colour",
+   "role": "hero",
+   "crop": [
+    258,
+    23,
+    554,
+    763
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.095,
+   "colour": "silver",
+   "rgb": [
+    179,
+    188,
+    188
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "ready",
+   "out": "ace/ace-tsar-ultimate-gold-silver",
+   "note": "single product"
+  },
+  {
+   "page": 27,
+   "xref": 2834,
+   "family_id": "ace-tsar-ultimate-gold",
+   "class": "colour",
+   "role": "unmatched",
+   "crop": [
+    261,
+    22,
+    547,
+    760
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.098,
+   "colour": "orange",
+   "rgb": [
+    200,
+    147,
+    79
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "ready",
+   "out": "ace/ace-tsar-ultimate-gold-orange",
+   "note": "single product"
+  },
+  {
+   "page": 27,
+   "xref": 2832,
+   "family_id": "ace-tsar-ultimate-gold",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    260,
+    22,
+    546,
+    759
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.099,
+   "colour": "orange",
+   "rgb": [
+    194,
+    150,
+    82
+   ],
+   "variant_key": "ace-tsar-ultimate-gold##ffde59",
+   "sku": "OSS-100086",
+   "status": "ready",
+   "out": "ace/ace-tsar-ultimate-gold-orange-2",
+   "note": "single product"
+  },
+  {
+   "page": 27,
+   "xref": 2838,
+   "family_id": "ace-tsar-ultimate-gold",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    259,
+    23,
+    545,
+    761
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.098,
+   "colour": "silver",
+   "rgb": [
+    178,
+    176,
+    173
+   ],
+   "variant_key": "ace-tsar-ultimate-gold##a6a6a6",
+   "sku": "OSS-100085",
+   "status": "ready",
+   "out": "ace/ace-tsar-ultimate-gold-silver-2",
+   "note": "single product"
+  },
+  {
+   "page": 29,
+   "xref": 2902,
+   "family_id": "ace-tsar-h-one",
+   "class": "colour",
+   "role": "hero",
+   "crop": [
+    217,
+    19,
+    584,
+    786
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.056,
+   "colour": "black",
+   "rgb": [
+    73,
+    75,
+    75
+   ],
+   "variant_key": "ace-tsar-h-one##a6a6a6",
+   "sku": "OSS-100092",
+   "status": "ready",
+   "out": "ace/ace-tsar-h-one-black",
+   "note": "single product"
+  },
+  {
+   "page": 29,
+   "xref": 2904,
+   "family_id": "ace-tsar-h-one",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    100,
+    34,
+    565,
+    772
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.098,
+   "colour": "black",
+   "rgb": [
+    60,
+    59,
+    58
+   ],
+   "variant_key": "ace-tsar-h-one##000000",
+   "sku": "OSS-100091",
+   "status": "ready",
+   "out": "ace/ace-tsar-h-one-black-2",
+   "note": "single product, 1 loose piece(s) left out"
+  },
+  {
+   "page": 30,
+   "xref": 2943,
+   "family_id": "ace-flash-bang-amotion",
+   "class": "kit",
+   "role": "gallery",
+   "crop": [
+    90,
+    112,
+    702,
+    739
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.029,
+   "colour": null,
+   "rgb": null,
+   "variant_key": null,
+   "sku": null,
+   "status": "gallery_only",
+   "out": null,
+   "note": "wide spread, not one standing product"
+  },
+  {
+   "page": 30,
+   "xref": 2941,
+   "family_id": "ace-flash-bang-amotion",
+   "class": "group",
+   "role": "hero",
+   "crop": [
+    32,
+    216,
+    220,
+    677
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.757,
+   "colour": "black",
+   "rgb": [
+    87,
+    90,
+    89
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "CHECK",
+   "out": "ace/ace-flash-bang-amotion-black",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 30,
+   "xref": 2941,
+   "family_id": "ace-flash-bang-amotion",
+   "class": "group",
+   "role": "colour",
+   "crop": [
+    225,
+    205,
+    401,
+    653
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.808,
+   "colour": "black",
+   "rgb": [
+    88,
+    89,
+    85
+   ],
+   "variant_key": "ace-flash-bang-amotion##000000",
+   "sku": "OSS-100096",
+   "status": "CHECK",
+   "out": "ace/ace-flash-bang-amotion-black-2",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 30,
+   "xref": 2941,
+   "family_id": "ace-flash-bang-amotion",
+   "class": "group",
+   "role": "unmatched",
+   "crop": [
+    404,
+    201,
+    574,
+    637
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.858,
+   "colour": "black",
+   "rgb": [
+    100,
+    97,
+    90
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "CHECK",
+   "out": "ace/ace-flash-bang-amotion-black-3",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 30,
+   "xref": 2941,
+   "family_id": "ace-flash-bang-amotion",
+   "class": "group",
+   "role": "unmatched",
+   "crop": [
+    571,
+    201,
+    743,
+    626
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.906,
+   "colour": "grey",
+   "rgb": [
+    101,
+    95,
+    99
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "CHECK",
+   "out": "ace/ace-flash-bang-amotion-grey",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 32,
+   "xref": 3005,
+   "family_id": "ace-connoisseur",
+   "class": "lifestyle",
+   "role": "gallery",
+   "crop": [
+    0,
+    0,
+    576,
+    720
+   ],
+   "src_px": [
+    576,
+    720
+   ],
+   "scale": 1.094,
+   "colour": null,
+   "rgb": null,
+   "variant_key": null,
+   "sku": null,
+   "status": "gallery_only",
+   "out": null,
+   "note": "no mask: photo on its own background"
+  },
+  {
+   "page": 32,
+   "xref": 3006,
+   "family_id": "ace-connoisseur",
+   "class": "group",
+   "role": "gallery",
+   "crop": [
+    7,
+    104,
+    393,
+    747
+   ],
+   "src_px": [
+    707,
+    800
+   ],
+   "scale": 1.26,
+   "colour": "blue",
+   "rgb": [
+    41,
+    63,
+    99
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "gallery_only",
+   "out": "ace/ace-connoisseur-blue",
+   "note": "person checked: a display panel and tray, not the hookah"
+  },
+  {
+   "page": 32,
+   "xref": 3006,
+   "family_id": "ace-connoisseur",
+   "class": "group",
+   "role": "hand_crop",
+   "crop": [
+    234,
+    153,
+    684,
+    727
+   ],
+   "src_px": [
+    707,
+    800
+   ],
+   "scale": 1.4,
+   "colour": "bronze",
+   "rgb": [
+    107,
+    79,
+    49
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "hand_crop",
+   "out": "ace/ace-connoisseur-bronze",
+   "note": "OVERLAP: 3 products touch in Ace's photo, needs a hand crop"
+  },
+  {
+   "page": 33,
+   "xref": 3034,
+   "family_id": "ace-d-207-connoisseur",
+   "class": "colour",
+   "role": "hero",
+   "crop": [
+    294,
+    45,
+    487,
+    777
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.107,
+   "colour": "gold",
+   "rgb": [
+    137,
+    107,
+    40
+   ],
+   "variant_key": "ace-d-207-connoisseur##a6a6a6",
+   "sku": "OSS-100103",
+   "status": "ready",
+   "out": "ace/ace-d-207-connoisseur-gold",
+   "note": "single product"
+  },
+  {
+   "page": 35,
+   "xref": 3113,
+   "family_id": "ace-techno",
+   "class": "group",
+   "role": "colour",
+   "crop": [
+    6,
+    11,
+    155,
+    379
+   ],
+   "src_px": [
+    800,
+    396
+   ],
+   "scale": 2.201,
+   "colour": "red",
+   "rgb": [
+    211,
+    18,
+    29
+   ],
+   "variant_key": "ace-techno##ff1616",
+   "sku": "OSS-100108",
+   "status": "CHECK",
+   "out": "ace/ace-techno-red",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 35,
+   "xref": 3113,
+   "family_id": "ace-techno",
+   "class": "group",
+   "role": "colour",
+   "crop": [
+    174,
+    13,
+    320,
+    380
+   ],
+   "src_px": [
+    800,
+    396
+   ],
+   "scale": 2.207,
+   "colour": "black",
+   "rgb": [
+    53,
+    53,
+    58
+   ],
+   "variant_key": "ace-techno##000000",
+   "sku": "OSS-100110",
+   "status": "CHECK",
+   "out": "ace/ace-techno-black",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 35,
+   "xref": 3113,
+   "family_id": "ace-techno",
+   "class": "group",
+   "role": "hero",
+   "crop": [
+    333,
+    12,
+    482,
+    382
+   ],
+   "src_px": [
+    800,
+    396
+   ],
+   "scale": 2.189,
+   "colour": "grey",
+   "rgb": [
+    140,
+    140,
+    148
+   ],
+   "variant_key": "ace-techno##a6a6a6",
+   "sku": "OSS-100112",
+   "status": "CHECK",
+   "out": "ace/ace-techno-grey",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 35,
+   "xref": 3113,
+   "family_id": "ace-techno",
+   "class": "group",
+   "role": "colour",
+   "crop": [
+    487,
+    13,
+    637,
+    380
+   ],
+   "src_px": [
+    800,
+    396
+   ],
+   "scale": 2.207,
+   "colour": "yellow",
+   "rgb": [
+    235,
+    187,
+    64
+   ],
+   "variant_key": "ace-techno##ffde59",
+   "sku": "OSS-100107",
+   "status": "CHECK",
+   "out": "ace/ace-techno-yellow",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 35,
+   "xref": 3113,
+   "family_id": "ace-techno",
+   "class": "group",
+   "role": "colour",
+   "crop": [
+    642,
+    14,
+    791,
+    380
+   ],
+   "src_px": [
+    800,
+    396
+   ],
+   "scale": 2.213,
+   "colour": "blue",
+   "rgb": [
+    18,
+    137,
+    212
+   ],
+   "variant_key": "ace-techno##5271ff",
+   "sku": "OSS-100109",
+   "status": "CHECK",
+   "out": "ace/ace-techno-blue",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 36,
+   "xref": 3147,
+   "family_id": "ace-gun",
+   "class": "colour",
+   "role": "hero",
+   "crop": [
+    225,
+    34,
+    590,
+    776
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.092,
+   "colour": "bronze",
+   "rgb": [
+    135,
+    103,
+    75
+   ],
+   "variant_key": "ace-gun##a6a6a6",
+   "sku": "OSS-100114",
+   "status": "ready",
+   "out": "ace/ace-gun-bronze",
+   "note": "single product"
+  },
+  {
+   "page": 37,
+   "xref": 3175,
+   "family_id": "ace-baseball-bat",
+   "class": "colour",
+   "role": "hero",
+   "crop": [
+    183,
+    21,
+    685,
+    700
+   ],
+   "src_px": [
+    800,
+    715
+   ],
+   "scale": 1.193,
+   "colour": "black",
+   "rgb": [
+    58,
+    58,
+    58
+   ],
+   "variant_key": "ace-baseball-bat##000000",
+   "sku": "OSS-100116",
+   "status": "ready",
+   "out": "ace/ace-baseball-bat-black",
+   "note": "single product"
+  },
+  {
+   "page": 40,
+   "xref": 3284,
+   "family_id": "ace-glass",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    485,
+    72,
+    662,
+    502
+   ],
+   "src_px": [
+    800,
+    532
+   ],
+   "scale": 1.884,
+   "colour": "green",
+   "rgb": [
+    162,
+    206,
+    23
+   ],
+   "variant_key": "ace-glass##a6e147",
+   "sku": "OSS-100126",
+   "status": "CHECK",
+   "out": "ace/ace-glass-green",
+   "note": "single product, 1 loose piece(s) left out"
+  },
+  {
+   "page": 40,
+   "xref": 3291,
+   "family_id": "ace-glass",
+   "class": "group",
+   "role": "gallery",
+   "crop": [
+    33,
+    157,
+    458,
+    703
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.482,
+   "colour": "red",
+   "rgb": [
+    249,
+    19,
+    30
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "gallery_only",
+   "out": "ace/ace-glass-red",
+   "note": "person checked: the open carry case"
+  },
+  {
+   "page": 40,
+   "xref": 3291,
+   "family_id": "ace-glass",
+   "class": "group",
+   "role": "colour",
+   "crop": [
+    487,
+    132,
+    733,
+    747
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.317,
+   "colour": "silver",
+   "rgb": [
+    191,
+    189,
+    191
+   ],
+   "variant_key": "ace-glass##a6a6a6",
+   "sku": "OSS-100128",
+   "status": "CHECK",
+   "out": "ace/ace-glass-silver",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 40,
+   "xref": 3286,
+   "family_id": "ace-glass",
+   "class": "colour",
+   "role": "hero",
+   "crop": [
+    244,
+    57,
+    631,
+    719
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.224,
+   "colour": "purple",
+   "rgb": [
+    130,
+    94,
+    164
+   ],
+   "variant_key": "ace-glass##c16ad5",
+   "sku": "OSS-100127",
+   "status": "ready",
+   "out": "ace/ace-glass-purple",
+   "note": "single product"
+  },
+  {
+   "page": 48,
+   "xref": 3578,
+   "family_id": "ace-rose",
+   "class": "colour",
+   "role": "hero",
+   "crop": [
+    282,
+    47,
+    517,
+    760
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.136,
+   "colour": "red",
+   "rgb": [
+    179,
+    45,
+    57
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "ready",
+   "out": "ace/ace-rose-red",
+   "note": "single product"
+  },
+  {
+   "page": 48,
+   "xref": 3570,
+   "family_id": "ace-rose",
+   "class": "colour",
+   "role": "unmatched",
+   "crop": [
+    267,
+    54,
+    472,
+    689
+   ],
+   "src_px": [
+    720,
+    720
+   ],
+   "scale": 1.276,
+   "colour": "yellow",
+   "rgb": [
+    214,
+    161,
+    12
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "CHECK",
+   "out": "ace/ace-rose-yellow",
+   "note": "single product"
+  },
+  {
+   "page": 48,
+   "xref": 3576,
+   "family_id": "ace-rose",
+   "class": "colour",
+   "role": "unmatched",
+   "crop": [
+    283,
+    47,
+    517,
+    760
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.136,
+   "colour": "purple",
+   "rgb": [
+    88,
+    53,
+    148
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "ready",
+   "out": "ace/ace-rose-purple",
+   "note": "single product"
+  },
+  {
+   "page": 48,
+   "xref": 3572,
+   "family_id": "ace-rose",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    260,
+    53,
+    475,
+    696
+   ],
+   "src_px": [
+    720,
+    720
+   ],
+   "scale": 1.26,
+   "colour": "silver",
+   "rgb": [
+    139,
+    141,
+    142
+   ],
+   "variant_key": "ace-rose##000000",
+   "sku": "OSS-100150",
+   "status": "CHECK",
+   "out": "ace/ace-rose-silver",
+   "note": "single product"
+  },
+  {
+   "page": 48,
+   "xref": 3574,
+   "family_id": "ace-rose",
+   "class": "colour",
+   "role": "unmatched",
+   "crop": [
+    283,
+    47,
+    517,
+    760
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.136,
+   "colour": "blue",
+   "rgb": [
+    13,
+    73,
+    156
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "ready",
+   "out": "ace/ace-rose-blue",
+   "note": "single product"
+  },
+  {
+   "page": 48,
+   "xref": 3568,
+   "family_id": "ace-rose",
+   "class": "colour",
+   "role": "unmatched",
+   "crop": [
+    265,
+    54,
+    474,
+    693
+   ],
+   "src_px": [
+    720,
+    720
+   ],
+   "scale": 1.268,
+   "colour": "orange",
+   "rgb": [
+    227,
+    66,
+    20
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "CHECK",
+   "out": "ace/ace-rose-orange",
+   "note": "single product"
+  },
+  {
+   "page": 49,
+   "xref": 3618,
+   "family_id": "ace-245-doll",
+   "class": "colour",
+   "role": "hero",
+   "crop": [
+    279,
+    32,
+    520,
+    800
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.055,
+   "colour": "teal",
+   "rgb": [
+    22,
+    144,
+    130
+   ],
+   "variant_key": "ace-245-doll##5ce1e6",
+   "sku": "OSS-100154",
+   "status": "ready",
+   "out": "ace/ace-245-doll-teal",
+   "note": "single product"
+  },
+  {
+   "page": 49,
+   "xref": 3616,
+   "family_id": "ace-245-doll",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    278,
+    32,
+    520,
+    798
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.057,
+   "colour": "blue",
+   "rgb": [
+    45,
+    89,
+    131
+   ],
+   "variant_key": "ace-245-doll##5271ff",
+   "sku": "OSS-100152",
+   "status": "ready",
+   "out": "ace/ace-245-doll-blue",
+   "note": "single product"
+  },
+  {
+   "page": 49,
+   "xref": 3612,
+   "family_id": "ace-245-doll",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    250,
+    28,
+    468,
+    720
+   ],
+   "src_px": [
+    720,
+    720
+   ],
+   "scale": 1.171,
+   "colour": "red",
+   "rgb": [
+    153,
+    62,
+    51
+   ],
+   "variant_key": "ace-245-doll##ff3131",
+   "sku": "OSS-100151",
+   "status": "ready",
+   "out": "ace/ace-245-doll-red",
+   "note": "single product"
+  },
+  {
+   "page": 49,
+   "xref": 3614,
+   "family_id": "ace-245-doll",
+   "class": "colour",
+   "role": "unmatched",
+   "crop": [
+    250,
+    28,
+    468,
+    717
+   ],
+   "src_px": [
+    720,
+    720
+   ],
+   "scale": 1.176,
+   "colour": "pink",
+   "rgb": [
+    127,
+    57,
+    107
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "ready",
+   "out": "ace/ace-245-doll-pink",
+   "note": "single product"
+  },
+  {
+   "page": 56,
+   "xref": 3900,
+   "family_id": "ace-2312-mahir-ace",
+   "class": "group",
+   "role": "hero",
+   "crop": [
+    7,
+    92,
+    265,
+    744
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.242,
+   "colour": "teal",
+   "rgb": [
+    3,
+    134,
+    181
+   ],
+   "variant_key": "ace-2312-mahir-ace##a6a6a6",
+   "sku": "OSS-100186",
+   "status": "ready",
+   "out": "ace/ace-2312-mahir-ace-teal",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 56,
+   "xref": 3900,
+   "family_id": "ace-2312-mahir-ace",
+   "class": "group",
+   "role": "colour",
+   "crop": [
+    265,
+    92,
+    523,
+    744
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.242,
+   "colour": "red",
+   "rgb": [
+    185,
+    14,
+    12
+   ],
+   "variant_key": "ace-2312-mahir-ace##ff1616",
+   "sku": "OSS-100183",
+   "status": "ready",
+   "out": "ace/ace-2312-mahir-ace-red",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 56,
+   "xref": 3900,
+   "family_id": "ace-2312-mahir-ace",
+   "class": "group",
+   "role": "colour",
+   "crop": [
+    526,
+    92,
+    783,
+    744
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.242,
+   "colour": "green",
+   "rgb": [
+    2,
+    111,
+    64
+   ],
+   "variant_key": "ace-2312-mahir-ace##000000",
+   "sku": "OSS-100185",
+   "status": "ready",
+   "out": "ace/ace-2312-mahir-ace-green",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 57,
+   "xref": 3943,
+   "family_id": "ace-2504-train",
+   "class": "colour",
+   "role": "hero",
+   "crop": [
+    255,
+    23,
+    558,
+    777
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.074,
+   "colour": "red",
+   "rgb": [
+    235,
+    72,
+    51
+   ],
+   "variant_key": "ace-2504-train##ff1616",
+   "sku": "OSS-100188",
+   "status": "ready",
+   "out": "ace/ace-2504-train-red",
+   "note": "single product"
+  },
+  {
+   "page": 57,
+   "xref": 3941,
+   "family_id": "ace-2504-train",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    255,
+    23,
+    558,
+    777
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.074,
+   "colour": "yellow",
+   "rgb": [
+    213,
+    199,
+    51
+   ],
+   "variant_key": "ace-2504-train##ffde59",
+   "sku": "OSS-100187",
+   "status": "ready",
+   "out": "ace/ace-2504-train-yellow",
+   "note": "single product"
+  },
+  {
+   "page": 57,
+   "xref": 3937,
+   "family_id": "ace-2504-train",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    255,
+    23,
+    558,
+    777
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.074,
+   "colour": "black",
+   "rgb": [
+    52,
+    61,
+    64
+   ],
+   "variant_key": "ace-2504-train##000000",
+   "sku": "OSS-100189",
+   "status": "ready",
+   "out": "ace/ace-2504-train-black",
+   "note": "single product"
+  },
+  {
+   "page": 57,
+   "xref": 3939,
+   "family_id": "ace-2504-train",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    255,
+    23,
+    558,
+    777
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.074,
+   "colour": "blue",
+   "rgb": [
+    36,
+    78,
+    211
+   ],
+   "variant_key": "ace-2504-train##5271ff",
+   "sku": "OSS-100190",
+   "status": "ready",
+   "out": "ace/ace-2504-train-blue",
+   "note": "single product"
+  },
+  {
+   "page": 59,
+   "xref": 4030,
+   "family_id": "ace-247-cutie",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    245,
+    40,
+    550,
+    776
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.101,
+   "colour": "orange",
+   "rgb": [
+    245,
+    134,
+    34
+   ],
+   "variant_key": "ace-247-cutie##ff914d",
+   "sku": "OSS-100196",
+   "status": "ready",
+   "out": "ace/ace-247-cutie-orange",
+   "note": "single product"
+  },
+  {
+   "page": 59,
+   "xref": 4028,
+   "family_id": "ace-247-cutie",
+   "class": "colour",
+   "role": "hero",
+   "crop": [
+    246,
+    39,
+    550,
+    776
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.099,
+   "colour": "red",
+   "rgb": [
+    244,
+    49,
+    40
+   ],
+   "variant_key": "ace-247-cutie##ff1616",
+   "sku": "OSS-100199",
+   "status": "ready",
+   "out": "ace/ace-247-cutie-red",
+   "note": "single product"
+  },
+  {
+   "page": 59,
+   "xref": 4024,
+   "family_id": "ace-247-cutie",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    245,
+    39,
+    550,
+    776
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.099,
+   "colour": "teal",
+   "rgb": [
+    8,
+    211,
+    224
+   ],
+   "variant_key": "ace-247-cutie##a6a6a6",
+   "sku": "OSS-100198",
+   "status": "ready",
+   "out": "ace/ace-247-cutie-teal",
+   "note": "single product"
+  },
+  {
+   "page": 59,
+   "xref": 4026,
+   "family_id": "ace-247-cutie",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    246,
+    40,
+    550,
+    776
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.101,
+   "colour": "blue",
+   "rgb": [
+    8,
+    85,
+    224
+   ],
+   "variant_key": "ace-247-cutie##5271ff",
+   "sku": "OSS-100200",
+   "status": "ready",
+   "out": "ace/ace-247-cutie-blue",
+   "note": "single product"
+  },
+  {
+   "page": 68,
+   "xref": 4395,
+   "family_id": "ace-226-wood",
+   "class": "group",
+   "role": "colour",
+   "crop": [
+    99,
+    167,
+    271,
+    662
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.636,
+   "colour": "bronze",
+   "rgb": [
+    159,
+    103,
+    75
+   ],
+   "variant_key": "ace-226-wood##ff914d",
+   "sku": "OSS-100231",
+   "status": "CHECK",
+   "out": "ace/ace-226-wood-bronze",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 68,
+   "xref": 4395,
+   "family_id": "ace-226-wood",
+   "class": "group",
+   "role": "hero",
+   "crop": [
+    317,
+    167,
+    490,
+    663
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.633,
+   "colour": "blue",
+   "rgb": [
+    56,
+    75,
+    120
+   ],
+   "variant_key": "ace-226-wood##000000",
+   "sku": "OSS-100232",
+   "status": "CHECK",
+   "out": "ace/ace-226-wood-blue",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 68,
+   "xref": 4395,
+   "family_id": "ace-226-wood",
+   "class": "group",
+   "role": "colour",
+   "crop": [
+    519,
+    166,
+    692,
+    662
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.633,
+   "colour": "black",
+   "rgb": [
+    81,
+    80,
+    83
+   ],
+   "variant_key": "ace-226-wood##a6a6a6",
+   "sku": "OSS-100233",
+   "status": "CHECK",
+   "out": "ace/ace-226-wood-black",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 70,
+   "xref": 4473,
+   "family_id": "ace-techno-minimal",
+   "class": "kit",
+   "role": "gallery",
+   "crop": [
+    183,
+    71,
+    616,
+    730
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.229,
+   "colour": null,
+   "rgb": null,
+   "variant_key": null,
+   "sku": null,
+   "status": "gallery_only",
+   "out": null,
+   "note": "stem only, no base: a parts shot"
+  },
+  {
+   "page": 70,
+   "xref": 4477,
+   "family_id": "ace-techno-minimal",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    250,
+    38,
+    548,
+    762
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.119,
+   "colour": "red",
+   "rgb": [
+    222,
+    10,
+    6
+   ],
+   "variant_key": "ace-techno-minimal##ff1616",
+   "sku": "OSS-100242",
+   "status": "ready",
+   "out": "ace/ace-techno-minimal-red",
+   "note": "single product, 2 loose piece(s) left out"
+  },
+  {
+   "page": 70,
+   "xref": 4475,
+   "family_id": "ace-techno-minimal",
+   "class": "colour",
+   "role": "hero",
+   "crop": [
+    250,
+    37,
+    548,
+    762
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.117,
+   "colour": "orange",
+   "rgb": [
+    225,
+    144,
+    22
+   ],
+   "variant_key": "ace-techno-minimal##ff914d",
+   "sku": "OSS-100241",
+   "status": "ready",
+   "out": "ace/ace-techno-minimal-orange",
+   "note": "single product, 2 loose piece(s) left out"
+  },
+  {
+   "page": 70,
+   "xref": 4469,
+   "family_id": "ace-techno-minimal",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    249,
+    37,
+    548,
+    762
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.117,
+   "colour": "purple",
+   "rgb": [
+    126,
+    51,
+    156
+   ],
+   "variant_key": "ace-techno-minimal##5271ff",
+   "sku": "OSS-100243",
+   "status": "ready",
+   "out": "ace/ace-techno-minimal-purple",
+   "note": "single product, 2 loose piece(s) left out"
+  },
+  {
+   "page": 70,
+   "xref": 4471,
+   "family_id": "ace-techno-minimal",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    250,
+    38,
+    548,
+    762
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.119,
+   "colour": "blue",
+   "rgb": [
+    6,
+    81,
+    147
+   ],
+   "variant_key": "ace-techno-minimal##000000",
+   "sku": "OSS-100244",
+   "status": "ready",
+   "out": "ace/ace-techno-minimal-blue",
+   "note": "single product, 2 loose piece(s) left out"
+  },
+  {
+   "page": 71,
+   "xref": 4510,
+   "family_id": "ace-geometry",
+   "class": "kit",
+   "role": "gallery",
+   "crop": [
+    40,
+    0,
+    578,
+    779
+   ],
+   "src_px": [
+    599,
+    800
+   ],
+   "scale": 1.04,
+   "colour": null,
+   "rgb": null,
+   "variant_key": null,
+   "sku": null,
+   "status": "gallery_only",
+   "out": null,
+   "note": "packaging box"
+  },
+  {
+   "page": 71,
+   "xref": 4508,
+   "family_id": "ace-geometry",
+   "class": "colour",
+   "role": "hero",
+   "crop": [
+    137,
+    18,
+    505,
+    788
+   ],
+   "src_px": [
+    599,
+    800
+   ],
+   "scale": 1.052,
+   "colour": "blue",
+   "rgb": [
+    40,
+    90,
+    140
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "ready",
+   "out": "ace/ace-geometry-blue",
+   "note": "single product"
+  },
+  {
+   "page": 75,
+   "xref": 4668,
+   "family_id": "ace-maklaud",
+   "class": "lifestyle",
+   "role": "gallery",
+   "crop": [
+    0,
+    0,
+    441,
+    692
+   ],
+   "src_px": [
+    599,
+    800
+   ],
+   "scale": 1.171,
+   "colour": null,
+   "rgb": null,
+   "variant_key": null,
+   "sku": null,
+   "status": "gallery_only",
+   "out": null,
+   "note": "person checked: a gloved hand holds the hookah"
+  },
+  {
+   "page": 75,
+   "xref": 4657,
+   "family_id": "ace-maklaud",
+   "class": "kit",
+   "role": "gallery",
+   "crop": [
+    135,
+    0,
+    800,
+    800
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 0.947,
+   "colour": null,
+   "rgb": null,
+   "variant_key": null,
+   "sku": null,
+   "status": "gallery_only",
+   "out": null,
+   "note": "packaging box"
+  },
+  {
+   "page": 76,
+   "xref": 4696,
+   "family_id": "ace-makloud-gold",
+   "class": "lifestyle",
+   "role": "gallery",
+   "crop": [
+    0,
+    0,
+    664,
+    664
+   ],
+   "src_px": [
+    664,
+    664
+   ],
+   "scale": 0.949,
+   "colour": null,
+   "rgb": null,
+   "variant_key": null,
+   "sku": null,
+   "status": "gallery_only",
+   "out": null,
+   "note": "no mask: photo on its own background"
+  },
+  {
+   "page": 76,
+   "xref": 4697,
+   "family_id": "ace-makloud-gold",
+   "class": "colour",
+   "role": "hand_crop",
+   "crop": [
+    21,
+    36,
+    549,
+    760
+   ],
+   "src_px": [
+    600,
+    800
+   ],
+   "scale": 1.119,
+   "colour": "gold",
+   "rgb": [
+    123,
+    108,
+    60
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "hand_crop",
+   "out": "ace/ace-makloud-gold-gold",
+   "note": "person checked: the wooden box stands in front of the base and is joined to it in the mask"
+  },
+  {
+   "page": 2,
+   "xref": 1902,
+   "family_id": "ace-alpha-x-ss-jocker",
+   "class": "colour",
+   "role": "hero",
+   "crop": [
+    20,
+    44,
+    278,
+    572
+   ],
+   "src_px": [
+    800,
+    606
+   ],
+   "scale": 1.534,
+   "colour": "black",
+   "rgb": [
+    61,
+    62,
+    63
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "CHECK",
+   "out": "ace/ace-alpha-x-ss-jocker-black",
+   "note": "single product, 4 loose piece(s) left out"
+  },
+  {
+   "page": 3,
+   "xref": 1917,
+   "family_id": "ace-houston-polar-night",
+   "class": "kit",
+   "role": "gallery",
+   "crop": [
+    230,
+    63,
+    570,
+    403
+   ],
+   "src_px": [
+    800,
+    471
+   ],
+   "scale": 1.853,
+   "colour": null,
+   "rgb": null,
+   "variant_key": null,
+   "sku": null,
+   "status": "gallery_only",
+   "out": null,
+   "note": "wide spread, not one standing product"
+  },
+  {
+   "page": 3,
+   "xref": 1915,
+   "family_id": "ace-houston-polar-night",
+   "class": "group",
+   "role": "hero",
+   "crop": [
+    167,
+    25,
+    512,
+    463
+   ],
+   "src_px": [
+    800,
+    471
+   ],
+   "scale": 1.826,
+   "colour": "blue",
+   "rgb": [
+    61,
+    87,
+    115
+   ],
+   "variant_key": "ace-houston-polar-night##000000",
+   "sku": "OSS-100006",
+   "status": "CHECK",
+   "out": "ace/ace-houston-polar-night-blue",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 3,
+   "xref": 1915,
+   "family_id": "ace-houston-polar-night",
+   "class": "group",
+   "role": "colour",
+   "crop": [
+    445,
+    58,
+    636,
+    471
+   ],
+   "src_px": [
+    800,
+    471
+   ],
+   "scale": 1.961,
+   "colour": "blue",
+   "rgb": [
+    69,
+    102,
+    130
+   ],
+   "variant_key": "ace-houston-polar-night##a6a6a6",
+   "sku": "OSS-100007",
+   "status": "CHECK",
+   "out": "ace/ace-houston-polar-night-blue-2",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 4,
+   "xref": 5974,
+   "family_id": "ace-alpha-x-reverse",
+   "class": "kit",
+   "role": "gallery",
+   "crop": [
+    64,
+    191,
+    734,
+    609
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 0.94,
+   "colour": null,
+   "rgb": null,
+   "variant_key": null,
+   "sku": null,
+   "status": "gallery_only",
+   "out": null,
+   "note": "packaging box"
+  },
+  {
+   "page": 4,
+   "xref": 1962,
+   "family_id": "ace-alpha-x-reverse",
+   "class": "colour",
+   "role": "hero",
+   "crop": [
+    158,
+    59,
+    643,
+    738
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.193,
+   "colour": "black",
+   "rgb": [
+    52,
+    52,
+    52
+   ],
+   "variant_key": "ace-alpha-x-reverse##000000",
+   "sku": "OSS-100008",
+   "status": "ready",
+   "out": "ace/ace-alpha-x-reverse-black",
+   "note": "single product"
+  },
+  {
+   "page": 4,
+   "xref": 1960,
+   "family_id": "ace-alpha-x-reverse",
+   "class": "colour",
+   "role": "unmatched",
+   "crop": [
+    163,
+    59,
+    643,
+    730
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.207,
+   "colour": "black",
+   "rgb": [
+    62,
+    52,
+    53
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "ready",
+   "out": "ace/ace-alpha-x-reverse-black-2",
+   "note": "single product"
+  },
+  {
+   "page": 5,
+   "xref": 1995,
+   "family_id": "ace-alpha-oro",
+   "class": "kit",
+   "role": "gallery",
+   "crop": [
+    28,
+    26,
+    693,
+    691
+   ],
+   "src_px": [
+    720,
+    720
+   ],
+   "scale": 0.947,
+   "colour": null,
+   "rgb": null,
+   "variant_key": null,
+   "sku": null,
+   "status": "gallery_only",
+   "out": null,
+   "note": "wide spread, not one standing product"
+  },
+  {
+   "page": 5,
+   "xref": 1993,
+   "family_id": "ace-alpha-oro",
+   "class": "colour",
+   "role": "hero",
+   "crop": [
+    255,
+    41,
+    542,
+    751
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.141,
+   "colour": "black",
+   "rgb": [
+    69,
+    69,
+    70
+   ],
+   "variant_key": "ace-alpha-oro##000000",
+   "sku": "OSS-100010",
+   "status": "ready",
+   "out": "ace/ace-alpha-oro-black",
+   "note": "single product, 1 loose piece(s) left out"
+  },
+  {
+   "page": 5,
+   "xref": 1997,
+   "family_id": "ace-alpha-oro",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    110,
+    31,
+    290,
+    369
+   ],
+   "src_px": [
+    400,
+    400
+   ],
+   "scale": 2.396,
+   "colour": "bronze",
+   "rgb": [
+    209,
+    171,
+    108
+   ],
+   "variant_key": "ace-alpha-oro##ff914d",
+   "sku": "OSS-100009",
+   "status": "CHECK",
+   "out": "ace/ace-alpha-oro-bronze",
+   "note": "single product"
+  },
+  {
+   "page": 6,
+   "xref": 2040,
+   "family_id": "ace-245-bubble",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    231,
+    24,
+    493,
+    698
+   ],
+   "src_px": [
+    720,
+    720
+   ],
+   "scale": 1.202,
+   "colour": "blue",
+   "rgb": [
+    83,
+    125,
+    221
+   ],
+   "variant_key": "ace-245-bubble##5271ff",
+   "sku": "OSS-100013",
+   "status": "ready",
+   "out": "ace/ace-245-bubble-blue",
+   "note": "single product"
+  },
+  {
+   "page": 6,
+   "xref": 2038,
+   "family_id": "ace-245-bubble",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    231,
+    24,
+    493,
+    698
+   ],
+   "src_px": [
+    720,
+    720
+   ],
+   "scale": 1.202,
+   "colour": "gold",
+   "rgb": [
+    238,
+    220,
+    95
+   ],
+   "variant_key": "ace-245-bubble##a6e147",
+   "sku": "OSS-100014",
+   "status": "ready",
+   "out": "ace/ace-245-bubble-gold",
+   "note": "single product"
+  },
+  {
+   "page": 6,
+   "xref": 2034,
+   "family_id": "ace-245-bubble",
+   "class": "colour",
+   "role": "hero",
+   "crop": [
+    256,
+    27,
+    548,
+    775
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.083,
+   "colour": "teal",
+   "rgb": [
+    30,
+    228,
+    232
+   ],
+   "variant_key": "ace-245-bubble##5ce1e6",
+   "sku": "OSS-100015",
+   "status": "ready",
+   "out": "ace/ace-245-bubble-teal",
+   "note": "single product"
+  },
+  {
+   "page": 6,
+   "xref": 2036,
+   "family_id": "ace-245-bubble",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    230,
+    23,
+    494,
+    698
+   ],
+   "src_px": [
+    720,
+    720
+   ],
+   "scale": 1.2,
+   "colour": "orange",
+   "rgb": [
+    232,
+    132,
+    97
+   ],
+   "variant_key": "ace-245-bubble##ff3131",
+   "sku": "OSS-100012",
+   "status": "ready",
+   "out": "ace/ace-245-bubble-orange",
+   "note": "single product"
+  },
+  {
+   "page": 7,
+   "xref": 2083,
+   "family_id": "ace-2601-lucas",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    263,
+    50,
+    548,
+    782
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.107,
+   "colour": "blue",
+   "rgb": [
+    47,
+    46,
+    80
+   ],
+   "variant_key": "ace-2601-lucas##5271ff",
+   "sku": "OSS-100017",
+   "status": "ready",
+   "out": "ace/ace-2601-lucas-blue",
+   "note": "single product"
+  },
+  {
+   "page": 7,
+   "xref": 2081,
+   "family_id": "ace-2601-lucas",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    254,
+    41,
+    539,
+    772
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.108,
+   "colour": "teal",
+   "rgb": [
+    25,
+    88,
+    114
+   ],
+   "variant_key": "ace-2601-lucas##5ce1e6",
+   "sku": "OSS-100019",
+   "status": "ready",
+   "out": "ace/ace-2601-lucas-teal",
+   "note": "single product"
+  },
+  {
+   "page": 7,
+   "xref": 2077,
+   "family_id": "ace-2601-lucas",
+   "class": "colour",
+   "role": "hero",
+   "crop": [
+    245,
+    22,
+    534,
+    783
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.064,
+   "colour": "black",
+   "rgb": [
+    60,
+    53,
+    44
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "ready",
+   "out": "ace/ace-2601-lucas-black",
+   "note": "single product"
+  },
+  {
+   "page": 7,
+   "xref": 2079,
+   "family_id": "ace-2601-lucas",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    266,
+    47,
+    544,
+    770
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.12,
+   "colour": "bronze",
+   "rgb": [
+    129,
+    64,
+    39
+   ],
+   "variant_key": "ace-2601-lucas##ff3131",
+   "sku": "OSS-100016",
+   "status": "ready",
+   "out": "ace/ace-2601-lucas-bronze",
+   "note": "single product"
+  },
+  {
+   "page": 8,
+   "xref": 2128,
+   "family_id": "ace-mark-2506",
+   "class": "colour",
+   "role": "hero",
+   "crop": [
+    247,
+    41,
+    544,
+    768
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.114,
+   "colour": "black",
+   "rgb": [
+    53,
+    63,
+    70
+   ],
+   "variant_key": "ace-mark-2506##5ce1e6",
+   "sku": "OSS-100023",
+   "status": "ready",
+   "out": "ace/ace-mark-2506-black",
+   "note": "single product"
+  },
+  {
+   "page": 8,
+   "xref": 2126,
+   "family_id": "ace-mark-2506",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    253,
+    42,
+    541,
+    768
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.116,
+   "colour": "bronze",
+   "rgb": [
+    182,
+    125,
+    86
+   ],
+   "variant_key": "ace-mark-2506##ff3131",
+   "sku": "OSS-100020",
+   "status": "ready",
+   "out": "ace/ace-mark-2506-bronze",
+   "note": "single product"
+  },
+  {
+   "page": 8,
+   "xref": 2122,
+   "family_id": "ace-mark-2506",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    247,
+    41,
+    544,
+    768
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.114,
+   "colour": "blue",
+   "rgb": [
+    54,
+    127,
+    209
+   ],
+   "variant_key": "ace-mark-2506##5271ff",
+   "sku": "OSS-100021",
+   "status": "ready",
+   "out": "ace/ace-mark-2506-blue",
+   "note": "single product"
+  },
+  {
+   "page": 8,
+   "xref": 2124,
+   "family_id": "ace-mark-2506",
+   "class": "colour",
+   "role": "unmatched",
+   "crop": [
+    251,
+    42,
+    539,
+    768
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.116,
+   "colour": "black",
+   "rgb": [
+    55,
+    53,
+    58
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "ready",
+   "out": "ace/ace-mark-2506-black-2",
+   "note": "single product"
+  },
+  {
+   "page": 11,
+   "xref": 2233,
+   "family_id": "ace-247-john-master",
+   "class": "colour",
+   "role": "hero",
+   "crop": [
+    269,
+    29,
+    536,
+    781
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.077,
+   "colour": "gold",
+   "rgb": [
+    106,
+    84,
+    44
+   ],
+   "variant_key": "ace-247-john-master##ff914d",
+   "sku": "OSS-100030",
+   "status": "ready",
+   "out": "ace/ace-247-john-master-gold",
+   "note": "single product"
+  },
+  {
+   "page": 11,
+   "xref": 2235,
+   "family_id": "ace-247-john-master",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    240,
+    48,
+    472,
+    690
+   ],
+   "src_px": [
+    720,
+    720
+   ],
+   "scale": 1.262,
+   "colour": "black",
+   "rgb": [
+    71,
+    64,
+    75
+   ],
+   "variant_key": "ace-247-john-master##000000",
+   "sku": "OSS-100031",
+   "status": "CHECK",
+   "out": "ace/ace-247-john-master-black",
+   "note": "single product"
+  },
+  {
+   "page": 11,
+   "xref": 2237,
+   "family_id": "ace-247-john-master",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    243,
+    41,
+    483,
+    679
+   ],
+   "src_px": [
+    720,
+    720
+   ],
+   "scale": 1.27,
+   "colour": "black",
+   "rgb": [
+    91,
+    90,
+    90
+   ],
+   "variant_key": "ace-247-john-master##a6a6a6",
+   "sku": "OSS-100032",
+   "status": "CHECK",
+   "out": "ace/ace-247-john-master-black-2",
+   "note": "single product"
+  },
+  {
+   "page": 13,
+   "xref": 2309,
+   "family_id": "ace-mazeace-2605",
+   "class": "colour",
+   "role": "hero",
+   "crop": [
+    284,
+    25,
+    505,
+    779
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.074,
+   "colour": "bronze",
+   "rgb": [
+    135,
+    88,
+    47
+   ],
+   "variant_key": "ace-mazeace-2605##ff914d",
+   "sku": "OSS-100036",
+   "status": "ready",
+   "out": "ace/ace-mazeace-2605-bronze",
+   "note": "single product"
+  },
+  {
+   "page": 13,
+   "xref": 2311,
+   "family_id": "ace-mazeace-2605",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    279,
+    29,
+    498,
+    779
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.08,
+   "colour": "black",
+   "rgb": [
+    55,
+    55,
+    55
+   ],
+   "variant_key": "ace-mazeace-2605##000000",
+   "sku": "OSS-100037",
+   "status": "ready",
+   "out": "ace/ace-mazeace-2605-black",
+   "note": "single product"
+  },
+  {
+   "page": 13,
+   "xref": 2313,
+   "family_id": "ace-mazeace-2605",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    284,
+    32,
+    499,
+    770
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.098,
+   "colour": "silver",
+   "rgb": [
+    150,
+    151,
+    151
+   ],
+   "variant_key": "ace-mazeace-2605##a6a6a6",
+   "sku": "OSS-100038",
+   "status": "ready",
+   "out": "ace/ace-mazeace-2605-silver",
+   "note": "single product"
+  },
+  {
+   "page": 14,
+   "xref": 2347,
+   "family_id": "ace-lotus",
+   "class": "colour",
+   "role": "hero",
+   "crop": [
+    250,
+    16,
+    527,
+    780
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.06,
+   "colour": "silver",
+   "rgb": [
+    133,
+    133,
+    131
+   ],
+   "variant_key": "ace-lotus##a6a6a6",
+   "sku": "OSS-100041",
+   "status": "ready",
+   "out": "ace/ace-lotus-silver",
+   "note": "single product"
+  },
+  {
+   "page": 14,
+   "xref": 2349,
+   "family_id": "ace-lotus",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    247,
+    21,
+    519,
+    772
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.079,
+   "colour": "gold",
+   "rgb": [
+    247,
+    237,
+    95
+   ],
+   "variant_key": "ace-lotus##ffde59",
+   "sku": "OSS-100039",
+   "status": "ready",
+   "out": "ace/ace-lotus-gold",
+   "note": "single product"
+  },
+  {
+   "page": 17,
+   "xref": 2451,
+   "family_id": "ace-egy-93",
+   "class": "kit",
+   "role": "gallery",
+   "crop": [
+    52,
+    117,
+    746,
+    719
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 0.908,
+   "colour": null,
+   "rgb": null,
+   "variant_key": null,
+   "sku": null,
+   "status": "gallery_only",
+   "out": null,
+   "note": "accessory spread or packaging"
+  },
+  {
+   "page": 17,
+   "xref": 2453,
+   "family_id": "ace-egy-93",
+   "class": "colour",
+   "role": "hero",
+   "crop": [
+    144,
+    76,
+    391,
+    739
+   ],
+   "src_px": [
+    540,
+    800
+   ],
+   "scale": 1.222,
+   "colour": "gold",
+   "rgb": [
+    152,
+    125,
+    76
+   ],
+   "variant_key": "ace-egy-93##a6a6a6",
+   "sku": "OSS-100050",
+   "status": "ready",
+   "out": "ace/ace-egy-93-gold",
+   "note": "single product"
+  },
+  {
+   "page": 18,
+   "xref": 2483,
+   "family_id": "ace-egy-m2-with-briefcase",
+   "class": "lifestyle",
+   "role": "gallery",
+   "crop": [
+    2,
+    0,
+    793,
+    441
+   ],
+   "src_px": [
+    800,
+    441
+   ],
+   "scale": 0.796,
+   "colour": null,
+   "rgb": null,
+   "variant_key": null,
+   "sku": null,
+   "status": "gallery_only",
+   "out": null,
+   "note": "mask covers the whole frame"
+  },
+  {
+   "page": 18,
+   "xref": 2481,
+   "family_id": "ace-egy-m2-with-briefcase",
+   "class": "colour",
+   "role": "hero",
+   "crop": [
+    321,
+    65,
+    481,
+    695
+   ],
+   "src_px": [
+    750,
+    750
+   ],
+   "scale": 1.286,
+   "colour": "gold",
+   "rgb": [
+    137,
+    116,
+    71
+   ],
+   "variant_key": "ace-egy-m2-with-briefcase##ff914d",
+   "sku": "OSS-100051",
+   "status": "CHECK",
+   "out": "ace/ace-egy-m2-with-briefcase-gold",
+   "note": "single product"
+  },
+  {
+   "page": 19,
+   "xref": 2517,
+   "family_id": "ace-na-grani-model-2",
+   "class": "kit",
+   "role": "gallery",
+   "crop": [
+    134,
+    131,
+    700,
+    656
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.113,
+   "colour": null,
+   "rgb": null,
+   "variant_key": null,
+   "sku": null,
+   "status": "gallery_only",
+   "out": null,
+   "note": "packaging box"
+  },
+  {
+   "page": 19,
+   "xref": 2519,
+   "family_id": "ace-na-grani-model-2",
+   "class": "colour",
+   "role": "hero",
+   "crop": [
+    291,
+    92,
+    523,
+    729
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.272,
+   "colour": "silver",
+   "rgb": [
+    153,
+    151,
+    151
+   ],
+   "variant_key": "ace-na-grani-model-2##a6a6a6",
+   "sku": "OSS-100054",
+   "status": "CHECK",
+   "out": "ace/ace-na-grani-model-2-silver",
+   "note": "single product"
+  },
+  {
+   "page": 20,
+   "xref": 2555,
+   "family_id": "ace-na-grani-model-1",
+   "class": "kit",
+   "role": "gallery",
+   "crop": [
+    97,
+    139,
+    703,
+    661
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.04,
+   "colour": null,
+   "rgb": null,
+   "variant_key": null,
+   "sku": null,
+   "status": "gallery_only",
+   "out": null,
+   "note": "accessory spread or packaging"
+  },
+  {
+   "page": 20,
+   "xref": 2553,
+   "family_id": "ace-na-grani-model-1",
+   "class": "colour",
+   "role": "hero",
+   "crop": [
+    140,
+    27,
+    728,
+    700
+   ],
+   "src_px": [
+    800,
+    716
+   ],
+   "scale": 1.071,
+   "colour": "black",
+   "rgb": [
+    86,
+    86,
+    86
+   ],
+   "variant_key": "ace-na-grani-model-1##a6a6a6",
+   "sku": "OSS-100057",
+   "status": "ready",
+   "out": "ace/ace-na-grani-model-1-black",
+   "note": "single product"
+  },
+  {
+   "page": 21,
+   "xref": 2595,
+   "family_id": "ace-mattpear-classic",
+   "class": "colour",
+   "role": "hero",
+   "crop": [
+    94,
+    72,
+    689,
+    770
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.059,
+   "colour": "black",
+   "rgb": [
+    70,
+    66,
+    57
+   ],
+   "variant_key": "ace-mattpear-classic##000000",
+   "sku": "OSS-100061",
+   "status": "ready",
+   "out": "ace/ace-mattpear-classic-black",
+   "note": "single product"
+  },
+  {
+   "page": 22,
+   "xref": 2637,
+   "family_id": "ace-darkside-neo",
+   "class": "kit",
+   "role": "gallery",
+   "crop": [
+    112,
+    64,
+    540,
+    737
+   ],
+   "src_px": [
+    649,
+    800
+   ],
+   "scale": 1.204,
+   "colour": null,
+   "rgb": null,
+   "variant_key": null,
+   "sku": null,
+   "status": "gallery_only",
+   "out": null,
+   "note": "packaging box"
+  },
+  {
+   "page": 22,
+   "xref": 2635,
+   "family_id": "ace-darkside-neo",
+   "class": "colour",
+   "role": "hero",
+   "crop": [
+    208,
+    121,
+    576,
+    688
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.429,
+   "colour": "black",
+   "rgb": [
+    56,
+    56,
+    56
+   ],
+   "variant_key": "ace-darkside-neo##000000",
+   "sku": "OSS-100066",
+   "status": "CHECK",
+   "out": "ace/ace-darkside-neo-black",
+   "note": "single product"
+  },
+  {
+   "page": 23,
+   "xref": 2679,
+   "family_id": "ace-dosha",
+   "class": "kit",
+   "role": "gallery",
+   "crop": [
+    203,
+    171,
+    600,
+    640
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.587,
+   "colour": null,
+   "rgb": null,
+   "variant_key": null,
+   "sku": null,
+   "status": "gallery_only",
+   "out": null,
+   "note": "packaging box"
+  },
+  {
+   "page": 23,
+   "xref": 2677,
+   "family_id": "ace-dosha",
+   "class": "colour",
+   "role": "hero",
+   "crop": [
+    135,
+    9,
+    690,
+    798
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.027,
+   "colour": "black",
+   "rgb": [
+    65,
+    65,
+    66
+   ],
+   "variant_key": "ace-dosha##000000",
+   "sku": "OSS-100071",
+   "status": "ready",
+   "out": "ace/ace-dosha-black",
+   "note": "single product"
+  },
+  {
+   "page": 24,
+   "xref": 2713,
+   "family_id": "ace-misha-rebel",
+   "class": "group",
+   "role": "unmatched",
+   "crop": [
+    270,
+    102,
+    525,
+    700
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.355,
+   "colour": "teal",
+   "rgb": [
+    30,
+    144,
+    150
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "CHECK",
+   "out": "ace/ace-misha-rebel-teal",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 24,
+   "xref": 2713,
+   "family_id": "ace-misha-rebel",
+   "class": "group",
+   "role": "unmatched",
+   "crop": [
+    276,
+    213,
+    306,
+    577
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 2.225,
+   "colour": "grey",
+   "rgb": [
+    149,
+    149,
+    149
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "CHECK",
+   "out": "ace/ace-misha-rebel-grey",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 24,
+   "xref": 2707,
+   "family_id": "ace-misha-rebel",
+   "class": "group",
+   "role": "unmatched",
+   "crop": [
+    48,
+    256,
+    88,
+    742
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.667,
+   "colour": "blue",
+   "rgb": [
+    6,
+    126,
+    216
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "CHECK",
+   "out": "ace/ace-misha-rebel-blue",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 24,
+   "xref": 2707,
+   "family_id": "ace-misha-rebel",
+   "class": "group",
+   "role": "unmatched",
+   "crop": [
+    226,
+    132,
+    453,
+    686
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.462,
+   "colour": "teal",
+   "rgb": [
+    34,
+    168,
+    183
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "CHECK",
+   "out": "ace/ace-misha-rebel-teal-2",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 24,
+   "xref": 2711,
+   "family_id": "ace-misha-rebel",
+   "class": "colour",
+   "role": "hero",
+   "crop": [
+    106,
+    29,
+    447,
+    778
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.081,
+   "colour": "black",
+   "rgb": [
+    84,
+    84,
+    84
+   ],
+   "variant_key": "ace-misha-rebel#one",
+   "sku": "OSS-100073",
+   "status": "ready",
+   "out": "ace/ace-misha-rebel-black",
+   "note": "single product"
+  },
+  {
+   "page": 24,
+   "xref": 2709,
+   "family_id": "ace-misha-rebel",
+   "class": "colour",
+   "role": "unmatched",
+   "crop": [
+    261,
+    81,
+    556,
+    729
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.25,
+   "colour": "grey",
+   "rgb": [
+    93,
+    95,
+    88
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "ready",
+   "out": "ace/ace-misha-rebel-grey-2",
+   "note": "single product"
+  },
+  {
+   "page": 28,
+   "xref": 2865,
+   "family_id": "ace-tsar-alexander",
+   "class": "colour",
+   "role": "hero",
+   "crop": [
+    73,
+    26,
+    386,
+    772
+   ],
+   "src_px": [
+    516,
+    800
+   ],
+   "scale": 1.086,
+   "colour": "gold",
+   "rgb": [
+    198,
+    148,
+    60
+   ],
+   "variant_key": "ace-tsar-alexander#one",
+   "sku": "OSS-100087",
+   "status": "ready",
+   "out": "ace/ace-tsar-alexander-gold",
+   "note": "single product"
+  },
+  {
+   "page": 28,
+   "xref": 2867,
+   "family_id": "ace-tsar-alexander",
+   "class": "colour",
+   "role": "unmatched",
+   "crop": [
+    244,
+    29,
+    558,
+    762
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.105,
+   "colour": "orange",
+   "rgb": [
+    196,
+    149,
+    77
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "ready",
+   "out": "ace/ace-tsar-alexander-orange",
+   "note": "single product"
+  },
+  {
+   "page": 28,
+   "xref": 2869,
+   "family_id": "ace-tsar-alexander",
+   "class": "colour",
+   "role": "unmatched",
+   "crop": [
+    180,
+    11,
+    422,
+    580
+   ],
+   "src_px": [
+    600,
+    600
+   ],
+   "scale": 1.424,
+   "colour": "silver",
+   "rgb": [
+    181,
+    179,
+    177
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "CHECK",
+   "out": "ace/ace-tsar-alexander-silver",
+   "note": "single product"
+  },
+  {
+   "page": 31,
+   "xref": 2977,
+   "family_id": "ace-amotion-pedal-rx",
+   "class": "group",
+   "role": "colour",
+   "crop": [
+    32,
+    58,
+    280,
+    752
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.167,
+   "colour": "gold",
+   "rgb": [
+    146,
+    137,
+    68
+   ],
+   "variant_key": "ace-amotion-pedal-rx##ffde59",
+   "sku": "OSS-100097",
+   "status": "ready",
+   "out": "ace/ace-amotion-pedal-rx-gold",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 31,
+   "xref": 2977,
+   "family_id": "ace-amotion-pedal-rx",
+   "class": "group",
+   "role": "hero",
+   "crop": [
+    268,
+    17,
+    537,
+    772
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.073,
+   "colour": "blue",
+   "rgb": [
+    67,
+    62,
+    127
+   ],
+   "variant_key": "ace-amotion-pedal-rx##5271ff",
+   "sku": "OSS-100099",
+   "status": "ready",
+   "out": "ace/ace-amotion-pedal-rx-blue",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 31,
+   "xref": 2977,
+   "family_id": "ace-amotion-pedal-rx",
+   "class": "group",
+   "role": "colour",
+   "crop": [
+    515,
+    57,
+    763,
+    752
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.165,
+   "colour": "black",
+   "rgb": [
+    85,
+    85,
+    75
+   ],
+   "variant_key": "ace-amotion-pedal-rx##000000",
+   "sku": "OSS-100100",
+   "status": "ready",
+   "out": "ace/ace-amotion-pedal-rx-black",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 34,
+   "xref": 3076,
+   "family_id": "ace-gold-wing",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    238,
+    17,
+    411,
+    627
+   ],
+   "src_px": [
+    800,
+    667
+   ],
+   "scale": 1.328,
+   "colour": "gold",
+   "rgb": [
+    101,
+    83,
+    48
+   ],
+   "variant_key": "ace-gold-wing##a6a6a6",
+   "sku": "OSS-100106",
+   "status": "CHECK",
+   "out": "ace/ace-gold-wing-gold",
+   "note": "single product"
+  },
+  {
+   "page": 34,
+   "xref": 3074,
+   "family_id": "ace-gold-wing",
+   "class": "colour",
+   "role": "hero",
+   "crop": [
+    292,
+    24,
+    510,
+    782
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.069,
+   "colour": "gold",
+   "rgb": [
+    100,
+    81,
+    43
+   ],
+   "variant_key": "ace-gold-wing##000000",
+   "sku": "OSS-100105",
+   "status": "ready",
+   "out": "ace/ace-gold-wing-gold-2",
+   "note": "single product"
+  },
+  {
+   "page": 38,
+   "xref": 3204,
+   "family_id": "ace-2508-xm",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    200,
+    56,
+    532,
+    763
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.146,
+   "colour": "red",
+   "rgb": [
+    239,
+    39,
+    46
+   ],
+   "variant_key": "ace-2508-xm##ff1616",
+   "sku": "OSS-100119",
+   "status": "ready",
+   "out": "ace/ace-2508-xm-red",
+   "note": "single product, 1 loose piece(s) left out"
+  },
+  {
+   "page": 38,
+   "xref": 3200,
+   "family_id": "ace-2508-xm",
+   "class": "colour",
+   "role": "hero",
+   "crop": [
+    224,
+    61,
+    559,
+    776
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.133,
+   "colour": "orange",
+   "rgb": [
+    226,
+    83,
+    4
+   ],
+   "variant_key": "ace-2508-xm##ffde59",
+   "sku": "OSS-100118",
+   "status": "ready",
+   "out": "ace/ace-2508-xm-orange",
+   "note": "single product, 1 loose piece(s) left out"
+  },
+  {
+   "page": 38,
+   "xref": 3202,
+   "family_id": "ace-2508-xm",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    196,
+    56,
+    529,
+    762
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.147,
+   "colour": "blue",
+   "rgb": [
+    3,
+    124,
+    189
+   ],
+   "variant_key": "ace-2508-xm##5271ff",
+   "sku": "OSS-100120",
+   "status": "ready",
+   "out": "ace/ace-2508-xm-blue",
+   "note": "single product, 1 loose piece(s) left out"
+  },
+  {
+   "page": 39,
+   "xref": 3253,
+   "family_id": "ace-247-mini",
+   "class": "kit",
+   "role": "gallery",
+   "crop": [
+    2,
+    148,
+    799,
+    731
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 0.79,
+   "colour": null,
+   "rgb": null,
+   "variant_key": null,
+   "sku": null,
+   "status": "gallery_only",
+   "out": null,
+   "note": "accessory spread or packaging"
+  },
+  {
+   "page": 41,
+   "xref": 3316,
+   "family_id": "ace-pluton-stainless",
+   "class": "colour",
+   "role": "hero",
+   "crop": [
+    401,
+    196,
+    603,
+    531
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 2.418,
+   "colour": "black",
+   "rgb": [
+    82,
+    84,
+    81
+   ],
+   "variant_key": "ace-pluton-stainless#one",
+   "sku": "OSS-100129",
+   "status": "CHECK",
+   "out": "ace/ace-pluton-stainless-black",
+   "note": "single product, 2 loose piece(s) left out"
+  },
+  {
+   "page": 42,
+   "xref": 3360,
+   "family_id": "ace-car",
+   "class": "kit",
+   "role": "gallery",
+   "crop": [
+    119,
+    88,
+    668,
+    653
+   ],
+   "src_px": [
+    720,
+    720
+   ],
+   "scale": 1.148,
+   "colour": null,
+   "rgb": null,
+   "variant_key": null,
+   "sku": null,
+   "status": "gallery_only",
+   "out": null,
+   "note": "wide spread, not one standing product"
+  },
+  {
+   "page": 42,
+   "xref": 3356,
+   "family_id": "ace-car",
+   "class": "kit",
+   "role": "gallery",
+   "crop": [
+    119,
+    88,
+    668,
+    653
+   ],
+   "src_px": [
+    720,
+    720
+   ],
+   "scale": 1.148,
+   "colour": null,
+   "rgb": null,
+   "variant_key": null,
+   "sku": null,
+   "status": "gallery_only",
+   "out": null,
+   "note": "wide spread, not one standing product"
+  },
+  {
+   "page": 42,
+   "xref": 3358,
+   "family_id": "ace-car",
+   "class": "kit",
+   "role": "gallery",
+   "crop": [
+    120,
+    88,
+    667,
+    653
+   ],
+   "src_px": [
+    720,
+    720
+   ],
+   "scale": 1.152,
+   "colour": null,
+   "rgb": null,
+   "variant_key": null,
+   "sku": null,
+   "status": "gallery_only",
+   "out": null,
+   "note": "wide spread, not one standing product"
+  },
+  {
+   "page": 43,
+   "xref": 3397,
+   "family_id": "ace-d-38",
+   "class": "colour",
+   "role": "hero",
+   "crop": [
+    121,
+    19,
+    457,
+    787
+   ],
+   "src_px": [
+    618,
+    800
+   ],
+   "scale": 1.055,
+   "colour": "pink",
+   "rgb": [
+    86,
+    27,
+    88
+   ],
+   "variant_key": "ace-d-38##000000",
+   "sku": "OSS-100138",
+   "status": "ready",
+   "out": "ace/ace-d-38-pink",
+   "note": "single product, 2 loose piece(s) left out"
+  },
+  {
+   "page": 44,
+   "xref": 3443,
+   "family_id": "ace-2-hose-ace-shisha",
+   "class": "colour",
+   "role": "hero",
+   "crop": [
+    249,
+    45,
+    546,
+    766
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.123,
+   "colour": "red",
+   "rgb": [
+    174,
+    21,
+    10
+   ],
+   "variant_key": "ace-2-hose-ace-shisha##ff1616",
+   "sku": "OSS-100141",
+   "status": "ready",
+   "out": "ace/ace-2-hose-ace-shisha-red",
+   "note": "single product"
+  },
+  {
+   "page": 44,
+   "xref": 3441,
+   "family_id": "ace-2-hose-ace-shisha",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    249,
+    45,
+    546,
+    766
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.123,
+   "colour": "blue",
+   "rgb": [
+    21,
+    54,
+    161
+   ],
+   "variant_key": "ace-2-hose-ace-shisha##5271ff",
+   "sku": "OSS-100142",
+   "status": "ready",
+   "out": "ace/ace-2-hose-ace-shisha-blue",
+   "note": "single product"
+  },
+  {
+   "page": 44,
+   "xref": 3437,
+   "family_id": "ace-2-hose-ace-shisha",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    249,
+    45,
+    546,
+    766
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.123,
+   "colour": "black",
+   "rgb": [
+    57,
+    51,
+    47
+   ],
+   "variant_key": "ace-2-hose-ace-shisha##000000",
+   "sku": "OSS-100143",
+   "status": "ready",
+   "out": "ace/ace-2-hose-ace-shisha-black",
+   "note": "single product"
+  },
+  {
+   "page": 44,
+   "xref": 3439,
+   "family_id": "ace-2-hose-ace-shisha",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    249,
+    45,
+    546,
+    766
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.123,
+   "colour": "green",
+   "rgb": [
+    44,
+    160,
+    36
+   ],
+   "variant_key": "ace-2-hose-ace-shisha##ffde59",
+   "sku": "OSS-100140",
+   "status": "ready",
+   "out": "ace/ace-2-hose-ace-shisha-green",
+   "note": "single product"
+  },
+  {
+   "page": 45,
+   "xref": 3473,
+   "family_id": "ace-dragon",
+   "class": "colour",
+   "role": "unmatched",
+   "crop": [
+    261,
+    44,
+    535,
+    773
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.111,
+   "colour": "red",
+   "rgb": [
+    173,
+    45,
+    28
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "ready",
+   "out": "ace/ace-dragon-red",
+   "note": "single product"
+  },
+  {
+   "page": 45,
+   "xref": 3475,
+   "family_id": "ace-dragon",
+   "class": "colour",
+   "role": "hero",
+   "crop": [
+    260,
+    44,
+    536,
+    774
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.11,
+   "colour": "gold",
+   "rgb": [
+    159,
+    158,
+    28
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "ready",
+   "out": "ace/ace-dragon-gold",
+   "note": "single product"
+  },
+  {
+   "page": 45,
+   "xref": 3471,
+   "family_id": "ace-dragon",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    234,
+    40,
+    482,
+    697
+   ],
+   "src_px": [
+    720,
+    720
+   ],
+   "scale": 1.233,
+   "colour": "blue",
+   "rgb": [
+    20,
+    61,
+    152
+   ],
+   "variant_key": "ace-dragon##000000",
+   "sku": "OSS-100144",
+   "status": "ready",
+   "out": "ace/ace-dragon-blue",
+   "note": "single product"
+  },
+  {
+   "page": 46,
+   "xref": 3506,
+   "family_id": "ace-246-knight",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    238,
+    29,
+    488,
+    702
+   ],
+   "src_px": [
+    720,
+    720
+   ],
+   "scale": 1.204,
+   "colour": "gold",
+   "rgb": [
+    128,
+    125,
+    75
+   ],
+   "variant_key": "ace-246-knight##a6e147",
+   "sku": "OSS-100147",
+   "status": "ready",
+   "out": "ace/ace-246-knight-gold",
+   "note": "single product"
+  },
+  {
+   "page": 46,
+   "xref": 3512,
+   "family_id": "ace-246-knight",
+   "class": "colour",
+   "role": "hero",
+   "crop": [
+    264,
+    32,
+    542,
+    781
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.081,
+   "colour": "blue",
+   "rgb": [
+    78,
+    104,
+    165
+   ],
+   "variant_key": "ace-246-knight##5271ff",
+   "sku": "OSS-100146",
+   "status": "ready",
+   "out": "ace/ace-246-knight-blue",
+   "note": "single product"
+  },
+  {
+   "page": 46,
+   "xref": 3508,
+   "family_id": "ace-246-knight",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    237,
+    29,
+    488,
+    702
+   ],
+   "src_px": [
+    720,
+    720
+   ],
+   "scale": 1.204,
+   "colour": "teal",
+   "rgb": [
+    75,
+    121,
+    130
+   ],
+   "variant_key": "ace-246-knight##5ce1e6",
+   "sku": "OSS-100148",
+   "status": "ready",
+   "out": "ace/ace-246-knight-teal",
+   "note": "single product"
+  },
+  {
+   "page": 46,
+   "xref": 3510,
+   "family_id": "ace-246-knight",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    237,
+    29,
+    488,
+    703
+   ],
+   "src_px": [
+    720,
+    720
+   ],
+   "scale": 1.202,
+   "colour": "red",
+   "rgb": [
+    176,
+    93,
+    83
+   ],
+   "variant_key": "ace-246-knight##ff3131",
+   "sku": "OSS-100145",
+   "status": "ready",
+   "out": "ace/ace-246-knight-red",
+   "note": "single product"
+  },
+  {
+   "page": 47,
+   "xref": 3543,
+   "family_id": "ace-hitchner-c",
+   "class": "colour",
+   "role": "hero",
+   "crop": [
+    270,
+    18,
+    531,
+    781
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.062,
+   "colour": "bronze",
+   "rgb": [
+    112,
+    79,
+    36
+   ],
+   "variant_key": "ace-hitchner-c##000000",
+   "sku": "OSS-100149",
+   "status": "ready",
+   "out": "ace/ace-hitchner-c-bronze",
+   "note": "single product"
+  },
+  {
+   "page": 50,
+   "xref": 3658,
+   "family_id": "ace-spider-p50",
+   "class": "group",
+   "role": "colour",
+   "crop": [
+    80,
+    79,
+    259,
+    338
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 3.127,
+   "colour": "orange",
+   "rgb": [
+    189,
+    133,
+    64
+   ],
+   "variant_key": "ace-spider-p50##ff914d",
+   "sku": "OSS-100155",
+   "status": "CHECK",
+   "out": "ace/ace-spider-p50-orange",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 50,
+   "xref": 3658,
+   "family_id": "ace-spider-p50",
+   "class": "group",
+   "role": "colour",
+   "crop": [
+    92,
+    437,
+    252,
+    706
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 3.011,
+   "colour": "grey",
+   "rgb": [
+    107,
+    106,
+    117
+   ],
+   "variant_key": "ace-spider-p50##a6a6a6",
+   "sku": "OSS-100159",
+   "status": "CHECK",
+   "out": "ace/ace-spider-p50-grey",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 50,
+   "xref": 3658,
+   "family_id": "ace-spider-p50",
+   "class": "group",
+   "role": "colour",
+   "crop": [
+    331,
+    75,
+    494,
+    340
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 3.057,
+   "colour": "red",
+   "rgb": [
+    134,
+    41,
+    64
+   ],
+   "variant_key": "ace-spider-p50##000000",
+   "sku": "OSS-100158",
+   "status": "CHECK",
+   "out": "ace/ace-spider-p50-red",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 50,
+   "xref": 3658,
+   "family_id": "ace-spider-p50",
+   "class": "group",
+   "role": "colour",
+   "crop": [
+    331,
+    438,
+    492,
+    709
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 2.989,
+   "colour": "red",
+   "rgb": [
+    164,
+    52,
+    50
+   ],
+   "variant_key": "ace-spider-p50##ff1616",
+   "sku": "OSS-100156",
+   "status": "CHECK",
+   "out": "ace/ace-spider-p50-red-2",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 50,
+   "xref": 3658,
+   "family_id": "ace-spider-p50",
+   "class": "group",
+   "role": "hero",
+   "crop": [
+    566,
+    438,
+    730,
+    712
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 2.956,
+   "colour": "blue",
+   "rgb": [
+    43,
+    71,
+    139
+   ],
+   "variant_key": "ace-spider-p50##5271ff",
+   "sku": "OSS-100157",
+   "status": "CHECK",
+   "out": "ace/ace-spider-p50-blue",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 50,
+   "xref": 3658,
+   "family_id": "ace-spider-p50",
+   "class": "group",
+   "role": "unmatched",
+   "crop": [
+    571,
+    81,
+    731,
+    348
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 3.034,
+   "colour": "green",
+   "rgb": [
+    59,
+    117,
+    61
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "CHECK",
+   "out": "ace/ace-spider-p50-green",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 51,
+   "xref": 3698,
+   "family_id": "ace-demeter-diamond",
+   "class": "colour",
+   "role": "hero",
+   "crop": [
+    229,
+    22,
+    603,
+    780
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.069,
+   "colour": "red",
+   "rgb": [
+    228,
+    115,
+    90
+   ],
+   "variant_key": "ace-demeter-diamond##ff914d",
+   "sku": "OSS-100160",
+   "status": "ready",
+   "out": "ace/ace-demeter-diamond-red",
+   "note": "single product"
+  },
+  {
+   "page": 51,
+   "xref": 6627,
+   "family_id": "ace-demeter-diamond",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    238,
+    24,
+    544,
+    769
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.087,
+   "colour": "teal",
+   "rgb": [
+    37,
+    99,
+    97
+   ],
+   "variant_key": "ace-demeter-diamond##a6a6a6",
+   "sku": "OSS-100164",
+   "status": "ready",
+   "out": "ace/ace-demeter-diamond-teal",
+   "note": "single product"
+  },
+  {
+   "page": 52,
+   "xref": 3735,
+   "family_id": "ace-elbomber-sansara",
+   "class": "group",
+   "role": "hero",
+   "crop": [
+    75,
+    32,
+    383,
+    496
+   ],
+   "src_px": [
+    500,
+    500
+   ],
+   "scale": 1.746,
+   "colour": "black",
+   "rgb": [
+    69,
+    59,
+    58
+   ],
+   "variant_key": "ace-elbomber-sansara##000000",
+   "sku": "OSS-100166",
+   "status": "CHECK",
+   "out": "ace/ace-elbomber-sansara-black",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 52,
+   "xref": 3735,
+   "family_id": "ace-elbomber-sansara",
+   "class": "group",
+   "role": "colour",
+   "crop": [
+    321,
+    40,
+    500,
+    500
+   ],
+   "src_px": [
+    500,
+    500
+   ],
+   "scale": 1.761,
+   "colour": "red",
+   "rgb": [
+    143,
+    20,
+    22
+   ],
+   "variant_key": "ace-elbomber-sansara##ff914d",
+   "sku": "OSS-100165",
+   "status": "CHECK",
+   "out": "ace/ace-elbomber-sansara-red",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 53,
+   "xref": 3775,
+   "family_id": "ace-yoto-camera",
+   "class": "kit",
+   "role": "gallery",
+   "crop": [
+    135,
+    122,
+    584,
+    587
+   ],
+   "src_px": [
+    720,
+    720
+   ],
+   "scale": 1.403,
+   "colour": null,
+   "rgb": null,
+   "variant_key": null,
+   "sku": null,
+   "status": "gallery_only",
+   "out": null,
+   "note": "packaging box"
+  },
+  {
+   "page": 53,
+   "xref": 3777,
+   "family_id": "ace-yoto-camera",
+   "class": "kit",
+   "role": "gallery",
+   "crop": [
+    135,
+    121,
+    584,
+    588
+   ],
+   "src_px": [
+    720,
+    720
+   ],
+   "scale": 1.403,
+   "colour": null,
+   "rgb": null,
+   "variant_key": null,
+   "sku": null,
+   "status": "gallery_only",
+   "out": null,
+   "note": "packaging box"
+  },
+  {
+   "page": 54,
+   "xref": 3817,
+   "family_id": "ace-2304-baby",
+   "class": "group",
+   "role": "hero",
+   "crop": [
+    14,
+    200,
+    163,
+    598
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 2.035,
+   "colour": "grey",
+   "rgb": [
+    134,
+    124,
+    123
+   ],
+   "variant_key": "ace-2304-baby##a6a6a6",
+   "sku": "OSS-100175",
+   "status": "CHECK",
+   "out": "ace/ace-2304-baby-grey",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 54,
+   "xref": 3817,
+   "family_id": "ace-2304-baby",
+   "class": "group",
+   "role": "colour",
+   "crop": [
+    170,
+    200,
+    318,
+    597
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 2.04,
+   "colour": "red",
+   "rgb": [
+    191,
+    65,
+    75
+   ],
+   "variant_key": "ace-2304-baby##ff1616",
+   "sku": "OSS-100176",
+   "status": "CHECK",
+   "out": "ace/ace-2304-baby-red",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 54,
+   "xref": 3817,
+   "family_id": "ace-2304-baby",
+   "class": "group",
+   "role": "hand_crop",
+   "crop": [
+    326,
+    200,
+    631,
+    598
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 2.035,
+   "colour": "teal",
+   "rgb": [
+    56,
+    128,
+    133
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "hand_crop",
+   "out": "ace/ace-2304-baby-teal",
+   "note": "person checked: two hookahs (teal and green) touch in Ace's photo"
+  },
+  {
+   "page": 54,
+   "xref": 3817,
+   "family_id": "ace-2304-baby",
+   "class": "group",
+   "role": "colour",
+   "crop": [
+    638,
+    200,
+    786,
+    597
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 2.04,
+   "colour": "gold",
+   "rgb": [
+    156,
+    122,
+    27
+   ],
+   "variant_key": "ace-2304-baby##ff914d",
+   "sku": "OSS-100173",
+   "status": "CHECK",
+   "out": "ace/ace-2304-baby-gold",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 55,
+   "xref": 3860,
+   "family_id": "ace-245-titi",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    248,
+    32,
+    557,
+    776
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.089,
+   "colour": "gold",
+   "rgb": [
+    138,
+    124,
+    47
+   ],
+   "variant_key": "ace-245-titi##ffde59",
+   "sku": "OSS-100178",
+   "status": "ready",
+   "out": "ace/ace-245-titi-gold",
+   "note": "single product"
+  },
+  {
+   "page": 55,
+   "xref": 3858,
+   "family_id": "ace-245-titi",
+   "class": "colour",
+   "role": "hero",
+   "crop": [
+    249,
+    32,
+    557,
+    777
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.087,
+   "colour": "black",
+   "rgb": [
+    67,
+    68,
+    66
+   ],
+   "variant_key": "ace-245-titi##000000",
+   "sku": "OSS-100180",
+   "status": "ready",
+   "out": "ace/ace-245-titi-black",
+   "note": "single product"
+  },
+  {
+   "page": 55,
+   "xref": 3854,
+   "family_id": "ace-245-titi",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    249,
+    32,
+    557,
+    776
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.089,
+   "colour": "blue",
+   "rgb": [
+    26,
+    70,
+    157
+   ],
+   "variant_key": "ace-245-titi##5271ff",
+   "sku": "OSS-100181",
+   "status": "ready",
+   "out": "ace/ace-245-titi-blue",
+   "note": "single product"
+  },
+  {
+   "page": 55,
+   "xref": 3856,
+   "family_id": "ace-245-titi",
+   "class": "colour",
+   "role": "unmatched",
+   "crop": [
+    249,
+    32,
+    557,
+    776
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.089,
+   "colour": "black",
+   "rgb": [
+    70,
+    71,
+    61
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "ready",
+   "out": "ace/ace-245-titi-black-2",
+   "note": "single product"
+  },
+  {
+   "page": 58,
+   "xref": 3987,
+   "family_id": "ace-247-new-g",
+   "class": "colour",
+   "role": "hero",
+   "crop": [
+    262,
+    43,
+    549,
+    775
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.107,
+   "colour": "bronze",
+   "rgb": [
+    125,
+    30,
+    5
+   ],
+   "variant_key": "ace-247-new-g##ff914d",
+   "sku": "OSS-100191",
+   "status": "ready",
+   "out": "ace/ace-247-new-g-bronze",
+   "note": "single product"
+  },
+  {
+   "page": 58,
+   "xref": 3983,
+   "family_id": "ace-247-new-g",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    251,
+    67,
+    546,
+    776
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.142,
+   "colour": "black",
+   "rgb": [
+    51,
+    43,
+    39
+   ],
+   "variant_key": "ace-247-new-g##000000",
+   "sku": "OSS-100192",
+   "status": "ready",
+   "out": "ace/ace-247-new-g-black",
+   "note": "single product"
+  },
+  {
+   "page": 58,
+   "xref": 3985,
+   "family_id": "ace-247-new-g",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    220,
+    30,
+    488,
+    702
+   ],
+   "src_px": [
+    720,
+    720
+   ],
+   "scale": 1.205,
+   "colour": "red",
+   "rgb": [
+    87,
+    7,
+    12
+   ],
+   "variant_key": "ace-247-new-g##a6a6a6",
+   "sku": "OSS-100193",
+   "status": "ready",
+   "out": "ace/ace-247-new-g-red",
+   "note": "single product"
+  },
+  {
+   "page": 60,
+   "xref": 4077,
+   "family_id": "ace-245-hickory",
+   "class": "colour",
+   "role": "hero",
+   "crop": [
+    241,
+    34,
+    555,
+    774
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.095,
+   "colour": "red",
+   "rgb": [
+    165,
+    10,
+    16
+   ],
+   "variant_key": "ace-245-hickory##ff1616",
+   "sku": "OSS-100204",
+   "status": "ready",
+   "out": "ace/ace-245-hickory-red",
+   "note": "single product"
+  },
+  {
+   "page": 60,
+   "xref": 4075,
+   "family_id": "ace-245-hickory",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    241,
+    34,
+    555,
+    774
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.095,
+   "colour": "black",
+   "rgb": [
+    61,
+    53,
+    54
+   ],
+   "variant_key": "ace-245-hickory##000000",
+   "sku": "OSS-100202",
+   "status": "ready",
+   "out": "ace/ace-245-hickory-black",
+   "note": "single product"
+  },
+  {
+   "page": 60,
+   "xref": 4071,
+   "family_id": "ace-245-hickory",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    241,
+    34,
+    555,
+    774
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.095,
+   "colour": "blue",
+   "rgb": [
+    22,
+    58,
+    157
+   ],
+   "variant_key": "ace-245-hickory##5271ff",
+   "sku": "OSS-100205",
+   "status": "ready",
+   "out": "ace/ace-245-hickory-blue",
+   "note": "single product"
+  },
+  {
+   "page": 60,
+   "xref": 4073,
+   "family_id": "ace-245-hickory",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    241,
+    35,
+    555,
+    774
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.096,
+   "colour": "pink",
+   "rgb": [
+    160,
+    51,
+    134
+   ],
+   "variant_key": "ace-245-hickory##a6a6a6",
+   "sku": "OSS-100203",
+   "status": "ready",
+   "out": "ace/ace-245-hickory-pink",
+   "note": "single product"
+  },
+  {
+   "page": 61,
+   "xref": 4117,
+   "family_id": "ace-hector-with-bag",
+   "class": "kit",
+   "role": "gallery",
+   "crop": [
+    57,
+    26,
+    761,
+    764
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 0.895,
+   "colour": null,
+   "rgb": null,
+   "variant_key": null,
+   "sku": null,
+   "status": "gallery_only",
+   "out": null,
+   "note": "wide spread, not one standing product"
+  },
+  {
+   "page": 62,
+   "xref": 4162,
+   "family_id": "ace-243-aira",
+   "class": "colour",
+   "role": "hero",
+   "crop": [
+    230,
+    36,
+    551,
+    765
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.111,
+   "colour": "black",
+   "rgb": [
+    23,
+    25,
+    28
+   ],
+   "variant_key": "ace-243-aira##000000",
+   "sku": "OSS-100212",
+   "status": "ready",
+   "out": "ace/ace-243-aira-black",
+   "note": "single product"
+  },
+  {
+   "page": 62,
+   "xref": 4160,
+   "family_id": "ace-243-aira",
+   "class": "colour",
+   "role": "unmatched",
+   "crop": [
+    230,
+    36,
+    551,
+    764
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.113,
+   "colour": "black",
+   "rgb": [
+    30,
+    23,
+    23
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "ready",
+   "out": "ace/ace-243-aira-black-2",
+   "note": "single product"
+  },
+  {
+   "page": 62,
+   "xref": 4158,
+   "family_id": "ace-243-aira",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    230,
+    36,
+    551,
+    764
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.113,
+   "colour": "black",
+   "rgb": [
+    47,
+    47,
+    47
+   ],
+   "variant_key": "ace-243-aira##a6a6a6",
+   "sku": "OSS-100213",
+   "status": "ready",
+   "out": "ace/ace-243-aira-black-3",
+   "note": "single product"
+  },
+  {
+   "page": 62,
+   "xref": 4154,
+   "family_id": "ace-243-aira",
+   "class": "colour",
+   "role": "unmatched",
+   "crop": [
+    230,
+    36,
+    552,
+    765
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.111,
+   "colour": "black",
+   "rgb": [
+    30,
+    27,
+    23
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "ready",
+   "out": "ace/ace-243-aira-black-4",
+   "note": "single product"
+  },
+  {
+   "page": 62,
+   "xref": 4156,
+   "family_id": "ace-243-aira",
+   "class": "colour",
+   "role": "unmatched",
+   "crop": [
+    230,
+    36,
+    551,
+    765
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.111,
+   "colour": "black",
+   "rgb": [
+    26,
+    30,
+    23
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "ready",
+   "out": "ace/ace-243-aira-black-5",
+   "note": "single product"
+  },
+  {
+   "page": 63,
+   "xref": 4220,
+   "family_id": "ace-214-st3",
+   "class": "group",
+   "role": "unmatched",
+   "crop": [
+    119,
+    408,
+    244,
+    717
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 2.621,
+   "colour": "black",
+   "rgb": [
+    94,
+    84,
+    89
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "CHECK",
+   "out": "ace/ace-214-st3-black",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 63,
+   "xref": 4220,
+   "family_id": "ace-214-st3",
+   "class": "group",
+   "role": "unmatched",
+   "crop": [
+    121,
+    56,
+    245,
+    365
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 2.621,
+   "colour": "pink",
+   "rgb": [
+    128,
+    46,
+    124
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "CHECK",
+   "out": "ace/ace-214-st3-pink",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 63,
+   "xref": 4220,
+   "family_id": "ace-214-st3",
+   "class": "group",
+   "role": "colour",
+   "crop": [
+    333,
+    56,
+    459,
+    365
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 2.621,
+   "colour": "red",
+   "rgb": [
+    173,
+    33,
+    42
+   ],
+   "variant_key": "ace-214-st3##ff1616",
+   "sku": "OSS-100217",
+   "status": "CHECK",
+   "out": "ace/ace-214-st3-red",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 63,
+   "xref": 4220,
+   "family_id": "ace-214-st3",
+   "class": "group",
+   "role": "hero",
+   "crop": [
+    334,
+    407,
+    459,
+    717
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 2.613,
+   "colour": "black",
+   "rgb": [
+    63,
+    63,
+    71
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "CHECK",
+   "out": "ace/ace-214-st3-black-2",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 63,
+   "xref": 4220,
+   "family_id": "ace-214-st3",
+   "class": "group",
+   "role": "colour",
+   "crop": [
+    561,
+    56,
+    686,
+    365
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 2.621,
+   "colour": "black",
+   "rgb": [
+    44,
+    53,
+    55
+   ],
+   "variant_key": "ace-214-st3##000000",
+   "sku": "OSS-100218",
+   "status": "CHECK",
+   "out": "ace/ace-214-st3-black-3",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 63,
+   "xref": 4220,
+   "family_id": "ace-214-st3",
+   "class": "group",
+   "role": "colour",
+   "crop": [
+    561,
+    410,
+    686,
+    719
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 2.621,
+   "colour": "blue",
+   "rgb": [
+    28,
+    72,
+    179
+   ],
+   "variant_key": "ace-214-st3##5271ff",
+   "sku": "OSS-100219",
+   "status": "CHECK",
+   "out": "ace/ace-214-st3-blue",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 64,
+   "xref": 4244,
+   "family_id": "ace-spider-p64",
+   "class": "kit",
+   "role": "gallery",
+   "crop": [
+    6,
+    7,
+    797,
+    619
+   ],
+   "src_px": [
+    800,
+    624
+   ],
+   "scale": 0.796,
+   "colour": null,
+   "rgb": null,
+   "variant_key": null,
+   "sku": null,
+   "status": "gallery_only",
+   "out": null,
+   "note": "accessory spread or packaging"
+  },
+  {
+   "page": 64,
+   "xref": 4246,
+   "family_id": "ace-spider-p64",
+   "class": "kit",
+   "role": "gallery",
+   "crop": [
+    104,
+    214,
+    681,
+    800
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.092,
+   "colour": null,
+   "rgb": null,
+   "variant_key": null,
+   "sku": null,
+   "status": "gallery_only",
+   "out": null,
+   "note": "wide spread, not one standing product"
+  },
+  {
+   "page": 64,
+   "xref": 4242,
+   "family_id": "ace-spider-p64",
+   "class": "group",
+   "role": "hero",
+   "crop": [
+    92,
+    419,
+    228,
+    738
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 2.539,
+   "colour": "gold",
+   "rgb": [
+    142,
+    123,
+    80
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "CHECK",
+   "out": "ace/ace-spider-p64-gold",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 64,
+   "xref": 4242,
+   "family_id": "ace-spider-p64",
+   "class": "group",
+   "role": "unmatched",
+   "crop": [
+    104,
+    57,
+    239,
+    374
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 2.555,
+   "colour": "red",
+   "rgb": [
+    140,
+    73,
+    82
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "CHECK",
+   "out": "ace/ace-spider-p64-red",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 64,
+   "xref": 4242,
+   "family_id": "ace-spider-p64",
+   "class": "group",
+   "role": "unmatched",
+   "crop": [
+    333,
+    63,
+    463,
+    375
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 2.596,
+   "colour": "gold",
+   "rgb": [
+    163,
+    139,
+    96
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "CHECK",
+   "out": "ace/ace-spider-p64-gold-2",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 64,
+   "xref": 4242,
+   "family_id": "ace-spider-p64",
+   "class": "group",
+   "role": "colour",
+   "crop": [
+    333,
+    419,
+    468,
+    736
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 2.555,
+   "colour": "black",
+   "rgb": [
+    92,
+    87,
+    72
+   ],
+   "variant_key": "ace-spider-p64##000000",
+   "sku": "OSS-100222",
+   "status": "CHECK",
+   "out": "ace/ace-spider-p64-black",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 64,
+   "xref": 4242,
+   "family_id": "ace-spider-p64",
+   "class": "group",
+   "role": "colour",
+   "crop": [
+    575,
+    64,
+    708,
+    379
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 2.571,
+   "colour": "gold",
+   "rgb": [
+    176,
+    154,
+    103
+   ],
+   "variant_key": "ace-spider-p64##ffde59",
+   "sku": "OSS-100220",
+   "status": "CHECK",
+   "out": "ace/ace-spider-p64-gold-3",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 64,
+   "xref": 4242,
+   "family_id": "ace-spider-p64",
+   "class": "group",
+   "role": "unmatched",
+   "crop": [
+    577,
+    418,
+    713,
+    737
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 2.539,
+   "colour": "bronze",
+   "rgb": [
+    136,
+    105,
+    74
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "CHECK",
+   "out": "ace/ace-spider-p64-bronze",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 65,
+   "xref": 4270,
+   "family_id": "ace-scorpion",
+   "class": "group",
+   "role": "colour",
+   "crop": [
+    175,
+    159,
+    219,
+    643
+   ],
+   "src_px": [
+    720,
+    720
+   ],
+   "scale": 1.674,
+   "colour": "black",
+   "rgb": [
+    28,
+    28,
+    32
+   ],
+   "variant_key": "ace-scorpion##000000",
+   "sku": "OSS-100224",
+   "status": "CHECK",
+   "out": "ace/ace-scorpion-black",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 65,
+   "xref": 4270,
+   "family_id": "ace-scorpion",
+   "class": "group",
+   "role": "unmatched",
+   "crop": [
+    248,
+    55,
+    572,
+    668
+   ],
+   "src_px": [
+    720,
+    720
+   ],
+   "scale": 1.321,
+   "colour": "black",
+   "rgb": [
+    51,
+    51,
+    54
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "CHECK",
+   "out": "ace/ace-scorpion-black-2",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 65,
+   "xref": 4272,
+   "family_id": "ace-scorpion",
+   "class": "group",
+   "role": "unmatched",
+   "crop": [
+    175,
+    159,
+    220,
+    643
+   ],
+   "src_px": [
+    720,
+    720
+   ],
+   "scale": 1.674,
+   "colour": "blue",
+   "rgb": [
+    4,
+    58,
+    145
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "CHECK",
+   "out": "ace/ace-scorpion-blue",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 65,
+   "xref": 4272,
+   "family_id": "ace-scorpion",
+   "class": "group",
+   "role": "unmatched",
+   "crop": [
+    248,
+    55,
+    572,
+    667
+   ],
+   "src_px": [
+    720,
+    720
+   ],
+   "scale": 1.324,
+   "colour": "blue",
+   "rgb": [
+    14,
+    43,
+    130
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "CHECK",
+   "out": "ace/ace-scorpion-blue-2",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 65,
+   "xref": 4274,
+   "family_id": "ace-scorpion",
+   "class": "group",
+   "role": "unmatched",
+   "crop": [
+    195,
+    176,
+    245,
+    715
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.503,
+   "colour": "orange",
+   "rgb": [
+    235,
+    62,
+    17
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "CHECK",
+   "out": "ace/ace-scorpion-orange",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 65,
+   "xref": 4274,
+   "family_id": "ace-scorpion",
+   "class": "group",
+   "role": "hero",
+   "crop": [
+    276,
+    62,
+    636,
+    742
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.191,
+   "colour": "orange",
+   "rgb": [
+    148,
+    39,
+    11
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "ready",
+   "out": "ace/ace-scorpion-orange-2",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 65,
+   "xref": 4268,
+   "family_id": "ace-scorpion",
+   "class": "group",
+   "role": "unmatched",
+   "crop": [
+    176,
+    159,
+    220,
+    643
+   ],
+   "src_px": [
+    720,
+    720
+   ],
+   "scale": 1.674,
+   "colour": "yellow",
+   "rgb": [
+    216,
+    185,
+    7
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "CHECK",
+   "out": "ace/ace-scorpion-yellow",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 65,
+   "xref": 4268,
+   "family_id": "ace-scorpion",
+   "class": "group",
+   "role": "unmatched",
+   "crop": [
+    248,
+    55,
+    573,
+    667
+   ],
+   "src_px": [
+    720,
+    720
+   ],
+   "scale": 1.324,
+   "colour": "gold",
+   "rgb": [
+    142,
+    125,
+    10
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "CHECK",
+   "out": "ace/ace-scorpion-gold",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 66,
+   "xref": 4307,
+   "family_id": "ace-jelly-fish",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    269,
+    47,
+    556,
+    751
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.151,
+   "colour": "grey",
+   "rgb": [
+    111,
+    117,
+    124
+   ],
+   "variant_key": "ace-jelly-fish##000000",
+   "sku": "OSS-100225",
+   "status": "ready",
+   "out": "ace/ace-jelly-fish-grey",
+   "note": "single product"
+  },
+  {
+   "page": 66,
+   "xref": 4309,
+   "family_id": "ace-jelly-fish",
+   "class": "colour",
+   "role": "hero",
+   "crop": [
+    269,
+    47,
+    559,
+    755
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.144,
+   "colour": "grey",
+   "rgb": [
+    113,
+    118,
+    124
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "ready",
+   "out": "ace/ace-jelly-fish-grey-2",
+   "note": "single product"
+  },
+  {
+   "page": 66,
+   "xref": 4305,
+   "family_id": "ace-jelly-fish",
+   "class": "colour",
+   "role": "unmatched",
+   "crop": [
+    269,
+    47,
+    559,
+    754
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.146,
+   "colour": "grey",
+   "rgb": [
+    111,
+    117,
+    124
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "ready",
+   "out": "ace/ace-jelly-fish-grey-3",
+   "note": "single product"
+  },
+  {
+   "page": 67,
+   "xref": 4358,
+   "family_id": "ace-ufo",
+   "class": "kit",
+   "role": "gallery",
+   "crop": [
+    6,
+    117,
+    710,
+    612
+   ],
+   "src_px": [
+    720,
+    720
+   ],
+   "scale": 0.895,
+   "colour": null,
+   "rgb": null,
+   "variant_key": null,
+   "sku": null,
+   "status": "gallery_only",
+   "out": null,
+   "note": "accessory spread or packaging"
+  },
+  {
+   "page": 67,
+   "xref": 4356,
+   "family_id": "ace-ufo",
+   "class": "kit",
+   "role": "gallery",
+   "crop": [
+    14,
+    64,
+    713,
+    704
+   ],
+   "src_px": [
+    720,
+    720
+   ],
+   "scale": 0.901,
+   "colour": null,
+   "rgb": null,
+   "variant_key": null,
+   "sku": null,
+   "status": "gallery_only",
+   "out": null,
+   "note": "accessory spread or packaging"
+  },
+  {
+   "page": 67,
+   "xref": 4352,
+   "family_id": "ace-ufo",
+   "class": "kit",
+   "role": "gallery",
+   "crop": [
+    33,
+    125,
+    669,
+    621
+   ],
+   "src_px": [
+    720,
+    720
+   ],
+   "scale": 0.991,
+   "colour": null,
+   "rgb": null,
+   "variant_key": null,
+   "sku": null,
+   "status": "gallery_only",
+   "out": null,
+   "note": "packaging box"
+  },
+  {
+   "page": 67,
+   "xref": 4354,
+   "family_id": "ace-ufo",
+   "class": "kit",
+   "role": "gallery",
+   "crop": [
+    48,
+    124,
+    720,
+    720
+   ],
+   "src_px": [
+    720,
+    720
+   ],
+   "scale": 0.938,
+   "colour": null,
+   "rgb": null,
+   "variant_key": null,
+   "sku": null,
+   "status": "gallery_only",
+   "out": null,
+   "note": "accessory spread or packaging"
+  },
+  {
+   "page": 69,
+   "xref": 4432,
+   "family_id": "ace-luka-y08",
+   "class": "colour",
+   "role": "hero",
+   "crop": [
+    192,
+    44,
+    600,
+    800
+   ],
+   "src_px": [
+    600,
+    800
+   ],
+   "scale": 1.071,
+   "colour": "grey",
+   "rgb": [
+    121,
+    117,
+    131
+   ],
+   "variant_key": "ace-luka-y08##a6a6a6",
+   "sku": "OSS-100240",
+   "status": "ready",
+   "out": "ace/ace-luka-y08-grey",
+   "note": "single product"
+  },
+  {
+   "page": 72,
+   "xref": 4547,
+   "family_id": "ace-embery",
+   "class": "colour",
+   "role": "hero",
+   "crop": [
+    39,
+    240,
+    104,
+    450
+   ],
+   "src_px": [
+    369,
+    800
+   ],
+   "scale": 3.857,
+   "colour": "blue",
+   "rgb": [
+    9,
+    32,
+    78
+   ],
+   "variant_key": "ace-embery##000000",
+   "sku": "OSS-100250",
+   "status": "CHECK",
+   "out": "ace/ace-embery-blue",
+   "note": "single product, 3 loose piece(s) left out"
+  },
+  {
+   "page": 73,
+   "xref": 4588,
+   "family_id": "ace-chaos-pro-saber",
+   "class": "colour",
+   "role": "unmatched",
+   "crop": [
+    167,
+    28,
+    332,
+    463
+   ],
+   "src_px": [
+    500,
+    500
+   ],
+   "scale": 1.862,
+   "colour": "grey",
+   "rgb": [
+    74,
+    83,
+    79
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "CHECK",
+   "out": "ace/ace-chaos-pro-saber-grey",
+   "note": "single product"
+  },
+  {
+   "page": 73,
+   "xref": 4586,
+   "family_id": "ace-chaos-pro-saber",
+   "class": "colour",
+   "role": "unmatched",
+   "crop": [
+    170,
+    26,
+    336,
+    462
+   ],
+   "src_px": [
+    500,
+    500
+   ],
+   "scale": 1.858,
+   "colour": "grey",
+   "rgb": [
+    76,
+    72,
+    83
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "CHECK",
+   "out": "ace/ace-chaos-pro-saber-grey-2",
+   "note": "single product"
+  },
+  {
+   "page": 73,
+   "xref": 4582,
+   "family_id": "ace-chaos-pro-saber",
+   "class": "colour",
+   "role": "hero",
+   "crop": [
+    114,
+    110,
+    571,
+    688
+   ],
+   "src_px": [
+    711,
+    800
+   ],
+   "scale": 1.379,
+   "colour": "black",
+   "rgb": [
+    38,
+    39,
+    40
+   ],
+   "variant_key": "ace-chaos-pro-saber##000000",
+   "sku": "OSS-100255",
+   "status": "CHECK",
+   "out": "ace/ace-chaos-pro-saber-black",
+   "note": "single product"
+  },
+  {
+   "page": 73,
+   "xref": 4584,
+   "family_id": "ace-chaos-pro-saber",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    170,
+    28,
+    335,
+    462
+   ],
+   "src_px": [
+    500,
+    500
+   ],
+   "scale": 1.866,
+   "colour": "gold",
+   "rgb": [
+    147,
+    136,
+    69
+   ],
+   "variant_key": "ace-chaos-pro-saber##ffde59",
+   "sku": "OSS-100252",
+   "status": "CHECK",
+   "out": "ace/ace-chaos-pro-saber-gold",
+   "note": "single product"
+  },
+  {
+   "page": 74,
+   "xref": 4615,
+   "family_id": "ace-elements-pro-big-size",
+   "class": "kit",
+   "role": "gallery",
+   "crop": [
+    0,
+    0,
+    445,
+    608
+   ],
+   "src_px": [
+    450,
+    800
+   ],
+   "scale": 1.332,
+   "colour": null,
+   "rgb": null,
+   "variant_key": null,
+   "sku": null,
+   "status": "gallery_only",
+   "out": null,
+   "note": "packaging box"
+  },
+  {
+   "page": 74,
+   "xref": 4629,
+   "family_id": "ace-elements-pro-big-size",
+   "class": "colour",
+   "role": "hero",
+   "crop": [
+    84,
+    34,
+    427,
+    480
+   ],
+   "src_px": [
+    500,
+    500
+   ],
+   "scale": 1.816,
+   "colour": "gold",
+   "rgb": [
+    178,
+    170,
+    81
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "CHECK",
+   "out": "ace/ace-elements-pro-big-size-gold",
+   "note": "single product"
+  },
+  {
+   "page": 74,
+   "xref": 4610,
+   "family_id": "ace-elements-pro-big-size",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    98,
+    33,
+    435,
+    469
+   ],
+   "src_px": [
+    500,
+    500
+   ],
+   "scale": 1.858,
+   "colour": "gold",
+   "rgb": [
+    204,
+    158,
+    38
+   ],
+   "variant_key": "ace-elements-pro-big-size##ffde59",
+   "sku": "OSS-100256",
+   "status": "CHECK",
+   "out": "ace/ace-elements-pro-big-size-gold-2",
+   "note": "single product"
+  },
+  {
+   "page": 77,
+   "xref": 4737,
+   "family_id": "ace-el-bomber-mid-night",
+   "class": "group",
+   "role": "hand_crop",
+   "crop": [
+    398,
+    241,
+    780,
+    707
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.649,
+   "colour": "red",
+   "rgb": [
+    128,
+    34,
+    63
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "hand_crop",
+   "out": "ace/ace-el-bomber-mid-night-red",
+   "note": "OVERLAP: 3 products touch in Ace's photo, needs a hand crop"
+  },
+  {
+   "page": 78,
+   "xref": 4774,
+   "family_id": "ace-uniun",
+   "class": "kit",
+   "role": "gallery",
+   "crop": [
+    11,
+    262,
+    793,
+    522
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 0.806,
+   "colour": null,
+   "rgb": null,
+   "variant_key": null,
+   "sku": null,
+   "status": "gallery_only",
+   "out": null,
+   "note": "packaging box"
+  },
+  {
+   "page": 78,
+   "xref": 4776,
+   "family_id": "ace-uniun",
+   "class": "colour",
+   "role": "hero",
+   "crop": [
+    278,
+    59,
+    522,
+    745
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 1.181,
+   "colour": "yellow",
+   "rgb": [
+    234,
+    204,
+    86
+   ],
+   "variant_key": "ace-uniun##ffde59",
+   "sku": "OSS-100272",
+   "status": "ready",
+   "out": "ace/ace-uniun-yellow",
+   "note": "single product, 1 loose piece(s) left out"
+  },
+  {
+   "page": 79,
+   "xref": 4810,
+   "family_id": "ace-acrylic-squre-box",
+   "class": "kit",
+   "role": "gallery",
+   "crop": [
+    0,
+    22,
+    303,
+    263
+   ],
+   "src_px": [
+    307,
+    263
+   ],
+   "scale": 2.079,
+   "colour": null,
+   "rgb": null,
+   "variant_key": null,
+   "sku": null,
+   "status": "gallery_only",
+   "out": null,
+   "note": "accessory spread or packaging"
+  },
+  {
+   "page": 80,
+   "xref": 4847,
+   "family_id": "ace-youto-v-acrylic",
+   "class": "kit",
+   "role": "gallery",
+   "crop": [
+    104,
+    185,
+    790,
+    786
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 0.918,
+   "colour": null,
+   "rgb": null,
+   "variant_key": null,
+   "sku": null,
+   "status": "gallery_only",
+   "out": null,
+   "note": "accessory spread or packaging"
+  },
+  {
+   "page": 81,
+   "xref": 4883,
+   "family_id": "ace-x-acrylic",
+   "class": "lifestyle",
+   "role": "gallery",
+   "crop": [
+    0,
+    0,
+    800,
+    678
+   ],
+   "src_px": [
+    800,
+    678
+   ],
+   "scale": 0.787,
+   "colour": null,
+   "rgb": null,
+   "variant_key": null,
+   "sku": null,
+   "status": "gallery_only",
+   "out": null,
+   "note": "no mask: photo on its own background"
+  },
+  {
+   "page": 82,
+   "xref": 4917,
+   "family_id": "ace-l-acrylic",
+   "class": "kit",
+   "role": "gallery",
+   "crop": [
+    63,
+    94,
+    732,
+    727
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 0.942,
+   "colour": null,
+   "rgb": null,
+   "variant_key": null,
+   "sku": null,
+   "status": "gallery_only",
+   "out": null,
+   "note": "accessory spread or packaging"
+  },
+  {
+   "page": 82,
+   "xref": 4916,
+   "family_id": "ace-l-acrylic",
+   "class": "lifestyle",
+   "role": "gallery",
+   "crop": [
+    0,
+    0,
+    640,
+    800
+   ],
+   "src_px": [
+    640,
+    800
+   ],
+   "scale": 0.984,
+   "colour": null,
+   "rgb": null,
+   "variant_key": null,
+   "sku": null,
+   "status": "gallery_only",
+   "out": null,
+   "note": "no mask: photo on its own background"
+  },
+  {
+   "page": 82,
+   "xref": 4919,
+   "family_id": "ace-l-acrylic",
+   "class": "colour",
+   "role": "hero",
+   "crop": [
+    271,
+    185,
+    551,
+    572
+   ],
+   "src_px": [
+    800,
+    800
+   ],
+   "scale": 2.093,
+   "colour": "silver",
+   "rgb": [
+    150,
+    126,
+    142
+   ],
+   "variant_key": "ace-l-acrylic##000000",
+   "sku": "OSS-100290",
+   "status": "CHECK",
+   "out": "ace/ace-l-acrylic-silver",
+   "note": "single product, 4 loose piece(s) left out"
+  },
+  {
+   "page": 83,
+   "xref": 4947,
+   "family_id": "ace-2210-mr",
+   "class": "colour",
+   "role": "hand_crop",
+   "crop": [
+    0,
+    47,
+    486,
+    793
+   ],
+   "src_px": [
+    599,
+    800
+   ],
+   "scale": 1.086,
+   "colour": "bronze",
+   "rgb": [
+    120,
+    94,
+    68
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "hand_crop",
+   "out": "ace/ace-2210-mr-bronze",
+   "note": "person checked: two hookahs (red and bronze) touch in Ace's photo"
+  },
+  {
+   "page": 84,
+   "xref": 4984,
+   "family_id": "ace-gravity",
+   "class": "group",
+   "role": "hand_crop",
+   "crop": [
+    43,
+    180,
+    195,
+    457
+   ],
+   "src_px": [
+    600,
+    600
+   ],
+   "scale": 2.924,
+   "colour": "black",
+   "rgb": [
+    65,
+    66,
+    66
+   ],
+   "variant_key": null,
+   "sku": null,
+   "status": "hand_crop",
+   "out": "ace/ace-gravity-black",
+   "note": "OVERLAP: 2 products touch in Ace's photo, needs a hand crop"
+  },
+  {
+   "page": 84,
+   "xref": 4984,
+   "family_id": "ace-gravity",
+   "class": "group",
+   "role": "colour",
+   "crop": [
+    222,
+    105,
+    431,
+    498
+   ],
+   "src_px": [
+    600,
+    600
+   ],
+   "scale": 2.061,
+   "colour": "grey",
+   "rgb": [
+    123,
+    124,
+    125
+   ],
+   "variant_key": "ace-gravity##000000",
+   "sku": "OSS-100294",
+   "status": "CHECK",
+   "out": "ace/ace-gravity-grey",
+   "note": "split from a row of colours at a gap in the mask"
+  },
+  {
+   "page": 84,
+   "xref": 4986,
+   "family_id": "ace-gravity",
+   "class": "colour",
+   "role": "hero",
+   "crop": [
+    2,
+    3,
+    583,
+    702
+   ],
+   "src_px": [
+    585,
+    704
+   ],
+   "scale": 1.084,
+   "colour": "gold",
+   "rgb": [
+    215,
+    197,
+    122
+   ],
+   "variant_key": "ace-gravity##a6e147",
+   "sku": "OSS-100295",
+   "status": "ready",
+   "out": "ace/ace-gravity-gold",
+   "note": "single product"
+  },
+  {
+   "page": 84,
+   "xref": 4988,
+   "family_id": "ace-gravity",
+   "class": "colour",
+   "role": "colour",
+   "crop": [
+    159,
+    27,
+    510,
+    566
+   ],
+   "src_px": [
+    600,
+    600
+   ],
+   "scale": 1.503,
+   "colour": "teal",
+   "rgb": [
+    51,
+    180,
+    235
+   ],
+   "variant_key": "ace-gravity##5271ff",
+   "sku": "OSS-100296",
+   "status": "CHECK",
+   "out": "ace/ace-gravity-teal",
+   "note": "single product"
+  }
+ ]
+}
