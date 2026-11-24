@@ -38,7 +38,13 @@ export function view(cat) {
   memo.set(cat, v); return v;
 }
 // A hookah's colours share one page in search: every colour's canonical is its family's lead colour (the card in the shop).
-export const canonicalSku = (cat, sku) => { const f = view(cat).front.get(sku); return f && f.family && view(cat).lead.get(f.family) || sku; };
+// Except a colour on sale whose lead is not (Price TBD or coming soon): it keeps its own address, so its offer is never
+// stated at a page that has none, and it is in the sitemap (breaker, 2026-11-24).
+export const canonicalSku = (cat, sku) => {
+  const v = view(cat), f = v.front.get(sku), lead = f && f.family && v.lead.get(f.family);
+  if (!lead || lead === sku) return sku;
+  return sellable(v.bySku.get(sku)) && !sellable(v.bySku.get(lead)) ? sku : lead;
+};
 // What a shopper sees as one item in a section: one per hookah family, every other item on its own.
 const shelf = (cat, list) => list.filter(p => { const f = view(cat).front.get(p.sku); return !f || !f.family || f.lead; });
 
@@ -101,7 +107,7 @@ export function crumbsLd(trail) {
 // (#main keeps the full-screen height it has while empty, styles.css #main:empty, so the footer never jumps.)
 export const SSR_STYLE = `<style>.ssr{display:none}#main:has(>.ssr:only-child){min-height:100svh}</style><noscript><style>.ssr{display:block;padding:var(--s-6,24px) var(--gutter,16px) var(--s-12,48px)}.ssr h1{font:400 var(--t-d1,2rem)/1 var(--font-display,sans-serif);margin:var(--s-4,16px) 0}.ssr p{max-width:65ch}`
   + `.ssr ol{display:flex;flex-wrap:wrap;gap:var(--s-2,8px);list-style:none;padding:0;margin:0;font-size:var(--t-14,.875rem)}.ssr ol li+li::before{content:"/";margin-right:var(--s-2,8px);color:var(--color-muted,#999)}.ssr ol li{white-space:nowrap}.ssr ol a{display:inline;padding:0;margin:0;min-height:0;min-width:0}`
-  + `.ssr ul{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:var(--s-6,24px) var(--s-4,16px);list-style:none;padding:0}.ssr li a{display:block}.ssr li img{display:block;width:100%;height:auto;background:var(--bonelt,#eee);margin-bottom:var(--s-2,8px)}article.ssr>img{display:block;width:100%;max-width:360px;height:auto;background:var(--bonelt,#eee)}</style></noscript>`;
+  + `.ssr ul{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:var(--s-6,24px) var(--s-4,16px);list-style:none;padding:0}.ssr li a{display:block}.ssr li img{display:block;width:100%;height:auto;background:var(--bonelt,#eee);margin-bottom:var(--s-2,8px)}article.ssr>img{display:block;width:100%;max-width:360px;height:auto;background:var(--bonelt,#eee)}body:has(#main>.ssr) .nojs>h1{display:none}</style></noscript>`;
 const crumbNav = trail => `<nav aria-label="Breadcrumb"><ol>${trail.map(([name, href], i) => `<li>${i === trail.length - 1 ? `<span aria-current="page">${esc(name)}</span>` : `<a href="${esc(href)}">${esc(name)}</a>`}</li>`).join("")}</ol></nav>`;
 const item = p => { const src = smallUrl(p); return `<li><a href="/p/${esc(p.sku)}">${src ? `<img src="${esc(src)}" alt="${esc(p.name)}" width="360" height="450" loading="lazy" decoding="async">` : ""}${esc(p.name)}</a> <span>${esc(priceWords(p))}</span></li>`; };
 
@@ -142,7 +148,9 @@ export function robots(env, url) {
   const live = liveHere(env, url);
   // Private pages and the data routes stay out. The page needs /api/catalog-module to draw its shelves and /api/photo for
   // uploaded photos, so those two stay crawlable (a blocked script means a blank page to Google's renderer).
-  const lines = ["User-agent: *", "Disallow: /admin", "Disallow: /api/", "Allow: /api/catalog-module", "Allow: /api/photo/", "Disallow: /account", "Disallow: /checkout"];
+  const lines = ["User-agent: *", "Disallow: /admin", "Disallow: /api/", "Allow: /api/catalog-module", "Allow: /api/photo/", "Disallow: /account$", "Disallow: /account/", "Disallow: /checkout$", "Disallow: /checkout/"];
+  // "$" ends the match: a bare "Disallow: /account" would also block /account.js and /account.css, which every page loads,
+  // and Google's renderer would then draw nothing (breaker, 2026-11-24).
   // /cart and /order/ are NOT blocked: the cart is linked from every page, and a blocked page can still be listed from
   // its links because the crawler never sees its noindex (docs/SEO.md). They stay crawlable and say noindex instead.
   if (live) lines.push("", `Sitemap: ${siteOrigin(env, url)}/sitemap.xml`);
@@ -152,7 +160,7 @@ export function robots(env, url) {
 // family), and the help pages. Never the cart, checkout, account, search, gifts or order pages.
 export function sitemap(env, url, cat) {
   const origin = siteOrigin(env, url), secs = cat.categories.filter(c => cat.products.some(p => p.category_id === c.id));
-  const items = shelf(cat, cat.products).map(p => `/p/${p.sku}`);
+  const items = cat.products.filter(p => canonicalSku(cat, p.sku) === p.sku).map(p => `/p/${p.sku}`);   // every page that is its own canonical
   const paths = ["/", "/shop", ...secs.map(c => `/shop/${c.id}`), "/set", "/shipping", "/terms", "/privacy", ...items];
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${paths.map(p => `<url><loc>${esc(origin + p)}</loc></url>`).join("\n")}\n</urlset>\n`;
 }

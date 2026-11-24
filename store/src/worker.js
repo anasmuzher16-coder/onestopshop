@@ -135,7 +135,15 @@ export default {
     if (event.cron === "*/10 * * * *") { ctx.waitUntil(sweep(env).then(r => { console.log(JSON.stringify({ at: "pay-sweep", ...r })); if (r.paid || r.released) dropCatalog(ctx); })); return; }   // every 10 minutes: unpaid orders checked with Stripe; stock it put back shows in the shop at once
     ctx.waitUntil(scrubCodes(env).then(() => nightly(env))); ctx.waitUntil(stockAlerts(env).then(() => restockReminders(env)));   // nightly: backup, and the customers' alerts and charcoal reminders
   },
-  async fetch(request, env, ctx) {
+  async fetch(request, env, ctx) { return demoNoindex(await route(request, env, ctx), env, request); },
+};
+// While the shop is not live on this address, every answer says noindex: redirects, errors, API answers and uploaded
+// photos too (the static files get it from public/_headers). A page sets its own header in page().
+function demoNoindex(r, env, request) {
+  if (liveHere(env, new URL(request.url)) || r.headers.get("X-Robots-Tag")) return r;
+  const out = new Response(r.body, r); out.headers.set("X-Robots-Tag", "noindex, nofollow"); return out;
+}
+async function route(request, env, ctx) {
     const url = new URL(request.url);
     const path = url.pathname;
     try {
@@ -192,6 +200,5 @@ export default {
       console.error(JSON.stringify({ at: "fetch", path, message: String(err && err.message || err) }));
       return new Response("Something went wrong on our side. Please try again.", { status: 500, headers: { "Content-Type": "text/plain; charset=utf-8" } });
     }
-  },
-};
+}
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" } });

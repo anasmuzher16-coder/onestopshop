@@ -262,7 +262,7 @@ function place() {
   const hk = document.querySelector('.shophead[data-cat="hookahs"]'), hkp = document.querySelector('.pdp[data-cat="hookahs"]'), co = document.querySelector('.shophead[data-cat="cologne"]'), pdp = document.querySelector('.pdp[data-cat="cologne"]');
   const next = hk || hkp ? "hookahs" : co || pdp ? "cologne" : null;
   head = hk || co || ((pdp || hkp) && (pdp || hkp).querySelector("[data-stage]")) || null; chips = hk || co ? head.parentNode.querySelector(":scope > .chips") : null;
-  const settled = () => { if (document.getElementById("main").childElementCount) arrivedBack = false; };   // only the page you came Back to skips its opening
+  const settled = () => { if (document.querySelector("#main > :not(.ssr)")) arrivedBack = false; };   // only the page you came Back to skips its opening
   if (!next) { stop(); modeName = null; settled(); return; }
   if (next !== modeName) { document.documentElement.classList.remove("pour-still", "pour-mist"); if (on || air || spray || cv.isConnected) off(); }
   modeName = next; M = MODES[next]; begin(); stick(); settled();

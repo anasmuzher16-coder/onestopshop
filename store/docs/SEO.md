@@ -18,7 +18,8 @@ two switches that turn it on at launch. Code: `src/seo.js` (everything below), `
 What changes on its own when the switches flip: the `<meta name="robots">` tag and `X-Robots-Tag` header go away on
 indexable pages, `/sitemap.xml` answers, `robots.txt` names it, and canonical, `og:url` and every structured-data address
 use `SITE_ORIGIN`. The `workers.dev` address keeps `noindex` and points its canonical at the domain, so the two copies
-never compete. Until both switches are set, every page says `noindex, nofollow` and there is no sitemap.
+never compete. Until both switches are set, every page says `noindex, nofollow` and there is no sitemap; redirects, errors, API answers
+and uploaded photos carry the same `X-Robots-Tag` (worker.js `demoNoindex`).
 `SITE_ORIGIN` must be exactly `https://host` (one trailing slash is forgiven). Left empty, the request's own address is
 used. Set but malformed (no scheme, `http`, a port or a path), it fails closed: nothing is indexable anywhere and the
 Worker logs the problem, so a typo can never put the workers.dev copy into search.
@@ -77,7 +78,8 @@ crawlable even though `/api/` is disallowed: "Google Search won't render JavaScr
   the last one the page's canonical.
 - **Hookah colours**: each colour has its own address, but the colours share one description and Ace's colour names are
   not confirmed, so every colour's canonical is its family's lead colour (the card in the shop) and only that one is in the
-  sitemap. Google's variant guidance allows a single canonical for a group whose variants are chosen on one page [G-VAR].
+  sitemap. One exception: a colour on sale whose lead colour is not (Price TBD or coming soon) keeps its own canonical and
+  sitemap entry, so its offer is never stated at a page without one. Google's variant guidance allows a single canonical for a group whose variants are chosen on one page [G-VAR].
   When the shop confirms colours and prices, switching to per-colour canonicals with `ProductGroup` is a small change in
   `canonicalSku` and `productLd`.
 
@@ -90,7 +92,8 @@ or a parent type, and every enumeration value (`availability`, `itemCondition`, 
 ## 3. robots.txt and the sitemap
 
 `/robots.txt` (Worker route) disallows `/admin`, `/api/` (except the catalogue module and photos), `/account` and
-`/checkout`, and names the sitemap only when live. It never blocks the whole site: a page blocked in robots.txt can still
+`/checkout` (written `/account$` and `/account/`: a bare prefix would also block `/account.js` and `/account.css`, which
+every page loads, and Google would render a blank page; `test-seo` checks every file a page loads is allowed), and names the sitemap only when live. It never blocks the whole site: a page blocked in robots.txt can still
 be listed from links because the crawler "will never see the noindex rule" [G-NOINDEX], so the demo relies on `noindex`
 on every page instead. For the same reason `/cart` and `/order/` are not blocked: the cart is linked from every page, so
 it stays crawlable and its `noindex` is seen. The trade-off on `/account` (also linked from every page) is accepted as

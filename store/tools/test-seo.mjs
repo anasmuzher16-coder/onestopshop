@@ -50,9 +50,17 @@ const supplier = new Map(); for (const fam of master.families) for (const v of f
 // ---------- 1 robots, sitemap, noindex while not live ----------
 const rb = await get("/robots.txt");
 ok(rb.r.status === 200 && /^text\/plain/.test(rb.r.headers.get("content-type") || ""), "robots.txt is served as text: " + rb.r.status);
-for (const line of ["Disallow: /admin", "Disallow: /api/", "Allow: /api/catalog-module", "Allow: /api/photo/", "Disallow: /account", "Disallow: /checkout"]) ok(rb.t.split("\n").includes(line), "robots.txt: " + line);
+for (const line of ["Disallow: /admin", "Disallow: /api/", "Allow: /api/catalog-module", "Allow: /api/photo/", "Disallow: /account$", "Disallow: /account/", "Disallow: /checkout$", "Disallow: /checkout/"]) ok(rb.t.split("\n").includes(line), "robots.txt: " + line);
 ok(!/Disallow: \/(cart|order)/.test(rb.t), "robots.txt leaves /cart and /order/ crawlable so their noindex is seen (the cart is linked from every page)");
 ok(!/Sitemap:/i.test(rb.t), "demo: robots.txt names no sitemap");
+// Google's rule: the longest matching Allow/Disallow wins ("*" any run, "$" the end). Every file a page loads must be allowed.
+const toRe = v => { const end = v.endsWith("$"), body = end ? v.slice(0, -1) : v; return new RegExp("^" + body.split("").map(ch => ch === "*" ? ".*" : /[.+?^{}()|[\]\\$]/.test(ch) ? "\\" + ch : ch).join("") + (end ? "$" : "")); };
+const rules = rb.t.split("\n").map(l => l.match(/^(Allow|Disallow): (\S+)/)).filter(Boolean).map(([, k, v]) => ({ allow: k === "Allow", len: v.length, re: toRe(v) }));
+const allowed = p => { const m = rules.filter(r => r.re.test(p)).sort((a, b) => b.len - a.len || b.allow - a.allow)[0]; return !m || m.allow; };
+const shellHtml = (await get("/")).t, loads = [...shellHtml.matchAll(/(?:src|href)="\/?([a-z0-9-]+\.(?:js|css))[^"]*"/g)].map(x => "/" + x[1]);
+const appJs = await (await fetch(B + "/app.js")).text(); for (const m of appJs.matchAll(/from "\.\/([a-z0-9-]+\.js)"/g)) loads.push("/" + m[1]);
+ok(loads.length > 3 && loads.every(allowed) && ["/account.js", "/account.css", "/api/catalog-module", "/api/photo/OSS-9601"].every(allowed), "robots.txt lets crawlers load every script and stylesheet a page needs: " + loads.filter(p => !allowed(p)).join(", "));
+ok(!allowed("/account") && !allowed("/account/") && !allowed("/checkout") && !allowed("/admin") && !allowed("/api/orders"), "robots.txt still keeps out /account, /checkout, /admin and the data routes");
 ok(!/Disallow: \/\s*$/m.test(rb.t), "robots.txt never blocks the whole shop (Google must reach the noindex on each page)");
 const sm = await get("/sitemap.xml"); ok(sm.r.status === 404, "demo: no sitemap: " + sm.r.status);
 const pages = ["/", "/shop", "/shop/" + C[0].id, "/p/" + sale[0].sku, "/p/" + tbd[0].sku, "/shipping", "/account", "/cart", "/checkout", "/search"];
@@ -88,7 +96,7 @@ const checkProduct = async p => {
   // Product data only for an item on sale (Google needs an offer); Price TBD and Coming soon items carry none at all
   if (p.state === "sale" && !prod) { badShape.push(p.sku + " on sale but no Product"); return; }
   if (prod) { const e = shape(prod, p.sku); if (e.length) badShape.push(...e); if (!prod.name || !prod.sku || prod.sku !== p.sku || (prod.image && !prod.image.every(abs))) badShape.push(p.sku + " name/sku/image"); }
-  const lead = p.family ? P.find(x => x.family === p.family && x.lead).sku : p.sku, canon = (g.t.match(/<link rel="canonical" href="([^"]+)">/) || [])[1];
+  const lp = p.family && P.find(x => x.family === p.family && x.lead), lead = !lp || (p.state === "sale" && lp.state !== "sale") ? p.sku : lp.sku, canon = (g.t.match(/<link rel="canonical" href="([^"]+)">/) || [])[1];
   if (!canon || !canon.endsWith("/p/" + lead) || !abs(canon)) canonWrong.push(`${p.sku} -> ${canon}`);
   if (p.state === "sale") {
     const o = prod.offers;
@@ -187,7 +195,11 @@ ok(!locs.some(l => /\/(cart|checkout|account|admin|api|search|gifts|order)\b/.te
 ok(locs.includes("https://shop.example.ca/shop/bowls") && locs.includes("https://shop.example.ca/shop/hookahs") && !locs.some(l => /\/shop\/(?!bowls$|hookahs$)/.test(l)), "sitemap: only sections with something on view");
 { const withCoal = { ...fake, products: [...fake.products, row("OSS-9301", { cat: "charcoal", price: 1500, stock: 2, active: 1 })] }, cm = seo.sitemap(env, own, withCoal);
   ok(cm.includes("<loc>https://shop.example.ca/shop/charcoal</loc>") && !/<loc>[^<]*\?/.test(cm), "sitemap: the Charcoal section is listed; no redirecting Heat filter address (or any query) is"); }
-const fromHeat = await get("/shop/heat?find=1"); ok(fromHeat.r.status === 301 && /\/shop\/charcoal\?find=1$/.test(fromHeat.r.headers.get("location") || ""), "an old charcoal link into Heat is a 301 to Charcoal: " + fromHeat.r.status + " " + fromHeat.r.headers.get("location"));
+const fromHeat = await get("/shop/heat?find=1"); ok(fromHeat.r.headers.get("x-robots-tag") === "noindex, nofollow", "demo: a redirect says noindex too"); for (const q of ["/api/nope", "/index.html"]) ok(((await get(q)).r.headers.get("x-robots-tag") || "") === "noindex, nofollow", "demo: noindex on " + q);
+ok(fromHeat.r.status === 301 && /\/shop\/charcoal\?find=1$/.test(fromHeat.r.headers.get("location") || ""), "an old charcoal link into Heat is a 301 to Charcoal: " + fromHeat.r.status + " " + fromHeat.r.headers.get("location"));
+{ const mixed = { ...fake, products: [row("OSS-100011", { cat: "hookahs", family: "ace-y" }), row("OSS-100012", { cat: "hookahs", family: "ace-y", price: 9900, stock: 1, active: 1 })] };
+  const sc = seo.seoFor({ env, url: own, cat: mixed, meta: { title: "x", desc: "x", index: true, product: mixed.products[1] }, site: "One Stop Shop" }), lm = seo.sitemap(env, own, mixed);
+  ok(sc.canonical === "https://shop.example.ca/p/OSS-100012" && !/OSS-100011/.test(sc.head.join("")) && lm.includes("/p/OSS-100012</loc>") && lm.includes("/p/OSS-100011</loc>"), "a colour on sale whose lead is Price TBD keeps its own canonical, offer address and sitemap entry: " + sc.canonical); }
 const s1 = seo.seoFor({ env, url: u("https://onestopshop-store.anas-dev.workers.dev/p/OSS-100002"), cat: fake, meta: { title: "x", desc: "x", index: true, product: fake.products[2] }, site: "One Stop Shop" });
 ok(s1.canonical === "https://shop.example.ca/p/OSS-100001", "canonical on the demo address points at the shop's own address and the family lead: " + s1.canonical);
 const s2 = seo.seoFor({ env, url: own, cat: fake, meta: { title: "x", desc: "x", index: true, product: fake.products[3] }, site: "One Stop Shop" });

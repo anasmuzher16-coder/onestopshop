@@ -25,7 +25,7 @@ const rnd = (a, b) => a + Math.random() * (b - a);
 function which() {
   if (document.querySelector('.shophead[data-cat="hookahs"],.shophead[data-cat="cologne"],.pdp[data-cat="hookahs"],.pdp[data-cat="cologne"]')) return null;   // fx-pour.js has these
   const c = document.querySelector(".shophead[data-cat],.pdp[data-cat]")?.dataset.cat; if (CATS.has(c)) return c;
-  if (!document.getElementById("main").childElementCount) return null;
+  if (!document.querySelector("#main > :not(.ssr)")) return null;
   const a = location.pathname.split("/")[1] || "";
   return !a || a === "shop" || a === "set" || a === "gifts" || a === "p" ? "house" : "calm";
 }
@@ -93,7 +93,7 @@ function clear() { end(); root.classList.remove("air-page", "air-still"); root.r
 function stick() { if (stuckHead?.isConnected && stuckBar) stuckBar.classList.toggle("is-stuck", stuckHead.getBoundingClientRect().bottom < stuckBar.getBoundingClientRect().top - .5); }
 function place() {
   const k = which(); stuckHead = document.querySelector(".shophead"); stuckBar = stuckHead && stuckHead.parentNode.querySelector(":scope > .chips");
-  if (!k) { if (document.getElementById("main").childElementCount) { clear(); arrivedBack = false; } return; }
+  if (!k) { if (document.querySelector("#main > :not(.ssr)")) { clear(); arrivedBack = false; } return; }
   if (RM.matches || new URLSearchParams(location.search).has("still")) { end(); still(k); } else start(k);
   stick(); arrivedBack = false;
 }
