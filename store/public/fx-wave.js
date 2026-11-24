@@ -186,7 +186,7 @@ function fit() {   // sized once: the shaders work in CSS pixels, so a later rot
 const CATS = new Set(["hookahs", "bases", "bowls", "heat", "hoses", "parts", "cologne", "misc"]);
 function sectionOf(path) {
   const [a = "", b] = path.split(/[?#]/)[0].replace(/^\/+|\/+$/g, "").split("/");
-  if (!a) return "home"; if (a === "shop") return !b ? "all" : CATS.has(b) ? b : "missing"; if (a === "gifts" || a === "set" || a === "shipping" || a === "search" || a === "cart") return a;
+  if (!a) return "home"; if (a === "shop") return !b ? "all" : CATS.has(b) ? b : b === "shisha" ? "bowls" : "missing";   // shisha rides the bowls wave if (a === "gifts" || a === "set" || a === "shipping" || a === "search" || a === "cart") return a;
   if (a === "p") return "piece"; return a === "checkout" || a === "order" || a === "terms" || a === "privacy" ? "quiet" : "missing";
 }
 function waveFor(path) {

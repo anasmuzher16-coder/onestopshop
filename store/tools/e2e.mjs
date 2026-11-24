@@ -12,7 +12,8 @@ await p.goto(base, { waitUntil: "networkidle" });
 t("home h1", (await p.locator("h1").count()) === 1);
 const cta = await p.locator(".hero__cta .btn").first().boundingBox(), vh = p.viewportSize().height;
 t("hero action inside first screen, above the dock", cta && cta.y + cta.height < vh - 64, JSON.stringify(cta));
-await p.locator('[data-piece]').first().tap(); await p.waitForURL(/\/p\//);
+// the hookahs on the home page are Price TBD since 2026-11-24 (not for sale), so the buying walk starts from a section that sells
+await p.goto(base + "shop/bowls", { waitUntil: "networkidle" }); await p.locator('[data-piece]:not(:has(.sticker--tbd)):not(:has(.sticker--sold))').first().tap(); await p.waitForURL(/\/p\//);
 t("product h1", (await p.locator("h1").count()) === 1);
 const price = cents(await p.locator("[data-stage] .sticker__v").innerText());
 await p.locator(".dock__buy").tap(); await p.waitForTimeout(100);

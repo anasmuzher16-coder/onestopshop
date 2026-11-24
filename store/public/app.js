@@ -31,7 +31,7 @@ const lum = hex => { const m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) ret
 const chipStyle = v => `--c:${esc(v.chip || "#8a8a8a")}${lum(v.chip) < .03 ? ";--ring:oklch(1 0 0 / .38)" : ""}`;
 function swatchGroup(fam, chosen, { label, card = "", max = 99 } = {}) {
   const shown = fam.slice(0, max), more = fam.length - shown.length;
-  return `<div class="swatches ${card ? "swatches--card" : ""}" role="radiogroup" aria-label="${esc(label)}">${shown.map((v, i) => `<button class="swatch" type="button" role="radio" data-swatch="${v.sku}" ${card ? `data-card="${card}"` : ""} aria-checked="${v.sku === chosen.sku}" tabindex="${v.sku === chosen.sku ? 0 : -1}" style="${chipStyle(v)}" aria-label="${esc(colourName(v, i))}${photoOf(v) ? "" : ", photo coming"}">${photoOf(v) ? "" : `<i class="swatch__none" aria-hidden="true"></i>`}</button>`).join("")}${more > 0 ? `<a class="swatches__more" href="/p/${fam[0].sku}" aria-label="${more} more colours">+${more}</a>` : ""}</div>`;
+  return `<div class="swatches ${card ? "swatches--card" : ""}" role="radiogroup" aria-label="${esc(label)}">${shown.map((v, i) => `<button class="swatch" type="button" role="radio" data-swatch="${v.sku}" ${card ? `data-card="${card}"` : ""} aria-checked="${v.sku === chosen.sku}" tabindex="${v.sku === chosen.sku ? 0 : -1}" style="${chipStyle(v)}" aria-label="${esc(colourName(v, i))}${photoOf(v) ? "" : ", photo coming"}"></button>`).join("")}${more > 0 ? `<a class="swatches__more" href="/p/${fam[0].sku}" aria-label="${more} more colours">+${more}</a>` : ""}</div>`;
 }
 // The photo a colour shows, and its label in the quiet TBD style (owner, 2026-11-24): its own photo ("Photo to be upscaled" when it
 // was enlarged), the family's photo with "Shown in <colour>", or the drawn stand-in with "Photo coming". The label is in the alt text too.
@@ -160,9 +160,10 @@ function card(p, i = 9) {
 
 // What a card says under the name: the item's own line, or for a hookah family its colours and whether it has a base.
 function cardMeta(p) {
-  if (!p.family) return `<p class="card__meta">${esc(p.note || p.details?.description || (p.facts && p.facts.size) || "")}</p>`;
-  const fam = familyOf(p), bits = [stemSet(p) ? "Stem set, no base" : "", fam.length > 1 ? `${fam.length} colours` : ""].filter(Boolean).join(", ");
-  return `${fam.length > 1 ? swatchGroup(fam, p, { label: `Colours of ${p.name}`, card: p.sku, max: 5 }) : ""}${bits ? `<p class="card__meta card__meta--fam">${bits}</p>` : ""}`;
+  const desc = p.details?.description;   // one line on the card, the whole of it on the product page
+  if (!p.family) return `<p class="card__meta ${desc ? "card__meta--one" : ""}">${esc(desc || p.note || (p.facts && p.facts.size) || "")}</p>`;
+  const fam = familyOf(p), bits = stemSet(p) ? "Stem set, no base" : "";   // the chips carry the colour count
+  return `${desc ? `<p class="card__meta card__meta--one">${esc(desc)}</p>` : ""}${fam.length > 1 ? swatchGroup(fam, p, { label: `Colours of ${p.name}`, card: p.sku, max: 5 }) : ""}${bits ? `<p class="card__meta card__meta--fam">${bits}</p>` : ""}`;
 }
 
 // ---------- views ----------
@@ -252,11 +253,11 @@ function shopGrid(cat) {
   const c = catById[cat] || null, list = c ? SHELF.filter(p => p.cat === c.id) : SHELF;
   // Hookahs: the shop's ticked (in-store) pieces first, then the rest of the catalogue, each grouped by kind
   const fams = list.filter(p => p.family), byKind = l => GROUPS.map(([k, name]) => [name, l.filter(p => (p.facts.group || "full_size") === k)]).filter(g => g[1].length);
-  const tiers = cat === "hookahs" && fams.length ? [["In the shop", "Ticked in the shop's own catalogue. Count TBD.", byKind(fams.filter(ticked))], ["From the catalogue", "From Ace Hookah\u2019s catalogue. Ask the counter about one.", byKind(fams.filter(p => !ticked(p)))]].filter(t => t[2].length) : null;
+  const tiers = cat === "hookahs" && fams.length ? [["In the shop", "Pieces the shop has in. Prices and counts TBD.", byKind(fams.filter(ticked))], ["From the catalogue", "From Ace Hookah\u2019s catalogue. Ask the counter about one.", byKind(fams.filter(p => !ticked(p)))]].filter(t => t[2].length) : null;
   const groups = tiers ? null : cat === "hookahs" ? [...Object.keys(SERIES).map(k => [k, list.filter(p => seriesOf(p) === k)]), ["More from the shelf", list.filter(p => !seriesOf(p) && !p.dark)], ["One of one", list.filter(p => p.dark)]].filter(g => g[1].length) : [["", list]];
   const range = items => { const pr = items.filter(forSale).map(x => x.price); return pr.length === items.length && pr.length ? `, ${whole(Math.min(...pr))} to ${whole(Math.max(...pr))}` : ""; };
-  return `${tiers ? tiers.map(([t, note, gs]) => `<section class="tier" aria-label="${t}"><header class="tier__head"><h2 class="tier__h">${t}</h2><p class="tier__n"><span class="num">${gs.reduce((a, g) => a + g[1].length, 0)}</span> hookahs. ${note}</p></header>
-    <div class="grid grid--shop">${gs.map(([name, items]) => `<h3 class="series">${name} <span class="num">${items.length} ${items.length === 1 ? "piece" : "pieces"}</span></h3>` + items.map(card).join("")).join("")}</div></section>`).join("")
+  return `${tiers ? tiers.map(([t, note, gs]) => `<section class="tier" aria-label="${t}"><header class="tier__head"><h2 class="tier__h">${t}</h2><p class="tier__n"><span class="num">${gs.reduce((a, g) => a + g[1].length, 0)}</span>&nbsp;hookahs. ${note}</p></header>
+    <div class="grid grid--shop">${gs.map(([name, items]) => `<h3 class="series">${name} <span class="num">${items.length} ${items.length === 1 ? "hookah" : "hookahs"}</span></h3>` + items.map(card).join("")).join("")}</div></section>`).join("")
   : `<div class="grid grid--shop">${groups.map(([name, items]) => (name ? `<h2 class="series" data-tone="${SERIES[name] || ""}">${name} <span class="num">${items.length} pieces${range(items)}</span></h2>` : "") + items.map(card).join("")).join("")}</div>`}`;
 }
 function viewShop(cat) {
@@ -265,7 +266,7 @@ function viewShop(cat) {
   return `
   <section class="shophead" data-tone="${c ? c.tone : "bone"}" ${c ? `data-cat="${c.id}"` : `data-fx="all"`}>
     <h1 class="shophead__h">${c ? c.name : "Everything"}</h1>
-    <p class="shophead__n"><span class="num">${list.length}</span> ${c && list.length && list.every(localOnly) ? "kinds of charcoal.<br>Pickup or local delivery only." : "pieces"}</p>
+    <p class="shophead__n"><span class="num">${list.length}</span> ${c && list.length && list.every(isCharcoal) ? "kinds of charcoal.<br>Pickup or local delivery only." : c && list.length && list.every(localOnly) ? "pieces.<br>Pickup or local delivery only." : "pieces"}</p>
   </section>
   <nav class="chips" aria-label="Categories"><a href="/shop" ${!c ? 'aria-current="page"' : ""}>All</a>${CATEGORIES.map(x => `<a href="/shop/${x.id}" ${c && c.id === x.id ? 'aria-current="page"' : ""}>${x.name}</a>`).join("")}<a href="/gifts/under-50">Gifts</a></nav>
   ${f ? f.html(shopGrid(cat)) : shopGrid(cat)}`;
@@ -319,7 +320,7 @@ function viewProduct(sku) {
   const p = base && base.family && bySku[asked] && bySku[asked].family === base.family ? bySku[asked] : base;
   if (!p) return `${band("missing", "ruby", "That one is gone.")}<section class="empty"><p class="lead">It may have sold. <a class="link" href="/shop">See what is on the counter</a>.</p></section>`;
   const c = catById[p.cat], parcels = pack([{ product: p, qty: 1 }]), opts = cpQuote([{ product: p, qty: 1 }]), b = parcels[0];
-  const inCart = state.cart.some(l => l.sku === sku);
+  const inCart = state.cart.some(l => l.sku === p.sku);   // the colour chosen, not the address's first colour
   const fam = familyOf(p), sale = forSale(p);
   const more = SHELF.filter(x => x.cat === p.cat && x.sku !== sku && (!p.family || x.family !== p.family) && !x.dark && !isSold(x))
     .sort((a, b) => p.family ? ((b.facts?.group === p.facts.group) - (a.facts?.group === p.facts.group)) || (ticked(b) - ticked(a)) : (seriesOf(b) === seriesOf(p)) - (seriesOf(a) === seriesOf(p))).slice(0, 4);
@@ -340,7 +341,7 @@ function viewProduct(sku) {
       ${chips}
       ${p.details && p.details.notes ? `<p class="pdp__notes"><span>Notes</span> ${esc(p.details.notes)}</p>` : ""}
       ${localOnly(p) ? counterLine(p) : ""}
-      ${!sale ? `<p class="soldline">${p.state === "tbd" ? "Price TBD. The shop is setting its prices now." : "Coming soon."}</p><p class="pdp__avail">${p.family ? (ticked(p) ? `In the shop. ${TBD("Availability")}` : `From Ace Hookah\u2019s catalogue. ${TBD("Availability")}`) : TBD("Availability")}</p><a class="btn btn--ghost btn--call" href="tel:+15192552222">Ask the counter</a>`
+      ${!sale ? `${p.state === "tbd" ? "" : `<p class="soldline">Coming soon.</p>`}<p class="pdp__avail">${p.family ? (ticked(p) ? `In the shop. ${TBD("Availability")}` : `From Ace Hookah\u2019s catalogue. ${TBD("Availability")}`) : TBD("Availability")}</p><a class="btn btn--ghost btn--call" href="tel:+15192552222">Ask the counter</a>`
         : sold ? `<p class="soldline">${p.dark ? "This one has sold. Each resin stem is poured once." : "Sold out for now."}</p><a class="btn btn--ghost btn--call" href="tel:+15192552222">Call the counter</a>`
         : inCart ? `<a class="btn btn--wide" href="/cart">In your cart. View cart</a>` : `<button class="btn btn--wide" type="button" data-add="${p.sku}">Add to cart</button>`}
       ${sale ? deliveryLine(p, opts) : ""}
@@ -591,7 +592,8 @@ function viewShipping() {
 function syncChrome() {
   $$("[data-cart-count]").forEach(e => e.textContent = cartCount());
   const h = route() || "#/";
-  const [ra, rb] = h.replace(/^#\/?/, "").split("/"), prod = ra === "p" ? bySku[rb] : null;
+  const [ra, rb] = h.replace(/^#\/?/, "").split("/"), asked = bySku[new URLSearchParams(location.search).get("colour")], base = ra === "p" ? bySku[rb] : null;
+  const prod = base && base.family && asked && asked.family === base.family ? asked : base;   // the dock buys the colour shown
   const here = (on, exact = on) => on ? `aria-current="${exact ? "page" : "true"}"` : "";   // the page itself, or the section a product belongs to
   $("[data-nav]").innerHTML = `<a href="/shop" ${here(h === "#/shop")}>Everything</a>` + CATEGORIES.map(c => `<a href="/shop/${c.id}" ${here(h === "#/shop/" + c.id || prod?.cat === c.id, h === "#/shop/" + c.id)}>${c.name}</a>`).join("") + `<a href="/gifts/under-50" ${here(ra === "gifts")}>Gifts</a><a href="/set" ${here(h === "#/set")}>Build a set</a><a href="/search" ${here(h === "#/search")}>Search</a>`;
   const topCart = $(".top__cart"); if (h === "#/cart") topCart.setAttribute("aria-current", "page"); else topCart.removeAttribute("aria-current");
@@ -602,7 +604,7 @@ function syncChrome() {
   dock.classList.toggle("dock--buy", !!prod || ra === "set" || (ra === "cart" && lines.length > 0));
   dock.innerHTML = prod
     ? `<a class="dock__side" href="/shop/${prod.cat}" data-back>Back</a>${state.cart.some(l => l.sku === prod.sku)
-        ? `<a class="dock__buy" href="/cart">In your cart. View cart</a>` : !forSale(prod) ? `<a class="dock__buy dock__buy--off" href="tel:+15192552222">${prod.state === "tbd" ? "Price TBD. Ask the counter" : "Coming soon. Ask the counter"}</a>` : isSold(prod) ? `<a class="dock__buy dock__buy--off" href="/shop/${prod.cat}">Sold. See what is left</a>` : `<button class="dock__buy" type="button" data-add="${prod.sku}">Add to cart <span class="num">${whole(prod.price)}</span></button>`}<a class="dock__side" href="/cart" aria-label="Cart">${count}</a>`
+        ? `<a class="dock__buy" href="/cart">In your cart. View cart</a>` : !forSale(prod) ? `<a class="dock__buy dock__buy--off" href="tel:+15192552222">Ask the counter</a>` : isSold(prod) ? `<a class="dock__buy dock__buy--off" href="/shop/${prod.cat}">Sold. See what is left</a>` : `<button class="dock__buy" type="button" data-add="${prod.sku}">Add to cart <span class="num">${whole(prod.price)}</span></button>`}<a class="dock__side" href="/cart" aria-label="Cart">${count}</a>`
     : ra === "set"
     ? `<a class="dock__side" href="/shop">Shop</a>${setPicks().some(Boolean) ? `<button class="dock__buy" type="button" data-add-set>Add the set <span class="num">${whole(setPicks().filter(Boolean).reduce((a, p) => a + p.price, 0))}</span></button>` : `<a class="dock__buy dock__buy--off" href="/shop">See what is in stock</a>`}<a class="dock__side" href="/cart" aria-label="Cart">${count}</a>`
     : ra === "cart" && lines.length
@@ -660,10 +662,13 @@ function pickColour(btn, focus) {
     return;
   }
   const stage = $("[data-stage]"); if (!stage) return;
+  const was = bySku[stage.dataset.stage], u = new URL(location.href); u.searchParams.set("colour", v.sku); history.replaceState(history.state, "", u.pathname + u.search);
+  // a colour that is on sale, or the one it replaces, rebuilds the buy area and the dock, so the button always adds the colour shown
+  if (forSale(v) || forSale(was)) { render(); const b = $(`[data-swatch="${v.sku}"]`); if (b && focus) b.focus(); return; }
+  stage.dataset.stage = v.sku;
   paintColour(stage, v, v.colour ? `${v.name}, ${v.colour}` : v.name);
   const name = $("[data-colour-name]"); if (name) { name.textContent = v.colour || ""; name.hidden = !v.colour; name.nextElementSibling.textContent = `${familyOf(v).indexOf(v) + 1} of ${familyOf(v).length}`; }
-  // the address and the share link name the colour; the page itself is the same piece, so history gets no new entry
-  const u = new URL(location.href); u.searchParams.set("colour", v.sku); history.replaceState(history.state, "", u.pathname + u.search);
+  // the address and the share link name the colour (set above); the page itself is the same piece, so history gets no new entry
 }
 // Arrow keys move through the colours like any radio group; Home and End jump to the ends.
 document.addEventListener("keydown", e => {

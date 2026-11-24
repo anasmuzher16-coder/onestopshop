@@ -25,7 +25,7 @@ const mixed = await post({ ...who, method: "pickup", lines: [{ sku: shisha.sku, 
 ok(mixed.status === 409 && (await stockOf(shisha.sku)) === before, "a cart mixing a TBD item with a real one is refused whole, and no stock moves");
 ok((await post({ ...who, method: "pickup", lines: [{ sku: "OSS-1001", qty: 1 }] })).status === 409, "a retired sample hookah cannot be ordered");
 // the back office cannot switch a catalogue item on without the shop's own price (the 0005 trigger)
-const login = await fetch(B + "/api/admin/login", { method: "POST", headers: { "Content-Type": "application/json", "X-OSS-Admin": "1" }, body: JSON.stringify({ key: KEY }) });
+const login = await fetch(B + "/api/admin/login", { method: "POST", headers: { "Content-Type": "application/json", "X-OSS-Admin": "1" }, body: JSON.stringify({ passcode: KEY }) });
 const cookie = (login.headers.get("set-cookie") || "").split(";")[0];
 const on = await fetch(B + `/api/admin/products/${tbd.sku}`, { method: "PUT", headers: { "Content-Type": "application/json", "X-OSS-Admin": "1", Cookie: cookie }, body: JSON.stringify({ active: true }) });
 ok(on.status === 409 && /Set the shop price/.test((await on.json().catch(() => ({}))).error || ""), "switching a TBD item on without a price is refused with the reason: " + on.status);
@@ -36,7 +36,7 @@ ok(!/supplier/i.test(mod) && !JSON.stringify(feed).includes("supplier"), "no sup
 const leak = (p, cents) => [p.price, p.price_cents].some(v => v != null && Math.round(v * (p.price_cents != null ? 1 : 100)) === cents);
 ok(!ace.some(p => leak(p, supplier.get(p.sku))), "no Ace item carries its supplier price in the catalogue module");
 ok(!feed.products.filter(p => supplier.has(p.sku)).some(p => p.price_cents !== null || p.for_sale), "the public feed gives TBD items no price and marks them not for sale");
-const ALLOWED = ["charcoal", "brand", "variant", "shape", "box_sku", "description", "ml", "kind", "notes"];
+const ALLOWED = ["charcoal", "brand", "variant", "shape", "box_sku", "photo", "description", "ml", "kind", "notes"];
 ok(!feed.products.some(p => "facts_known" in p || "availability" in p || "supplier_ref" in p || Object.keys(JSON.parse(p.details || "{}")).some(k => !ALLOWED.includes(k))), "the public feed's details hold only the public keys (no photo rights, sources, research notes or catalogue facts)");
 ok(feed.products.filter(p => /^OSS-93/.test(p.sku)).every(p => p.ship_class === "pickup_only"), "the feed says foil is pickup or local delivery while its weight is TBD");
 let pageLeak = 0, offers = 0;
@@ -67,7 +67,7 @@ const sh = await post({ ...who, ...to, method: "ship", service: "cp-exp", lines:
 ok(sh.status === 201 && sh.data.order.subtotal_cents === Math.round(shisha.price * 100), `shisha ships at the shop's price: ${sh.status} ${sh.data.error || ""}`);
 ok(P.filter(p => p.cat === "shisha").length === 47 && P.filter(p => p.cat === "shisha" && p.stock === 0).length === 3, "all 47 shisha flavours are up, 3 sold out");
 const sold = P.find(p => p.cat === "shisha" && p.stock === 0); ok((await post({ ...who, method: "pickup", lines: [{ sku: sold.sku, qty: 1 }] })).status === 409, "a sold-out flavour cannot be ordered");
-const foil = P.filter(p => p.weightTbd); ok(foil.length === 15 && foil.every(p => p.state === "sale" && p.ship === "pickup_only"), "15 foil packs on sale, pickup or local delivery while the weight is TBD");
+const foil = P.filter(p => p.weightTbd && p.cat === "heat"); ok(foil.length === 15 && foil.every(p => p.state === "sale" && p.ship === "pickup_only"), "15 foil packs on sale, pickup or local delivery while the weight is TBD");
 ok((await post({ ...who, ...to, method: "ship", service: "cp-exp", lines: [{ sku: foil[0].sku, qty: 1 }] })).data.local_only === true, "foil cannot be sent by a carrier on a made-up weight");
 ok((await post({ ...who, method: "pickup", lines: [{ sku: foil[0].sku, qty: 1 }] })).status === 201, "foil can be picked up");
 

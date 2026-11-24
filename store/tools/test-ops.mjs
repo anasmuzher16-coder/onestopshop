@@ -41,7 +41,7 @@ ok(!evilHtml.includes("<img src=x") && evilHtml.includes("&lt;img"), "a name wit
 
 const bk = await call("/api/admin/backup");
 ok(bk.status === 200 && /attachment; filename="one-stop-shop-backup-\d{4}-\d\d-\d\d\.json"/.test(bk.r.headers.get("content-disposition") || ""), "backup downloads as a dated file");
-ok(bk.data.tables && bk.data.tables.products.length === 98 && bk.data.tables.orders.length >= 50 && bk.data.tables.stock_moves.length > 90 && bk.data.tables.emails.length >= 5 && !("sessions" in bk.data.tables), "backup holds products, orders, stock history and emails, and no sign-in tokens");
+ok(bk.data.tables && bk.data.tables.products.length === 98 + 69 + 15 + 47 + 296 && bk.data.tables.orders.length >= 50 && bk.data.tables.stock_moves.length > 90 && bk.data.tables.emails.length >= 5 && !("sessions" in bk.data.tables), "backup holds products, orders, stock history and emails, and no sign-in tokens");
 
 ok((await call("/api/admin/logout", { method: "POST", body: {} })).status === 200 && (await call("/api/admin/summary")).status === 401, "signing out ends that sign-in for good");
 cookie = "";

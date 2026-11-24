@@ -95,7 +95,7 @@ async function page(request, env, url, ctx) {
 // The public catalogue feed: what a shopper can already see, nothing more. Research notes, photo rights, source lines
 // and catalogue facts stay in the database; an item not on sale shows no stock count.
 const FEED = ["sku", "name", "category_id", "price_cents", "weight_g", "box_id", "glass", "ship_class", "height_cm", "note", "img", "stock"];
-const FEED_DETAILS = ["charcoal", "brand", "variant", "shape", "box_sku", "description", "ml", "kind", "notes"];   // allowlist: anything added to details later stays private
+const FEED_DETAILS = ["charcoal", "brand", "variant", "shape", "box_sku", "photo", "description", "ml", "kind", "notes"];   // allowlist: anything added to details later stays private
 function publicFeed(cat) {
   return { categories: cat.categories, boxes: cat.boxes, products: cat.products.map(p => {
     const o = {}; for (const k of FEED) o[k] = p[k];
