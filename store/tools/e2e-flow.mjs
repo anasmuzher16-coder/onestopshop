@@ -4,6 +4,8 @@
 import { createRequire } from "node:module"; import { readFileSync } from "node:fs";
 const { chromium } = createRequire("C:/dev/puckempire-arena/package.json")("playwright");
 const B = process.env.BASE || "http://127.0.0.1:4420", shots = process.argv[2];
+// Card orders go to Stripe's page (the local stand-in, tools/fake-stripe.mjs): pay there, come back, wait for the signed webhook.
+const payThrough = async (p, timeout = 15000) => { await p.waitForURL(u => /\/pay\/cs_/.test(String(u)) || /\/order\/W[A-Z0-9]{6}$/.test(String(u)), { timeout }); if (/\/pay\/cs_/.test(p.url())) { await p.locator("[data-fake-pay]").click(); await p.waitForURL(/\/order\/W[A-Z0-9]{6}$/, { timeout }); await p.waitForSelector('[data-pay-state="paid"]', { timeout }); } };
 const KEY = readFileSync(new URL("../.dev.vars", import.meta.url), "utf8").match(/ADMIN_KEY=(.+)/)[1].trim();
 let n = 0, f = 0; const t = (name, c, extra = "") => { n++; if (!c) { f++; console.log("FAIL", name, extra); } };
 const b = await chromium.launch(); const errs = [];
@@ -26,7 +28,7 @@ try {
   t("empty form is stopped with a message", await p.locator("[data-co-err]").isVisible());
   await p.fill("#co-name", "Sam Sample"); await p.fill("#co-email", "sam@example.com"); await p.fill("#co-line1", "1 Test Street"); await p.fill("#co-city", "Toronto");
   const shown = await p.locator(".totals__door dd").innerText();
-  await p.locator('[data-checkout] button[type="submit"]').tap(); await p.waitForURL(/\/order\/W[A-Z0-9]{6}$/, { timeout: 15000 });
+  await p.locator('[data-checkout] button[type="submit"]').tap(); await payThrough(p, 15000);
   const id1 = new URL(p.url()).pathname.split("/").pop(), paid = await p.locator(".totals__door dd").innerText();
   t("confirmation shows the order code", (await p.locator(".done__tag b").innerText()) === id1);
   t("the total on the confirmation equals the total shown before paying", paid === shown, `${shown} vs ${paid}`);
@@ -38,7 +40,7 @@ try {
   await p.locator('a[href="/checkout"]:visible').first().tap(); await p.waitForURL(/\/checkout$/);
   t("pickup checkout asks for no address", await p.locator("#co-line1").count() === 0);
   await p.fill("#co-name", "Pat Pickup"); await p.fill("#co-email", "pat@example.com");
-  await p.locator('[data-checkout] button[type="submit"]').tap(); await p.waitForURL(/\/order\/W[A-Z0-9]{6}$/, { timeout: 15000 });
+  await p.locator('[data-checkout] button[type="submit"]').tap(); await payThrough(p, 15000);
   const id2 = new URL(p.url()).pathname.split("/").pop();
   // 3 sold out on the shelf
   await p.goto(B + "/p/OSS-7008", { waitUntil: "networkidle" });
@@ -72,7 +74,7 @@ try {
   t("checkout asks nothing about age", await p.locator('input[type="checkbox"]').count() === 0 && !/photo id|\bage\b|adult/i.test(await p.locator("#main").innerText()));
   await snap("flow-charcoal-checkout");
   await p.fill("#co-name", "Cole Coal"); await p.fill("#co-email", "cole@example.com");
-  await p.locator('[data-checkout] button[type="submit"]').tap(); await p.waitForURL(/\/order\/W[A-Z0-9]{6}$/, { timeout: 15000 });
+  await p.locator('[data-checkout] button[type="submit"]').tap(); await payThrough(p, 15000);
   const id3 = new URL(p.url()).pathname.split("/").pop();
   t("the confirmation says nothing about age or ID", !/photo id|\bage\b|adult/i.test(await p.locator("#main").innerText()));
   await p.evaluate(() => { localStorage.removeItem("oss:postal"); localStorage.removeItem("oss:ship"); });

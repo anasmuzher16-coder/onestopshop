@@ -57,7 +57,7 @@ ok(o1.order.status === "paid" && o1.order.pay_status === "paid" && o1.order.paid
 ok(o1.emails.filter(e => e.kind === "order_placed").length === 1, "one receipt, written after the webhook");
 const again = await hook(B, completed(ts, { payment_intent: o1.order.pay_intent }));
 const pi = await hook(B, intentSucceeded(ts, o1.order.pay_intent));
-ok(again.data.result === "repeat" && pi.data.result === "repeat", "a second completed event and payment_intent.succeeded change nothing: " + again.data.result + "," + pi.data.result);
+ok(again.data.result === "repeat" && pi.data.result !== "paid", "a second completed event changes nothing, and a payment_intent event never pays an order: " + again.data.result + "," + pi.data.result);
 const replayEv = completed(ts, { payment_intent: o1.order.pay_intent }); await hook(B, replayEv); const r2 = await hook(B, replayEv);
 ok(r2.data.repeat === true, "the very same event id is recognised as a repeat");
 ok((await order(t.data.order.id)).emails.filter(e => e.kind === "order_placed").length === 1, "still one receipt after four deliveries");
@@ -76,7 +76,8 @@ ok(both.filter(r => r.data.result === "released").length === 1, "three expiry ev
 ok((await stockOf("OSS-8004")) === e0, "the 2 are back on the shelf, not 4 or 6");
 const exo = (await order(ex.data.order.id)).order;
 ok(exo.status === "cancelled" && exo.pay_status === "expired", "the expired order is closed as not paid");
-ok((await hook(B, completed(xs))).data.result === "repeat" && (await order(ex.data.order.id)).order.status === "cancelled", "a completed event after the page closed cannot revive it");
+const late = await hook(B, completed(xs)), lateO = (await order(ex.data.order.id)).order;
+ok(late.data.result === "paid_after_cancel" && lateO.status === "cancelled" && lateO.pay_status === "paid" && (await stockOf("OSS-8004")) === e0, "money arriving for a closed order never revives it or takes stock, but is kept on record as a refund owed");
 ok((await order(ex.data.order.id)).emails.every(e => e.kind !== "order_placed"), "no receipt was ever written for it");
 
 // 5 a lost webhook: the sweep asks Stripe itself
@@ -141,8 +142,8 @@ ok((await order(rid)).order.pay_status === "paid", "refund test order is paid");
 ok((await admin(`/orders/${rid}/refund`, { amount_cents: 500 })).status === 400, "a refund needs its own key");
 const op1 = crypto.randomUUID(), part = await admin(`/orders/${rid}/refund`, { op: op1, amount_cents: 1000, reason: "scratched base" });
 ok(part.status === 200 && part.data.order.pay_status === "part_refunded" && part.data.order.refunded_cents === 1000, "partial refund of $10: " + part.status + " " + (part.data.error || ""));
-const dup = await admin(`/orders/${rid}/refund`, { op: op1, amount_cents: 1000 });
-ok(dup.status === 200 && (await order(rid)).order.refunded_cents === 1000, "the same refund tap sent twice refunds once");
+const dup = await admin(`/orders/${rid}/refund`, { op: op1, amount_cents: 2000 });
+ok(dup.status === 200 && (await order(rid)).order.refunded_cents === 1000, "the same refund tap sent twice (even with a different amount) refunds once, for what was booked");
 ok((await admin(`/orders/${rid}/refund`, { op: crypto.randomUUID(), amount_cents: total })).status === 409, "more than is left is refused");
 ok((await admin(`/orders/${rid}/refund`, { op: crypto.randomUUID(), amount_cents: -5 })).status === 400 && (await admin(`/orders/${rid}/refund`, { op: crypto.randomUUID(), amount_cents: 1.5 })).status === 400, "negative and fractional amounts are refused");
 const left = total - 1000, race = await Promise.all([1, 2, 3].map(() => admin(`/orders/${rid}/refund`, { op: crypto.randomUUID(), amount_cents: left })));

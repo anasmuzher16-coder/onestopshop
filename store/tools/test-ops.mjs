@@ -14,9 +14,10 @@ for (const p of ["/privacy", "/terms"]) { const r = await call(p); ok(r.status =
 ok((await call("/api/admin/backup")).status === 401 && (await call("/api/admin/emails/1")).status === 401, "backup and emails need sign-in");
 
 // a shopper orders the last Midnight Coal for pickup, and something to ship
-const pick = await call("/api/orders", { method: "POST", body: { name: "Pat Pickup", email: "pat@example.com", method: "pickup", lines: [{ sku: "OSS-7006", qty: 1 }] } });
+const pick = await call("/api/orders", { method: "POST", body: { name: "Pat Pickup", email: "pat@example.com", method: "pickup", pay: "at_pickup", lines: [{ sku: "OSS-7006", qty: 1 }] } });
 const ship = await call("/api/orders", { method: "POST", body: { name: "Sam Sample", email: "sam@example.com", method: "ship", service: "cp-exp", postal: "M5V 2T6", address: { line1: "1 Test Street", city: "Toronto" }, lines: [{ sku: "OSS-8001", qty: 1 }] } });
 ok(pick.status === 201 && ship.status === 201, "two orders placed");
+if (ship.data.pay?.url) await fetch(ship.data.pay.url, { method: "POST", redirect: "manual" });   // paid on the Stripe stand-in, which sends the signed webhook
 
 const login = await call("/api/admin/login", { method: "POST", body: { passcode: KEY } }); cookie = (login.r.headers.get("set-cookie") || "").split(";")[0];
 ok(login.status === 200 && /oss_admin=[a-f0-9]{64}/.test(cookie), "signed in");
@@ -35,7 +36,7 @@ await call(`/api/admin/orders/${ship.data.order.id}/status`, { method: "POST", b
 const shipped = (await call("/api/admin/orders/" + ship.data.order.id)).data.emails.find(e => e.kind === "order_shipped"); ok(!!shipped, "marking it shipped writes the shipped email");
 const view = shipped ? (await call("/api/admin/emails/" + shipped.id)).data.email : null;
 ok(view && view.html.includes(ship.data.order.id) && view.html.includes("Sunset shades") && !/<script/i.test(view.html), "the shipped email names the order and the item, and carries no script");
-const evil = await call("/api/orders", { method: "POST", body: { name: '<img src=x onerror=alert(1)>', email: "x@example.com", method: "pickup", lines: [{ sku: "OSS-8003", qty: 1 }] } });
+const evil = await call("/api/orders", { method: "POST", body: { name: '<img src=x onerror=alert(1)>', email: "x@example.com", method: "pickup", pay: "at_pickup", lines: [{ sku: "OSS-8003", qty: 1 }] } });
 const evilMail = (await call("/api/admin/orders/" + evil.data.order.id)).data.emails.find(e => e.kind === "order_placed"), evilHtml = (await call("/api/admin/emails/" + evilMail.id)).data.email.html;
 ok(!evilHtml.includes("<img src=x") && evilHtml.includes("&lt;img"), "a name with code in it is shown as text in the email");
 

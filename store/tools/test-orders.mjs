@@ -37,6 +37,7 @@ const got = await post(pickup("OSS-7006", last, { order_key: k3 })), again = awa
 ok(got.status === 201 && again.status === 200 && again.data.order?.id === got.data.order?.id, `retry of the order that took the last ${last}: ${got.status},${again.status}`);
 
 // a key is not a way to read or change something else
+if (a.data.pay?.url) await fetch(a.data.pay.url, { method: "POST", redirect: "manual" });   // the order is paid (Stripe stand-in): it is now final
 const other = await post({ ...who, email: "someone@example.com", method: "pickup", lines: [{ sku: "OSS-8004", qty: 1 }], order_key: k1 });
 ok(other.status === 409 && !other.data.order, "a key with different order details is refused: " + other.status);
 const moved = await post({ ...who, name: "Key Corrected", method: "pickup", lines: [{ sku: "OSS-8004", qty: 1 }], order_key: k1 });

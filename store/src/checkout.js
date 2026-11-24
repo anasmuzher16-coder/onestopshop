@@ -53,7 +53,7 @@ async function findKeyed(env, key, sameOrder) {
     }
     return { row };
   }
-  return { id: code(), idem };
+  return { spent: true };   // every slot for this key is used: a random code here could not be found by a retry
 }
 // An unpaid order whose details changed. True once its page is closed at Stripe (or never existed) and its stock is back.
 async function closeUnpaid(env, row) {
@@ -114,6 +114,7 @@ export async function placeOrder(request, env, url) {
     keyed = await findKeyed(env, key, sameOrder);
     for (let i = 0; keyed.open && i < 3; i++) { await wait(300); keyed = await findKeyed(env, key, sameOrder); }
     if (keyed.open) return stillOpen();
+    if (keyed.spent) return json({ error: "This order was tried too many times. Refresh the page and place it again.", key_spent: true }, 409);
     if (keyed.changed) return json({ error: `We already have this as order ${keyed.id}. To change its details, call the counter at 519-255-2222.`, existing_order: keyed.id }, 409);
     if (keyed.row) return replay(env, url.origin, keyed.row);
   }
@@ -180,7 +181,7 @@ export async function placeOrder(request, env, url) {
     return again.row ? replay(env, url.origin, again.row) : stillOpen();
   }
   const took = await db.batch(lines.flatMap(l => [
-    db.prepare("UPDATE products SET stock = stock - ?1, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE sku = ?2 AND stock >= ?1").bind(l.qty, l.product.sku),
+    db.prepare("UPDATE products SET stock = stock - ?1, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE sku = ?2 AND stock >= ?1 AND EXISTS (SELECT 1 FROM orders WHERE id = ?3 AND status = 'pending' AND release_op IS NULL)").bind(l.qty, l.product.sku, id),
     db.prepare("INSERT INTO stock_moves (sku, delta, reason, ref, actor) SELECT ?2, -?1, 'sale', ?3, 'store' WHERE changes() = 1").bind(l.qty, l.product.sku, id),
   ]));
   const failed = lines.filter((l, i) => !took[i * 2].meta.changes);
@@ -188,7 +189,7 @@ export async function placeOrder(request, env, url) {
     const got = lines.filter((l, i) => took[i * 2].meta.changes);
     await db.batch([
       ...got.flatMap(l => [db.prepare("UPDATE products SET stock = stock + ? WHERE sku = ?").bind(l.qty, l.product.sku), db.prepare("INSERT INTO stock_moves (sku, delta, reason, ref, actor) VALUES (?, ?, 'released', ?, 'store')").bind(l.product.sku, l.qty, id)]),
-      db.prepare("DELETE FROM order_items WHERE order_id = ?").bind(id), db.prepare("DELETE FROM orders WHERE id = ?").bind(id),
+      db.prepare("DELETE FROM order_items WHERE order_id = ? AND EXISTS (SELECT 1 FROM orders WHERE id = ? AND status = 'pending' AND release_op IS NULL)").bind(id, id), db.prepare("DELETE FROM orders WHERE id = ? AND status = 'pending' AND release_op IS NULL").bind(id),
     ]);
     const left = await db.prepare("SELECT stock FROM products WHERE sku = ?").bind(failed[0].product.sku).first("stock");
     return json({ error: `${failed[0].product.name} sold out while you were checking out.`, sku: failed[0].product.sku, stock: left ?? 0 }, 409);

@@ -54,10 +54,13 @@ ok(race.filter(r => r.status === 201).length === 1 && (await stockOf("OSS-7006")
 // the shop sees it
 const login = await fetch(B + "/api/admin/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ passcode: KEY }) }), cookie = (login.headers.get("set-cookie") || "").split(";")[0];
 const orders = (await (await fetch(B + "/api/admin/orders", { headers: { Cookie: cookie } })).json()).orders;
-ok(a.status === 201 && orders.some(o => o.id === a.data.order.id && o.status === "paid"), "the new order is in the back office as To pack");
+ok(a.status === 201 && orders.some(o => o.id === a.data.order.id && o.status === "pending" && o.pay_status === "awaiting"), "before payment the order waits, not To pack");
+if (a.data.pay?.url) await fetch(a.data.pay.url, { method: "POST", redirect: "manual" });   // pay on the Stripe stand-in: its signed webhook marks the order paid
+const paidNow = (await (await fetch(B + "/api/admin/orders", { headers: { Cookie: cookie } })).json()).orders;
+ok(a.status === 201 && paidNow.some(o => o.id === a.data.order.id && o.status === "paid"), "once paid, the new order is in the back office as To pack");
 const hist = (await (await fetch(B + "/api/admin/products/OSS-1001/history", { headers: { Cookie: cookie } })).json()).moves;
 ok(hist[0].reason === "sale" && hist[0].delta === -1, "the sale is in the stock history");
-const lost = orders.filter(o => o.status === "pending").length; ok(lost === 0, "no half-made orders left behind: " + lost);
+const lost = orders.filter(o => o.status === "pending" && !["awaiting", "pay_at_pickup"].includes(o.pay_status)).length; ok(lost === 0, "no half-made orders left behind (orders waiting on a payment are not half-made): " + lost);
 
 // CHARCOAL (owner, 2026-11-24): pickup or our own local delivery only, never Canada Post or any carrier, and no age or ID
 // step anywhere a customer can see (staff check ID in person).
@@ -84,6 +87,7 @@ ok(coalOk.data.order?.subtotal_cents === 1199 + 2195, "charcoal is charged the s
 ok(!/\bage\b|photo id|legal age|age_/i.test(JSON.stringify(coalOk.data)), "the order answer says nothing about age or ID");if (coalOk.status === 201) {
   const seen = await (await fetch(B + "/api/admin/orders/" + coalOk.data.order.id, { headers: { Cookie: cookie } })).json();
   ok(seen.items.some(i => i.category_id === "heat"), "the back office can tell a charcoal order (for its staff-only ID note)");
+  if (coalOk.data.pay?.url) await fetch(coalOk.data.pay.url, { method: "POST", redirect: "manual" });   // paid on the Stripe stand-in first
   await fetch(B + "/api/admin/orders/" + coalOk.data.order.id + "/status", { method: "POST", headers: { "Content-Type": "application/json", "X-OSS-Admin": "1", Cookie: cookie }, body: JSON.stringify({ status: "ready" }) });
   const mails = (await (await fetch(B + "/api/admin/orders/" + coalOk.data.order.id, { headers: { Cookie: cookie } })).json()).emails;
   ok(mails.length === 2, "the receipt and the ready-for-pickup email are written: " + mails.map(m => m.kind).join(","));

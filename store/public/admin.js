@@ -123,6 +123,7 @@ function editSheet(p) {
     ${isNew ? `<label class="field"><span>How many on the shelf now</span><input class="input num" name="stock" inputmode="numeric" value="0"></label>` : ""}
     <label class="check"><input type="checkbox" name="glass" ${p.glass ? "checked" : ""}> Glass, pack with care</label>
     <label class="check"><input type="checkbox" name="active" ${p.active ? "checked" : ""}> Show in the store</label>
+    ${payActs(o)}
     <p class="err" role="alert" data-err></p>
     <div class="sheet__act"><button class="btn" type="submit">${isNew ? "Add product" : "Save"}</button><button class="btn btn--ghost" type="button" data-close>Cancel</button></div>
     ${isNew ? "" : `<section><h3 class="meta" style="margin-bottom:var(--s-2)">Stock history</h3><div class="hist" data-hist><div><span>Loading</span></div></div></section>`}</form>`;
@@ -160,7 +161,7 @@ document.addEventListener("change", async e => {
 // ---------- Orders ----------
 const ORDER_STATE = { pending: ["done", "Not paid"], paid: ["go", "To pack"], packed: ["go", "Packed, to send"], ready: ["go", "Ready for pickup"], shipped: ["done", "Shipped"], collected: ["done", "Collected"], cancelled: ["out", "Cancelled"], refunded: ["out", "Refunded"] };
 const isLocal = o => o.ship_service === "Local delivery";
-const stateLabel = o => isLocal(o) && o.status === "packed" ? "Packed, to deliver" : isLocal(o) && o.status === "shipped" ? "Out for delivery" : ORDER_STATE[o.status][1];
+const stateLabel = o => o.status === "pending" && o.pay_status === "pay_at_pickup" ? "Pay at pickup, to get ready" : o.status === "pending" && o.pay_status === "awaiting" ? "Waiting for card payment" : isLocal(o) && o.status === "packed" ? "Packed, to deliver" : isLocal(o) && o.status === "shipped" ? "Out for delivery" : ORDER_STATE[o.status][1];
 const dropInfo = o => { let a = {}; try { a = JSON.parse(o.address || "{}"); } catch {} const where = a.line1 ? `${a.line1}, ${a.city}, ${a.province} ${a.postal}` : ""; let q = {}; try { q = JSON.parse(o.ship_quote || "{}"); } catch {} return `${q.confirm_address ? `<div><dt>Check first</dt><dd>Priced from the postal code. Call to confirm the address before driving.</dd></div>` : ""}${a.note ? `<div><dt>Note</dt><dd>${esc(a.note)}</dd></div>` : ""}`; };
 // Address and phone first and large: this is what gets read and tapped from a phone on the way out the door.
 const dropCard = o => {
@@ -172,9 +173,15 @@ const dropCard = o => {
     ${a.line1 ? `<p class="drop__addr">${esc(a.line1)}<br>${esc(a.city)}, ${esc(a.province)} ${esc(a.postal)}</p>` : ""}${from ? `<p class="drop__from">${from}</p>` : ""}
     <div class="drop__act">${o.phone ? `<a class="btn" href="tel:${esc(String(o.phone).replace(/[^\d+]/g, ""))}">Call ${esc(o.phone)}</a>` : ""}${where ? `<a class="btn btn--ghost" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(where)}" target="_blank" rel="noopener">Open in Maps</a>` : ""}</div></section>`;
 };
-const NEXT = o => ({ paid: o.method === "pickup" ? ["ready", "Mark ready for pickup"] : ["packed", "Mark packed"], packed: ["shipped", isLocal(o) ? "Mark out for delivery" : "Mark shipped"], ready: ["collected", "Mark collected"] }[o.status]);
+const NEXT = o => ({ pending: o.pay_status === "pay_at_pickup" ? ["ready", "Mark ready for pickup"] : undefined, paid: o.method === "pickup" ? ["ready", "Mark ready for pickup"] : ["packed", "Mark packed"], packed: ["shipped", isLocal(o) ? "Mark out for delivery" : "Mark shipped"], ready: o.pay_status === "pay_at_pickup" ? undefined : ["collected", "Mark collected"] }[o.status]);
+const isTodo = o => ["paid", "packed", "ready"].includes(o.status) || (o.status === "pending" && o.pay_status === "pay_at_pickup");
+// How the order is paid, in words, and what can be done about it from here.
+const PAY = { awaiting: "Card, not paid yet", paid: "Paid", pay_at_pickup: "To pay at the counter", expired: "Card page closed unpaid", failed: "Card payment failed", refunded: "Refunded", part_refunded: "Part refunded" };
+const payFacts = o => !o.pay_status ? "" : `<div><dt>Payment</dt><dd>${PAY[o.pay_status] || esc(o.pay_status)}${o.pay_method === "card" && o.paid_cents ? `, card ${money(o.paid_cents)}` : o.pay_status === "paid" && o.pay_method === "at_pickup" ? ", at the counter" : ""}${o.refunded_cents ? `, ${money(o.refunded_cents)} refunded` : ""}</dd></div>`;
+const payActs = o => o.pay_status === "pay_at_pickup" ? `<button class="btn" type="button" data-markpaid>Mark paid at the counter</button>`
+  : o.pay_method === "card" && ["paid", "part_refunded"].includes(o.pay_status) ? `<form class="refund" data-refundform><label class="meta" for="rf-amt">Refund to the card</label><div class="refund__row"><input class="field num" id="rf-amt" name="amount" inputmode="decimal" value="${((o.paid_cents - (o.refunded_cents || 0)) / 100).toFixed(2)}" aria-describedby="rf-note"><button class="btn btn--ghost" type="submit">Refund</button></div><p class="fineprint" id="rf-note">Up to ${money(o.paid_cents - (o.refunded_cents || 0))}. Stock is not put back: count returns in with the stock button.</p></form>` : "";
 function viewOrders() {
-  const todo = o => ["paid", "packed", "ready"].includes(o.status), list = state.orders.filter(o => state.oflt === "all" || (state.oflt === "todo" ? todo(o) : !todo(o)));
+  const todo = isTodo, list = state.orders.filter(o => state.oflt === "all" || (state.oflt === "todo" ? todo(o) : !todo(o)));
   const chip = (id, label) => `<button class="chip" type="button" data-oflt="${id}" aria-pressed="${state.oflt === id}">${label}</button>`;
   return `<div class="tools"><h1 class="h1">Orders<span class="sample">Sample orders</span></h1><div class="chips" role="group" aria-label="Filter">${chip("todo", "To do " + state.orders.filter(todo).length)}${chip("done", "Finished")}${chip("all", "All " + state.orders.length)}</div></div>
     <div class="rows">${list.map(o => { const k = ORDER_STATE[o.status][0], label = stateLabel(o); return `<button class="row order" type="button" data-order="${o.id}"><span class="row__main"><span class="row__name">${esc(o.name)}</span><span class="row__meta">${o.id} &middot; ${when(o.created_at)} &middot; ${o.units} ${o.units === 1 ? "item" : "items"} &middot; ${o.method === "pickup" ? "Pickup" : isLocal(o) ? "Delivery" : esc(o.tax_province || "")}</span></span><span class="order__r"><b class="num">${money(o.total_cents)}</b><span class="state ${k}">${label}</span></span></button>`; }).join("") || `<p class="empty">Nothing waiting. New orders show up here.</p>`}</div>`;
@@ -187,8 +194,8 @@ async function orderSheet(id) {
     ${items.some(i => i.category_id === "heat" || /"charcoal":true/.test(i.details || "")) ? `<p class="fineprint" data-staff-note>Charcoal order. Check ID if the customer looks young.</p>` : ""}
     <div class="rows items">${items.map(i => `<div class="row">${thumb(i, catOf((state.products.find(p => p.sku === i.sku) || {}).category_id).tone)}<span class="row__main"><span class="row__name">${esc(i.name)}</span><span class="row__meta">${i.sku}${i.box_id ? " &middot; box " + esc(i.box_id) : ""}</span></span><span class="num"><b style="color:var(--color-strong)">${i.qty}</b> &times; ${money(i.unit_cents)}</span></div>`).join("")}</div>
     <dl class="facts"><div><dt>Items</dt><dd class="num">${money(o.subtotal_cents)}</dd></div><div><dt>${o.method === "pickup" ? "Pickup at the counter" : isLocal(o) ? "Local delivery" : "Shipping, " + esc(o.ship_service || "")}</dt><dd class="num">${o.method === "pickup" || (isLocal(o) && !o.shipping_cents) ? "Free" : money(o.shipping_cents)}</dd></div>
-      <div><dt>Tax, ${esc(o.tax_province || "")}</dt><dd class="num">${money(o.tax_cents)}</dd></div><div><dt><b style="color:var(--color-strong)">Total paid</b></dt><dd class="num"><b>${money(o.total_cents)}</b></dd></div>
-      ${o.tracking ? `<div><dt>Tracking</dt><dd class="num">${esc(o.tracking)}</dd></div>` : ""}${dropInfo(o)}</dl>
+      <div><dt>Tax, ${esc(o.tax_province || "")}</dt><dd class="num">${money(o.tax_cents)}</dd></div><div><dt><b style="color:var(--color-strong)">${o.pay_status === "paid" || o.pay_status === "refunded" || o.pay_status === "part_refunded" || !o.pay_status ? "Total paid" : "Total"}</b></dt><dd class="num"><b>${money(o.total_cents)}</b></dd></div>
+      ${payFacts(o)}${o.tracking ? `<div><dt>Tracking</dt><dd class="num">${esc(o.tracking)}</dd></div>` : ""}${dropInfo(o)}</dl>
     <section><h3 class="meta" style="margin-bottom:var(--s-2)">Emails to the customer</h3><div class="hist">${emails.map(e => `<button class="mailrow" type="button" data-mail="${e.id}"><span>${esc(MAIL[e.kind] || e.kind)}, ${when(e.at)}</span><span class="state ${e.status === "sent" ? "done" : e.status === "failed" ? "out" : "low"}">${e.status === "sent" ? "Sent" : e.status === "failed" ? "Failed" : "Written, not sent"}</span></button>`).join("") || `<div><span>None yet.</span></div>`}</div>
       ${emails.some(e => e.status === "held") ? `<p class="fineprint">Emails are written and kept here. They start sending once the shop's mail service is connected.</p>` : ""}<div data-mailview></div></section>
     <p class="err" role="alert" data-err></p>
@@ -207,7 +214,7 @@ async function mailView(id) {
 async function loadProducts() { const r = await api("/products"); state.products = r.products; state.categories = r.categories; state.boxes = r.boxes; }
 async function loadOrders() { state.orders = (await api("/orders")).orders; }
 function chrome() {
-  const todo = state.orders.filter(o => ["paid", "packed", "ready"].includes(o.status)).length;
+  const todo = state.orders.filter(isTodo).length;
   $$("[data-tab]").forEach(b => { b.toggleAttribute("aria-current", false); if (b.dataset.tab === state.tab) b.setAttribute("aria-current", "page"); if (b.dataset.tab === "orders") b.innerHTML = "Orders" + (todo ? `<i class="num">${todo}</i>` : ""); });
 }
 async function render() {
@@ -233,6 +240,8 @@ document.addEventListener("click", async e => {
   if ((el = t.closest("[data-mail]"))) return mailView(el.dataset.mail).catch(er => toast(er.message));
   if (t.closest("[data-close]")) return sheet.close();
   if (t.closest("[data-logout]")) { await api("/logout", { method: "POST", body: {} }).catch(() => {}); state.in = false; return gate(); }
+  if ((el = t.closest("[data-markpaid]"))) { const id = el.closest("[data-ordersheet]").dataset.ordersheet; el.disabled = true;
+    try { await api(`/orders/${id}/paid`, { method: "POST", body: {} }); await loadOrders(); await orderSheet(id); render(); toast("Marked paid."); } catch (er) { $("[data-err]", sheet).textContent = er.message; el.disabled = false; } return; }
   if ((el = t.closest("[data-next]"))) { const id = el.closest("[data-ordersheet]").dataset.ordersheet; el.disabled = true;
     try { await api(`/orders/${id}/status`, { method: "POST", body: { status: el.dataset.next } }); await loadOrders(); await orderSheet(id); render(); toast("Order updated."); } catch (er) { $("[data-err]", sheet).textContent = er.message; el.disabled = false; } return; }
   if ((el = t.closest("[data-step]"))) {
@@ -248,3 +257,15 @@ let qT; document.addEventListener("input", e => { if (e.target.id !== "q") retur
 sheet.addEventListener("click", e => { if (e.target === sheet) sheet.close(); });
 
 api("/products").then(() => boot()).catch(() => { if (!state.in) gate(); });
+
+document.addEventListener("submit", async e => {
+  const f = e.target.closest("[data-refundform]"); if (!f) return; e.preventDefault();
+  const id = f.closest("[data-ordersheet]").dataset.ordersheet, btn = f.querySelector("button"), err = $("[data-err]", sheet);
+  const cents = Math.round(parseFloat(String(f.elements.amount.value).replace(/[^\d.]/g, "")) * 100);
+  if (!(cents > 0)) { err.textContent = "Enter the amount to refund."; return; }
+  if (!confirm(`Refund ${money(cents)} to the customer's card? This cannot be undone.`)) return;
+  f.dataset.op = f.dataset.op && f.dataset.cents === String(cents) ? f.dataset.op : crypto.randomUUID(); f.dataset.cents = String(cents);
+  btn.disabled = true; err.textContent = "";
+  try { await api(`/orders/${id}/refund`, { method: "POST", body: { op: f.dataset.op, amount_cents: cents } }); await loadOrders(); await orderSheet(id); render(); toast(`Refunded ${money(cents)}.`); }
+  catch (er) { err.textContent = er.message; btn.disabled = false; }
+});

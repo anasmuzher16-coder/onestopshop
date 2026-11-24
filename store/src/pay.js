@@ -69,7 +69,11 @@ export async function openCheckout(env, origin, o) {
   const r = await stripe(env, "POST", "/v1/checkout/sessions", params, `checkout-${o.id}`);
   if (!r.ok || !r.data.id || !r.data.url) throw new Error(`stripe answered ${r.status}: ${r.data.error?.message || "no session"}`);
   if (r.data.amount_total !== o.total_cents || r.data.currency !== "cad") throw new Error(`order ${o.id}: Stripe priced it at ${r.data.amount_total} ${r.data.currency}`);
-  await db.prepare("UPDATE orders SET pay_session = ?, pay_url = ?, updated_at = " + NOW + " WHERE id = ? AND pay_session IS NULL").bind(r.data.id, r.data.url, o.id).run();
+  const put = await db.prepare("UPDATE orders SET pay_session = ?1, pay_url = ?2, updated_at = " + NOW + " WHERE id = ?3 AND (pay_session IS NULL OR pay_session = ?1) AND status = 'pending' AND pay_status = 'awaiting' AND release_op IS NULL").bind(r.data.id, r.data.url, o.id).run();
+  if (!put.meta.changes) {   // the order closed while the page was being made: close the page too, so nobody can pay into a closed order
+    await stripe(env, "POST", `/v1/checkout/sessions/${encodeURIComponent(r.data.id)}/expire`, {}).catch(() => null);
+    throw new Error(`order ${o.id} closed before its payment page was attached`);
+  }
   return { session: r.data.id, url: r.data.url };
 }
 
@@ -101,8 +105,11 @@ async function markPaid(env, o, { intent, amount, session }) {
   if (res.meta.changes !== 1) {
     // Paid for an order the shop already cancelled: keep the money on record so the back office shows a refund is owed.
     const late = await db.prepare(`UPDATE orders SET pay_status = 'paid', pay_intent = ?1, payment_ref = ?1, paid_cents = ?2, paid_at = ${NOW}, updated_at = ${NOW}
-      WHERE id = ?3 AND status = 'cancelled' AND pay_status = 'awaiting' AND pay_session = ?4`).bind(intent, amount, o.id, session).run();
+      WHERE id = ?3 AND status = 'cancelled' AND pay_status IN ('awaiting','expired','failed') AND pay_session = ?4`).bind(intent, amount, o.id, session).run();
     if (late.meta.changes) { console.error(JSON.stringify({ at: "pay", problem: "paid after the order was cancelled: refund it from the back office", order: o.id })); return "paid_after_cancel"; }
+    // a paid order whose receipt was never written (the Worker stopped in between) gets it on Stripe's redelivery
+    const now = await db.prepare("SELECT pay_status, paid_at FROM orders WHERE id = ?").bind(o.id).first();
+    if (now?.pay_status === "paid" && now.paid_at && Date.now() - isoMs(now.paid_at) > 60000 && !(await db.prepare("SELECT 1 AS y FROM emails WHERE order_id = ? AND kind = 'order_placed'").bind(o.id).first("y"))) { await receipt(env, o.id, "paid"); return "receipt_resent"; }
     return "repeat";
   }
   await receipt(env, o.id, "paid");
@@ -144,7 +151,7 @@ export async function webhook(request, env) {
   let ev; try { ev = JSON.parse(raw); } catch { return json({ error: "Bad body." }, 400); }
   if (!ev || typeof ev.id !== "string" || typeof ev.type !== "string" || !ev.data || typeof ev.data.object !== "object") return json({ error: "Bad event." }, 400);
   // a test-mode event can never pay a live order, or the other way round
-  if (!!ev.livemode !== String(env.STRIPE_SECRET_KEY).startsWith("sk_live_")) return json({ ok: true, ignored: "mode" });
+  if (!!ev.livemode !== /^(sk|rk)_live_/.test(String(env.STRIPE_SECRET_KEY))) return json({ ok: true, ignored: "mode" });
   const db = env.DB;
   if (await db.prepare("SELECT 1 AS y FROM pay_events WHERE id = ?").bind(ev.id).first("y")) return json({ ok: true, repeat: true });
   const obj = ev.data.object, orderId = typeof obj.metadata?.order_id === "string" ? obj.metadata.order_id : typeof obj.client_reference_id === "string" ? obj.client_reference_id : null;
@@ -156,10 +163,6 @@ export async function webhook(request, env) {
     else if (obj.payment_status !== "paid") result = "waiting";   // a delayed method: the async_payment_succeeded event settles it
     else if (obj.amount_total !== o.total_cents || obj.currency !== "cad" || typeof obj.payment_intent !== "string") result = "mismatch";
     else result = await markPaid(env, o, { intent: obj.payment_intent, amount: obj.amount_total, session: obj.id });
-  } else if (ev.type === "payment_intent.succeeded") {
-    if (obj.object !== "payment_intent" || !o.pay_session) result = "mismatch";
-    else if (obj.amount_received !== o.total_cents || obj.currency !== "cad") result = "mismatch";
-    else result = await markPaid(env, o, { intent: obj.id, amount: obj.amount_received, session: o.pay_session });
   } else if (ev.type === "checkout.session.expired" || ev.type === "checkout.session.async_payment_failed") {
     if (obj.id !== o.pay_session) result = "mismatch";
     else result = (await releaseHeld(db, o.id, ev.type.endsWith("expired") ? "expired" : "failed")) ? "released" : "repeat";
@@ -184,7 +187,7 @@ export async function payStatus(request, env, url) {
 // arrived cannot leave an order unpaid-but-charged or hold stock for ever.
 export async function sweep(env) {
   if (!cardReady(env)) return { checked: 0 };
-  const db = env.DB, list = (await db.prepare("SELECT * FROM orders WHERE pay_status = 'awaiting' AND status = 'pending' ORDER BY created_at LIMIT 25").all()).results;
+  const db = env.DB, list = (await db.prepare("SELECT * FROM orders WHERE pay_status = 'awaiting' AND status = 'pending' ORDER BY updated_at, created_at LIMIT 25").all()).results;
   let paid = 0, released = 0;
   for (const o of list) {
     try {
@@ -196,6 +199,7 @@ export async function sweep(env) {
       if (s.status === "open" && Date.now() > isoMs(o.pay_expires_at) + 120000) s = (await stripe(env, "POST", `/v1/checkout/sessions/${encodeURIComponent(o.pay_session)}/expire`, {})).data.status ? (await stripe(env, "GET", `/v1/checkout/sessions/${encodeURIComponent(o.pay_session)}`)).data : s;
       if (s.status === "complete" && s.payment_status === "paid" && s.amount_total === o.total_cents && s.currency === "cad") paid += +((await markPaid(env, o, { intent: s.payment_intent, amount: s.amount_total, session: s.id })) === "paid");
       else if (s.status === "expired") released += +(await releaseHeld(db, o.id, "expired"));
+      else await db.prepare(`UPDATE orders SET updated_at = ${NOW} WHERE id = ? AND pay_status = 'awaiting'`).bind(o.id).run();   // not settled: to the back of the queue, so it never starves newer orders
     } catch (e) { console.error(JSON.stringify({ at: "pay-sweep", order: o.id, message: String(e && e.message || e) })); }
   }
   return { checked: list.length, paid, released };
@@ -229,7 +233,7 @@ export async function adminPay(request, env, id, what, actor) {
   }
   // what is left is paid minus every refund that has not failed (pending ones count, so two taps cannot both fit)
   const left = o.paid_cents - ((await db.prepare("SELECT COALESCE(SUM(amount_cents),0) AS c FROM refunds WHERE order_id = ? AND status != 'failed'").bind(id).first("c")) || 0) + (prior ? prior.amount_cents : 0);
-  const amount = body.amount_cents === undefined || body.amount_cents === null ? left : Number(body.amount_cents);
+  const amount = prior ? prior.amount_cents : body.amount_cents === undefined || body.amount_cents === null ? left : Number(body.amount_cents);   // a retried tap asks Stripe for exactly what was booked
   if (!Number.isInteger(amount) || amount < 1) return json({ error: "Enter the amount to refund in cents, more than zero." }, 400);
   if (amount > left) return json({ error: `Only ${(left / 100).toFixed(2)} is left to refund on this order.`, left_cents: left }, 409);
   if (!prior) {
@@ -237,7 +241,8 @@ export async function adminPay(request, env, id, what, actor) {
       WHERE (SELECT paid_cents FROM orders WHERE id = ?2) - (SELECT COALESCE(SUM(amount_cents),0) FROM refunds WHERE order_id = ?2 AND status != 'failed') >= ?3`).bind(op, id, amount, reason, actor).run();
     if (!put.meta.changes) return json({ error: "Another refund on this order just went through. Refresh to see what is left." }, 409);
   }
-  const r = await stripe(env, "POST", "/v1/refunds", { payment_intent: o.pay_intent, amount, reason: "requested_by_customer", metadata: { order_id: id, op } }, `refund-${op}`);
+  let r; try { r = await stripe(env, "POST", "/v1/refunds", { payment_intent: o.pay_intent, amount, reason: "requested_by_customer", metadata: { order_id: id, op } }, `refund-${op}`); }
+  catch { return json({ error: "Stripe did not answer. Tap refund again: it will not refund twice.", retry: true }, 502); }   // left pending: the same op retries safely
   if (!r.ok || !["succeeded", "pending"].includes(r.data.status)) {
     const why = r.data.error?.message ? String(r.data.error.message).slice(0, 200) : `Stripe answered ${r.status}`;
     await db.prepare(`UPDATE refunds SET status = 'failed', detail = ?, updated_at = ${NOW} WHERE op = ? AND status = 'pending'`).bind(why, op).run();
