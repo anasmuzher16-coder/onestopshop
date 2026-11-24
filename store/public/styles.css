@@ -280,8 +280,10 @@ body:not([data-route]) .foot{visibility:hidden}
   .dock{display:none}
   .top{gap:var(--s-8);padding-block:var(--s-4)}
   .top__nav{display:flex;gap:var(--s-5);flex:1;font-size:var(--t-14);font-weight:500}
-  .top__nav a{text-decoration:none;padding:var(--s-2) 0;color:var(--color-text)}
-  .top__nav a:hover{color:var(--color-strong)} .top__nav a[aria-current]{color:var(--color-strong);box-shadow:0 2px 0 var(--color-strong)}
+  /* 44 px targets: the box grows and the padding is given back as margin, so the words sit where they did; the current page's
+     line is drawn under the word (not the padded box), at the same 2 px and the same distance as before */
+  .top__nav a{display:inline-flex;align-items:center;min-height:44px;padding:0 7px;margin:0 -7px;text-decoration:none;color:var(--color-text)}
+  .top__nav a:hover{color:var(--color-strong)} .top__nav a[aria-current]{color:var(--color-strong);text-decoration:underline 2px;text-underline-offset:9px}
   .top{min-height:76px}
   .top__cart{margin-left:0}
   .chips{display:none}
@@ -781,7 +783,7 @@ html.restoring .grid--shop .card{content-visibility:visible}
 ::view-transition-new(chips){animation:none}
 @media (min-width:960px){
   /* twelve places to go: the row stays one line and slides sideways when the window is narrow, the way the chips do on a phone */
-  .top__nav{min-width:0;padding-block:2px;overflow-x:auto;scrollbar-width:none;white-space:nowrap}
+  .top__nav{min-width:0;padding-block:2px;padding-inline:7px;margin-inline:-7px;overflow-x:auto;scrollbar-width:none;white-space:nowrap}   /* room for the links' 7 px of extra target at both ends of the row */
   .top__nav::-webkit-scrollbar{display:none}
   .top__nav a{flex:none}
   .top__nav a:focus-visible{outline-offset:-2px}
@@ -883,3 +885,19 @@ html.restoring .grid--shop .card{content-visibility:visible}
 .pdp__tile .shot__tag--tbd{right:var(--s-4);bottom:var(--s-4)}
 .grid .shot__tag--tbd{font-size:12px;letter-spacing:.02em;line-height:1.2;max-width:calc(100% - var(--s-3))}
 .card__meta--one{-webkit-line-clamp:1}
+
+/* ---------- PRICE TBD, quiet (polish, 2026-11-24): a blank label, not yet through the price gun ----------
+   296 catalogue colours wait for the shop's price, so a full price-gun label on each made the unknown the loudest thing on
+   the page. The device stays (the label in the price's place, so it still reads at a glance) but it is not stuck on yet:
+   no label stock, no ember band, no hand angle, no shadow; a dashed hairline where the label will go, and the words in the
+   one shared TBD register (meta caps on the tile's ink, like "Shown in" and "Photo to be upscaled"). It fades in; it is
+   never pressed on, because nothing has been priced. */
+:is(.tile,.piece,.pdp__tile,.resin__item) .sticker.sticker--tbd{display:inline-flex;gap:.4em;align-items:baseline;width:auto;height:auto;min-width:0;padding:5px 8px;border:1px dashed oklch(0.16 0.012 50 / .5);border-radius:var(--radius);
+  background:var(--tile,var(--bonelt));box-shadow:none;transform:none;color:var(--color-on-tile);font-size:12px;overflow:visible}
+:is(.tile,.piece,.pdp__tile,.resin__item) .sticker.sticker--tbd::before,:is(.tile,.piece,.pdp__tile,.resin__item) .sticker.sticker--tbd::after{content:none}
+:is(.tile,.piece,.pdp__tile,.resin__item) .sticker.sticker--tbd .sticker__k,:is(.tile,.piece,.pdp__tile,.resin__item) .sticker.sticker--tbd .sticker__v{display:inline;max-width:none;padding:0;font:600 12px/1.25 var(--font-ui);letter-spacing:.06em;text-transform:uppercase;color:inherit;opacity:.86}
+:is(.tile,.piece,.pdp__tile,.resin__item) .sticker.sticker--tbd .sticker__v::first-letter{font-size:inherit;vertical-align:baseline;margin:0}
+.pdp__tile .sticker.sticker--tbd.sticker--tbd{padding:8px 12px} .pdp__tile .sticker.sticker--tbd.sticker--tbd .sticker__k,.pdp__tile .sticker.sticker--tbd.sticker--tbd .sticker__v{font-size:14px}
+.card__a:hover .sticker--tbd,.card__a:active .sticker--tbd,.piece:active .sticker--tbd{transform:none}
+@keyframes tbd-in{from{opacity:0}}
+.tile[data-stick=go] .sticker--tbd{animation:tbd-in var(--dur-state) var(--ease-state) var(--stick-d,0ms) backwards}

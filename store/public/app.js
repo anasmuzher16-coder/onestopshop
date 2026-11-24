@@ -104,7 +104,10 @@ const feeText = n => n === 0 ? "Free" : money(n);
 const isCharcoal = p => !!(p && p.details && p.details.charcoal);
 const localOnly = p => !!p && (p.ship === "pickup_only" || isCharcoal(p));
 const carried = lines => !lines.some(l => localOnly(l.product));
-const cpQuote = lines => state.dest && carried(lines) ? quote(state.dest, pack(lines)) : [];
+// No shipping to Quebec until the site has a French version (Charter of the French Language; plan section 8). The server refuses it too.
+const toQuebec = () => !!(state.dest && state.dest.prov === "QC");
+const QC_NOTE = "We do not ship to Quebec yet: the site is in English only for now. Pickup in Windsor is free, or call 519-255-2222.";
+const cpQuote = lines => state.dest && carried(lines) && !toQuebec() ? quote(state.dest, pack(lines)) : [];
 const freeNote = sub => sub >= FREE_LOCAL_CENTS ? "Free local delivery: your items are $200 or more before tax." : `Local delivery is free on orders of $200 or more before tax. Add ${money((FREE_LOCAL_CENTS - sub) / 100)} more to get it.`;
 function saveCart() { store.set("cart", state.cart); syncChrome(); }
 function addToCart(sku) {
@@ -557,6 +560,7 @@ function deliveryLine(p, opts) {
   if (isSold(p) || !forSale(p)) return "";
   let s = deliveryNow(cartCents() + (state.cart.some(l => l.sku === p.sku) ? 0 : toCents(p.price)));
   if (localOnly(p) && (s.key === "far" || s.key === "ship" || s.key === "down")) s = { msg: "This one goes by local delivery or pickup", sub: "Canada Post does not carry it. Pickup is free", act: "Change" };
+  else if (toQuebec()) s = { msg: "We do not ship to Quebec yet", sub: "The site is in English only for now. Pickup in Windsor is free", act: "Change" };
   else if (state.dest && !opts.length && (s.key === "far" || s.key === "ship" || s.key === "down")) s = { msg: `We cannot price shipping to ${state.dest.full} here`, sub: "Call 519-255-2222, or pickup is free", act: "Change" };
   return `<button class="dline" type="button" data-open-postal><span class="dline__msg">${esc(s.msg)}</span>${s.sub ? `<span class="dline__sub">${esc(s.sub)}</span>` : ""}<span class="dline__act">${esc(s.act)}</span></button>`;
 }
@@ -607,7 +611,7 @@ function viewCart() {
     : checking ? `<p class="note" role="status">Checking delivery to ${esc(state.dest.full)}.</p>`
     : status === "far" || (state.dest.complete && !localArea(state.dest) && state.dest.prov === "ON" && /^N[089]/.test(state.dest.fsa)) ? `<p class="note">${esc(state.dest.full)} is past our 25 km delivery area. ${otherWay}</p>`
     : status === "down" ? `<p class="note">We cannot check delivery right now. ${otherWay}</p>` : "";
-  const tooHeavy = state.dest && !opts.length && !canLocal && carried(lines);
+  const tooHeavy = state.dest && !opts.length && !canLocal && carried(lines) && !toQuebec();
   return `
   ${band("cart", "gilt", "Your cart", `<span class="num">${lines.reduce((a, l) => a + l.qty, 0)}</span> ${lines.reduce((a, l) => a + l.qty, 0) === 1 ? "piece" : "pieces"}, packed at the counter`)}
   <section class="cart">
@@ -625,6 +629,7 @@ function viewCart() {
       ${!state.dest && WIDE.matches ? `<button class="btn btn--wide" type="button" data-open-postal>Check delivery to my postal code</button>` : ""}
       ${localNote}
       ${counter ? `<p class="note">${canLocal ? "Choose local delivery or free pickup for the whole order" : "Choose free pickup for the whole order"}${mixed ? ", or leave the charcoal out to ship the rest" : ""}. Charcoal goes by pickup or local delivery only, never by Canada Post.${state.dest?.complete && !canLocal && !checking && !localArea(state.dest) ? ` Local delivery does not reach ${esc(state.dest.full)}.` : ""}</p>` : ""}
+      ${toQuebec() && carried(lines) ? `<p class="note">${QC_NOTE}</p>` : ""}
       ${tooHeavy ? `<p class="note">One of these boxes is over the 30 kg carrier limit. Call the counter at 519-255-2222 and we will quote it by hand.</p>` : ""}
       ${opts.length || canLocal ? `<fieldset class="opts"><legend>Getting it to ${esc(state.dest.full)} <button class="link" type="button" data-open-postal>Change</button></legend>
         ${canLocal ? `<label class="opt"><input type="radio" name="ship" value="local" ${local ? "checked" : ""}><span class="opt__name">Local delivery<small>${localFee !== null ? localEta() : "We price it from your street address at checkout"}</small></span><span class="num">${localFee !== null ? feeText(localFee) : "At checkout"}</span></label>` : ""}
@@ -653,9 +658,9 @@ function viewCart() {
 
 function viewShipping() {
   return `
-  ${band("shipping", "cobalt", "Shipping", "From Windsor to every province and territory.")}
+  ${band("shipping", "cobalt", "Shipping", "From Windsor across Canada.")}
   <section class="reading">
-    <p class="lead">We pack every order at the counter in Windsor and ship to every province and territory.</p>
+    <p class="lead">We pack every order at the counter in Windsor and ship to every province and territory except Quebec, for now: the site is in English only, and we will ship there once it is also in French. Pickup in Windsor is open to everyone.</p>
     <h2 class="h3">Local delivery</h2>
     <p>We deliver from our Walkerville shop, priced by road distance: $10 up to 10 km and $15 up to 25 km, per order, plus tax. Orders with $200 or more in items before tax deliver free. Anything in the shop can come by local delivery. Enter your postal code and we show your exact price, or tell you if you are past our delivery area.</p>
     <p>While the shop is open, it arrives in about 25 minutes to 1 hour. After closing, it arrives the next morning. These are estimates, not set times. Local delivery is paid online when you order.</p>
@@ -669,7 +674,7 @@ function viewShipping() {
     <h2 class="h3">Pick up</h2>
     <p>Order online and pick up for free at ${SHOP_ADDRESS}. ${directions()} or call <a class="link" href="tel:+15192552222">519-255-2222</a>.</p>
     <h2 class="h3">Returns</h2>
-    <p>All sales are final. If something arrives broken, bring it into the store and talk to the store manager.</p>
+    <p>All sales are final, except faulty, wrong, damaged or undelivered items. If something arrives broken or is not what you ordered, call 519-255-2222 or bring it into the store and talk to the store manager: we repair, replace or refund it. <a class="link" href="/terms">Terms of sale</a>.</p>
   </section>`;
 }
 
@@ -1037,21 +1042,24 @@ const viewPrivacy = () => doc("Privacy", "What we collect when you order, why, a
   ["What we collect", ["Your name, email, phone number if you give it, and delivery address, so we can send your order and answer questions about it.", "Your card details go straight to the payment company. We never see or store the card number."]],
   ["How you found us", ["When you place an order, we save with it where your first visit in the last 30 days came from: a short code from our business card or a link we posted, the name of the site that sent you (like Google or Instagram), and the first page you opened. It stays on your device until you order. We use it only to count which of our cards, posts and listings bring orders. It is not used to follow you around the web, and we never share it."]],
   ["What we do not do", ["We do not sell or rent your details. We do not use advertising trackers. Visit counts on this site use no cookies and do not identify you."]],
-  ["Who else sees it", ["The carrier or our driver gets your name, phone number and address to deliver the order. For local delivery, your address goes to our map service, Geoapify, to work out the distance. The payment company gets what it needs to take the payment. Our hosting company stores the order on our behalf."]],
+  ["Who else sees it", ["The carrier or our driver gets your name, phone number and address to deliver the order. For local delivery, your address goes to our map service, Geoapify, to work out the distance. Card payments are taken by Stripe, which gets what it needs to take the payment. Our hosting company, Cloudflare, stores the shop's records on our behalf, and our email service sends the order emails.", "Some of these companies work outside Canada, mostly in the United States, so your details may be stored or handled there and can be reached by the courts and authorities of that country. Each of them may use your details only to do this work for us."]],
   ["If you make an account", ["You sign in with a code we email you. We keep your email, the details you choose to save, your saved items, back-in-stock requests, your charcoal reminder choice and any points, so they are there next time. A cookie keeps you signed in for up to 30 days. You can delete the account yourself from the account page at any time."]],
+  ["Emails we send", ["Emails about your order: that it was placed, that it is ready or on its way. A back-in-stock email only when you ask for one, and a charcoal reminder only when you turn it on. Each reminder and alert has an unsubscribe link, and we act on it at once (the law allows up to 10 business days). We do not send newsletters."]],
   ["How long we keep it", ["Order records are kept for six years, because tax law requires it. After that they are deleted."]],
-  ["Your choices", ["You can ask to see what we hold about you, to correct it, or to have it deleted where the law allows. Email or call the counter and we will answer within 30 days.", "Marketing emails are only sent if you ask for them, and every one has an unsubscribe link."]],
-  ["Who to ask", ["The person responsible for privacy at the shop is the manager. Call 519-255-2222."]],
+  ["Keeping it safe", ["The shop's records are behind a sign-in with named staff, and every change is logged with who made it. If something ever went wrong with your details that could put you at real risk, we would tell you and the Privacy Commissioner of Canada as soon as we could."]],
+  ["Your choices", ["You can ask to see what we hold about you, to correct it, or to have it deleted where the law allows. Email or call the counter and we will answer within 30 days."]],
+  ["Who to ask", ["The person responsible for privacy at the shop is the manager. Call 519-255-2222 or ask at 760 Wyandotte St E. If you are not happy with the answer, you can contact the Privacy Commissioner of Canada."]],
 ]);
 const viewTerms = () => doc("Terms of sale", "The plain rules for buying from us online.", [
-  ["Prices and tax", ["Prices are in Canadian dollars. Tax is added at checkout, based on the province the order ships to."]],
-  ["Shipping", ["We ship within Canada. The price at checkout is the price you pay for shipping. Delivery times are the carrier's estimates. Cologne ships by ground only."]],
+  ["Who you are buying from", [`One Stop Shop, 760 Wyandotte St E, Windsor, ON N9A 3J4. Call 519-255-2222. Legal business name ${TBD("")}.`]],
+  ["Prices and tax", ["Prices are in Canadian dollars. Tax is added at checkout, based on the province the order ships to. Before you pay, checkout shows each item's price, delivery or shipping, tax and the total, and you can go back and change anything. We email you a copy of your order."]],
+  ["Shipping", ["We ship within Canada, except to Quebec for now: the site is in English only, and we will ship there once it is also in French. Anyone can pick up in Windsor. The price at checkout is the price you pay for shipping. Delivery times are the carrier's estimates. Cologne ships by ground only."]],
   ["Local delivery", ["We deliver within 25 km by road of our Windsor shop: $10 up to 10 km and $15 from there to 25 km, per order, plus tax. Orders with $200 or more in items before tax deliver free. Arrival times are estimates. Local delivery is paid online when you order."]],
   ["Pickup", ["Pickup at 760 Wyandotte St E, Windsor, ON N9A 3J4 is free. We email you when the order is ready and hold it for 14 days."]],
   ["Charcoal", ["Charcoal is sold for pickup or local delivery only. It is not shipped by Canada Post or any other carrier."]],
-  ["Returns", ["All sales are final."]],
-  ["Broken on arrival", ["If something arrives broken, bring it into the store at 760 Wyandotte St E and talk to the store manager."]],
-  ["If something is wrong with the order", ["If we cannot ship within 30 days of the date promised, you can cancel for a full refund."]],
+  ["Returns", ["All sales are final, except faulty, wrong, damaged or undelivered items. We do not take back an item because you changed your mind."]],
+  ["Faulty, wrong or damaged", ["If an item is faulty, is not what you ordered, or arrives broken, call 519-255-2222 or bring it to 760 Wyandotte St E and talk to the store manager. We will repair it, replace it or refund it. Nothing here takes away your rights under Ontario's Consumer Protection Act."]],
+  ["If it does not arrive", ["If we do not deliver within 30 days of the delivery date we gave you (or of your order, if we gave none), you can cancel for a full refund. We refund within 15 days of your cancelling, to the way you paid."]],
 ]);
 const viewMissing = () => `${band("missing", "ruby", "Nothing at this address.")}<section class="empty"><p class="lead">The link may be old. <a class="link" href="/shop">See what is on the counter</a>.</p></section>`;
 const SITE = "One Stop Shop", HOME_TITLE = document.title, PLAIN = { account: "Your account", cart: "Cart", shipping: "Shipping and returns", set: "Build a set", search: "Search", privacy: "Privacy", terms: "Terms of sale", checkout: "Checkout" };

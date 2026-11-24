@@ -13,7 +13,7 @@ h1,h2,h3,p{margin:0}
 
 /* chrome */
 .bar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:var(--s-6);min-height:var(--bar-h);padding:0 var(--gutter);background:var(--color-bg);border-bottom:1px solid var(--color-line)}
-.bar__mark{display:flex;align-items:baseline;gap:.3em;font:400 1.5rem/1 var(--font-display);color:var(--color-strong);text-decoration:none;white-space:nowrap}
+.bar__mark{display:flex;align-items:baseline;gap:.3em;padding-block:10px;font:400 1.5rem/1 var(--font-display);color:var(--color-strong);text-decoration:none;white-space:nowrap}
 .bar__b{color:var(--ember)}
 .bar__sub{font:500 var(--t-12)/1 var(--font-ui);letter-spacing:.1em;text-transform:uppercase;color:var(--color-muted);margin-left:var(--s-3)}
 .bar__end{margin-left:auto;display:flex;gap:var(--s-5)}
@@ -100,7 +100,7 @@ button.row__main:hover .row__name,.order:hover .row__name{text-decoration:underl
 .row__meta{font-size:var(--t-12);color:var(--color-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .row__end{display:grid;justify-items:end;gap:4px}
 .step{display:grid;grid-template-columns:44px 2.6rem 44px;align-items:center;border:1px solid var(--color-field);border-radius:var(--radius)}
-.step button{height:42px;font-size:1.25rem;line-height:1;color:var(--color-strong)}
+.step button{height:44px;font-size:1.25rem;line-height:1;color:var(--color-strong)}
 .step button:hover{background:var(--coal-2)}
 .step button[disabled]{color:var(--color-field);cursor:default;background:none}
 .step output{text-align:center;font-weight:600;color:var(--color-strong)}

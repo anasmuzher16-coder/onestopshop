@@ -75,6 +75,8 @@ for (const [engine, w, h, mobile] of [["chromium", 390, 844, true], ["webkit", 3
     { const words = await p.locator("#main").innerText(); t(`${tag} shipping page: store manager, final sale, no pay at door`, /talk to the store manager/.test(words) && /All sales are final/.test(words) && !/send a photo|\bcash\b|at the door/i.test(words)); }
     await p.goto(B + "/terms", { waitUntil: "networkidle" });
     { const words = await p.locator("#main").innerText(); t(`${tag} terms: draft marker, final sale, store manager`, /for the shop to review/i.test(words) && /All sales are final/.test(words) && /talk to the store manager/.test(words) && !/take a photo|within 14 days for a refund|\bcash\b/i.test(words)); }
+    { const terms = await p.locator("#main").innerText(); await p.goto(B + "/shipping", { waitUntil: "networkidle" }); const words = terms + " " + await p.locator("#main").innerText();
+      t(`${tag} terms and shipping: final sale keeps the legal carve-outs, no Quebec shipping yet, nothing about ID or age`, /All sales are final, except faulty, wrong, damaged or undelivered items/.test(words) && /except (to )?Quebec/.test(words) && !/\bID\b|\bage\b|\b19\+|\bminimum age/i.test(words)); }
     await p.evaluate(() => { localStorage.clear(); localStorage.setItem("oss:strip-off", "true"); });
     await p.goto(B + "/p/OSS-8004", { waitUntil: "networkidle" }); await press(p.locator("[data-add]:visible").first()); await p.waitForTimeout(900);
     await p.goto(B + "/cart", { waitUntil: "networkidle" });

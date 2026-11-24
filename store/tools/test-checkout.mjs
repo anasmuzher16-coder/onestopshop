@@ -31,6 +31,9 @@ const ab = await post({ ...who, postal: "T2P 1J9", address: { line1: "2 Test Ave
 ok(ab.status === 201 && ab.data.order.tax_cents === Math.round((ab.data.order.subtotal_cents + ab.data.order.shipping_cents) * 0.05) && ab.data.order.tax_label === "GST 5%", "Alberta charges GST 5%");
 const ns = await post({ ...who, postal: "B3H 1A1", address: { line1: "3 Test Rd", city: "Halifax" }, method: "ship", service: "cp-exp", lines: [{ sku: "OSS-8004", qty: 1 }] });
 ok(ns.status === 201 && ns.data.order.tax_label === "HST 14%", "Nova Scotia charges HST 14%");
+// Quebec: no carrier shipping until the site is in French (plan section 8); nothing is held for the refused order
+const qc = await post({ ...who, postal: "H2Y 1C6", address: { line1: "4 Rue Test", city: "Montreal" }, method: "ship", service: "cp-exp", lines: [{ sku: "OSS-8004", qty: 1 }] });
+ok(qc.status === 409 && qc.data.quebec === true && !qc.data.order, "Quebec is refused for shipping, in words: " + qc.status);
 // pickup: free, Ontario tax, no address needed
 const pu = await post({ ...who, method: "pickup", lines: [{ sku: "OSS-8004", qty: 2 }] });
 ok(pu.status === 201 && pu.data.order.shipping_cents === 0 && pu.data.order.tax_cents === Math.round(pu.data.order.subtotal_cents * 0.13), "pickup is free with Ontario tax");
