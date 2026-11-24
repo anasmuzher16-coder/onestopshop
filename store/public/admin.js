@@ -1,7 +1,7 @@
 // Back office screens: sign in, Today (shop numbers), Stock (the inventory), Orders. Plain modules, no framework.
 const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const money = (cents, whole = false) => (cents < 0 ? "-$" : "$") + (Math.abs(cents) / 100).toLocaleString("en-CA", { minimumFractionDigits: whole ? 0 : 2, maximumFractionDigits: whole ? 0 : 2 });
+const money = (cents, whole = false) => (cents < 0 ? "−$" : "$") + (Math.abs(cents) / 100).toLocaleString("en-CA", { minimumFractionDigits: whole ? 0 : 2, maximumFractionDigits: whole ? 0 : 2 });
 const main = $("#main"), sheet = $("[data-sheet]"), toastEl = $("[data-toast]");
 let toastT; const toast = msg => { toastEl.textContent = msg; toastEl.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => toastEl.hidden = true, 2600); };
 
@@ -239,8 +239,8 @@ async function orderSheet(id) {
     <div class="sheet__top"><div><p class="meta">Order ${o.id} &middot; ${when(o.created_at)}</p><h2 class="h2" style="margin:0">${esc(o.name)}</h2><span class="state ${k}">${label}</span></div><button class="sheet__x" type="button" data-close>Close</button></div>
     ${dropCard(o)}
     ${wait >= 3 ? `<p class="remind" data-remind><b>Waiting ${wait} days.</b> A friendly call usually does it. We hold pickups for 14 days.</p>` : ""}
-    ${o.status === "cancelled" ? `<p class="remind"><b>Cancelled${o.cancel_reason ? ", " + esc(REASON[o.cancel_reason].toLowerCase()) : ""}.</b> ${o.cancelled_by ? `By ${esc(who(o.cancelled_by))}, ${when(o.cancelled_at)}.` : ""} ${o.cancel_note ? esc(o.cancel_note) : ""}${o.cancelled_by ? " The stock went back on the shelf." : ""}</p>` : ""}
-    ${charcoal ? `<div class="idcheck" data-staff-note><p>Charcoal order. Check ID if the customer looks young.</p><label class="check"><input type="checkbox" data-idcheck ${o.id_checked_at ? "checked" : ""}> ID checked</label><p class="fineprint">${o.id_checked_at ? `By ${esc(who(o.id_checked_by))}, ${when(o.id_checked_at)}. ` : ""}Staff only: customers never see this.</p></div>` : ""}
+    ${o.status === "cancelled" ? `<p class="remind"><b>Cancelled${o.cancel_reason ? ", " + esc(REASON[o.cancel_reason].toLowerCase()) : ""}.</b> ${o.cancelled_by ? `By ${esc(who(o.cancelled_by))}, ${when(o.cancelled_at).replace(/[.]$/, "")}.` : ""} ${o.cancel_note ? esc(o.cancel_note) : ""}${o.cancelled_by ? " The stock went back on the shelf." : ""}</p>` : ""}
+    ${charcoal ? `<div class="idcheck" data-staff-note><p>Charcoal order. Check ID if the customer looks young.</p><label class="check"><input type="checkbox" data-idcheck ${o.id_checked_at ? "checked" : ""}> ID checked</label><p class="fineprint">${o.id_checked_at ? `By ${esc(who(o.id_checked_by))}, ${when(o.id_checked_at).replace(/[.]$/, "")}. ` : ""}Staff only: customers never see this.</p></div>` : ""}
     <div class="rows items">${items.map(i => `<div class="row">${thumb(i, catOf((state.products.find(p => p.sku === i.sku) || {}).category_id).tone)}<span class="row__main"><span class="row__name">${esc(i.name)}</span><span class="row__meta">${i.sku}${i.box_id ? " &middot; box " + esc(i.box_id) : ""}</span></span><span class="num"><b style="color:var(--color-strong)">${i.qty}</b> &times; ${money(i.unit_cents)}</span></div>`).join("")}</div>
     <dl class="facts"><div><dt>Items</dt><dd class="num">${money(o.subtotal_cents)}</dd></div><div><dt>${o.method === "pickup" ? "Pickup at the counter" : isLocal(o) ? "Local delivery" : "Shipping, " + esc(o.ship_service || "")}</dt><dd class="num">${o.method === "pickup" || (isLocal(o) && !o.shipping_cents) ? "Free" : money(o.shipping_cents)}</dd></div>
       <div><dt>Tax, ${esc(o.tax_province || "")}</dt><dd class="num">${money(o.tax_cents)}</dd></div><div><dt><b style="color:var(--color-strong)">Total paid</b></dt><dd class="num"><b>${money(o.total_cents)}</b></dd></div>
@@ -278,8 +278,8 @@ function viewOffice(r, staff, settings) {
     <section class="hero wide"><div class="month"><button class="month__b" type="button" data-month="${shiftMonth(mo, -1)}" aria-label="Month before">&larr;</button><p class="meta" aria-live="polite">${monthName(mo)}</p>${mo < thisMonth ? `<button class="month__b" type="button" data-month="${shiftMonth(mo, 1)}" aria-label="Next month">&rarr;</button>` : `<span class="month__b" aria-hidden="true"></span>`}</div>
       <h1 class="hero__fig num"><sup>$</sup>${money(s.share_cents).slice(1)}</h1>
       <p class="hero__sub">studio share: ${pct}% of the ${esc(s.basis_label)}, ${money(s.basis_cents)}</p>
-      <p class="fineprint">The basis waits on the owner's written confirmation. Set by ${esc(who(s.basis_set_by))}${s.basis_set_at ? ", " + when(s.basis_set_at) : ""}.</p></section>
-    <section><h2 class="h2">Online sales</h2><table class="ledger"><thead><tr><th scope="col">${monthName(mo)}</th><th scope="col" class="r">Orders</th><th scope="col" class="r">Items, before tax and delivery</th></tr></thead><tbody>
+      <p class="fineprint">The basis waits on the owner's written confirmation. Set by ${esc(who(s.basis_set_by))}${s.basis_set_at ? ", " + when(s.basis_set_at).replace(/\.$/, "") : ""}.</p></section>
+    <section><h2 class="h2">Online sales</h2><p class="fineprint office__note">Subtotal is the items, before tax and delivery. Sales count on the order date, cancels on the day they happen.</p><table class="ledger"><thead><tr><th scope="col">${monthName(mo)}</th><th scope="col" class="r">Orders</th><th scope="col" class="r">Subtotal</th></tr></thead><tbody>
       ${line("Paid orders", r.sales.orders, r.sales.subtotal)}
       ${line("Cancelled or refunded", r.refunds.orders, -r.refunds.subtotal, r.refunds.orders ? "minus" : "")}
       ${line("<b>Net</b>", r.net.orders, r.net.subtotal, "net")}</tbody></table>

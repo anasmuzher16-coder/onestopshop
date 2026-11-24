@@ -215,9 +215,9 @@ button.row__main:hover .row__name,.order:hover .row__name{text-decoration:underl
 .tally__say.bad{color:var(--ruby);text-transform:none;letter-spacing:0;font-weight:500}
 .wait{color:var(--gilt);font-weight:600}
 /* reminders and the staff-only charcoal block sit in the sheet as text on a raised step, never as a striped box */
-.remind{font-size:var(--t-14);color:var(--color-text);padding:var(--s-3) var(--s-4);background:var(--color-raised);border-radius:var(--radius)}
+.remind{font-size:var(--t-14);color:var(--color-text);padding:var(--s-3) var(--s-4);background:var(--color-bg);border-radius:var(--radius)}
 .remind b{color:var(--color-strong)}
-.idcheck{display:grid;gap:var(--s-1);padding:var(--s-3) var(--s-4);background:var(--color-raised);border-radius:var(--radius);font-size:var(--t-14)}
+.idcheck{display:grid;gap:var(--s-1);padding:var(--s-3) var(--s-4);background:var(--color-bg);border-radius:var(--radius);font-size:var(--t-14)}
 .idcheck .fineprint{margin:0}
 .cancel{border-top:1px solid var(--color-line);padding-top:var(--s-3)}
 .cancel summary{min-height:44px;display:flex;align-items:center;color:var(--color-muted);font-size:var(--t-14);text-decoration:underline;text-underline-offset:.2em;cursor:pointer;list-style:none}
@@ -257,3 +257,5 @@ span.month__b{border-color:transparent}
   .addstaff{grid-template-columns:1fr 1fr}
   .addstaff .btn{grid-column:1 / -1}
 }
+.office__note{margin:0 0 var(--s-3)}
+.office .ledger td:first-child{overflow-wrap:anywhere}
