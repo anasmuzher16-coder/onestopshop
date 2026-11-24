@@ -11,6 +11,7 @@ import { deliveryQuote } from "./delivery.js";
 import { cardReady, openCheckout, releaseHeld, receipt, HOLD_MIN, LATE_SESSION_MS } from "./pay.js";
 import { customerFrom } from "./account.js";
 import { orderLoyalty, orderLoyaltyStatements } from "./loyalty.js";
+import { cleanSource } from "./source.js";
 
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" } });
 const text = (v, max) => typeof v === "string" && v.trim().length > 0 && v.trim().length <= max ? v.trim() : null;
@@ -175,12 +176,12 @@ export async function placeOrder(request, env, url) {
   if (key) quote = { ...quote, idem: keyed.idem, idem_req: sameOrder };
 
   // 1 write the order as pending  2 take the stock, one guarded step per item  3 open the payment page, or put everything back
-  const id = key ? keyed.id : code(), acct = orderLoyaltyStatements(db, id, customer, loy);
+  const id = key ? keyed.id : code(), acct = orderLoyaltyStatements(db, id, customer, loy), src = cleanSource(body.source, url.hostname);   // where the order came from (short codes only)
   let first;
   try { first = await db.batch([
-    db.prepare(`INSERT INTO orders (id, status, method, email, name, phone, address, subtotal_cents, shipping_cents, tax_cents, total_cents, tax_province, ship_service, ship_quote, pay_method, pay_status, pay_expires_at)
-      VALUES (?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ${pay === "card" ? `strftime('%Y-%m-%dT%H:%M:%SZ','now','+${HOLD_MIN} minutes')` : "NULL"})`)
-      .bind(id, method, email, name, phone, JSON.stringify({ ...address, ...(note ? { note } : {}) }), subtotal, shipping, tax, total, province, service, JSON.stringify(quote), pay, pay === "card" ? "awaiting" : "pay_at_pickup"),
+    db.prepare(`INSERT INTO orders (id, status, method, email, name, phone, address, subtotal_cents, shipping_cents, tax_cents, total_cents, tax_province, ship_service, ship_quote, pay_method, pay_status, pay_expires_at, source, source_detail)
+      VALUES (?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ${pay === "card" ? `strftime('%Y-%m-%dT%H:%M:%SZ','now','+${HOLD_MIN} minutes')` : "NULL"}, ?, ?)`)
+      .bind(id, method, email, name, phone, JSON.stringify({ ...address, ...(note ? { note } : {}) }), subtotal, shipping, tax, total, province, service, JSON.stringify(quote), pay, pay === "card" ? "awaiting" : "pay_at_pickup", src.source, src.detail),
     ...lines.map(l => db.prepare("INSERT INTO order_items (order_id, sku, name, qty, unit_cents) VALUES (?,?,?,?,?)").bind(id, l.product.sku, l.product.name, l.qty, cents(l.product.price))),
     ...acct.statements,
   ]); } catch (e) {   // two copies of one retry at the same moment: the database let one through

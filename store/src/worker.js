@@ -120,7 +120,7 @@ export default {
         if (request.method !== "GET") return json({ error: "Method not allowed" }, 405);
         return json(await loadCatalog(env.DB));
       }
-      if (path === "/api/admin/loyalty") return await loyaltyAdmin(request, env, url, signedIn);
+      if (path === "/api/admin/loyalty") return await loyaltyAdmin(request, env, url, async (r, e) => !!(await signedIn(r, e))?.owner);   // the points program is the owner's setting, never staff
       if (path.startsWith("/api/admin/")) { const r = await admin(request, env, url); if (request.method !== "GET" && r.ok) { dropCatalog(ctx); ctx.waitUntil(stockAlerts(env, url.origin)); } return r; } // a change in the back office shows in the shop at once; anything back in stock emails whoever asked
       if (path.startsWith("/api/account/")) return await accountRoute(request, env, url);
       if (path === "/api/orders") { if (request.method !== "POST") return json({ error: "Method not allowed" }, 405); const r = await placeOrder(request, env, url); if (r.ok) dropCatalog(ctx); return r; }

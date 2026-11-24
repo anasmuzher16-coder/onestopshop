@@ -2,6 +2,7 @@ import { PRODUCTS, CATEGORIES, BOXES } from "/api/catalog-module";
 import { route, navigate, navInfo, spotHere, canGoBack, setQuery, setSpotAnchor } from "./route.js";
 import { parsePostal, pack, quote, money, days, MAX_QTY, fuelOn, orderTotals, taxRate, taxLabel, localArea, localDue, localEta, FREE_LOCAL_CENTS, SHOP_HOURS } from "./rates.js";
 import { accountView, afterRender, rewardCents, rewardRow, rewardFlag, rewardGone } from "./account.js";
+import { visitSource } from "./source.js";   // where the visit came from, sent with the order (back office report)
 
 // ---------- state (everything read from storage is validated) ----------
 const bySku = Object.assign(Object.create(null), Object.fromEntries(PRODUCTS.map(p => [p.sku, p])));   // no inherited keys: "constructor" in a saved cart or an address is not a product
@@ -810,7 +811,7 @@ document.addEventListener("submit", async e => {
   const sent = cartLines(), sig = orderSig(sent, sc), shownTotal = +f.querySelector(".totals").dataset.total;   // the figure on the screen, not a fresh sum: if the rate moved since, the server says so
   try {
     const r = await fetch("/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ order_key: orderKey(sig + pay + v("email").toLowerCase()), expected_total_cents: shownTotal, use_reward: rewardCents(cartCents(sent)) > 0, lines: state.cart, method: pickup ? "pickup" : "ship", service: local ? "local" : chosen && chosen.id, delivery_fee_cents: local ? Math.round(deliveryFeeNow() * 100) : undefined, postal: state.dest && state.dest.full,
-      name: v("name"), email: v("email"), phone: v("phone"), note: state.note, address: { line1: v("line1"), city: v("city") }, pay }) });
+      name: v("name"), email: v("email"), phone: v("phone"), note: state.note, address: { line1: v("line1"), city: v("city") }, pay, source: visitSource() }) });
     const data = await r.json().catch(() => ({}));
     if (!r.ok) { btn.disabled = false; btn.textContent = label; if (local && data.delivery) { if (data.delivery === "far") state.farFor = state.dest.full; state.delivery = data.delivery === "ok" ? { key: deliveryKey(), fee_cents: data.base_fee_cents ?? data.fee_cents, due: data.fee_cents, sub: cartCents() } : null; state.refused = data.delivery === "ok" ? null : deliveryKey(); refreshDelivery(f, data.delivery === "ok" ? undefined : deliveryMsg(data.delivery)); if (data.delivery !== "ok") return; } 
       if (data.local_only) { state.cartNews = [data.error]; state.ship = null; store.set("ship", null); navigate("/cart"); return; }   // an out-of-date page offered a carrier: back to the cart, where the real choices are
@@ -835,6 +836,7 @@ const DRAFT = `<p class="done__tag"><span>Draft</span> <b>for the shop to review
 const doc = (title, lead, parts) => `${band("docs", "bone", title, lead)}<section class="cart doc">${DRAFT}${parts.map(([h, body]) => `<h2 class="h3">${h}</h2>${body.map(t => `<p>${t}</p>`).join("")}`).join("")}</section>`;
 const viewPrivacy = () => doc("Privacy", "What we collect when you order, why, and how to ask about it.", [
   ["What we collect", ["Your name, email, phone number if you give it, and delivery address, so we can send your order and answer questions about it.", "Your card details go straight to the payment company. We never see or store the card number."]],
+  ["How you found us", ["When you place an order, we save with it where your first visit in the last 30 days came from: a short code from our business card or a link we posted, the name of the site that sent you (like Google or Instagram), and the first page you opened. It stays on your device until you order. We use it only to count which of our cards, posts and listings bring orders. It is not used to follow you around the web, and we never share it."]],
   ["What we do not do", ["We do not sell or rent your details. We do not use advertising trackers. Visit counts on this site use no cookies and do not identify you."]],
   ["Who else sees it", ["The carrier or our driver gets your name, phone number and address to deliver the order. For local delivery, your address goes to our map service, Geoapify, to work out the distance. The payment company gets what it needs to take the payment. Our hosting company stores the order on our behalf."]],
   ["If you make an account", ["You sign in with a code we email you. We keep your email, the details you choose to save, your saved items, back-in-stock requests, your charcoal reminder choice and any points, so they are there next time. A cookie keeps you signed in for up to 30 days. You can delete the account yourself from the account page at any time."]],

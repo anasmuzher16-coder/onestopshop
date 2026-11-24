@@ -1,10 +1,12 @@
 // A full copy of the shop's records as one JSON document: products, stock history, orders, emails, the change log.
 // Used by the "Download a backup" link in the back office and by the nightly job. Uploaded photos are not
 // included (they are large); the product rows that point at them are.
-const TABLES = ["categories", "boxes", "products", "stock_moves", "orders", "order_items", "emails", "audit_log", "refunds", "pay_events",
-  "customers", "loyalty_ledger", "favourites", "stock_alerts", "account_settings", "marketing_consents"];   // accounts: points are owed to customers, so they are backed up too (sign-ins and codes are not)
+// Staff rows are copied without their PIN hashes; sign-in sessions, codes and attempts are never copied.
+const TABLES = ["categories", "boxes", "products", "stock_moves", "orders", "order_items", "emails", "audit_log", "settings", "staff", "refunds", "pay_events",
+  "customers", "loyalty_ledger", "favourites", "stock_alerts", "account_settings", "marketing_consents"];   // accounts: points are owed to customers, so they are backed up too
+const COLS = { staff: "id, name, active, created_by, created_at, removed_at" };
 export async function snapshot(db) {
-  const res = await db.batch(TABLES.map(t => db.prepare(`SELECT * FROM ${t}`)));
+  const res = await db.batch(TABLES.map(t => db.prepare(`SELECT ${COLS[t] || "*"} FROM ${t}`)));
   const tables = {}; TABLES.forEach((t, i) => { tables[t] = res[i].results; });
   return { store: "One Stop Shop", taken_at: new Date().toISOString(), counts: Object.fromEntries(TABLES.map(t => [t, tables[t].length])), tables };
 }

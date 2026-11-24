@@ -188,3 +188,78 @@ button.row__main:hover .row__name,.order:hover .row__name{text-decoration:underl
 .drop__from{color:var(--color-text);font-size:var(--t-14)}
 .drop__act{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:var(--s-2);margin-top:var(--s-2)}
 .drop__act .btn{min-height:56px;font-size:var(--t-18);font-weight:600;text-decoration:none}
+
+/* ---- round two: staff sign-in, count and receive, cancel, the office ---- */
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.gate__swap{justify-self:start;min-height:44px;color:var(--color-muted);font-size:var(--t-14);text-decoration:underline;text-underline-offset:.2em}
+.gate__swap:hover{color:var(--color-strong)}
+.input--pin{letter-spacing:.4em;font-size:var(--t-22)}
+.bar__who{font-size:var(--t-14);color:var(--color-strong);display:inline-flex;align-items:center;max-width:9rem;overflow:hidden;text-overflow:ellipsis}
+.tabs--4{grid-template-columns:repeat(4,1fr)}
+.tools__head{display:flex;align-items:end;justify-content:space-between;gap:var(--s-4);flex-wrap:wrap}
+.tools__help{color:var(--color-muted);font-size:var(--t-14);max-width:60ch}
+.tools__ref{max-width:420px}
+/* the mode switch: one control, three words; the pressed word is the bone plate, like the section chips */
+.seg{display:inline-grid;grid-auto-flow:column;border:1px solid var(--color-field);border-radius:var(--radius)}
+.seg__b{min-height:44px;padding:0 var(--s-4);font-size:var(--t-14);font-weight:500;color:var(--color-text)}
+.seg__b+.seg__b{border-left:1px solid var(--color-field)}
+.seg__b[aria-pressed="true"]{background:var(--bone);color:var(--ink);font-weight:600}
+.tally__progress{font-size:var(--t-12);letter-spacing:.09em;text-transform:uppercase;color:var(--color-muted)}
+/* the tally: the counted number is the row's display, set in the shop's poster face */
+.row.tally{grid-template-columns:52px minmax(0,1fr) auto}
+.tally__box{display:flex;align-items:center;gap:var(--s-1);border-bottom:2px solid var(--color-field);min-height:56px}
+.tally__box:focus-within{border-bottom-color:var(--white)}
+.tally__plus{font:400 1.75rem/1 var(--font-display);color:var(--color-muted)}
+.tally__in{width:4.2ch;min-height:56px;background:none;border:0;padding:0;text-align:right;font:400 2.25rem/1 var(--font-display);color:var(--color-strong)}
+.tally__in::placeholder{color:var(--coal-3);opacity:1}
+.tally__in:focus{outline:0}
+.tally__say{font-size:var(--t-12);font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--color-muted);min-height:1.5em}
+.tally__say.ok{color:var(--color-muted)} .tally__say.ok::before{content:"";display:inline-block;width:.62em;height:.62em;margin-right:.45em;border:1.5px solid currentColor;border-radius:50%;vertical-align:.02em}
+.tally__say.diff{color:var(--gilt)} .tally__say.diff::before{content:"";display:inline-block;width:.62em;height:.62em;margin-right:.45em;background:currentColor;clip-path:polygon(50% 0,100% 100%,0 100%);vertical-align:.02em}
+.tally__say.bad{color:var(--ruby);text-transform:none;letter-spacing:0;font-weight:500}
+.wait{color:var(--gilt);font-weight:600}
+/* reminders and the staff-only charcoal block sit in the sheet as text on a raised step, never as a striped box */
+.remind{font-size:var(--t-14);color:var(--color-text);padding:var(--s-3) var(--s-4);background:var(--color-bg);border-radius:var(--radius)}
+.remind b{color:var(--color-strong)}
+.idcheck{display:grid;gap:var(--s-1);padding:var(--s-3) var(--s-4);background:var(--color-bg);border-radius:var(--radius);font-size:var(--t-14)}
+.idcheck .fineprint{margin:0}
+.cancel{border-top:1px solid var(--color-line);padding-top:var(--s-3)}
+.cancel summary{min-height:44px;display:flex;align-items:center;color:var(--color-muted);font-size:var(--t-14);text-decoration:underline;text-underline-offset:.2em;cursor:pointer;list-style:none}
+.cancel summary::-webkit-details-marker{display:none}
+.cancel[open] summary{color:var(--color-strong);text-decoration:none;font-weight:600}
+.cancel form{display:grid;gap:var(--s-3);margin-top:var(--s-2)}
+.cancel__why{border:0;margin:0;padding:0;display:grid}
+.cancel__why legend{margin-bottom:var(--s-1)}
+.btn--danger{background:none;border:1px solid var(--ruby);color:var(--ruby)}
+.btn--danger:hover{background:var(--ruby);color:var(--ink)}
+/* the office: the share is the figure; the ledger proves it */
+.office{display:grid;gap:var(--s-8)}
+.month{display:flex;align-items:center;gap:var(--s-3)}
+.month__b{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--color-field);border-radius:var(--radius);color:var(--color-strong)}
+span.month__b{border-color:transparent}
+.month .meta{min-width:10.5rem;text-align:center}
+.ledger tr.minus td{color:var(--color-muted)}
+.ledger tr.net td{border-top:2px solid var(--color-field);color:var(--color-strong)}
+.prov.src{grid-template-columns:minmax(5rem,8rem) minmax(0,1fr) 2.4rem 5rem}
+.prov.src b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
+.prov i{font-style:normal;text-align:right}
+.basis{border:0;margin:0;padding:0;display:grid}
+.staff{grid-template-columns:minmax(0,1fr) auto}
+.staff__act{display:flex;gap:var(--s-4)}
+.addstaff{display:grid;grid-template-columns:minmax(0,1fr) 9rem auto;gap:var(--s-3);align-items:end;margin-top:var(--s-4)}
+.addstaff .err{grid-column:1 / -1}
+@media (min-width:860px){
+  .office{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);column-gap:var(--s-16);align-items:start}
+  .office>.wide{grid-column:1 / -1}
+  .row.tally{grid-template-columns:52px minmax(0,1fr) auto}
+  .team{max-width:720px}
+}
+@media (max-width:859px){
+  .bar__store{display:none}
+  .row.tally{grid-template-rows:auto}
+  .row.tally .thumb,.row.tally .row__main{grid-row:auto}
+  .addstaff{grid-template-columns:1fr 1fr}
+  .addstaff .btn{grid-column:1 / -1}
+}
+.office__note{margin:0 0 var(--s-3)}
+.office .ledger td:first-child{overflow-wrap:anywhere}
