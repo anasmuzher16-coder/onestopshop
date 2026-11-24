@@ -11,18 +11,19 @@ ok(/<noscript>[\s\S]*519-255-2222[\s\S]*760 Wyandotte[\s\S]*Monday to Saturday 1
 ok(home.r.headers.get("strict-transport-security") === "max-age=31536000", "HSTS one year, no subdomains: " + home.r.headers.get("strict-transport-security"));
 ok(/og:image" content="[^"]+\/img\/share\.jpg"/.test(home.t), "pages have a default share image");
 ok((await fetch(B + "/img/share.jpg")).status === 200, "the share image exists");
-const prod = await get("/p/OSS-1001"); ok(/og:image" content="[^"]+\/img\/pc\/hookah00\.webp"/.test(prod.t) && !/share\.jpg/.test(prod.t), "a product shares its own photo");
+const prod = await get("/p/OSS-9601"); ok(/og:image" content="[^"]+\/img\/pc\/oss-9601\.webp"/.test(prod.t) && !/share\.jpg/.test(prod.t), "a product shares its own photo");
 if (process.env.EXPECT_LIVE === "1") ok(!/name="robots"/.test(home.t) && !home.r.headers.get("x-robots-tag"), "live: pages can be indexed: " + home.r.headers.get("x-robots-tag"));
 else ok(/<meta name="robots" content="noindex, nofollow">/.test(home.t) && home.r.headers.get("x-robots-tag") === "noindex, nofollow", "the demo stays noindex");
 for (const p of ["/constructor", "/toString", "/__proto__"]) ok((await get(p)).r.status === 404, p + " is a real 404");
 const map = await get("/sitemap.xml");
-if (process.env.EXPECT_LIVE === "1") ok(map.r.status === 200 && map.t.includes(`<loc>${B}/shop/hookahs</loc>`) && map.t.includes("/p/OSS-1001</loc>") && !map.t.includes("/cart"), "live: the sitemap lists the shop");
+if (process.env.EXPECT_LIVE === "1") ok(map.r.status === 200 && map.t.includes(`<loc>${B}/shop/hookahs</loc>`) && map.t.includes("/p/OSS-9601</loc>") && !map.t.includes("/cart"), "live: the sitemap lists the shop");
 else ok(map.r.status === 404 && map.r.headers.get("x-robots-tag") === "noindex, nofollow", "demo: no sitemap: " + map.r.status);
 const heads = readFileSync(new URL("../public/_headers", import.meta.url), "utf8");
 ok(!/\/\*\.(js|css)\r?\n\s*Cache-Control:[^\r\n]*stale-while-revalidate/.test(heads), "scripts and styles cannot stay stale for days");
-const bishop = (await (await fetch(B + "/api/catalog")).json()).products.find(p => p.sku === "OSS-1008");
-ok(bishop && bishop.stock === 0, "the sold Resin Bishop reads 0 in the catalogue");
-const buy = await fetch(B + "/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: "No Sale", email: "nosale@example.com", method: "pickup", lines: [{ sku: "OSS-1008", qty: 1 }] }) });
-ok(buy.status === 409, "the server refuses the sold Resin Bishop: " + buy.status);
-const page = await get("/p/OSS-1008"); ok(/OutOfStock/.test(page.t), "the Bishop's product data says out of stock");
+// the sold-out piece: a shisha flavour the shop has run out of (the sample Resin Bishop was retired 2026-11-24)
+const bishop = (await (await fetch(B + "/api/catalog")).json()).products.find(p => p.sku === "OSS-9616");
+ok(bishop && bishop.stock === 0, "the sold-out flavour reads 0 in the catalogue");
+const buy = await fetch(B + "/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: "No Sale", email: "nosale@example.com", method: "pickup", lines: [{ sku: "OSS-9616", qty: 1 }] }) });
+ok(buy.status === 409, "the server refuses the sold-out flavour: " + buy.status);
+const page = await get("/p/OSS-9616"); ok(/OutOfStock/.test(page.t), "the sold-out flavour's product data says out of stock");
 console.log(f ? `FAIL ${f} of ${n} checks` : `PASS ${n} checks`); process.exit(f ? 1 : 0);

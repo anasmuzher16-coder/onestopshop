@@ -13,7 +13,8 @@ for (const [tag, type, ctx] of [["webkit390", webkit, { viewport: { width: 390, 
     const y = () => p.evaluate(() => Math.round(scrollY));
     const tapCard = () => p.evaluate(() => { const a = [...document.querySelectorAll("#main a[data-piece]")].find(x => { const r = x.getBoundingClientRect(); return r.top > 160 && r.bottom < innerHeight - 90; }); a.click(); return a.dataset.piece; });
     // 14 back and forward keep the place
-    await open("/shop/hookahs"); await p.evaluate(() => scrollTo(0, 2600)); await wait(250); const pick = await p.evaluate(() => { const a = [...document.querySelectorAll("#main a[data-piece]")].find(x => { const r = x.getBoundingClientRect(); return r.top > 160 && r.bottom < innerHeight - 90; }); return Math.round(a.getBoundingClientRect().top); }); const sku = await tapCard(); await p.waitForURL(/\/p\//); await wait(300);
+    // deep in the list with a card in full view (hookah cards grew colour chips on 2026-11-24, so a fixed 2600 px can land between cards)
+    await open("/shop/hookahs"); await p.evaluate(() => { const c = document.querySelectorAll("#main a[data-piece]")[9]; const r = c.getBoundingClientRect(); scrollTo(0, scrollY + r.top + r.height / 2 - (innerHeight + 70) / 2); }); await wait(250);  const pick = await p.evaluate(() => { const a = [...document.querySelectorAll("#main a[data-piece]")].find(x => { const r = x.getBoundingClientRect(); return r.top > 160 && r.bottom < innerHeight - 90; }); return Math.round(a.getBoundingClientRect().top); }); const sku = await tapCard(); await p.waitForURL(/\/p\//); await wait(300);
     t(`${tag} 14 a new page starts at the top`, (await y()) === 0, String(await y()));
     await p.evaluate(() => scrollTo(0, 300)); await wait(150);
     await p.goBack(); await wait(450); const back = await p.evaluate(s => Math.round(document.querySelector(`[data-piece="${s}"]`).getBoundingClientRect().top), sku);
@@ -21,9 +22,9 @@ for (const [tag, type, ctx] of [["webkit390", webkit, { viewport: { width: 390, 
     t(`${tag} 14 the tapped card is on screen`, await p.evaluate(s => { const r = document.querySelector(`[data-piece="${s}"]`).getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight; }, sku));
     await p.goForward(); await wait(450); t(`${tag} 14 Forward returns to the place on the product`, Math.abs((await y()) - 300) <= 4, String(await y()));
     // 16 titles
-    for (const [u, want] of [["/shop/bowls", /^Bowls \|/], ["/cart", /^Cart \|/], ["/p/OSS-1001", /^Sultan Gorgon \|/]]) { await open("/terms"); await p.evaluate(x => { const a = document.createElement("a"); a.href = x; a.style.display = "none"; document.body.append(a); a.click(); a.remove(); }, u); await p.waitForURL("**" + u); await wait(250); t(`${tag} 16 title changes on ${u}`, want.test(await p.title()), await p.title()); }
+    for (const [u, want] of [["/shop/bowls", /^Bowls \|/], ["/cart", /^Cart \|/], ["/p/OSS-9601", /^Zanobia Herbal Molasses Double Apple, 250 g \|/]]) { await open("/terms"); await p.evaluate(x => { const a = document.createElement("a"); a.href = x; a.style.display = "none"; document.body.append(a); a.click(); a.remove(); }, u); await p.waitForURL("**" + u); await wait(250); t(`${tag} 16 title changes on ${u}`, want.test(await p.title()), await p.title()); }
     // 17 Everything and Gifts from anywhere
-    for (const u of ["/shop/hookahs", "/p/OSS-1001", "/cart", "/set"]) { await open(u); const v = await p.evaluate(() => [...document.querySelectorAll("a[href]")].filter(a => a.getBoundingClientRect().width > 0).map(a => a.getAttribute("href"))); t(`${tag} 17 ${u} reaches Everything and Gifts`, v.includes("/shop") && v.some(h => h.startsWith("/gifts/")), v.length + " links"); }
+    for (const u of ["/shop/hookahs", "/p/OSS-100024", "/cart", "/set"]) { await open(u); const v = await p.evaluate(() => [...document.querySelectorAll("a[href]")].filter(a => a.getBoundingClientRect().width > 0).map(a => a.getAttribute("href"))); t(`${tag} 17 ${u} reaches Everything and Gifts`, v.includes("/shop") && v.some(h => h.startsWith("/gifts/")), v.length + " links"); }
     // 18 chips hold still
     if (tag === "webkit390") { await open("/shop/parts"); t(`${tag} 18 chips are their own layer in a page change`, await p.evaluate(() => getComputedStyle(document.querySelector(".chips")).viewTransitionName) === "chips"); }
     // 19 current page
@@ -35,15 +36,16 @@ for (const [tag, type, ctx] of [["webkit390", webkit, { viewport: { width: 390, 
     } else { await open("/gifts/under-150"); t(`${tag} 19 dock marks Shop on Gifts`, await p.locator('.dock a[href="/shop"][aria-current]').count() === 1); }
     // 15 dock Back is the real Back
     if (tag === "webkit390") {
-      await open("/search"); await p.fill("#q", "brass"); await wait(250); const s = await p.evaluate(() => { const a = document.querySelector("[data-search-out] a[data-piece]"); a.click(); return a.dataset.piece; }); await p.waitForURL("**/p/" + s); await wait(250);
+      // the search word was "brass" until the sample hookahs (Egyptian brass) were retired on 2026-11-24; "bowl" finds real pieces
+      await open("/search"); await p.fill("#q", "bowl"); await wait(250); const s = await p.evaluate(() => { const a = document.querySelector("[data-search-out] a[data-piece]"); a.click(); return a.dataset.piece; }); await p.waitForURL("**/p/" + s); await wait(250);
       await p.locator(".dock a.dock__side", { hasText: "Back" }).click(); await p.waitForURL(/\/search/); await wait(250);
-      t(`${tag} 15 dock Back returns to the search`, /\/search\?q=brass$/.test(p.url()) && await p.inputValue("#q") === "brass", p.url());
-      await open("/p/OSS-1001"); await p.locator(".dock a.dock__side", { hasText: "Back" }).click(); await p.waitForURL("**/shop/hookahs"); t(`${tag} 15 from a shared link Back goes to the section`, true);
+      t(`${tag} 15 dock Back returns to the search`, /\/search\?q=bowl$/.test(p.url()) && await p.inputValue("#q") === "bowl", p.url());
+      await open("/p/OSS-100024"); await p.locator(".dock a.dock__side", { hasText: "Back" }).click(); await p.waitForURL("**/shop/hookahs"); t(`${tag} 15 from a shared link Back goes to the section`, true);
     }
     // 20 search and addresses
-    await open("/search?q=brass"); t(`${tag} 20 /search?q= runs the search`, await p.inputValue("#q") === "brass" && await p.locator("[data-search-out] a[data-piece]").count() > 0);
+    await open("/search?q=bowl"); t(`${tag} 20 /search?q= runs the search`, await p.inputValue("#q") === "bowl" && await p.locator("[data-search-out] a[data-piece]").count() > 0);
     await p.fill("#q", "zzzqqq"); await wait(200); t(`${tag} 20 no results offers a way on`, await p.locator('[data-search-out] a[href="/shop"]').count() === 1);
-    const lower = await p.goto(B + "/p/oss-1001", { waitUntil: "domcontentloaded" }); await p.waitForSelector("#main > *"); t(`${tag} 20 a lowercase item number opens the item`, lower.status() === 200 && /\/p\/OSS-1001$/.test(p.url()) && /Sultan Gorgon/.test(await p.locator("h1").innerText()), p.url());
+    const lower = await p.goto(B + "/p/oss-100024", { waitUntil: "domcontentloaded" }); await p.waitForSelector("#main > *"); t(`${tag} 20 a lowercase item number opens the item`, lower.status() === 200 && /\/p\/OSS-100024$/.test(p.url()) && /DMX Hookah/.test(await p.locator("h1").innerText()), p.url());
     for (const u of ["/cart/extra", "/set/extra", "/shop/hookahs/extra", "/gifts/nope", "/order/nope", "/search/x"]) { const r = await p.goto(B + u, { waitUntil: "domcontentloaded" }); await p.waitForSelector("#main > *"); await wait(120); t(`${tag} 20 ${u} is a real 404`, r.status() === 404 && /Nothing at this address/.test(await p.locator("h1").innerText()) && /^Page not found/.test(await p.title()), r.status() + " " + await p.locator("h1").innerText()); }
     t(`${tag} no script errors`, !errs.length, errs[0] || "");
     await c.close();

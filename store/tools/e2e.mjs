@@ -12,7 +12,8 @@ await p.goto(base, { waitUntil: "networkidle" });
 t("home h1", (await p.locator("h1").count()) === 1);
 const cta = await p.locator(".hero__cta .btn").first().boundingBox(), vh = p.viewportSize().height;
 t("hero action inside first screen, above the dock", cta && cta.y + cta.height < vh - 64, JSON.stringify(cta));
-await p.locator('[data-piece]').first().tap(); await p.waitForURL(/\/p\//);
+// the hookahs on the home page are Price TBD since 2026-11-24 (not for sale), so the buying walk starts from a section that sells
+await p.goto(base + "shop/bowls", { waitUntil: "networkidle" }); await p.locator('[data-piece]:not(:has(.sticker--tbd)):not(:has(.sticker--sold))').first().tap(); await p.waitForURL(/\/p\//);
 t("product h1", (await p.locator("h1").count()) === 1);
 const price = cents(await p.locator("[data-stage] .sticker__v").innerText());
 await p.locator(".dock__buy").tap(); await p.waitForTimeout(100);
@@ -38,18 +39,18 @@ t("qty 2 doubles items", cents(r2[0]) === price * 2); t("qty 2 total adds up", c
 await p.locator('input[name="ship"]').nth(2).check(); await p.waitForTimeout(100);
 const r3 = await p.locator(".totals dd").allInnerTexts();
 t("second option changes shipping and still adds up", cents(r3[1]) > cents(r2[1]) && cents(r3[0]) + cents(r3[1]) === cents(r3[2]));
-for (const bad of ["null", "{}", '"x"', '[{"sku":"OSS-1027","qty":-3}]', '[{"sku":"NOPE","qty":2}]', '[{"sku":"OSS-1027","qty":1e9}]']) {
+for (const bad of ["null", "{}", '"x"', '[{"sku":"OSS-9601","qty":-3}]', '[{"sku":"NOPE","qty":2}]', '[{"sku":"OSS-9601","qty":1e9}]']) {
   await p.evaluate(v => localStorage.setItem("oss:cart", v), bad); await p.reload({ waitUntil: "networkidle" });
   t("survives cart=" + bad, (await p.locator("h1").count()) === 1 && !(await p.locator("#main").innerText()).includes("NaN") && !(await p.locator("#main").innerText()).includes("-$"));
 }
-for (const r of ["", "shop", "shop/bowls", "p/OSS-1008", "p/NOPE", "nope", "shipping"]) {
+for (const r of ["", "shop", "shop/bowls", "p/OSS-9616", "p/NOPE", "nope", "shipping"]) {
   await p.goto(base + r, { waitUntil: "networkidle" }); await p.reload({ waitUntil: "networkidle" });
   t("route " + r + " renders one h1", (await p.locator("h1").count()) === 1);
   t("route " + r + " no sideways scroll", await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
 }
 for (const [r, code] of [["p/NOPE", 404], ["nope", 404], ["shop/bowls", 200]]) { const res = await p.goto(base + r); t("address " + r + " answers " + code, res.status() === code, String(res.status())); }
-await p.goto(base + "#/p/OSS-1008", { waitUntil: "networkidle" });
-t("old #/ link is upgraded to a real address", new URL(p.url()).pathname === "/p/OSS-1008" && (await p.locator("h1").count()) === 1, p.url());
+await p.goto(base + "#/p/OSS-9616", { waitUntil: "networkidle" });
+t("old #/ link is upgraded to a real address", new URL(p.url()).pathname === "/p/OSS-9616" && (await p.locator("h1").count()) === 1, p.url());
 await p.goto(base + "shop/bowls", { waitUntil: "networkidle" }); await p.locator("[data-piece]").first().tap(); await p.waitForURL(/\/p\//); await p.goBack(); await p.waitForTimeout(700);
 t("back button returns to the category", new URL(p.url()).pathname === "/shop/bowls" && (await p.locator("h1").count()) === 1, p.url());
 await p.goto(base + "shop/bowls", { waitUntil: "networkidle" }); await p.waitForTimeout(700); await p.locator("[data-piece]").first().tap(); await p.waitForURL(/\/p\//); await p.waitForTimeout(900);

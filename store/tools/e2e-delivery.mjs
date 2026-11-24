@@ -16,7 +16,9 @@ for (const [engine, w, h, mobile] of [["chromium", 390, 844, true], ["webkit", 3
   try {
     const ctx = await b.newContext({ viewport: { width: w, height: h }, ...(engine === "chromium" ? { isMobile: mobile } : {}), hasTouch: mobile, deviceScaleFactor: mobile ? 2 : 1 });
     const p = await ctx.newPage(); p.on("pageerror", e => errs.push(e.message));
-    const snap = async name => { if (shots) await p.screenshot({ path: `${shots}/${tag}-${name}.png`, fullPage: true }); };
+    // a capture for a person to look at, not a check: a page taller than WebKit can photograph in one piece (32,767 px; the
+    // 83 hookah families since 2026-11-24) is captured to the first screen instead of failing the journey
+    const snap = async name => { if (!shots) return; try { await p.screenshot({ path: `${shots}/${tag}-${name}.png`, fullPage: true }); } catch (e) { if (!/32767/.test(String(e))) throw e; await p.screenshot({ path: `${shots}/${tag}-${name}.png` }); } };
     const press = l => l.click();
     // the chooser: first arrival on the hookah page, no layout shift, nothing covered, X and both answers remembered
     await p.addInitScript(() => { window.__cls = 0; try { new PerformanceObserver(l => { for (const e of l.getEntries()) if (!e.hadRecentInput) window.__cls += e.value; }).observe({ type: "layout-shift", buffered: true }); } catch {} });

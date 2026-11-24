@@ -130,6 +130,8 @@ export async function placeOrder(request, env, url) {
   for (const [sku, qty] of want) {
     const p = bySku[sku];
     if (!p) return json({ error: "One of the items is no longer sold. Remove it and try again.", sku, stock: 0 }, 409);
+    // On view but not for sale: no shop price yet ("Price TBD"), or priced but not switched on ("Coming soon"). Never sold, whatever the request says.
+    if (p.state !== "sale") return json({ error: p.state === "tbd" ? `${p.name} has no shop price yet, so it cannot be ordered. Remove it and try again.` : `${p.name} is not on sale yet. Remove it and try again.`, sku, stock: 0, not_for_sale: true }, 409);
     if (p.stock < qty) return json({ error: p.stock ? `Only ${p.stock} left of ${p.name}.` : `${p.name} has just sold out.`, sku, stock: p.stock }, 409);
     // Charcoal (and anything stored as pickup_only) goes by pickup or our own local delivery, never by Canada Post or any
     // carrier (owner, 2026-11-24). Every service other than "local" is a carrier service, so all of them are refused.
@@ -197,7 +199,9 @@ export async function placeOrder(request, env, url) {
     return json({ error: "Your points reward is not available on this order. Check the new total, then place your order.", reward_gone: true, repriced: { subtotal_cents: subtotal, shipping_cents: shipping, tax_cents: t.tax, total_cents: t.total } }, 409);
   }
   const took = await db.batch(lines.flatMap(l => [
-    db.prepare("UPDATE products SET stock = stock - ?1, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE sku = ?2 AND stock >= ?1 AND EXISTS (SELECT 1 FROM orders WHERE id = ?3 AND status = 'pending' AND release_op IS NULL)").bind(l.qty, l.product.sku, id),
+    // the guard repeats the sale rule in the same statement: switched off, unpriced, or repriced since this order was worked out, it does not sell;
+    // and the order must still be open (a payment page that closed meanwhile has already put everything back)
+    db.prepare("UPDATE products SET stock = stock - ?1, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE sku = ?2 AND stock >= ?1 AND active = 1 AND price_cents > 0 AND price_cents = ?4 AND EXISTS (SELECT 1 FROM orders WHERE id = ?3 AND status = 'pending' AND release_op IS NULL)").bind(l.qty, l.product.sku, id, cents(l.product.price)),
     db.prepare("INSERT INTO stock_moves (sku, delta, reason, ref, actor) SELECT ?2, -?1, 'sale', ?3, 'store' WHERE changes() = 1").bind(l.qty, l.product.sku, id),
   ]));
   const failed = lines.filter((l, i) => !took[i * 2].meta.changes);
@@ -208,8 +212,10 @@ export async function placeOrder(request, env, url) {
       db.prepare("DELETE FROM loyalty_ledger WHERE order_id = ? AND EXISTS (SELECT 1 FROM orders WHERE id = ? AND status = 'pending' AND release_op IS NULL)").bind(id, id),
       db.prepare("DELETE FROM order_items WHERE order_id = ? AND EXISTS (SELECT 1 FROM orders WHERE id = ? AND status = 'pending' AND release_op IS NULL)").bind(id, id), db.prepare("DELETE FROM orders WHERE id = ? AND status = 'pending' AND release_op IS NULL").bind(id),
     ]);
-    const left = await db.prepare("SELECT stock FROM products WHERE sku = ?").bind(failed[0].product.sku).first("stock");
-    return json({ error: `${failed[0].product.name} sold out while you were checking out.`, sku: failed[0].product.sku, stock: left ?? 0 }, 409);
+    const now = await db.prepare("SELECT stock, price_cents, active FROM products WHERE sku = ?").bind(failed[0].product.sku).first();
+    if (now && now.stock >= failed[0].qty && (now.price_cents !== cents(failed[0].product.price) || now.active !== 1))   // not sold out: its price or its switch changed
+      return json({ error: `${failed[0].product.name} changed while you were checking out. Refresh to see it now.`, sku: failed[0].product.sku, changed: true }, 409);
+    return json({ error: `${failed[0].product.name} sold out while you were checking out.`, sku: failed[0].product.sku, stock: now?.stock ?? 0 }, 409);
   }
   let payInfo = { method: pay, status: pay === "card" ? "awaiting" : "pay_at_pickup" };
   if (pay === "card") {

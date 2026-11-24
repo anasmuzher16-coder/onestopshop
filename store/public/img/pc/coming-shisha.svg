@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 900" width="720" height="900">
+<!-- Stand-in for a shisha tub whose photo is still coming. The shop's flat object style (coming-charcoal.svg): one light
+     from the top left, no outlines, no brand or flavour on it, because the drawing must never pass for the pack. -->
+<ellipse cx="360" cy="792" rx="230" ry="20" fill="#1b1410" opacity=".16"/>
+<!-- tub body -->
+<path d="M170 430 H550 L530 770 C530 786 190 786 190 770 Z" fill="#2b2622"/>
+<path d="M170 430 H360 V782 C270 780 190 778 190 770 Z" fill="#3a3430"/>
+<!-- label band, blank -->
+<path d="M176 520 H544 L538 650 H184 Z" fill="#ebe2d1"/>
+<path d="M176 520 H360 V650 H184 Z" fill="#f6efe2"/>
+<path d="M216 566 H360" stroke="#d8ccb6" stroke-width="12" stroke-linecap="round"/>
+<path d="M216 602 H306" stroke="#d8ccb6" stroke-width="12" stroke-linecap="round"/>
+<!-- lid -->
+<path d="M158 392 H562 V438 C562 448 158 448 158 438 Z" fill="#c9bea9"/>
+<path d="M158 392 H360 V446 C250 446 158 444 158 438 Z" fill="#ebe2d1"/>
+<path d="M158 392 C158 372 562 372 562 392 C562 404 158 404 158 392 Z" fill="#f6efe2"/>
+<path d="M200 386 C260 378 330 376 380 377" fill="none" stroke="#ffffff" stroke-width="6" stroke-linecap="round" opacity=".8"/>
+</svg>

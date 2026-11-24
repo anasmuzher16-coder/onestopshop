@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 900" width="720" height="900">
+<!-- Stand-in for a hookah whose photo is still coming. Drawn in the shop's flat object style, like coming-charcoal.svg:
+     one light from the top left, no outlines, no brand. Framed like the catalogue photos: 810 px tall, 45 px foot margin. -->
+<ellipse cx="360" cy="846" rx="190" ry="16" fill="#1b1410" opacity=".16"/>
+<!-- bowl -->
+<path d="M318 52 H402 L388 118 H332 Z" fill="#c9bea9"/>
+<path d="M318 52 H360 V118 H332 Z" fill="#ebe2d1"/>
+<path d="M312 46 H408 V58 H312 Z" fill="#f6efe2"/>
+<!-- foil and two lit coals on the bowl, the same cubes as the charcoal stand-in -->
+<path d="M316 44 C330 38 390 38 404 44" fill="none" stroke="#d8ccb6" stroke-width="4" stroke-linecap="round"/>
+<g transform="translate(330 36)"><path d="M0 -10 L12 -17 L24 -10 L12 -3 Z" fill="#e35a2a"/><path d="M0 -10 V4 L12 11 V-3 Z" fill="#b9411d"/><path d="M24 -10 V4 L12 11 V-3 Z" fill="#8f3215"/></g>
+<g transform="translate(366 36)"><path d="M0 -10 L12 -17 L24 -10 L12 -3 Z" fill="#e35a2a"/><path d="M0 -10 V4 L12 11 V-3 Z" fill="#b9411d"/><path d="M24 -10 V4 L12 11 V-3 Z" fill="#8f3215"/></g>
+<!-- heat keeper grommet and tray -->
+<path d="M340 118 H380 V140 H340 Z" fill="#5e5650"/>
+<path d="M240 150 C240 170 480 170 480 150 C480 140 240 140 240 150 Z" fill="#c9bea9"/>
+<path d="M240 150 C240 140 480 140 480 150 C480 156 240 156 240 150 Z" fill="#f6efe2"/>
+<!-- stem: two rods and two collars -->
+<path d="M344 164 H376 V560 H344 Z" fill="#c9bea9"/>
+<path d="M344 164 H360 V560 H344 Z" fill="#ebe2d1"/>
+<path d="M332 270 H388 V292 H332 Z" fill="#5e5650"/><path d="M332 270 H360 V292 H332 Z" fill="#6b625b"/>
+<path d="M332 420 H388 V442 H332 Z" fill="#5e5650"/><path d="M332 420 H360 V442 H332 Z" fill="#6b625b"/>
+<!-- hose port, valve and hose -->
+<path d="M376 500 H452 V520 H376 Z" fill="#c9bea9"/>
+<path d="M376 500 H452 V508 H376 Z" fill="#ebe2d1"/>
+<path d="M452 510 C540 510 560 600 560 680 C560 760 520 800 560 822 C600 842 640 820 640 790 C640 740 600 700 620 660" fill="none" stroke="#3a3430" stroke-width="16" stroke-linecap="round"/>
+<!-- the handle and mouthpiece, resting against the hose -->
+<path d="M612 668 L640 540" stroke="#c9bea9" stroke-width="18" stroke-linecap="round"/>
+<path d="M612 668 L640 540" stroke="#ebe2d1" stroke-width="7" stroke-linecap="round" transform="translate(-4 0)"/>
+<path d="M641 536 L648 502" stroke="#5e5650" stroke-width="10" stroke-linecap="round"/>
+<path d="M452 506 C536 506 556 596 556 676" fill="none" stroke="#5e5650" stroke-width="4" stroke-linecap="round" opacity=".7"/>
+<path d="M284 500 H344 V516 H284 Z" fill="#c9bea9"/>
+<ellipse cx="282" cy="508" rx="12" ry="14" fill="#5e5650"/>
+<!-- base: glass bulb, lit from the top left -->
+<path d="M330 560 H390 V600 C390 640 520 670 520 750 C520 815 450 846 360 846 C270 846 200 815 200 750 C200 670 330 640 330 600 Z" fill="#a9b9bf"/>
+<path d="M330 560 H360 V846 C270 846 200 815 200 750 C200 670 330 640 330 600 Z" fill="#c8d6da"/>
+<path d="M236 724 C246 690 290 672 318 656" fill="none" stroke="#ffffff" stroke-width="8" stroke-linecap="round" opacity=".7"/>
+<!-- water line -->
+<path d="M206 726 C260 744 460 744 514 726 C520 760 516 790 500 808 C440 838 280 838 220 808 C204 790 200 760 206 726 Z" fill="#8f8780" opacity=".35"/>
+<path d="M326 556 H394 V566 H326 Z" fill="#5e5650"/>
+</svg>

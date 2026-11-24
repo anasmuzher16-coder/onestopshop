@@ -835,3 +835,50 @@ html.restoring .grid--shop .card{content-visibility:visible}
 .dock .dock__buy--ask,.dock .dock__buy--ask:active{background:var(--color-raised);color:var(--color-strong);box-shadow:inset 0 0 0 1px var(--color-field)}   /* asks for a choice; turns ember (Check out) once one is made */
 .co__coal{margin-top:var(--s-6)}
 .co__coal .line__pick{display:block;margin-bottom:var(--s-1)}
+
+/* ---------- on view before it is sold (2026-11-24): "Price TBD", colour chips, facts still to come ---------- */
+/* The price gun's own sticker, same ember disc: the word does the work, so nothing turns into a warning colour. */
+.sticker--tbd .sticker__k{font-size:12px;letter-spacing:.04em}
+.sticker--tbd .sticker__v{font-size:1.45rem;letter-spacing:.02em} .sticker--tbd .sticker__v::first-letter{font-size:1em;vertical-align:0;margin:0}
+.grid .sticker--tbd .sticker__k,.piece .sticker--tbd .sticker__k{font-size:12px;letter-spacing:0;max-width:none} .grid .sticker--tbd .sticker__v{font-size:1.1rem} .piece .sticker--tbd .sticker__v{font-size:1rem}
+.pdp__tile .sticker--tbd .sticker__v{font-size:1.6rem}
+/* One quiet style for every unknown: the meta register, never a colour of its own. */
+.tbd{font:600 var(--t-12)/1.4 var(--font-ui);letter-spacing:.08em;text-transform:uppercase;color:var(--color-muted);white-space:nowrap}
+.pdp__avail{margin:0 0 var(--s-3);color:var(--color-text)}
+.pick__none{margin:0 0 var(--s-3);padding:0 var(--gutter);color:var(--color-muted)}
+/* THE COLOUR SWITCHER. The chips are the product's own colours: content, so they are the only saturated marks here.
+   44 px targets on the product page, 32 px on cards (WCAG 2.5.8 floor is 24). Chosen = a bone ring outside a coal gap;
+   a colour with no photo of its own carries a small hollow mark ("photo coming"). Dark chips get a light inner ring. */
+.swatches{display:flex;flex-wrap:wrap;align-items:center;gap:var(--s-1);margin:0 0 var(--s-4) calc(-1 * var(--s-2))}
+.swatch{position:relative;display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:50%;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.swatch::before{content:"";width:28px;height:28px;border-radius:50%;background:var(--c);box-shadow:inset 0 0 0 1px var(--ring,oklch(1 0 0 / .16));transition:transform var(--dur-micro) var(--ease-enter),box-shadow var(--dur-micro) var(--ease-state)}
+.swatch[aria-checked="true"]::before{box-shadow:inset 0 0 0 1px var(--ring,oklch(1 0 0 / .16)),0 0 0 3px var(--color-bg),0 0 0 5px var(--color-strong)}
+.swatch:hover::before{transform:scale(1.1)}
+.swatch:focus-visible{outline:2px solid var(--color-focus);outline-offset:-2px}
+.swatch__none{position:absolute;right:7px;bottom:7px;width:10px;height:10px;border-radius:50%;background:var(--color-bg);box-shadow:inset 0 0 0 2px var(--color-muted)}
+.swatches--card{flex-wrap:nowrap;margin:0 0 0 -11px;gap:0;overflow-x:auto;scrollbar-width:none;overscroll-behavior-x:contain}
+.swatches--card::-webkit-scrollbar{display:none}
+.swatches--card .swatch{flex:none;width:44px;height:44px} .swatches--card .swatch::before{width:22px;height:22px}
+.swatches--card .swatch[aria-checked="true"]::before{box-shadow:inset 0 0 0 1px var(--ring,oklch(1 0 0 / .16)),0 0 0 2px var(--color-bg),0 0 0 3.5px var(--color-strong)}
+.swatches--card .swatch__none{right:5px;bottom:5px;width:7px;height:7px;box-shadow:inset 0 0 0 1.5px var(--color-muted)}
+.swatches__more{flex:none;display:inline-grid;place-items:center;min-width:44px;height:44px;font:600 var(--t-12)/1 var(--font-ui);color:var(--color-muted);text-decoration:none;font-variant-numeric:tabular-nums}
+.swatches__more:hover{color:var(--color-strong)}
+.swatches__n{margin:0 0 var(--s-1);font-size:var(--t-14);color:var(--color-muted)}
+.swatches__n b{font-weight:600;color:var(--color-strong);text-transform:capitalize;margin-right:var(--s-1)}
+.swatches__n .num{margin-right:var(--s-2);font-variant-numeric:tabular-nums}
+/* the colour change: the new photo is decoded first, then fades over the old one in the state tier; reduced motion swaps at once */
+.shot--in{position:absolute;inset:0;opacity:0;transition:opacity 240ms var(--ease-state)}
+.shot--in.is-on{opacity:1}
+@media (prefers-reduced-motion: reduce){.swatch::before{transition:none}.shot--in{transition:none}}
+/* hookahs: the shop's own pieces, then the catalogue; kinds inside each */
+.tier__head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:var(--s-2) var(--s-6);padding:var(--s-12) var(--gutter) 0}
+.tier:first-of-type .tier__head{padding-top:var(--s-6)}
+.tier__h{margin:0;font:400 var(--t-d2)/.95 var(--font-display);letter-spacing:-.02em}
+.tier__n{margin:0;max-width:44ch;font-size:var(--t-14);color:var(--color-muted)}
+.tier .series{font-size:var(--t-d1)}
+
+.pdp__desc{margin:0 0 var(--s-4);max-width:60ch;color:var(--color-text);line-height:1.55}
+.shot__tag--tbd{font-size:max(12px,var(--t-12));left:auto;right:var(--s-2);bottom:var(--s-2);max-width:calc(100% - var(--s-4));text-align:right;letter-spacing:.06em;opacity:.7}
+.pdp__tile .shot__tag--tbd{right:var(--s-4);bottom:var(--s-4)}
+.grid .shot__tag--tbd{font-size:12px;letter-spacing:.02em;line-height:1.2;max-width:calc(100% - var(--s-3))}
+.card__meta--one{-webkit-line-clamp:1}

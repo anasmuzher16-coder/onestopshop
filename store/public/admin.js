@@ -156,6 +156,7 @@ function editSheet(p) {
     <div class="grid2"><label class="field"><span>Section</span><select class="input" name="category_id">${state.categories.map(x => opt(x.id, x.name, p.category_id)).join("")}</select></label>
       <label class="field"><span>Price, $</span><input class="input num" name="price" inputmode="decimal" value="${dol(p.price_cents)}" required></label></div>
     <label class="field"><span>Description, one line</span><input class="input" name="note" value="${esc(p.note)}" maxlength="200"></label>
+    ${p.family ? `<label class="field"><span>Colour name, as customers see it</span><input class="input" name="variant_label" value="${esc((() => { try { return JSON.parse(p.details || "{}").colour || ""; } catch { return ""; } })())}" placeholder="${esc(p.variant_label || "")}" maxlength="40"></label>` : ""}
     <div data-cologne ${p.category_id === "cologne" ? "" : "hidden"}><div class="grid2"><label class="field"><span>Size, mL</span><input class="input num" name="ml" inputmode="numeric" value="${esc(d.ml ?? "")}"></label>
       <label class="field"><span>Kind</span><input class="input" name="kind" value="${esc(d.kind ?? "")}" placeholder="Eau de parfum"></label></div>
       <label class="field" style="margin-top:var(--s-3)"><span>Scent notes</span><input class="input" name="notes" value="${esc(d.notes ?? "")}" maxlength="120" placeholder="Saffron, rose, oud"></label></div>
@@ -183,7 +184,7 @@ document.addEventListener("submit", async e => {
   if (price === null || price < 0) return err.textContent = "Enter the price as dollars, like 49.99.";
   if (!(parseInt(f.weight_g.value, 10) > 0)) return err.textContent = "Enter the weight in grams. A kitchen scale is fine.";
   const body = { name: f.name.value, category_id: f.category_id.value, price_cents: price, cost_cents: f.cost.value.trim() === "" ? null : cents(f.cost.value), weight_g: parseInt(f.weight_g.value, 10), box_id: f.box_id.value,
-    ship_class: f.ship_class.value, note: f.note.value, low_stock_at: parseInt(f.low_stock_at.value, 10) || 0, glass: f.glass.checked, active: f.active.checked,
+    ship_class: f.ship_class.value, note: f.note.value, ...(f.variant_label ? { variant_label: f.variant_label.value } : {}), low_stock_at: parseInt(f.low_stock_at.value, 10) || 0, glass: f.glass.checked, active: f.active.checked,
     details: f.category_id.value === "cologne" ? { ml: parseInt(f.ml.value, 10) || null, kind: f.kind.value, notes: f.notes.value } : {} };
   if (!sku) body.stock = parseInt(f.stock.value, 10) || 0;
   const btn = $('button[type="submit"]', f); btn.disabled = true;

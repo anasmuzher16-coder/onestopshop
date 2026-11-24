@@ -389,6 +389,7 @@ const FX = {
     }
   },
 };
+FX.shisha = FX.bowls;   // shisha (2026-11-24): the clay bowl it is packed into is its object, band and product page alike
 // ---- the pages that are not a shop section: same rule, one object, one act (tools/council-fx-pages.js)
 const SINE = "cubic-bezier(.37,0,.63,1)";
 // the object on a page band, from its layer or by name
@@ -939,6 +940,7 @@ const ACT = {
       { transform: turn(0, 0) + " scale(1)" }], 900, hit + 40);
   },
 };
+ACT.shisha = ACT.bowls;
 function piece(layer, go, host, cat) {
   if (!go) return;
   let hit = T0; const born = performance.now();
