@@ -413,6 +413,9 @@ function shipChoice(lines) {
   const pickup = state.ship === "pickup", local = !pickup && canLocal && wantsLocal, waiting = checking && wantsLocal;
   return { parcels, opts, canLocal, checking, localFee, status: near && q ? q.status : null, pickup, local, chosen: pickup || local || waiting || state.ship === "local" ? null : opts.find(o => o.id === state.ship) || opts[0] || null };
 }
+// On a phone the dock asks for the postal code, so the page does not ask a second time. Crossing the width puts the right one back.
+const WIDE = matchMedia("(min-width:960px)");
+WIDE.addEventListener("change", () => { if (route() === "#/cart") render(); });
 function viewCart() {
   const lines = cartLines(), news = state.cartNews.length ? `<div class="cartnews" role="status" data-cart-news>${state.cartNews.map(m => `<p>${esc(m)}</p>`).join("")}</div>` : ""; state.newsSeen = state.cartNews.length > 0;
   if (!lines.length) return `${band("cart", "gilt", "Your cart", "Nothing in it yet.")}<section class="empty">${news}<p class="lead">Start with the <a class="link" href="/shop/hookahs">hookahs</a>, the <a class="link" href="/shop/bowls">bowls</a>, or <a class="link" href="/set">build a set</a>.</p></section>`;
@@ -438,7 +441,7 @@ function viewCart() {
     <section class="cartship">
       <h2 class="h3">How we pack it</h2>
       <ol class="boxes">${parcels.map(p => `<li><span class="num">${p.l} \u00d7 ${p.w} \u00d7 ${p.h} cm, ${p.kg} kg</span> ${esc(p.label.toLowerCase())}, ${p.items.length} ${p.items.length === 1 ? "item" : "items"}</li>`).join("")}</ol>
-      ${!state.dest ? `<button class="btn btn--wide cartship__ask" type="button" data-open-postal>Check delivery to my postal code</button>` : ""}
+      ${!state.dest && WIDE.matches ? `<button class="btn btn--wide" type="button" data-open-postal>Check delivery to my postal code</button>` : ""}
       ${localNote}
       ${state.dest && !carried(lines) ? `<p class="note">One piece here does not go by Canada Post. ${canLocal ? "Choose local delivery or free pickup." : "Pickup at the Windsor counter is free."}</p>` : ""}
       ${tooHeavy ? `<p class="note">One of these boxes is over the 30 kg carrier limit. Call the counter at 519-255-2222 and we will quote it by hand.</p>` : ""}

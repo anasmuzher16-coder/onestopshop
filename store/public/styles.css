@@ -257,7 +257,7 @@ body:not([data-route]) .foot{visibility:hidden}
 .foot__ar{margin:0;font-size:var(--t-d2);color:var(--gilt);text-align:left}
 .foot__en{margin:0 0 var(--s-8);font:400 var(--t-d2)/1.05 var(--font-display);color:var(--gilt);text-wrap:balance}
 .foot__list{margin:0;display:grid;gap:var(--s-4)}
-.foot__list a{display:inline-block;padding:10px 0;margin:-6px 0}
+.foot__list a{display:inline-block;padding:10px 4px;margin:-6px -4px}
 .foot__list dt{font-size:var(--t-12);color:var(--color-muted)} .foot__list dd{margin:0;color:var(--color-strong);text-wrap:balance}
 
 /* ================= scale up ================= */
@@ -784,7 +784,7 @@ html.restoring .grid--shop .card{content-visibility:visible}
 @media (min-width:960px){.piece .sticker::before{content:"ONE STOP";font-size:8px;line-height:3}
   .shophead[data-cat="bowls"] .fx-obj{top:43%}}   /* the bowl sits higher, so its stem reads as a stem running off the band, not a stub */
 /* 26 on a phone the dock asks for the postal code, so the page does not ask again */
-@media (max-width:959px){.cartship__ask,#checkout-why{display:none}}
+@media (max-width:959px){#checkout-why{display:none}}
 /* 27 utility pages start on the same left edge as their title */
 .cart,.reading,.empty{margin:0}
 /* 28 the hero word's comma stands inside its band, and on a phone the small label keeps clear of the bowl */
