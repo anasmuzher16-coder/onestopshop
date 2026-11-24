@@ -262,13 +262,27 @@ function shopGrid(cat) {
     <div class="grid grid--shop">${gs.map(([name, items]) => `<h3 class="series">${name} <span class="num">${items.length} ${items.length === 1 ? "hookah" : "hookahs"}</span></h3>` + items.map(card).join("")).join("")}</div></section>`).join("")
   : `<div class="grid grid--shop">${groups.map(([name, items]) => (name ? `<h2 class="series" data-tone="${SERIES[name] || ""}">${name} <span class="num">${items.length} pieces${range(items)}</span></h2>` : "") + items.map(card).join("")).join("")}</div>`}`;
 }
+// The band's line under a section name, from the section's own items, counted: Heat says how many are charcoal and how
+// many foil; Hookahs counts hookahs, Shisha flavours; the pickup line only when every item in the section is pickup or local.
+const plural = (n, one, many) => `<span class="num">${n}</span> ${n === 1 ? one : many}`;
+function bandNote(c, list) {
+  if (!c) return plural(list.length, "piece", "pieces");
+  const local = list.length && list.every(localOnly) ? ".<br>Pickup or local delivery only." : "";
+  if (c.id === "heat") {
+    const coal = list.filter(isCharcoal).length, other = list.length - coal;
+    return [coal ? plural(coal, "kind of charcoal", "kinds of charcoal") : "", other ? plural(other, list.filter(p => !isCharcoal(p)).every(p => /foil/i.test(p.name)) ? "foil pack" : "piece", list.filter(p => !isCharcoal(p)).every(p => /foil/i.test(p.name)) ? "foil packs" : "pieces") : ""].filter(Boolean).join(" and ") + local;
+  }
+  if (c.id === "hookahs") return plural(list.length, "hookah", "hookahs") + local;
+  if (c.id === "shisha") return plural(list.length, "flavour", "flavours") + local;
+  return plural(list.length, "piece", "pieces") + local;
+}
 function viewShop(cat) {
   const c = catById[cat] || null, list = c ? SHELF.filter(p => p.cat === c.id) : SHELF;
   const f = c && find.findShop(c.id);   // section filters (find.js); null when a section has nothing to filter by
   return `
   <section class="shophead" data-tone="${c ? c.tone : "bone"}" ${c ? `data-cat="${c.id}"` : `data-fx="all"`}>
     <h1 class="shophead__h">${c ? c.name : "Everything"}</h1>
-    <p class="shophead__n"><span class="num">${list.length}</span> ${c && list.length && list.every(isCharcoal) ? "kinds of charcoal.<br>Pickup or local delivery only." : c && list.length && list.every(localOnly) ? "pieces.<br>Pickup or local delivery only." : "pieces"}</p>
+    <p class="shophead__n">${bandNote(c, list)}</p>
   </section>
   <nav class="chips" aria-label="Categories"><a href="/shop" ${!c ? 'aria-current="page"' : ""}>All</a>${CATEGORIES.map(x => `<a href="/shop/${x.id}" ${c && c.id === x.id ? 'aria-current="page"' : ""}>${x.name}</a>`).join("")}<a href="/gifts/under-50">Gifts</a></nav>
   ${f ? f.html(shopGrid(cat)) : shopGrid(cat)}`;
