@@ -7,6 +7,8 @@ import { createRequire } from "node:module";
 const { chromium, webkit } = createRequire("C:/dev/puckempire-arena/package.json")("playwright");
 const B = (process.env.BASE || "http://127.0.0.1:4420").replace(/\/$/, "");
 let n = 0, f = 0; const ok = (c, msg) => { n++; if (!c) { f++; console.log("FAIL", msg); } };
+// the local server drops idle kept-alive connections while a database command runs beside it: a reset before any answer is retried (as test-backoffice does)
+const fetch = async (u, o) => { for (let i = 0; ; i++) try { return await globalThis.fetch(u, o); } catch (e) { if (i >= 2 || e?.cause?.code !== "ECONNRESET") throw e; } };
 const tap = (p, h) => p.evaluate(h => { const a = document.createElement("a"); a.href = h; document.body.append(a); a.click(); a.remove(); }, h);
 const filled = (p, s) => p.waitForFunction(s => document.querySelector(`#main .shophead[data-cat="${s}"]`) && !document.querySelector("#main [data-later]") && !document.querySelector("#main[aria-busy]") && !document.documentElement.hasAttribute("data-swapping"), s, { timeout: 15000 }).then(() => true, () => false);
 const skus = p => p.evaluate(() => [...document.querySelectorAll("#main .card [data-piece]")].map(a => a.dataset.piece));
@@ -46,7 +48,9 @@ for (const eng of [chromium, webkit]) {
 // the Ace colours, on its card and its page; a photo state the page has no use for never reaches the storefront.
 if (process.env.PERSIST) {
   const { execFileSync } = await import("node:child_process"), { fileURLToPath } = await import("node:url");
-  const sql = cmd => execFileSync("cmd", ["/c", "npx", "wrangler", "d1", "execute", "onestopshop", "--local", "--persist-to", process.env.PERSIST, "--command", `"${cmd}"`], { cwd: fileURLToPath(new URL("..", import.meta.url)), stdio: "pipe" });
+  const { join } = await import("node:path");
+  const WRANGLER = process.env.WRANGLER_JS || join(execFileSync(process.platform === "win32" ? "npm.cmd" : "npm", ["root", "-g"], { encoding: "utf8", shell: process.platform === "win32" }).trim(), "wrangler", "bin", "wrangler.js");   // as test-account does
+  const sql = cmd => execFileSync(process.execPath, [WRANGLER, "d1", "execute", "onestopshop", "--local", "--persist-to", process.env.PERSIST, "--command", cmd], { cwd: fileURLToPath(new URL("..", import.meta.url)), stdio: "pipe" });
   const mod = async () => import("data:text/javascript;base64," + Buffer.from(await (await fetch(B + "/api/catalog-module")).text()).toString("base64"));
   const P0 = (await mod()).PRODUCTS.filter(p => p.cat === "charcoal" && p.img && p.state === "sale"), up = P0[0], other = P0[1];
   sql(`UPDATE products SET details = json_set(details, '$.photo', 'upscale') WHERE sku = '${up.sku}'; UPDATE products SET details = json_set(details, '$.photo', 'rejected, from a rival site') WHERE sku = '${other.sku}'`);
