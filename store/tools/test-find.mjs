@@ -93,11 +93,12 @@ if (b) try {
   await p.locator("[data-gf1]").nth(1).click(); await p.locator("[data-gf2]").first().click(); await p.waitForTimeout(800);
   const fsel = F.readSel("heat", heat, new URL(p.url()).search);
   ok(fsel.shape?.length === 1 && fsel.n?.length >= 1 && await p.locator(".grid--shop .card").count() === F.apply("heat", heat, fsel).length && /Filter\s*\d/.test(await p.locator(".fbar__btn").innerText()), "the coal finder lands on the filtered shelf it names: " + p.url());
-  // the finder button keeps filters already set, and closing it changes nothing
+  // the finder offer steps aside once a filter is set; opening and closing it changes nothing
   await p.goto(B + "/shop/heat?type=foil", { waitUntil: "load" }); await p.waitForSelector("[data-fbar]");
-  await p.locator(".fbar .qchip").first().scrollIntoViewIfNeeded().catch(() => {});
-  await p.locator("[data-f-finder]").click(); await p.waitForSelector(".fsheet[open]"); await p.keyboard.press("Escape"); await p.waitForTimeout(200);
-  ok(/type=foil/.test(p.url()) && !/find=/.test(p.url()), "the finder leaves the address alone: " + p.url());
+  ok(!(await p.locator("[data-f-finder]").count()), "no finder offer once a filter is set");
+  await p.goto(B + "/shop/heat", { waitUntil: "load" }); await p.waitForSelector("[data-f-finder]");
+  await p.locator("[data-f-finder]").click(); await p.waitForSelector(".fsheet[open]"); await p.keyboard.press("Escape"); await p.waitForTimeout(400);
+  ok(new URL(p.url()).pathname === "/shop/heat" && !new URL(p.url()).search && !(await p.locator(".fsheet[open]").count()), "the finder closes and leaves the address alone: " + p.url());
   await p.goto(B + "/search", { waitUntil: "load" });
   ok(await p.locator(".way").count() >= 4, "search opens with ways in");
   await p.locator("#q").fill("cocnut cubes"); await p.waitForTimeout(200);
