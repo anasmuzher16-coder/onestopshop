@@ -42,12 +42,13 @@ export const canonicalSku = (cat, sku) => { const f = view(cat).front.get(sku); 
 // What a shopper sees as one item in a section: one per hookah family, every other item on its own.
 const shelf = (cat, list) => list.filter(p => { const f = view(cat).front.get(p.sku); return !f || !f.family || f.lead; });
 
+const NOCARD = new Set(IMG_VERSIONS._nocard || []);   // photos with no transparency get no card (build-share.py)
 const photoUrl = (origin, p) => p.photo_ver ? `${origin}/api/photo/${p.sku}?v=${p.photo_ver}` : p.img ? `${origin}/img/pc/${p.img}.webp${IMG_VERSIONS[p.img] ? "?v=" + IMG_VERSIONS[p.img] : ""}` : null;
 const smallUrl = p => p.photo_ver ? `/api/photo/${p.sku}?v=${p.photo_ver}` : p.img ? `/img/pc/${p.img}${p.img_dark ? "" : "-s"}.webp${IMG_VERSIONS[p.img] ? "?v=" + IMG_VERSIONS[p.img] : ""}` : null;
 // The link-preview picture: the product's own 1200 x 630 card when it has one (store/tools/build-share.py); an uploaded
 // photo as it is (the back office replaces the static one, so its card would show the old photo); else the shop's card.
 export function shareImage(origin, p, site) {
-  if (p && !p.photo_ver && p.img && IMG_VERSIONS[p.img]) return { url: `${origin}/img/share/${p.img}.jpg?v=${IMG_VERSIONS[p.img]}`, w: 1200, h: 630, type: "image/jpeg", alt: `${p.name} at ${site}, ${SHOP.street}, Windsor` };
+  if (p && !p.photo_ver && p.img && IMG_VERSIONS[p.img] && !NOCARD.has(p.img)) return { url: `${origin}/img/share/${p.img}.jpg?v=${IMG_VERSIONS[p.img]}`, w: 1200, h: 630, type: "image/jpeg", alt: `${p.name} at ${site}, ${SHOP.street}, Windsor` };
   if (p && p.photo_ver) return { url: `${origin}/api/photo/${p.sku}?v=${p.photo_ver}`, alt: `${p.name} at ${site}` };
   return { url: `${origin}/img/share.jpg`, w: 1200, h: 630, type: "image/jpeg", alt: `${site}, ${SHOP.street}, Windsor: hookahs on the counter` };
 }

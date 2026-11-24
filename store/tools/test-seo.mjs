@@ -81,6 +81,7 @@ ok(/<style>\.ssr\{display:none\}/.test(home.t) && /<noscript><style>\.ssr\{displ
 ok(/og:image" content="https?:\/\/[^"]+\/img\/share\.jpg"/.test(home.t) && /og:image:width" content="1200"/.test(home.t) && /og:image:height" content="630"/.test(home.t) && /og:image:alt" content="[^"]+"/.test(home.t), "home: the shop's share card, absolute, sized, with alt text");
 
 // ---------- 3 every product page: content, Product + Offer, breadcrumbs ----------
+const nocardEarly = new Set(JSON.parse(readFileSync(new URL("../src/img-versions.json", import.meta.url), "utf8"))._nocard || []);
 let badShape = [], offerWrong = [], tbdLeak = [], supplierLeak = [], ssrWrong = [], crumbWrong = [], canonWrong = [], shareWrong = [];
 const checkProduct = async p => {
   const g = await get("/p/" + p.sku); if (g.r.status !== 200) { ssrWrong.push(p.sku + " " + g.r.status); return; }
@@ -107,7 +108,7 @@ const checkProduct = async p => {
   if (!crumbs || shape(crumbs, "crumbs").length || crumbs.itemListElement.some((x, i) => x.position !== i + 1 || !abs(x.item) || !x.name) || crumbs.itemListElement.at(-1).item !== canon) crumbWrong.push(p.sku);
   if (!/<nav aria-label="Breadcrumb">/.test(m)) crumbWrong.push(p.sku + " no visible trail");
   const img = (g.t.match(/<meta property="og:image" content="([^"]+)"/) || [])[1];
-  if (!abs(img) || (p.img && !p.photo && !p.img.startsWith("/") && p.iv && !img.endsWith(`/img/share/${p.img}.jpg?v=${p.iv}`))) shareWrong.push(`${p.sku} ${img}`);
+  if (!abs(img) || (p.img && !p.photo && !p.img.startsWith("/") && p.iv && !nocardEarly.has(p.img) && !img.endsWith(`/img/share/${p.img}.jpg?v=${p.iv}`))) shareWrong.push(`${p.sku} ${img}`);
 };
 for (let i = 0; i < P.length; i += 16) await Promise.all(P.slice(i, i + 16).map(checkProduct));
 ok(badShape.length === 0, `every product's data matches schema.org (${P.length} pages): ` + badShape.slice(0, 5).join("; "));
@@ -139,7 +140,9 @@ const card = readFileSync(new URL("../tools/build-share.py", import.meta.url), "
 const ver = s => { const h = createHash("sha256"); for (const suf of ["", "-s", "-m", "-l"]) { const f = PC + s + suf + ".webp"; if (existsSync(f)) { h.update(suf); h.update(readFileSync(f)); } } return h.digest("hex").slice(0, 8) + card; };
 const stale = stems.filter(s => vers[s] !== ver(s));
 ok(stale.length === 0, `every photo's version matches its files (run python store/tools/build-share.py after changing photos): ${stale.slice(0, 5).join(", ")}`);
-ok(stems.every(s => existsSync(fileURLToPath(new URL(`../public/img/share/${s}.jpg`, import.meta.url)))), "every photo has its share card");
+const nocard = new Set(vers._nocard || []);
+ok(stems.every(s => nocard.has(s) || existsSync(fileURLToPath(new URL(`../public/img/share/${s}.jpg`, import.meta.url)))), "every photo with transparency has its share card");
+ok([...nocard].every(s => !P.some(p => p.img === s && p.state === "sale")), "no item on sale is left without its own card: " + [...nocard].join(", "));
 ok(P.filter(p => p.img && !p.photo && vers[p.img]).every(p => p.iv === vers[p.img]), "the catalogue hands the page each photo's own version");
 const jpegSize = buf => { for (let i = 2; i < buf.length;) { const m = buf[i + 1], len = buf.readUInt16BE(i + 2); if (m >= 0xc0 && m <= 0xcf && m !== 0xc4 && m !== 0xc8 && m !== 0xcc) return [buf.readUInt16BE(i + 7), buf.readUInt16BE(i + 5)]; i += 2 + len; } return null; };
 for (const p of [sale.find(x => x.img && x.iv), tbd.find(x => x.img && x.iv)].filter(Boolean)) {

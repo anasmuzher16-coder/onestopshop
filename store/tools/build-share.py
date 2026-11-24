@@ -29,7 +29,7 @@ STORE = Path(__file__).resolve().parent.parent
 PC, OUT, VERS = STORE / "public/img/pc", STORE / "public/img/share", STORE / "src/img-versions.json"
 HOME_OUT = STORE / "public/img/share.jpg"           # the shop's own card (home, sections, items with no photo)
 W, H, U = 1200, 630, 8                              # the card, and the 8 px unit every measure below is a multiple of
-CARD = 5                                            # bump when the card's design changes: every share image is redrawn
+CARD = 6                                            # bump when the card's design changes: every share image is redrawn
 
 
 def oklch(l, c, h):
@@ -98,14 +98,21 @@ def face(name, px, wght=None):
     return _FACES[key]
 
 
+SIZES = json.loads((PC / "sizes.json").read_text()) if (PC / "sizes.json").exists() else {}
+
+
 def cutout(stem):
-    """The product alone: a cut-out cropped to what is actually drawn (frame and foot margin dropped); a photo with its
-    own background as it is."""
+    """The product alone: a cut-out cropped to what is actually drawn (frame and foot margin dropped). A photo that was
+    framed with its own soft shadow (sizes.json "shadow") loses that shadow first, so it never carries two. A photo with
+    no transparency gets no card (None): pasted on the tile it would be a box, not a product on a shelf."""
     src = Image.open(PC / f"{stem}.webp")
-    if src.mode == "RGBA":
-        box = src.getchannel("A").point(lambda a: 255 if a > 96 else 0).getbbox()   # above the faint shadow some photos carry
-        return src.crop(box) if box else src
-    return src.convert("RGBA")
+    if src.mode != "RGBA":
+        return None
+    if (SIZES.get(stem.split("/")[-1]) or {}).get("shadow", 0) > .05:
+        a = src.getchannel("A").point(lambda v: 0 if v < 110 else v)   # the baked shadow is faint; the product is not
+        src = src.copy(); src.putalpha(a)
+    box = src.getchannel("A").point(lambda a: 255 if a > 96 else 0).getbbox()
+    return src.crop(box) if box else src
 
 
 def fit(im, w, h):
@@ -162,25 +169,47 @@ def label():
     return out
 
 
+LABEL_X, LABEL_R, LABEL_B = SAFE0 + 2 * U - 37, 76 * U, 28 * U   # label stock from x 301; its corner reaches x ~600, y ~220
+RIGHT = SAFE1 - 2 * U                                            # 899: nothing past the square's right edge, less a margin
+
+
+def place(piece):
+    """Where a piece stands: clear of the label's corner (a tall piece starts right of it), never past the square's right
+    edge, and a flat piece is enlarged so it never shrinks to a sliver."""
+    if piece.height < 18 * U:                                   # very flat (a stem, a mouthpiece): at least 144 px tall
+        piece = fit(piece, 2 * (RIGHT - CX) + 10 * U, 18 * U)   # ... within the square, centred under the label
+        return piece, (SAFE0 + RIGHT) // 2 + U
+    if FLOOR - piece.height < LABEL_B:                          # its top reaches the label's height: start right of it
+        room = RIGHT - LABEL_R
+        if piece.width > room:
+            piece = fit(piece, room, piece.height)
+        return piece, LABEL_R + piece.width // 2 + max(0, (room - piece.width) // 4)
+    return piece, CX
+
+
 def card(stem):
+    pieces = [cutout(s_) for s_ in (HOME if stem == "home" else [stem])]
+    if any(p is None for p in pieces):
+        return None
     im = Image.new("RGB", (W, H), BONELT)
     d = ImageDraw.Draw(im)
     d.rectangle([0, FLOOR - 4 * U, W, FOOT], fill=SHELF)       # the shelf, the full width
-    if stem == "home":     # three pieces at one scale, overlapping a little, the middle one in front
-        pieces = [fit(cutout(s_), BOX_W, 42 * U) for s_ in HOME]   # shorter than one piece alone, so the label clears their heads
-        gap = 19 * U
+    if stem == "home":     # three pieces at one scale below the label, overlapping a little, the middle one in front
+        pieces = [fit(p, BOX_W, FLOOR - LABEL_B - 2 * U) for p in pieces]
+        gap = 18 * U
         for i in (0, 2, 1):
-            stand(im, pieces[i], CX + U + (i - 1) * gap)
+            stand(im, pieces[i], LABEL_R - 2 * U + (i - 1) * gap)
     else:
-        stand(im, fit(cutout(stem), BOX_W, BOX_H), CX)
+        piece, cx = place(fit(pieces[0], BOX_W, BOX_H))
+        stand(im, piece, cx)
     lab = label()
-    im.paste(lab, (SAFE0 - 7 * U, -U), lab)                 # the top-left corner of the safe square, like a label on a tile
+    im.paste(lab, (LABEL_X, -U), lab)                        # inside the top-left corner of the safe square
     # the foot: the address, the one fact every preview carries, in the site's text face
     d.rectangle([0, FOOT, W, H], fill=COAL0)
     small = face("readex", 3 * U + 4, 500)
-    t = "760 Wyandotte St E, Windsor, Ontario"
-    tb = small.getbbox(t)
-    d.text((6 * U, FOOT + (H - FOOT - (tb[3] - tb[1])) / 2 - tb[1]), t, font=small, fill=BONE)
+    t = "760 Wyandotte St E, Windsor"
+    tb = small.getbbox(t)                                  # centred, so a square crop keeps all of it
+    d.text(((W - (tb[2] - tb[0])) / 2 - tb[0], FOOT + (H - FOOT - (tb[3] - tb[1])) / 2 - tb[1]), t, font=small, fill=BONE)
     return im
 
 
@@ -190,18 +219,25 @@ def main(argv):
     if only and out_dir:
         out_dir.mkdir(parents=True, exist_ok=True)
         for stem in only:
-            card(stem).save(out_dir / (stem.replace("/", "_") + ".jpg"), "JPEG", quality=82, optimize=True, progressive=True)
+            c = card(stem)
+            if c is None:
+                print(stem, "has no transparency: no card"); continue
+            c.save(out_dir / (stem.replace("/", "_") + ".jpg"), "JPEG", quality=82, optimize=True, progressive=True)
         return
     old = json.loads(VERS.read_text()) if VERS.exists() else {}
-    vers, wrote = {}, 0
+    vers, wrote, nocard = {}, 0, []
     for stem in base_photos():
         v = version(stem) + str(CARD)
         vers[stem] = v
         f = OUT / f"{stem}.jpg"
-        if old.get(stem) == v and f.exists():
+        if old.get(stem) == v and (f.exists() or stem in old.get("_nocard", [])):
+            if stem in old.get("_nocard", []): nocard.append(stem)
             continue
+        c = card(stem)
+        if c is None:                     # no transparency: the page shares the shop's card instead (src/seo.js)
+            nocard.append(stem); f.unlink(missing_ok=True); continue
         f.parent.mkdir(parents=True, exist_ok=True)
-        card(stem).save(f, "JPEG", quality=82, optimize=True, progressive=True)
+        c.save(f, "JPEG", quality=82, optimize=True, progressive=True)
         wrote += 1
     v = hashlib.sha256("".join(vers[s_] for s_ in HOME).encode()).hexdigest()[:8] + str(CARD)
     vers["_home"] = v
@@ -211,6 +247,7 @@ def main(argv):
     for f in OUT.rglob("*.jpg"):   # a photo that is gone takes its share image with it
         if f.relative_to(OUT).with_suffix("").as_posix() not in vers:
             f.unlink()
+    vers["_nocard"] = sorted(nocard)
     VERS.write_text(json.dumps(vers, indent=0, sort_keys=True) + "\n")
     print(f"{len(vers)} photos, {wrote} share images written, versions in {VERS.relative_to(STORE)}")
 

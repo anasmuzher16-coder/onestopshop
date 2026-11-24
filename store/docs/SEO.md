@@ -113,7 +113,12 @@ shop's label, products cut in half by square crops, uneven product sizes) the ca
 what is actually drawn and fitted by its longer side, stands on a shelf with a contact shadow; the shop's real price-gun
 label (white stock, ember ONE STOP band, perforation, SHOP in ink, -6 degrees, drop shadow) is stuck on the tile's
 corner; both sit inside the centred square (x 285 to 915) that small iMessage and WhatsApp previews keep; the address
-runs in Readex Pro across a coal band at the foot. No price and no product name on the card: prices change in the back office and an image cannot
+runs in Readex Pro across a coal band at the foot. A second review (REVISE) led to: the label fully inside the square;
+tall pieces standing right of the label's corner, never under it; very flat pieces (stems, brushes) enlarged to at
+least 144 px tall; a photo framed with its own faint shadow losing it before the card's shadow is drawn; the address
+centred so a square crop keeps it; and no card at all for the four old sample photos without transparency (hookah11,
+12, 14, 18, all retired), which share the shop's card instead (`_nocard` in `src/img-versions.json`). The wide view leaves
+bare tile to the right of the square: accepted, so that the square preview is complete. No price and no product name on the card: prices change in the back office and an image cannot
 follow; the preview prints the page title beside it. The shop's own card (`img/share.jpg`, used by home, sections and
 items without a photo) now shows three of the shop's ticked Ace hookahs instead of the retired sample hookahs.
 
