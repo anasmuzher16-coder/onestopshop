@@ -6,11 +6,8 @@ export async function loadCatalog(db) {
     db.prepare("SELECT id, label, l_cm, w_cm, h_cm, tare_g FROM boxes ORDER BY id"),
     db.prepare("SELECT p.sku, p.name, p.category_id, p.price_cents, p.weight_g, p.box_id, p.glass, p.ship_class, p.height_cm, p.note, p.img, p.img_dark, p.img_lw, p.photo_ver, p.details, p.stock FROM products p JOIN categories c ON c.id = p.category_id WHERE p.active = 1 AND c.active = 1 ORDER BY p.sort, p.sku"),
   ]);
-  return { categories: cats.results, boxes: boxes.results, products: prods.results.map(p => SOLD_PENDING_DB.has(p.sku) ? { ...p, stock: 0 } : p) };
+  return { categories: cats.results, boxes: boxes.results, products: prods.results };
 }
-// Sold, with the live database not yet updated. Every page, the catalogue and checkout read 0 from here, so it shows and acts sold before and after
-// the owner's stock update. Once that update has run this entry does nothing and can be removed.
-const SOLD_PENDING_DB = new Set(["OSS-1008"]);
 
 // The storefront's copy of the catalogue. Reading the database costs a few tenths of a second on every page, so
 // pages and the catalogue module are served from a copy: this worker's memory (20 s), then the data centre's cache
