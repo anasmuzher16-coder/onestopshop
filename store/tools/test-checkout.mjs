@@ -12,6 +12,55 @@ const post = async body => { const r = await fetch(B + "/api/orders", { method: 
 const stockOf = async sku => (await (await fetch(B + "/api/catalog")).json()).products.find(p => p.sku === sku)?.stock;
 const who = { name: "Test Shopper", email: "test@example.com" }, to = { postal: "M5V 2T6", address: { line1: "1 Test Street", city: "Toronto" } };
 
+// NO CARD KEYS (the live demo): pickup orders are paid at the counter; shipping and local delivery are refused with the
+// shop's number before anything is priced or held, so the carrier pricing below cannot be reached and is checked with keys.
+const CARD = /<meta name="oss-pay" content="card">/.test(await (await fetch(B + "/")).text());
+if (!CARD) {
+  const noKeys = r => r.status === 503 && r.data.pay_off === true && /519-255-2222/.test(r.data.error || "") && !r.data.order;
+  const at = { pay: "at_pickup" }, s2001 = await stockOf("OSS-2001"), coalSku = "OSS-9104", c0 = await stockOf(coalSku);
+  for (const [what, body] of [["a ship order to Toronto", { ...who, ...to, method: "ship", service: "cp-exp", lines: [{ sku: "OSS-2001", qty: 1 }] }],
+    ["a ship order to Alberta", { ...who, postal: "T2P 1J9", address: { line1: "2 Test Ave", city: "Calgary" }, method: "ship", service: "cp-exp", lines: [{ sku: "OSS-8003", qty: 1 }] }],
+    ["a ship order to Quebec", { ...who, postal: "H2Y 1C6", address: { line1: "4 Rue Test", city: "Montreal" }, method: "ship", service: "cp-exp", lines: [{ sku: "OSS-8004", qty: 1 }] }],
+    ["cologne by Expedited", { ...who, ...to, method: "ship", service: "cp-exp", lines: [{ sku: "OSS-7001", qty: 1 }] }],
+    ["charcoal by Canada Post", { ...who, ...to, method: "ship", service: "cp-exp", lines: [{ sku: coalSku, qty: 1 }] }],
+    ["charcoal by our local delivery", { ...who, phone: "519-555-0101", postal: "N9A 1A1", address: { line1: "7 D3000 Coal St", city: "Windsor" }, method: "ship", service: "local", delivery_fee_cents: 1000, lines: [{ sku: coalSku, qty: 1 }, { sku: "OSS-8003", qty: 1 }] }],
+    ["a card pickup", { ...who, method: "pickup", lines: [{ sku: "OSS-8004", qty: 1 }] }]]) {
+    const r = await post(body); ok(noKeys(r), `no keys: ${what} is refused with the shop's number: ${r.status} ${r.data.error || ""}`);
+  }
+  ok((await stockOf("OSS-2001")) === s2001 && (await stockOf(coalSku)) === c0, "no keys: refused orders hold no stock");
+  const pu = await post({ ...who, ...at, method: "pickup", lines: [{ sku: "OSS-8004", qty: 2 }, { sku: "OSS-2001", qty: 1 }] });
+  ok(pu.status === 201 && pu.data.order.shipping_cents === 0 && pu.data.order.tax_cents === Math.round(pu.data.order.subtotal_cents * 0.13) && pu.data.order.subtotal_cents === 2 * (await (await fetch(B + "/api/catalog")).json()).products.find(p => p.sku === "OSS-8004").price_cents + 30900, "no keys: a pickup paid at the counter is free, Ontario tax, the database's prices: " + pu.status + " " + (pu.data.error || JSON.stringify(pu.data.order?.subtotal_cents)));
+  ok(pu.status === 201 && (await stockOf("OSS-2001")) === s2001 - 1, "no keys: the counter order holds its stock");
+  ok((await post({ ...who, ...at, method: "pickup", lines: [] })).status === 400, "empty cart refused");
+  ok((await post({ ...who, ...at, method: "pickup", lines: [{ sku: "NOPE", qty: 1 }] })).status === 409, "unknown item refused");
+  ok((await post({ ...who, ...at, method: "pickup", lines: [{ sku: "OSS-8004", qty: -2 }] })).status === 400, "negative quantity refused");
+  ok((await post({ ...who, ...at, method: "pickup", lines: [{ sku: "OSS-8004", qty: 1.5 }] })).status !== 500, "odd quantity handled");
+  ok((await post({ name: "", email: "x@y.ca", ...at, method: "pickup", lines: [{ sku: "OSS-8004", qty: 1 }] })).status === 400, "missing name refused");
+  ok((await post({ name: "A", email: "not-an-email", ...at, method: "pickup", lines: [{ sku: "OSS-8004", qty: 1 }] })).status === 400, "bad email refused");
+  ok((await post({ ...who, ...at, method: "pickup", lines: [{ sku: "OSS-7008", qty: 1 }] })).status === 409, "sold-out item refused");
+  ok((await post({ ...who, ...at, method: "ship", service: "cp-exp", ...to, lines: [{ sku: "OSS-8004", qty: 1 }] })).status === 400, "paying at the counter is for pickup only");
+  ok((await fetch(B + "/api/orders")).status === 405, "orders cannot be listed by the public");
+  const last = await stockOf("OSS-7006"), race = await Promise.all([1, 2, 3].map(() => post({ ...who, ...at, method: "pickup", lines: [{ sku: "OSS-7006", qty: last }] })));
+  ok(race.filter(r => r.status === 201).length === 1 && (await stockOf("OSS-7006")) === 0, `three shoppers after the last ${last}: exactly one gets it (${race.map(r => r.status).join(",")})`);
+  const login = await fetch(B + "/api/admin/login", { method: "POST", headers: { "Content-Type": "application/json", "X-OSS-Admin": "1" }, body: JSON.stringify({ passcode: KEY }) }), cookie = (login.headers.get("set-cookie") || "").split(";")[0];
+  const orders = (await (await fetch(B + "/api/admin/orders", { headers: { Cookie: cookie } })).json()).orders;
+  ok(pu.status === 201 && orders.some(o => o.id === pu.data.order.id && o.pay_status === "pay_at_pickup"), "the back office has the counter order, to be paid at pickup");
+  const cat = await (await fetch(B + "/api/catalog")).json(), coal = cat.products.filter(p => p.category_id === "charcoal" && JSON.parse(p.details).charcoal === true);
+  ok(coal.length === 69 && coal.every(p => p.ship_class === "pickup_only"), "the Charcoal section holds the shop's 69 charcoal items, all pickup or local delivery only: " + coal.length);
+  const coalOk = await post({ ...who, ...at, method: "pickup", lines: [{ sku: coalSku, qty: 1 }, { sku: "OSS-8003", qty: 1 }] });
+  ok(coalOk.status === 201 && coalOk.data.order.subtotal_cents === 1199 + 2195 && !/\bage\b|photo id|legal age|age_/i.test(JSON.stringify(coalOk.data)), "charcoal picked up and paid at the counter, at the shop's price, no age step: " + coalOk.status + " " + (coalOk.data.error || ""));
+  if (coalOk.status === 201) {
+    const seen = await (await fetch(B + "/api/admin/orders/" + coalOk.data.order.id, { headers: { Cookie: cookie } })).json();
+    ok(seen.items.some(i => i.category_id === "charcoal"), "the back office can tell a charcoal order (for its staff-only ID note)");
+    await fetch(B + "/api/admin/orders/" + coalOk.data.order.id + "/status", { method: "POST", headers: { "Content-Type": "application/json", "X-OSS-Admin": "1", Cookie: cookie }, body: JSON.stringify({ status: "ready" }) });
+    const mails = (await (await fetch(B + "/api/admin/orders/" + coalOk.data.order.id, { headers: { Cookie: cookie } })).json()).emails;
+    ok(["order_placed", "new_order", "pickup_ready"].every(k => mails.some(m => m.kind === k)), "the receipt, the shop's new-order note and the ready-for-pickup email are written: " + mails.map(m => m.kind).join(","));
+    for (const m of mails) { const e = (await (await fetch(B + "/api/admin/emails/" + m.id, { headers: { Cookie: cookie } })).json()).email; ok(!/\bID\b/.test(e.html + e.subject) && !/photo id|\bage\b|adult/i.test(e.html + e.subject), `the customer's ${m.kind} email says nothing about age or ID`); }
+  }
+  ok(!/MinAge|age_check|RULES/.test(await (await fetch(B + "/api/catalog-module")).text()), "no age setting reaches the storefront");
+  console.log(f ? `FAIL ${f} of ${n} checks (no card keys)` : `PASS ${n} checks (no card keys)`); process.exit(f ? 1 : 0);
+}
+
 // a glass piece to Toronto: shipping must equal the mockup's verified engine, tax must be Ontario HST on items plus shipping.
 // (The sample hookahs were retired on 2026-11-24 and the Ace hookahs have no shop price yet, so a glass base stands in.)
 const hk = PRODUCTS.find(p => p.sku === "OSS-2001"), ref = quote(parsePostal("M5V 2T6"), pack([{ product: hk, qty: 1 }]), fuelOn().pct).find(o => o.id === "cp-exp");

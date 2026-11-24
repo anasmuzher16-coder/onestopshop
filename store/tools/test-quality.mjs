@@ -23,7 +23,7 @@ ok(!/\/\*\.(js|css)\r?\n\s*Cache-Control:[^\r\n]*stale-while-revalidate/.test(he
 // the sold-out piece: a shisha flavour the shop has run out of (the sample Resin Bishop was retired 2026-11-24)
 const bishop = (await (await fetch(B + "/api/catalog")).json()).products.find(p => p.sku === "OSS-9616");
 ok(bishop && bishop.stock === 0, "the sold-out flavour reads 0 in the catalogue");
-const buy = await fetch(B + "/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: "No Sale", email: "nosale@example.com", method: "pickup", lines: [{ sku: "OSS-9616", qty: 1 }] }) });
+const buy = await fetch(B + "/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: "No Sale", email: "nosale@example.com", method: "pickup", pay: "at_pickup", lines: [{ sku: "OSS-9616", qty: 1 }] }) });
 ok(buy.status === 409, "the server refuses the sold-out flavour: " + buy.status);
 const page = await get("/p/OSS-9616"); ok(/OutOfStock/.test(page.t), "the sold-out flavour's product data says out of stock");
 console.log(f ? `FAIL ${f} of ${n} checks` : `PASS ${n} checks`); process.exit(f ? 1 : 0);

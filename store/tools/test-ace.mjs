@@ -7,6 +7,9 @@ const KEY = readFileSync(new URL("../.dev.vars", import.meta.url), "utf8").match
 let n = 0, f = 0; const ok = (c, msg) => { n++; if (!c) { f++; console.log("FAIL", msg); } };
 const post = async body => { const r = await fetch(B + "/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }); return { status: r.status, data: await r.json().catch(() => ({})) }; };
 const who = { name: "Test Shopper", email: "test@example.com" }, to = { postal: "M5V 2T6", address: { line1: "1 Test Street", city: "Toronto" } };
+// With no card keys (the live demo) a pickup is paid at the counter, and delivery or shipping is refused with the shop's number.
+const CARD = /<meta name="oss-pay" content="card">/.test(await (await fetch(B + "/")).text()), pk = CARD ? {} : { pay: "at_pickup" };
+const noKeys = r => r.status === 503 && r.data.pay_off === true && /519-255-2222/.test(r.data.error || "");
 const master = JSON.parse(readFileSync(new URL("../catalog/suppliers/ace/master.json", import.meta.url), "utf8"));
 const supplier = new Map(); for (const fam of master.families) for (const v of fam.variants) supplier.set(v.sku, fam.supplier_price_cents.v);
 const mod = await (await fetch(B + "/api/catalog-module")).text(), { PRODUCTS: P } = await import("data:text/javascript," + encodeURIComponent(mod));
@@ -17,19 +20,19 @@ const ace = P.filter(p => supplier.has(p.sku)), tbd = ace[0];
 ok(ace.length === supplier.size, `every Ace colour is on the site: ${ace.length} of ${supplier.size}`);
 ok(new Set(ace.filter(p => p.lead).map(p => p.family)).size === master.families.length, "one card per Ace family");
 ok(ace.every(p => p.state === "tbd" && p.price === null && p.stock === 0), "every Ace item shows Price TBD: no price, no stock count");
-for (const body of [{ ...who, method: "pickup", lines: [{ sku: tbd.sku, qty: 1 }] }, { ...who, ...to, method: "ship", service: "cp-exp", lines: [{ sku: tbd.sku, qty: 1, price: 1, unit_cents: 100 }] }]) {
-  const r = await post(body); ok(r.status === 409 && r.data.not_for_sale === true, `a TBD item is refused by the server (${body.method}): ${r.status} ${r.data.error || ""}`);
+for (const body of [{ ...who, ...pk, method: "pickup", lines: [{ sku: tbd.sku, qty: 1 }] }, { ...who, ...to, method: "ship", service: "cp-exp", lines: [{ sku: tbd.sku, qty: 1, price: 1, unit_cents: 100 }] }]) {
+  const r = await post(body); ok(!CARD && body.method === "ship" ? noKeys(r) : r.status === 409 && r.data.not_for_sale === true, `a TBD item is refused by the server (${body.method}): ${r.status} ${r.data.error || ""}`);
 }
 const shisha = P.find(p => p.cat === "shisha" && p.state === "sale" && p.stock > 1), before = await stockOf(shisha.sku);
-const mixed = await post({ ...who, method: "pickup", lines: [{ sku: shisha.sku, qty: 1 }, { sku: tbd.sku, qty: 1 }] });
+const mixed = await post({ ...who, ...pk, method: "pickup", lines: [{ sku: shisha.sku, qty: 1 }, { sku: tbd.sku, qty: 1 }] });
 ok(mixed.status === 409 && (await stockOf(shisha.sku)) === before, "a cart mixing a TBD item with a real one is refused whole, and no stock moves");
-ok((await post({ ...who, method: "pickup", lines: [{ sku: "OSS-1001", qty: 1 }] })).status === 409, "a retired sample hookah cannot be ordered");
+ok((await post({ ...who, ...pk, method: "pickup", lines: [{ sku: "OSS-1001", qty: 1 }] })).status === 409, "a retired sample hookah cannot be ordered");
 // the back office cannot switch a catalogue item on without the shop's own price (the 0005 trigger)
 const login = await fetch(B + "/api/admin/login", { method: "POST", headers: { "Content-Type": "application/json", "X-OSS-Admin": "1" }, body: JSON.stringify({ passcode: KEY }) });
 const cookie = (login.headers.get("set-cookie") || "").split(";")[0];
 const on = await fetch(B + `/api/admin/products/${tbd.sku}`, { method: "PUT", headers: { "Content-Type": "application/json", "X-OSS-Admin": "1", Cookie: cookie }, body: JSON.stringify({ active: true }) });
 ok(on.status === 409 && /Set the shop price/.test((await on.json().catch(() => ({}))).error || ""), "switching a TBD item on without a price is refused with the reason: " + on.status);
-ok((await post({ ...who, method: "pickup", lines: [{ sku: tbd.sku, qty: 1 }] })).status === 409, "and it still cannot be ordered afterwards");
+ok((await post({ ...who, ...pk, method: "pickup", lines: [{ sku: tbd.sku, qty: 1 }] })).status === 409, "and it still cannot be ordered afterwards");
 
 // 2 the supplier's price is nowhere a shopper can reach
 ok(!/supplier/i.test(mod) && !JSON.stringify(feed).includes("supplier"), "no supplier field in the catalogue module or the public feed");
@@ -67,18 +70,18 @@ ok((await fetch(B + "/p/OSS-9999999", { redirect: "manual" })).status === 404, "
 // Shisha is paid at the counter until the card company approves it (payments, docs/PAYMENTS.md; STRIPE_TOBACCO_OK unset here):
 // shipping it by card is refused with that reason, and a pickup paid at the counter sells it at the shop's price.
 const shCard = await post({ ...who, ...to, method: "ship", service: "cp-exp", lines: [{ sku: shisha.sku, qty: 1 }] });
-ok(shCard.status === 409 && shCard.data.counter_only === true, `shisha is not taken by card while the card company has not approved it: ${shCard.status} ${shCard.data.error || ""}`);
+ok(CARD ? shCard.status === 409 && shCard.data.counter_only === true : noKeys(shCard), `shisha is not taken by card while the card company has not approved it: ${shCard.status} ${shCard.data.error || ""}`);
 const sh = await post({ ...who, method: "pickup", pay: "at_pickup", lines: [{ sku: shisha.sku, qty: 1 }] });
 ok(sh.status === 201 && sh.data.order.subtotal_cents === Math.round(shisha.price * 100), `shisha sells at the shop's price, paid at the counter: ${sh.status} ${sh.data.error || ""}`);
 ok(P.filter(p => p.cat === "shisha").length === 47 && P.filter(p => p.cat === "shisha" && p.stock === 0).length === 3, "all 47 shisha flavours are up, 3 sold out");
-const sold = P.find(p => p.cat === "shisha" && p.stock === 0); ok((await post({ ...who, method: "pickup", lines: [{ sku: sold.sku, qty: 1 }] })).status === 409, "a sold-out flavour cannot be ordered");
+const sold = P.find(p => p.cat === "shisha" && p.stock === 0); ok((await post({ ...who, ...pk, method: "pickup", lines: [{ sku: sold.sku, qty: 1 }] })).status === 409, "a sold-out flavour cannot be ordered");
 const foil = P.filter(p => p.weightTbd && p.cat === "heat" && !(p.details && p.details.charcoal));   // charcoal now carries its catalogue facts too (weight unknown), and is pickup or local by its own rule
 ok(foil.length === 15 && foil.every(p => p.state === "sale" && p.ship === "pickup_only"), "15 foil packs on sale, pickup or local delivery while the weight is TBD");
-ok((await post({ ...who, ...to, method: "ship", service: "cp-exp", lines: [{ sku: foil[0].sku, qty: 1 }] })).data.local_only === true, "foil cannot be sent by a carrier on a made-up weight");
-ok((await post({ ...who, method: "pickup", lines: [{ sku: foil[0].sku, qty: 1 }] })).status === 201, "foil can be picked up");
+{ const r = await post({ ...who, ...to, method: "ship", service: "cp-exp", lines: [{ sku: foil[0].sku, qty: 1 }] }); ok(CARD ? r.data.local_only === true : noKeys(r), "foil cannot be sent by a carrier on a made-up weight: " + r.status); }
+ok((await post({ ...who, ...pk, method: "pickup", lines: [{ sku: foil[0].sku, qty: 1 }] })).status === 201, "foil can be picked up");
 
 // 5 bad input is refused before anything else
 for (const bad of [[{ sku: tbd.sku, qty: 0 }], [{ sku: tbd.sku, qty: 1.5 }], [{ sku: { $ne: 1 }, qty: 1 }], [{ sku: "OSS-100024' OR 1=1 --", qty: 1 }]]) {
-  const r = await post({ ...who, method: "pickup", lines: bad }); ok(r.status === 400 || r.status === 409, "odd line refused: " + JSON.stringify(bad) + " " + r.status);
+  const r = await post({ ...who, ...pk, method: "pickup", lines: bad }); ok(r.status === 400 || r.status === 409, "odd line refused: " + JSON.stringify(bad) + " " + r.status);
 }
 console.log(`${n - f}/${n} passed`); process.exit(f ? 1 : 0);

@@ -6,6 +6,9 @@ const B = process.env.BASE || "http://127.0.0.1:4420", shots = process.argv[2], 
 // Card orders go to Stripe's page (the local stand-in, tools/fake-stripe.mjs): pay there, come back, wait for the signed webhook.
 const payThrough = async (p, timeout = 15000) => { await p.waitForURL(u => /\/pay\/cs_/.test(String(u)) || /\/order\/W[A-Z0-9]{6}$/.test(String(u)), { timeout }); if (/\/pay\/cs_/.test(p.url())) { await p.locator("[data-fake-pay]").click(); await p.waitForURL(/\/order\/W[A-Z0-9]{6}$/, { timeout }); await p.waitForSelector('[data-pay-state="paid"]', { timeout }); } };
 let n = 0, f = 0; const t = (name, c, extra = "") => { n++; if (!c) { f++; console.log("FAIL", name, extra); } };
+// With no card keys (the live demo) delivery and shipping cannot be ordered: the page says so with the shop's number, and a
+// pickup is ordered and paid at the counter instead
+const CARD = /<meta name="oss-pay" content="card">/.test(await (await fetch(B + "/")).text());
 let run = Date.now() % 100000;
 // Each engine buys five of the test piece, so make sure the sample shelf has enough before starting.
 { const login = await fetch(B + "/api/admin/login", { method: "POST", headers: { "Content-Type": "application/json", "X-OSS-Admin": "1" }, body: JSON.stringify({ passcode: KEY }) }), Cookie = (login.headers.get("set-cookie") || "").split(";")[0];
@@ -60,8 +63,10 @@ for (const [engine, w, h, mobile] of [["chromium", 390, 844, true], ["webkit", 3
     await p.goto(B + "/checkout", { waitUntil: "networkidle" }); await p.waitForSelector("[data-checkout]");
     t(`${tag} $200 or more shows Free at checkout`, /Delivery\s*Free/.test(await p.locator(".totals").innerText()));
     await p.fill("#co-name", "Dee Livery"); await p.fill("#co-email", "dee@example.com"); await p.fill("#co-city", "Windsor"); await p.fill("#co-line1", `7 D3000 ${run} St`); await p.fill("#co-phone", "519-555-0101");
-    await press(p.locator('[data-checkout] button[type="submit"]')); await payThrough(p, 15000); await p.waitForTimeout(500);
-    t(`${tag} order page shows Free and arrival wording`, /Delivery\s*Free/.test(await p.locator(".totals").innerText()) && /Arrives /.test(await p.locator("#main").innerText()));
+    if (CARD) {
+      await press(p.locator('[data-checkout] button[type="submit"]')); await payThrough(p, 15000); await p.waitForTimeout(500);
+      t(`${tag} order page shows Free and arrival wording`, /Delivery\s*Free/.test(await p.locator(".totals").innerText()) && /Arrives /.test(await p.locator("#main").innerText()));
+    } else t(`${tag} no keys: delivery cannot be paid yet, and the page gives the shop's number`, await p.locator('[data-checkout] button[type="submit"]').isDisabled() && /not switched on[\s\S]*519-255-2222/.test(await p.locator(".co__pay").innerText()));
     // after hours: Sunday 8 pm in Windsor, the shop closed at 7
     // A separate context: a frozen clock must not leak into the rest of the journey.
     { const later = await b.newContext({ viewport: { width: w, height: h }, ...(engine === "chromium" ? { isMobile: mobile } : {}), hasTouch: mobile }), q = await later.newPage();
@@ -98,6 +103,22 @@ for (const [engine, w, h, mobile] of [["chromium", 390, 844, true], ["webkit", 3
     await p.waitForTimeout(500); await snap("cart");
     await p.goto(B + "/checkout", { waitUntil: "networkidle" }); await p.waitForSelector("[data-checkout]");
     const go = p.locator('[data-checkout] button[type="submit"]');
+    if (!CARD) {
+      // no card keys: the exact fee is shown but delivery cannot be ordered; the same cart picked up is ordered and paid at the counter
+      t(`${tag} no keys: checkout shows the exact fee, delivery cannot be ordered, the shop's number is given`, /\$10\.00/.test(await p.locator(".totals").innerText()) && await go.isDisabled() && /519-255-2222/.test(await p.locator(".co__pay").innerText()));
+      await p.goto(B + "/cart", { waitUntil: "networkidle" }); await p.locator('input[name="ship"][value="pickup"]').check({ force: true }); await p.waitForTimeout(400);
+      await p.goto(B + "/checkout", { waitUntil: "networkidle" }); await p.waitForSelector("[data-checkout]");
+      t(`${tag} no keys: a pickup is paid at the counter`, /At the counter when you pick it up/.test(await p.locator(".co__pay").innerText()) && await go.isEnabled());
+      await p.fill("#co-name", "Dee Livery"); await p.fill("#co-email", "dee@example.com"); if (await p.locator("#co-phone").isVisible()) await p.fill("#co-phone", "519-555-0101");
+      await press(go); await p.waitForURL(/\/order\/W[A-Z0-9]{6}$/, { timeout: 15000 }); await p.waitForTimeout(600);
+      t(`${tag} no keys: the pickup order is placed, to pay at the counter`, /counter/i.test(await p.locator("#main").innerText()) && !/tracking/i.test(await p.locator("#main").innerText()));
+      await snap("done");
+      const id = new URL(p.url()).pathname.split("/").pop();
+      await p.goto(B + "/admin", { waitUntil: "networkidle" }); if (await p.locator("#passcode").count()) { await p.fill("#passcode", KEY); await press(p.locator('button[type="submit"]')); } await p.waitForSelector(".hero__fig");
+      await press(p.locator('[data-tab="orders"]')); await press(p.locator(`[data-order="${id}"]`)); await p.waitForSelector("dialog[open]");
+      t(`${tag} no keys: the back office has the pickup order, to be paid at the counter`, /Dee Livery/.test(await p.locator("dialog[open]").innerText()) && /counter/i.test(await p.locator("dialog[open]").innerText()));
+      await ctx.close(); t(`${tag} no page errors`, !errs.length, errs.slice(0, 2).join(" | ")); continue;   // the browser closes in finally
+    }
     t(`${tag} checkout already shows the exact fee`, /\$10\.00/.test(await p.locator(".totals").innerText()) && /^Pay \$/.test(await go.innerText()));
     await p.fill("#co-name", "Dee Livery"); await p.fill("#co-email", "dee@example.com"); await p.fill("#co-city", "Windsor"); await p.fill("#co-line1", `7 D30000 ${run} St`); await p.fill("#co-phone", "519-555-0101");
     await press(go); await p.waitForSelector("[data-local-off]");

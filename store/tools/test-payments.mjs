@@ -21,6 +21,40 @@ const pickup = (sku, qty, extra = {}) => ({ ...who, method: "pickup", lines: [{ 
 const login = await fetch(B + "/api/admin/login", { method: "POST", headers: { "Content-Type": "application/json", "X-OSS-Admin": "1" }, body: JSON.stringify({ passcode: KEY }) }); cookie = (login.headers.get("set-cookie") || "").split(";")[0];
 ok(login.status === 200, "signed in to the back office");
 
+// NO CARD KEYS (the live demo): nothing can be paid by card, so no payment page, no webhook, no card refund. Pickups are paid
+// at the counter; delivery and shipping are refused with the shop's number, before anything is priced or held.
+if (!/<meta name="oss-pay" content="card">/.test(await (await fetch(B + "/")).text())) {
+  const noKeys = r => r.status === 503 && r.data.pay_off === true && !r.data.order && !r.data.pay;
+  const to = { postal: "M5V 2T6", address: { line1: "1 Test Street", city: "Toronto" } }, s0 = await stockOf("OSS-2001");
+  const ship = await post({ ...who, ...to, method: "ship", service: "cp-exp", lines: [{ sku: "OSS-2001", qty: 1 }] });
+  ok(noKeys(ship) && /519-255-2222/.test(ship.data.error || ""), "no keys: a card order to ship is refused with the shop's number: " + ship.status + " " + (ship.data.error || ""));
+  const cardPick = await post(pickup("OSS-2001", 1));
+  ok(noKeys(cardPick) && /pay at the counter/i.test(cardPick.data.error || ""), "no keys: a card pickup is told to pay at the counter: " + cardPick.status + " " + (cardPick.data.error || ""));
+  ok((await stockOf("OSS-2001")) === s0, "no keys: refused card orders hold no stock");
+  ok((await post({ ...who, method: "pickup", pay: "bitcoin", lines: [{ sku: "OSS-8004", qty: 1 }] })).status === 400, "an unknown way to pay is refused");
+  ok((await post({ ...who, ...to, method: "ship", service: "cp-exp", pay: "at_pickup", lines: [{ sku: "OSS-8001", qty: 1 }] })).status === 400, "pay at the counter is refused for shipping");
+  const c0 = await stockOf("OSS-8001"), cp = await post(pickup("OSS-8001", 1, { pay: "at_pickup" }));
+  ok(cp.status === 201 && cp.data.pay.status === "pay_at_pickup" && !cp.data.pay.url && (await stockOf("OSS-8001")) === c0 - 1, "pay at the counter: placed, stock held, no payment page");
+  let co = await order(cp.data.order.id);
+  ok(co.order.status === "pending" && co.order.pay_status === "pay_at_pickup", "it waits as pay at pickup");
+  const mail = co.emails.find(e => e.kind === "order_placed"), html = mail ? (await admin("/emails/" + mail.id)).data.email.html : "";
+  ok(/pay at the counter/i.test(html) && !/payment went through/i.test(html), "its email says pay at the counter, never paid");
+  const wh = await hook(B, event("checkout.session.completed", { id: "cs_test_x1234567", object: "checkout.session", payment_status: "paid", amount_total: 1, currency: "cad", payment_intent: "pi_x", metadata: { order_id: cp.data.order.id } }));
+  ok(wh.status === 503 && (await order(cp.data.order.id)).order.pay_status === "pay_at_pickup", "no keys: the webhook is shut and cannot touch an order: " + wh.status);
+  ok((await fetch(B + "/api/pay/webhook")).status === 405, "the webhook only takes POST");
+  ok((await admin(`/orders/${cp.data.order.id}/refund`, { op: "x".repeat(20) })).status === 409, "nothing to refund to a card on a counter order");
+  ok((await admin(`/orders/${cp.data.order.id}/status`, { status: "ready" })).status === 200, "it can be got ready before it is paid");
+  ok((await admin(`/orders/${cp.data.order.id}/status`, { status: "collected" })).status === 409, "it cannot be handed over unpaid");
+  ok((await admin(`/orders/${cp.data.order.id}/paid`, {})).status === 200 && (await admin(`/orders/${cp.data.order.id}/paid`, {})).status === 409, "the shop marks it paid at the counter, once");
+  co = await order(cp.data.order.id);
+  ok(co.order.pay_status === "paid" && co.order.paid_cents === co.order.total_cents && (await admin(`/orders/${cp.data.order.id}/status`, { status: "collected" })).status === 200, "paid at the counter, then collected");
+  const coal = (await (await fetch(B + "/api/catalog")).json()).products.find(p => /"charcoal":true/.test(p.details || "") && p.stock > 0);
+  ok(!!coal && noKeys(await post({ ...who, ...to, method: "ship", service: "cp-exp", lines: [{ sku: coal.sku, qty: 1 }] })) && (await post(pickup(coal.sku, 1, { pay: "at_pickup" }))).status === 201, "charcoal is never shipped, and can be picked up and paid at the counter");
+  ok((await fetch(B + `/api/admin/orders/${cp.data.order.id}/refund`, { method: "POST", headers: { "Content-Type": "application/json", "X-OSS-Admin": "1" }, body: JSON.stringify({ op: crypto.randomUUID() }) })).status === 401, "refunds need the back office sign-in");
+  ok((await admin("/orders")).data.orders.some(o => o.id === cp.data.order.id && o.pay_method === "at_pickup"), "the order list carries the way to pay");
+  console.log(f ? `FAIL ${f} of ${n} checks (no card keys)` : `PASS ${n} checks (no card keys)`); process.exit(f ? 1 : 0);
+}
+
 // 1 tampering: prices, totals and amounts from the browser are ignored; Stripe is asked for the server's figure
 const s0 = await stockOf("OSS-2001"), PRICE = (await (await fetch(B + "/api/catalog")).json()).products.find(p => p.sku === "OSS-2001").price_cents;   // the shelf price, read from the shop
 const t = await post({ ...who, postal: "M5V 2T6", address: { line1: "1 Test Street", city: "Toronto" }, method: "ship", service: "cp-exp", lines: [{ sku: "OSS-2001", qty: 1, price: 0.01, unit_cents: 1 }], total_cents: 1, amount: 1, subtotal_cents: 1 });

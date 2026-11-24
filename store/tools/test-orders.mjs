@@ -5,7 +5,9 @@ let n = 0, f = 0; const ok = (c, msg) => { n++; if (!c) { f++; console.log("FAIL
 const post = async body => { const r = await fetch(B + "/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }); return { status: r.status, data: await r.json().catch(() => ({})) }; };
 const stockOf = async sku => (await (await fetch(B + "/api/catalog")).json()).products.find(p => p.sku === sku)?.stock;
 const who = { name: "Key Tester", email: "key@example.com" }, key = s => `test-${s}-${crypto.randomUUID()}`.slice(0, 60);
-const pickup = (sku, qty, extra = {}) => ({ ...who, method: "pickup", lines: [{ sku, qty }], ...extra });
+// with no card keys (the live demo) a pickup is paid at the counter, so these orders say so
+const pk = /<meta name="oss-pay" content="card">/.test(await (await fetch(B + "/")).text()) ? {} : { pay: "at_pickup" };
+const pickup = (sku, qty, extra = {}) => ({ ...who, ...pk, method: "pickup", lines: [{ sku, qty }], ...extra });
 
 // the total
 const s0 = await stockOf("OSS-8004");
@@ -38,9 +40,9 @@ ok(got.status === 201 && again.status === 200 && again.data.order?.id === got.da
 
 // a key is not a way to read or change something else
 if (a.data.pay?.url) await fetch(a.data.pay.url, { method: "POST", redirect: "manual" });   // the order is paid (Stripe stand-in): it is now final
-const other = await post({ ...who, email: "someone@example.com", method: "pickup", lines: [{ sku: "OSS-8004", qty: 1 }], order_key: k1 });
+const other = await post({ ...who, email: "someone@example.com", ...pk, method: "pickup", lines: [{ sku: "OSS-8004", qty: 1 }], order_key: k1 });
 ok(other.status === 409 && !other.data.order, "a key with different order details is refused: " + other.status);
-const moved = await post({ ...who, name: "Key Corrected", method: "pickup", lines: [{ sku: "OSS-8004", qty: 1 }], order_key: k1 });
+const moved = await post({ ...who, name: "Key Corrected", ...pk, method: "pickup", lines: [{ sku: "OSS-8004", qty: 1 }], order_key: k1 });
 ok(moved.status === 409 && moved.data.existing_order === a.data.order.id && !moved.data.order, "changed details never replay the old order as a success: " + moved.status);
 ok((await post(pickup("OSS-8004", 1, { order_key: "short" }))).status === 400, "a malformed key is refused");
 ok((await post(pickup("OSS-8004", 1, { order_key: 12345 }))).status === 400, "a key that is not text is refused");

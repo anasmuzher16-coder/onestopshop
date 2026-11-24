@@ -30,6 +30,19 @@ ok((await post("/api/delivery", { line1: `7 NOTFOUND ${run}b`, city: "Detroit", 
 for (const [a, b] of [[`7 D4000 ${run} St`, `7-D4000 ${run} St`]]) ok((await check(a)).data.status === "ok" && (await check(b)).data.status === "unsure", "addresses that differ only by punctuation do not share an answer");
 const who = { name: "Dee Livery", email: "dee@example.com", phone: "519-555-0101" }, base = { ...who, method: "ship", service: "local", postal: "N9A 1A1", lines: [{ sku: "OSS-8004", qty: 1 }] };
 const at = line1 => ({ line1, city: "Windsor" });
+// NO CARD KEYS (the live demo): the delivery quote above still answers, but a delivery order is refused with the shop's
+// number before anything is priced or held. The fee rules on real orders below are checked with keys.
+if (!/<meta name="oss-pay" content="card">/.test(await (await fetch(B + "/")).text())) {
+  const stock0 = (await (await fetch(B + "/api/catalog")).json()).products.find(p => p.sku === "OSS-8004").stock;
+  for (const [what, body] of [["a delivery order", { ...base, address: at(`7 D12500 ${run} St`), delivery_fee_cents: 1500 }], ["a forged lower fee", { ...base, address: at(`7 D12500 ${run} St`), delivery_fee_cents: 1000 }],
+    ["past 25 km", { ...base, address: at(`7 D25000_1 ${run} St`), delivery_fee_cents: 1500 }], ["a forged free delivery", { ...base, address: at(`7 D3000 ${run} St`), delivery_fee_cents: 0 }],
+    ["a Toronto postal code", { ...base, postal: "M5V 2T6", address: at(`7 D5000 ${run} St`), delivery_fee_cents: 1000 }], ["Canada Post", { ...who, method: "ship", service: "cp-exp", postal: "M5V 2T6", lines: base.lines, address: { line1: "1 Test St", city: "Toronto" } }]]) {
+    const r = await post("/api/orders", body);
+    ok(r.status === 503 && r.data.pay_off === true && /519-255-2222/.test(r.data.error || "") && !r.data.order, `no keys: ${what} is refused with the shop's number: ${r.status} ${r.data.error || ""}`);
+  }
+  ok((await (await fetch(B + "/api/catalog")).json()).products.find(p => p.sku === "OSS-8004").stock === stock0, "no keys: refused delivery orders hold no stock");
+  console.log(f ? `FAIL ${f} of ${n} checks (no card keys)` : `PASS ${n} checks (no card keys)`); process.exit(f ? 1 : 0);
+}
 const good = await post("/api/orders", { ...base, address: at(`7 D12500 ${run} St`), delivery_fee_cents: 1500 });
 ok(good.status === 201, "delivery order placed: " + good.status + " " + (good.data.error || ""));
 if (good.status === 201) { const o = good.data.order; ok(o.shipping_cents === 1500 && o.service === "Local delivery", "fee and service on the order"); ok(o.tax_cents === Math.round((o.subtotal_cents + 1500) * 0.13) && o.total_cents === o.subtotal_cents + 1500 + o.tax_cents, "HST on items plus delivery"); }

@@ -102,8 +102,10 @@ await A(`/products/${SKU}`, { method: "PUT", body: { price_cents: 5400 } });
 
 // ---- orders: source, cancel with restock, the ID tick ----
 // a shopper's order, paid on the Stripe stand-in (tools/fake-stripe.mjs): its signed webhook marks it paid, as for a real card
+// with no card keys (the live demo) a pickup is paid at the counter: the same order is placed that way
+const pk = /<meta name="oss-pay" content="card">/.test((await call("/", { as: "none" })).text) ? {} : { pay: "at_pickup" };
 const place = async (sku, qty, extra = {}) => {
-  const r = await call("/api/orders", { method: "POST", as: "none", body: { name: "Rhea Mbeki", email: "rhea@example.com", method: "pickup", lines: [{ sku, qty }], ...extra } });
+  const r = await call("/api/orders", { method: "POST", as: "none", body: { name: "Rhea Mbeki", email: "rhea@example.com", method: "pickup", ...pk, lines: [{ sku, qty }], ...extra } });
   if (r.status === 201 && r.data.pay?.url) { await fetch(r.data.pay.url, { method: "POST", redirect: "manual" }); await new Promise(res => setTimeout(res, 300)); }
   return r;
 };
