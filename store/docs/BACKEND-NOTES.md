@@ -93,3 +93,13 @@ the place in the code that follows it. "Follow-up" items are known gaps left for
 - Turn on Workers Logs and Traces in wrangler.jsonc (`observability`) before launch; left out here so this branch
   does not change deploy settings.
 - `wrangler types` for a generated Env (the code is plain JavaScript today).
+
+## PIN hashing cost (integration, 2026-11-24)
+- Staff PINs are hashed with PBKDF2-HMAC-SHA256 at `PIN_ROUNDS` rounds (src/staff.js, `PIN_ROUNDS_DEFAULT` = 100,000,
+  the most workerd allows). That is about 100 ms of CPU per sign-in or PIN change. The Workers Free plan allows 10 ms
+  of CPU per request, so on Free a staff sign-in may be cut off; the paid plan allows far more.
+- `PIN_ROUNDS` (a Worker var, 10,000 to 100,000) sets the rounds for PINs set from then on. Every stored hash keeps
+  the rounds it was made with, so changing the var never breaks an existing PIN; a PIN moves to the new count when
+  it is next set. Measure on the demo before changing it; fewer rounds make a stolen database cheaper to guess
+  (the pepper, PIN_PEPPER, is the main defence there).
+

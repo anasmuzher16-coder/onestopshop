@@ -6,7 +6,11 @@ const enc = new TextEncoder();
 const hex = buf => [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, "0")).join("");
 const unhex = s => new Uint8Array((s.match(/../g) || []).map(h => parseInt(h, 16)));
 export const MAX_ITER = 100000;
-const iterations = env => { const n = parseInt(env.PIN_ITERATIONS || "", 10); return n >= 10000 && n <= MAX_ITER ? n : MAX_ITER; };
+// The rounds new PINs are hashed with: one constant, overridable by the PIN_ROUNDS var (10,000 to 100,000). Each stored
+// hash carries its own rounds ("pbkdf2-sha256$<rounds>$..."), so changing this later never breaks a PIN already set;
+// a PIN picks up the new count the next time it is set. 100,000 is about 100 ms of CPU; see docs/BACKEND-NOTES.md.
+export const PIN_ROUNDS_DEFAULT = MAX_ITER;
+const iterations = env => { const n = parseInt(env.PIN_ROUNDS || env.PIN_ITERATIONS || "", 10); return n >= 10000 && n <= MAX_ITER ? n : PIN_ROUNDS_DEFAULT; };
 const pepper = env => env.PIN_PEPPER || env.ADMIN_KEY || "";
 
 // Same-length digests compared in constant time, so neither the length nor the first wrong byte leaks.
