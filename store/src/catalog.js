@@ -46,12 +46,20 @@ export function toStorefront(cat) {
   const CATEGORIES = cat.categories.map(c => ({ id: c.id, name: c.name, tone: c.tone }));
   const PRODUCTS = cat.products.map(p => {
     let details = {}; try { details = JSON.parse(p.details || "{}"); } catch { details = {}; }
+    const coal = !!details.charcoal; delete details.photo_rights; delete details.photo_rejected; delete details.source_lines;   // shop-only notes stay in the back office
     return { sku: p.sku, name: p.name, cat: p.category_id, price: p.price_cents / 100, kg: p.weight_g / 1000, box: p.box_id, glass: !!p.glass,
-      height: p.height_cm, note: p.note, ...(p.photo_ver ? { img: `/api/photo/${p.sku}?v=${p.photo_ver}`, photo: true, dark: false } : { img: p.img, dark: !!p.img_dark, lw: p.img_lw ?? undefined }), ship: p.ship_class, stock: p.stock, details };
+      height: p.height_cm, note: p.note, ...(p.photo_ver ? { img: `/api/photo/${p.sku}?v=${p.photo_ver}`, photo: true, dark: false } : { img: p.img, dark: !!p.img_dark, lw: p.img_lw ?? undefined }), ship: coal ? "pickup_only" : p.ship_class, stock: p.stock, details };
   });
   return { BOXES, CATEGORIES, PRODUCTS };
 }
 
+// Charcoal (owner, 2026-11-23) lives in the heat section and carries details.charcoal. toStorefront makes every marked item pickup or local delivery only
+// (ship class pickup_only: never Canada Post or any carrier) whatever its row says, so a back-office edit can never let it ship.
+export const CHARCOAL = "heat";
+// Storefront products: charcoal (always pickup or local delivery, never a carrier).
+export const isCharcoal = p => !!(p && p.details && p.details.charcoal);
+// Raw database rows (page titles and descriptions): pickup or local delivery only, never shipped.
+export const counterRow = p => { if (!p) return false; if (p.ship_class === "pickup_only") return true; try { return !!JSON.parse(p.details || "{}").charcoal; } catch { return false; } };
 export function catalogModule(cat) {
   const { BOXES, CATEGORIES, PRODUCTS } = toStorefront(cat);
   // JSON is valid JavaScript; U+2028/2029 are escaped so no product text can break the module.

@@ -1,0 +1,1349 @@
+{
+ "source": "C:/dev/onestopshop/inventory-2026-11-23/catalogue-verified.json (2026-11-23). Prices are the shop's.",
+ "products": [
+  {
+   "sku": "OSS-9101",
+   "name": "Coco Cafe Coconut Charcoal Cubes, 72 pcs, 25 mm",
+   "note": "Box of 72 coconut charcoal cubes, 25 mm",
+   "price_cents": 899,
+   "weight_g": 1,
+   "img": "",
+   "sort": 2100,
+   "details": {
+    "brand": "Coco Cafe",
+    "variant": "72 pcs, 25 mm",
+    "shape": "Cube",
+    "source_lines": "46, 47, 48",
+    "charcoal": true,
+    "weight_known": false,
+    "photo": "coming",
+    "tags": "charcoal coals coal coco cafe"
+   }
+  },
+  {
+   "sku": "OSS-9102",
+   "name": "Duracubes Coconut Charcoal Hexagon Sticks, 62 pcs",
+   "note": "Box of 62 coconut charcoal hexagon sticks",
+   "price_cents": 1199,
+   "weight_g": 1,
+   "img": "",
+   "sort": 2101,
+   "details": {
+    "brand": "Duracubes",
+    "variant": "62 pcs",
+    "shape": "Hexagon stick",
+    "source_lines": "50, 51, 52",
+    "charcoal": true,
+    "weight_known": false,
+    "photo": "coming",
+    "tags": "charcoal coals coal duracubes"
+   }
+  },
+  {
+   "sku": "OSS-9103",
+   "name": "Chelax Coconut Shell Charcoal Cubes, 64 pcs, 26 mm",
+   "note": "Box of 64 coconut shell charcoal cubes, 26 x 26 x 26 mm",
+   "price_cents": 899,
+   "weight_g": 1,
+   "img": "",
+   "sort": 2102,
+   "details": {
+    "brand": "Chelax",
+    "variant": "64 pcs, 26 mm",
+    "shape": "Cube",
+    "source_lines": "55, 56, 57",
+    "charcoal": true,
+    "weight_known": false,
+    "photo": "coming",
+    "tags": "charcoal coals coal chelax"
+   }
+  },
+  {
+   "sku": "OSS-9104",
+   "name": "Amy Deluxe Coconut Charcoal Cubes, 1 kg, 27 mm",
+   "note": "Box of coconut charcoal cubes, 27 mm, 1 kg",
+   "price_cents": 1199,
+   "weight_g": 1000,
+   "img": "oss-9104",
+   "sort": 2003,
+   "details": {
+    "brand": "Amy Deluxe",
+    "variant": "1 kg, 27 mm",
+    "shape": "Cube",
+    "source_lines": "59, 60, 61, 62",
+    "charcoal": true,
+    "weight_known": true,
+    "photo": "approved",
+    "photo_rights": "permission needed",
+    "tags": "charcoal coals coal amy deluxe"
+   }
+  },
+  {
+   "sku": "OSS-9105",
+   "name": "Amy Deluxe Coconut Charcoal Cubes, 1 kg, 26 mm",
+   "note": "Box of coconut charcoal cubes, 26 mm, 1 kg",
+   "price_cents": 1199,
+   "weight_g": 1000,
+   "img": "",
+   "sort": 2104,
+   "details": {
+    "brand": "Amy Deluxe",
+    "variant": "1 kg, 26 mm",
+    "shape": "Cube",
+    "source_lines": "64, 65, 66, 67, 203, 206",
+    "charcoal": true,
+    "weight_known": true,
+    "photo": "coming",
+    "photo_rejected": true,
+    "tags": "charcoal coals coal amy deluxe"
+   }
+  },
+  {
+   "sku": "OSS-9106",
+   "name": "Coco Max Coconut Charcoal Half Cubes, 108 pcs, 1 kg",
+   "note": "Box of 108 coconut charcoal half cubes, 1 kg",
+   "price_cents": 799,
+   "weight_g": 1000,
+   "img": "",
+   "sort": 2105,
+   "details": {
+    "brand": "Coco Max",
+    "variant": "108 pcs, 1 kg",
+    "shape": "Half cube",
+    "source_lines": "69, 70, 71",
+    "charcoal": true,
+    "weight_known": true,
+    "photo": "coming",
+    "tags": "charcoal coals coal coco max"
+   }
+  },
+  {
+   "sku": "OSS-9107",
+   "name": "Coco Alajamy Coconut Charcoal, 72 pcs",
+   "note": "Box of 72 coconut charcoal pieces",
+   "price_cents": 999,
+   "weight_g": 1,
+   "img": "",
+   "sort": 2106,
+   "details": {
+    "brand": "Coco Alajamy",
+    "variant": "72 pcs",
+    "shape": null,
+    "source_lines": "73, 74, 75",
+    "charcoal": true,
+    "weight_known": false,
+    "photo": "coming",
+    "tags": "charcoal coals coal coco alajamy"
+   }
+  },
+  {
+   "sku": "OSS-9108",
+   "name": "Coco Fuego Cubes Core XL, 54 pcs, 1 kg, 27 mm",
+   "note": "Box of 54 coconut charcoal cubes, XL, 27 x 27 x 27 mm, 1 kg",
+   "price_cents": 1699,
+   "weight_g": 1000,
+   "img": "",
+   "sort": 2107,
+   "details": {
+    "brand": "Coco Fuego",
+    "variant": "54 pcs, 1 kg, 27 mm",
+    "shape": "Cube, core",
+    "source_lines": "77, 78, 79, 80, 81",
+    "charcoal": true,
+    "weight_known": true,
+    "photo": "coming",
+    "tags": "charcoal coals coal coco fuego"
+   }
+  },
+  {
+   "sku": "OSS-9109",
+   "name": "Starbuzz Coconut Shell Charcoal Tablets, 100 tablets, 33 mm",
+   "note": "Box of 100 coconut shell tablets, 33 mm",
+   "price_cents": 1999,
+   "weight_g": 1,
+   "img": "oss-9109",
+   "sort": 2008,
+   "details": {
+    "brand": "Starbuzz",
+    "variant": "100 tablets, 33 mm",
+    "shape": "Tablet",
+    "source_lines": "90, 92",
+    "charcoal": true,
+    "weight_known": false,
+    "photo": "approved",
+    "photo_rights": "permission needed",
+    "tags": "charcoal coals coal starbuzz"
+   }
+  },
+  {
+   "sku": "OSS-9110",
+   "name": "Starbuzz Coconut Shell Charcoal Tablets, 100 tablets, 35 mm",
+   "note": "Box of 100 coconut shell tablets, 35 mm",
+   "price_cents": 1999,
+   "weight_g": 1,
+   "img": "oss-9110",
+   "sort": 2009,
+   "details": {
+    "brand": "Starbuzz",
+    "variant": "100 tablets, 35 mm",
+    "shape": "Tablet",
+    "source_lines": "90, 94",
+    "charcoal": true,
+    "weight_known": false,
+    "photo": "approved",
+    "photo_rights": "permission needed",
+    "tags": "charcoal coals coal starbuzz"
+   }
+  },
+  {
+   "sku": "OSS-9111",
+   "name": "Starbuzz Coconut Shell Charcoal Tablets, 100 tablets, 40 mm",
+   "note": "Box of 100 coconut shell tablets, 40 mm",
+   "price_cents": 2299,
+   "weight_g": 1,
+   "img": "oss-9111",
+   "sort": 2010,
+   "details": {
+    "brand": "Starbuzz",
+    "variant": "100 tablets, 40 mm",
+    "shape": "Tablet",
+    "source_lines": "90, 96",
+    "charcoal": true,
+    "weight_known": false,
+    "photo": "approved",
+    "photo_rights": "permission needed",
+    "tags": "charcoal coals coal starbuzz"
+   }
+  },
+  {
+   "sku": "OSS-9112",
+   "name": "Three Kings Charcoal Tablets, 100 tablets",
+   "note": "Box of 100 charcoal tablets",
+   "price_cents": 1199,
+   "weight_g": 1,
+   "img": "",
+   "sort": 2111,
+   "details": {
+    "brand": "Three Kings",
+    "variant": "100 tablets",
+    "shape": "Tablet",
+    "source_lines": "98, 100",
+    "charcoal": true,
+    "weight_known": false,
+    "photo": "coming",
+    "tags": "charcoal coals coal three kings"
+   }
+  },
+  {
+   "sku": "OSS-9113",
+   "name": "Starlight Charcoal Tablets, 100 tablets, 33 mm",
+   "note": "Box of 100 charcoal tablets, 33 mm",
+   "price_cents": 999,
+   "weight_g": 1,
+   "img": "oss-9113",
+   "sort": 2012,
+   "details": {
+    "brand": "Starlight",
+    "variant": "100 tablets, 33 mm",
+    "shape": "Tablet",
+    "source_lines": "102, 104",
+    "charcoal": true,
+    "weight_known": false,
+    "photo": "approved",
+    "photo_rights": "permission needed",
+    "tags": "charcoal coals coal starlight"
+   }
+  },
+  {
+   "sku": "OSS-9114",
+   "name": "Tanya Charcoal Tablets, 100 tablets",
+   "note": "Box of 100 charcoal tablets",
+   "price_cents": 999,
+   "weight_g": 1,
+   "img": "",
+   "sort": 2113,
+   "details": {
+    "brand": "Tanya",
+    "variant": "100 tablets",
+    "shape": "Tablet",
+    "source_lines": "106, 108",
+    "charcoal": true,
+    "weight_known": false,
+    "photo": "coming",
+    "tags": "charcoal coals coal tanya"
+   }
+  },
+  {
+   "sku": "OSS-9115",
+   "name": "Zanobia Charcoal Tablets, 100 tablets, 33 mm",
+   "note": "Box of 100 charcoal tablets, 33 mm",
+   "price_cents": 999,
+   "weight_g": 1,
+   "img": "",
+   "sort": 2114,
+   "details": {
+    "brand": "Zanobia",
+    "variant": "100 tablets, 33 mm",
+    "shape": "Tablet",
+    "source_lines": "110, 113",
+    "charcoal": true,
+    "weight_known": false,
+    "photo": "coming",
+    "tags": "charcoal coals coal zanobia"
+   }
+  },
+  {
+   "sku": "OSS-9116",
+   "name": "Zanobia Charcoal Tablets, 100 tablets, 38 mm",
+   "note": "Box of 100 charcoal tablets, 38 mm",
+   "price_cents": 1299,
+   "weight_g": 1,
+   "img": "",
+   "sort": 2115,
+   "details": {
+    "brand": "Zanobia",
+    "variant": "100 tablets, 38 mm",
+    "shape": "Tablet",
+    "source_lines": "110, 115",
+    "charcoal": true,
+    "weight_known": false,
+    "photo": "coming",
+    "tags": "charcoal coals coal zanobia"
+   }
+  },
+  {
+   "sku": "OSS-9117",
+   "name": "Sultana Charcoal Tablets, 120 tablets, 33 mm",
+   "note": "Box of 120 charcoal tablets, 33 mm",
+   "price_cents": 1000,
+   "weight_g": 1,
+   "img": "",
+   "sort": 2116,
+   "details": {
+    "brand": "Sultana",
+    "variant": "120 tablets, 33 mm",
+    "shape": "Tablet",
+    "source_lines": "117, 120",
+    "charcoal": true,
+    "weight_known": false,
+    "photo": "coming",
+    "tags": "charcoal coals coal sultana"
+   }
+  },
+  {
+   "sku": "OSS-9118",
+   "name": "MYA Genie Coco Charcoal, 112 tablets",
+   "note": "Box of 112 charcoal tablets",
+   "price_cents": 1199,
+   "weight_g": 1,
+   "img": "oss-9118",
+   "sort": 2017,
+   "details": {
+    "brand": "MYA",
+    "variant": "112 tablets",
+    "shape": "Tablet",
+    "source_lines": "124, 128",
+    "charcoal": true,
+    "weight_known": false,
+    "photo": "approved",
+    "photo_rights": "permission needed",
+    "tags": "charcoal coals coal mya"
+   }
+  },
+  {
+   "sku": "OSS-9119",
+   "name": "MYA Genie Coco Charcoal, 96 tablets",
+   "note": "Box of 96 charcoal tablets",
+   "price_cents": 1199,
+   "weight_g": 1,
+   "img": "oss-9119",
+   "sort": 2018,
+   "details": {
+    "brand": "MYA",
+    "variant": "96 tablets",
+    "shape": "Tablet",
+    "source_lines": "124, 130",
+    "charcoal": true,
+    "weight_known": false,
+    "photo": "approved",
+    "photo_rights": "permission needed",
+    "tags": "charcoal coals coal mya"
+   }
+  },
+  {
+   "sku": "OSS-9120",
+   "name": "MYA Genie Coco Charcoal, 72 tablets",
+   "note": "Box of 72 charcoal tablets",
+   "price_cents": 1199,
+   "weight_g": 1,
+   "img": "oss-9120",
+   "sort": 2019,
+   "details": {
+    "brand": "MYA",
+    "variant": "72 tablets",
+    "shape": "Tablet",
+    "source_lines": "124, 132",
+    "charcoal": true,
+    "weight_known": false,
+    "photo": "approved",
+    "photo_rights": "permission needed",
+    "tags": "charcoal coals coal mya"
+   }
+  },
+  {
+   "sku": "OSS-9121",
+   "name": "MYA Genie Coco Gold Charcoal, 64 tablets",
+   "note": "Box of 64 charcoal tablets",
+   "price_cents": 1199,
+   "weight_g": 1,
+   "img": "",
+   "sort": 2120,
+   "details": {
+    "brand": "MYA",
+    "variant": "Gold, 64 tablets",
+    "shape": "Tablet",
+    "source_lines": "124, 134",
+    "charcoal": true,
+    "weight_known": false,
+    "photo": "coming",
+    "tags": "charcoal coals coal mya"
+   }
+  },
+  {
+   "sku": "OSS-9122",
+   "name": "MYA Genie Coco Hexagonal Charcoal, 64 tablets",
+   "note": "Box of 64 charcoal hexagons",
+   "price_cents": 1199,
+   "weight_g": 1,
+   "img": "",
+   "sort": 2121,
+   "details": {
+    "brand": "MYA",
+    "variant": "64 tablets",
+    "shape": "Hexagonal",
+    "source_lines": "124, 136",
+    "charcoal": true,
+    "weight_known": false,
+    "photo": "coming",
+    "photo_rejected": true,
+    "tags": "charcoal coals coal mya"
+   }
+  },
+  {
+   "sku": "OSS-9123",
+   "name": "MYA Genie Coco Charcoal, 84 tablets",
+   "note": "Box of 84 charcoal tablets",
+   "price_cents": 1199,
+   "weight_g": 1,
+   "img": "oss-9123",
+   "sort": 2022,
+   "details": {
+    "brand": "MYA",
+    "variant": "84 tablets",
+    "shape": "Tablet",
+    "source_lines": "124, 138",
+    "charcoal": true,
+    "weight_known": false,
+    "photo": "approved",
+    "photo_rights": "permission needed",
+    "tags": "charcoal coals coal mya"
+   }
+  },
+  {
+   "sku": "OSS-9124",
+   "name": "Red Star Premium Charcoal Cubes, 64 pcs",
+   "note": "Box of 64 charcoal cubes",
+   "price_cents": 899,
+   "weight_g": 1,
+   "img": "",
+   "sort": 2123,
+   "details": {
+    "brand": "Red Star",
+    "variant": "64 pcs",
+    "shape": "Cube",
+    "source_lines": "142, 146",
+    "charcoal": true,
+    "weight_known": false,
+    "photo": "coming",
+    "tags": "charcoal coals coal red star"
+   }
+  },
+  {
+   "sku": "OSS-9125",
+   "name": "Cleopatra Charcoal, 72 tablets",
+   "note": "Box of 72 charcoal tablets",
+   "price_cents": 399,
+   "weight_g": 1,
+   "img": "",
+   "sort": 2124,
+   "details": {
+    "brand": "Cleopatra",
+    "variant": "72 tablets",
+    "shape": "Tablet",
+    "source_lines": "150, 154",
+    "charcoal": true,
+    "weight_known": false,
+    "photo": "coming",
+    "tags": "charcoal coals coal cleopatra"
+   }
+  },
+  {
+   "sku": "OSS-9126",
+   "name": "Coco Nara Charcoal, 120 tablets",
+   "note": "Box of 120 charcoal tablets",
+   "price_cents": 1499,
+   "weight_g": 1,
+   "img": "oss-9126",
+   "sort": 2025,
+   "details": {
+    "brand": "Coco Nara",
+    "variant": "120 tablets",
+    "shape": "Tablet",
+    "source_lines": "156, 158",
+    "charcoal": true,
+    "weight_known": false,
+    "photo": "approved",
+    "photo_rights": "permission needed",
+    "tags": "charcoal coals coal coco nara"
+   }
+  },
+  {
+   "sku": "OSS-9127",
+   "name": "Titanium Cubettes Coconut Charcoal, 120 cubettes",
+   "note": "Box of 120 coconut cubettes",
+   "price_cents": 1399,
+   "weight_g": 1,
+   "img": "oss-9127",
+   "sort": 2026,
+   "details": {
+    "brand": "Titanium",
+    "variant": "120 cubettes",
+    "shape": "Cubette",
+    "source_lines": "162, 166",
+    "charcoal": true,
+    "weight_known": false,
+    "photo": "approved",
+    "photo_rights": "permission needed",
+    "tags": "charcoal coals coal titanium"
+   }
+  },
+  {
+   "sku": "OSS-9128",
+   "name": "Titanium Flats Coconut Charcoal, 108 flats, 25 mm",
+   "note": "Box of 108 coconut flats, 25 mm",
+   "price_cents": 1399,
+   "weight_g": 1,
+   "img": "oss-9128",
+   "sort": 2027,
+   "details": {
+    "brand": "Titanium",
+    "variant": "108 flats, 25 mm",
+    "shape": "Flat",
+    "source_lines": "162, 168",
+    "charcoal": true,
+    "weight_known": false,
+    "photo": "approved",
+    "photo_rights": "permission needed",
+    "tags": "charcoal coals coal titanium"
+   }
+  },
+  {
+   "sku": "OSS-9129",
+   "name": "Titanium Cubes Coconut Charcoal, 72 cubes",
+   "note": "Box of 72 coconut cubes",
+   "price_cents": 1399,
+   "weight_g": 1,
+   "img": "oss-9129",
+   "sort": 2028,
+   "details": {
+    "brand": "Titanium",
+    "variant": "72 cubes",
+    "shape": "Cube",
+    "source_lines": "162, 170",
+    "charcoal": true,
+    "weight_known": false,
+    "photo": "approved",
+    "photo_rights": "permission needed",
+    "tags": "charcoal coals coal titanium"
+   }
+  },
+  {
+   "sku": "OSS-9130",
+   "name": "Cocourth Charcoal Cubes, 54 cubes",
+   "note": "Box of 54 charcoal cubes",
+   "price_cents": 1199,
+   "weight_g": 1,
+   "img": "",
+   "sort": 2129,
+   "details": {
+    "brand": "Cocourth",
+    "variant": "54 cubes",
+    "shape": "Cube",
+    "source_lines": "174, 178",
+    "charcoal": true,
+    "weight_known": false,
+    "photo": "coming",
+    "tags": "charcoal coals coal cocourth"
+   }
+  },
+  {
+   "sku": "OSS-9131",
+   "name": "Cocourth Quarter Circle Charcoal, 96 pcs, 25 x 25",
+   "note": "Box of 96 charcoal quarter circles, 25 x 25",
+   "price_cents": 1199,
+   "weight_g": 1,
+   "img": "oss-9131",
+   "sort": 2030,
+   "details": {
+    "brand": "Cocourth",
+    "variant": "96 pcs, 25 x 25",
+    "shape": "Quarter circle",
+    "source_lines": "174, 180",
+    "charcoal": true,
+    "weight_known": false,
+    "photo": "approved",
+    "photo_rights": "permission needed",
+    "tags": "charcoal coals coal cocourth"
+   }
+  },
+  {
+   "sku": "OSS-9132",
+   "name": "Cocourth Charcoal Cubes, 72 cubes",
+   "note": "Box of 72 charcoal cubes",
+   "price_cents": 1199,
+   "weight_g": 1,
+   "img": "",
+   "sort": 2131,
+   "details": {
+    "brand": "Cocourth",
+    "variant": "72 cubes",
+    "shape": "Cube",
+    "source_lines": "174, 182",
+    "charcoal": true,
+    "weight_known": false,
+    "photo": "coming",
+    "photo_rejected": true,
+    "tags": "charcoal coals coal cocourth"
+   }
+  },
+  {
+   "sku": "OSS-9133",
+   "name": "Cocous Charcoal Cubes, 72 cubes, 25 mm",
+   "note": "Box of 72 charcoal cubes, 25 x 25 x 25",
+   "price_cents": 1199,
+   "weight_g": 1,
+   "img": "oss-9133",
+   "sort": 2032,
+   "details": {
+    "brand": "Cocous",
+    "variant": "72 cubes, 25 mm",
+    "shape": "Cube",
+    "source_lines": "185, 189",
+    "charcoal": true,
+    "weight_known": false,
+    "photo": "approved",
+    "photo_rights": "permission needed",
+    "tags": "charcoal coals coal cocous"
+   }
+  },
+  {
+   "sku": "OSS-9134",
+   "name": "Cocous Charcoal Cubes, 64 cubes, 26 mm",
+   "note": "Box of 64 charcoal cubes, 26 x 26 x 26",
+   "price_cents": 1199,
+   "weight_g": 1,
+   "img": "oss-9134",
+   "sort": 2033,
+   "details": {
+    "brand": "Cocous",
+    "variant": "64 cubes, 26 mm",
+    "shape": "Cube",
+    "source_lines": "185, 191",
+    "charcoal": true,
+    "weight_known": false,
+    "photo": "approved",
+    "photo_rights": "permission needed",
+    "tags": "charcoal coals coal cocous"
+   }
+  },
+  {
+   "sku": "OSS-9135",
+   "name": "Cocous Charcoal Cubes, 54 cubes, 27 mm",
+   "note": "Box of 54 charcoal cubes, 27 x 27 x 27",
+   "price_cents": 1199,
+   "weight_g": 1,
+   "img": "oss-9135",
+   "sort": 2034,
+   "details": {
+    "brand": "Cocous",
+    "variant": "54 cubes, 27 mm",
+    "shape": "Cube",
+    "source_lines": "185, 193",
+    "charcoal": true,
+    "weight_known": false,
+    "photo": "approved",
+    "photo_rights": "permission needed",
+    "tags": "charcoal coals coal cocous"
+   }
+  },
+  {
+   "sku": "OSS-9136",
+   "name": "Memtaz Charcoal, 120 tablets",
+   "note": "Box of 120 charcoal tablets",
+   "price_cents": 999,
+   "weight_g": 1,
+   "img": "",
+   "sort": 2135,
+   "details": {
+    "brand": "Memtaz",
+    "variant": "120 tablets",
+    "shape": "Tablet",
+    "source_lines": "196, 200",
+    "charcoal": true,
+    "weight_known": false,
+    "photo": "coming",
+    "tags": "charcoal coals coal memtaz"
+   }
+  },
+  {
+   "sku": "OSS-9138",
+   "name": "Uma Knows Best Charcoal Cubes, 1 kg",
+   "note": "Box of charcoal cubes, 1 kg",
+   "price_cents": 999,
+   "weight_g": 1000,
+   "img": "",
+   "sort": 2136,
+   "details": {
+    "brand": "Knows Best",
+    "variant": "1 kg",
+    "shape": "Cube",
+    "source_lines": "210, 214",
+    "charcoal": true,
+    "weight_known": true,
+    "photo": "coming",
+    "tags": "charcoal coals coal knows best"
+   }
+  },
+  {
+   "sku": "OSS-9139",
+   "name": "Starlight Bamboo Triangle Stick Charcoal, 1 kg",
+   "note": "Box of bamboo charcoal triangle sticks, 1 kg",
+   "price_cents": 999,
+   "weight_g": 1000,
+   "img": "",
+   "sort": 2137,
+   "details": {
+    "brand": "Starlight",
+    "variant": "1 kg",
+    "shape": "Triangle stick",
+    "source_lines": "217, 221",
+    "charcoal": true,
+    "weight_known": true,
+    "photo": "coming",
+    "tags": "charcoal coals coal starlight"
+   }
+  },
+  {
+   "sku": "OSS-9140",
+   "name": "Starlight Bamboo Charcoal Sticks, 1 kg",
+   "note": "Box of bamboo charcoal sticks, 1 kg",
+   "price_cents": 999,
+   "weight_g": 1000,
+   "img": "",
+   "sort": 2138,
+   "details": {
+    "brand": "Starlight",
+    "variant": "1 kg",
+    "shape": "Stick",
+    "source_lines": "217, 223",
+    "charcoal": true,
+    "weight_known": true,
+    "photo": "coming",
+    "tags": "charcoal coals coal starlight"
+   }
+  },
+  {
+   "sku": "OSS-9141",
+   "name": "Golden River Coconut Charcoal Cubes, 1 kg",
+   "note": "Box of coconut charcoal cubes, 1 kg",
+   "price_cents": 999,
+   "weight_g": 1000,
+   "img": "",
+   "sort": 2139,
+   "details": {
+    "brand": "Golden River",
+    "variant": "1 kg",
+    "shape": "Cube",
+    "source_lines": "225, 227",
+    "charcoal": true,
+    "weight_known": true,
+    "photo": "coming",
+    "photo_rejected": true,
+    "tags": "charcoal coals coal golden river"
+   }
+  },
+  {
+   "sku": "OSS-9142",
+   "name": "Coco Fuego Jumbo Hexastar, 60 pcs, 27 x 32 mm",
+   "note": "Box of 60 coconut charcoal hexastars, 27 x 32 mm",
+   "price_cents": 1699,
+   "weight_g": 1,
+   "img": "",
+   "sort": 2140,
+   "details": {
+    "brand": "Coco Fuego",
+    "variant": "60 pcs, 27 x 32 mm",
+    "shape": "Jumbo hexastar",
+    "source_lines": "231, 235, 307, 314",
+    "charcoal": true,
+    "weight_known": false,
+    "photo": "coming",
+    "tags": "charcoal coals coal coco fuego"
+   }
+  },
+  {
+   "sku": "OSS-9143",
+   "name": "MOB Hookah Coconut Shell Charcoal Cubes, 72 cubes, 1 kg",
+   "note": "Box of 72 coconut shell charcoal cubes, 1 kg",
+   "price_cents": 999,
+   "weight_g": 1000,
+   "img": "",
+   "sort": 2141,
+   "details": {
+    "brand": "MOB Hookah",
+    "variant": "72 cubes, 1 kg",
+    "shape": "Cube",
+    "source_lines": "238, 240",
+    "charcoal": true,
+    "weight_known": true,
+    "photo": "coming",
+    "tags": "charcoal coals coal mob hookah"
+   }
+  },
+  {
+   "sku": "OSS-9144",
+   "name": "Yahya Coconut Charcoal Cubes, 1 kg",
+   "note": "Box of coconut charcoal cubes, 1 kg",
+   "price_cents": 999,
+   "weight_g": 1000,
+   "img": "oss-9144",
+   "sort": 2042,
+   "details": {
+    "brand": "Yahya",
+    "variant": "1 kg",
+    "shape": "Cube",
+    "source_lines": "243, 246",
+    "charcoal": true,
+    "weight_known": true,
+    "photo": "approved",
+    "photo_rights": "permission needed",
+    "tags": "charcoal coals coal yahya"
+   }
+  },
+  {
+   "sku": "OSS-9145",
+   "name": "Sultana Premium Hexa Edition, 75 tablets",
+   "note": "Box of 75 coconut shell charcoal hexa pieces",
+   "price_cents": 999,
+   "weight_g": 1,
+   "img": "",
+   "sort": 2143,
+   "details": {
+    "brand": "Sultana",
+    "variant": "75 tablets",
+    "shape": "Hexa",
+    "source_lines": "249, 252",
+    "charcoal": true,
+    "weight_known": false,
+    "photo": "coming",
+    "photo_rejected": true,
+    "tags": "charcoal coals coal sultana"
+   }
+  },
+  {
+   "sku": "OSS-9146",
+   "name": "Sultana Premium Coconut Shell Charcoal Cubes, 72 cubes",
+   "note": "Box of 72 coconut shell charcoal cubes",
+   "price_cents": 999,
+   "weight_g": 1,
+   "img": "oss-9146",
+   "sort": 2044,
+   "details": {
+    "brand": "Sultana",
+    "variant": "72 cubes",
+    "shape": "Cube",
+    "source_lines": "249, 254",
+    "charcoal": true,
+    "weight_known": false,
+    "photo": "approved",
+    "photo_rights": "permission needed",
+    "tags": "charcoal coals coal sultana"
+   }
+  },
+  {
+   "sku": "OSS-9147",
+   "name": "Coco Fire Coconut Shell Charcoal Cubes, 1 kg",
+   "note": "Box of coconut shell charcoal cubes, 1 kg",
+   "price_cents": 799,
+   "weight_g": 1000,
+   "img": "",
+   "sort": 2145,
+   "details": {
+    "brand": "Coco Fire",
+    "variant": "1 kg",
+    "shape": "Cube",
+    "source_lines": "257, 260",
+    "charcoal": true,
+    "weight_known": true,
+    "photo": "coming",
+    "tags": "charcoal coals coal coco fire"
+   }
+  },
+  {
+   "sku": "OSS-9148",
+   "name": "Coco Alkanz Charcoal Cubes, 72 cubes",
+   "note": "Box of 72 charcoal cubes",
+   "price_cents": 899,
+   "weight_g": 1,
+   "img": "",
+   "sort": 2146,
+   "details": {
+    "brand": "Coco Alkanz",
+    "variant": "72 cubes",
+    "shape": "Cube",
+    "source_lines": "263, 266",
+    "charcoal": true,
+    "weight_known": false,
+    "photo": "coming",
+    "tags": "charcoal coals coal coco alkanz"
+   }
+  },
+  {
+   "sku": "OSS-9149",
+   "name": "Naya Coconut Charcoal Cubes, 72 cubes, 1 kg",
+   "note": "Box of 72 coconut charcoal cubes, 1 kg",
+   "price_cents": 999,
+   "weight_g": 1000,
+   "img": "oss-9149",
+   "sort": 2047,
+   "details": {
+    "brand": "Naya",
+    "variant": "72 cubes, 1 kg",
+    "shape": "Cube",
+    "source_lines": "269, 272",
+    "charcoal": true,
+    "weight_known": true,
+    "photo": "approved",
+    "photo_rights": "permission needed",
+    "tags": "charcoal coals coal naya"
+   }
+  },
+  {
+   "sku": "OSS-9150",
+   "name": "Naya Coconut Charcoal Cubes, 64 cubes, 1 kg",
+   "note": "Box of 64 coconut charcoal cubes, 1 kg",
+   "price_cents": 999,
+   "weight_g": 1000,
+   "img": "oss-9150",
+   "sort": 2048,
+   "details": {
+    "brand": "Naya",
+    "variant": "64 cubes, 1 kg",
+    "shape": "Cube",
+    "source_lines": "269, 274",
+    "charcoal": true,
+    "weight_known": true,
+    "photo": "approved",
+    "photo_rights": "permission needed",
+    "tags": "charcoal coals coal naya"
+   }
+  },
+  {
+   "sku": "OSS-9151",
+   "name": "Coco Riki Organic Coal Cubes, 72 cubes, 1 kg",
+   "note": "Box of 72 organic coal cubes, 1 kg",
+   "price_cents": 999,
+   "weight_g": 1000,
+   "img": "oss-9151",
+   "sort": 2049,
+   "details": {
+    "brand": "Coco Riki",
+    "variant": "72 cubes, 1 kg",
+    "shape": "Cube",
+    "source_lines": "277, 280",
+    "charcoal": true,
+    "weight_known": true,
+    "photo": "approved",
+    "photo_rights": "permission needed",
+    "tags": "charcoal coals coal coco riki"
+   }
+  },
+  {
+   "sku": "OSS-9152",
+   "name": "Coco Army Hexagonal Sticks, 62 pcs",
+   "note": "Box of 62 coconut shell charcoal hexagonal sticks",
+   "price_cents": 1299,
+   "weight_g": 1,
+   "img": "oss-9152",
+   "sort": 2050,
+   "details": {
+    "brand": "Coco Army",
+    "variant": "62 pcs",
+    "shape": "Hexagonal stick",
+    "source_lines": "283, 287",
+    "charcoal": true,
+    "weight_known": false,
+    "photo": "approved",
+    "photo_rights": "permission needed",
+    "tags": "charcoal coals coal coco army"
+   }
+  },
+  {
+   "sku": "OSS-9153",
+   "name": "Coco Army Cubes, 72 cubes",
+   "note": "Box of 72 coconut shell charcoal cubes",
+   "price_cents": 999,
+   "weight_g": 1,
+   "img": "oss-9153",
+   "sort": 2051,
+   "details": {
+    "brand": "Coco Army",
+    "variant": "72 cubes",
+    "shape": "Cube",
+    "source_lines": "283, 289",
+    "charcoal": true,
+    "weight_known": false,
+    "photo": "approved",
+    "photo_rights": "permission needed",
+    "tags": "charcoal coals coal coco army"
+   }
+  },
+  {
+   "sku": "OSS-9154",
+   "name": "Coco Army Cubes, 90 cubes",
+   "note": "Box of 90 coconut shell charcoal cubes",
+   "price_cents": 999,
+   "weight_g": 1,
+   "img": "oss-9154",
+   "sort": 2052,
+   "details": {
+    "brand": "Coco Army",
+    "variant": "90 cubes",
+    "shape": "Cube",
+    "source_lines": "283, 291",
+    "charcoal": true,
+    "weight_known": false,
+    "photo": "approved",
+    "photo_rights": "permission needed",
+    "tags": "charcoal coals coal coco army"
+   }
+  },
+  {
+   "sku": "OSS-9155",
+   "name": "Coco Charcoal Village Cubes, 72 cubes, 1 kg",
+   "note": "Box of 72 charcoal cubes, 1 kg",
+   "price_cents": 1199,
+   "weight_g": 1000,
+   "img": "",
+   "sort": 2153,
+   "details": {
+    "brand": "Coco Charcoal Village",
+    "variant": "72 cubes, 1 kg",
+    "shape": "Cube",
+    "source_lines": "295, 298",
+    "charcoal": true,
+    "weight_known": true,
+    "photo": "coming",
+    "tags": "charcoal coals coal coco charcoal village"
+   }
+  },
+  {
+   "sku": "OSS-9156",
+   "name": "Coco Buzz 2.0 Cubes, 72 cubes",
+   "note": "Box of 72 charcoal cubes",
+   "price_cents": 1799,
+   "weight_g": 1,
+   "img": "oss-9156",
+   "sort": 2054,
+   "details": {
+    "brand": "Coco Buzz 2.0",
+    "variant": "72 cubes",
+    "shape": "Cube",
+    "source_lines": "301, 304",
+    "charcoal": true,
+    "weight_known": false,
+    "photo": "approved",
+    "photo_rights": "permission needed",
+    "tags": "charcoal coals coal coco buzz 2.0"
+   }
+  },
+  {
+   "sku": "OSS-9157",
+   "name": "Coco Fuego Flower Cubes XL, 56 pcs, 1 kg",
+   "note": "Box of 56 coconut charcoal flower cubes, XL, 1 kg",
+   "price_cents": 1699,
+   "weight_g": 1000,
+   "img": "oss-9157",
+   "sort": 2055,
+   "details": {
+    "brand": "Coco Fuego",
+    "variant": "56 pcs, 1 kg",
+    "shape": "Flower cube",
+    "source_lines": "307, 310",
+    "charcoal": true,
+    "weight_known": true,
+    "photo": "approved",
+    "photo_rights": "permission needed",
+    "tags": "charcoal coals coal coco fuego"
+   }
+  },
+  {
+   "sku": "OSS-9158",
+   "name": "Coco Fuego Big Boss Cubes, 64 cubes, 1 kg",
+   "note": "Box of 64 coconut charcoal cubes, 1 kg",
+   "price_cents": 1699,
+   "weight_g": 1000,
+   "img": "",
+   "sort": 2156,
+   "details": {
+    "brand": "Coco Fuego",
+    "variant": "64 cubes, 1 kg",
+    "shape": "Cube",
+    "source_lines": "307, 312",
+    "charcoal": true,
+    "weight_known": true,
+    "photo": "coming",
+    "tags": "charcoal coals coal coco fuego"
+   }
+  },
+  {
+   "sku": "OSS-9160",
+   "name": "Coco Fuego Half Moon, 40 pcs",
+   "note": "Box of 40 coconut charcoal half moons",
+   "price_cents": 1699,
+   "weight_g": 1,
+   "img": "oss-9160",
+   "sort": 2057,
+   "details": {
+    "brand": "Coco Fuego",
+    "variant": "40 pcs",
+    "shape": "Half moon",
+    "source_lines": "307, 316",
+    "charcoal": true,
+    "weight_known": false,
+    "photo": "approved",
+    "photo_rights": "permission needed",
+    "tags": "charcoal coals coal coco fuego"
+   }
+  },
+  {
+   "sku": "OSS-9161",
+   "name": "Coco Fuego Hexagon, 52 pcs",
+   "note": "Box of 52 coconut charcoal hexagons",
+   "price_cents": 1699,
+   "weight_g": 1,
+   "img": "",
+   "sort": 2158,
+   "details": {
+    "brand": "Coco Fuego",
+    "variant": "52 pcs",
+    "shape": "Hexagon",
+    "source_lines": "307, 318",
+    "charcoal": true,
+    "weight_known": false,
+    "photo": "coming",
+    "tags": "charcoal coals coal coco fuego"
+   }
+  },
+  {
+   "sku": "OSS-9162",
+   "name": "Coco Fuego Bermuda, 60 pcs",
+   "note": "Box of 60 coconut charcoal quarter circles",
+   "price_cents": 1699,
+   "weight_g": 1,
+   "img": "",
+   "sort": 2159,
+   "details": {
+    "brand": "Coco Fuego",
+    "variant": "60 pcs",
+    "shape": "Bermuda (quarter circle, as listed)",
+    "source_lines": "307, 320",
+    "charcoal": true,
+    "weight_known": false,
+    "photo": "coming",
+    "tags": "charcoal coals coal coco fuego"
+   }
+  },
+  {
+   "sku": "OSS-9501",
+   "name": "Starbuzz Coconut Shell Charcoal Tablets, single roll, 33 mm",
+   "note": "Single roll from the Starbuzz Coconut Shell Charcoal Tablets box",
+   "price_cents": 250,
+   "weight_g": 1,
+   "img": "",
+   "sort": 2260,
+   "details": {
+    "brand": "Starbuzz",
+    "variant": "single roll",
+    "box_sku": "OSS-9109",
+    "source_lines": "90, 92",
+    "charcoal": true,
+    "weight_known": false,
+    "photo": "coming",
+    "tags": "charcoal coals coal roll starbuzz"
+   }
+  },
+  {
+   "sku": "OSS-9502",
+   "name": "Starbuzz Coconut Shell Charcoal Tablets, single roll, 35 mm",
+   "note": "Single roll from the Starbuzz Coconut Shell Charcoal Tablets box",
+   "price_cents": 250,
+   "weight_g": 1,
+   "img": "",
+   "sort": 2261,
+   "details": {
+    "brand": "Starbuzz",
+    "variant": "single roll",
+    "box_sku": "OSS-9110",
+    "source_lines": "90, 94",
+    "charcoal": true,
+    "weight_known": false,
+    "photo": "coming",
+    "tags": "charcoal coals coal roll starbuzz"
+   }
+  },
+  {
+   "sku": "OSS-9503",
+   "name": "Starbuzz Coconut Shell Charcoal Tablets, single roll, 40 mm",
+   "note": "Single roll from the Starbuzz Coconut Shell Charcoal Tablets box",
+   "price_cents": 300,
+   "weight_g": 1,
+   "img": "",
+   "sort": 2262,
+   "details": {
+    "brand": "Starbuzz",
+    "variant": "single roll",
+    "box_sku": "OSS-9111",
+    "source_lines": "90, 96",
+    "charcoal": true,
+    "weight_known": false,
+    "photo": "coming",
+    "tags": "charcoal coals coal roll starbuzz"
+   }
+  },
+  {
+   "sku": "OSS-9504",
+   "name": "Three Kings Charcoal Tablets, single roll",
+   "note": "Single roll from the Three Kings Charcoal Tablets box",
+   "price_cents": 150,
+   "weight_g": 1,
+   "img": "",
+   "sort": 2263,
+   "details": {
+    "brand": "Three Kings",
+    "variant": "single roll",
+    "box_sku": "OSS-9112",
+    "source_lines": "98, 100",
+    "charcoal": true,
+    "weight_known": false,
+    "photo": "coming",
+    "tags": "charcoal coals coal roll three kings"
+   }
+  },
+  {
+   "sku": "OSS-9505",
+   "name": "Starlight Charcoal Tablets, single roll, 33 mm",
+   "note": "Single roll from the Starlight Charcoal Tablets box",
+   "price_cents": 125,
+   "weight_g": 1,
+   "img": "",
+   "sort": 2264,
+   "details": {
+    "brand": "Starlight",
+    "variant": "single roll",
+    "box_sku": "OSS-9113",
+    "source_lines": "102, 104",
+    "charcoal": true,
+    "weight_known": false,
+    "photo": "coming",
+    "tags": "charcoal coals coal roll starlight"
+   }
+  },
+  {
+   "sku": "OSS-9506",
+   "name": "Tanya Charcoal Tablets, single roll",
+   "note": "Single roll from the Tanya Charcoal Tablets box",
+   "price_cents": 125,
+   "weight_g": 1,
+   "img": "",
+   "sort": 2265,
+   "details": {
+    "brand": "Tanya",
+    "variant": "single roll",
+    "box_sku": "OSS-9114",
+    "source_lines": "106, 108",
+    "charcoal": true,
+    "weight_known": false,
+    "photo": "coming",
+    "tags": "charcoal coals coal roll tanya"
+   }
+  },
+  {
+   "sku": "OSS-9507",
+   "name": "Zanobia Charcoal Tablets, single roll, 33 mm",
+   "note": "Single roll from the Zanobia Charcoal Tablets box",
+   "price_cents": 125,
+   "weight_g": 1,
+   "img": "",
+   "sort": 2266,
+   "details": {
+    "brand": "Zanobia",
+    "variant": "single roll",
+    "box_sku": "OSS-9115",
+    "source_lines": "110, 113",
+    "charcoal": true,
+    "weight_known": false,
+    "photo": "coming",
+    "tags": "charcoal coals coal roll zanobia"
+   }
+  },
+  {
+   "sku": "OSS-9508",
+   "name": "Zanobia Charcoal Tablets, single roll, 38 mm",
+   "note": "Single roll from the Zanobia Charcoal Tablets box",
+   "price_cents": 150,
+   "weight_g": 1,
+   "img": "",
+   "sort": 2267,
+   "details": {
+    "brand": "Zanobia",
+    "variant": "single roll",
+    "box_sku": "OSS-9116",
+    "source_lines": "110, 115",
+    "charcoal": true,
+    "weight_known": false,
+    "photo": "coming",
+    "tags": "charcoal coals coal roll zanobia"
+   }
+  },
+  {
+   "sku": "OSS-9509",
+   "name": "Sultana Charcoal Tablets, single roll, 33 mm",
+   "note": "Single roll from the Sultana Charcoal Tablets box",
+   "price_cents": 125,
+   "weight_g": 1,
+   "img": "",
+   "sort": 2268,
+   "details": {
+    "brand": "Sultana",
+    "variant": "single roll",
+    "box_sku": "OSS-9117",
+    "source_lines": "117, 120",
+    "charcoal": true,
+    "weight_known": false,
+    "photo": "coming",
+    "tags": "charcoal coals coal roll sultana"
+   }
+  }
+ ]
+}

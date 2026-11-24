@@ -53,12 +53,12 @@ function close() {
   anims[0].finished.then(done, done);
 }
 document.addEventListener("click", e => {
-  const el = e.target.closest("[data-stage] .shot"); if (!el || e.target.closest(".sticker") || !el.complete || !el.naturalWidth) return;
+  const el = e.target.closest("[data-stage] .shot:not(.shot--drawn)"); if (!el || e.target.closest(".sticker") || !el.complete || !el.naturalWidth) return;
   open(el);
 });
 dlg.addEventListener("click", close);
-document.addEventListener("keydown", e => { const el = e.target.closest && e.target.closest("[data-stage] .shot"); if (el && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); open(el); } });
-const main = document.getElementById("main"), arm = () => { const el = main.querySelector("[data-stage] .shot"); if (el) { el.tabIndex = 0; el.setAttribute("role", "button"); el.setAttribute("aria-label", "Enlarge photo: " + el.alt); } };
+document.addEventListener("keydown", e => { const el = e.target.closest && e.target.closest("[data-stage] .shot:not(.shot--drawn)"); if (el && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); open(el); } });
+const main = document.getElementById("main"), arm = () => { const el = main.querySelector("[data-stage] .shot:not(.shot--drawn)"); if (el) { el.tabIndex = 0; el.setAttribute("role", "button"); el.setAttribute("aria-label", "Enlarge photo: " + el.alt); } };
 new MutationObserver(arm).observe(main, { childList: true }); arm();
 addEventListener("keydown", e => { if (e.key === "Escape" && isOpen()) { e.preventDefault(); close(); } else if (e.key === "Tab" && isOpen()) { e.preventDefault(); dlg.querySelector(".zoom__x").focus(); } });
 addEventListener("routechange", () => { if (isOpen()) { anims.forEach(a => a.cancel()); anims = []; closing = false; close(); } }); // leaving the page always closes the photo

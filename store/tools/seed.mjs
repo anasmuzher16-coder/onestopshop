@@ -1,6 +1,6 @@
 // Writes seed/seed.sql from the mockup's sample catalogue (site/catalog.js). Sample data only: the shop's real
 // products replace it through the admin. node store/tools/seed.mjs
-import { writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { BOXES, CATEGORIES, PRODUCTS } from "../../site/catalog.js";
 const q = v => v === null || v === undefined ? "NULL" : typeof v === "number" ? String(v) : "'" + String(v).replace(/'/g, "''") + "'";
 const out = ["DELETE FROM emails; DELETE FROM sessions; DELETE FROM login_attempts; DELETE FROM product_photos; DELETE FROM audit_log; DELETE FROM stock_moves; DELETE FROM order_items; DELETE FROM orders; DELETE FROM products; DELETE FROM boxes; DELETE FROM categories;"];
@@ -67,6 +67,17 @@ for (let d = 34; d >= 0; d--) {
 }
 // Photos with a flaw in the cut-out stay off the shelf until the real photos arrive.
 out.push("UPDATE products SET active = 0 WHERE img IN ('hookah50','bowl30','acc03','bowl26','hmd12','acc06','hose09','bowl06'); -- cut-outs with holes eaten into them: off the shelf until the shop's own photos replace them");
+// Heat becomes charcoal (owner, 2026-11-23: "All the charcoals are going to replace what's currently in the heat
+// section"). The old Heat pieces are hidden, not deleted: their rows, stock and history stay, so they can come back.
+out.push("UPDATE products SET active = 0 WHERE category_id = 'heat'; -- retired 2026-11-23, replaced by the shop's charcoal");
+// The shop's real charcoal (store/seed/charcoal.json, from the verified inventory). Prices are the shop's.
+// Pickup or local delivery only, never Canada Post (ship class pickup_only). Stock: 10 each, the shop's ruling of
+// 2026-11-24; it updates the counts as items sell.
+const START_STOCK = 10;
+for (const c of JSON.parse(readFileSync(new URL("../seed/charcoal.json", import.meta.url), "utf8")).products) {
+  out.push(`INSERT INTO products (sku,name,category_id,price_cents,weight_g,box_id,glass,ship_class,note,img,img_dark,img_lw,details,stock,low_stock_at,sort) VALUES (${[c.sku, c.name, "heat", c.price_cents, c.weight_g, "XS", 0, "pickup_only", c.note, c.img, 0, null, JSON.stringify(c.details), START_STOCK, 1, c.sort].map(q).join(",")});`);
+  out.push(`INSERT INTO stock_moves (sku,delta,reason,ref,actor) VALUES (${q(c.sku)},${START_STOCK},'count','starting count, 2026-11-24','seed');`);
+}
 console.log("sample orders:", k);
 writeFileSync(new URL("../seed/seed.sql", import.meta.url), out.join("\n") + "\n");
 console.log(`seed.sql: ${CATEGORIES.length} categories, ${Object.keys(BOXES).length} boxes, ${PRODUCTS.length} products`);

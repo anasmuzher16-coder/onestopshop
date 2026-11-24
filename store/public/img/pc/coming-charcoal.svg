@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 900" width="720" height="900">
+<!-- Stand-in for a charcoal box whose photo is still coming. Drawn in the shop's flat object style: one light from the top left, no outlines, coal cubes cold (not lit). -->
+<ellipse cx="372" cy="772" rx="262" ry="22" fill="#1b1410" opacity=".16"/>
+<!-- the box -->
+<path d="M172 372 L292 302 H588 L468 372 Z" fill="#f6efe2"/>
+<path d="M468 372 L588 302 V702 L468 772 Z" fill="#c9bea9"/>
+<path d="M172 372 H468 V772 H172 Z" fill="#ebe2d1"/>
+<path d="M226 337 H526" stroke="#d8ccb6" stroke-width="3" stroke-linecap="round"/>
+<path d="M186 386 H454" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity=".8"/>
+<!-- the printed band -->
+<path d="M172 478 H468 V598 H172 Z" fill="#2b2622"/>
+<path d="M468 478 L588 408 V528 L468 598 Z" fill="#1f1b18"/>
+<g transform="translate(224 538)">
+ <path d="M0 -18 L22 -30 L44 -18 L22 -6 Z" fill="#e35a2a"/><path d="M0 -18 V8 L22 20 V-6 Z" fill="#b9411d"/><path d="M44 -18 V8 L22 20 V-6 Z" fill="#8f3215"/>
+</g>
+<g transform="translate(298 538)">
+ <path d="M0 -18 L22 -30 L44 -18 L22 -6 Z" fill="#6b625b"/><path d="M0 -18 V8 L22 20 V-6 Z" fill="#4a433e"/><path d="M44 -18 V8 L22 20 V-6 Z" fill="#383230"/>
+</g>
+<g transform="translate(372 538)">
+ <path d="M0 -18 L22 -30 L44 -18 L22 -6 Z" fill="#6b625b"/><path d="M0 -18 V8 L22 20 V-6 Z" fill="#4a433e"/><path d="M44 -18 V8 L22 20 V-6 Z" fill="#383230"/>
+</g>
+<path d="M186 628 H330" stroke="#d8ccb6" stroke-width="10" stroke-linecap="round"/>
+<path d="M186 656 H280" stroke="#d8ccb6" stroke-width="10" stroke-linecap="round"/>
+<!-- loose cubes in front, cold coal -->
+<g>
+ <path d="M396 680 H486 V770 H396 Z" fill="#3a3430"/><path d="M396 680 L426 660 H516 L486 680 Z" fill="#5e5650"/><path d="M486 680 L516 660 V750 L486 770 Z" fill="#26211e"/>
+ <path d="M402 684 H478" stroke="#8f8780" stroke-width="2.4" stroke-linecap="round" opacity=".7"/>
+</g>
+<g>
+ <path d="M494 690 H574 V770 H494 Z" fill="#35302c"/><path d="M494 690 L520 672 H600 L574 690 Z" fill="#59514b"/><path d="M574 690 L600 672 V752 L574 770 Z" fill="#221e1b"/>
+ <path d="M500 694 H566" stroke="#8f8780" stroke-width="2.4" stroke-linecap="round" opacity=".7"/>
+</g>
+<g transform="rotate(-8 492 620)">
+ <path d="M446 590 H536 V680 H446 Z" fill="#3d3733"/><path d="M446 590 L476 570 H566 L536 590 Z" fill="#665d57"/><path d="M536 590 L566 570 V660 L536 680 Z" fill="#29241f"/>
+ <path d="M452 594 H528" stroke="#a39a92" stroke-width="2.4" stroke-linecap="round" opacity=".75"/>
+</g>
+</svg>
