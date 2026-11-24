@@ -19,7 +19,7 @@ flat, flats, finger, fingers, stick, sticks, half moon, hexagon
 foil, aluminium, aluminum, tin foil, screen
 bowl, head, clay bowl, phunnel, funnel
 hose, tube, mouthpiece, tip
-base, vase, glass, water
+base, vase, glass
 heat management, hmd, kaloud, lotus
 grommet, gasket, seal, rubber
 stem, shaft
@@ -139,9 +139,9 @@ export function jumps(ix, q, { terms } = understand(ix, q)) {
     }
     if (!named.length) { const w = SECTION_WORDS[c.id]; if (w && terms.some(t => t.alts.some(x => w.includes(x))) && list.length) out.push({ cat: c, label: "All " + c.name.toLowerCase(), n: cards(list).length, href: `/shop/${c.id}`, whole: true }); continue; }
     const n = apply(c.id, list, sel).length; if (!n) continue;
-    out.push({ cat: c, label: named.join(", "), n, href: `/shop/${c.id}${writeSel(c.id, list, sel)}`, quick: terms.some(t => t.quick) });
+    out.push({ cat: c, label: named.reverse().map((x, i) => i ? x.toLowerCase() : x).join(" "), n, href: `/shop/${c.id}${writeSel(c.id, list, sel)}`, quick: terms.some(t => t.quick) });
   }
-  return out.sort((a, b) => (a.whole || 0) - (b.whole || 0) || b.label.split(",").length - a.label.split(",").length || b.n - a.n).slice(0, 3);
+  return out.sort((a, b) => (a.whole || 0) - (b.whole || 0) || b.label.split(" ").length - a.label.split(" ").length || b.n - a.n).slice(0, 3);
 }
 // a word that names a whole section opens it
 const SECTION_WORDS = { hookahs: ["hookah"], bases: ["base"], bowls: ["bowl"], heat: ["charcoal"], hoses: ["hose"], parts: ["part", "brush", "cleaner"], cologne: ["cologne"] };

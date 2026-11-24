@@ -9,10 +9,10 @@ const here = () => { const m = location.pathname.match(/^\/shop\/([a-z0-9-]+)\/?
 // ---------- drawn marks: the same 2px ink line as the section objects ----------
 const SVG = (d, vb = "0 0 48 40") => `<svg class="shape" viewBox="${vb}" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">${d}</svg>`;
 export const DRAWN = {
-  cube: SVG(`<path d="M24 4l16 8v16l-16 8-16-8V12z"/><path d="M8 12l16 8 16-8M24 20v16"/>`),
-  tablet: SVG(`<ellipse cx="24" cy="16" rx="17" ry="7"/><path d="M7 16v7c0 4 8 7 17 7s17-3 17-7v-7"/><ellipse cx="24" cy="16" rx="5" ry="2" stroke-width="1.4"/>`),
-  flat: SVG(`<path d="M6 18l22-8 14 6-22 8z"/><path d="M6 18v6l14 6 22-8v-6M20 24v6"/>`),
-  roll: SVG(`<rect x="6" y="13" width="36" height="14" rx="7"/><path d="M14 13v14M20 13v14M26 13v14M32 13v14" stroke-width="1.4"/>`),
+  cube: SVG(`<path d="M24 4l16 8-16 8-16-8z" fill="#3a302a"/><path d="M8 12l16 8v16L8 28z" fill="#1d1714"/><path d="M40 12L24 20v16l16-8z" fill="#2a221d"/><path d="M14 22l3 1.5M30 27l3-1.5" stroke="#f26a3d" stroke-width="2.4"/><path d="M24 4l16 8v16l-16 8-16-8V12z"/>`),
+  tablet: SVG(`<path d="M7 16v7c0 4 8 7 17 7s17-3 17-7v-7" fill="#1d1714"/><ellipse cx="24" cy="16" rx="17" ry="7" fill="#3a302a"/><ellipse cx="24" cy="16" rx="5" ry="2" fill="#f26a3d" stroke="none"/><path d="M7 16v7c0 4 8 7 17 7s17-3 17-7v-7"/>`),
+  flat: SVG(`<path d="M6 18l22-8 14 6-22 8z" fill="#3a302a"/><path d="M6 18v6l14 6v-6z" fill="#1d1714"/><path d="M20 24l22-8v6l-22 8z" fill="#2a221d"/><path d="M6 18v6l14 6 22-8v-6M20 24v6"/>`),
+  roll: SVG(`<rect x="6" y="13" width="36" height="14" rx="7" fill="#e9e2d6"/><path d="M6 20h36v0a7 7 0 0 1-7 7H13a7 7 0 0 1-7-7z" fill="#c9bfb0" stroke="none"/><path d="M14 13v14M20 13v14M26 13v14M32 13v14" stroke-width="1.4"/><rect x="6" y="13" width="36" height="14" rx="7"/>`),
 };
 const TICK = `<svg class="frow__tick" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5l3.2 3L13 4.5"/></svg>`;
 const XMARK = `<svg class="qchip__x" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg>`;
@@ -82,24 +82,37 @@ export function findShop(cat, list = listOf(cat)) {
   return {
     on,
     // phone: the row, the count, the grid. desktop: the rail beside them. The grid is only replaced when something is set.
-    html: grid => `${bar}<div class="fwrap" data-fwrap="${cat}"><aside class="frail" aria-label="Filter ${X.esc(cat)}">${groupsHTML(cat, list, sel)}</aside><div class="fmain">${resultsHTML(cat, list, sel)}${k ? `<div class="fapplied" role="group" aria-label="Filters on">${appliedChips(cat, list, sel)}</div>` : ""}${finderLink(cat)}<div data-fgrid>${on ? gridHTML(cat, list, sel) : grid}</div></div></div>`,
+    html: grid => `${bar}<div class="fwrap" data-fwrap="${cat}"><aside class="frail" aria-label="Filter ${X.esc(cat)}">${groupsHTML(cat, list, sel)}</aside><div class="fmain">${resultsHTML(cat, list, sel)}${k ? `<div class="fapplied" role="group" aria-label="Filters on">${appliedChips(cat, list, sel)}</div>` : ""}${k ? "" : finderLink(cat)}<div data-fgrid>${on ? gridHTML(cat, list, sel) : grid}</div></div></div>`,
   };
 }
 
 // ---------- the sheet (phone) ----------
+function shut() {
+  if (!sheet?.open || sheet.classList.contains("is-leaving")) return;
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return sheet.close();
+  sheet.classList.add("is-leaving");
+  setTimeout(() => { sheet.classList.remove("is-leaving"); if (sheet.open) sheet.close(); }, 160);
+}
 let sheet = null, draft = null;
 const open = new Set();   // long groups ("All 39 brands") the shopper has opened stay open while they pick
 function sheetEl() {
   if (sheet) return sheet;
   sheet = document.createElement("dialog"); sheet.className = "fsheet"; sheet.setAttribute("aria-labelledby", "fsheet-h");
   document.body.append(sheet);
-  sheet.addEventListener("click", e => { if (e.target === sheet) sheet.close(); });   // a tap on the dimmed page closes it
+  sheet.addEventListener("click", e => { if (e.target === sheet) shut(); });   // a tap on the dimmed page closes it
+  sheet.addEventListener("cancel", e => { e.preventDefault(); shut(); });   // Esc leaves the same way
+  // a drag down on the handle or the header closes it, as a sheet does
+  let y0 = null;
+  sheet.addEventListener("pointerdown", e => { if (e.target.closest(".fsheet__head") && !e.target.closest("button")) { y0 = e.clientY; sheet.setPointerCapture?.(e.pointerId); } });
+  sheet.addEventListener("pointermove", e => { if (y0 == null) return; const dy = Math.max(0, e.clientY - y0); sheet.style.transform = dy ? `translateY(${dy}px)` : ""; });
+  const end = e => { if (y0 == null) return; const dy = e.clientY - y0; y0 = null; sheet.style.transform = ""; if (dy > 72) shut(); };
+  sheet.addEventListener("pointerup", end); sheet.addEventListener("pointercancel", end);
   sheet.addEventListener("close", () => { draft = null; document.documentElement.classList.remove("fsheet-open"); });
   return sheet;
 }
 function drawSheet(cat) {
   const list = listOf(cat), n = apply(cat, list, draft).length, s = sheetEl(), y = s.querySelector(".fsheet__body")?.scrollTop || 0;
-  s.innerHTML = `<div class="fsheet__head"><h2 class="fsheet__h" id="fsheet-h" tabindex="-1">Filter</h2><button class="fsheet__x" type="button" data-f-close aria-label="Close">${CLOSE}</button></div>
+  s.innerHTML = `<div class="fsheet__head"><span class="fsheet__grip" aria-hidden="true"></span><h2 class="fsheet__h" id="fsheet-h" tabindex="-1">Filter</h2><button class="fsheet__x" type="button" data-f-close aria-label="Close">${CLOSE}</button></div>
     <div class="fsheet__body">${groupsHTML(cat, list, draft, true)}</div>
     <div class="fsheet__foot"><button class="link" type="button" data-f-clear>Clear all</button><button class="btn" type="button" data-f-apply ${n ? "" : "disabled"}>${n ? `Show ${n} ${noun(cat, n)}` : "Nothing matches"}</button></div>`;
   s.querySelector(".fsheet__body").scrollTop = y;
@@ -119,7 +132,7 @@ function finderHTML(step, n1) {
   const opts = step === 1
     ? Q1.map(([v, h, sub]) => { const c = v === "roll" ? list.filter(p => heatKind(p) === "roll").length : boxes.filter(p => v === "91" ? ["91", "kg"].includes(piecesBand(p)) : piecesBand(p) === v).length; return c ? `<button class="gf__opt" type="button" data-gf1="${v}">${v === "roll" ? DRAWN.roll : DRAWN.cube}<span><span class="gf__name">${h}</span><span class="gf__sub">${sub}</span></span><span class="num">${c}</span></button>` : ""; })
     : Q2.map(([v, h, sub]) => { const c = boxes.filter(p => bandOK(p) && shapeOf(p) === v).length; return c ? `<button class="gf__opt" type="button" data-gf2="${v}">${DRAWN[v]}<span><span class="gf__name">${h}</span><span class="gf__sub">${sub}</span></span><span class="num">${c}</span></button>` : ""; });
-  return `<div class="fsheet__head"><p class="gf__step">Question ${step} of 2</p><button class="fsheet__x" type="button" data-f-close aria-label="Close">${CLOSE}</button></div>
+  return `<div class="fsheet__head"><span class="fsheet__grip" aria-hidden="true"></span><p class="gf__step">Question ${step} of 2</p><button class="fsheet__x" type="button" data-f-close aria-label="Close">${CLOSE}</button></div>
     <div class="fsheet__body"><h2 class="gf__q" id="fsheet-h">${step === 1 ? "How much do you need?" : "Which shape?"}</h2>
     ${step === 2 ? `<p class="gf__picked">For <b>${Q1.find(q => q[0] === n1)[1].toLowerCase()}</b> <button class="link" type="button" data-gf-back>Change</button></p>` : ""}
     <div class="gf__opts">${opts.join("")}</div>
@@ -161,18 +174,18 @@ export function init(ctx) {
     if (!cat) return;
     const list = listOf(cat);
     if (t.matches("[data-f-open]")) return openSheet(cat);
-    if (t.matches("[data-f-close]")) return sheet.close();
+    if (t.matches("[data-f-close]")) return shut();
     if (t.matches("[data-f-more]")) { const grp = t.closest(".fgroup"), more = [...grp.querySelectorAll("[data-more]")]; more.forEach(b => b.hidden = false); open.add(t.dataset.fMore); more[0]?.focus(); t.remove(); return; }
     if (t.matches("[data-f-finder]")) { e.preventDefault(); n1 = null; return openFinder(1); }
-    if (t.matches("[data-gf1]")) { n1 = t.dataset.gf1; if (n1 === "roll") { sheet.close(); return go("heat", { type: ["roll"] }); } return openFinder(2); }
+    if (t.matches("[data-gf1]")) { n1 = t.dataset.gf1; if (n1 === "roll") { shut(); return go("heat", { type: ["roll"] }); } return openFinder(2); }
     if (t.matches("[data-gf-back]")) return openFinder(1);
-    if (t.matches("[data-gf2]")) { const sel = { type: ["box"], n: n1 === "91" ? ["91", "kg"] : [n1], shape: [t.dataset.gf2] }; sheet.close(); return go("heat", sel); }
-    if (t.matches("[data-gf-common]")) { sheet.close(); return go("heat", { type: ["box"] }); }
+    if (t.matches("[data-gf2]")) { const sel = { type: ["box"], n: n1 === "91" ? ["91", "kg"] : [n1], shape: [t.dataset.gf2] }; shut(); return go("heat", sel); }
+    if (t.matches("[data-gf-common]")) { shut(); return go("heat", { type: ["box"] }); }
     if (inSheet && draft) {   // the sheet works on a draft; "Show N" applies it
       if (t.matches("[data-f-toggle]")) draft = toggle(draft, t.dataset.fToggle, t.dataset.v);
       else if (t.matches("[data-f-sort]")) { draft = { ...draft }; if (t.dataset.fSort) draft.sort = t.dataset.fSort; else delete draft.sort; }
       else if (t.matches("[data-f-clear]")) draft = {};
-      else if (t.matches("[data-f-apply]")) { const sel = draft; sheet.close(); go(cat, sel); document.querySelector("[data-fbar] .fbar__btn")?.focus({ preventScroll: true }); return; }
+      else if (t.matches("[data-f-apply]")) { const sel = draft; shut(); go(cat, sel); document.querySelector("[data-fbar] .fbar__btn")?.focus({ preventScroll: true }); return; }
       const key = t.dataset.fToggle ? `[data-f-toggle="${t.dataset.fToggle}"][data-v="${CSS.escape(t.dataset.v)}"]` : t.dataset.fSort !== undefined ? `[data-f-sort="${t.dataset.fSort}"]` : "[data-f-clear]";
       drawSheet(cat); sheet.querySelector(key)?.focus({ preventScroll: true }); return;
     }

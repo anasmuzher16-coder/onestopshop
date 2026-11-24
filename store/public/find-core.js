@@ -39,7 +39,7 @@ export const colourOf = p => p.named && p.colour ? low(p.colour) : null;
 const cover = (list, f, what) => { const all = list.length, have = list.filter(f).length; return have && have < all ? `${what} on ${have} of ${all} so far.` : ""; };
 const HEAT = [
   { key: "type", label: "What you are buying", of: heatKind, opts: [["box", "Boxes"], ["roll", "Single rolls"], ["foil", "Foil"]], quick: true },
-  { key: "shape", label: "Shape", hint: "charcoal boxes", of: shapeOf, opts: [["cube", "Cubes"], ["tablet", "Tablets"], ["flat", "Flats, fingers"]], drawn: true, quick: true },
+  { key: "shape", label: "Shape", hint: "charcoal boxes", of: shapeOf, opts: [["cube", "Cubes"], ["tablet", "Tablets"], ["flat", "Flats"]], drawn: true, quick: true },
   { key: "n", label: "Pieces in the box", of: piecesBand, opts: [["60", "Up to 60"], ["90", "61 to 90"], ["91", "91 or more"], ["kg", "1 kg, count not listed"]] },
   { key: "made", label: "Made from", of: madeOf, opts: [["coconut", "Coconut"], ["bamboo", "Bamboo"]], quick: ["coconut"], note: l => cover(l.filter(p => heatKind(p) === "box"), madeOf, "Listed") },
   { key: "mm", label: "Size", of: p => mmOf(p) && String(mmOf(p)), opts: "dyn", fmt: v => v + " mm", note: l => cover(l.filter(p => heatKind(p) === "box"), mmOf, "Sizes listed") },

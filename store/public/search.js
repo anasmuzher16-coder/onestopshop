@@ -23,33 +23,37 @@ export function init(ctx) {
 }
 
 const S = (d, vb = "0 0 48 40") => `<svg viewBox="${vb}" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">${d}</svg>`;
+// Small objects in the band objects' own manner: flat fills, a lit side and a shade side (light from the top left),
+// one ink outline. Colours are the objects' own materials (steel, glass, brass, paper, coal), not UI colours.
+const STEEL = "#d9dde3", STEEL_D = "#9aa3ae", GLASS = "#5fb7b0", GLASS_D = "#2f7f7a", BRASS = "#e6c25a", BRASS_D = "#b48a2c", PAPER = "#f6f1e7", PAPER_D = "#d8cfbf", COAL = "#3a302a", COAL_D = "#1d1714", EMBER = "#f26a3d";
 const ICON = {
-  set: S(`<path d="M19 3h10l-2 6h-6z"/><path d="M15 11h18M24 11v14"/><path d="M18 26h12c4 3 5 6 5 8a11 4 0 0 1-22 0c0-2 1-5 5-8z"/><path d="M27 20c6 0 9 3 9 8"/>`),
+  set: S(`<path d="M19 3h10l-2 6h-6z" fill="${COAL}"/><path d="M14 10h20l-2 3H16z" fill="${STEEL}"/><path d="M22 13h4v13h-4z" fill="${STEEL_D}"/><path d="M18 26h12c4 3 6 6 6 8a12 5 0 0 1-24 0c0-2 2-5 6-8z" fill="${GLASS}"/><path d="M14 33c3 3 17 3 20 0a12 5 0 0 1-20 0z" fill="${GLASS_D}" stroke="none"/><path d="M26 18c7 0 11 4 11 10" stroke-width="2.4"/><path d="M18 26h12c4 3 6 6 6 8a12 5 0 0 1-24 0c0-2 2-5 6-8z"/>`),
   coal: DRAWN.cube.replace('class="shape" ', ""),
-  foil: DRAWN.flat.replace('class="shape" ', ""),
-  gift: S(`<path d="M8 16h32v20H8zM6 10h36v6H6zM24 10v26"/><path d="M24 10c-4-6-12-6-10 0M24 10c4-6 12-6 10 0"/>`),
-  part: S(`<path d="M10 30c8 0 8-10 16-10s8-8 14-8"/><circle cx="10" cy="30" r="3"/><path d="M36 8l6 6"/>`),
-  scent: S(`<path d="M18 14h12v4l4 4v14H14V22l4-4z"/><path d="M20 8h8v6h-8z"/>`),
-  jar: S(`<path d="M12 12h24v4H12z"/><path d="M14 16h20v18a3 3 0 0 1-3 3H17a3 3 0 0 1-3-3z"/><path d="M19 24c2-3 8-3 10 0"/>`),
-  base: S(`<path d="M18 8h12M20 8v6c-8 4-10 10-10 15a14 7 0 0 0 28 0c0-5-2-11-10-15V8"/>`),
-  bowl: S(`<path d="M12 12h24l-4 12H16z"/><path d="M20 24v6h8v-6"/>`),
-  hose: S(`<path d="M8 32c10 0 6-20 18-20 8 0 10 6 14 6"/><path d="M38 14l4 4"/>`),
-  hookah: S(`<path d="M19 3h10l-2 6h-6z"/><path d="M15 11h18M24 11v14"/><path d="M18 26h12c4 3 5 6 5 8a11 4 0 0 1-22 0c0-2 1-5 5-8z"/>`),
+  foil: S(`<ellipse cx="24" cy="21" rx="18" ry="11" fill="${STEEL}"/><path d="M6 21a18 11 0 0 0 36 0c-4 6-30 6-36 0z" fill="${STEEL_D}" stroke="none"/><g fill="${COAL_D}" stroke="none"><circle cx="18" cy="18" r="1.4"/><circle cx="24" cy="16" r="1.4"/><circle cx="30" cy="18" r="1.4"/><circle cx="21" cy="23" r="1.4"/><circle cx="27" cy="23" r="1.4"/></g><path d="M9 15c6-7 24-8 31 0" stroke="#fff" stroke-width="1.6" opacity=".8"/><ellipse cx="24" cy="21" rx="18" ry="11"/>`),
+  gift: S(`<path d="M8 16h32v20H8z" fill="${PAPER}"/><path d="M24 16h16v20H24z" fill="${PAPER_D}" stroke="none"/><path d="M6 10h36v6H6z" fill="${PAPER}"/><path d="M21 10h6v26h-6z" fill="${EMBER}"/><path d="M24 10c-4-6-12-6-10 0M24 10c4-6 12-6 10 0" stroke-width="2.4"/><path d="M8 16h32v20H8zM6 10h36v6H6z"/>`),
+  part: S(`<path d="M8 30l18-18 6 6-18 18z" fill="${STEEL}"/><path d="M20 24l12-12 3 3-12 12z" fill="${STEEL_D}" stroke="none"/><circle cx="36" cy="11" r="6" fill="${BRASS}"/><circle cx="36" cy="11" r="2.5" fill="${BRASS_D}"/><path d="M8 30l18-18 6 6-18 18z"/>`),
+  scent: S(`<path d="M20 6h8v7h-8z" fill="${BRASS}"/><path d="M16 13h16l3 5v17a2 2 0 0 1-2 2H15a2 2 0 0 1-2-2V18z" fill="${GLASS}"/><path d="M24 13h8l3 5v17a2 2 0 0 1-2 2h-9z" fill="${GLASS_D}" stroke="none"/><path d="M17 18v12" stroke="#fff" stroke-width="2" opacity=".7"/><path d="M16 13h16l3 5v17a2 2 0 0 1-2 2H15a2 2 0 0 1-2-2V18z"/>`),
+  jar: S(`<path d="M11 9h26v6H11z" fill="${COAL}"/><path d="M13 15h22v19a3 3 0 0 1-3 3H16a3 3 0 0 1-3-3z" fill="${PAPER}"/><path d="M24 15h11v19a3 3 0 0 1-3 3h-8z" fill="${PAPER_D}" stroke="none"/><path d="M13 22h22v8H13z" fill="${EMBER}"/><path d="M13 15h22v19a3 3 0 0 1-3 3H16a3 3 0 0 1-3-3z"/>`),
+  base: S(`<path d="M20 8v6c-8 4-10 10-10 15a14 7 0 0 0 28 0c0-5-2-11-10-15V8z" fill="${GLASS}"/><path d="M24 14v22a14 7 0 0 0 14-7c0-5-2-11-10-15z" fill="${GLASS_D}" stroke="none"/><path d="M18 8h12"/><path d="M20 8v6c-8 4-10 10-10 15a14 7 0 0 0 28 0c0-5-2-11-10-15V8"/>`),
+  bowl: S(`<path d="M12 12h24l-4 12H16z" fill="${COAL}"/><path d="M24 12h12l-4 12h-8z" fill="${COAL_D}" stroke="none"/><path d="M20 24v6h8v-6z" fill="${STEEL_D}"/><path d="M12 12h24l-4 12H16z"/>`),
+  hose: S(`<path d="M8 32c10 0 6-20 18-20 8 0 10 6 14 6" stroke-width="4"/><path d="M8 32c10 0 6-20 18-20 8 0 10 6 14 6" stroke="${STEEL}" stroke-width="1.6"/><path d="M38 14l5 5" stroke-width="4"/>`),
+  hookah: S(`<path d="M19 3h10l-2 6h-6z" fill="${COAL}"/><path d="M14 10h20l-2 3H16z" fill="${STEEL}"/><path d="M22 13h4v13h-4z" fill="${STEEL_D}"/><path d="M18 26h12c4 3 6 6 6 8a12 5 0 0 1-24 0c0-2 2-5 6-8z" fill="${GLASS}"/><path d="M18 26h12c4 3 6 6 6 8a12 5 0 0 1-24 0c0-2 2-5 6-8z"/>`),
 };
 const CAT_ICON = { hookahs: "hookah", bases: "base", bowls: "bowl", heat: "coal", hoses: "hose", parts: "part", cologne: "scent", shisha: "jar", misc: "gift" };
 const toneOf = id => (X.CATEGORIES.find(c => c.id === id) || {}).tone || "bone";
 const has = cat => X.PRODUCTS.some(p => p.cat === cat);
 
+const tone = (id, fallback) => (X.CATEGORIES.find(c => c.id === id) || {}).tone || fallback;
 function ways() {
   const foil = X.PRODUCTS.filter(p => heatKind(p) === "foil").length, flav = X.PRODUCTS.filter(p => p.cat === "shisha").length;
   const all = [
-    ["/set", "ruby", "set", "Starting out", "A hookah, bowl and hose that go together", has("hookahs") || has("bowls")],
-    ["/shop/heat?find=coal", "ember", "coal", "Need coals", "Pick the right box in two taps", X.PRODUCTS.some(p => heatKind(p) === "box")],
-    ["/shop/shisha", "amethyst", "jar", "Flavours", `${flav} tobacco-free flavours`, flav > 0],
-    ["/shop/heat?type=foil", "gilt", "foil", "Foil", `${foil} packs, by size and thickness`, foil > 0],
+    ["/set", tone("hookahs", "ruby"), "set", "Starting out", "A hookah, bowl and hose that go together", has("hookahs") || has("bowls")],
+    ["/shop/heat?find=coal", tone("heat", "ember"), "coal", "Need coals", "Pick the right box in two taps", X.PRODUCTS.some(p => heatKind(p) === "box")],
+    ["/shop/shisha", tone("shisha", "amethyst"), "jar", "Flavours", `${flav} tobacco-free flavours`, flav > 0],
+    ["/shop/heat?type=foil", tone("heat", "ember"), "foil", "Foil", `${foil} packs, by size and thickness`, foil > 0],
     ["/gifts/under-50", "emerald", "gift", "A gift", "Under $50 or under $150, packed at the counter", true],
-    ["/shop/parts", "cobalt", "part", "Parts and care", `${X.PRODUCTS.filter(p => p.cat === "parts").length} pieces to fix or clean your setup`, has("parts")],
-    ["/shop/cologne", "amethyst", "scent", "Smell good", "Cologne and fragrance", has("cologne")],
+    ["/shop/parts", tone("parts", "gilt"), "part", "Parts and care", `${X.PRODUCTS.filter(p => p.cat === "parts").length} pieces to fix or clean your setup`, has("parts")],
+    ["/shop/cologne", tone("cologne", "amethyst"), "scent", "Smell good", "Cologne and fragrance", has("cologne")],
   ].filter(w => w[5]).slice(0, 6);
   return `<div class="ways2">${all.map(([href, tone, icon, name, sub]) => `<a class="way" data-tone="${tone}" href="${href}">${ICON[icon]}<span class="way__name">${name}</span><span class="way__sub">${X.esc(sub)}</span></a>`).join("")}</div>`;
 }
@@ -68,9 +72,11 @@ function mark(name, words) {
 }
 function meta(p) {
   const f = p.facts || {}, bits = [];
-  if (p.family) { const n = X.PRODUCTS.filter(x => x.family === p.family).length; if (n > 1) bits.push(`${n} colours`); if (f.stamp === "stamped") bits.push("In the shop now"); }
-  else { if (f.count) bits.push(`${f.count} pieces`); if (f.size) bits.push(f.size); if (!bits.length && p.note) bits.push(p.note); }
-  return bits.join(" · ");
+  if (p.family) { const n = X.PRODUCTS.filter(x => x.family === p.family).length; if (n > 1) bits.push(`${n} colours`); if (f.stamp && f.stamp !== "none") bits.push("In the shop now"); }
+  else { if (f.count) bits.push(`${f.count} pieces`); if (f.size) bits.push(f.size); }
+  // never repeat what the name already says ("1 kg, 27 mm" then "27 mm")
+  const name = p.name.toLowerCase(), num = s => (s.match(/\d+(?:\.\d+)?/) || [""])[0];
+  return bits.filter(b => !name.includes(num(b) || b.toLowerCase())).join(" · ");
 }
 const row = (p, words) => `<li class="row"><a href="/p/${p.sku}" data-piece="${p.sku}"><span class="row__t tile">${X.shot(p, { small: true, use: "thumb" })}</span><span><span class="row__n">${mark(p.name, words)}</span><span class="row__m">${X.esc(meta(p))}</span></span>${X.sticker(p)}</a></li>`;
 const jumpRow = j => `<li><a href="${j.href}" data-tone="${toneOf(j.cat.id)}"><i>${ICON[CAT_ICON[j.cat.id]] || ""}</i><span>${X.esc(j.whole ? `All of ${j.cat.name}` : j.label)}<small>${X.esc(j.whole ? "The whole section" : `${j.cat.name}, filtered for you`)}${j.quick ? ". Quick-light boxes say so on the box." : ""}</small></span><span class="num">${j.n}</span></a></li>`;
