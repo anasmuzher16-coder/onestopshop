@@ -126,7 +126,7 @@ export async function placeOrder(request, env, url) {
   if (loy.refused) { const t = rates.orderTotals(subtotal, shipping, province); return json({ error: "Your points reward is not available on this order. Check the new total, then place your order.", reward_gone: true, repriced: { subtotal_cents: subtotal, shipping_cents: shipping, tax_cents: t.tax, total_cents: t.total } }, 409); }
   const { tax, total } = rates.orderTotals(subtotal - loy.reward_cents, shipping, province);
   // the shopper agreed to a figure: if ours is different, nothing is placed and they are shown the new one
-  if (body.expected_total_cents !== undefined && body.expected_total_cents !== total) return json({ error: `The total is now ${rates.money(total / 100)}. Check it, then place your order.`, repriced: { subtotal_cents: subtotal, shipping_cents: shipping, tax_cents: tax, total_cents: total } }, 409);
+  if (body.expected_total_cents !== undefined && body.expected_total_cents !== total) return json({ error: `The total is now ${rates.money(total / 100)}. Check it, then place your order.`, repriced: { subtotal_cents: subtotal, reward_cents: loy.reward_cents, shipping_cents: shipping, tax_cents: tax, total_cents: total } }, 409);
   if (key) quote = { ...quote, idem: keyed.idem, idem_req: sameOrder };
 
   // 1 write the order as pending  2 take the stock, one guarded step per item  3 confirm, or put everything back

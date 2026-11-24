@@ -2,7 +2,7 @@
 // serves the catalogue from the database, and passes every other request to the static files.
 import { loadCatalog, shopCatalog, dropCatalog, catalogModule, counterRow, CHARCOAL } from "./catalog.js";
 import { admin, photo, signedIn } from "./admin.js";
-import { accountRoute, stockAlerts, restockReminders } from "./account.js";
+import { accountRoute, stockAlerts, restockReminders, scrubCodes } from "./account.js";
 import { loyaltyAdmin } from "./loyalty.js";
 import { placeOrder } from "./checkout.js";
 import { deliveryRoute } from "./delivery.js";
@@ -97,7 +97,7 @@ function sitemap(cat, url) {
 
 export default {
   // every night: a full copy of the shop's records into the backup bucket
-  async scheduled(event, env, ctx) { ctx.waitUntil(nightly(env)); ctx.waitUntil(stockAlerts(env).then(() => restockReminders(env))); },   // and the customers' alerts and charcoal reminders
+  async scheduled(event, env, ctx) { ctx.waitUntil(scrubCodes(env).then(() => nightly(env))); ctx.waitUntil(stockAlerts(env).then(() => restockReminders(env))); },   // and the customers' alerts and charcoal reminders
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const path = url.pathname;

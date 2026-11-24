@@ -11,10 +11,11 @@
 // Points never expire with time: there is no expiry anywhere in this file, on purpose (Ontario CPA, see the doc).
 
 export const LOYALTY_DEFAULTS = Object.freeze({ on: false, points_per_dollar: 1, reward_points: 100, reward_cents: 500 });
+const MAX_BACK_CENTS = 10;
 const LIMITS = { points_per_dollar: [1, 10], reward_points: [10, 10000], reward_cents: [100, 10000] };
 
 export async function loyaltySettings(db) {
-  const raw = await db.prepare("SELECT value FROM settings WHERE key = 'loyalty'").first("value");
+  const raw = await db.prepare("SELECT value FROM account_settings WHERE key = 'loyalty'").first("value");
   let v = {}; try { v = JSON.parse(raw || "{}"); } catch {}
   const out = { ...LOYALTY_DEFAULTS };
   if (typeof v.on === "boolean") out.on = v.on;
@@ -86,8 +87,10 @@ export async function loyaltyAdmin(request, env, url, signedIn) {
   const before = await loyaltySettings(db), next = { ...before };
   if ("on" in body) { if (typeof body.on !== "boolean") return json({ error: "Check: on." }, 400); next.on = body.on; }
   for (const [k, [lo, hi]] of Object.entries(LIMITS)) if (k in body) { if (!Number.isInteger(body[k]) || body[k] < lo || body[k] > hi) return json({ error: `Check: ${k.replace(/_/g, " ")} (${lo} to ${hi}).` }, 400); next[k] = body[k]; }
+  // a typo must not become a giveaway: the program may give back at most 10 cents on a dollar of items
+  if (next.reward_cents * next.points_per_dollar / next.reward_points > MAX_BACK_CENTS) return json({ error: `That gives back more than ${MAX_BACK_CENTS} cents on every dollar. ${costNote(next)}` }, 400);
   await db.batch([
-    db.prepare("INSERT INTO settings (key, value) VALUES ('loyalty', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now')").bind(JSON.stringify(next)),
+    db.prepare("INSERT INTO account_settings (key, value) VALUES ('loyalty', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now')").bind(JSON.stringify(next)),
     db.prepare("INSERT INTO audit_log (actor, action, target, before, after) VALUES ('owner', 'loyalty.settings', 'loyalty', ?, ?)").bind(JSON.stringify(before), JSON.stringify(next)),
   ]);
   return json({ ok: true, loyalty: next, cost: costNote(next) });

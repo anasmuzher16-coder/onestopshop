@@ -7,7 +7,8 @@ import { CHARCOAL } from "./catalog.js";
 
 const COOKIE = "oss_c", SESSION_DAYS = 30, CODE_MINUTES = 10, MAX_TRIES = 5;
 // rate limits: per email (any network), per network (any email), and the whole shop, so nobody can use the form to flood an inbox
-const LIMIT = { perEmail15: 3, perWhoHour: 20, allHour: 300, wrongPerWho15: 30 };
+// wrongPerEmailDay caps guesses at one inbox from every network together: 15 a day, far under NIST's 100 (doc, section 3)
+const LIMIT = { perEmail15: 3, perWhoHour: 20, allHour: 1000, wrongPerWho15: 30, wrongPerEmailDay: 15 };
 const NOW = "strftime('%Y-%m-%dT%H:%M:%SZ','now')";
 const SOLD = "('paid','packed','shipped','ready','collected')";
 const SHOP_LINE = "One Stop Shop, 760 Wyandotte St E, Windsor, ON N9A 3J4. 519-255-2222.";
@@ -20,11 +21,19 @@ function sixDigits() {   // uniform: values past the last whole million are thro
 }
 const json = (body, status = 200, headers = {}) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", ...headers } });
 const who = request => sha("acct|" + (request.headers.get("CF-Connecting-IP") || "local"));
+const mailKey = email => sha("mail|" + email);
+// The outbox copy of a sign-in email holds a live code: it is wiped once sent, used, or expired.
+const WIPED = why => `subject = 'Sign-in code (${why})', html = '<p>This sign-in code is no longer kept.</p>', body = 'This sign-in code is no longer kept.'`;
+const scrubStatement = db => db.prepare(`UPDATE emails SET ${WIPED("expired")} WHERE kind = 'sign_in' AND at < strftime('%Y-%m-%dT%H:%M:%SZ','now','-${CODE_MINUTES + 1} minutes') AND body != 'This sign-in code is no longer kept.'`);
+export const scrubCodes = async env => { try { await scrubStatement(env.DB).run(); } catch (e) { console.error(JSON.stringify({ at: "scrub-codes", message: String(e && e.message || e) })); } };   // before every backup
 const cookieToken = request => ((request.headers.get("Cookie") || "").match(/(?:^|;\s*)oss_c=([a-f0-9]{64})(?:;|$)/) || [])[1];
 const cookie = (url, token, maxAge) => `${COOKIE}=${token}; Path=/; HttpOnly;${url.protocol === "https:" ? " Secure;" : ""} SameSite=Lax; Max-Age=${maxAge}`;
 export const cleanEmail = v => { if (typeof v !== "string") return null; const e = v.trim().toLowerCase(); return e.length <= 120 && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e) ? e : null; };
 const text = (v, max) => v === undefined || v === null ? "" : typeof v === "string" && v.trim().length <= max ? v.trim() : null;
 const postal = v => { const m = String(v || "").trim().toUpperCase().match(/^([A-Z]\d[A-Z])[ -]?(\d[A-Z]\d)$/); return m ? m[1] + " " + m[2] : null; };
+export const REMIND_WORDS = "Yes, email me a reminder to restock charcoal. I can unsubscribe at any time.";
+const withdraw = (db, id, email) => [db.prepare("UPDATE customers SET remind_days = NULL WHERE id = ?").bind(id),
+  db.prepare(`UPDATE marketing_consents SET withdrawn_at = ${NOW} WHERE email = ? AND withdrawn_at IS NULL`).bind(email)];
 export const siteOrigin = env => (env.SITE_URL || "https://onestopshop-store.anas-dev.workers.dev").replace(/\/$/, "");
 
 // The signed-in customer for this request, or null. Expired sessions never count.
@@ -61,7 +70,7 @@ async function meData(db, c) {
   let address = {}; try { address = JSON.parse(c.address || "{}"); } catch {}
   return { signed_in: true, customer: { email: c.email, name: c.name, phone: c.phone, address, since: c.created_at.slice(0, 10) },
     loyalty: await loyaltyView(db, c.id), favourites: fav.results.map(r => r.sku), alerts: al.results.map(r => r.sku),
-    reminder: { days: c.remind_days ?? null, since: c.remind_days ? c.remind_consent_at : null } };
+    reminder: { days: c.remind_days ?? null, since: c.remind_days ? c.remind_consent_at : null, words: REMIND_WORDS } };
 }
 async function ordersOf(db, c) {
   const os = (await db.prepare("SELECT id, status, method, ship_service, subtotal_cents, reward_cents, total_cents, created_at FROM orders WHERE customer_id = ? AND status != 'pending' ORDER BY created_at DESC LIMIT 50").bind(c.id).all()).results;
@@ -92,25 +101,40 @@ export async function accountRoute(request, env, url) {
     const w = await who(request);
     const n = await db.prepare(`SELECT COALESCE(SUM(email = ?1 AND created_at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-15 minutes')),0) AS mail, COALESCE(SUM(who = ?2),0) AS mine, COUNT(*) AS everyone FROM sign_in_codes WHERE created_at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 hour')`).bind(email, w).first();
     if (n.mail >= LIMIT.perEmail15 || n.mine >= LIMIT.perWhoHour || n.everyone >= LIMIT.allHour) return json({ error: "That is a lot of codes in a short time. Wait 15 minutes, then ask again." }, 429);
+    // wrong codes for this one inbox, from any network, over a day: past the cap no new code is made until it clears
+    const wrongMail = await db.prepare("SELECT COUNT(*) AS n FROM account_attempts WHERE who = ? AND at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 day')").bind(await mailKey(email)).first("n");
+    if (wrongMail >= LIMIT.wrongPerEmailDay) return json({ error: "Too many wrong codes for this email today. Try again tomorrow, or call the counter at 519-255-2222." }, 429);
     const code = sixDigits(), link = random(32), salt = random(16);
     await db.batch([
       db.prepare("UPDATE sign_in_codes SET used = 1 WHERE email = ? AND used = 0").bind(email),   // only the newest code works
       db.prepare(`INSERT INTO sign_in_codes (email, salt, code_hash, link_hash, who, expires_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ','now','+${CODE_MINUTES} minutes'))`).bind(email, salt, await sha(salt + ":" + code), await sha(link), w),
       db.prepare("DELETE FROM sign_in_codes WHERE created_at < strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 day')"),
       db.prepare("DELETE FROM account_attempts WHERE at < strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 day')"),
-      db.prepare(`UPDATE emails SET subject = 'Sign-in code (expired)', html = '<p>This sign-in code has expired.</p>', body = 'This sign-in code has expired.' WHERE kind = 'sign_in' AND at < strftime('%Y-%m-%dT%H:%M:%SZ','now','-${CODE_MINUTES + 5} minutes') AND body != 'This sign-in code has expired.'`),
+      scrubStatement(db),
     ]);
     await writeEmail(env, null, email, signInMail(site, code, `${url.origin}/account#signin=${link}`));
+    // once the mail service has it, our copy of the code is wiped at once; a held copy (no mail service yet) dies with the code
+    await db.prepare(`UPDATE emails SET ${WIPED("sent")} WHERE kind = 'sign_in' AND recipient = ? AND status = 'sent'`).bind(email).run();
     return json({ ok: true, minutes: CODE_MINUTES });
   }
 
   // Use a code (with its email) or a link token. Either works once; a code dies after 5 wrong tries.
-  if (path === "/verify" && method === "POST") {
+  // /peek only says which email a link is for, without using it, so the page can ask "sign in as ...?" first
+  // (someone sending you a link to THEIR account cannot slip you into it unawares).
+  if ((path === "/verify" || path === "/peek") && method === "POST") {
     const w = await who(request);
     const wrong = await db.prepare("SELECT COUNT(*) AS n FROM account_attempts WHERE who = ? AND at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-15 minutes')").bind(w).first("n");
     if (wrong >= LIMIT.wrongPerWho15) return json({ error: "Too many wrong codes. Wait 15 minutes and try again." }, 429);
-    const miss = async (msg, status = 400) => { await db.prepare("INSERT INTO account_attempts (who) VALUES (?)").bind(w).run(); return json({ error: msg }, status); };
+    const miss = async (msg, status = 400, email = null) => {
+      await db.batch([db.prepare("INSERT INTO account_attempts (who) VALUES (?)").bind(w), ...(email ? [db.prepare("INSERT INTO account_attempts (who) VALUES (?)").bind(await mailKey(email))] : [])]);
+      return json({ error: msg }, status);
+    };
     let row = null;
+    if (path === "/peek") {
+      if (typeof body.link !== "string" || !/^[a-f0-9]{64}$/.test(body.link)) return miss("That sign-in link is not complete. Ask for a new code.");
+      row = await db.prepare(`SELECT email FROM sign_in_codes WHERE link_hash = ? AND used = 0 AND expires_at > ${NOW}`).bind(await sha(body.link)).first();
+      return row ? json({ ok: true, email: row.email }) : miss("That sign-in link has expired or was already used. Ask for a new code.");
+    }
     if (typeof body.link === "string") {
       if (!/^[a-f0-9]{64}$/.test(body.link)) return miss("That sign-in link is not complete. Ask for a new code.");
       row = await db.prepare(`SELECT * FROM sign_in_codes WHERE link_hash = ? AND used = 0 AND expires_at > ${NOW}`).bind(await sha(body.link)).first();
@@ -125,7 +149,7 @@ export async function accountRoute(request, env, url) {
       if (!counted.meta.changes) return miss("Too many wrong tries for this code. Ask for a new one.");
       if (!same(await sha(row.salt + ":" + code), row.code_hash)) {
         if (row.tries + 1 >= MAX_TRIES) await db.prepare("UPDATE sign_in_codes SET used = 1 WHERE id = ?").bind(row.id).run();
-        return miss("That code is not right, or it has expired. Ask for a new one.");
+        return miss("That code is not right, or it has expired. Ask for a new one.", 400, email);
       }
     }
     const spent = await db.prepare("UPDATE sign_in_codes SET used = 1 WHERE id = ? AND used = 0").bind(row.id).run();
@@ -138,7 +162,8 @@ export async function accountRoute(request, env, url) {
       ...(old ? [db.prepare("DELETE FROM customer_sessions WHERE token_hash = ?").bind(await sha(old))] : []),
       db.prepare(`DELETE FROM customer_sessions WHERE expires_at <= ${NOW}`),
       db.prepare("UPDATE sign_in_codes SET used = 1 WHERE email = ? AND used = 0").bind(row.email),
-      db.prepare("UPDATE emails SET subject = 'Sign-in code (used)', html = '<p>This sign-in code has been used.</p>', body = 'This sign-in code has been used.' WHERE kind = 'sign_in' AND recipient = ?").bind(row.email),
+      db.prepare(`UPDATE emails SET ${WIPED("used")} WHERE kind = 'sign_in' AND recipient = ?`).bind(row.email),
+      db.prepare("DELETE FROM account_attempts WHERE who = ?").bind(await mailKey(row.email)),   // a right code clears this inbox's wrong-code count
       // orders placed as a guest with this email are theirs: they proved they own it
       db.prepare("UPDATE orders SET customer_id = ? WHERE customer_id IS NULL AND lower(email) = ?").bind(c.id, row.email),
     ]);
@@ -148,8 +173,8 @@ export async function accountRoute(request, env, url) {
   // One unsubscribe link per customer, in every reminder and alert email. Works without signing in; does nothing else.
   if (path === "/unsubscribe" && method === "POST") {
     if (typeof body.token !== "string" || !/^[a-f0-9]{48}$/.test(body.token)) return json({ error: "That unsubscribe link is not complete." }, 400);
-    const c = await db.prepare("SELECT id FROM customers WHERE unsub_token = ?").bind(body.token).first();
-    if (c) await db.batch([db.prepare("UPDATE customers SET remind_days = NULL WHERE id = ?").bind(c.id), db.prepare("DELETE FROM stock_alerts WHERE customer_id = ?").bind(c.id)]);
+    const c = await db.prepare("SELECT id, email FROM customers WHERE unsub_token = ?").bind(body.token).first();
+    if (c) await db.batch([...withdraw(db, c.id, c.email), db.prepare("DELETE FROM stock_alerts WHERE customer_id = ?").bind(c.id)]);
     return json({ ok: true });   // the same answer either way
   }
 
@@ -189,12 +214,15 @@ export async function accountRoute(request, env, url) {
 
   // The charcoal reminder: off until the customer turns it on and agrees to the exact words, which are kept with the time (CASL).
   if (path === "/reminder" && method === "PUT") {
-    if (body.days === null) { await db.prepare("UPDATE customers SET remind_days = NULL WHERE id = ?").bind(c.id).run(); return json({ ok: true, reminder: { days: null } }); }
+    if (body.days === null) { await db.batch(withdraw(db, c.id, c.email)); return json({ ok: true, reminder: { days: null, words: REMIND_WORDS } }); }
     if (![14, 21, 30, 45, 60].includes(body.days)) return json({ error: "Choose how often." }, 400);
     if (body.consent !== true) return json({ error: "Tick the box to say yes to these emails.", field: "consent" }, 400);
-    const words = `Yes, email me a reminder to restock charcoal every ${body.days} days. I can unsubscribe at any time.`;
-    await db.prepare(`UPDATE customers SET remind_days = ?, remind_consent_at = ${NOW}, remind_consent_text = ? WHERE id = ?`).bind(body.days, words, c.id).run();
-    return json({ ok: true, reminder: { days: body.days } });
+    await db.batch([   // the words on the page come from REMIND_WORDS too (via /me), so what is kept is exactly what was shown
+      db.prepare(`UPDATE customers SET remind_days = ?, remind_consent_at = ${NOW}, remind_consent_text = ? WHERE id = ?`).bind(body.days, REMIND_WORDS, c.id),
+      db.prepare(`UPDATE marketing_consents SET withdrawn_at = ${NOW} WHERE email = ? AND purpose = 'restock_reminder' AND withdrawn_at IS NULL`).bind(c.email),
+      db.prepare("INSERT INTO marketing_consents (email, purpose, words, detail) VALUES (?, 'restock_reminder', ?, ?)").bind(c.email, REMIND_WORDS, `every ${body.days} days, chosen in the account`),
+    ]);
+    return json({ ok: true, reminder: { days: body.days, words: REMIND_WORDS } });
   }
 
   if (path === "/sign-out" && method === "POST") {
@@ -209,6 +237,7 @@ export async function accountRoute(request, env, url) {
   if (path === "/delete" && method === "POST") {
     if (body.confirm !== "delete") return json({ error: "Confirm first." }, 400);
     await db.batch([
+      ...withdraw(db, c.id, c.email),   // the consent record itself stays (marketing_consents): it is the proof for emails already sent
       db.prepare("UPDATE orders SET customer_id = NULL WHERE customer_id = ?").bind(c.id),
       db.prepare("DELETE FROM loyalty_ledger WHERE customer_id = ?").bind(c.id),
       db.prepare("DELETE FROM favourites WHERE customer_id = ?").bind(c.id),
@@ -242,7 +271,7 @@ export async function stockAlerts(env, origin = siteOrigin(env)) {
 export async function restockReminders(env, origin = siteOrigin(env)) {
   const db = env.DB, site = env.SITE_NAME || "One Stop Shop"; let sent = 0;
   try {
-    const list = (await db.prepare(`SELECT c.*, (SELECT MAX(o.created_at) FROM orders o JOIN order_items i ON i.order_id = o.id JOIN products p ON p.sku = i.sku WHERE o.customer_id = c.id AND o.status IN ${SOLD} AND p.category_id = ?) AS last_coal FROM customers c WHERE c.remind_days IS NOT NULL LIMIT 500`).bind(CHARCOAL).all()).results;
+    const list = (await db.prepare(`SELECT c.*, (SELECT MAX(o.created_at) FROM orders o JOIN order_items i ON i.order_id = o.id JOIN products p ON p.sku = i.sku WHERE o.customer_id = c.id AND o.status IN ${SOLD} AND p.category_id = ?) AS last_coal FROM customers c WHERE c.remind_days IS NOT NULL ORDER BY COALESCE(c.remind_last_at, c.remind_consent_at) LIMIT 500`).bind(CHARCOAL).all()).results;
     const now = Date.now();
     for (const c of list) {
       const from = Math.max(...[c.last_coal, c.remind_last_at, c.remind_consent_at].filter(Boolean).map(t => Date.parse(t)));

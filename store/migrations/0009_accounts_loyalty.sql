@@ -86,10 +86,21 @@ CREATE TABLE loyalty_ledger (
 CREATE INDEX loyalty_customer ON loyalty_ledger(customer_id);
 
 -- Shop settings the owner can change without a code change (the loyalty program lives here, off until turned on).
-CREATE TABLE settings (
+CREATE TABLE account_settings (
   key TEXT PRIMARY KEY, value TEXT NOT NULL,
   updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
 );
+
+-- Proof of consent for marketing email (CASL s.13 puts the proof on the sender). One row per yes, with the exact
+-- words shown; withdrawn_at is set on unsubscribe, turning off, or deleting the account. Kept after the account is
+-- deleted, because it is the record for emails already sent.
+CREATE TABLE marketing_consents (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  email TEXT NOT NULL, purpose TEXT NOT NULL, words TEXT NOT NULL, detail TEXT,
+  given_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now')),
+  withdrawn_at TEXT
+);
+CREATE INDEX marketing_consents_email ON marketing_consents(email, given_at);
 
 ALTER TABLE orders ADD COLUMN customer_id INTEGER REFERENCES customers(id);
 ALTER TABLE orders ADD COLUMN reward_cents INTEGER NOT NULL DEFAULT 0;

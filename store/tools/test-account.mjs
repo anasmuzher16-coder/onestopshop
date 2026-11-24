@@ -70,6 +70,9 @@ const g2 = `race-${run}@example.com`; await api("/code", { method: "POST", body:
 await Promise.all(Array.from({ length: 12 }, (_, i) => api("/verify", { method: "POST", body: { email: g2, code: String((+real2 + 1 + i) % 1000000).padStart(6, "0") }, ip: ip() })));
 ok(sql(`SELECT tries FROM sign_in_codes WHERE email = '${g2}'`)[0].tries <= 5, "twelve guesses at once still count as at most five");
 ok((await api("/verify", { method: "POST", body: { email: g2, code: real2 }, ip: ip() })).status === 400, "and the code is dead after them");
+const cap = `cap-${run}@example.com`; let capSt = [];
+for (let round = 0; round < 3; round++) { await new Promise(r => setTimeout(r, 0)); sql(`DELETE FROM sign_in_codes WHERE email = '${cap}'`); await api("/code", { method: "POST", body: { email: cap }, ip: ip() }); for (let i = 0; i < 5; i++) capSt.push((await api("/verify", { method: "POST", body: { email: cap, code: "000000" }, ip: ip() })).status); }
+ok(capSt.every(s => s === 400) && (await api("/code", { method: "POST", body: { email: cap }, ip: ip() })).status === 429, "15 wrong codes at one inbox in a day, from any networks, stop new codes for it");
 // one network guessing across many inboxes is slowed too
 const bip = ip(); let st = [];
 for (let i = 0; i < 31; i++) st.push((await api("/verify", { method: "POST", body: { email: `spray${i}-${run}@example.com`, code: "123456" }, ip: bip })).status);
@@ -86,8 +89,10 @@ ok(/HttpOnly/.test(va.setCookie) && /SameSite=Lax/.test(va.setCookie) && /Max-Ag
 ok(at && at !== planted && at.length === 64, "sign-in issues a fresh random session, never the one the browser brought (no fixation)");
 ok((await api("/me", { cookie: "oss_c=" + planted })).data.signed_in === false, "the planted cookie is worth nothing");
 ok((await api("/verify", { method: "POST", body: { email: a, code: acode }, ip: aip })).status === 400, "a code works once");
-ok(sql(`SELECT body FROM emails WHERE id = ${am.id}`)[0].body === "This sign-in code has been used.", "the used code is wiped from the outbox copy");
+ok(sql(`SELECT body FROM emails WHERE id = ${am.id}`)[0].body === "This sign-in code is no longer kept.", "the used code is wiped from the outbox copy");
 await api("/code", { method: "POST", body: { email: a }, ip: aip }); const link = linkIn(lastMail(a));
+const pk = await api("/peek", { method: "POST", body: { link }, ip: aip });
+ok(pk.status === 200 && pk.data.email === a && !pk.setCookie.includes("oss_c="), "a link says whose account it opens before it is used (no silent sign-in to someone else's account)");
 const vl = await api("/verify", { method: "POST", body: { link }, ip: aip }), alice2 = "oss_c=" + tokenOf(vl.setCookie);
 ok(vl.status === 200 && vl.data.me.customer.email === a, "the one-tap link signs in");
 ok((await api("/verify", { method: "POST", body: { link }, ip: aip })).status === 400, "the link works once");
@@ -133,7 +138,9 @@ ok((await api("/reminder", { method: "PUT", cookie: aliceNow, body: { days: 21 }
 ok((await api("/reminder", { method: "PUT", cookie: aliceNow, body: { days: 5, consent: true } })).status === 400, "only the offered intervals");
 ok((await api("/reminder", { method: "PUT", cookie: aliceNow, body: { days: 21, consent: true } })).status === 200, "the reminder turns on with consent");
 const cons = sql(`SELECT remind_days, remind_consent_at, remind_consent_text, unsub_token FROM customers WHERE email = '${a}'`)[0];
-ok(cons.remind_days === 21 && cons.remind_consent_at && /every 21 days/.test(cons.remind_consent_text), "the consent words and time are kept");
+ok(cons.remind_days === 21 && cons.remind_consent_at && cons.remind_consent_text === (await api("/me", { cookie: aliceNow })).data.reminder.words, "the consent words kept are the words the page shows, with the time");
+const log = sql(`SELECT words, detail, withdrawn_at FROM marketing_consents WHERE email = '${a}'`);
+ok(log.length === 1 && /every 21 days/.test(log[0].detail) && !log[0].withdrawn_at, "the yes is logged with its interval");
 await fetch(B + "/__scheduled?cron=0+8+*+*+*"); await new Promise(r => setTimeout(r, 1500));
 ok(lastMail(a).kind !== "restock_reminder", "no reminder before the interval has passed");
 sql(`UPDATE customers SET remind_consent_at = '2026-01-01T00:00:00Z' WHERE email = '${a}'`);
@@ -152,6 +159,7 @@ ok(offOrder.data.order.points === 0 && sql(`SELECT COUNT(*) AS n FROM loyalty_le
 ok((await order({ name: "Alice", email: a, method: "pickup", use_reward: true, lines: [{ sku: cheap.sku, qty: 1 }] }, aliceNow)).status === 409, "with points off, a reward cannot be taken");
 ok((await fetch(B + "/api/admin/loyalty", { method: "PUT", headers: { "Content-Type": "application/json", "X-OSS-Admin": "1" }, body: JSON.stringify({ on: true }) })).status === 401, "only the back office can turn points on");
 ok((await adm("/loyalty", "PUT", { reward_points: 5 })).status === 400, "settings outside the limits are refused");
+ok((await adm("/loyalty", "PUT", { points_per_dollar: 10, reward_points: 10, reward_cents: 10000 })).status === 400 && (await adm("/loyalty", "PUT", { reward_cents: 1100 })).status === 400, "a setting that gives back more than 10 cents a dollar is refused");
 const on = await adm("/loyalty", "PUT", { on: true });
 ok(on.status === 200 && on.data.loyalty.on && on.data.loyalty.points_per_dollar === 1 && on.data.loyalty.reward_points === 100 && on.data.loyalty.reward_cents === 500 && /5 cents on every dollar/.test(on.data.cost), "points turn on with the defaults: 1 a dollar, $5 at 100 (" + on.data.cost + ")");
 const carol = (await signIn(`carol-${run}@example.com`)).cookie, carolEmail = `carol-${run}@example.com`;
@@ -198,6 +206,7 @@ ok((await api("/delete", { method: "POST", cookie: aliceNow, body: {} })).status
 const del = await api("/delete", { method: "POST", cookie: aliceNow, body: { confirm: "delete" } });
 ok(del.status === 200 && !(await api("/me", { cookie: aliceNow })).data.signed_in && !(await api("/me", { cookie: alice2 })).data.signed_in, "delete my account signs out every device");
 ok(sql(`SELECT COUNT(*) AS n FROM customers WHERE email = '${a}'`)[0].n === 0 && sql(`SELECT COUNT(*) AS n FROM orders WHERE id = '${guestOrder.data.order.id}' AND customer_id IS NULL`)[0].n === 1, "the account is gone; its orders stay as guest orders (tax records)");
+ok(sql(`SELECT COUNT(*) AS n FROM marketing_consents WHERE email = '${a}' AND withdrawn_at IS NOT NULL`)[0].n >= 1, "the consent record outlives the account, marked withdrawn (CASL proof)");
 
 // ---- 9. nothing about age or ID where customers look
 const words = JSON.stringify([(await api("/me", { cookie: carol })).data, (await api("/orders", { cookie: carol })).data]) + sql(`SELECT subject || html AS t FROM emails WHERE kind IN ('sign_in','back_in_stock','restock_reminder') ORDER BY id DESC LIMIT 20`).map(r => r.t).join(" ");
