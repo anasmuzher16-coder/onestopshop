@@ -272,7 +272,7 @@ function productKeep(sku) {
   const p = bySku[sku], info = $(".pdp__info"); if (!p || !info || $(".keep", info)) return;
   const at = $(".pdp__info > .btn", info) || $(".pdp__info > .soldline", info); if (!at) return;
   const fav = signedIn() && me.favourites.includes(sku), al = signedIn() && me.alerts.includes(sku);
-  at.insertAdjacentHTML("afterend", `<div class="keep"><button class="keep__b" type="button" data-keep="fav" data-sku="${sku}" aria-pressed="${fav}"></button>${p.stock === 0 ? `<button class="keep__b" type="button" data-keep="alert" data-sku="${sku}" aria-pressed="${al}"></button>` : ""}</div>`);
+  at.insertAdjacentHTML("afterend", `<div class="keep"><button class="keep__b" type="button" data-keep="fav" data-sku="${sku}" aria-pressed="${fav}"></button>${p.stock === 0 && p.state === "sale" ? `<button class="keep__b" type="button" data-keep="alert" data-sku="${sku}" aria-pressed="${al}"></button>` : ""}</div>`);
   $$(".keep [data-keep]", info).forEach(keepWords);
 }
 const earnNow = l => { let cart = []; try { cart = JSON.parse(localStorage.getItem("oss:cart")) || []; } catch {} const sub = cart.reduce((a, x) => a + (bySku[x.sku] ? Math.round(bySku[x.sku].price * 100) * x.qty : 0), 0); return Math.floor(Math.max(0, sub - rewardCents(sub)) / 100) * l.points_per_dollar; };

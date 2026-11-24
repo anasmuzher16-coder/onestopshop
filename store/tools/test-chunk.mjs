@@ -67,6 +67,21 @@ if (process.env.PERSIST) {
   await p.goto(B + "/p/" + up.sku, { waitUntil: "load" }); await p.waitForTimeout(600);
   const onPage = await p.evaluate(() => document.querySelector("[data-stage] .shot__tag--tbd")?.textContent || ""), alt = await p.evaluate(() => document.querySelector("[data-stage] img")?.alt || "");
   ok(onCard === "Photo to be upscaled" && onPage === "Photo to be upscaled" && /Photo to be upscaled/.test(alt), `a single item's photo to be upscaled is labelled on its card and its page: "${onCard}" "${onPage}"`);
+  // the shop's own photo uploaded in the back office: the label about the old photo goes with it
+  const jpeg = new Uint8Array(400); jpeg.set([0xff, 0xd8, 0xff, 0xe0]);
+  const upl = await fetch(B + "/api/admin/products/" + up.sku + "/photo", { method: "POST", headers: { "Content-Type": "image/jpeg", "X-OSS-Admin": "1", Cookie: ck }, body: jpeg });
+  await p.goto(B + "/shop/charcoal", { waitUntil: "load" }); await p.waitForTimeout(800);
+  const afterCard = await p.evaluate(s => document.querySelector(`#main a[data-piece="${s}"] .shot__tag--tbd`)?.textContent || "", up.sku);
+  await p.goto(B + "/p/" + up.sku, { waitUntil: "load" }); await p.waitForTimeout(600);
+  const afterPage = await p.evaluate(() => document.querySelector("[data-stage] .shot__tag--tbd")?.textContent || "");
+  ok(upl.status === 200 && afterCard === "" && afterPage === "", `after the shop uploads its own photo the label is gone: ${upl.status} "${afterCard}" "${afterPage}"`);
+  // an item waiting for the shop's price is "in the shop": its page never offers a back-in-stock email, a sold-out item for sale does
+  const tbd = P1.find(p => p.state === "tbd" && p.stock === 0), gone = P1.find(p => p.state === "sale" && p.stock === 0);
+  if (tbd) { await p.goto(B + "/p/" + tbd.sku, { waitUntil: "load" }); await p.waitForSelector(".keep__b", { timeout: 8000 }).catch(() => {});
+    ok(await p.locator('.keep__b[data-keep="fav"]').count() === 1 && await p.locator('.keep__b[data-keep="alert"]').count() === 0, `a Price TBD item (${tbd.sku}) offers Save but no back-in-stock email`); }
+  else ok(false, "a Price TBD item with no count to check");
+  if (gone) { await p.goto(B + "/p/" + gone.sku, { waitUntil: "load" }); await p.waitForSelector(".keep__b", { timeout: 8000 }).catch(() => {});
+    ok(await p.locator('.keep__b[data-keep="alert"]').count() === 1, `a sold-out item for sale (${gone.sku}) still offers the back-in-stock email`); }
   await b.close();
 }
 console.log(f ? `FAIL ${f} of ${n} checks` : `PASS ${n} checks`); process.exit(f ? 1 : 0);

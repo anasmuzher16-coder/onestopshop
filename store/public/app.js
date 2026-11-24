@@ -50,7 +50,7 @@ function swatchGroup(fam, chosen, { label, card = "" } = {}) {
 // was enlarged), the family's photo with "Shown in <colour>", or the drawn stand-in with "Photo coming". The label is in the alt text too.
 function photoLabel(v) {
   const f = (v && v.facts) || {};
-  if (!v.img) return "";
+  if (!v.img || v.photo === true) return "";   // the shop's own photo, uploaded in the back office, replaces whatever the label was about
   if (f.photo === "family") return `Shown in ${f.shown_in || "another colour"}${f.photo_upscale ? ". Photo to be upscaled" : ""}`;
   if (v.details?.photo === "replace") return "Photo to be replaced";   // a stand-in photo of a similar pack (owner, 2026-11-24)
   return f.photo_label === "upscale" || v.details?.photo === "upscale" ? "Photo to be upscaled" : "";   // a single item (charcoal, foil, shisha) says it in its details
