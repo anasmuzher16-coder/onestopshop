@@ -55,6 +55,8 @@ if (process.env.PERSIST) {
   await fetch(B + "/api/admin/products/" + up.sku, { method: "PUT", headers: { "Content-Type": "application/json", "X-OSS-Admin": "1", Cookie: ck }, body: JSON.stringify({ low_stock_at: 1 }) });
   const P1 = (await mod()).PRODUCTS, a = P1.find(p => p.sku === up.sku), z = P1.find(p => p.sku === other.sku);
   ok(a.details.photo === "upscale" && !("photo" in z.details), "the storefront gets 'upscale', never another photo note: " + JSON.stringify(z.details.photo));
+  { const feed = (await (await fetch(B + "/api/catalog")).json()).products, fa = feed.find(p => p.sku === up.sku), fz = feed.find(p => p.sku === other.sku);
+    ok(JSON.parse(fa.details).photo === "upscale" && !("photo" in JSON.parse(fz.details)), "the public feed (/api/catalog) keeps other photo notes private too"); }
   const b = await chromium.launch(), p = await b.newPage({ viewport: { width: 390, height: 844 } });
   await p.goto(B + "/shop/charcoal", { waitUntil: "load" }); await p.waitForTimeout(800);
   const onCard = await p.evaluate(s => document.querySelector(`#main a[data-piece="${s}"] .shot__tag--tbd`)?.textContent || "", up.sku);

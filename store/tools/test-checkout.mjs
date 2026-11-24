@@ -82,6 +82,13 @@ ok(carrierIds.length >= 2, "the carrier services to try: " + carrierIds.join(","
   const mv = await put("charcoal"), moved = await post({ ...who, ...to, method: "ship", service: carrierIds[0], lines: [{ sku: "OSS-8003", qty: 1 }] });
   ok(mv.status === 200 && moved.status === 409 && moved.data.local_only === true, `an item moved into Charcoal cannot go by carrier: ${mv.status} ${moved.status}`);
   await put(was); }
+// and the other way: an item from the charcoal list moved out of Charcoal (to Heat, marked standard with a weight) stays
+// pickup or local delivery only (breaker, 2026-11-24)
+{ const put = body => fetch(B + "/api/admin/products/OSS-9102", { method: "PUT", headers: { "Content-Type": "application/json", "X-OSS-Admin": "1", Cookie: cookie }, body: JSON.stringify(body) });
+  const mv = await put({ category_id: "heat", ship_class: "standard", weight_g: 50 }), out = await post({ ...who, ...to, method: "ship", service: carrierIds[0], lines: [{ sku: "OSS-9102", qty: 1 }] });
+  const feed = (await (await fetch(B + "/api/catalog")).json()).products.find(p => p.sku === "OSS-9102");
+  ok(mv.status === 200 && out.status === 409 && out.data.local_only === true && feed.ship_class === "pickup_only" && JSON.parse(feed.details).charcoal === true, `charcoal moved out of Charcoal still cannot go by carrier: ${mv.status} ${out.status} ${feed.ship_class}`);
+  await put({ category_id: "charcoal" }); }
 for (const service of [...carrierIds, "cp-nope", undefined]) {
   const r = await post({ ...who, ...to, method: "ship", service, lines: [{ sku: coalSku, qty: 1 }] });
   ok(r.status === 409 && /cannot be shipped/.test(r.data.error || "") && !r.data.order, `charcoal cannot be shipped by ${service}: ${r.status}`);

@@ -1,6 +1,6 @@
 // One Stop Shop store Worker. Answers the page routes (each with its own title, description and a real 404),
 // serves the catalogue from the database, and passes every other request to the static files.
-import { shopCatalog, dropCatalog, catalogModule, counterRow, sellable, toStorefront, CHARCOAL } from "./catalog.js";
+import { shopCatalog, dropCatalog, catalogModule, counterRow, sellable, toStorefront, CHARCOAL, isCharcoalRow, PUBLIC_PHOTO } from "./catalog.js";
 import { heroPicks } from "../public/picks.js";
 import { admin, photo, signedIn } from "./admin.js";
 import { accountRoute, stockAlerts, restockReminders, scrubCodes } from "./account.js";
@@ -62,9 +62,11 @@ const COAL_KEYS = new Set(["find", "shape", "n", "made", "mm"]);
 function charcoalMoved(url) {
   if (url.pathname.replace(/\/+$/, "") !== "/shop/heat" || !url.search) return null;
   const q = url.searchParams, type = (q.get("type") || "").split(",").filter(Boolean);
-  const coal = [...q.keys()].some(k => COAL_KEYS.has(k)) || (type.length && type.every(t => t === "box" || t === "roll"));
-  if (!coal || type.includes("foil")) return null;
-  const out = new URLSearchParams(); for (const [k, v] of q) if (k === "type" || k === "sort" || k === "brand" || COAL_KEYS.has(k)) out.append(k, v);
+  const coalType = type.filter(t => t === "box" || t === "roll"), coalSort = ["piece", "most"].includes(q.get("sort"));   // the per-piece sorts are Charcoal's now
+  const coal = [...q.keys()].some(k => COAL_KEYS.has(k)) || coalType.length > 0 || coalSort;
+  if (!coal || (type.includes("foil") && !coalType.length)) return null;   // a foil link stays in Heat
+  const out = new URLSearchParams(); for (const [k, v] of q) if (k === "sort" || k === "brand" || COAL_KEYS.has(k)) out.append(k, v);
+  if (coalType.length) out.set("type", coalType.join(","));   // "box,foil" keeps its charcoal half
   const s = out.toString(); return "/shop/charcoal" + (s ? "?" + s.replace(/%2C/gi, ",") : "");
 }
 async function page(request, env, url, ctx) {
@@ -117,7 +119,10 @@ function publicFeed(cat) {
     const o = {}; for (const k of FEED) o[k] = p[k];
     o.for_sale = sellable(p); if (!o.for_sale) o.stock = 0; if (!(p.price_cents > 0)) o.price_cents = null;
     // the item's own public details (the charcoal mark, brand, size, description); the shop's notes on photo rights and sources stay private
-    let d = {}; try { d = JSON.parse(p.details || "{}") || {}; } catch {} o.details = JSON.stringify(Object.fromEntries(FEED_DETAILS.filter(k => k in d).map(k => [k, d[k]])));
+    let d = {}; try { d = JSON.parse(p.details || "{}") || {}; } catch {}
+    if (isCharcoalRow(p)) d.charcoal = true;   // the mark follows the section and the charcoal list, as on the storefront
+    if ("photo" in d && !PUBLIC_PHOTO.includes(d.photo)) delete d.photo;   // only the photo states a page shows; other photo notes stay private
+    o.details = JSON.stringify(Object.fromEntries(FEED_DETAILS.filter(k => k in d).map(k => [k, d[k]])));
     if (counterRow(p)) o.ship_class = "pickup_only";   // charcoal, and anything whose weight is not known yet
     return o; }) };
 }

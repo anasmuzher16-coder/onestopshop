@@ -43,8 +43,9 @@ export function pickupReady(site, o, items) {
 export function newOrder(site, o, items, how = "at_pickup") {
   const paid = how === "paid", way = o.method === "pickup" ? "Pickup at the counter" : o.ship_service === "Local delivery" ? "Local delivery" : `Shipping, ${esc(o.ship_service || "")}`;
   const rows = [...lines(items), ["How", way], [paid ? "Paid by card" : "To pay at pickup", money(o.total_cents), true]];
-  const heading = `New order ${esc(o.id)}`, intro = `${esc(o.name)}${o.phone ? `, ${esc(o.phone)}` : ""}. ${paid ? "Paid by card." : "Pays at the counter."} Open it in the back office to get it ready.`;
-  return { kind: "new_order", subject: `${site}: new order ${o.id}, ${money(o.total_cents)}${paid ? "" : ", pay at pickup"}`, html: frame(site, heading, intro, rows, "Sent to the shop for every new order."), body: plain(heading, intro, rows, "") };
+  const say = e => `${e(o.name)}${o.phone ? `, ${e(o.phone)}` : ""}. ${paid ? "Paid by card." : "Pays at the counter."} Open it in the back office to get it ready.`;
+  const heading = `New order ${esc(o.id)}`, intro = say(esc);
+  return { kind: "new_order", subject: `${site}: new order ${o.id}, ${money(o.total_cents)}${paid ? "" : ", pay at pickup"}`, html: frame(site, heading, intro, rows, "Sent to the shop for every new order."), body: plain(`New order ${o.id}`, say(String), rows, "") };   // the plain text carries the name as typed (O'Brien, not O&#39;Brien)
 }
 export function lowStock(site, list) {
   const rows = list.map(p => [esc(p.name), p.stock <= 0 ? "Out" : `${p.stock} left`]);

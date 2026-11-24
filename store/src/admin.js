@@ -1,6 +1,6 @@
 import { orderShipped, pickupReady, writeEmail } from "./email.js";
 import { snapshot } from "./backup.js";
-import { CHARCOAL } from "./catalog.js";
+import { CHARCOAL, isCharcoalRow } from "./catalog.js";
 import { adminPay } from "./pay.js";
 import { sameSecret, hashPin, checkPin, pinProblem, cleanName } from "./staff.js";
 import { report, reportCsv, monthOf } from "./report.js";
@@ -186,7 +186,7 @@ export async function admin(request, env, url) {
       const base = "details" in out ? JSON.parse(out.details) : { ...had }; if (out.colour) base.colour = out.colour; else delete base.colour;
       out.details = JSON.stringify(base); delete out.colour;
     }
-    if (had.charcoal || out.category_id === CHARCOAL) charcoalRules(out, had);   // charcoal stays charcoal; retired Heat pieces are never turned into it
+    if (had.charcoal || out.category_id === CHARCOAL || isCharcoalRow(before)) charcoalRules(out, had);   // also an item from the charcoal list, wherever it is moved   // charcoal stays charcoal; retired Heat pieces are never turned into it
     const cols = Object.keys(out); if (!cols.length) return json({ ok: true });
     const was = {}; for (const k of cols) was[k] = before[k];
     try { await db.batch([db.prepare(`UPDATE products SET ${cols.map(k => k + " = ?").join(", ")}, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE sku = ?`).bind(...cols.map(k => out[k]), m[1]), audit("product.edit", m[1], was, out)]); }
