@@ -934,43 +934,39 @@ a[href^="tel:"]{white-space:nowrap}
 .fx .spk{fill:#ffb347;opacity:0} .fx .lit,.fx .stack{transform-box:view-box;transform-origin:50px 100px}
 .shophead[data-cat="charcoal"] .fx-obj:not([style]){top:auto;bottom:0;translate:none}   /* the stack stands on the band floor */
 /* ---------- STOCK ARRIVING SOON (2026-11-24, owner: "Hide samples, show coming soon") ----------
-   atelier: statement then evidence. The first slot of the shop grid stays on the page as the section's empty place: a jewel
-   tile at a card's size and ratio, labelled like a missing photo, carrying the price gun's TBD label ("Stock / Soon"), the
-   one signature beat (it is stuck on once, as the hero's labels are). Beside it the meta line, one display line, one
-   sentence and the one action (the counter's phone, ember like every primary action). Below, on hairlines, the sections
-   that do hold stock, counted: a ledger, not cards. Same 4 px ladder, tokens only, no new colours. */
-.soon{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--s-6) var(--s-3);padding:var(--s-5) var(--gutter) var(--s-16)}
-.soon__tile{grid-column:1;grid-row:1;align-self:start}
-.soon__ph{position:absolute;inset:0;display:grid;place-items:center;padding:var(--s-3);font-size:var(--t-12);font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--color-on-tile);opacity:.82;text-align:center}
-.soon__tile .sticker{top:6px;right:6px;bottom:auto;animation:tbd-in var(--dur-state) var(--ease-state) 380ms backwards}
-.soon__copy{display:contents}
-.soon__what{grid-column:2;grid-row:1;align-self:start;margin:0;white-space:normal}
-.soon__h{grid-column:2;grid-row:1;align-self:end;margin:0;font:400 var(--t-d1)/.95 var(--font-display);letter-spacing:-.01em;color:var(--color-strong);text-wrap:balance;padding-top:.1em}
-.soon__p{grid-column:1 / -1;margin:0;max-width:46ch;font-size:var(--t-16);line-height:1.5;text-wrap:pretty}
-.soon__acts{grid-column:1 / -1;display:flex;flex-wrap:wrap;align-items:center;gap:var(--s-4) var(--s-6)}
+   atelier (review 2): the store's rule for an unknown is a dashed hairline, never a block of colour, so the empty first slot of
+   the grid is a dashed slot on the coal at a card's size, holding the section's own drawn object, still. One claim (the h2),
+   one sentence, one action (the counter's phone, ember like every primary action), then the sections that do hold stock as
+   a hairline ledger beside it. 4 px ladder, tokens only, no new colours. Phone: copy and the call first, the slot after. */
+.soon{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--s-6);padding:var(--s-6) var(--gutter) var(--s-16)}
+.soon__slot.fx{position:relative;inset:auto;z-index:auto;overflow:hidden;display:grid;place-items:center;aspect-ratio:2 / 1;padding:var(--s-4);
+  border:1px dashed color-mix(in oklch,var(--tile) 70%,transparent);border-radius:var(--radius);background:color-mix(in oklch,var(--tile) 34%,var(--color-raised));order:2}
+.soon__slot svg{display:block;height:100%;width:auto;max-width:100%;overflow:visible}
+.soon__slot .o{opacity:.92}
+.soon__copy{order:1;display:grid;gap:var(--s-4);align-content:start}
+.soon__h{margin:0;font:400 var(--t-d2)/.92 var(--font-display);letter-spacing:-.01em;color:var(--color-strong);text-wrap:balance;padding-top:.1em}
+.soon__p{margin:0;max-width:46ch;font-size:var(--t-16);line-height:1.5;text-wrap:pretty}
+.soon__acts{display:flex;flex-wrap:wrap;align-items:center;gap:var(--s-4) var(--s-6);margin-top:var(--s-2)}
 .soon__acts .link{display:inline-flex;align-items:center;min-height:44px;margin:0;padding:0}
-.soon__open{grid-column:1 / -1;margin:calc(var(--s-2) * -1) 0 0;font-size:var(--t-14);color:var(--color-muted)}
-.soonnow{grid-column:1 / -1;margin-top:var(--s-8)}
+.soonnow{order:3;margin-top:var(--s-6);max-width:720px}
 .soonnow__h{margin:0 0 var(--s-3);font:600 var(--t-12)/1.4 var(--font-ui);letter-spacing:.08em;text-transform:uppercase;color:var(--color-muted)}
 .soonnow ul{list-style:none;margin:0;padding:0;border-top:1px solid var(--color-line)}
 .soonnow a{display:grid;grid-template-columns:var(--s-4) minmax(0,1fr) auto;align-items:center;gap:var(--s-4);min-height:56px;border-bottom:1px solid var(--color-line);color:var(--color-strong);text-decoration:none}
-.soonnow__sw{width:var(--s-4);height:var(--s-4);border-radius:2px;background:var(--tile)}
+.soonnow a:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px}
+.soonnow__sw{width:var(--s-4);height:var(--s-4);border-radius:var(--radius);background:var(--tile)}
 .soonnow__n{font:400 var(--t-22)/1 var(--font-display);padding-top:.12em}
 .soonnow__c{display:inline-flex;align-items:baseline;gap:var(--s-2);font-size:var(--t-14);color:var(--color-text)}
 .soonnow a:hover .soonnow__n,.soonnow a:focus-visible .soonnow__n{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:.12em}
 @media (min-width:640px){
-  .soon{grid-template-columns:repeat(3,minmax(0,1fr))}
-  .soon__tile .sticker{top:var(--s-2);right:var(--s-2)}
-  .soon__what,.soon__h,.soon__p,.soon__acts,.soon__open,.soonnow{grid-column:2 / -1}
-  .soon__what{grid-row:1;align-self:start}
-  .soon__h{grid-row:2;align-self:start;font-size:var(--t-d2);line-height:.92}
-  .soon__tile{grid-row:1 / 6}
-  .soon__p{grid-row:3} .soon__acts{grid-row:4} .soon__open{grid-row:5;margin:0}
-  .soonnow{grid-row:6;margin-top:var(--s-12)}
+  .soon{grid-template-columns:repeat(3,minmax(0,1fr));column-gap:var(--s-3);row-gap:var(--s-8)}
+  .soon__slot.fx{order:0;grid-column:1;grid-row:1;align-self:start;aspect-ratio:4 / 5;padding:var(--s-6)}
+  .soon__copy{order:0;grid-column:2 / -1;grid-row:1;padding-left:var(--s-3)}
+  .soon .soonnow{order:0;grid-column:2 / -1;grid-row:2;margin:0;padding-left:var(--s-3)}
 }
-@media (min-width:960px){.soon{grid-template-columns:repeat(4,minmax(0,1fr));column-gap:var(--s-3);row-gap:var(--s-4)} .soon__what,.soon__h,.soon__p,.soon__acts,.soon__open{grid-column:2 / 5} .soonnow{grid-column:2 / 4} .soon__what{margin-top:var(--s-1)}}
-@media (min-width:1500px){.soon{grid-template-columns:repeat(5,minmax(0,1fr))}}
-@media (prefers-reduced-motion:reduce){.soon__tile .sticker{animation:none}}
-/* the home tiles of a section still on its way: the jewel, its name, "Soon" where the count goes, the missing-photo label */
-.cat__ph{grid-column:2;grid-row:1 / 3;align-self:center;justify-self:center;font-size:var(--t-12);font-weight:600;letter-spacing:.08em;text-transform:uppercase;opacity:.7;text-align:center}
-.cat--soon .cat__n{letter-spacing:.08em;text-transform:uppercase}
+@media (min-width:960px){.soon{grid-template-columns:repeat(4,minmax(0,1fr))} .soon__copy{grid-column:2 / 4} .soon .soonnow{grid-column:4;grid-row:1;padding-left:var(--s-4)}}
+@media (min-width:1500px){.soon{grid-template-columns:repeat(5,minmax(0,1fr))} .soon .soonnow{grid-column:4 / 6}}
+/* the home page: sections whose stock is not on the site yet are one quiet line under the tiles, never a tile of their own */
+.cats__soon{margin:0;padding:var(--s-4) var(--gutter) 0;font-size:var(--t-14);line-height:1.6;color:var(--color-text)}
+.cats__soon .tbd{margin-right:var(--s-2)}
+.cats__soon .link{display:inline-block;padding:var(--s-3) 0;margin:calc(var(--s-3) * -1) 0}
+@media (min-width:960px){.cat:nth-child(4):last-child{grid-column:1 / -1}}   /* four sections with stock: the fourth closes the mosaic as one band */

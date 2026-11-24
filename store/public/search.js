@@ -53,7 +53,7 @@ function ways() {
     ["/shop/charcoal?find=coal", tone("charcoal", "ash"), "coal", "Need coals", "Pick the right box in two taps", X.PRODUCTS.some(p => heatKind(p) === "box")],
     ["/shop/shisha", tone("shisha", "amethyst"), "jar", "Flavours", `${flav} tobacco-free flavours`, flav > 0],
     ["/shop/heat?type=foil", tone("heat", "ember"), "foil", "Foil", `${foil} packs, by size and thickness`, foil > 0],
-    ["/gifts/under-50", "emerald", "gift", "A gift", "Under $50 or under $150, packed at the counter", X.PRODUCTS.some(p => buyable(p) && p.ship !== "pickup_only" && !(p.details && p.details.charcoal) && !p.dark && p.price < 50)],
+    ["/gifts/under-50", "emerald", "gift", "A gift", "Packed at the counter", X.PRODUCTS.some(p => buyable(p) && p.ship !== "pickup_only" && !(p.details && p.details.charcoal) && !p.dark && p.price < 50)],
     ["/shop/parts", tone("parts", "gilt"), "part", "Parts and care", `${X.PRODUCTS.filter(p => p.cat === "parts").length} pieces to fix or clean your setup`, has("parts")],
     ["/shop/cologne", tone("cologne", "amethyst"), "scent", "Smell good", "Cologne and fragrance", has("cologne")],
   ].filter(w => w[5]).slice(0, 6);
@@ -96,8 +96,9 @@ export function searchOut(q) {
   if (!hits.length) {
     if (u.pages.length) return said + pages;
     const near = nearest(IX, q);
-    if (soon.length) return `<h2 class="srch__none">${X.esc(soonNames)}: stock arriving soon.</h2><p class="srch__nonep">We are putting the shop’s own list online. Call the counter at <a class="link" href="tel:+15192552222">519-255-2222</a> and we will check the shelf, or see ${soonLink}.</p>
-      <h3 class="srch__h">On the shelf now</h3>${ways()}`;
+    // a word naming a section whose stock is not on the site yet: the same empty state as the section (no link back into it)
+    if (soon.length) return `<h2 class="srch__none">${X.esc(soonNames)}: stock arriving soon.</h2><p class="srch__nonep">Our ${X.esc(soonNames.toLowerCase())} are not on the site yet. Call the counter and we will check the shelf for you.</p>
+      <p class="soon__acts"><a class="btn" href="tel:+15192552222">Call 519-255-2222</a></p>${X.nowLedger ? X.nowLedger() : ways()}`;
     return `<h2 class="srch__none">No “${X.esc(q)}” on the shelf.</h2><p class="srch__nonep">${near.alone.length ? "Here is the nearest we have, or ask us to get it in." : near.mean ? "" : "Try one of these, or ask us to get it in."}</p>
       ${near.mean ? `<p class="meant">Did you mean <a class="link" href="/search?q=${encodeURIComponent(near.mean)}">${X.esc(near.mean)}</a>?</p>` : ""}
       ${near.alone.map(a => `<h3 class="srch__h">With just “${X.esc(a.word)}” <span class="num">${a.n}</span></h3>${a.jumps.length ? `<ul class="jumps">${a.jumps.map(jumpRow).join("")}</ul>` : ""}<ul class="rows">${a.hits.map(p => row(p, [a.word])).join("")}</ul>`).join("")}

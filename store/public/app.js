@@ -272,29 +272,34 @@ function cardMeta(p) {
 const band = (fx, tone, title, note = "") => `<section class="shophead shophead--page" data-tone="${tone}" data-fx="${fx}"><h1 class="shophead__h">${title}</h1>${note ? `<p class="shophead__n">${note}</p>` : ""}</section>`;
 
 // ---------- STOCK ARRIVING SOON (owner, 2026-11-24: "Hide samples, show coming soon") ----------
-// A section, gift list or set with nothing in it shows its empty place on the shelf instead of an empty grid: the first slot
-// of the grid, a jewel tile in the section's colour labelled the way the grid labels a missing photo, with the price gun's
-// label slapped on it ("Stock / Soon", the TBD label). Beside it one plain sentence and the one action, the counter's phone;
-// below it, the sections that do have something on the shelf, counted. No form: the shop answers the phone.
+// A section, gift list or set with nothing in it shows its empty place on the shelf instead of an empty grid. The store's
+// rule for an unknown is a dashed hairline, never a coloured block (styles.css, "quiet TBD"), so the first slot of the grid
+// is drawn as a dashed empty slot on the coal, and the section's own drawn object (the one its band plays with) stands in it,
+// still. Beside it one claim, one sentence and the one action, the counter's phone; beside that, what is on the shelf now,
+// counted, as a ledger. No form: the shop answers the phone.
 const SOON_NOUN = { parts: "parts and care pieces", misc: "odds and ends", heat: "heat pieces", cologne: "colognes" };
 const shelfNow = c => { const l = SHELF.filter(p => p.cat === c.id), sale = l.filter(forSale).length; return [c, l.length, sale]; };
-function soonShelf({ tone, what, title = "Stock arriving soon.", lead, meta = `${esc(what)}, <span class="num">0</span> on the shelf` }) {
+// the drawings are the band's own (fx-objects.js, already fetched by the effects); a slot is filled once they are here
+let objs = null, slotN = 0;
+const fillSlots = () => (objs ||= import("./fx-objects.js")).then(({ OBJ }) => { for (const s of document.querySelectorAll(".soon__slot[data-obj]:empty")) { const o = OBJ[s.dataset.obj]; if (o) s.innerHTML = `<svg viewBox="0 0 100 100" aria-hidden="true">${o.replaceAll("ID", "soon" + (++slotN))}</svg>`; } }).catch(() => {});
+function nowLedger() {
   const now = CATEGORIES.map(shelfNow).filter(([, n]) => n);
+  return now.length ? `<nav class="soonnow" aria-labelledby="soonnow-h"><h2 class="soonnow__h" id="soonnow-h">On the shelf now</h2>
+      <ul>${now.map(([c, n, sale]) => `<li><a href="/shop/${c.id}" data-tone="${c.tone}"><span class="soonnow__sw" aria-hidden="true"></span><span class="soonnow__n">${esc(c.name)}</span><span class="soonnow__c"><span class="num">${n}</span>${sale ? "" : ` ${TBD("Prices")}`}</span></a></li>`).join("")}</ul></nav>` : "";
+}
+function soonShelf({ tone, obj, title = "Stock arriving soon.", lead }) {
+  setTimeout(fillSlots, 0);   // after the page has put this in
   return `<section class="soon" data-tone="${tone}" aria-labelledby="soon-h">
-    <div class="soon__tile tile" aria-hidden="true"><span class="soon__ph">On its way</span><span class="sticker sticker--tbd" style="--r:-7deg"><span class="sticker__k">List</span><span class="sticker__v">TBD</span></span></div>
+    <div class="soon__slot fx" data-obj="${obj}" aria-hidden="true"></div>
     <div class="soon__copy">
-      <p class="tbd soon__what">${meta}</p>
       <h2 class="soon__h" id="soon-h">${title}</h2>
       <p class="soon__p">${lead}</p>
       <div class="soon__acts"><a class="btn" href="tel:+15192552222">Call 519-255-2222</a>${directions()}</div>
-      <p class="soon__open">${openLine()}. ${SHOP_STREET}, Windsor.</p>
     </div>
-    ${now.length ? `<nav class="soonnow" aria-labelledby="soonnow-h"><h2 class="soonnow__h" id="soonnow-h">On the shelf now</h2>
-      <ul>${now.map(([c, n, sale]) => `<li><a href="/shop/${c.id}" data-tone="${c.tone}"><span class="soonnow__sw" aria-hidden="true"></span><span class="soonnow__n">${esc(c.name)}</span><span class="soonnow__c"><span class="num">${n}</span>${sale ? "" : ` ${TBD("Prices")}`}</span></a></li>`).join("")}</ul></nav>` : ""}
+    ${nowLedger()}
   </section>`;
 }
-const soonSection = c => soonShelf({ tone: c.tone, what: c.name, lead: `We are putting the shop’s own ${SOON_NOUN[c.id] || c.name.toLowerCase()} online. Until the list is up, call the counter and we will check the shelf for you.` });
-function viewHome() {
+const soonSection = c => soonShelf({ tone: c.tone, obj: c.id, lead: `Our ${SOON_NOUN[c.id] || c.name.toLowerCase()} are not on the site yet. Call the counter and we will check the shelf for you.` });function viewHome() {
   // the first screen and the counter picks: the shop's ticked (in-store) hookahs with their own photo, one per family (public/picks.js, the Worker preloads the same first one)
   const ranked = heroPicks(PRODUCTS, 13), stars = ranked.slice(0, 5), picks = ranked.slice(5, 13);
   for (const p of SHELF.filter(x => x.cat === "hookahs" && !x.dark)) { if (picks.length >= 8) break; if (!picks.includes(p) && !stars.includes(p)) picks.push(p); }
@@ -319,12 +324,11 @@ function viewHome() {
     </div>
   </section>
   <section class="cats" aria-label="Shop by category">
-    ${/* sections with stock lead; those still waiting for theirs follow */ [...CATEGORIES.filter(c => SHELF.some(p => p.cat === c.id)), ...CATEGORIES.filter(c => !SHELF.some(p => p.cat === c.id))].map((c, i) => { const n = SHELF.filter(p => p.cat === c.id).length; const lead = (c.id === "hookahs" && stars[0]) || SHELF.find(p => p.cat === c.id && !p.dark && p.img) || SHELF.find(p => p.cat === c.id && !p.dark);
-      // a section with nothing in it yet keeps its tile, labelled like the grid's missing photo, and says "Soon" where the count goes
-      return lead ? `<a class="cat" data-tone="${c.tone}" href="/shop/${c.id}">${shot(lead, { small: i > 0, use: i ? "cat" : "cat1", cls: "cat__img" })}<span class="cat__name">${c.name}</span><span class="cat__n num">${n}</span></a>`
-        : `<a class="cat cat--soon" data-tone="${c.tone}" href="/shop/${c.id}"><span class="cat__ph" aria-hidden="true">On its way</span><span class="cat__name">${c.name}</span><span class="cat__n">Soon<span class="sr">: stock arriving soon</span></span></a>`; }).join("")}
+    ${CATEGORIES.filter(c => SHELF.some(p => p.cat === c.id)).map((c, i) => { const n = SHELF.filter(p => p.cat === c.id).length; const lead = (c.id === "hookahs" && stars[0]) || SHELF.find(p => p.cat === c.id && !p.dark && p.img) || SHELF.find(p => p.cat === c.id && !p.dark);
+      return `<a class="cat" data-tone="${c.tone}" href="/shop/${c.id}">${shot(lead, { small: i > 0, use: i ? "cat" : "cat1", cls: "cat__img" })}<span class="cat__name">${c.name}</span><span class="cat__n num">${n}</span></a>`; }).join("")}
   </section>
-  <section class="shelf">
+  ${(() => { const waiting = CATEGORIES.filter(c => !SHELF.some(p => p.cat === c.id));   // sections whose stock is not on the site yet: one quiet line, never a tile (2026-11-24)
+    return waiting.length ? `<p class="cats__soon"><span class="tbd">Not on the site yet</span> ${waiting.map(c => `<a class="link" href="/shop/${c.id}">${esc(c.name)}</a>`).join(", ")}. Call <a class="link" href="tel:+15192552222">519-255-2222</a> to ask.</p>` : ""; })()}  <section class="shelf">
     <header class="shelf__head"><h2 class="h2">Counter picks</h2><a class="link" href="/shop/hookahs">All ${SHELF.filter(p => p.cat === "hookahs").length} hookahs</a></header>
     <div class="grid">${picks.map((p, i) => card(p, i + 8)).join("")}</div>
   </section>
@@ -411,7 +415,7 @@ function viewShop(cat) {
   return `
   <section class="shophead" data-tone="${c ? c.tone : "bone"}" ${c ? `data-cat="${c.id}"` : `data-fx="all"`}>
     <h1 class="shophead__h">${c ? c.name : "Everything"}</h1>
-    <p class="shophead__n">${empty ? "Stock arriving soon" : bandNote(c, list)}</p>
+    <p class="shophead__n">${empty ? openLine() : bandNote(c, list)}</p>
   </section>
   <nav class="chips" aria-label="Categories"><a href="/shop" ${!c ? 'aria-current="page"' : ""}>All</a>${CATEGORIES.map(x => `<a href="/shop/${x.id}" ${c && c.id === x.id ? 'aria-current="page"' : ""}>${x.name}</a>`).join("")}<a href="/gifts/under-50">Gifts</a></nav>
   ${empty ? soonSection(c) : f ? f.html(() => shopGrid(cat)) : shopGrid(cat)}`;
@@ -522,11 +526,11 @@ function viewGifts(kind) {
   return `
   <section class="shophead" data-tone="${under ? "emerald" : "cobalt"}" data-fx="gifts">
     <h1 class="shophead__h">${under ? "Under $50" : "Under $150"}</h1>
-    <p class="shophead__n">${list.length ? `<span class="num">${list.length}</span> gifts, packed at the counter` : "Gifts arriving soon"}</p>
+    <p class="shophead__n">${list.length ? `<span class="num">${list.length}</span> gifts, packed at the counter` : openLine()}</p>
   </section>
   <nav class="chips chips--on" aria-label="Gifts"><a href="/shop">Everything</a><a href="/gifts/under-50" ${under ? 'aria-current="page"' : ""}>Under $50</a><a href="/gifts/under-150" ${!under ? 'aria-current="page"' : ""}>Under $150</a><a href="/set">The full setup</a></nav>
   ${list.length ? `<div class="grid grid--shop">${list.map(card).join("")}</div>`
-    : soonShelf({ tone: under ? "emerald" : "cobalt", what: under ? "Gifts under $50" : "Gifts under $150", title: "Gifts arriving soon.", lead: "Pieces in this price range are on their way to the site. Call the counter and we will check the shelf for you, and pack it as a gift." })}`;
+    : soonShelf({ tone: under ? "emerald" : "cobalt", obj: "gifts", title: "Gifts arriving soon.", lead: "Nothing in this price range is on the site yet. Call the counter and we will check the shelf for you, and pack it as a gift." })}`;
 }
 
 // ---------- build a set ----------
@@ -560,16 +564,17 @@ function setWhy() {
   const by = { tbd: [], sold: [], soon: [] }, and = l => l.length > 1 ? l.slice(0, -1).join(", ") + " and " + l.at(-1) : l[0];
   for (const [slot, cat] of SLOTS) { if (OPTIONAL.has(slot)) continue; const l = inCat(cat), name = (catById[cat]?.name || cat).toLowerCase(); by[!l.length ? "soon" : l.some(forSale) ? "sold" : "tbd"].push(name); }
   const cap = s => s[0].toUpperCase() + s.slice(1);
-  return [by.tbd.length ? `${cap(and(by.tbd.map(n => n.replace(/s$/, ""))))} prices are on the way.` : "", by.soon.length ? `The shop\u2019s ${and(by.soon)} are arriving soon.` : "", by.sold.length ? `The ${and(by.sold)} are sold out for now.` : ""].filter(Boolean).join(" ");
+  const parts = [by.tbd.length ? `${and(by.tbd.map(n => n.replace(/s$/, "")))} prices are on the way` : "", by.soon.length ? `our ${and(by.soon)} are not on the site yet` : "", by.sold.length ? `the ${and(by.sold)} are sold out for now` : ""].filter(Boolean);
+  return parts.length ? cap(parts.length > 1 ? parts.slice(0, -1).join(", ") + ", and " + parts.at(-1) : parts[0]) + "." : "";
 }
 function viewSet() {
   const picks = setPicks();
   if (!setReady()) return `
   <section class="shophead" data-tone="ruby" data-fx="set">
     <h1 class="shophead__h">Build a set</h1>
-    <p class="shophead__n">Sets arriving soon</p>
+    <p class="shophead__n">${openLine()}</p>
   </section>
-  ${soonShelf({ tone: "ruby", what: "Sets", meta: `Sets, <span class="num">0</span> ready to build`, title: "Sets arriving soon.", lead: `A set is a hookah, a bowl and a hose that go together. ${setWhy()} Call the counter and we will help you put one together from the shelf.` })}`;
+  ${soonShelf({ tone: "ruby", obj: "set", title: "Sets arriving soon.", lead: `A set is a hookah, a bowl and a hose that go together. ${setWhy()} Call the counter and we will help you put one together from the shelf.` })}`;
   return `
   <section class="shophead" data-tone="ruby" data-fx="set">
     <h1 class="shophead__h">Build a set</h1>
@@ -1232,6 +1237,6 @@ window.addEventListener("routechange", () => {
   if (!navInfo().instant && document.startViewTransition && !matchMedia("(prefers-reduced-motion: reduce)").matches) document.startViewTransition(go); else go();   // a wave is already covering the change
 });
 find.init({ PRODUCTS, esc, card, render, navigate, grid: shopGrid, defer });
-finder.init({ PRODUCTS, CATEGORIES, esc, shot, sticker, setQ: q => { state.q = q; } });
+finder.init({ PRODUCTS, CATEGORIES, esc, shot, sticker, nowLedger, setQ: q => { state.q = q; } });
 render();
 if (spotHere()) putScroll(spotHere());   // a reload, or Back from another site, lands where you were
