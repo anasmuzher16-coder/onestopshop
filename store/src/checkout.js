@@ -5,6 +5,7 @@ import * as rates from "../public/rates-core.js";
 import { loadCatalog, toStorefront, isCharcoal } from "./catalog.js";
 import { orderPlaced, lowStock, writeEmail } from "./email.js";
 import { deliveryQuote } from "./delivery.js";
+import { cleanSource } from "./source.js";
 
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" } });
 const text = (v, max) => typeof v === "string" && v.trim().length > 0 && v.trim().length <= max ? v.trim() : null;
@@ -125,10 +126,10 @@ export async function placeOrder(request, env, url) {
   if (key) quote = { ...quote, idem: keyed.idem, idem_req: sameOrder };
 
   // 1 write the order as pending  2 take the stock, one guarded step per item  3 confirm, or put everything back
-  const id = key ? keyed.id : code();
+  const id = key ? keyed.id : code(), src = cleanSource(body.source, url.hostname);   // where the order came from (short codes only)
   try { await db.batch([
-    db.prepare("INSERT INTO orders (id, status, method, email, name, phone, address, subtotal_cents, shipping_cents, tax_cents, total_cents, tax_province, ship_service, ship_quote, payment_ref) VALUES (?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'DEMO')")
-      .bind(id, method, email, name, phone, JSON.stringify({ ...address, ...(note ? { note } : {}) }), subtotal, shipping, tax, total, province, service, JSON.stringify(quote)),
+    db.prepare("INSERT INTO orders (id, status, method, email, name, phone, address, subtotal_cents, shipping_cents, tax_cents, total_cents, tax_province, ship_service, ship_quote, payment_ref, source, source_detail) VALUES (?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'DEMO', ?, ?)")
+      .bind(id, method, email, name, phone, JSON.stringify({ ...address, ...(note ? { note } : {}) }), subtotal, shipping, tax, total, province, service, JSON.stringify(quote), src.source, src.detail),
     ...lines.map(l => db.prepare("INSERT INTO order_items (order_id, sku, name, qty, unit_cents) VALUES (?,?,?,?,?)").bind(id, l.product.sku, l.product.name, l.qty, cents(l.product.price))),
   ]); } catch (e) {   // two copies of one retry at the same moment: the database let one through
     if (!key || !/UNIQUE|constraint/i.test(String(e && e.message))) throw e;
