@@ -101,7 +101,7 @@ export const counterRow = p => { if (!p) return false; if (p.ship_class === "pic
 // charcoal-...), so moving an item out of Charcoal in the back office never makes it shippable (breaker, 2026-11-24).
 export function isCharcoalRow(p) { const f = String(p.family || ""); return (p.category_id === CHARCOAL && !f.startsWith("foil-")) || f.startsWith("charcoal-"); }
 // The photo states a page shows; any other note on a photo stays in the back office.
-export const PUBLIC_PHOTO = ["approved", "coming", "upscale"];
+export const PUBLIC_PHOTO = ["approved", "coming", "upscale", "replace"];
 export function catalogModule(cat) {
   const { BOXES, CATEGORIES, PRODUCTS } = toStorefront(cat);
   // JSON is valid JavaScript; U+2028/2029 are escaped so no product text can break the module.
