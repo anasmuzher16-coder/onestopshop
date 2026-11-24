@@ -129,7 +129,7 @@ function shot(p, { small = false, eager = false, use = small ? "card" : "pdp", c
   const box = !p.img && !p.photo && p.details?.box_sku && bySku[p.details.box_sku];
   if (box && box.img) return shot(box, { small, eager, use, cls, alt: alt ? `${alt}, shown with the box it comes from` : "" }) + `<span class="shot__tag" aria-hidden="true">Sold by the roll</span>`;
   // charcoal still waiting for the shop's photo: the drawn box stands in, so the grid never shows a broken picture
-  if (!p.img && (isCharcoal(p) || p.cat === "heat")) return `<img class="shot shot--drawn ${cls}" src="img/pc/coming-charcoal.svg" alt="${esc(alt ? alt + ", drawing until the photo is ready" : "")}" width="720" height="900" ${eager ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async"><span class="shot__tag" aria-hidden="true">Photo coming</span>`;
+  if (!p.img && isCharcoal(p)) return `<img class="shot shot--drawn ${cls}" src="img/pc/coming-charcoal.svg" alt="${esc(alt ? alt + ", drawing until the photo is ready" : "")}" width="720" height="900" ${eager ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async"><span class="shot__tag" aria-hidden="true">Photo coming</span>`;
   // a hookah or a shisha flavour still waiting for its photo: the drawn stand-in, in the same style as the charcoal box
   const drawn = !p.img && (p.cat === "hookahs" ? "coming-hookah" : p.cat === "shisha" ? "coming-shisha" : "");
   if (drawn) return `<img class="shot shot--drawn ${cls}" src="img/pc/${drawn}.svg" alt="${esc(alt ? alt + ", drawing until the photo is ready" : "")}" width="720" height="900" ${eager ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async"><span class="shot__tag" aria-hidden="true">Photo coming</span>`;
@@ -336,7 +336,7 @@ function viewProduct(sku) {
     <div class="pdp__info">
       <p class="crumb"><a href="/shop/${p.cat}">${c.name}</a></p>
       <h1 class="pdp__name">${esc(p.name)}</h1>
-      ${p.family ? (stemSet(p) ? `<p class="pdp__note">Stem set, no base.</p>` : "") : `<p class="pdp__note">${esc(p.note || p.facts?.size || "")}${p.height ? `. Stands ${p.height} cm.` : p.note || p.facts?.size ? "." : ""}</p>`}
+      ${p.family ? (stemSet(p) ? `<p class="pdp__note">Stem set, no base.</p>` : "") : `<p class="pdp__note">${esc(p.note || p.facts?.size || "")}${p.height ? `. Stands ${p.height} cm.` : /[.!?]$/.test(p.note || p.facts?.size || ".") ? "" : "."}</p>`}
       ${p.details?.description ? `<p class="pdp__desc">${esc(p.details.description)}</p>` : ""}
       ${chips}
       ${p.details && p.details.notes ? `<p class="pdp__notes"><span>Notes</span> ${esc(p.details.notes)}</p>` : ""}
