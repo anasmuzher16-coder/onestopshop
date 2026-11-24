@@ -266,8 +266,8 @@ function swap() {
 // when the first frame after it arrives, so the screen holds at full cover through that frame and the wake then leaves in one smooth
 // pass, instead of jumping a third of the way the moment the frame lands.
 function unveil(now) {
-  w.rt = now; w.rd = Math.max(Math.round(w.o.ms * .8), Math.min(w.o.ms, w.t0 + Math.min(MAX_MS, w.o.cover + w.o.ms) - now));
-  clearTimeout(w.goneT); w.goneT = setTimeout(finish, w.rd + 400);   // the frame clock lands the end; this only catches a stalled one
+  w.rt = now; w.rd = Math.max(120, Math.min(w.o.ms, w.t0 + Math.min(MAX_MS, w.o.cover + w.o.ms) - now));   // the whole pass keeps its time budget: a slow swap makes the wake leave a little faster, never later
+  clearTimeout(w.goneT); w.goneT = setTimeout(finish, w.rd + 90);
 }
 function tick(now) {
   raf = 0; if (!w) return; raf = requestAnimationFrame(tick); now = Math.max(now, performance.now() - 40);
