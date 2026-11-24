@@ -157,6 +157,9 @@ export async function placeOrder(request, env, url) {
       shipping = due; service = "Local delivery"; province = "ON"; eta = rates.localEta(); quote = { id: "local", eta, metres: d.metres, shop: d.shop, base_fee_cents: d.fee_cents, ...(d.confirm ? { confirm_address: true } : {}) };
       address = { line1, city, province, postal: dest.full };
     } else {
+    // No carrier shipping to Quebec until the site is also in French (Charter of the French Language, as amended by Bill 96;
+    // plan section 8, not legal advice). Pickup stays open to everyone.
+    if (dest.prov === "QC") return json({ error: "We do not ship to Quebec yet: the site is in English only for now. Pickup in Windsor is free.", field: "postal", quebec: true }, 409);
     if (rates.fuelOn().stale) console.error(JSON.stringify({ at: "checkout", problem: "Canada Post fuel rate is out of date: add this week's row to FUEL_WEEKS in rates-core.js", using: rates.fuelOn().week }));
     const parcels = rates.pack(lines), opts = rates.quote(dest, parcels);
     if (!opts.length) return json({ error: "One of these boxes is over the carrier's 30 kg limit. Call the counter and we will quote it by hand." }, 409);

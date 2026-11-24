@@ -25,6 +25,7 @@ for (const [engine, w, h, mobile] of [["chromium", 390, 844, true], ["webkit", 3
     await p.goto(B + "/shop/hookahs", { waitUntil: "networkidle" }); await p.waitForTimeout(600);
     const opts = p.locator(".dchoose__opt");
     t(`${tag} chooser shows LOCAL and NATIONWIDE`, await opts.count() === 2 && await opts.nth(0).isVisible() && /LOCAL DELIVERY/i.test(await opts.nth(0).innerText()) && /NATIONWIDE DELIVERY/i.test(await opts.nth(1).innerText()));
+    t(`${tag} nationwide says Canada except Quebec, not anywhere in Canada`, /except Quebec/i.test(await opts.nth(1).innerText()) && !/anywhere in Canada(?! except)/i.test(await p.locator("body").innerText()));
     const geo = await p.evaluate(() => ({ strip: document.querySelector(".dstrip").getBoundingClientRect().bottom, card: document.querySelector(".card").getBoundingClientRect().top, sizes: [...document.querySelectorAll(".dchoose__opt,.dstrip__x")].map(e => { const r = e.getBoundingClientRect(); return Math.min(r.width, r.height); }), wide: document.documentElement.scrollWidth <= innerWidth, cls: window.__cls ?? 0, pos: getComputedStyle(document.querySelector(".dstrip")).position }));
     t(`${tag} chooser is above the products, in the page flow`, geo.strip <= geo.card && geo.pos === "relative", JSON.stringify(geo));
     t(`${tag} chooser targets are at least 44px`, geo.sizes.every(s => s >= 44), geo.sizes.join(","));
@@ -75,6 +76,8 @@ for (const [engine, w, h, mobile] of [["chromium", 390, 844, true], ["webkit", 3
     { const words = await p.locator("#main").innerText(); t(`${tag} shipping page: store manager, final sale, no pay at door`, /talk to the store manager/.test(words) && /All sales are final/.test(words) && !/send a photo|\bcash\b|at the door/i.test(words)); }
     await p.goto(B + "/terms", { waitUntil: "networkidle" });
     { const words = await p.locator("#main").innerText(); t(`${tag} terms: draft marker, final sale, store manager`, /for the shop to review/i.test(words) && /All sales are final/.test(words) && /talk to the store manager/.test(words) && !/take a photo|within 14 days for a refund|\bcash\b/i.test(words)); }
+    { const terms = await p.locator("#main").innerText(); await p.goto(B + "/shipping", { waitUntil: "networkidle" }); const words = terms + " " + await p.locator("#main").innerText();
+      t(`${tag} terms and shipping: final sale keeps the legal carve-outs, no Quebec shipping yet, nothing about ID or age`, /All sales are final, except faulty, wrong, damaged or undelivered items/.test(words) && /except (to )?Quebec/.test(words) && !/\bID\b|\bage\b|\b19\+|\bminimum age/i.test(words)); }
     await p.evaluate(() => { localStorage.clear(); localStorage.setItem("oss:strip-off", "true"); });
     await p.goto(B + "/p/OSS-8004", { waitUntil: "networkidle" }); await press(p.locator("[data-add]:visible").first()); await p.waitForTimeout(900);
     await p.goto(B + "/cart", { waitUntil: "networkidle" });

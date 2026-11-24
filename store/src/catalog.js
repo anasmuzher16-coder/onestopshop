@@ -66,10 +66,11 @@ export function toStorefront(cat) {
   for (const p of cat.products) if (grouped(p)) { const own = parse(p.facts_known).photo === "own"; if (!lead[p.family] || (own && !lead[p.family].own)) lead[p.family] = { sku: p.sku, own }; }
   const PRODUCTS = cat.products.map(p => {
     const details = parse(p.details);
-    // charcoal by its flag, or by its section: anything in Heat that is not foil is charcoal, so moving an item into Heat in the
+    // charcoal by its flag, or by its section: anything in Charcoal is charcoal, so moving an item into Charcoal in the
     // back office can never leave it shippable by a carrier (breaker, 2026-11-24)
-    if (p.category_id === CHARCOAL && !String(p.family || "").startsWith("foil-")) details.charcoal = true;
+    if (isCharcoalRow(p)) details.charcoal = true;   // also an item from the charcoal list, wherever the back office puts it
     const coal = !!details.charcoal; delete details.photo_rights; delete details.photo_rejected; delete details.source_lines;   // shop-only notes stay in the back office
+    if ("photo" in details && !PUBLIC_PHOTO.includes(details.photo)) delete details.photo;   // only the photo states a page shows; any other note on a photo stays in the back office
     const sale = sellable(p), facts = p.family ? shownFacts(p) : {};
     // a catalogue item whose pack weight is not known yet cannot be priced for a carrier: pickup or local delivery until it is
     const weightTbd = weightUnknown(p);
@@ -89,12 +90,18 @@ export function toStorefront(cat) {
   return { BOXES, CATEGORIES, PRODUCTS };
 }
 
-// Charcoal (owner, 2026-11-23) lives in the heat section and carries details.charcoal. toStorefront makes every marked item pickup or local delivery only
+// Charcoal (owner, 2026-11-23) has its own section since 2026-11-24 (Heat keeps foil and heat management) and carries
+// details.charcoal. toStorefront makes every marked item, and everything in this section, pickup or local delivery only
 // (ship class pickup_only: never Canada Post or any carrier) whatever its row says, so a back-office edit can never let it ship.
-export const CHARCOAL = "heat";
+export const CHARCOAL = "charcoal";
 // Storefront products: charcoal (always pickup or local delivery, never a carrier).
 export const isCharcoal = p => !!(p && p.details && p.details.charcoal);
-export const counterRow = p => { if (!p) return false; if (p.ship_class === "pickup_only" || weightUnknown(p)) return true; try { return !!JSON.parse(p.details || "{}").charcoal; } catch { return false; } };
+export const counterRow = p => { if (!p) return false; if (p.ship_class === "pickup_only" || isCharcoalRow(p) || weightUnknown(p)) return true; try { return !!JSON.parse(p.details || "{}").charcoal; } catch { return false; } };
+// A database row is charcoal by its section (anything in Charcoal but foil), or by coming from the charcoal list (family
+// charcoal-...), so moving an item out of Charcoal in the back office never makes it shippable (breaker, 2026-11-24).
+export function isCharcoalRow(p) { const f = String(p.family || ""); return (p.category_id === CHARCOAL && !f.startsWith("foil-")) || f.startsWith("charcoal-"); }
+// The photo states a page shows; any other note on a photo stays in the back office.
+export const PUBLIC_PHOTO = ["approved", "coming", "upscale"];
 export function catalogModule(cat) {
   const { BOXES, CATEGORIES, PRODUCTS } = toStorefront(cat);
   // JSON is valid JavaScript; U+2028/2029 are escaped so no product text can break the module.

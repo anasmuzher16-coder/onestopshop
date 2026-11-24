@@ -1,6 +1,6 @@
 // The air of every other page. Hookahs have their smoke and cologne its mist (fx-pour.js); here each section gets the fine thing that
 // belongs to its product, on the same black ground, behind every word, photo and button:
-//   bases  bubbles rising through water      bowls  pale ash lifting off the foil     heat   embers
+//   bases  bubbles rising through water      bowls  pale ash lifting off the foil     heat   embers     charcoal  slow deep sparks
 //   hoses  long slow threads                 parts  brass glints                      misc   warm dust in shop light
 //   home, browsing and gifts: warm motes      cart, checkout, the small print: the same, far quieter
 // Each drop drifts, fades and is replaced somewhere new, so nothing loops. On a section's first open they fly out from its object.
@@ -11,6 +11,7 @@ const P = {
   bases: { sprite: "ring", rgb: [158, 236, 226], n: 150, r: [1.6, 5.2], a: [.16, .5], vx: 3, vy: [-27, -9], life: [7, 15], sway: 7, haze: .014 },
   bowls: { sprite: "dot", rgb: [206, 204, 198], n: 260, r: [.28, 1.25], a: [.16, .56], vx: 6, vy: [-11, -3], life: [6, 14], sway: 11, haze: .016 },
   heat: { sprite: "dot", rgb: [255, 150, 66], n: 190, r: [.45, 1.8], a: [.32, .9], vx: 6, vy: [-27, -8], life: [4, 10], sway: 9, haze: .016, flicker: 1.8 },
+  charcoal: { sprite: "dot", rgb: [255, 112, 44], n: 130, r: [.4, 1.5], a: [.26, .85], vx: 4, vy: [-18, -5], life: [5, 12], sway: 6, haze: .015, flicker: 2.4 },   // deeper, slower sparks off lit coals
   hoses: { threads: 14, rgb: [132, 232, 176], haze: .012 },
   parts: { sprite: "star", rgb: [244, 208, 122], n: 46, r: [.7, 2.2], a: [.22, .85], vx: .8, vy: [-1.2, 1.2], life: [5, 11], sway: 1.5, haze: .012, flicker: .9, peak: 8 },
   misc: { sprite: "dot", rgb: [238, 226, 204], n: 140, r: [.5, 2.4], a: [.08, .3], vx: 7, vy: [-4, 7], life: [7, 16], sway: 8, haze: .014 },
@@ -19,7 +20,7 @@ const P = {
 };
 // how present the air is: every section carries the same weight as the hookah smoke and cologne mist; the quiet pages stay quiet
 for (const k in P) { const c = P[k], m = k === "calm" ? 1.3 : 1; if (c.n) { c.n = Math.round(c.n * (k === "calm" ? 1.4 : 1.8)); c.a = [c.a[0] * 1.2 * m / (k === "calm" ? 1.3 : 1), Math.min(.95, c.a[1] * 1.25)]; } c.haze *= k === "calm" ? 1.6 : 2.7; }
-const CATS = new Set(["bases", "bowls", "heat", "hoses", "parts", "misc"]);
+const CATS = new Set(["bases", "bowls", "heat", "charcoal", "hoses", "parts", "misc"]);
 const rnd = (a, b) => a + Math.random() * (b - a);
 function which() {
   if (document.querySelector('.shophead[data-cat="hookahs"],.shophead[data-cat="cologne"],.pdp[data-cat="hookahs"],.pdp[data-cat="cologne"]')) return null;   // fx-pour.js has these

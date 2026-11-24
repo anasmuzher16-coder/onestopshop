@@ -11,7 +11,8 @@ export const slug = s => low(s).normalize("NFD").replace(/[̀-ͯ]/g, "").replace
 export const brandOf = p => F(p).brand || D(p).brand || null;
 export const isRoll = p => !!D(p).box_sku || /\bsingle roll\b/i.test(p.name);
 export const isCoal = p => !!D(p).charcoal;
-export const heatKind = p => p.cat !== "heat" ? null : isCoal(p) ? (isRoll(p) ? "roll" : "box") : /foil/i.test(p.name + " " + (F(p).material || "")) ? "foil" : null;
+// what a charcoal-or-heat item is: a box or a single roll of charcoal (the Charcoal section, 2026-11-24), or foil (Heat)
+export const heatKind = p => p.cat === "charcoal" || (p.cat === "heat" && isCoal(p)) ? (isRoll(p) ? "roll" : "box") : p.cat === "heat" && /foil/i.test(p.name + " " + (F(p).material || "")) ? "foil" : null;
 export function shapeOf(p) {
   if (heatKind(p) !== "box") return null;
   const s = low(F(p).shape || D(p).shape); if (!s) return null;
@@ -37,12 +38,17 @@ export const colourOf = p => p.named && p.colour ? low(p.colour) : null;
 // ---------- the groups, per section ----------
 // key: address key. multi: OR inside the group. of(p): the item's value (or values). note(list): the honest coverage line.
 const cover = (list, f, what) => { const all = list.length, have = list.filter(f).length; return have && have < all ? `${what} on ${have} of ${all} so far.` : ""; };
-const HEAT = [
-  { key: "type", label: "What you are buying", of: heatKind, opts: [["box", "Boxes"], ["roll", "Single rolls"], ["foil", "Foil"]], quick: true },
+// Charcoal (its own section since 2026-11-24): boxes and rolls, shape, count, make, size, brand. Heat: foil and brand.
+const CHARCOAL = [
+  { key: "type", label: "What you are buying", of: heatKind, opts: [["box", "Boxes"], ["roll", "Single rolls"]], quick: true },
   { key: "shape", label: "Shape", hint: "charcoal boxes", of: shapeOf, opts: [["cube", "Cubes"], ["tablet", "Tablets"], ["flat", "Flats"]], drawn: true, quick: true },
   { key: "n", label: "Pieces in the box", of: piecesBand, opts: [["60", "Up to 60"], ["90", "61 to 90"], ["91", "91 or more"], ["kg", "1 kg, count not listed"]] },
   { key: "made", label: "Made from", of: madeOf, opts: [["coconut", "Coconut"], ["bamboo", "Bamboo"]], quick: ["coconut"], note: l => cover(l.filter(p => heatKind(p) === "box"), madeOf, "Listed") },
   { key: "mm", label: "Size", of: p => mmOf(p) && String(mmOf(p)), opts: "dyn", fmt: v => v + " mm", note: l => cover(l.filter(p => heatKind(p) === "box"), mmOf, "Sizes listed") },
+  { key: "brand", label: "Brand", of: p => brandOf(p) && slug(brandOf(p)), opts: "dyn", fmt: (v, list) => brandOf(list.find(p => slug(brandOf(p)) === v)) || v, top: 8 },
+];
+const HEAT = [
+  { key: "type", label: "What you are buying", of: p => heatKind(p) === "foil" ? "foil" : "piece", opts: [["foil", "Foil"], ["piece", "Heat management"]], quick: true },
   { key: "foil", label: "Foil size", of: foilSize, opts: [["55in", "Standard, 5.5 in"], ["7in", "Large, 7 in"], ["15cm", "Wide, 15 cm"]], note: l => cover(l.filter(p => heatKind(p) === "foil"), foilSize, "Sizes listed") },
   { key: "mic", label: "Foil thickness", of: p => micOf(p) && String(micOf(p)), opts: "dyn", fmt: v => v + " micron" },
   { key: "brand", label: "Brand", of: p => brandOf(p) && slug(brandOf(p)), opts: "dyn", fmt: (v, list) => brandOf(list.find(p => slug(brandOf(p)) === v)) || v, top: 8 },
@@ -63,8 +69,8 @@ const SHISHA = [
   { key: "flavour", label: "Flavour", of: flavourOf, opts: [["mint", "Mint and ice"], ["fruit", "Fruit"], ["sweet", "Sweet and candy"], ["blend", "House blends"]], quick: true },
   { key: "brand", label: "Brand", of: p => brandOf(p) && slug(brandOf(p)), opts: "dyn", fmt: (v, list) => brandOf(list.find(p => slug(brandOf(p)) === v)) || v },
 ];
-export const SORTS = { heat: [["", "As on the shelf"], ["price", "Price, low first"], ["piece", "Price per piece"], ["most", "Most pieces"]], hookahs: [["", "As on the shelf"], ["price", "Price, low first"]] };
-export const GROUPS = { heat: HEAT, hookahs: HOOKAHS, shisha: SHISHA };
+export const SORTS = { charcoal: [["", "As on the shelf"], ["price", "Price, low first"], ["piece", "Price per piece"], ["most", "Most pieces"]], hookahs: [["", "As on the shelf"], ["price", "Price, low first"]] };
+export const GROUPS = { charcoal: CHARCOAL, heat: HEAT, hookahs: HOOKAHS, shisha: SHISHA };
 export const DEFAULT_SORTS = [["", "As on the shelf"], ["price", "Price, low first"]];
 const MIN_ITEMS = 12;   // a smaller section gets Sort only
 const G_CACHE = new WeakMap(), FAM_CACHE = new WeakMap();   // a list is read once: counting runs every option against every item

@@ -5,7 +5,7 @@
 import { readFileSync } from "node:fs";
 import { cleanSource } from "../src/source.js";
 import { share, monthStart, monthOf, reportCsv } from "../src/report.js";
-import { pinProblem } from "../src/staff.js";
+import { pinProblem, hashPin, checkPin } from "../src/staff.js";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
@@ -35,6 +35,11 @@ ok(cleanSource({ referrer: "http://a\"onmouseover=x'b&c.com/" }).detail === "{}"
 ok(share(100000, 500) === 5000 && share(12345, 500) === 617 && share(12350, 500) === 618 && share(-12350, 500) === -618 && share(0, 500) === 0, "5% share rounds once, half away from zero, in whole cents");
 ok(new Date(monthStart(2026, 11)).toISOString() === "2026-11-01T04:00:00.000Z" && new Date(monthStart(2026, 12)).toISOString() === "2026-12-01T05:00:00.000Z" && new Date(monthStart(2026, 3)).toISOString() === "2026-03-01T05:00:00.000Z", "months start at midnight Windsor time, summer and winter");
 ok(monthOf("2026-11") === "2026-11" && monthOf("2026-13") === null && monthOf("1999-01") === null && monthOf("2026-1") === null && /^\d{4}-\d\d$/.test(monthOf()), "month input is checked");
+{ // the pepper: PIN_PEPPER is used when set (a hash made with it fails without it, and the fallback key cannot stand in for it)
+  // Node has no crypto.subtle.timingSafeEqual (a Workers extension): a plain stand-in here, in the test only
+  if (!crypto.subtle.timingSafeEqual) crypto.subtle.timingSafeEqual = (a, b) => Buffer.compare(Buffer.from(a), Buffer.from(b)) === 0;
+  const withP = { PIN_PEPPER: "pepper-a", ADMIN_KEY: "k", PIN_ROUNDS: "10000" }, noP = { ADMIN_KEY: "k", PIN_ROUNDS: "10000" }, h = await hashPin(withP, "482913");
+  ok(await checkPin(withP, "482913", h) && !(await checkPin(noP, "482913", h)) && !(await checkPin({ ...withP, PIN_PEPPER: "pepper-b" }, "482913", h)), "staff PINs are hashed with PIN_PEPPER when it is set"); }
 ok(pinProblem("482913") === null && pinProblem("123456") && pinProblem("111111") && pinProblem("12345") && pinProblem("abcdef") && pinProblem(482913), "PIN rules: 6 digits, not an obvious one");
 const csv = reportCsv({ month: "2026-11", timezone: "America/Toronto", rows: [{ line: "sale", at: "2026-11-02T15:00:00Z", id: "=cmd", status: "paid", method: "pickup", source: "+x", subtotal_cents: 1000, shipping_cents: 0, tax_cents: 130, total_cents: 1130 }], sales: { orders: 1, subtotal: 1000, delivery: 0, tax: 130, total: 1130 }, refunds: { orders: 0, subtotal: 0, delivery: 0, tax: 0, total: 0 }, net: { orders: 1, subtotal: 1000, delivery: 0, tax: 130, total: 1130 }, studio: { rate_bp: 500, basis_label: "subtotal before tax and delivery", basis_cents: 1000, share_cents: 50 } });
 ok(csv.includes('"\'=cmd"') && csv.includes('"\'+x"') && csv.includes('"-0.00"') === false && csv.includes('"10.00"'), "CSV cells that a spreadsheet would run as formulas are defused");
@@ -56,6 +61,7 @@ ok(ls.status === 200 && ls.data.owner === false && /HttpOnly/.test(ls.r.headers.
 const me = (await A("/me", { as: "staff" })).data; ok(me.owner === false && me.actor.startsWith(name + " #"), "staff session is named: " + me.actor);
 for (const p of ["/staff", "/settings", "/report", "/report.csv", "/backup"]) ok((await A(p, { as: "staff" })).status === 403, "staff cannot open " + p);
 ok((await A("/staff/" + add.data.id, { method: "DELETE", body: {}, as: "staff" })).status === 403, "staff cannot remove staff");
+ok((await A("/orders/WAAAAAA/counter-refund", { method: "POST", body: { op: uuid(), reason: "x" }, as: "staff" })).status === 403 && (await A("/orders/WAAAAAA/refund", { method: "POST", body: { op: uuid() }, as: "staff" })).status === 403, "staff cannot record or make a refund: money back is the owner's");
 ok((await A("/products/OSS-8004/stock", { method: "POST", body: { delta: 1 }, headers: { "Sec-Fetch-Site": "cross-site" } })).status === 403, "a write the browser marks cross-site is refused");
 ok((await A("/login", { method: "POST", as: "staff", body: { passcode: KEY }, headers: { "Sec-Fetch-Site": "cross-site" } })).status === 403, "a sign-in from another site is refused");
 
@@ -82,8 +88,16 @@ ok((await A(`/products/OSS-8003/stock`, { method: "POST", as: "staff", body: { d
 const hist = (await A(`/products/${SKU}/history`, { as: "staff" })).data;
 const mine = hist.moves.filter(m => m.actor === me.actor);
 ok(mine.some(m => m.reason === "count" && m.delta === 4 && m.ref === "counted " + (s0 + 4)) && mine.some(m => m.reason === "received" && m.delta === 6 && m.ref === "INV-2291") && mine.filter(m => m.reason === "received").length === 1 && mine.filter(m => m.reason === "count").length === 3, "history names who counted and received, once each");
-await A(`/products/${SKU}`, { method: "PUT", as: "staff", body: { price_cents: 5500 } });
-ok((await A(`/products/${SKU}/history`)).data.changes.some(c => c.action === "product.edit" && c.actor === me.actor && c.after.includes("5500")), "a price change records who made it");
+// prices are the shop's: only the owner sets them (owner, 2026-11-24); staff keep every other edit
+const price0 = (await prod(SKU)).price_cents;
+const staffPrice = await A(`/products/${SKU}`, { method: "PUT", as: "staff", body: { price_cents: price0 + 100, note: "staff tried a price" } });
+ok(staffPrice.status === 403 && (await prod(SKU)).price_cents === price0 && !(await A(`/products/${SKU}/history`)).data.changes.some(c => c.actor === me.actor && (c.after || "").includes("staff tried a price")), "staff cannot change a price, and nothing else in that save goes through: " + staffPrice.status);
+ok((await A(`/products/${SKU}`, { method: "PUT", as: "staff", body: { cost_cents: 123 } })).status === 403, "staff cannot change the private cost either");
+ok((await A("/products", { method: "POST", as: "staff", body: { name: "Staff item", category_id: "misc", price_cents: 100, weight_g: 10, box_id: "S" } })).status === 403, "staff cannot add a product (a new product carries a price)");
+const staffNote = await A(`/products/${SKU}`, { method: "PUT", as: "staff", body: { price_cents: price0, low_stock_at: (await prod(SKU)).low_stock_at } });
+ok(staffNote.status === 200 && (await prod(SKU)).price_cents === price0, "staff can still save the form with the price unchanged");
+await A(`/products/${SKU}`, { method: "PUT", body: { price_cents: 5500 } });
+ok((await A(`/products/${SKU}/history`)).data.changes.some(c => c.action === "product.edit" && c.actor === "owner" && c.after.includes("5500")), "a price change records who made it");
 await A(`/products/${SKU}`, { method: "PUT", body: { price_cents: 5400 } });
 
 // ---- orders: source, cancel with restock, the ID tick ----

@@ -39,7 +39,7 @@ const ICON = {
   hose: S(`<path d="M8 32c10 0 6-20 18-20 8 0 10 6 14 6" stroke-width="4"/><path d="M8 32c10 0 6-20 18-20 8 0 10 6 14 6" stroke="${STEEL}" stroke-width="1.6"/><path d="M38 14l5 5" stroke-width="4"/>`),
   hookah: S(`<path d="M19 3h10l-2 6h-6z" fill="${COAL}"/><path d="M14 10h20l-2 3H16z" fill="${STEEL}"/><path d="M22 13h4v13h-4z" fill="${STEEL_D}"/><path d="M18 26h12c4 3 6 6 6 8a12 5 0 0 1-24 0c0-2 2-5 6-8z" fill="${GLASS}"/><path d="M18 26h12c4 3 6 6 6 8a12 5 0 0 1-24 0c0-2 2-5 6-8z"/>`),
 };
-const CAT_ICON = { hookahs: "hookah", bases: "base", bowls: "bowl", heat: "coal", hoses: "hose", parts: "part", cologne: "scent", shisha: "jar", misc: "gift" };
+const CAT_ICON = { hookahs: "hookah", bases: "base", bowls: "bowl", charcoal: "coal", heat: "foil", hoses: "hose", parts: "part", cologne: "scent", shisha: "jar", misc: "gift" };
 const toneOf = id => (X.CATEGORIES.find(c => c.id === id) || {}).tone || "bone";
 const has = cat => X.PRODUCTS.some(p => p.cat === cat);
 
@@ -48,7 +48,7 @@ function ways() {
   const foil = X.PRODUCTS.filter(p => heatKind(p) === "foil").length, flav = X.PRODUCTS.filter(p => p.cat === "shisha").length;
   const all = [
     ["/set", tone("hookahs", "ruby"), "set", "Starting out", "A hookah, bowl and hose that go together", has("hookahs") || has("bowls")],
-    ["/shop/heat?find=coal", tone("heat", "ember"), "coal", "Need coals", "Pick the right box in two taps", X.PRODUCTS.some(p => heatKind(p) === "box")],
+    ["/shop/charcoal?find=coal", tone("charcoal", "ash"), "coal", "Need coals", "Pick the right box in two taps", X.PRODUCTS.some(p => heatKind(p) === "box")],
     ["/shop/shisha", tone("shisha", "amethyst"), "jar", "Flavours", `${flav} tobacco-free flavours`, flav > 0],
     ["/shop/heat?type=foil", tone("heat", "ember"), "foil", "Foil", `${foil} packs, by size and thickness`, foil > 0],
     ["/gifts/under-50", "emerald", "gift", "A gift", "Under $50 or under $150, packed at the counter", true],
@@ -101,7 +101,7 @@ export function searchOut(q) {
   const groups = grouped(IX, hits);
   return `${said}${pages}${js.length ? `<ul class="jumps">${js.map(jumpRow).join("")}</ul>` : ""}
     <p class="sr" role="status">${hits.length} ${hits.length === 1 ? "match" : "matches"}</p>
-    ${groups.map(g => { const more = g.items.length > 4, coal = g.cat.id === "heat" && g.items.some(p => heatKind(p) !== "foil");
+    ${groups.map(g => { const more = g.items.length > 4, coal = g.cat.id === "charcoal";
       return `<section class="rgroup" data-tone="${g.cat.tone}"><div class="rgroup__h"><h2>${X.esc(g.cat.name)}</h2><span class="num">${g.items.length}</span></div>${coal ? `<p class="rgroup__note">Charcoal is pickup or local delivery only.</p>` : ""}
       <ul class="rows">${g.items.slice(0, 4).map(p => row(p, words)).join("")}</ul>${more ? `<a class="link rgroup__all" href="/search?q=${encodeURIComponent(q)}&in=${g.cat.id}" data-s-all="${g.cat.id}">See all ${g.items.length} in ${X.esc(g.cat.name)}</a>` : ""}</section>`; }).join("")}`;
 }

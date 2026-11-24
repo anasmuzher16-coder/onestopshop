@@ -7,7 +7,7 @@
 //  - stock taken for an unpaid order comes back exactly once, when Stripe says the page expired or payment failed;
 //  - every call that creates something at Stripe carries an Idempotency-Key, so a retry can never charge twice.
 import * as rates from "../public/rates-core.js";
-import { orderPlaced, lowStock, writeEmail } from "./email.js";
+import { orderPlaced, newOrder, lowStock, writeEmail } from "./email.js";
 
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" } });
 const NOW = "strftime('%Y-%m-%dT%H:%M:%SZ','now')";
@@ -123,6 +123,8 @@ export async function receipt(env, id, how) {
   const items = (await db.prepare("SELECT sku, name, qty, unit_cents FROM order_items WHERE order_id = ? ORDER BY sku").bind(id).all()).results;
   const site = env.SITE_NAME || "One Stop Shop", q = (() => { try { return JSON.parse(o.ship_quote || "{}"); } catch { return {}; } })();
   await writeEmail(env, id, o.email, orderPlaced(site, { ...o, eta: q.eta ?? null }, items, how));
+  // the shop hears about it too: held in the outbox (back office) until the mail service and OWNER_EMAIL are set
+  await writeEmail(env, id, env.OWNER_EMAIL || "the shop", newOrder(site, o, items, how));
   const low = await db.prepare(`SELECT name, stock FROM products WHERE active = 1 AND stock <= low_stock_at AND sku IN (${items.map(() => "?").join(",") || "''"}) ORDER BY stock, name`).bind(...items.map(i => i.sku)).all();
   if (low.results.length) await writeEmail(env, id, env.OWNER_EMAIL || "the shop", lowStock(site, low.results));
 }
@@ -223,6 +225,7 @@ export async function adminPay(request, env, id, what, actor) {
     if (!res[0].meta.changes) return json({ error: "That order changed. Refresh and try again." }, 409);
     return json({ ok: true, pay_status: "paid" });
   }
+  if (what === "counter-refund") return counterRefund(db, o, body, actor);
   // refund: full when no amount is given, otherwise that many cents. Card orders only: counter payments are refunded at the till.
   if (o.pay_method !== "card" || !["paid", "part_refunded"].includes(o.pay_status) || !o.pay_intent) return json({ error: o.pay_method === "at_pickup" ? "This was paid at the counter. Refund it at the till." : "There is no card payment on this order to refund." }, 409);
   if (!cardReady(env)) return json({ error: "Card payments are not connected." }, 503);
@@ -259,4 +262,41 @@ export async function adminPay(request, env, id, what, actor) {
   ]);
   const now = await db.prepare("SELECT pay_status, status, paid_cents, refunded_cents FROM orders WHERE id = ?").bind(id).first();
   return json({ ok: true, refund: { amount_cents: amount, status: "succeeded", counted: done[1].meta.changes === 1 }, order: now });
+}
+
+// A refund handed back at the till for an order paid at the counter: the money has already moved, so this only records
+// it, in the same refunds table as card refunds (detail 'counter', no Stripe id). That one row is what the monthly report,
+// the 5% share and the points read, so a till refund lowers the report and takes back its points exactly as a card
+// refund does. One D1 batch (one transaction): the row is written only if the order is still paid at the counter and
+// the amount fits in what is left; the order moves only if that row went in; the log line only if the order moved.
+// The request's own key (op) makes a repeated tap answer the same and record once.
+async function counterRefund(db, o, body, actor) {
+  const id = o.id, op = typeof body.op === "string" && /^[A-Za-z0-9-]{16,64}$/.test(body.op) ? body.op : null;
+  if (!op) return json({ error: "Refresh the page and try again." }, 400);
+  const prior = await db.prepare("SELECT order_id, amount_cents, status, detail FROM refunds WHERE op = ?").bind(op).first();
+  if (prior) return prior.order_id === id && prior.detail === "counter" ? json({ ok: true, refund: { amount_cents: prior.amount_cents, status: prior.status }, replayed: true }) : json({ error: "That refund could not be read." }, 409);
+  // a cancelled order is already counted as given back in full on its cancel day: a till refund on it would rewrite a past month
+  if (o.status === "cancelled") return json({ error: "This order was cancelled, so the report already counts it as given back in full." }, 409);
+  if (o.pay_method !== "at_pickup" || !["paid", "part_refunded"].includes(o.pay_status)) return json({ error: o.pay_method === "card" ? "This was paid by card. Refund it to the card." : "Only an order paid at the counter can have a counter refund recorded." }, 409);
+  const reason = typeof body.reason === "string" ? body.reason.trim().slice(0, 200) : "";
+  if (!reason) return json({ error: "Say why in a few words, for example: returned, faulty." }, 400);
+  const left = o.paid_cents - ((await db.prepare("SELECT COALESCE(SUM(amount_cents),0) AS c FROM refunds WHERE order_id = ? AND status != 'failed'").bind(id).first("c")) || 0);
+  const amount = body.amount_cents === undefined || body.amount_cents === null ? left : Number(body.amount_cents);
+  if (!Number.isInteger(amount) || amount < 1) return json({ error: "Enter the amount given back, more than zero." }, 400);
+  if (amount > left) return json({ error: `Only ${(left / 100).toFixed(2)} is left to refund on this order.`, left_cents: left }, 409);
+  let res; try { res = await db.batch([
+    db.prepare(`INSERT INTO refunds (op, order_id, amount_cents, status, reason, actor, detail) SELECT ?1, ?2, ?3, 'succeeded', ?4, ?5, 'counter'
+      WHERE EXISTS (SELECT 1 FROM orders WHERE id = ?2 AND pay_method = 'at_pickup' AND pay_status IN ('paid','part_refunded') AND status <> 'cancelled')
+      AND (SELECT paid_cents FROM orders WHERE id = ?2) - (SELECT COALESCE(SUM(amount_cents),0) FROM refunds WHERE order_id = ?2 AND status != 'failed') >= ?3`).bind(op, id, amount, reason, actor),
+    db.prepare(`UPDATE orders SET refunded_cents = refunded_cents + ?1, pay_status = CASE WHEN refunded_cents + ?1 >= paid_cents THEN 'refunded' ELSE 'part_refunded' END,
+      status = CASE WHEN refunded_cents + ?1 >= paid_cents THEN 'refunded' ELSE status END, updated_at = ${NOW} WHERE id = ?2 AND changes() = 1`).bind(amount, id),
+    db.prepare("INSERT INTO audit_log (actor, action, target, before, after) SELECT ?, 'order.counter_refund', ?, ?, ? WHERE changes() = 1").bind(actor, id, JSON.stringify({ refunded_cents: o.refunded_cents, status: o.status }), JSON.stringify({ amount_cents: amount, reason })),
+  ]); } catch (e) {   // the same tap twice at once: the op is unique, so the second batch rolls back whole; answer with the first
+    if (!/UNIQUE/i.test(String(e && e.message))) throw e;
+    const won = await db.prepare("SELECT order_id, amount_cents, status FROM refunds WHERE op = ?").bind(op).first();
+    return won && won.order_id === id ? json({ ok: true, refund: { amount_cents: won.amount_cents, status: won.status }, replayed: true }) : json({ error: "That refund could not be read." }, 409);
+  }
+  if (!res[0].meta.changes) return json({ error: "This order changed, or another refund just used what was left. Refresh to see it." }, 409);
+  const now = await db.prepare("SELECT pay_status, status, paid_cents, refunded_cents FROM orders WHERE id = ?").bind(id).first();
+  return json({ ok: true, refund: { amount_cents: amount, status: "succeeded" }, order: now });
 }

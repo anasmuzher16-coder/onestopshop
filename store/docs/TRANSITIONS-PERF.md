@@ -113,3 +113,27 @@ typography, ux-flows, brand-systems. One decision each changed:
 - ux-flows: the frequency law: section taps are frequent, so the nav answers at the tap and the backdrops yield to the wave.
 - brand-systems: frozen vs flexes. Material, palette and timing are frozen; only pixel count flexes, and only below 25 fps or on a
   device measured too slow to fill the screen in time.
+
+## Polish pass (2026-11-24): the swap in steps
+
+Item 7 above is now done in app.js ("THE FIRST SCREEN FIRST"). A long section (more than 24 cards) reached by a wave tap is
+built in separate tasks: the wave's own frame only commits the address; the next task puts the page in with every card as a
+card-shaped slot (the wave holds full cover meanwhile, `data-swapping`, at most 400 ms after the page is in); the task after
+draws the first screen's cards (and on a desktop the filter rail); idle callbacks draw the rest, about 8 ms a turn (Safari:
+16 ms timers). Back draws through the remembered card before landing. Tone, colour family and price formatting are worked
+out once, not per card (`seriesOf` used to scan the whole catalogue for every card). Checked by `tools/test-chunk.mjs`.
+
+Long tasks during a transition, Chromium 390x844 @3x, 4x CPU (`tools/wave-perf.mjs`, ONLY=hookahs,heat,shisha,all), ms:
+
+| | Hookahs | Heat | Shisha | Everything |
+|---|---|---|---|---|
+| before, first tap | 514, 157 | 316, 55 | 166 | 469 |
+| before, warm | 219 | 269 | 121 | 388 |
+| after, first tap | 60-62 plus 108-262 (smoke shader setup in fx-pour, not the render) | 88-141 | 0-68 | 0-66 |
+| after, warm (rounds 2-3, three runs) | 52-100 | 50-103 | 0-77 | 0-66 |
+
+Not met: "no task over 50 ms" holds on Everything and most Shisha taps, not yet on Hookahs or Heat. What is left in the
+page task (trace, warm Hookahs): app.js render of the page shell about 25 ms, the section objects' placement in fx-sections,
+fx-pour and fx-smoke (their MutationObservers) about 25-35 ms, and style and layout about 20 ms. Splitting those further
+means changing the section effects' timing, which this pass left alone. The machine was shared with other sessions; single
+rows are noisy.

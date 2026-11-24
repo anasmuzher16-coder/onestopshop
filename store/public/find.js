@@ -20,7 +20,7 @@ const SLIDERS = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stro
 const CLOSE = `<svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13"/></svg>`;
 const ARROW = `<svg class="arrow" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 3l5 5-5 5"/></svg>`;
 
-const noun = (cat, n) => cat === "heat" ? (n === 1 ? "item" : "items") : cat === "hookahs" ? (n === 1 ? "hookah" : "hookahs") : cat === "shisha" ? (n === 1 ? "flavour" : "flavours") : (n === 1 ? "piece" : "pieces");
+const noun = (cat, n) => cat === "heat" || cat === "charcoal" ? (n === 1 ? "item" : "items") : cat === "hookahs" ? (n === 1 ? "hookah" : "hookahs") : cat === "shisha" ? (n === 1 ? "flavour" : "flavours") : (n === 1 ? "piece" : "pieces");
 const addr = (cat, list, sel) => `/shop/${cat}${writeSel(cat, list, sel)}`;
 const toggle = (sel, key, v) => { const cur = sel[key] || [], next = cur.includes(v) ? cur.filter(x => x !== v) : [...cur, v]; const s = { ...sel }; if (next.length) s[key] = next; else delete s[key]; return s; };
 
@@ -58,7 +58,7 @@ function groupsHTML(cat, list, sel, sortLast = false) {
   return sortLast ? groups + sort : sort + groups;   // the sheet leads with the filters, so what is already set shows first
 }
 function finderLink(cat) {
-  return cat === "heat" ? `<button class="finderlink" type="button" data-f-finder aria-haspopup="dialog">${DRAWN.cube}<span>What coal do I need?<small>Two questions, then the right boxes</small></span>${ARROW}</button>` : "";
+  return cat === "charcoal" ? `<button class="finderlink" type="button" data-f-finder aria-haspopup="dialog">${DRAWN.cube}<span>What coal do I need?<small>Two questions, then the right boxes</small></span>${ARROW}</button>` : "";
 }
 function emptyHTML(cat, list, sel) {
   const back = drops(cat, list, sel).filter(d => d.n > 0).sort((a, b) => b.n - a.n);
@@ -82,7 +82,7 @@ export function findShop(cat, list = listOf(cat)) {
   return {
     on,
     // phone: the row, the count, the grid. desktop: the rail beside them. The grid is only replaced when something is set.
-    html: grid => `${bar}<div class="fwrap" data-fwrap="${cat}"><aside class="frail" aria-label="Filter ${X.esc(cat)}">${groupsHTML(cat, list, sel)}</aside><div class="fmain">${resultsHTML(cat, list, sel)}${k ? `<div class="fapplied" role="group" aria-label="Filters on">${appliedChips(cat, list, sel)}</div>` : ""}${k ? "" : finderLink(cat)}<div data-fgrid>${on ? gridHTML(cat, list, sel) : grid}</div></div></div>`,
+    html: grid => `${bar}<div class="fwrap" data-fwrap="${cat}"><aside class="frail" aria-label="Filter ${X.esc(cat)}">${X.defer ? X.defer(() => groupsHTML(cat, list, sel)) : groupsHTML(cat, list, sel)}</aside><div class="fmain">${resultsHTML(cat, list, sel)}${k ? `<div class="fapplied" role="group" aria-label="Filters on">${appliedChips(cat, list, sel)}</div>` : ""}${k ? "" : finderLink(cat)}<div data-fgrid>${on ? gridHTML(cat, list, sel) : typeof grid === "function" ? grid() : grid}</div></div></div>`,   // the plain grid is only built when it is shown
   };
 }
 
@@ -127,7 +127,7 @@ function openSheet(cat) {
 const Q1 = [["roll", "One session", "A single roll"], ["90", "A regular box", "61 to 90 pieces"], ["91", "A big box", "91 pieces or more, or 1 kg"]];
 const Q2 = [["cube", "Cubes", "Burn the longest. Light them on a stove or coal burner."], ["tablet", "Tablets", "Round discs. Quick-light ones say so on the box."], ["flat", "Flats and fingers", "Flat, half moon and stick shapes."]];
 function finderHTML(step, n1) {
-  const list = listOf("heat"), boxes = list.filter(p => heatKind(p) === "box");
+  const list = listOf("charcoal"), boxes = list.filter(p => heatKind(p) === "box");
   const bandOK = p => n1 === "91" ? ["91", "kg"].includes(piecesBand(p)) : piecesBand(p) === n1;
   const opts = step === 1
     ? Q1.map(([v, h, sub]) => { const c = v === "roll" ? list.filter(p => heatKind(p) === "roll").length : boxes.filter(p => v === "91" ? ["91", "kg"].includes(piecesBand(p)) : piecesBand(p) === v).length; return c ? `<button class="gf__opt" type="button" data-gf1="${v}">${v === "roll" ? DRAWN.roll : DRAWN.cube}<span><span class="gf__name">${h}</span><span class="gf__sub">${sub}</span></span><span class="num">${c}</span></button>` : ""; })
@@ -140,7 +140,7 @@ function finderHTML(step, n1) {
 }
 let n1 = null;
 function openFinder(step = 1) {
-  const s = sheetEl(); s.dataset.cat = "heat"; s.innerHTML = finderHTML(step, n1);
+  const s = sheetEl(); s.dataset.cat = "charcoal"; s.innerHTML = finderHTML(step, n1);
   if (!s.open) { document.documentElement.classList.add("fsheet-open"); s.showModal(); }
   (s.querySelector(".gf__opt") || s.querySelector("[data-f-close]")).focus();
 }
@@ -153,7 +153,7 @@ function redraw(cat) {
   const wrap = document.querySelector(`[data-fwrap="${cat}"]`), bar = document.querySelector("[data-fbar]");
   if (!wrap || !bar) return X.render();
   const f = findShop(cat); if (!f) return X.render();
-  const tmp = document.createElement("div"); tmp.innerHTML = f.html(X.grid(cat));
+  const tmp = document.createElement("div"); tmp.innerHTML = f.html(() => X.grid(cat));
   const focusKey = document.activeElement?.closest?.("[data-f-toggle],[data-f-sort]");
   const key = focusKey && (focusKey.dataset.fToggle ? `[data-f-toggle="${focusKey.dataset.fToggle}"][data-v="${CSS.escape(focusKey.dataset.v)}"]` : `[data-f-sort="${focusKey.dataset.fSort}"]`);
   const inRail = !!focusKey?.closest(".frail"), group = focusKey?.closest(".fgroup")?.querySelector("[data-f-toggle],[data-f-sort]"), railY = wrap.querySelector(".frail")?.scrollTop || 0;
@@ -177,10 +177,10 @@ export function init(ctx) {
     if (t.matches("[data-f-close]")) return shut();
     if (t.matches("[data-f-more]")) { const grp = t.closest(".fgroup"), more = [...grp.querySelectorAll("[data-more]")]; more.forEach(b => b.hidden = false); open.add(t.dataset.fMore); more[0]?.focus(); t.remove(); return; }
     if (t.matches("[data-f-finder]")) { e.preventDefault(); n1 = null; return openFinder(1); }
-    if (t.matches("[data-gf1]")) { n1 = t.dataset.gf1; if (n1 === "roll") { shut(); return go("heat", { type: ["roll"] }); } return openFinder(2); }
+    if (t.matches("[data-gf1]")) { n1 = t.dataset.gf1; if (n1 === "roll") { shut(); return go("charcoal", { type: ["roll"] }); } return openFinder(2); }
     if (t.matches("[data-gf-back]")) return openFinder(1);
-    if (t.matches("[data-gf2]")) { const sel = { type: ["box"], n: n1 === "91" ? ["91", "kg"] : [n1], shape: [t.dataset.gf2] }; shut(); return go("heat", sel); }
-    if (t.matches("[data-gf-common]")) { shut(); return go("heat", { type: ["box"] }); }
+    if (t.matches("[data-gf2]")) { const sel = { type: ["box"], n: n1 === "91" ? ["91", "kg"] : [n1], shape: [t.dataset.gf2] }; shut(); return go("charcoal", sel); }
+    if (t.matches("[data-gf-common]")) { shut(); return go("charcoal", { type: ["box"] }); }
     if (inSheet && draft) {   // the sheet works on a draft; "Show N" applies it
       if (t.matches("[data-f-toggle]")) draft = toggle(draft, t.dataset.fToggle, t.dataset.v);
       else if (t.matches("[data-f-sort]")) { draft = { ...draft }; if (t.dataset.fSort) draft.sort = t.dataset.fSort; else delete draft.sort; }
@@ -202,10 +202,10 @@ export function init(ctx) {
   }, true);
   addEventListener("routechange", () => { if (sheet?.open) sheet.close(); open.clear(); });
 }
-// a link to /shop/heat?find=coal opens the finder once the page is drawn
+// a link to /shop/charcoal?find=coal opens the finder once the page is drawn
 export function afterRender() {
-  if (here() === "heat" && new URLSearchParams(location.search).get("find") === "coal") {
-    history.replaceState(history.state, "", "/shop/heat" + location.search.replace(/[?&]find=coal/, "").replace(/^&/, "?"));
+  if (here() === "charcoal" && new URLSearchParams(location.search).get("find") === "coal") {
+    history.replaceState(history.state, "", "/shop/charcoal" + location.search.replace(/[?&]find=coal/, "").replace(/^&/, "?"));
     n1 = null; openFinder(1);
   }
 }

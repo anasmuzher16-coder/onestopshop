@@ -42,7 +42,7 @@ export const PAGES = [
   { words: ["address", "where", "direction", "location", "map", "visit"], label: "Visit the counter", sub: "760 Wyandotte St E, Windsor", href: "/#visit-h" },
   { words: ["delivery", "deliver", "local", "driver"], label: "Local delivery", sub: "From $10 near Windsor", href: "/shipping" },
   { words: ["pickup", "pick", "collect"], label: "Pickup", sub: "Free at the counter, same day", href: "/shipping" },
-  { words: ["ship", "shipping", "post", "canada post", "mail"], label: "Shipping across Canada", sub: "How we pack and what it costs", href: "/shipping" },
+  { words: ["ship", "shipping", "post", "canada post", "mail"], label: "Shipping across Canada", sub: "Everywhere but Quebec for now. How we pack and what it costs", href: "/shipping" },
   { words: ["return", "refund", "exchange", "broken"], label: "Returns and broken items", sub: "Shipping and returns", href: "/shipping" },
   { words: ["term", "condition"], label: "Terms of sale", sub: "", href: "/terms" },
   { words: ["privacy"], label: "Privacy", sub: "", href: "/privacy" },
@@ -144,7 +144,7 @@ export function jumps(ix, q, { terms } = understand(ix, q)) {
   return out.sort((a, b) => (a.whole || 0) - (b.whole || 0) || b.label.split(" ").length - a.label.split(" ").length || b.n - a.n).slice(0, 3);
 }
 // a word that names a whole section opens it
-const SECTION_WORDS = { hookahs: ["hookah"], bases: ["base"], bowls: ["bowl"], heat: ["charcoal"], hoses: ["hose"], parts: ["part", "brush", "cleaner"], cologne: ["cologne"] };
+const SECTION_WORDS = { hookahs: ["hookah"], bases: ["base"], bowls: ["bowl"], charcoal: ["charcoal"], heat: ["foil", "heat management"], hoses: ["hose"], parts: ["part", "brush", "cleaner"], cologne: ["cologne"] };
 // nothing matched: each word on its own, then the closest shop word
 export function nearest(ix, q) {
   const u = understand(ix, q), words = u.terms.map(t => t.w), alone = [];

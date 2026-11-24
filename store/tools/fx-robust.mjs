@@ -4,7 +4,7 @@
 //   ENGINE=webkit node tools/fx-robust.mjs   the same under WebKit (closest thing to Safari without a phone)
 //   STATIC=1 node tools/fx-robust.mjs        only the source checks; no browser is launched
 //   ONLY=hoses,misc                          limit the section walk
-// About 4 minutes for all eight sections. Written by the round-two council; first run against a browser by the builder.
+// About 4 minutes for all nine sections. Written by the round-two council; first run against a browser by the builder.
 import { createRequire } from "node:module";
 import { readFileSync } from "node:fs";
 const base = (process.env.BASE || "http://127.0.0.1:4420/").replace(/\/*$/, "/");
@@ -112,10 +112,10 @@ const p = await open();
 await load(p, "");
 const shop = await p.evaluate(async () => { const m = await import("/api/catalog-module"); return { cats: m.CATEGORIES.map(c => c.id), prods: m.PRODUCTS.map(x => ({ sku: x.sku, cat: x.cat, photo: !!(x.dark || x.photo) })) }; });
 const only = (process.env.ONLY || "").split(",").filter(Boolean);
-const SECS = ["hookahs", "bases", "bowls", "heat", "hoses", "parts", "cologne", "misc"].filter(c => shop.cats.includes(c) && (!only.length || only.includes(c)));
+const SECS = ["hookahs", "bases", "bowls", "heat", "charcoal", "hoses", "parts", "cologne", "misc"].filter(c => shop.cats.includes(c) && (!only.length || only.includes(c)));
 const CANVAS = new Set([]), LONG = new Set(["hookahs", "hoses"]), SMOKY = new Set(["hookahs"]);
 const pick = c => shop.prods.find(x => x.cat === c && !x.photo) || shop.prods.find(x => x.cat === c);
-t("the shop has the eight sections", SECS.length === 8 || only.length > 0, SECS.join(","));
+t("the shop has the nine sections (charcoal its own since 2026-11-24)", SECS.length === 9 || only.length > 0, SECS.join(","));
 
 // ---------- 2. every section: direct load, in-site arrival, three re-draws, six seconds on, five taps ----------
 for (const c of SECS) {

@@ -13,7 +13,7 @@ h1,h2,h3,p{margin:0}
 
 /* chrome */
 .bar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:var(--s-6);min-height:var(--bar-h);padding:0 var(--gutter);background:var(--color-bg);border-bottom:1px solid var(--color-line)}
-.bar__mark{display:flex;align-items:baseline;gap:.3em;font:400 1.5rem/1 var(--font-display);color:var(--color-strong);text-decoration:none;white-space:nowrap}
+.bar__mark{display:flex;align-items:baseline;gap:.3em;padding-block:10px;font:400 1.5rem/1 var(--font-display);color:var(--color-strong);text-decoration:none;white-space:nowrap}
 .bar__b{color:var(--ember)}
 .bar__sub{font:500 var(--t-12)/1 var(--font-ui);letter-spacing:.1em;text-transform:uppercase;color:var(--color-muted);margin-left:var(--s-3)}
 .bar__end{margin-left:auto;display:flex;gap:var(--s-5)}
@@ -38,6 +38,7 @@ main{padding:var(--s-6) var(--gutter) var(--s-16);max-width:1240px;margin:0 auto
 .input{width:100%;min-height:48px;padding:0 var(--s-3);background:var(--coal-1);border:1px solid var(--color-field);border-radius:var(--radius);color:var(--color-strong)}
 textarea.input{padding:var(--s-3);min-height:84px;resize:vertical}
 .input:focus{border-color:var(--white);outline:0}
+.input[readonly]{background:none;border-style:dashed;color:var(--color-muted)}   /* shown, not editable here (a price for staff): the same field, its fill taken away */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:.5em;min-height:48px;padding:0 var(--s-5);background:var(--color-action);color:var(--color-on-action);border-radius:var(--radius);font-weight:600;text-decoration:none}
 .btn:hover{background:var(--color-action-press)}
 .btn--ghost{background:none;border:1px solid var(--color-field);color:var(--color-strong)}
@@ -91,7 +92,7 @@ textarea.input{padding:var(--s-3);min-height:84px;resize:vertical}
 .chip[aria-pressed="true"]{background:var(--bone);border-color:var(--bone);color:var(--ink);font-weight:600}
 .rows{border-bottom:1px solid var(--color-line)}
 .row{display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:var(--s-3);align-items:center;padding:10px 0;border-top:1px solid var(--color-line)}
-.row.off{opacity:.55}
+.row.off .thumb{opacity:.45} .row.off .row__name{color:var(--color-muted)}   /* off the site: the photo fades and the name steps down; the words stay readable (WCAG 1.4.3) */
 .thumb{width:52px;height:64px;background:var(--tile,var(--coal-2));border-radius:2px;object-fit:contain;display:block}
 .row__main{min-width:0;text-align:left;display:grid;gap:2px;min-height:44px;align-content:center}
 .row__name{color:var(--color-strong);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -99,7 +100,7 @@ button.row__main:hover .row__name,.order:hover .row__name{text-decoration:underl
 .row__meta{font-size:var(--t-12);color:var(--color-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .row__end{display:grid;justify-items:end;gap:4px}
 .step{display:grid;grid-template-columns:44px 2.6rem 44px;align-items:center;border:1px solid var(--color-field);border-radius:var(--radius)}
-.step button{height:42px;font-size:1.25rem;line-height:1;color:var(--color-strong)}
+.step button{height:44px;font-size:1.25rem;line-height:1;color:var(--color-strong)}
 .step button:hover{background:var(--coal-2)}
 .step button[disabled]{color:var(--color-field);cursor:default;background:none}
 .step output{text-align:center;font-weight:600;color:var(--color-strong)}

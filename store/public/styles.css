@@ -160,7 +160,8 @@ body:not([data-route]) .foot{visibility:hidden}
 .shelf__head .link{font-size:var(--t-14);white-space:nowrap}
 .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--s-6) var(--s-3)}
 .grid--shop{padding:var(--s-5) var(--gutter) var(--s-16)}
-.grid--shop .card{content-visibility:auto;contain-intrinsic-size:auto 300px}
+.grid--shop .card{content-visibility:auto;contain-intrinsic-size:auto var(--card-h,300px)}
+.later::before{content:"";display:block;aspect-ratio:4/5}.later::after{content:"";display:block;height:104px}   /* a card still being drawn (app.js, the first screen first): a tile and a card's text lines, so the page barely moves as it fills */
 .card__a{display:block;text-decoration:none}
 .card__name{font:500 var(--t-14)/1.3 var(--font-ui);color:var(--color-strong);margin:var(--s-2) 0 2px}
 .card__a:hover .card__name{text-decoration:underline;text-underline-offset:.2em}
@@ -279,8 +280,10 @@ body:not([data-route]) .foot{visibility:hidden}
   .dock{display:none}
   .top{gap:var(--s-8);padding-block:var(--s-4)}
   .top__nav{display:flex;gap:var(--s-5);flex:1;font-size:var(--t-14);font-weight:500}
-  .top__nav a{text-decoration:none;padding:var(--s-2) 0;color:var(--color-text)}
-  .top__nav a:hover{color:var(--color-strong)} .top__nav a[aria-current]{color:var(--color-strong);box-shadow:0 2px 0 var(--color-strong)}
+  /* 44 px targets: the box grows and the padding is given back as margin, so the words sit where they did; the current page's
+     line is drawn under the word (not the padded box), at the same 2 px and the same distance as before */
+  .top__nav a{display:inline-flex;align-items:center;min-height:44px;padding:0 7px;margin:0 -7px;text-decoration:none;color:var(--color-text)}
+  .top__nav a:hover{color:var(--color-strong)} .top__nav a[aria-current]{color:var(--color-strong);text-decoration:underline 2px;text-underline-offset:9px}
   .top{min-height:76px}
   .top__cart{margin-left:0}
   .chips{display:none}
@@ -545,7 +548,7 @@ html:not(.hero-seen) .piece .sticker{animation-timing-function:linear(0,.25 6%,.
 .done__lines b{color:var(--color-strong)}
 @media (min-width:960px){.checkout,.done{max-width:640px}}
 .cart.done>.btn--wide{display:inline-flex}
-.shot--none{display:grid;place-items:center;font-size:var(--t-12);letter-spacing:.08em;text-transform:uppercase;color:var(--color-on-tile);opacity:.55;text-align:center;padding:var(--s-3)}
+.shot--none{display:grid;place-items:center;font-size:var(--t-12);letter-spacing:.08em;text-transform:uppercase;color:var(--color-on-tile);opacity:.82;text-align:center;padding:var(--s-3)}
 .checkout .h2--xl{margin-bottom:var(--s-6)}
 
 /* privacy and terms */
@@ -780,7 +783,7 @@ html.restoring .grid--shop .card{content-visibility:visible}
 ::view-transition-new(chips){animation:none}
 @media (min-width:960px){
   /* twelve places to go: the row stays one line and slides sideways when the window is narrow, the way the chips do on a phone */
-  .top__nav{min-width:0;padding-block:2px;overflow-x:auto;scrollbar-width:none;white-space:nowrap}
+  .top__nav{min-width:0;padding-block:2px;padding-inline:7px;margin-inline:-7px;overflow-x:auto;scrollbar-width:none;white-space:nowrap}   /* room for the links' 7 px of extra target at both ends of the row */
   .top__nav::-webkit-scrollbar{display:none}
   .top__nav a{flex:none}
   .top__nav a:focus-visible{outline-offset:-2px}
@@ -830,7 +833,7 @@ html.restoring .grid--shop .card{content-visibility:visible}
 [data-pickup-choice]:focus{outline:none}
 [data-pickup-choice]:focus-visible{outline:2px solid var(--color-focus);outline-offset:6px}
 .dline--above{margin:0 0 var(--s-4)}
-.shophead[data-cat="heat"] ~ .grid .card__pick{display:none}   /* the section head already says it; mixed grids (search, everything) keep it */
+.shophead:is([data-cat="heat"],[data-cat="charcoal"]) ~ .grid .card__pick{display:none}   /* the section head already says it; mixed grids (search, everything) keep it */
 .cartnews__undo{display:inline-block;min-height:44px;padding:var(--s-2) 0;font-weight:600}
 .dock .dock__buy--ask,.dock .dock__buy--ask:active{background:var(--color-raised);color:var(--color-strong);box-shadow:inset 0 0 0 1px var(--color-field)}   /* asks for a choice; turns ember (Check out) once one is made */
 .co__coal{margin-top:var(--s-6)}
@@ -853,16 +856,33 @@ html.restoring .grid--shop .card{content-visibility:visible}
 .swatch{position:relative;display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:50%;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .swatch::before{content:"";width:28px;height:28px;border-radius:50%;background:var(--c);box-shadow:inset 0 0 0 1px var(--ring,oklch(1 0 0 / .16));transition:transform var(--dur-micro) var(--ease-enter),box-shadow var(--dur-micro) var(--ease-state)}
 .swatch[aria-checked="true"]::before{box-shadow:inset 0 0 0 1px var(--ring,oklch(1 0 0 / .16)),0 0 0 3px var(--color-bg),0 0 0 5px var(--color-strong)}
-.swatch:hover::before{transform:scale(1.1)}
+@media (hover:hover){.swatch:hover::before{transform:scale(1.1)}}   /* a pointer only: a tap never leaves a chip swollen */
 .swatch:focus-visible{outline:2px solid var(--color-focus);outline-offset:-2px}
 .swatch__none{position:absolute;right:7px;bottom:7px;width:10px;height:10px;border-radius:50%;background:var(--color-bg);box-shadow:inset 0 0 0 2px var(--color-muted)}
-.swatches--card{flex-wrap:nowrap;margin:0 0 0 -11px;gap:0;overflow-x:auto;scrollbar-width:none;overscroll-behavior-x:contain}
-.swatches--card::-webkit-scrollbar{display:none}
+/* On a card (polish, 2026-11-24): a row of 44 px places that never runs past the card. .swatchbox is the size container; the
+   places stay inside the card (a card clips what hangs out, content-visibility, so a hanging target would lose taps). Places that fit:
+   floor(box width / 44). When the colours do not all fit (app.js marks the row o2...o8), the last place that fits is
+   "+N" and the chips after it hide. Selected: a 2 px coal gap and a 2 px white ring, 30 px across, readable on every chip
+   (white on coal is 17:1; dark chips also carry a light inner ring, chipStyle). */
+.swatchbox{container:sw / inline-size;display:flex;align-items:center;margin:0}
+.swatches--card .swatch,.swatchbox .swatches__more{place-items:center start;padding-left:4px}   /* each chip sits 4 px into its 44 px place: the first one's chosen ring lands exactly on the card edge and the row keeps one 44 px rhythm */
+.swatches--card{flex-wrap:nowrap;margin:0;gap:0;min-width:0}
 .swatches--card .swatch{flex:none;width:44px;height:44px} .swatches--card .swatch::before{width:22px;height:22px}
-.swatches--card .swatch[aria-checked="true"]::before{box-shadow:inset 0 0 0 1px var(--ring,oklch(1 0 0 / .16)),0 0 0 2px var(--color-bg),0 0 0 3.5px var(--color-strong)}
-.swatches--card .swatch__none{right:5px;bottom:5px;width:7px;height:7px;box-shadow:inset 0 0 0 1.5px var(--color-muted)}
-.swatches__more{flex:none;display:inline-grid;place-items:center;min-width:44px;height:44px;font:600 var(--t-12)/1 var(--font-ui);color:var(--color-muted);text-decoration:none;font-variant-numeric:tabular-nums}
-.swatches__more:hover{color:var(--color-strong)}
+.swatches--card .swatch[aria-checked="true"]::before{box-shadow:inset 0 0 0 1px var(--ring,oklch(1 0 0 / .16)),0 0 0 2px var(--color-bg),0 0 0 4px var(--color-strong)}
+.swatches--card .swatch__none{left:19px;right:auto;top:25px;bottom:auto;width:8px;height:8px;box-shadow:inset 0 0 0 1.5px var(--color-muted)}   /* on the chip's lower right, where the chip now sits in its place */
+/* "+N" is one of the family: a chip-sized pill with a hairline, bone figures, so it reads as a way on, not a disabled count */
+.swatches__more span{display:grid;place-items:center;min-width:22px;height:22px;padding:0 5px;border-radius:11px;box-shadow:inset 0 0 0 1px oklch(0.925 0.022 80 / .45);color:var(--color-text);transition:box-shadow var(--dur-micro) var(--ease-state)}
+.swatches__more:hover span,.swatches__more:focus-visible span{box-shadow:inset 0 0 0 1px var(--color-text)}
+.swatches__more{flex:none;display:none;place-items:center;width:44px;height:44px;font:600 var(--t-12)/1 var(--font-ui);color:var(--color-muted);text-decoration:none;font-variant-numeric:tabular-nums}
+.swatches__more:hover{color:var(--color-strong)} .swatches__more:focus-visible{outline:2px solid var(--color-focus);outline-offset:-2px;border-radius:50%}
+/* k places fit when the card is [44k, 44k + 44) px wide */
+@container sw (width < 132px){.o2 .swatch:nth-of-type(n+2){display:none} .o2 .swatches__more[data-k="2"]{display:grid}}
+@container sw (132px <= width < 176px){.o3 .swatch:nth-of-type(n+3){display:none} .o3 .swatches__more[data-k="3"]{display:grid}}
+@container sw (176px <= width < 220px){.o4 .swatch:nth-of-type(n+4){display:none} .o4 .swatches__more[data-k="4"]{display:grid}}
+@container sw (220px <= width < 264px){.o5 .swatch:nth-of-type(n+5){display:none} .o5 .swatches__more[data-k="5"]{display:grid}}
+@container sw (264px <= width < 308px){.o6 .swatch:nth-of-type(n+6){display:none} .o6 .swatches__more[data-k="6"]{display:grid}}
+@container sw (308px <= width < 352px){.o7 .swatch:nth-of-type(n+7){display:none} .o7 .swatches__more[data-k="7"]{display:grid}}
+@container sw (width >= 352px){.o8 .swatch:nth-of-type(n+8){display:none} .o8 .swatches__more[data-k="8"]{display:grid}}
 .swatches__n{margin:0 0 var(--s-1);font-size:var(--t-14);color:var(--color-muted)}
 .swatches__n b{font-weight:600;color:var(--color-strong);text-transform:capitalize;margin-right:var(--s-1)}
 .swatches__n .num{margin-right:var(--s-2);font-variant-numeric:tabular-nums}
@@ -882,3 +902,34 @@ html.restoring .grid--shop .card{content-visibility:visible}
 .pdp__tile .shot__tag--tbd{right:var(--s-4);bottom:var(--s-4)}
 .grid .shot__tag--tbd{font-size:12px;letter-spacing:.02em;line-height:1.2;max-width:calc(100% - var(--s-3))}
 .card__meta--one{-webkit-line-clamp:1}
+
+/* ---------- PRICE TBD, quiet (polish, 2026-11-24): a blank label, not yet through the price gun ----------
+   296 catalogue colours wait for the shop's price, so a full price-gun label on each made the unknown the loudest thing on
+   the page. The device stays (the label in the price's place, so it still reads at a glance) but it is not stuck on yet:
+   no label stock, no ember band, no hand angle, no shadow; a dashed hairline where the label will go, and the words in the
+   one shared TBD register (meta caps on the tile's ink, like "Shown in" and "Photo to be upscaled"). It fades in; it is
+   never pressed on, because nothing has been priced. */
+:is(.tile,.piece,.pdp__tile,.resin__item) .sticker.sticker--tbd{display:inline-flex;gap:.4em;align-items:baseline;width:auto;height:auto;min-width:0;padding:5px 8px;border:1px dashed oklch(0.16 0.012 50 / .42);border-radius:var(--radius);
+  background:var(--tile,var(--bonelt));box-shadow:none;transform:none;color:var(--color-on-tile);font-size:12px;overflow:visible}
+:is(.tile,.piece,.pdp__tile,.resin__item) .sticker.sticker--tbd::before,:is(.tile,.piece,.pdp__tile,.resin__item) .sticker.sticker--tbd::after{content:none}
+:is(.tile,.piece,.pdp__tile,.resin__item) .sticker.sticker--tbd .sticker__k,:is(.tile,.piece,.pdp__tile,.resin__item) .sticker.sticker--tbd .sticker__v{display:inline;max-width:none;padding:0;font:600 12px/1.25 var(--font-ui);letter-spacing:.06em;text-transform:uppercase;color:inherit;opacity:.86}
+:is(.tile,.piece,.pdp__tile,.resin__item) .sticker.sticker--tbd .sticker__v::first-letter{font-size:inherit;vertical-align:baseline;margin:0}
+.pdp__tile .sticker.sticker--tbd.sticker--tbd{padding:8px 12px} .pdp__tile .sticker.sticker--tbd.sticker--tbd .sticker__k,.pdp__tile .sticker.sticker--tbd.sticker--tbd .sticker__v{font-size:14px}
+.card__a:hover .sticker--tbd,.card__a:active .sticker--tbd,.piece:active .sticker--tbd{transform:none}
+@keyframes tbd-in{from{opacity:0}}
+.tile[data-stick=go] .sticker--tbd{animation:tbd-in var(--dur-state) var(--ease-state) var(--stick-d,0ms) backwards}
+
+/* design review (polish): the photo labels get the same tile fill as Price TBD, so glass behind them never runs through the words;
+   a phone number never breaks across lines */
+.tile .shot__tag--tbd,.pdp__tile .shot__tag--tbd{padding:3px 6px;border-radius:var(--radius);background:var(--tile,var(--bonelt));opacity:1;color:oklch(0.16 0.012 50 / .82)}
+a[href^="tel:"]{white-space:nowrap}
+
+/* ---------- CHARCOAL, the section's object (2026-11-24): six coconut cubes stacked 3-2-1; the top one is lit ----------
+   Coal is matte black-brown with a grey sheen on its edges; the lit cube's edges burn ember and its top goes to ash.
+   The burn is content (the coals' own glow), never the UI accent. Classes are the drawing's own (tools/objects-r5.txt). */
+.fx .ctop{fill:#74695f} .fx .cside{fill:#1b1715} .fx .cfront{fill:#2e2825} .fx .cgrain{fill:none;stroke:#4f4743;stroke-width:.6;stroke-linecap:round}
+.fx .chi{fill:none;stroke:#7a716b;stroke-width:.9;stroke-linecap:round} .fx .chi.dim{stroke:#3d3632}
+.fx .cash{fill:#d8d1c7;opacity:.9} .fx .crack{fill:none;stroke:#ff9a3d;stroke-width:1.1;stroke-linecap:round;stroke-linejoin:round} .fx .bwash{fill:#ff7a30;opacity:.2} .fx .bwash.w2{fill:#ff6426} .fx .bwash.w4{fill:#f04a1e} .fx .bwash.w5{fill:#e2381a;opacity:.45}   /* six stacked bands: the heat strongest at the bottom */ .fx .rim{fill:none;stroke:#ff8a3d;stroke-width:1.6;stroke-linecap:round;opacity:.75}
+.fx .bglow{fill:#ff4a14;opacity:.4} .fx .bline{fill:#ffb050}
+.fx .spk{fill:#ffb347;opacity:0} .fx .lit,.fx .stack{transform-box:view-box;transform-origin:50px 100px}
+.shophead[data-cat="charcoal"] .fx-obj:not([style]){top:auto;bottom:0;translate:none}   /* the stack stands on the band floor */

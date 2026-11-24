@@ -118,7 +118,7 @@ function viewStock() {
   return `<div class="tools"><div class="tools__head"><h1 class="h1">Stock</h1><div class="seg" role="group" aria-label="What you are doing">${modeChip("adjust", "Adjust")}${modeChip("count", "Count")}${modeChip("receive", "Receive")}</div></div>
     ${tally ? `<p class="tools__help">${MODE_HELP[state.smode]}</p>` : ""}
     ${state.smode === "receive" ? `<label class="field tools__ref"><span>Delivery note or invoice number, optional</span><input class="input" id="recvref" value="${esc(state.recvRef)}" maxlength="60" autocomplete="off"></label>` : ""}
-    <div class="tools__top"><input class="input" id="q" type="search" placeholder="Search stock" value="${esc(state.q)}" aria-label="Search stock">${tally ? "" : `<button class="btn" type="button" data-new>Add product</button>`}</div>
+    <div class="tools__top"><input class="input" id="q" type="search" placeholder="Search stock" value="${esc(state.q)}" aria-label="Search stock">${tally || !state.me.owner ? "" : `<button class="btn" type="button" data-new>Add product</button>`}</div>
     <div class="chips" role="group" aria-label="Section">${chip("all", "All " + state.products.length)}${chip("low", "Low or out")}${state.categories.map(c => chip(c.id, c.name)).join("")}</div>${progress}</div>
     <div class="rows" data-rows>${rowsHtml(list)}</div>`;
 }
@@ -155,7 +155,8 @@ function editSheet(p) {
     ${isNew ? "" : `<div class="photo">${thumb(p, c.tone).replace('width="52" height="64"', 'width="96" height="120"')}<div><p>Take or choose a photo. Plain background, the whole piece in frame.</p><label class="btn btn--ghost">Change photo<input type="file" accept="image/*" data-photo hidden></label></div></div>`}
     <label class="field"><span>Name</span><input class="input" name="name" value="${esc(p.name)}" maxlength="80" required></label>
     <div class="grid2"><label class="field"><span>Section</span><select class="input" name="category_id">${state.categories.map(x => opt(x.id, x.name, p.category_id)).join("")}</select></label>
-      <label class="field"><span>Price, $</span><input class="input num" name="price" inputmode="decimal" value="${dol(p.price_cents)}" required></label></div>
+      <label class="field"><span>Price, $</span><input class="input num" name="price" inputmode="decimal" value="${dol(p.price_cents)}" required ${state.me.owner ? "" : 'readonly aria-describedby="price-who"'}></label></div>
+    ${state.me.owner ? "" : `<p class="fineprint" id="price-who">Prices are set by the owner. Everything else here you can change.</p>`}
     <label class="field"><span>Description, one line</span><input class="input" name="note" value="${esc(p.note)}" maxlength="200"></label>
     ${p.family ? `<label class="field"><span>Colour name, as customers see it</span><input class="input" name="variant_label" value="${esc((() => { try { return JSON.parse(p.details || "{}").colour || ""; } catch { return ""; } })())}" placeholder="${esc(p.variant_label || "")}" maxlength="40"></label>` : ""}
     <div data-cologne ${p.category_id === "cologne" ? "" : "hidden"}><div class="grid2"><label class="field"><span>Size, mL</span><input class="input num" name="ml" inputmode="numeric" value="${esc(d.ml ?? "")}"></label>
@@ -164,7 +165,7 @@ function editSheet(p) {
     <div class="grid2"><label class="field"><span>Weight, grams</span><input class="input num" name="weight_g" inputmode="numeric" value="${esc(p.weight_g)}" required></label>
       <label class="field"><span>Ships in</span><select class="input" name="box_id">${state.boxes.map(b => opt(b.id, `${b.label} (${b.l_cm} x ${b.w_cm} x ${b.h_cm} cm)`, p.box_id)).join("")}</select></label></div>
     <label class="field"><span>How it can ship</span><select class="input" name="ship_class">${opt("standard", "Any service", p.ship_class)}${opt("ground_only", "Ground only (cologne, anything flammable)", p.ship_class)}${opt("pickup_only", "Pickup or local delivery only (never shipped)", p.ship_class)}</select></label>
-    <div class="grid2"><label class="field"><span>Your cost, $ (private)</span><input class="input num" name="cost" inputmode="decimal" value="${dol(p.cost_cents)}"></label>
+    <div class="grid2"><label class="field"><span>Your cost, $ (private)</span><input class="input num" name="cost" inputmode="decimal" value="${dol(p.cost_cents)}" ${state.me.owner ? "" : 'readonly aria-describedby="price-who"'}></label>
       <label class="field"><span>Warn me at</span><input class="input num" name="low_stock_at" inputmode="numeric" value="${esc(p.low_stock_at)}"></label></div>
     ${isNew ? `<label class="field"><span>How many on the shelf now</span><input class="input num" name="stock" inputmode="numeric" value="0"></label>` : ""}
     <label class="check"><input type="checkbox" name="glass" ${p.glass ? "checked" : ""}> Glass, pack with care</label>
@@ -225,7 +226,8 @@ const REASON = { no_show: "Not picked up", customer: "Customer asked", other: "O
 const pj = s => { try { return JSON.parse(s || "{}") || {}; } catch { return {}; } };
 const FIELD = { price_cents: "price", cost_cents: "cost", low_stock_at: "warning level", category_id: "section", ship_class: "shipping", note: "description", weight_g: "weight", box_id: "box" };
 const ACTION = { "order.status": a => `Marked ${(pj(a.after).status || "").replace("ready", "ready for pickup")}`, "order.cancel": a => `Cancelled: ${(REASON[pj(a.after).reason] || "").toLowerCase()}`, "order.id_check": a => pj(a.after).checked ? "ID checked" : "ID tick removed",
-  "product.edit": a => `Edited ${Object.keys(pj(a.after)).map(k => FIELD[k] || k.replace(/_/g, " ")).join(", ")}`, "product.create": () => "Added to the store", "product.photo": () => "New photo" };
+  "product.edit": a => `Edited ${Object.keys(pj(a.after)).map(k => FIELD[k] || k.replace(/_/g, " ")).join(", ")}`, "product.create": () => "Added to the store", "product.photo": () => "New photo",
+  "order.refund": a => `Refunded ${money(pj(a.after).amount_cents || 0)} to the card`, "order.counter_refund": a => `Recorded ${money(pj(a.after).amount_cents || 0)} given back at the counter${pj(a.after).reason ? ": " + pj(a.after).reason : ""}`, "order.paid_at_counter": () => "Paid at the counter" };
 const trailHtml = list => list.map(a => `<div><span>${esc((ACTION[a.action] || (() => a.action))(a))}, ${esc(who(a.actor))}</span><span class="num">${when(a.at)}</span></div>`).join("");
 const NEXT = o => ({ pending: o.pay_status === "pay_at_pickup" ? ["ready", "Mark ready for pickup"] : undefined, paid: o.method === "pickup" ? ["ready", "Mark ready for pickup"] : ["packed", "Mark packed"], packed: ["shipped", isLocal(o) ? "Mark out for delivery" : "Mark shipped"], ready: o.pay_status === "pay_at_pickup" ? undefined : ["collected", "Mark collected"] }[o.status]);
 const isTodo = o => ["paid", "packed", "ready"].includes(o.status) || (o.status === "pending" && o.pay_status === "pay_at_pickup");
@@ -234,7 +236,13 @@ const PAY = { awaiting: "Card, not paid yet", paid: "Paid", pay_at_pickup: "To p
 const payFacts = o => !o.pay_status ? "" : `<div><dt>Payment</dt><dd>${PAY[o.pay_status] || esc(o.pay_status)}${o.pay_method === "card" && o.paid_cents ? `, card ${money(o.paid_cents)}` : o.pay_status === "paid" && o.pay_method === "at_pickup" ? ", at the counter" : ""}${o.refunded_cents ? `, ${money(o.refunded_cents)} refunded` : ""}</dd></div>`;
 const payActs = o => o.pay_status === "pay_at_pickup" ? `<button class="btn" type="button" data-markpaid>Mark paid at the counter</button>`
   : o.pay_method === "card" && ["paid", "part_refunded"].includes(o.pay_status) && state.me.owner ? `<form class="refund" data-refundform><label class="meta" for="rf-amt">Refund to the card</label><div class="refund__row"><input class="field num" id="rf-amt" name="amount" inputmode="decimal" value="${((o.paid_cents - (o.refunded_cents || 0)) / 100).toFixed(2)}" aria-describedby="rf-note"><button class="btn btn--ghost" type="submit">Refund</button></div><p class="fineprint" id="rf-note">Up to ${money(o.paid_cents - (o.refunded_cents || 0))}. Stock is not put back: count returns in with the stock button.</p></form>`
-  : o.pay_method === "card" && ["paid", "part_refunded"].includes(o.pay_status) ? `<p class="fineprint">Refunds to the card are done by the owner.</p>` : "";
+  : o.pay_method === "card" && ["paid", "part_refunded"].includes(o.pay_status) ? `<p class="fineprint">Refunds to the card are done by the owner.</p>`
+  : o.pay_method === "at_pickup" && ["paid", "part_refunded"].includes(o.pay_status) && o.status !== "cancelled" && state.me.owner ? `<form class="refund" data-tillrefund novalidate><p class="meta">Refund given at the counter</p>
+      <div class="refund__row"><label class="field"><span>Amount given back, $</span><input class="input num" name="amount" inputmode="decimal" value="${((o.paid_cents - (o.refunded_cents || 0)) / 100).toFixed(2)}" aria-describedby="tr-note"></label></div>
+      <label class="field"><span>Why</span><input class="input" name="why" maxlength="200" placeholder="Returned, faulty" aria-describedby="tr-note"></label>
+      <button class="btn btn--ghost" type="submit">Record the refund</button>
+      <p class="fineprint" id="tr-note">For money already given back at the till. Up to ${money(o.paid_cents - (o.refunded_cents || 0))}. It comes off the monthly report and takes back the customer's points. Count returned items in with the stock button.</p></form>`
+  : o.pay_method === "at_pickup" && ["paid", "part_refunded"].includes(o.pay_status) && o.status !== "cancelled" ? `<p class="fineprint">Refunds given at the counter are recorded by the owner.</p>` : "";
 function viewOrders() {
   const todo = isTodo, list = state.orders.filter(o => state.oflt === "all" || (state.oflt === "todo" ? todo(o) : !todo(o)));
   const chip = (id, label) => `<button class="chip" type="button" data-oflt="${id}" aria-pressed="${state.oflt === id}">${label}</button>`;
@@ -243,7 +251,7 @@ function viewOrders() {
 }
 async function orderSheet(id) {
   const { order: o, items, emails = [], trail = [] } = await api("/orders/" + id), k = ORDER_STATE[o.status][0], label = stateLabel(o), next = NEXT(o);
-  const charcoal = items.some(i => i.category_id === "heat" || /"charcoal":true/.test(i.details || "")), canCancel = ["paid", "packed", "ready"].includes(o.status) || (o.status === "pending" && o.pay_status === "pay_at_pickup"), wait = waitDays(o), units = items.reduce((a, i) => a + i.qty, 0), src = pj(o.source_detail);
+  const charcoal = items.some(i => i.category_id === "charcoal" || /"charcoal":true/.test(i.details || "")), canCancel = ["paid", "packed", "ready"].includes(o.status) || (o.status === "pending" && o.pay_status === "pay_at_pickup"), wait = waitDays(o), units = items.reduce((a, i) => a + i.qty, 0), src = pj(o.source_detail);
   sheet.innerHTML = `<div class="sheet__in" data-ordersheet="${o.id}">
     <div class="sheet__top"><div><p class="meta">Order ${o.id} &middot; ${when(o.created_at)}</p><h2 class="h2" style="margin:0">${esc(o.name)}</h2><span class="state ${k}">${label}</span></div><button class="sheet__x" type="button" data-close>Close</button></div>
     ${dropCard(o)}
@@ -270,7 +278,7 @@ async function orderSheet(id) {
   if (!sheet.open) sheet.showModal();
 }
 
-const MAIL = { order_placed: "Order received", order_shipped: "Shipped", pickup_ready: "Ready for pickup", low_stock: "Low stock note to the shop" };
+const MAIL = { order_placed: "Order received", order_shipped: "Shipped", pickup_ready: "Ready for pickup", low_stock: "Low stock note to the shop", new_order: "New order note to the shop" };
 async function mailView(id) {
   const box = $("[data-mailview]", sheet); if (!box) return;
   const { email: e } = await api("/emails/" + id);
@@ -403,5 +411,17 @@ document.addEventListener("submit", async e => {
   f.dataset.op = f.dataset.op && f.dataset.cents === String(cents) ? f.dataset.op : crypto.randomUUID(); f.dataset.cents = String(cents);
   btn.disabled = true; err.textContent = "";
   try { await api(`/orders/${id}/refund`, { method: "POST", body: { op: f.dataset.op, amount_cents: cents } }); await loadOrders(); await orderSheet(id); render(); toast(`Refunded ${money(cents)}.`); }
+  catch (er) { err.textContent = er.message; btn.disabled = false; }
+});
+// A refund already handed back at the till: recorded so the report, the 5% and the customer's points all see it.
+document.addEventListener("submit", async e => {
+  const f = e.target.closest("[data-tillrefund]"); if (!f) return; e.preventDefault();
+  const id = f.closest("[data-ordersheet]").dataset.ordersheet, btn = f.querySelector("button"), err = $("[data-err]", sheet);
+  const cents = Math.round(parseFloat(String(f.elements.amount.value).replace(/[^\d.]/g, "")) * 100), why = f.elements.why.value.trim();
+  if (!(cents > 0)) { err.textContent = "Enter the amount given back."; return; }
+  if (!why) { err.textContent = "Say why in a few words, for example: returned, faulty."; f.elements.why.focus(); return; }
+  f.dataset.op = f.dataset.op && f.dataset.cents === String(cents) ? f.dataset.op : crypto.randomUUID(); f.dataset.cents = String(cents);
+  btn.disabled = true; err.textContent = "";
+  try { await api(`/orders/${id}/counter-refund`, { method: "POST", body: { op: f.dataset.op, amount_cents: cents, reason: why } }); await loadOrders(); await orderSheet(id); render(); toast(`Recorded ${money(cents)} given back at the counter.`); }
   catch (er) { err.textContent = er.message; btn.disabled = false; }
 });

@@ -21,7 +21,8 @@ const stockFor = p => !forSale(p) || isSold(p) ? 0 : Number.isInteger(p.stock) ?
 // Anything not known yet is said plainly, in one quiet style, never guessed and never left blank.
 const TBD = what => `<span class="tbd">${what ? what + " " : ""}TBD</span>`;   // TBD("") when the label beside it already names the fact
 const SHELF = shelfOf(PRODUCTS);   // one card per hookah family; every other item is its own card
-const familyOf = p => p && p.family ? PRODUCTS.filter(x => x.family === p.family) : p ? [p] : [];
+const FAMILIES = new Map(); for (const p of PRODUCTS) if (p.family) { if (!FAMILIES.has(p.family)) FAMILIES.set(p.family, []); FAMILIES.get(p.family).push(p); }   // built once: every card used to filter the whole catalogue for its colours
+const familyOf = p => p && p.family ? FAMILIES.get(p.family) || [p] : p ? [p] : [];
 const GROUPS = [["full_size", "Full size"], ["stem_set", "Stem sets"], ["compact_travel", "Compact and travel"], ["statement", "Statement pieces"]];
 const stemSet = p => !!(p && p.facts && p.facts.includes_base === false);
 // ---------- THE COLOUR SWITCHER: every catalogue colour, a radio group; a colour without its own photo says "Photo coming" ----------
@@ -30,10 +31,20 @@ const photoOf = v => !!(v && v.img);   // its own photo or the family's, labelle
 const colourName = (v, i) => v.colour ? (v.named ? v.colour : `${v.colour}, name TBD`) : `Colour ${i + 1}`;
 // a light chip on the coal ground gets a ring; computed from the chip's own colour so it never disappears into the page
 const lum = hex => { const m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return 0; const c = [0, 2, 4].map(i => parseInt(m[1].slice(i, i + 2), 16) / 255).map(x => x <= .04045 ? x / 12.92 : ((x + .055) / 1.055) ** 2.4); return .2126 * c[0] + .7152 * c[1] + .0722 * c[2]; };
-const chipStyle = v => `--c:${esc(v.chip || "#8a8a8a")}${lum(v.chip) < .03 ? ";--ring:oklch(1 0 0 / .38)" : ""}`;
-function swatchGroup(fam, chosen, { label, card = "", max = 99 } = {}) {
-  const shown = fam.slice(0, max), more = fam.length - shown.length;
-  return `<div class="swatches ${card ? "swatches--card" : ""}" role="radiogroup" aria-label="${esc(label)}">${shown.map((v, i) => `<button class="swatch" type="button" role="radio" data-swatch="${v.sku}" ${card ? `data-card="${card}"` : ""} aria-checked="${v.sku === chosen.sku}" tabindex="${v.sku === chosen.sku ? 0 : -1}" style="${chipStyle(v)}" aria-label="${esc(colourName(v, i))}${photoOf(v) ? "" : ", photo coming"}"></button>`).join("")}${more > 0 ? `<a class="swatches__more" href="/p/${fam[0].sku}" aria-label="${more} more colours">+${more}</a>` : ""}</div>`;
+const chipStyle = v => `--c:${esc(v.chip || "#8a8a8a")}${lum(v.chip) < .1 ? ";--ring:oklch(1 0 0 / .36)" : ""}`;   // a dark chip (charcoal, mid grey and darker) gets a light inner ring, so it never sinks into the coal
+// THE COLOUR SWITCHER on a card: every chip has a 44 px target, and the row never runs past the card. How many targets fit
+// is the card's own width (a container query, styles.css): when the colours do not all fit, the last place becomes "+N",
+// N being exactly the colours not shown at that width. The "+N" for each possible width is written once, here, and CSS shows
+// the one that fits, so nothing is measured while a section is drawn. Up to 8 places on the widest card.
+const SW_MAX = 8;
+function swatchGroup(fam, chosen, { label, card = "" } = {}) {
+  const chip = (v, i) => `<button class="swatch" type="button" role="radio" data-swatch="${v.sku}" ${card ? `data-card="${card}"` : ""} aria-checked="${v.sku === chosen.sku}" tabindex="${v.sku === chosen.sku ? 0 : -1}" style="${chipStyle(v)}" aria-label="${esc(colourName(v, i))}${photoOf(v) ? "" : ", photo coming"}">${photoOf(v) ? "" : `<span class="swatch__none" aria-hidden="true"></span>`}</button>`;
+  if (!card) return `<div class="swatches" role="radiogroup" aria-label="${esc(label)}">${fam.map(chip).join("")}</div>`;   // the product page wraps: every colour shows
+  // the chosen colour always shows on the card: it leads the row when it would otherwise be hidden
+  const at = fam.findIndex(v => v.sku === chosen.sku), row = at > 0 ? [fam[at], ...fam.slice(0, at), ...fam.slice(at + 1)] : fam, n = row.length;
+  const over = [], more = [];
+  for (let k = 2; k <= SW_MAX; k++) if (n > k) { over.push("o" + k); more.push(`<a class="swatches__more" data-k="${k}" href="/p/${card}" aria-label="${n - k + 1} more ${n - k + 1 === 1 ? "colour" : "colours"} of ${esc(label.replace(/^Colours of /, ""))}"><span class="num">+${n - k + 1}</span></a>`); }
+  return `<div class="swatchbox ${over.join(" ")}"><div class="swatches swatches--card" role="radiogroup" aria-label="${esc(label)}">${row.map(v => chip(v, fam.indexOf(v))).join("")}</div>${more.join("")}</div>`;
 }
 // The photo a colour shows, and its label in the quiet TBD style (owner, 2026-11-24): its own photo ("Photo to be upscaled" when it
 // was enlarged), the family's photo with "Shown in <colour>", or the drawn stand-in with "Photo coming". The label is in the alt text too.
@@ -41,7 +52,7 @@ function photoLabel(v) {
   const f = (v && v.facts) || {};
   if (!v.img) return "";
   if (f.photo === "family") return `Shown in ${f.shown_in || "another colour"}${f.photo_upscale ? ". Photo to be upscaled" : ""}`;
-  return f.photo_label === "upscale" ? "Photo to be upscaled" : "";
+  return f.photo_label === "upscale" || v.details?.photo === "upscale" ? "Photo to be upscaled" : "";   // a single item (charcoal, foil, shisha) says it in its details
 }
 const colourShot = (v, o = {}) => { const l = photoLabel(v); return shot(v, { ...o, alt: o.alt ? (l ? `${o.alt}. ${l}` : o.alt) : "" }) + (l ? `<span class="shot__tag shot__tag--tbd" aria-hidden="true">${esc(l)}</span>` : ""); };
 function cleanCart(x) {
@@ -56,7 +67,7 @@ function fitCart(cart) {
   for (const l of cart) {
     const p = bySku[l.sku], max = stockFor(p);
     if (!forSale(p)) { news.push(p.state === "tbd" ? `${p.name} has no shop price yet, so we took it out of your cart.` : `${p.name} is not on sale yet, so we took it out of your cart.`); continue; }
-    if (!max) { news.push(`${p.name} has sold, so we took it out of your cart.`); continue; }
+    if (!max) { news.push(`${p.name} has sold out, so we took it out of your cart.`); continue; }
     if (l.qty > max) news.push(`We only have ${max} of ${p.name}, so your cart now has ${max}.`);
     kept.push({ sku: l.sku, qty: Math.min(max, l.qty) });
   }
@@ -66,12 +77,15 @@ const state = { reach: ["local", "nationwide"].includes(store.get("reach")) ? st
 { const fit = fitCart(state.cart); if (fit.news.length) { state.cart = fit.kept; state.cartNews = fit.news; store.set("cart", state.cart); } }
 const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-const whole = n => "$" + (Math.round(n * 100) % 100 ? n.toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : Math.round(n).toLocaleString("en-CA")); // cents only when the price has them
+const NF_CENTS = new Intl.NumberFormat("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 }), NF_WHOLE = new Intl.NumberFormat("en-CA");   // made once: toLocaleString builds a new formatter on every call
+const whole = n => "$" + (Math.round(n * 100) % 100 ? NF_CENTS.format(n) : NF_WHOLE.format(Math.round(n))); // cents only when the price has them
 const TONES = ["ember", "teal", "ruby", "cobalt", "gilt", "emerald"];
 const SERIES = { Sultan: "ruby", Mamoun: "gilt", Cairo: "teal", Regent: "cobalt", Stuttgart: "emerald" };
 const seriesOf = p => p.name.split(" ")[0] in SERIES ? p.name.split(" ")[0] : "";
 // Colour is decided, not random: one jewel per series; everything else takes the next jewel along within its category.
-const toneOf = p => p.dark ? "" : p.photo ? "bone" : SERIES[seriesOf(p)] || TONES[PRODUCTS.filter(x => x.cat === p.cat && !seriesOf(x)).indexOf(p) % TONES.length];
+// Worked out once for the whole catalogue (it used to scan every product for every card): the same answer as before, item by item.
+const TONE = new Map(); { const k = Object.create(null); for (const p of PRODUCTS) { const s = seriesOf(p), i = s ? -1 : (k[p.cat] = (k[p.cat] ?? -1) + 1); TONE.set(p, p.dark ? "" : p.photo ? "bone" : s ? SERIES[s] : TONES[i % TONES.length]); } }
+const toneOf = p => TONE.has(p) ? TONE.get(p) : p.dark ? "" : p.photo ? "bone" : SERIES[seriesOf(p)] || TONES[0];
 const place = d => d.city ? d.city : d.fsa;
 const byName = n => PRODUCTS.find(p => p.name === n);
 const inCat = c => SHELF.filter(p => p.cat === c && !p.dark);
@@ -100,7 +114,10 @@ const feeText = n => n === 0 ? "Free" : money(n);
 const isCharcoal = p => !!(p && p.details && p.details.charcoal);
 const localOnly = p => !!p && (p.ship === "pickup_only" || isCharcoal(p));
 const carried = lines => !lines.some(l => localOnly(l.product));
-const cpQuote = lines => state.dest && carried(lines) ? quote(state.dest, pack(lines)) : [];
+// No shipping to Quebec until the site has a French version (Charter of the French Language; plan section 8). The server refuses it too.
+const toQuebec = () => !!(state.dest && state.dest.prov === "QC");
+const QC_NOTE = "<b>Not shipping to Quebec yet.</b> The site is in English only for now. Pickup in Windsor is free, or call <a class=\"link tel\" href=\"tel:+15192552222\">519-255-2222</a>.";
+const cpQuote = lines => state.dest && carried(lines) && !toQuebec() ? quote(state.dest, pack(lines)) : [];
 const freeNote = sub => sub >= FREE_LOCAL_CENTS ? "Free local delivery: your items are $200 or more before tax." : `Local delivery is free on orders of $200 or more before tax. Add ${money((FREE_LOCAL_CENTS - sub) / 100)} more to get it.`;
 function saveCart() { store.set("cart", state.cart); syncChrome(); }
 function addToCart(sku) {
@@ -145,15 +162,86 @@ function sticker(p, { big = false } = {}) {
   const n = parseInt(p.sku.slice(-3), 10), r = ((n * 37) % 23) - 13; // -13..+9 degrees, fixed per product
   if (p.state === "tbd") return `<span class="sticker sticker--tbd ${big ? "sticker--big" : ""}" style="--r:${r}deg"><span class="sticker__k">Price</span><span class="sticker__v">TBD</span></span>`;   // the price gun's own words until the shop sets its price
   if (p.state === "soon") return `<span class="sticker sticker--tbd ${big ? "sticker--big" : ""}" style="--r:${r}deg"><span class="sticker__k">Soon</span><span class="sticker__v">${whole(p.price)}</span></span>`;
-  return `<span class="sticker ${big ? "sticker--big" : ""} ${isSold(p) ? "sticker--sold" : ""}" style="--r:${r}deg"><span class="sticker__v">${isSold(p) ? "Sold" : whole(p.price)}</span></span>`;
+  return `<span class="sticker ${big ? "sticker--big" : ""} ${isSold(p) ? "sticker--sold" : ""}" style="--r:${r}deg"><span class="sticker__v">${isSold(p) ? "Sold out" : whole(p.price)}</span></span>`;
 }
 
+// ---------- THE FIRST SCREEN FIRST: a section swap draws the cards you can see, then the rest in idle moments ----------
+// A long section (83 hookah families, 84 Heat items, every piece on Everything) was one 150-650 ms task on a slow phone, in the
+// middle of the wave. While a navigation draws, cards past the first screen leave a sized slot and wait in a queue; the queue is
+// drawn a few cards at a time between frames, never more than ~8 ms of work per turn. Parts of the page nobody sees in the first
+// frame (the desktop filter rail, hidden on a phone) wait the same way. Back to a spot down the list draws through it first.
+// The swap itself stays small: under the wave's full cover it puts in the page with every card as a slot, the section's band and its
+// objects; the cards of the first screen follow in their own task straight after (before the wave starts to leave), the rest in
+// idle moments. Each step is its own task, so none of them holds the wave.
+// How many cards fill the first screen: the grid's columns at this width (styles.css) times the rows that fit, plus one row.
+const firstScreen = () => { const w = innerWidth, cols = w >= 1500 ? 5 : w >= 960 ? 4 : w >= 640 ? 3 : 2; return cols * (Math.ceil(innerHeight / (w / cols * 1.25 + 90)) + 1); };
+let queue = null;     // only while render() draws a section: { q parts waiting: { html(), sku? } }
+let pending = null;   // after the draw, until every waiting part is in: { q, order, slots, at, step, run, first }
+let runs = 0;
 function card(p, i = 9) {
+  if (queue) return `<div class="later" data-later="${queue.q.push({ html: () => cardHTML(p, i), sku: p.sku }) - 1}" aria-hidden="true"></div>`;
+  return cardHTML(p, i);
+}
+// any part of the page that can arrive a moment after the first screen (find.js passes the filter rail through here)
+const defer = make => queue ? `<div class="later--part" data-later="${queue.q.push({ html: make }) - 1}" aria-hidden="true"></div>` : make();
+const idle = window.requestIdleCallback ? f => requestIdleCallback(f, { timeout: 120 }) : f => setTimeout(() => f(null), 16);   // Safari has no idle callback: one short turn per frame
+const soon = (() => { const ch = new MessageChannel(), fns = []; ch.port1.onmessage = () => fns.shift()?.(); return f => { fns.push(f); ch.port2.postMessage(0); }; })();   // the next task, with no timer clamp
+function laterStart(q) {   // called once #main holds the new page; any earlier queue is dropped with the page it belonged to
+  const main = $("#main"), run = ++runs; pending = null;
+  if (!q || !q.q.length) { main.removeAttribute("aria-busy"); return; }
+  const slots = []; for (const s of main.querySelectorAll("[data-later]")) slots[+s.dataset.later] = s;
+  // The first screen: on a desktop the filter rail is part of it (find.css shows it from 960 px), so it goes first and is drawn
+  // with the first cards; on a phone the rail is hidden and waits until the cards are in.
+  const parts = q.q.filter(x => !x.sku).length, partsFirst = q.wide;
+  const order = [...q.q.keys()].sort((a, b) => (partsFirst ? (!q.q[b].sku) - (!q.q[a].sku) : (!q.q[a].sku) - (!q.q[b].sku)) || a - b);
+  pending = { q: q.q, order, slots, at: 0, step: 2, run };
+  main.setAttribute("aria-busy", "true");   // screen readers wait for the whole list
+  const upto = q.first - 1 + (partsFirst ? parts : 0);
+  setTimeout(() => { if (runs === run) delete document.documentElement.dataset.swapping; }, 400);   // never hold the wave longer than this after the page is in
+  soon(() => {
+    try { if (pending && pending.run === run) { drawLater(0, upto, true); if (pending) drain(run); } }
+    finally { delete document.documentElement.dataset.swapping; }   // the wave may leave now: the first screen is in
+  });
+}
+// Draws waiting parts in order for up to `budget` ms, or through position `upto` whatever it costs (the first screen; Back to a spot).
+function drawLater(budget = 8, upto = -1, first = false) {
+  const L = pending; if (!L) return;
+  const t0 = performance.now(), made = [];
+  while (L.at < L.order.length) {
+    // a few parts per parse; the count grows while there is time left, so the cost per card is measured, not guessed
+    const end = Math.min(L.order.length, upto >= L.at ? upto + 1 : L.at + L.step), idx = [];
+    for (let j = L.at; j < end; j++) { const k = L.order[j]; if (L.slots[k] && L.slots[k].isConnected) idx.push(k); }   // a slot a filter redraw has replaced is skipped
+    if (idx.length) {
+      const tpl = document.createElement("template"); tpl.innerHTML = idx.map(k => L.q[k].html() + "<!--/later-->").join("");
+      let i = 0, group = [];   // each part's nodes run up to its marker
+      for (const n of [...tpl.content.childNodes]) {
+        if (n.nodeType === 8 && n.data === "/later") { L.slots[idx[i]].replaceWith(...group); made.push(...group.filter(g => g.nodeType === 1)); group = []; i++; }
+        else group.push(n);
+      }
+    }
+    L.at = end;
+    const used = performance.now() - t0;
+    if (L.at > upto && used >= budget) break;
+    if (used < budget / 3) L.step = Math.min(24, L.step * 2);
+  }
+  const cards = made.filter(m => m.classList.contains("card"));
+  if (cards.length) dispatchEvent(new CustomEvent("oss:cards", { detail: { cards, first } }));   // fx-stick sticks their labels like the rest
+  if (L.at >= L.order.length) { pending = null; $("#main").removeAttribute("aria-busy"); }
+}
+function drain(run) { idle(dl => { if (!pending || pending.run !== run) return; drawLater(dl ? Math.max(4, Math.min(8, dl.timeRemaining())) : 6); if (pending) drain(run); }); }
+// Back to a spot down a long list: the cards through the remembered one (and a screen after it) are drawn before the scroll lands.
+function drawThrough(sku) {
+  if (!pending) return; const L = pending, j = sku ? L.order.findIndex(k => L.q[k].sku === sku) : -1, first = firstScreen();
+  drawLater(0, j >= 0 ? j + first : L.order.length, false);   // no card to aim at: everything, so the remembered height exists. Not "first":
+  // the scroll has not landed yet, so these labels wait for their cards to come into view, as on any Back
+}
+
+function cardHTML(p, i = 9) {
   const tone = toneOf(p);
   return `
   <article class="card" data-tone="${tone}" ${p.family ? `data-family="${p.sku}"` : ""}>
     <a class="card__a" href="/p/${p.sku}" data-piece="${p.sku}">
-      <div class="tile ${p.dark || p.photo ? "tile--photo" : ""}">${p.family ? colourShot(p, { small: true, eager: i < 2 }) : shot(p, { small: true, eager: i < 2 })}${sticker(p)}</div>
+      <div class="tile ${p.dark || p.photo ? "tile--photo" : ""}">${colourShot(p, { small: true, eager: i < 2 })}${sticker(p)}</div>
       <h3 class="card__name">${esc(p.name)}</h3>
     </a>
     ${cardMeta(p)}${localOnly(p) ? `<p class="card__pick">Pickup or local delivery only</p>` : ""}
@@ -165,7 +253,7 @@ function cardMeta(p) {
   const desc = p.details?.description;   // one line on the card, the whole of it on the product page
   if (!p.family) return `<p class="card__meta ${desc ? "card__meta--one" : ""}">${esc(desc || p.note || (p.facts && p.facts.size) || "")}</p>`;
   const fam = familyOf(p), bits = stemSet(p) ? "Stem set, no base" : "";   // the chips carry the colour count
-  return `${desc ? `<p class="card__meta card__meta--one">${esc(desc)}</p>` : ""}${fam.length > 1 ? swatchGroup(fam, p, { label: `Colours of ${p.name}`, card: p.sku, max: 5 }) : ""}${bits ? `<p class="card__meta card__meta--fam">${bits}</p>` : ""}`;
+  return `${desc ? `<p class="card__meta card__meta--one">${esc(desc)}</p>` : ""}${fam.length > 1 ? swatchGroup(fam, p, { label: `Colours of ${p.name}`, card: p.sku }) : ""}${bits ? `<p class="card__meta card__meta--fam">${bits}</p>` : ""}`;
 }
 
 // ---------- views ----------
@@ -190,7 +278,7 @@ function viewHome() {
     <div class="hero__in">
       <h1 class="hero__h"><span class="hero__lead">Hookahs,</span> <span class="hero__rest">and everything that goes with them.</span></h1>
       <div class="hero__side">
-        <p class="hero__p">Local delivery from $10 near Windsor, free pickup, and shipping across Canada.</p>
+        <p class="hero__p">Local delivery from $10 near Windsor, free pickup, and shipping across Canada except Quebec, for now.</p>
         <div class="hero__cta"><a class="btn" href="/shop/hookahs">Shop hookahs</a><a class="btn btn--ghost" href="/shop">All ${SHELF.length} pieces</a></div>
       </div>
     </div>
@@ -268,9 +356,13 @@ const plural = (n, one, many) => `<span class="num">${n}</span> ${n === 1 ? one 
 function bandNote(c, list) {
   if (!c) return plural(list.length, "piece", "pieces");
   const local = list.length && list.every(localOnly) ? ".<br>Pickup or local delivery only." : "";
-  if (c.id === "heat") {
-    const coal = list.filter(isCharcoal).length, other = list.length - coal;
-    return [coal ? plural(coal, "kind of charcoal", "kinds of charcoal") : "", other ? plural(other, list.filter(p => !isCharcoal(p)).every(p => /foil/i.test(p.name)) ? "foil pack" : "piece", list.filter(p => !isCharcoal(p)).every(p => /foil/i.test(p.name)) ? "foil packs" : "pieces") : ""].filter(Boolean).join(" and ") + local;
+  if (c.id === "charcoal") {   // its own section since 2026-11-24: boxes and the single rolls cut from them
+    const rolls = list.filter(p => p.details?.box_sku).length, boxes = list.length - rolls;
+    return [boxes ? plural(boxes, "box of charcoal", "boxes of charcoal") : "", rolls ? plural(rolls, "single roll", "single rolls") : ""].filter(Boolean).join(" and ") + local;
+  }
+  if (c.id === "heat") {   // foil, and the heat management pieces back on the shelf
+    const foil = list.filter(p => /foil/i.test(p.name)).length, other = list.length - foil;
+    return [foil ? plural(foil, "foil pack", "foil packs") : "", other ? plural(other, "heat piece", "heat pieces") : ""].filter(Boolean).join(" and ") + local;
   }
   if (c.id === "hookahs") return plural(list.length, "hookah", "hookahs") + local;
   if (c.id === "shisha") return plural(list.length, "flavour", "flavours") + local;
@@ -285,7 +377,7 @@ function viewShop(cat) {
     <p class="shophead__n">${bandNote(c, list)}</p>
   </section>
   <nav class="chips" aria-label="Categories"><a href="/shop" ${!c ? 'aria-current="page"' : ""}>All</a>${CATEGORIES.map(x => `<a href="/shop/${x.id}" ${c && c.id === x.id ? 'aria-current="page"' : ""}>${x.name}</a>`).join("")}<a href="/gifts/under-50">Gifts</a></nav>
-  ${f ? f.html(shopGrid(cat)) : shopGrid(cat)}`;
+  ${f ? f.html(() => shopGrid(cat)) : shopGrid(cat)}`;
 }
 
 // The product page for charcoal: one plain answer about how it is bought, in place of the delivery and shipping rows.
@@ -334,21 +426,21 @@ function factsSpec(p, fam) {
 function viewProduct(sku) {
   const asked = new URLSearchParams(location.search).get("colour"), base = bySku[sku];
   const p = base && base.family && bySku[asked] && bySku[asked].family === base.family ? bySku[asked] : base;
-  if (!p) return `${band("missing", "ruby", "That one is gone.")}<section class="empty"><p class="lead">It may have sold. <a class="link" href="/shop">See what is on the counter</a>.</p></section>`;
+  if (!p) return `${band("missing", "ruby", "That one is gone.")}<section class="empty"><p class="lead">It may have sold out. <a class="link" href="/shop">See what is on the counter</a>.</p></section>`;
   const c = catById[p.cat], parcels = pack([{ product: p, qty: 1 }]), opts = cpQuote([{ product: p, qty: 1 }]), b = parcels[0];
   const inCart = state.cart.some(l => l.sku === p.sku);   // the colour chosen, not the address's first colour
   const fam = familyOf(p), sale = forSale(p);
   const more = SHELF.filter(x => x.cat === p.cat && x.sku !== sku && (!p.family || x.family !== p.family) && !x.dark && !isSold(x))
     .sort((a, b) => p.family ? ((b.facts?.group === p.facts.group) - (a.facts?.group === p.facts.group)) || (ticked(b) - ticked(a)) : (seriesOf(b) === seriesOf(p)) - (seriesOf(a) === seriesOf(p))).slice(0, 4);
   const n = parseInt(p.sku.slice(-3), 10), nth = (c, k) => { const l = liveCat(c); return l.length ? l[(n + k) % l.length] : null; };
-  const goes = p.cat === "hookahs" ? [nth("bowls", 0), nth("heat", 1), nth("hoses", 2), nth("parts", 3)].filter(Boolean) : [];
+  const goes = p.cat === "hookahs" ? [nth("bowls", 0), nth("charcoal", 1), nth("hoses", 2), nth("parts", 3)].filter(Boolean) : [];
   // a hookah family's colours: each chip shows its colour and swaps the photo; a name the shop has not confirmed is never stated as fact
   const chips = fam.length > 1 ? `<p class="swatches__n" id="colour-h">Colour <b data-colour-name ${p.colour ? "" : "hidden"}>${esc(p.colour || "")}</b> <span class="num">${fam.indexOf(p) + 1} of ${fam.length}</span> ${fam.every(v => v.named) ? "" : TBD("Colours")}</p>
       ${swatchGroup(fam, p, { label: "Colour" })}` : "";
   const sold = isSold(p);
   return `
   <article class="pdp" data-tone="${toneOf(p)}" data-cat="${p.cat}">
-    <div data-stage="${p.sku}" class="pdp__tile tile ${p.dark || p.photo ? "tile--photo" : ""}">${p.family ? colourShot(p, { eager: true, alt: p.colour ? `${p.name}, ${p.colour}` : p.name }) : shot(p, { eager: true, alt: p.name })}${sticker(p, { big: true })}</div>
+    <div data-stage="${p.sku}" class="pdp__tile tile ${p.dark || p.photo ? "tile--photo" : ""}">${p.family ? colourShot(p, { eager: true, alt: p.colour ? `${p.name}, ${p.colour}` : p.name }) : colourShot(p, { eager: true, alt: p.name })}${sticker(p, { big: true })}</div>
     <div class="pdp__info">
       <p class="crumb"><a href="/shop/${p.cat}">${c.name}</a></p>
       <h1 class="pdp__name">${esc(p.name)}</h1>
@@ -357,7 +449,7 @@ function viewProduct(sku) {
       ${chips}
       ${p.details && p.details.notes ? `<p class="pdp__notes"><span>Notes</span> ${esc(p.details.notes)}</p>` : ""}
       ${localOnly(p) ? counterLine(p) : ""}
-      ${!sale ? `${p.state === "tbd" ? "" : `<p class="soldline">Coming soon.</p>`}<p class="pdp__avail">${p.family ? (ticked(p) ? `In the shop. ${TBD("Availability")}` : `From Ace Hookah\u2019s catalogue. ${TBD("Availability")}`) : TBD("Availability")}</p><a class="btn btn--ghost btn--call" href="tel:+15192552222">Ask the counter</a>`
+      ${!sale ? `${p.state === "tbd" ? `<p class="pdp__avail">${TBD("Price")} The shop sets it. Call <a class="link tel" href="tel:+15192552222">519-255-2222</a> to ask.</p>` : `<p class="soldline">Coming soon.</p>`}<p class="pdp__avail">${p.family ? (ticked(p) ? `In the shop. ${TBD("Availability")}` : `From Ace Hookah\u2019s catalogue. ${TBD("Availability")}`) : TBD("Availability")}</p><a class="btn btn--ghost btn--call" href="tel:+15192552222">Ask the counter</a>`
         : sold ? `<p class="soldline">${p.dark ? "This one has sold. Each resin stem is poured once." : "Sold out for now."}</p><a class="btn btn--ghost btn--call" href="tel:+15192552222">Call the counter</a>`
         : inCart ? `<a class="btn btn--wide" href="/cart">In your cart. View cart</a>` : `<button class="btn btn--wide" type="button" data-add="${p.sku}">Add to cart</button>`}
       ${sale ? deliveryLine(p, opts) : ""}
@@ -367,7 +459,7 @@ function viewProduct(sku) {
         <table class="ledger"><thead><tr><th scope="col">Service</th><th scope="col">Arrives</th><th scope="col" class="r">Cost</th></tr></thead>
         <tbody>${localRow(p)}${opts.map(o => `<tr><td>${o.carrier} ${o.service}</td><td>${days(o.days)}</td><td class="r num">${money(o.total)}</td></tr>`).join("")}
         <tr><td>Pick up at ${SHOP_STREET}</td><td>${pickupDay()}</td><td class="r num">Free</td></tr></tbody></table>`
-        : `<p class="ways__to">Local delivery from $10 near Windsor. Free pickup. ${localOnly(p) ? "" : p.ship === "ground_only" ? "Ships by ground across Canada." : "Ships across Canada."}</p>`}
+        : `<p class="ways__to">Local delivery from $10 near Windsor. Free pickup. ${localOnly(p) ? "" : p.ship === "ground_only" ? "Ships by ground across Canada, except Quebec for now." : "Ships across Canada, except Quebec for now."}</p>`}
       </section>`}
       ${!sale ? "" : localOnly(p) ? counterSpec(p) : `<section class="spec" aria-labelledby="spec-h">
         <h2 class="h3" id="spec-h">Packed size</h2>
@@ -401,7 +493,7 @@ function viewGifts(kind) {
 
 // ---------- build a set ----------
 // The heat section is charcoal now: pickup or local delivery only, so it is an optional pick, never put in a set by default.
-const SLOTS = [["hookah", "hookahs", "The hookah"], ["bowl", "bowls", "A bowl"], ["heat", "heat", "Charcoal, pickup or local delivery only"], ["hose", "hoses", "A hose"]];
+const SLOTS = [["hookah", "hookahs", "The hookah"], ["bowl", "bowls", "A bowl"], ["heat", "charcoal", "Charcoal, pickup or local delivery only"], ["hose", "hoses", "A hose"]];
 const OPTIONAL = new Set(["heat"]);
 const setOpts = c => inCat(c).filter(p => forSale(p) && !isSold(p));   // a set is never offered, or defaulted to, something the shop cannot sell (a hookah with "Price TBD" included)
 const canSet = p => forSale(p) && !isSold(p) ? p : null;
@@ -470,7 +562,7 @@ async function priceLocal() {
 }
 // What we can honestly say about delivery right now. The strip and the product line both read this, so they never disagree.
 function deliveryNow(subCents = cartCents()) {
-  const d = state.dest, from = "Local delivery from $10 near Windsor", either = "It ships across Canada, or pickup is free";
+  const d = state.dest, from = "Local delivery from $10 near Windsor", either = "It ships across Canada except Quebec, or pickup is free";
   if (!d) return { key: "none", msg: from, sub: "", act: "Check your postal code" };
   const far = { key: "far", msg: `${d.full} is past our delivery area`, sub: either, act: "Change" };
   if (localArea(d) && !d.complete) return { key: "partial", msg: from, sub: "", act: "Add your full postal code" };
@@ -489,6 +581,7 @@ function deliveryLine(p, opts) {
   if (isSold(p) || !forSale(p)) return "";
   let s = deliveryNow(cartCents() + (state.cart.some(l => l.sku === p.sku) ? 0 : toCents(p.price)));
   if (localOnly(p) && (s.key === "far" || s.key === "ship" || s.key === "down")) s = { msg: "This one goes by local delivery or pickup", sub: "Canada Post does not carry it. Pickup is free", act: "Change" };
+  else if (toQuebec()) s = { msg: "We do not ship to Quebec yet", sub: "The site is in English only for now. Pickup in Windsor is free", act: "Change" };
   else if (state.dest && !opts.length && (s.key === "far" || s.key === "ship" || s.key === "down")) s = { msg: `We cannot price shipping to ${state.dest.full} here`, sub: "Call 519-255-2222, or pickup is free", act: "Change" };
   return `<button class="dline" type="button" data-open-postal><span class="dline__msg">${esc(s.msg)}</span>${s.sub ? `<span class="dline__sub">${esc(s.sub)}</span>` : ""}<span class="dline__act">${esc(s.act)}</span></button>`;
 }
@@ -539,7 +632,7 @@ function viewCart() {
     : checking ? `<p class="note" role="status">Checking delivery to ${esc(state.dest.full)}.</p>`
     : status === "far" || (state.dest.complete && !localArea(state.dest) && state.dest.prov === "ON" && /^N[089]/.test(state.dest.fsa)) ? `<p class="note">${esc(state.dest.full)} is past our 25 km delivery area. ${otherWay}</p>`
     : status === "down" ? `<p class="note">We cannot check delivery right now. ${otherWay}</p>` : "";
-  const tooHeavy = state.dest && !opts.length && !canLocal && carried(lines);
+  const tooHeavy = state.dest && !opts.length && !canLocal && carried(lines) && !toQuebec();
   return `
   ${band("cart", "gilt", "Your cart", `<span class="num">${lines.reduce((a, l) => a + l.qty, 0)}</span> ${lines.reduce((a, l) => a + l.qty, 0) === 1 ? "piece" : "pieces"}, packed at the counter`)}
   <section class="cart">
@@ -557,6 +650,7 @@ function viewCart() {
       ${!state.dest && WIDE.matches ? `<button class="btn btn--wide" type="button" data-open-postal>Check delivery to my postal code</button>` : ""}
       ${localNote}
       ${counter ? `<p class="note">${canLocal ? "Choose local delivery or free pickup for the whole order" : "Choose free pickup for the whole order"}${mixed ? ", or leave the charcoal out to ship the rest" : ""}. Charcoal goes by pickup or local delivery only, never by Canada Post.${state.dest?.complete && !canLocal && !checking && !localArea(state.dest) ? ` Local delivery does not reach ${esc(state.dest.full)}.` : ""}</p>` : ""}
+      ${toQuebec() && carried(lines) ? `<p class="note">${QC_NOTE}</p>` : ""}
       ${tooHeavy ? `<p class="note">One of these boxes is over the 30 kg carrier limit. Call the counter at 519-255-2222 and we will quote it by hand.</p>` : ""}
       ${opts.length || canLocal ? `<fieldset class="opts"><legend>Getting it to ${esc(state.dest.full)} <button class="link" type="button" data-open-postal>Change</button></legend>
         ${canLocal ? `<label class="opt"><input type="radio" name="ship" value="local" ${local ? "checked" : ""}><span class="opt__name">Local delivery<small>${localFee !== null ? localEta() : "We price it from your street address at checkout"}</small></span><span class="num">${localFee !== null ? feeText(localFee) : "At checkout"}</span></label>` : ""}
@@ -585,9 +679,9 @@ function viewCart() {
 
 function viewShipping() {
   return `
-  ${band("shipping", "cobalt", "Shipping", "From Windsor to every province and territory.")}
+  ${band("shipping", "cobalt", "Shipping", "From Windsor across Canada, except Quebec for now.")}
   <section class="reading">
-    <p class="lead">We pack every order at the counter in Windsor and ship to every province and territory.</p>
+    <p class="lead">We pack every order at the counter in Windsor and ship to every province and territory except Quebec, for now: the site is in English only, and we will ship there once it is also in French. Pickup in Windsor is open to everyone.</p>
     <h2 class="h3">Local delivery</h2>
     <p>We deliver from our Walkerville shop, priced by road distance: $10 up to 10 km and $15 up to 25 km, per order, plus tax. Orders with $200 or more in items before tax deliver free. Anything in the shop can come by local delivery. Enter your postal code and we show your exact price, or tell you if you are past our delivery area.</p>
     <p>While the shop is open, it arrives in about 25 minutes to 1 hour. After closing, it arrives the next morning. These are estimates, not set times. Local delivery is paid online when you order.</p>
@@ -601,7 +695,7 @@ function viewShipping() {
     <h2 class="h3">Pick up</h2>
     <p>Order online and pick up for free at ${SHOP_ADDRESS}. ${directions()} or call <a class="link" href="tel:+15192552222">519-255-2222</a>.</p>
     <h2 class="h3">Returns</h2>
-    <p>All sales are final. If something arrives broken, bring it into the store and talk to the store manager.</p>
+    <p>All sales are final, except faulty, wrong, damaged or undelivered items. If something arrives broken or is not what you ordered, call 519-255-2222 or bring it into the store and talk to the store manager: we repair, replace or refund it. <a class="link" href="/terms">Terms of sale</a>.</p>
   </section>`;
 }
 
@@ -621,7 +715,7 @@ function syncChrome() {
   dock.classList.toggle("dock--buy", !!prod || ra === "set" || (ra === "cart" && lines.length > 0));
   dock.innerHTML = prod
     ? `<a class="dock__side" href="/shop/${prod.cat}" data-back>Back</a>${state.cart.some(l => l.sku === prod.sku)
-        ? `<a class="dock__buy" href="/cart">In your cart. View cart</a>` : !forSale(prod) ? `<a class="dock__buy dock__buy--off" href="tel:+15192552222">Ask the counter</a>` : isSold(prod) ? `<a class="dock__buy dock__buy--off" href="/shop/${prod.cat}">Sold. See what is left</a>` : `<button class="dock__buy" type="button" data-add="${prod.sku}">Add to cart <span class="num">${whole(prod.price)}</span></button>`}<a class="dock__side" href="/cart" aria-label="Cart">${count}</a>`
+        ? `<a class="dock__buy" href="/cart">In your cart. View cart</a>` : !forSale(prod) ? `<a class="dock__buy dock__buy--off" href="tel:+15192552222">Ask the counter</a>` : isSold(prod) ? `<a class="dock__buy dock__buy--off" href="/shop/${prod.cat}">Sold out. See what is left</a>` : `<button class="dock__buy" type="button" data-add="${prod.sku}">Add to cart <span class="num">${whole(prod.price)}</span></button>`}<a class="dock__side" href="/cart" aria-label="Cart">${count}</a>`
     : ra === "set"
     ? `<a class="dock__side" href="/shop">Shop</a>${setPicks().some(Boolean) ? `<button class="dock__buy" type="button" data-add-set>Add the set <span class="num">${whole(setPicks().filter(Boolean).reduce((a, p) => a + p.price, 0))}</span></button>` : `<a class="dock__buy dock__buy--off" href="/shop">See what is in stock</a>`}<a class="dock__side" href="/cart" aria-label="Cart">${count}</a>`
     : ra === "cart" && lines.length
@@ -634,7 +728,7 @@ const sheetH = $("#sheet-h"), sheetP = $(".sheet__p", sheet), sheetGo = $('butto
 const SHEET_WORDS = {
   plain: { h: sheetH.textContent, p: sheetP.textContent, go: sheetGo.textContent },
   local: { h: "Where should we deliver?", p: "Local delivery is $10 up to 10 km and $15 up to 25 km from our Windsor shop. Free on orders of $200 or more before tax.", go: "Check local delivery" },
-  nationwide: { h: "Where should we ship it?", p: "We ship anywhere in Canada by Canada Post. Enter your postal code to see the prices.", go: "See shipping prices" },
+  nationwide: { h: "Where should we ship it?", p: "We ship across Canada by Canada Post, except to Quebec for now. Enter your postal code to see the prices.", go: "See shipping prices" },
 };
 function sheetWords(mode) { const w = SHEET_WORDS[mode || "plain"]; state.sheetMode = mode || null; sheetH.textContent = w.h; sheetP.textContent = w.p; sheetGo.textContent = w.go; }
 function openSheet(mode) { sheetWords(mode); state.sheetFell = false; postalInput.value = state.dest ? state.dest.full : ""; postalErr.textContent = postalBad; postalErr.hidden = true; postalInput.removeAttribute("aria-invalid"); sheet.showModal(); postalInput.focus(); postalInput.select(); }
@@ -690,7 +784,7 @@ function pickColour(btn, focus) {
 // Arrow keys move through the colours like any radio group; Home and End jump to the ends.
 document.addEventListener("keydown", e => {
   const btn = e.target.closest?.("[role=radio][data-swatch]"); if (!btn) return;
-  const all = $$("[role=radio]", btn.closest("[role=radiogroup]")), i = all.indexOf(btn);
+  const all = $$("[role=radio]", btn.closest("[role=radiogroup]")).filter(b => b.getClientRects().length), i = all.indexOf(btn);   // only the colours the card has room to show
   const to = { ArrowRight: i + 1, ArrowDown: i + 1, ArrowLeft: i - 1, ArrowUp: i - 1, Home: 0, End: all.length - 1 }[e.key];
   if (to === undefined) return; e.preventDefault(); pickColour(all[(to + all.length) % all.length], true);
 });
@@ -726,7 +820,7 @@ $("[data-postal-form]").addEventListener("submit", e => {
   const refuse = msg => { postalErr.textContent = msg; postalErr.hidden = false; postalInput.setAttribute("aria-invalid", "true"); postalInput.focus(); };
   if (!d) return refuse(postalBad);
   if (state.sheetFell && localArea(d)) { sheetWords("local"); state.sheetFell = false; }   // they corrected a mistyped code: they still asked for local delivery
-  if (state.sheetMode === "local" && !localArea(d)) { sheetWords("nationwide"); state.sheetFell = true; return refuse(`${d.full} is past our local delivery area. We can ship it to you anywhere in Canada.`); }
+  if (state.sheetMode === "local" && !localArea(d)) { sheetWords("nationwide"); state.sheetFell = true; return refuse(`${d.full} is past our local delivery area. We can ship it to you anywhere in Canada except Quebec.`); }
   if (state.sheetMode === "local" && !d.complete) return refuse("Enter the full postal code, like N9A 1A1, so we can check the distance.");
   if (state.localQ?.status === "down") state.localQ = null;   // a new try after the map service was unavailable
   const chose = state.sheetMode;
@@ -969,21 +1063,24 @@ const viewPrivacy = () => doc("Privacy", "What we collect when you order, why, a
   ["What we collect", ["Your name, email, phone number if you give it, and delivery address, so we can send your order and answer questions about it.", "Your card details go straight to the payment company. We never see or store the card number."]],
   ["How you found us", ["When you place an order, we save with it where your first visit in the last 30 days came from: a short code from our business card or a link we posted, the name of the site that sent you (like Google or Instagram), and the first page you opened. It stays on your device until you order. We use it only to count which of our cards, posts and listings bring orders. It is not used to follow you around the web, and we never share it."]],
   ["What we do not do", ["We do not sell or rent your details. We do not use advertising trackers. Visit counts on this site use no cookies and do not identify you."]],
-  ["Who else sees it", ["The carrier or our driver gets your name, phone number and address to deliver the order. For local delivery, your address goes to our map service, Geoapify, to work out the distance. The payment company gets what it needs to take the payment. Our hosting company stores the order on our behalf."]],
+  ["Who else sees it", ["The carrier or our driver gets your name, phone number and address to deliver the order. For local delivery, your address goes to our map service, Geoapify, to work out the distance. Card payments are taken by Stripe, which gets what it needs to take the payment. Our hosting company, Cloudflare, stores the shop's records on our behalf, and our email service sends the order emails.", "Some of these companies work outside Canada, mostly in the United States, so your details may be stored or handled there and can be reached by the courts and authorities of that country. Each of them may use your details only to do this work for us."]],
   ["If you make an account", ["You sign in with a code we email you. We keep your email, the details you choose to save, your saved items, back-in-stock requests, your charcoal reminder choice and any points, so they are there next time. A cookie keeps you signed in for up to 30 days. You can delete the account yourself from the account page at any time."]],
+  ["Emails we send", ["Emails about your order: that it was placed, that it is ready or on its way. A back-in-stock email only when you ask for one, and a charcoal reminder only when you turn it on. Each reminder and alert has an unsubscribe link, and we act on it at once (the law allows up to 10 business days). We do not send newsletters."]],
   ["How long we keep it", ["Order records are kept for six years, because tax law requires it. After that they are deleted."]],
-  ["Your choices", ["You can ask to see what we hold about you, to correct it, or to have it deleted where the law allows. Email or call the counter and we will answer within 30 days.", "Marketing emails are only sent if you ask for them, and every one has an unsubscribe link."]],
-  ["Who to ask", ["The person responsible for privacy at the shop is the manager. Call 519-255-2222."]],
+  ["Keeping it safe", ["The shop's records are behind a sign-in with named staff, and every change is logged with who made it. If something ever went wrong with your details that could put you at real risk, we would tell you and the Privacy Commissioner of Canada as soon as we could."]],
+  ["Your choices", ["You can ask to see what we hold about you, to correct it, or to have it deleted where the law allows. Email or call the counter and we will answer within 30 days."]],
+  ["Who to ask", ["The person responsible for privacy at the shop is the manager. Call 519-255-2222 or ask at 760 Wyandotte St E. If you are not happy with the answer, you can contact the Privacy Commissioner of Canada."]],
 ]);
 const viewTerms = () => doc("Terms of sale", "The plain rules for buying from us online.", [
-  ["Prices and tax", ["Prices are in Canadian dollars. Tax is added at checkout, based on the province the order ships to."]],
-  ["Shipping", ["We ship within Canada. The price at checkout is the price you pay for shipping. Delivery times are the carrier's estimates. Cologne ships by ground only."]],
+  ["Who you are buying from", [`One Stop Shop, 760 Wyandotte St E, Windsor, ON N9A 3J4. Call 519-255-2222. Legal business name ${TBD("")}.`]],
+  ["Prices and tax", ["Prices are in Canadian dollars. Tax is added at checkout, based on the province the order ships to. Before you pay, checkout shows each item's price, delivery or shipping, tax and the total, and you can go back and change anything. We email you a copy of your order."]],
+  ["Shipping", ["We ship within Canada, except to Quebec for now: the site is in English only, and we will ship there once it is also in French. Anyone can pick up in Windsor. The price at checkout is the price you pay for shipping. Delivery times are the carrier's estimates. Cologne ships by ground only."]],
   ["Local delivery", ["We deliver within 25 km by road of our Windsor shop: $10 up to 10 km and $15 from there to 25 km, per order, plus tax. Orders with $200 or more in items before tax deliver free. Arrival times are estimates. Local delivery is paid online when you order."]],
   ["Pickup", ["Pickup at 760 Wyandotte St E, Windsor, ON N9A 3J4 is free. We email you when the order is ready and hold it for 14 days."]],
   ["Charcoal", ["Charcoal is sold for pickup or local delivery only. It is not shipped by Canada Post or any other carrier."]],
-  ["Returns", ["All sales are final."]],
-  ["Broken on arrival", ["If something arrives broken, bring it into the store at 760 Wyandotte St E and talk to the store manager."]],
-  ["If something is wrong with the order", ["If we cannot ship within 30 days of the date promised, you can cancel for a full refund."]],
+  ["Returns", ["All sales are final, except faulty, wrong, damaged or undelivered items. We do not take back an item because you changed your mind."]],
+  ["Faulty, wrong or damaged", ["If an item is faulty, is not what you ordered, or arrives broken, call 519-255-2222 or bring it to 760 Wyandotte St E and talk to the store manager. We will repair it, replace it or refund it. Nothing here takes away your rights under Ontario's Consumer Protection Act."]],
+  ["If it does not arrive", ["If we do not deliver within 30 days of the delivery date we gave you (or of your order, if we gave none), you can cancel for a full refund. We refund within 15 days of your cancelling, to the way you paid."]],
 ]);
 const viewMissing = () => `${band("missing", "ruby", "Nothing at this address.")}<section class="empty"><p class="lead">The link may be old. <a class="link" href="/shop">See what is on the counter</a>.</p></section>`;
 const SITE = "One Stop Shop", HOME_TITLE = document.title, PLAIN = { account: "Your account", cart: "Cart", shipping: "Shipping and returns", set: "Build a set", search: "Search", privacy: "Privacy", terms: "Terms of sale", checkout: "Checkout" };
@@ -999,12 +1096,16 @@ function pageTitle(a, b, real) {
   const name = a === "shop" ? (b ? catById[b].name : "Shop") : a === "p" ? bySku[b].name : a === "gifts" ? "Gifts" : a === "order" ? `Order ${b}` : PLAIN[a];
   return `${name} | ${SITE}`;
 }
-function render() {
+function render({ chunk = false } = {}) {
   const keep = focusKey(document.activeElement);
   const [a, b, more] = route().replace(/^#\/?/, "").split("/").filter(Boolean), real = realPage(a, b, more);
   if (a === "search") state.q = new URLSearchParams(location.search).get("q") ?? state.q;
   document.title = pageTitle(a, b, real);
-  $("#main").innerHTML = !real ? viewMissing() : a === "shop" ? viewShop(b) : a === "p" ? viewProduct(b) : a === "cart" ? viewCart() : a === "shipping" ? viewShipping() : a === "gifts" ? viewGifts(b) : a === "set" ? viewSet() : a === "search" ? viewSearch() : a === "privacy" ? viewPrivacy() : a === "terms" ? viewTerms() : a === "checkout" ? viewCheckout() : a === "order" ? viewOrder(b) : a === "account" ? accountView(band) : !a ? viewHome() : viewMissing();
+  // a long section reached by a tap: the page now, its cards in the tasks after. Short sections draw whole, as before (the Misc
+  // act stamps the labels already on its first screen at the swap, so its cards must be there).
+  queue = chunk && real && a === "shop" && (b ? SHELF.filter(p => p.cat === b).length : SHELF.length) > 24 ? { q: [], first: firstScreen(), wide: innerWidth >= 960 } : null;   // the window's size read before the page changes, so reading it forces no layout
+  let html, q; try { html = !real ? viewMissing() : a === "shop" ? viewShop(b) : a === "p" ? viewProduct(b) : a === "cart" ? viewCart() : a === "shipping" ? viewShipping() : a === "gifts" ? viewGifts(b) : a === "set" ? viewSet() : a === "search" ? viewSearch() : a === "privacy" ? viewPrivacy() : a === "terms" ? viewTerms() : a === "checkout" ? viewCheckout() : a === "order" ? viewOrder(b) : a === "account" ? accountView(band) : !a ? viewHome() : viewMissing(); } finally { q = queue; queue = null; }
+  $("#main").innerHTML = html; laterStart(q);
   document.body.dataset.route = a || "home";
   syncChrome();
   const chip = $(".chips [aria-current]"); if (chip) chip.parentNode.scrollLeft = chip.offsetLeft - (chip.parentNode.clientWidth - chip.offsetWidth) / 2;   // the section you are in sits centred in the row
@@ -1041,16 +1142,18 @@ addEventListener("pageshow", e => { if (e.persisted) cartFromStorage(); });
 setSpotAnchor(() => { for (const a of $$("#main [data-piece]")) { const r = a.getBoundingClientRect(); if (r.bottom > 80) return { sku: a.dataset.piece, top: Math.round(r.top) }; } return null; });
 function putScroll(spot) {
   const y = typeof spot === "number" ? spot : spot.y || 0, root = document.documentElement, land = () => { scrollTo(0, y); const a = spot.sku && document.querySelector(`#main [data-piece="${spot.sku}"]`); if (a) scrollBy(0, a.getBoundingClientRect().top - spot.top); };
-  root.classList.add("restoring"); land();
-  requestAnimationFrame(() => { land(); root.classList.remove("restoring"); });
+  drawThrough(spot.sku); root.classList.add("restoring"); land();
+  // cards off screen fall back to a guessed height once drawing stops (WebKit keeps no remembered size): the guess is set to a real card's
+  // height first, so leaving the restoring state cannot move the page
+  requestAnimationFrame(() => { land(); const c = document.querySelector("#main .grid--shop .card"); if (c && c.offsetHeight) root.style.setProperty("--card-h", c.offsetHeight + "px"); root.classList.remove("restoring"); });
 }
 function go() {
   if (state.newsSeen && !/^#\/cart/.test(route())) { state.cartNews = []; state.newsSeen = false; state.dropped = null; }
   const from = last.match(/^#\/p\/(.+)$/), spot = navInfo().cause === "pop" ? spotHere() : undefined; last = route();
-  render(); if (spot === undefined) scrollTo(0, 0); else putScroll(spot);
+  render({ chunk: true }); if (spot === undefined) scrollTo(0, 0); else putScroll(spot);
   const stage = $("[data-stage]");
   if (stage) { stage.style.viewTransitionName = "piece"; const st = $(".sticker", stage); if (st) st.style.viewTransitionName = "tag"; }
-  else if (from) { const back = $(`[data-piece="${from[1]}"]`), n = back && ($(".tile", back) || back); if (n) { n.style.viewTransitionName = "piece"; const st = $(".sticker", back); if (st) st.style.viewTransitionName = "tag"; const box = n.getBoundingClientRect(); if (spot === undefined || box.bottom < 60 || box.top > innerHeight - 60) n.scrollIntoView({ block: "center" }); } }
+  else if (from) { if (pending && pending.q.some(x => x.sku === from[1])) drawThrough(from[1]); const back = $(`[data-piece="${from[1]}"]`), n = back && ($(".tile", back) || back); if (n) { n.style.viewTransitionName = "piece"; const st = $(".sticker", back); if (st) st.style.viewTransitionName = "tag"; const box = n.getBoundingClientRect(); if (spot === undefined || box.bottom < 60 || box.top > innerHeight - 60) n.scrollIntoView({ block: "center" }); } }
   const sq = $("#q"); if (sq) sq.focus({ preventScroll: true }); else $("#main").focus({ preventScroll: true });
 }
 // 15 the dock's Back is the real Back; from a shared link there is nothing behind it, so it goes to the section
@@ -1060,9 +1163,20 @@ document.addEventListener("click", e => {
 }, true);
 window.addEventListener("routechange", () => {
   if (route() === last) return;
+  // A long section landed by the wave is drawn in the task after the wave's own frame, so the wave's drawing and the page's building
+  // are two tasks, not one. The wave holds its full cover while data-swapping is set (fx-wave.js), so nothing old is ever revealed.
+  const [ra, rb] = route().replace(/^#\/?/, "").split("/").filter(Boolean);
+  if (navInfo().cause === "wave" && ra === "shop" && (rb ? SHELF.filter(p => p.cat === rb).length : SHELF.length) > 24) {
+    const root = document.documentElement; root.dataset.swapping = "";
+    // data-swapping stays on until the first screen's cards are in (laterStart clears it); with no chunked draw after all it is
+    // cleared here, and a timer makes sure the wave is never held longer than 400 ms whatever happens
+    soon(() => { try { if (route() !== last) go(); } finally { if (!pending) delete root.dataset.swapping; } });
+    setTimeout(() => delete root.dataset.swapping, 1500);
+    return;
+  }
   if (!navInfo().instant && document.startViewTransition && !matchMedia("(prefers-reduced-motion: reduce)").matches) document.startViewTransition(go); else go();   // a wave is already covering the change
 });
-find.init({ PRODUCTS, esc, card, render, navigate, grid: shopGrid });
+find.init({ PRODUCTS, esc, card, render, navigate, grid: shopGrid, defer });
 finder.init({ PRODUCTS, CATEGORIES, esc, shot, sticker, setQ: q => { state.q = q; } });
 render();
 if (spotHere()) putScroll(spotHere());   // a reload, or Back from another site, lands where you were

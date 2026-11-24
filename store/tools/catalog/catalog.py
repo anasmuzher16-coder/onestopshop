@@ -29,6 +29,10 @@ SUPPLIER_META = {
     "shisha": {"id": "shisha", "name": "Tobacco-free shisha", "sku_block": "OSS-30NNNN", "credit": ""},
 }
 SHISHA_SECTION = "INSERT OR IGNORE INTO categories (id, name, tone, sort, active) VALUES ('shisha', 'Shisha', 'emerald', 8, 0)"
+# Charcoal, its own section after Heat (shop request, 2026-11-24): the sections from place 4 on move down one, once.
+# The same two statements open store/catalog/live/charcoal-section-2026-11-24.sql. Both are safe to run twice.
+CHARCOAL_SECTION = ("UPDATE categories SET sort = sort + 1 WHERE sort > 3 AND id <> 'charcoal' AND EXISTS (SELECT 1 FROM categories WHERE id <> 'charcoal' AND sort = 4) AND NOT EXISTS (SELECT 1 FROM categories WHERE id = 'charcoal')",
+                    "INSERT OR IGNORE INTO categories (id, name, tone, sort, active) VALUES ('charcoal', 'Charcoal', 'ash', 4, 1)")
 
 
 def today():
@@ -303,7 +307,7 @@ def desired_rows(supplier: str, m):
                    "family": f["family_id"], "variant_label": v["label"]["v"] or "", "swatch_hex": None,
                    "img": v["photo"]["img"] or "", "height_cm": None,
                    "facts_known": json.dumps(facts, sort_keys=True, ensure_ascii=False)}
-            shopcols = {"name": shop["display_name"]["v"], "category_id": "shisha" if f["category"] == "shisha" else "heat",
+            shopcols = {"name": shop["display_name"]["v"], "category_id": "shisha" if f["category"] == "shisha" else "charcoal" if charcoal else "heat",   # Charcoal its own section (2026-11-24); Heat keeps foil
                         "price_cents": shop["price_cents"]["v"] or 0,
                         "weight_g": 1, "box_id": "XS", "glass": 0, "ship_class": "pickup_only" if charcoal else "standard",
                         "note": shop["note"]["v"] or "", "stock": shop["stock"]["v"] or 0, "low_stock_at": 1,
@@ -363,7 +367,8 @@ def compute_plan(supplier, m, db_rows, reg=None):
     for sku, w in want.items():
         h = have.get(sku)
         # a row made elsewhere (no supplier yet) is adopted only when it sits in the section this item belongs to
-        if h is not None and h.get("supplier_id") is None and h.get("category_id") != w["shop"]["category_id"]:
+        home = ("heat", "charcoal") if w["shop"]["category_id"] == "charcoal" else (w["shop"]["category_id"],)   # charcoal made before 2026-11-24 may still sit in Heat
+        if h is not None and h.get("supplier_id") is None and h.get("category_id") not in home:
             raise C.ValidationError(f"{sku} exists in the database in section {h.get('category_id')!r}, not {w['shop']['category_id']!r}: "
                                     "refusing to take it over (a back-office number may have collided with the registry)")
     for sku, h in have.items():
@@ -438,6 +443,9 @@ def apply_supplier(con, supplier, m, shop_fill=False, actor="catalog-import"):
                     (supplier, meta["name"], meta["sku_block"], meta["credit"]))
         if supplier == "shisha":   # its section is made switched off; turning it on is the shop's call
             con.execute(SHISHA_SECTION)
+        if supplier == "charcoal-foil":   # charcoal has its own section since 2026-11-24 (made if missing, after Heat)
+            for s in CHARCOAL_SECTION:
+                con.execute(s)
         for sku in p["added"]:
             w = want[sku]
             cols = {**w["shop"], **w["sup"]}
@@ -538,6 +546,8 @@ def seed_sql(supplier, m, category=None):
            f"INSERT OR IGNORE INTO suppliers (id, name, sku_block, note) VALUES ({q(supplier)}, {q(meta['name'])}, {q(meta['sku_block'])}, {q(meta['credit'])});"]
     if supplier == "shisha":
         out.append(SHISHA_SECTION + ";")
+    if supplier == "charcoal-foil" and any(r["shop"]["category_id"] == "charcoal" for r in rows):
+        out.extend(s + ";" for s in CHARCOAL_SECTION)
     for r in rows:
         cols = {**r["shop"], **r["sup"]}
         out.append(f"INSERT OR IGNORE INTO products (sku, {', '.join(cols)}) VALUES ({q(r['sku'])}, {', '.join(q(v) for v in cols.values())});")
@@ -546,7 +556,9 @@ def seed_sql(supplier, m, category=None):
         sets = ", ".join(f"{k} = {q(v)}" for k, v in r["sup"].items())
         cond = " OR ".join(f"{k} IS NOT {q(v)}" for k, v in r["sup"].items())
         # never take over a row that belongs to another supplier, or a back-office row in another section
-        own = f"(supplier_id = {q(supplier)} OR (supplier_id IS NULL AND category_id = {q(r['shop']['category_id'])}))"
+        # (charcoal made before 2026-11-24 still sits in Heat until the Charcoal section step moves it, so either section is its own)
+        secs = ("heat", "charcoal") if r["shop"]["category_id"] == "charcoal" else (r["shop"]["category_id"],)
+        own = f"(supplier_id = {q(supplier)} OR (supplier_id IS NULL AND category_id IN ({', '.join(q(s) for s in secs)})))"
         out.append(f"UPDATE products SET {sets}, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE sku = {q(r['sku'])} AND {own} AND ({cond});")
         out.append(f"UPDATE products SET availability = {q(r['shop']['availability'])} WHERE sku = {q(r['sku'])} AND supplier_id = {q(supplier)} AND availability = 'dropped';")
     live = [r["sku"] for r in rows]
