@@ -29,7 +29,7 @@ STORE = Path(__file__).resolve().parent.parent
 PC, OUT, VERS = STORE / "public/img/pc", STORE / "public/img/share", STORE / "src/img-versions.json"
 HOME_OUT = STORE / "public/img/share.jpg"           # the shop's own card (home, sections, items with no photo)
 W, H, U = 1200, 630, 8                              # the card, and the 8 px unit every measure below is a multiple of
-CARD = 7                                            # bump when the card's design changes: every share image is redrawn
+CARD = 8                                            # bump when the card's design changes: every share image is redrawn
 
 
 def oklch(l, c, h):
@@ -77,7 +77,6 @@ CX = 85 * U                                        # 680: the product's centre, 
 FLOOR, FOOT = 65 * U, 71 * U                       # feet stand at y 520; the coal band starts at 568
 BOX_W, BOX_H = 50 * U, 54 * U                      # 400 x 432: the longer side of every product is fitted to this box
 SHELF = oklch(.86, .03, 78)                        # one step darker than the tile: the shelf the pieces stand on
-PALE_TILE, PALE_SHELF = oklch(.56, .016, 60), oklch(.50, .016, 60)   # coal-3, the site's own field grey, for pale pieces
 
 
 def lum(c):
@@ -136,7 +135,7 @@ def fit(im, w, h):
     return im.resize((max(1, round(im.width * s)), max(1, round(im.height * s))), Image.LANCZOS)
 
 
-def stand(card_im, piece, cx):
+def stand(card_im, piece, cx, deep=False):
     """Puts a piece on the shelf at x = cx, feet on the floor line, with a soft contact shadow under the part that
     actually touches it (an angled piece rests on one end, not on the middle of its box)."""
     sh = Image.new("L", card_im.size, 0)
@@ -145,7 +144,7 @@ def stand(card_im, piece, cx):
     x0 = round(cx - piece.width / 2)
     l, r = (x0 + foot[0], x0 + foot[2]) if foot else (x0, x0 + piece.width)
     pad = max(2 * U, (r - l) * .1)
-    ImageDraw.Draw(sh).ellipse([l - pad, FLOOR - 1.5 * U, r + pad, FLOOR + 1.5 * U], fill=110)
+    ImageDraw.Draw(sh).ellipse([max(SAFE0, l - pad), FLOOR - 1.5 * U, min(RIGHT, r + pad), FLOOR + 1.5 * U], fill=170 if deep else 110)
     sh = sh.filter(ImageFilter.GaussianBlur(10))
     card_im.paste(Image.new("RGB", card_im.size, COAL0), (0, 0), sh)
     card_im.paste(piece, (round(cx - piece.width / 2), FLOOR - piece.height), piece)
@@ -228,8 +227,10 @@ def card(stem):
         return None
     lab, b = label_box()
     LABEL_R, LABEL_B = LABEL_LEFT + b[2] - b[0], LABEL_TOP + b[3] - b[1]
-    # a pale piece (white rubber, clear glass) would vanish on bone: it gets the darker tile step instead
-    tile, shelf = (BONELT, SHELF) if contrast(pieces[0], BONELT) >= 1.5 else (PALE_TILE, PALE_SHELF)
+    # every card on bone, as photo products are on the site (app.js toneOf). The field grey tried for pale pieces in the
+    # third round exposed cut-out edges and caught dark hookahs with clear vases (fourth review): a pale piece instead
+    # gets a deeper contact shadow
+    tile, shelf, pale = BONELT, SHELF, contrast(pieces[0], BONELT) < 1.5
     im = Image.new("RGB", (W, H), tile)
     d = ImageDraw.Draw(im)
     d.rectangle([0, FLOOR - 4 * U, W, FOOT], fill=shelf)       # the shelf, the full width
@@ -240,7 +241,7 @@ def card(stem):
             stand(im, pieces[i], LABEL_R - 2 * U + (i - 1) * gap)
     else:
         piece, cx = place(fit(pieces[0], BOX_W, BOX_H))
-        stand(im, piece, cx)
+        stand(im, piece, cx, deep=pale)
     im.paste(lab, (LABEL_LEFT - b[0], LABEL_TOP - b[1]), lab)   # inside the top-left corner of the safe square
     # the foot: the address, the one fact every preview carries, in the site's text face
     d.rectangle([0, FOOT, W, H], fill=COAL0)

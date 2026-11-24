@@ -118,7 +118,14 @@ tall pieces standing right of the label's corner, never under it; very flat piec
 least 144 px tall; a photo framed with its own faint shadow losing it before the card's shadow is drawn; the address
 centred so a square crop keeps it; and no card at all for the four old sample photos without transparency (hookah11,
 12, 14, 18, all retired), which share the shop's card instead (`_nocard` in `src/img-versions.json`). The wide view leaves
-bare tile to the right of the square: accepted, so that the square preview is complete. No price and no product name on the card: prices change in the back office and an image cannot
+bare tile to the right of the square: accepted, so that the square preview is complete. A third round (REVISE) shrank the label about 25 percent
+and put each contact shadow under the part of a piece that touches the shelf. A fourth round was still REVISE (art
+direction and hostile shapes at 2: the flat tile and shelf read as unstated, a hose handle or a separate tip can hang
+in the air, very thin diagonal pieces shrink to slivers, the wide view's bare sides). The field-grey ground tried for
+pale pieces in round three was backed out (it exposed cut-out edges); pale pieces get a deeper shadow on bone instead.
+Open, by the quality-gate rule, until the owner approves a still: the material of the tile and shelf (light falloff and
+a shelf lip were proposed), grounding detached parts, laying thin diagonal stems flat, and whether to use each
+section's colour tile instead of bone. No price and no product name on the card: prices change in the back office and an image cannot
 follow; the preview prints the page title beside it. The shop's own card (`img/share.jpg`, used by home, sections and
 items without a photo) now shows three of the shop's ticked Ace hookahs instead of the retired sample hookahs.
 
