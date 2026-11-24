@@ -2,6 +2,8 @@ import { PRODUCTS, CATEGORIES, BOXES } from "/api/catalog-module";
 import { route, navigate, navInfo, spotHere, canGoBack, setQuery, setSpotAnchor } from "./route.js";
 import { parsePostal, pack, quote, money, days, MAX_QTY, fuelOn, orderTotals, taxRate, taxLabel, localArea, localDue, localEta, FREE_LOCAL_CENTS, SHOP_HOURS } from "./rates.js";
 import { shelfOf, ticked, heroPicks } from "./picks.js";
+import * as find from "./find.js";
+import * as finder from "./search.js";
 
 // ---------- state (everything read from storage is validated) ----------
 const bySku = Object.assign(Object.create(null), Object.fromEntries(PRODUCTS.map(p => [p.sku, p])));   // no inherited keys: "constructor" in a saved cart or an address is not a product
@@ -246,22 +248,27 @@ function viewHome() {
   </section>`;
 }
 
-function viewShop(cat) {
+function shopGrid(cat) {
   const c = catById[cat] || null, list = c ? SHELF.filter(p => p.cat === c.id) : SHELF;
   // Hookahs: the shop's ticked (in-store) pieces first, then the rest of the catalogue, each grouped by kind
   const fams = list.filter(p => p.family), byKind = l => GROUPS.map(([k, name]) => [name, l.filter(p => (p.facts.group || "full_size") === k)]).filter(g => g[1].length);
   const tiers = cat === "hookahs" && fams.length ? [["In the shop", "Ticked in the shop's own catalogue. Count TBD.", byKind(fams.filter(ticked))], ["From the catalogue", "From Ace Hookah\u2019s catalogue. Ask the counter about one.", byKind(fams.filter(p => !ticked(p)))]].filter(t => t[2].length) : null;
   const groups = tiers ? null : cat === "hookahs" ? [...Object.keys(SERIES).map(k => [k, list.filter(p => seriesOf(p) === k)]), ["More from the shelf", list.filter(p => !seriesOf(p) && !p.dark)], ["One of one", list.filter(p => p.dark)]].filter(g => g[1].length) : [["", list]];
   const range = items => { const pr = items.filter(forSale).map(x => x.price); return pr.length === items.length && pr.length ? `, ${whole(Math.min(...pr))} to ${whole(Math.max(...pr))}` : ""; };
+  return `${tiers ? tiers.map(([t, note, gs]) => `<section class="tier" aria-label="${t}"><header class="tier__head"><h2 class="tier__h">${t}</h2><p class="tier__n"><span class="num">${gs.reduce((a, g) => a + g[1].length, 0)}</span> hookahs. ${note}</p></header>
+    <div class="grid grid--shop">${gs.map(([name, items]) => `<h3 class="series">${name} <span class="num">${items.length} ${items.length === 1 ? "piece" : "pieces"}</span></h3>` + items.map(card).join("")).join("")}</div></section>`).join("")
+  : `<div class="grid grid--shop">${groups.map(([name, items]) => (name ? `<h2 class="series" data-tone="${SERIES[name] || ""}">${name} <span class="num">${items.length} pieces${range(items)}</span></h2>` : "") + items.map(card).join("")).join("")}</div>`}`;
+}
+function viewShop(cat) {
+  const c = catById[cat] || null, list = c ? SHELF.filter(p => p.cat === c.id) : SHELF;
+  const f = c && find.findShop(c.id);   // section filters (find.js); null when a section has nothing to filter by
   return `
   <section class="shophead" data-tone="${c ? c.tone : "bone"}" ${c ? `data-cat="${c.id}"` : `data-fx="all"`}>
     <h1 class="shophead__h">${c ? c.name : "Everything"}</h1>
     <p class="shophead__n"><span class="num">${list.length}</span> ${c && list.length && list.every(localOnly) ? "kinds of charcoal.<br>Pickup or local delivery only." : "pieces"}</p>
   </section>
   <nav class="chips" aria-label="Categories"><a href="/shop" ${!c ? 'aria-current="page"' : ""}>All</a>${CATEGORIES.map(x => `<a href="/shop/${x.id}" ${c && c.id === x.id ? 'aria-current="page"' : ""}>${x.name}</a>`).join("")}<a href="/gifts/under-50">Gifts</a></nav>
-  ${tiers ? tiers.map(([t, note, gs]) => `<section class="tier" aria-label="${t}"><header class="tier__head"><h2 class="tier__h">${t}</h2><p class="tier__n"><span class="num">${gs.reduce((a, g) => a + g[1].length, 0)}</span> hookahs. ${note}</p></header>
-    <div class="grid grid--shop">${gs.map(([name, items]) => `<h3 class="series">${name} <span class="num">${items.length} ${items.length === 1 ? "piece" : "pieces"}</span></h3>` + items.map(card).join("")).join("")}</div></section>`).join("")
-  : `<div class="grid grid--shop">${groups.map(([name, items]) => (name ? `<h2 class="series" data-tone="${SERIES[name] || ""}">${name} <span class="num">${items.length} pieces${range(items)}</span></h2>` : "") + items.map(card).join("")).join("")}</div>`}`;
+  ${f ? f.html(shopGrid(cat)) : shopGrid(cat)}`;
 }
 
 // The product page for charcoal: one plain answer about how it is bought, in place of the delivery and shipping rows.
@@ -416,26 +423,9 @@ function viewSet() {
   </div>`;
 }
 
-// ---------- search ----------
-function searchResults() {
-  const q = state.q.trim().toLowerCase(), words = q.split(/\s+/).filter(Boolean);
-  if (!words.length) return `<p class="lead">Try brass, steel, base, hose, or a name.</p>`;
-  // other names people type for the same things, and a hookah family's colours and item numbers
-  const ALSO = { hookahs: "hookah hooka shisha nargile narghile argileh", shisha: "shisha molasses flavour flavor", heat: "charcoal coals coal foil" };
-  const hayOf = p => [p.name, p.note, catById[p.cat].name, ALSO[p.cat] || "", p.details?.brand, p.details?.tags, p.facts?.brand, p.facts?.size, ...familyOf(p).flatMap(v => [v.sku, v.colour]), stemSet(p) ? "stem set" : "", p.family ? (GROUPS.find(g => g[0] === p.facts.group) || [, ""])[1] : ""].filter(Boolean).join(" ").toLowerCase();
-  const hits = SHELF.filter(p => { const hay = hayOf(p); return words.every(w => hay.includes(w)); });
-  return hits.length ? `<p class="search__n"><span class="num">${hits.length}</span> ${hits.length === 1 ? "piece" : "pieces"}</p><div class="grid">${hits.map(card).join("")}</div>`
-    : `<p class="lead">Nothing matches \u201c${esc(state.q.trim())}\u201d. Look through <a class="link" href="/shop">everything</a>, or call the counter at <a class="link" href="tel:+15192552222">519-255-2222</a> and we will check the shelf.</p>`;
-}
-function viewSearch() {
-  return `
-  ${band("search", "teal", "Search")}
-  <section class="search">
-    <label class="field__label" for="q">Search all ${SHELF.length} pieces</label>
-    <input class="field field--text" id="q" type="search" autocomplete="off" enterkeyhint="search" placeholder="Brass, bowl, Sultan" value="${esc(state.q)}">
-    <div class="search__out" data-search-out aria-live="polite">${searchResults()}</div>
-  </section>`;
-}
+// ---------- search (search.js: ways in, grouped results, synonyms, typo tolerance) ----------
+const searchResults = () => finder.searchOut(state.q);
+const viewSearch = () => finder.searchPage(state.q, new URLSearchParams(location.search).get("in"));
 
 // One place decides how an order is travelling, so the cart, the dock and checkout can never disagree.
 let localTicket = 0;
@@ -923,6 +913,7 @@ function render() {
   if (keep) { const el = document.querySelector(keep); if (el) el.focus({ preventScroll: true }); }
   priceLocal();
   preloadColours();
+  find.afterRender();
 }
 let last = route();
 document.addEventListener("click", e => {
@@ -965,5 +956,7 @@ window.addEventListener("routechange", () => {
   if (route() === last) return;
   if (!navInfo().instant && document.startViewTransition && !matchMedia("(prefers-reduced-motion: reduce)").matches) document.startViewTransition(go); else go();   // a wave is already covering the change
 });
+find.init({ PRODUCTS, esc, card, render, navigate, grid: shopGrid });
+finder.init({ PRODUCTS, CATEGORIES, esc, shot, sticker, setQ: q => { state.q = q; } });
 render();
 if (spotHere()) putScroll(spotHere());   // a reload, or Back from another site, lands where you were
