@@ -681,7 +681,11 @@ document.addEventListener("keydown", e => {
 function preloadColours() {
   const stage = $("[data-stage]"), v = stage && bySku[stage.dataset.stage]; if (!v || !v.family) return;
   const go = () => familyOf(v).filter(ownPhoto).forEach(x => { const im = new Image(); im.decoding = "async"; im.src = `img/pc/${x.img}-m.webp${V}`; });
-  if (window.requestIdleCallback) requestIdleCallback(go, { timeout: 1500 }); else setTimeout(go, 400);
+  // fetched the moment a hand or a key reaches the chips, or a few seconds after the page has settled, so the colours
+  // never compete with the page's own first pictures and its smoke
+  let done = false; const once = () => { if (done) return; done = true; go(); };
+  const g = $(".pdp [role=radiogroup]"); if (g) ["pointerenter", "touchstart", "focusin"].forEach(t => g.addEventListener(t, once, { once: true, passive: true }));
+  setTimeout(() => { if (window.requestIdleCallback) requestIdleCallback(once, { timeout: 2000 }); else once(); }, 3500);
 }
 document.addEventListener("input", e => {
   if (e.target.id === "q") { state.q = e.target.value; setQuery(state.q.trim()); $("[data-search-out]").innerHTML = searchResults(); }
