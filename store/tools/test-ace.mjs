@@ -71,7 +71,7 @@ const sh = await post({ ...who, method: "pickup", pay: "at_pickup", lines: [{ sk
 ok(sh.status === 201 && sh.data.order.subtotal_cents === Math.round(shisha.price * 100), `shisha sells at the shop's price, paid at the counter: ${sh.status} ${sh.data.error || ""}`);
 ok(P.filter(p => p.cat === "shisha").length === 47 && P.filter(p => p.cat === "shisha" && p.stock === 0).length === 3, "all 47 shisha flavours are up, 3 sold out");
 const sold = P.find(p => p.cat === "shisha" && p.stock === 0); ok((await post({ ...who, method: "pickup", lines: [{ sku: sold.sku, qty: 1 }] })).status === 409, "a sold-out flavour cannot be ordered");
-const foil = P.filter(p => p.weightTbd && p.cat === "heat"); ok(foil.length === 15 && foil.every(p => p.state === "sale" && p.ship === "pickup_only"), "15 foil packs on sale, pickup or local delivery while the weight is TBD");
+const foil = P.filter(p => p.weightTbd && p.cat === "heat" && !(p.details && p.details.charcoal));   // charcoal now carries its catalogue facts too (weight unknown), and is pickup or local by its own rule ok(foil.length === 15 && foil.every(p => p.state === "sale" && p.ship === "pickup_only"), "15 foil packs on sale, pickup or local delivery while the weight is TBD");
 ok((await post({ ...who, ...to, method: "ship", service: "cp-exp", lines: [{ sku: foil[0].sku, qty: 1 }] })).data.local_only === true, "foil cannot be sent by a carrier on a made-up weight");
 ok((await post({ ...who, method: "pickup", lines: [{ sku: foil[0].sku, qty: 1 }] })).status === 201, "foil can be picked up");
 
