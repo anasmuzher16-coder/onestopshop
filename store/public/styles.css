@@ -753,6 +753,22 @@ button.dline:active{background:var(--color-line)}
   .dchoose__sub{font-size:var(--t-14);line-height:20px;text-align:right}
 }
 /* ========== END DELIVERY STRIP AND PRODUCT LINE ========== */
+/* Back and Forward land exactly: for one frame every card is really drawn */
+html.restoring .grid--shop .card{content-visibility:visible}
+/* the chip row is chrome: it holds still through a page change instead of showing old and new chips over each other */
+.chips{view-transition-name:chips}
+::view-transition-group(chips){animation:none}
+::view-transition-old(chips){display:none}
+::view-transition-new(chips){animation:none}
+@media (min-width:960px){
+  /* twelve places to go: the row stays one line and slides sideways when the window is narrow, the way the chips do on a phone */
+  .top__nav{min-width:0;padding-block:2px;overflow-x:auto;scrollbar-width:none;white-space:nowrap}
+  .top__nav::-webkit-scrollbar{display:none}
+  .top__nav a{flex:none}
+  .top__nav a:focus-visible{outline-offset:-2px}
+  .top__cart{flex:none}
+  .top__cart[aria-current]{color:var(--color-strong);box-shadow:0 2px 0 var(--color-strong)}
+}
 /* the cart says plainly when the shelf changed what it holds: a word and a mark, in the reading order */
 .cartnews{margin:0 0 var(--s-4);font-size:var(--t-14);color:var(--color-strong);font-weight:500}
 .cartnews p{margin:0;padding:var(--s-3) 0;border-top:1px solid var(--color-line)}

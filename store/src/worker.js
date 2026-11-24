@@ -32,6 +32,7 @@ function describe(path, cat, site) {
     return { title: `${p.name} | ${site}`, desc: `${p.note}. ${money(p.price_cents)}. Shipped across Canada or free pickup in Windsor.`, index: true, product: p };
   }
   if (a === "order") return b && /^W[A-Z0-9]{6}$/.test(b) ? { ...base, title: `Order ${b} | ${site}`, index: false } : null;
+  if (a === "gifts" && b && b !== "under-50" && b !== "under-150") return null;
   if (b && a !== "gifts") return null;
   const fixed = { privacy: "Privacy", terms: "Terms of sale", checkout: "Checkout", cart: "Cart", shipping: "Shipping and returns", set: "Build a set", search: "Search", gifts: "Gifts" };
   if (!fixed[a]) return null;
@@ -110,6 +111,7 @@ export default {
         return new Response(shell.body, { status: 200, headers });
       }
       if (path === "/index.html") return Response.redirect(url.origin + "/", 301);
+      const lower = path.match(/^\/p\/([A-Za-z]+-\d+)\/?$/); if (lower && lower[1] !== lower[1].toUpperCase()) return Response.redirect(`${url.origin}/p/${lower[1].toUpperCase()}`, 301);   // an item number typed in small letters
       if (/\.[a-z0-9]{2,5}$/i.test(path)) return env.ASSETS.fetch(request); // a file that is not there: plain 404
       if (request.method !== "GET" && request.method !== "HEAD") return new Response("Method not allowed", { status: 405 });
       return await page(request, env, url, ctx);

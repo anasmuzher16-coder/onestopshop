@@ -1,5 +1,5 @@
 import { PRODUCTS, CATEGORIES, BOXES } from "/api/catalog-module";
-import { route, navigate, navInfo } from "./route.js";
+import { route, navigate, navInfo, spotHere, canGoBack, setQuery, setSpotAnchor } from "./route.js";
 import { parsePostal, pack, quote, money, days, MAX_QTY, fuelOn, orderTotals, taxRate, taxLabel, localArea, localDue, localEta, FREE_LOCAL_CENTS, SHOP_HOURS } from "./rates.js";
 
 // ---------- state (everything read from storage is validated) ----------
@@ -201,7 +201,7 @@ function viewShop(cat) {
     <h1 class="shophead__h">${c ? c.name : "Everything"}</h1>
     <p class="shophead__n"><span class="num">${list.length}</span> pieces</p>
   </section>
-  <nav class="chips" aria-label="Categories"><a href="/shop" ${!c ? 'aria-current="page"' : ""}>All</a>${CATEGORIES.map(x => `<a href="/shop/${x.id}" ${c && c.id === x.id ? 'aria-current="page"' : ""}>${x.name}</a>`).join("")}</nav>
+  <nav class="chips" aria-label="Categories"><a href="/shop" ${!c ? 'aria-current="page"' : ""}>All</a>${CATEGORIES.map(x => `<a href="/shop/${x.id}" ${c && c.id === x.id ? 'aria-current="page"' : ""}>${x.name}</a>`).join("")}<a href="/gifts/under-50">Gifts</a></nav>
   <div class="grid grid--shop">${groups.map(([name, items]) => (name ? `<h2 class="series" data-tone="${SERIES[name] || ""}">${name} <span class="num">${items.length} pieces, ${whole(Math.min(...items.map(x => x.price)))} to ${whole(Math.max(...items.map(x => x.price)))}</span></h2>` : "") + items.map(card).join("")).join("")}</div>`;
 }
 
@@ -272,13 +272,13 @@ function viewProduct(sku) {
 // ---------- gifts ----------
 function giftList(under) { return PRODUCTS.filter(p => !p.dark && !isSold(p) && (under ? p.price < 50 : p.price >= 50 && p.price <= 150)).sort((a, b) => b.price - a.price); }
 function viewGifts(kind) {
-  const under = kind === "under-50", list = giftList(under);
+  const under = kind !== "under-150", list = giftList(under);
   return `
   <section class="shophead" data-tone="${under ? "emerald" : "cobalt"}" data-fx="gifts">
     <h1 class="shophead__h">${under ? "Under $50" : "Under $150"}</h1>
     <p class="shophead__n"><span class="num">${list.length}</span> gifts, packed at the counter</p>
   </section>
-  <nav class="chips chips--on" aria-label="Gifts"><a href="/gifts/under-50" ${under ? 'aria-current="page"' : ""}>Under $50</a><a href="/gifts/under-150" ${!under ? 'aria-current="page"' : ""}>Under $150</a><a href="/set">The full setup</a></nav>
+  <nav class="chips chips--on" aria-label="Gifts"><a href="/shop">Everything</a><a href="/gifts/under-50" ${under ? 'aria-current="page"' : ""}>Under $50</a><a href="/gifts/under-150" ${!under ? 'aria-current="page"' : ""}>Under $150</a><a href="/set">The full setup</a></nav>
   <div class="grid grid--shop">${list.map(card).join("")}</div>`;
 }
 
@@ -325,7 +325,7 @@ function searchResults() {
   if (!words.length) return `<p class="lead">Try brass, steel, base, hose, or a name.</p>`;
   const hits = PRODUCTS.filter(p => { const hay = (p.name + " " + p.note + " " + catById[p.cat].name + " " + p.sku).toLowerCase(); return words.every(w => hay.includes(w)); });
   return hits.length ? `<p class="search__n"><span class="num">${hits.length}</span> ${hits.length === 1 ? "piece" : "pieces"}</p><div class="grid">${hits.slice(0, 40).map(card).join("")}</div>`
-    : `<p class="lead">Nothing matches \u201c${esc(state.q.trim())}\u201d. Call the counter at <a class="link" href="tel:+15192552222">519-255-2222</a> and we will check the shelf.</p>`;
+    : `<p class="lead">Nothing matches \u201c${esc(state.q.trim())}\u201d. Look through <a class="link" href="/shop">everything</a>, or call the counter at <a class="link" href="tel:+15192552222">519-255-2222</a> and we will check the shelf.</p>`;
 }
 function viewSearch() {
   return `
@@ -491,21 +491,23 @@ function viewShipping() {
 function syncChrome() {
   $$("[data-cart-count]").forEach(e => e.textContent = cartCount());
   const h = route() || "#/";
-  $("[data-nav]").innerHTML = CATEGORIES.map(c => `<a href="/shop/${c.id}" ${h === "#/shop/" + c.id ? 'aria-current="page"' : ""}>${c.name}</a>`).join("") + `<a href="/set" ${h === "#/set" ? 'aria-current="page"' : ""}>Build a set</a><a href="/search" ${h === "#/search" ? 'aria-current="page"' : ""}>Search</a>`;
   const [ra, rb] = h.replace(/^#\/?/, "").split("/"), prod = ra === "p" ? bySku[rb] : null;
+  const here = (on, exact = on) => on ? `aria-current="${exact ? "page" : "true"}"` : "";   // the page itself, or the section a product belongs to
+  $("[data-nav]").innerHTML = `<a href="/shop" ${here(h === "#/shop")}>Everything</a>` + CATEGORIES.map(c => `<a href="/shop/${c.id}" ${here(h === "#/shop/" + c.id || prod?.cat === c.id, h === "#/shop/" + c.id)}>${c.name}</a>`).join("") + `<a href="/gifts/under-50" ${here(ra === "gifts")}>Gifts</a><a href="/set" ${here(h === "#/set")}>Build a set</a><a href="/search" ${here(h === "#/search")}>Search</a>`;
+  const topCart = $(".top__cart"); if (h === "#/cart") topCart.setAttribute("aria-current", "page"); else topCart.removeAttribute("aria-current");
   const count = `<span data-cart-count>${cartCount()}</span>`, dock = $(".dock");
   dock.classList.toggle("dock--buy", !!prod);
   const lines = cartLines(), sub = lines.reduce((a, l) => a + l.product.price * l.qty, 0);
   const sc = ra === "cart" && lines.length ? shipChoice(lines) : null, ship = sc && sc.chosen, canPay = !!sc && (sc.pickup || sc.local || !!ship);
   dock.classList.toggle("dock--buy", !!prod || ra === "set" || (ra === "cart" && lines.length > 0));
   dock.innerHTML = prod
-    ? `<a class="dock__side" href="/shop/${prod.cat}">Back</a>${state.cart.some(l => l.sku === prod.sku)
+    ? `<a class="dock__side" href="/shop/${prod.cat}" data-back>Back</a>${state.cart.some(l => l.sku === prod.sku)
         ? `<a class="dock__buy" href="/cart">In your cart. View cart</a>` : isSold(prod) ? `<a class="dock__buy dock__buy--off" href="/shop/${prod.cat}">Sold. See what is left</a>` : `<button class="dock__buy" type="button" data-add="${prod.sku}">Add to cart <span class="num">${whole(prod.price)}</span></button>`}<a class="dock__side" href="/cart" aria-label="Cart">${count}</a>`
     : ra === "set"
     ? `<a class="dock__side" href="/shop">Shop</a>${setPicks().some(Boolean) ? `<button class="dock__buy" type="button" data-add-set>Add the set <span class="num">${whole(setPicks().filter(Boolean).reduce((a, p) => a + p.price, 0))}</span></button>` : `<a class="dock__buy dock__buy--off" href="/shop">See what is in stock</a>`}<a class="dock__side" href="/cart" aria-label="Cart">${count}</a>`
     : ra === "cart" && lines.length
     ? `<a class="dock__side" href="/shop">Shop</a>${canPay ? `<a class="dock__buy" href="/checkout">Check out <span class="num">${money(sub + (ship ? ship.total : sc && sc.local ? sc.localFee || 0 : 0))}</span></a>` : sc && sc.checking ? `<span class="dock__buy dock__buy--off">Checking delivery</span>` : `<button class="dock__buy" type="button" data-open-postal>${state.dest ? "Change postal code" : "Add postal code for shipping"}</button>`}<span class="dock__side">${count}</span>`
-    : `<a href="/" ${h === "#/" ? 'aria-current="page"' : ""}>Home</a><a href="/shop" ${h.startsWith("#/shop") ? 'aria-current="page"' : ""}>Shop</a><a href="/search" ${h === "#/search" ? 'aria-current="page"' : ""}>Search</a><a href="/cart" ${h === "#/cart" ? 'aria-current="page"' : ""}>Cart ${count}</a>`;
+    : `<a href="/" ${h === "#/" ? 'aria-current="page"' : ""}>Home</a><a href="/shop" ${here(h.startsWith("#/shop") || ra === "gifts", h === "#/shop")}>Shop</a><a href="/search" ${h === "#/search" ? 'aria-current="page"' : ""}>Search</a><a href="/cart" ${h === "#/cart" ? 'aria-current="page"' : ""}>Cart ${count}</a>`;
   syncDelivery();
 }
 const sheet = $("[data-postal-sheet]"), postalInput = $("#postal"), postalErr = $("#postal-err");
@@ -530,7 +532,7 @@ document.addEventListener("click", e => {
   if (e.target.closest("[data-add-set]")) { setPicks().filter(Boolean).forEach(p => addToCart(p.sku)); navigate("/cart"); }
 });
 document.addEventListener("input", e => {
-  if (e.target.id === "q") { state.q = e.target.value; $("[data-search-out]").innerHTML = searchResults(); }
+  if (e.target.id === "q") { state.q = e.target.value; setQuery(state.q.trim()); $("[data-search-out]").innerHTML = searchResults(); }
   if (e.target.matches("[data-note]")) { state.note = e.target.value; store.set("note", state.note); }
 });
 document.addEventListener("change", e => { if (e.target.name === "ship") { state.ship = e.target.value; store.set("ship", state.ship); render(); } });
@@ -724,10 +726,25 @@ const viewTerms = () => doc("Terms of sale", "The plain rules for buying from us
   ["If something is wrong with the order", ["If we cannot ship within 30 days of the date promised, you can cancel for a full refund."]],
 ]);
 const viewMissing = () => `${band("missing", "ruby", "Nothing at this address.")}<section class="empty"><p class="lead">The link may be old. <a class="link" href="/shop">See what is on the counter</a>.</p></section>`;
+const SITE = "One Stop Shop", HOME_TITLE = document.title, PLAIN = { cart: "Cart", shipping: "Shipping and returns", set: "Build a set", search: "Search", privacy: "Privacy", terms: "Terms of sale", checkout: "Checkout" };
+// The same addresses the server answers. Anything else is the missing page, never a page that merely looks right.
+function realPage(a, b, more) {
+  if (more) return false; if (!a) return true;
+  if (a === "shop") return !b || !!catById[b]; if (a === "p") return !!b; if (a === "gifts") return !b || b === "under-50" || b === "under-150";
+  if (a === "order") return !!b && /^W[A-Z0-9]{6}$/.test(b);
+  return !b && a in PLAIN;
+}
+function pageTitle(a, b, real) {
+  if (!real || (a === "p" && !bySku[b])) return `Page not found | ${SITE}`; if (!a) return HOME_TITLE;
+  const name = a === "shop" ? (b ? catById[b].name : "Shop") : a === "p" ? bySku[b].name : a === "gifts" ? "Gifts" : a === "order" ? `Order ${b}` : PLAIN[a];
+  return `${name} | ${SITE}`;
+}
 function render() {
   const keep = focusKey(document.activeElement);
-  const [a, b] = route().replace(/^#\/?/, "").split("/");
-  $("#main").innerHTML = a === "shop" ? (b && !catById[b] ? viewMissing() : viewShop(b)) : a === "p" ? viewProduct(b) : a === "cart" ? viewCart() : a === "shipping" ? viewShipping() : a === "gifts" ? viewGifts(b) : a === "set" ? viewSet() : a === "search" ? viewSearch() : a === "privacy" ? viewPrivacy() : a === "terms" ? viewTerms() : a === "checkout" ? viewCheckout() : a === "order" ? viewOrder(b) : !a ? viewHome() : viewMissing();
+  const [a, b, more] = route().replace(/^#\/?/, "").split("/"), real = realPage(a, b, more);
+  if (a === "search") state.q = new URLSearchParams(location.search).get("q") ?? state.q;
+  document.title = pageTitle(a, b, real);
+  $("#main").innerHTML = !real ? viewMissing() : a === "shop" ? viewShop(b) : a === "p" ? viewProduct(b) : a === "cart" ? viewCart() : a === "shipping" ? viewShipping() : a === "gifts" ? viewGifts(b) : a === "set" ? viewSet() : a === "search" ? viewSearch() : a === "privacy" ? viewPrivacy() : a === "terms" ? viewTerms() : a === "checkout" ? viewCheckout() : a === "order" ? viewOrder(b) : !a ? viewHome() : viewMissing();
   document.body.dataset.route = a || "home";
   syncChrome();
   const chip = $(".chips [aria-current]"); if (chip) chip.parentNode.scrollLeft = chip.offsetLeft - (chip.parentNode.clientWidth - chip.offsetWidth) / 2;   // the section you are in sits centred in the row
@@ -750,15 +767,27 @@ function cartFromStorage() {
 }
 addEventListener("storage", e => { if (e.key === null || e.key === "oss:cart") cartFromStorage(); });
 addEventListener("pageshow", e => { if (e.persisted) cartFromStorage(); });
+// Long lists skip drawing what is off screen, so their height is a guess until they are drawn: draw it all for one frame to land exactly.
+setSpotAnchor(() => { for (const a of $$("#main [data-piece]")) { const r = a.getBoundingClientRect(); if (r.bottom > 80) return { sku: a.dataset.piece, top: Math.round(r.top) }; } return null; });
+function putScroll(spot) {
+  const y = typeof spot === "number" ? spot : spot.y || 0, root = document.documentElement, land = () => { scrollTo(0, y); const a = spot.sku && document.querySelector(`#main [data-piece="${spot.sku}"]`); if (a) scrollBy(0, a.getBoundingClientRect().top - spot.top); };
+  root.classList.add("restoring"); land();
+  requestAnimationFrame(() => { land(); root.classList.remove("restoring"); });
+}
 function go() {
   if (state.newsSeen && !/^#\/cart/.test(route())) { state.cartNews = []; state.newsSeen = false; }
-  const from = last.match(/^#\/p\/(.+)$/); last = route();
-  render(); scrollTo(0, 0);
+  const from = last.match(/^#\/p\/(.+)$/), spot = navInfo().cause === "pop" ? spotHere() : undefined; last = route();
+  render(); if (spot === undefined) scrollTo(0, 0); else putScroll(spot);
   const stage = $("[data-stage]");
   if (stage) { stage.style.viewTransitionName = "piece"; const st = $(".sticker", stage); if (st) st.style.viewTransitionName = "tag"; }
-  else if (from) { const back = $(`[data-piece="${from[1]}"]`), n = back && ($(".tile", back) || back); if (n) { n.style.viewTransitionName = "piece"; const st = $(".sticker", back); if (st) st.style.viewTransitionName = "tag"; n.scrollIntoView({ block: "center" }); } }
+  else if (from) { const back = $(`[data-piece="${from[1]}"]`), n = back && ($(".tile", back) || back); if (n) { n.style.viewTransitionName = "piece"; const st = $(".sticker", back); if (st) st.style.viewTransitionName = "tag"; const box = n.getBoundingClientRect(); if (spot === undefined || box.bottom < 60 || box.top > innerHeight - 60) n.scrollIntoView({ block: "center" }); } }
   const sq = $("#q"); if (sq) sq.focus({ preventScroll: true }); else $("#main").focus({ preventScroll: true });
 }
+// 15 the dock's Back is the real Back; from a shared link there is nothing behind it, so it goes to the section
+document.addEventListener("click", e => {
+  const b = e.target.closest?.("[data-back]"); if (!b || !canGoBack() || e.metaKey || e.ctrlKey || e.shiftKey) return;
+  e.preventDefault(); e.stopPropagation(); history.back();
+}, true);
 window.addEventListener("routechange", () => {
   if (route() === last) return;
   if (!navInfo().instant && document.startViewTransition && !matchMedia("(prefers-reduced-motion: reduce)").matches) document.startViewTransition(go); else go();   // a wave is already covering the change
