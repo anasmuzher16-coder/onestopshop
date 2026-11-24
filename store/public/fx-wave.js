@@ -123,39 +123,52 @@ void main() {
 const VERT = `#version 300 es
 out vec2 v; void main() { vec2 p = vec2(gl_VertexID == 1 ? 3. : -1., gl_VertexID == 2 ? 3. : -1.); v = p * .5 + .5; gl_Position = vec4(p, 0., 1.); }`;
 
-let cv = null, gl = null, vao = null, noise = null, progs = {}, broken = false, tier = 0, atlas = null, tex = {}, imgs = {}, w = null, raf = 0, freeTimer = 0, undo = null, lastD = null, proxy = null;
+let cv = null, gl = null, par = null, vao = null, noise = null, progs = {}, broken = false, tier = 0, atlas = null, tex = {}, imgs = {}, w = null, raf = 0, freeTimer = 0, undo = null, lastD = null, proxy = null;
 try { tier = Math.min(2, +sessionStorage.getItem("oss:wave-tier") || 0); } catch {}
 const saveData = () => !!navigator.connection?.saveData;
 
 function glInit() {
   if (gl) return true; if (broken) return false;
   cv = document.createElement("canvas"); cv.width = cv.height = 0; cv.className = "fx-wave"; cv.setAttribute("aria-hidden", "true");
-  cv.style.cssText = "position:fixed;left:0;top:0;width:100vw;height:100lvh;z-index:15;pointer-events:none;display:block;opacity:0";
-  gl = cv.getContext("webgl2", { alpha: true, premultipliedAlpha: true, antialias: false, depth: false, stencil: false, powerPreference: "high-performance", desynchronized: false });
+  cv.style.cssText = "position:fixed;left:0;top:0;width:100vw;height:100lvh;z-index:15;pointer-events:none;display:block;opacity:0;transform-origin:0 0"; shown = ""; css = null;
+  // "default", not "high-performance": on a two-GPU laptop asking for the big GPU switches the whole machine over at that moment, a visible hitch
+  gl = cv.getContext("webgl2", { alpha: true, premultipliedAlpha: true, antialias: false, depth: false, stencil: false, powerPreference: "default", desynchronized: false });
   if (!gl) { cv = null; broken = true; return false; }
+  par = gl.getExtension("KHR_parallel_shader_compile");
   cv.addEventListener("webglcontextlost", e => { e.preventDefault(); lostGL(); });
   return setup();
 }
 function setup() {
   vao = gl.createVertexArray(); gl.bindVertexArray(vao); gl.disable(gl.BLEND); gl.disable(gl.DEPTH_TEST);
   const n = 256, d = new Uint8Array(n * n), r = new Uint8Array(n * n); for (let i = 0; i < r.length; i++) r[i] = Math.random() * 256;
-  // tiling value noise: every texel the average of a small wrapped neighbourhood, stretched back to full range
-  let lo = 255, hi = 0; const sum = new Float32Array(n * n);
-  for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) { let s = 0; for (let j = -2; j <= 2; j++) for (let i = -2; i <= 2; i++) s += r[((y + j + n) % n) * n + (x + i + n) % n]; s /= 25; sum[y * n + x] = s; if (s < lo) lo = s; if (s > hi) hi = s; }
+  // tiling value noise: every texel the average of a small wrapped neighbourhood, stretched back to full range. The 5x5 box runs as two 5-tap passes (same result, a fifth of the work)
+  let lo = 255, hi = 0; const row = new Float32Array(n * n), sum = new Float32Array(n * n);
+  for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) { let s = 0; for (let i = -2; i <= 2; i++) s += r[y * n + (x + i + n) % n]; row[y * n + x] = s; }
+  for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) { let s = 0; for (let j = -2; j <= 2; j++) s += row[((y + j + n) % n) * n + x]; s /= 25; sum[y * n + x] = s; if (s < lo) lo = s; if (s > hi) hi = s; }
   for (let i = 0; i < d.length; i++) d[i] = (sum[i] - lo) / (hi - lo) * 255;
   noise = gl.createTexture(); gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, noise); gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8, n, n, 0, gl.RED, gl.UNSIGNED_BYTE, d); gl.generateMipmap(gl.TEXTURE_2D);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
   return !gl.isContextLost();
 }
-function build(fs) {
-  const sh = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS) && !gl.isContextLost()) throw new Error("wave shader: " + gl.getShaderInfoLog(s)); return s; };
-  const p = gl.createProgram(), a = sh(gl.VERTEX_SHADER, VERT), b = sh(gl.FRAGMENT_SHADER, fs); gl.attachShader(p, a); gl.attachShader(p, b); gl.linkProgram(p); gl.deleteShader(a); gl.deleteShader(b);
-  if (!gl.getProgramParameter(p, gl.LINK_STATUS) && !gl.isContextLost()) throw new Error("wave link: " + gl.getProgramInfoLog(p));
-  const u = {}, n = gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS); for (let i = 0; i < n; i++) { const name = gl.getActiveUniform(p, i).name.replace("[0]", ""); u[name] = gl.getUniformLocation(p, name); }
-  return { p, u };
+// Compiling is split in two. start() hands the source to the driver and returns at once; with KHR_parallel_shader_compile the driver
+// compiles on its own threads. ready() asks for the result, which blocks only if the compile is still running, so it is asked for when
+// the extension says the work is done (warm), or at a tap that came first (the old cost, paid once).
+function start(fs) {
+  const sh = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; };
+  const p = gl.createProgram(), a = sh(gl.VERTEX_SHADER, VERT), b = sh(gl.FRAGMENT_SHADER, fs); gl.attachShader(p, a); gl.attachShader(p, b); gl.linkProgram(p);
+  return { p, a, b, u: null };
 }
-const prog = key => progs[key] || (progs[key] = build(key === "flip" ? FLIP : HEAD + MAT[key] + FOOT));
+function ready(P) {
+  if (P.u) return P;
+  if (!gl.getProgramParameter(P.p, gl.LINK_STATUS) && !gl.isContextLost()) { const log = [P.a, P.b].map(s => gl.getShaderInfoLog(s)).join(" ") + " " + gl.getProgramInfoLog(P.p); throw new Error("wave shader: " + log); }
+  gl.deleteShader(P.a); gl.deleteShader(P.b); P.a = P.b = null;
+  const u = {}, n = gl.getProgramParameter(P.p, gl.ACTIVE_UNIFORMS); for (let i = 0; i < n; i++) { const name = gl.getActiveUniform(P.p, i).name.replace("[0]", ""); u[name] = gl.getUniformLocation(P.p, name); }
+  P.u = u; return P;
+}
+const srcOf = key => key === "flip" ? FLIP : HEAD + MAT[key] + FOOT;
+const prog = key => ready(progs[key] || (progs[key] = start(srcOf(key))));
+const compiling = key => { const P = progs[key]; return !!P && !P.u && !!par && !gl.getProgramParameter(P.p, par.COMPLETION_STATUS_KHR); };
 // THE SLOT for the baked art. A new bake only changes its entry here: file, grid, cell size, full-cover frame, and optionally flow (a same-grid RG map) with flowMax (its reach in cell UV).
 const BOOKS = { parts: { file: "parts.webp", mip: true }, bowls: { file: "kit-bowls.webp", mip: true }, misc: { file: "kit-misc.webp", mip: true }, set: { file: "kit-set.webp", mip: true }, shipping: { file: "kit-shipping.webp", mip: true }, search: { file: "kit-search.webp", mip: true }, cart: { file: "kit-cart.webp", mip: true }, gifts: { file: "kit-gifts.webp", mip: true }, all: { file: "kit-all.webp", mip: true } };   // empty: smoke and fire are drawn in their shaders now, so nothing extra downloads
 // the flipbooks are asked for when the browser is idle, never on Save-Data or reduced motion
@@ -168,7 +181,7 @@ function loadAtlas() {
 function loadBooks(keys) {
   for (const k of keys) { const B = BOOKS[k], im = new Image(); im.decoding = "async"; im.src = "img/wave/" + B.file + "?v=" + (ART[B.file] || "0");   /* the version is the file's own hash, from tools/build-wave-art.mjs */
     const fl = B.flow ? new Image() : null; if (fl) { fl.decoding = "async"; fl.src = "img/wave/" + B.flow; }
-    Promise.all([im.decode(), fl?.decode()]).then(() => { atlas[k] = B; imgs[k] = im; if (fl) imgs[k + ":flow"] = fl; }).catch(() => {}); }   // decoded off the main thread, so the tap never pays for it
+    Promise.all([im.decode(), fl?.decode()]).then(() => { atlas[k] = B; imgs[k] = im; if (fl) imgs[k + ":flow"] = fl; if (warmed) idle(upAll); }).catch(() => {}); }   // decoded off the main thread, so the tap never pays for it
 }
 function upload(key, unit, im) {
   if (tex[key]) return tex[key]; const t = gl.createTexture(); gl.activeTexture(unit); gl.bindTexture(gl.TEXTURE_2D, t);
@@ -179,8 +192,19 @@ function upload(key, unit, im) {
 function atlasTex(k) { const im = imgs[k]; if (!im) return null; if (imgs[k + ":flow"]) upload(k + ":flow", gl.TEXTURE2, imgs[k + ":flow"]); return upload(k, gl.TEXTURE1, im); }
 function fit() {   // sized once: the shaders work in CSS pixels, so a later rotation only stretches the buffer. A slower tier applies from the next page load.
   if (cv.width < 2) { const cw = cv.clientWidth || innerWidth, ch = cv.clientHeight || innerHeight, dp = Math.min(2, devicePixelRatio || 1), long = Math.min(TIERS[tier], Math.max(cw, ch) * dp), k = long / Math.max(cw, ch); cv.width = Math.max(2, Math.round(cw * k)); cv.height = Math.max(2, Math.round(ch * k)); }
-  gl.viewport(0, 0, cv.width, cv.height);
+  view();
 }
+// THE RENDER SCALE. The effect can draw into the top-left part of its buffer and the canvas is stretched back over the screen with a
+// CSS transform: fewer pixels for the shader, no resize (WebKit stops presenting a resized WebGL canvas), and it can change between two frames.
+let res = 1, shown = "";
+try { res = Math.max(.5, Math.min(1, +sessionStorage.getItem("oss:wave-res") || 1)); } catch {}
+let vp = [0, 0];
+function view() {
+  const vw = Math.max(2, Math.round(cv.width * res)), vh = Math.max(2, Math.round(cv.height * res)); vp = [vw, vh];
+  gl.viewport(0, cv.height - vh, vw, vh);
+  const tf = res === 1 ? "" : `scale(${cv.width / vw},${cv.height / vh})`; if (tf !== shown) { shown = tf; cv.style.transform = tf; }
+}
+function lower(to) { to = Math.max(.5, to); if (to >= res) return; res = to; try { sessionStorage.setItem("oss:wave-res", res); } catch {} }
 
 // which section a path belongs to
 const CATS = new Set(["hookahs", "bases", "bowls", "heat", "hoses", "parts", "cologne", "misc"]);
@@ -200,7 +224,10 @@ function underline(path) {
   const nav = document.querySelector("[data-nav]"); if (!nav) return; const was = nav.querySelector("[aria-current]"), next = [...nav.querySelectorAll("a")].find(a => a.getAttribute("href") === path.split(/[?#]/)[0]);
   if (was === next) return; was?.removeAttribute("aria-current"); next?.setAttribute("aria-current", "page"); undo = () => { if (!nav.isConnected) return; next?.removeAttribute("aria-current"); was?.setAttribute("aria-current", "page"); };
 }
-const cssSize = () => [cv.clientWidth || innerWidth, cv.clientHeight || innerHeight];
+// the canvas's CSS size, read once and again only after a resize: reading it inside a frame right after the page swap forced the browser
+// to lay out the whole new page there and then
+let css = null; addEventListener("resize", () => { css = null; }, { passive: true });
+const cssSize = () => css || (css = [cv.clientWidth || innerWidth, cv.clientHeight || innerHeight]);
 const margin = o => { const [x, y] = cssSize(), L = Math.abs(o.d[0]) * x + Math.abs(o.d[1]) * y; return Math.max(o.r || 0, (o.e || 0) / L) + .005; };   // how far past the frame the edge has to start and finish
 function draw(o, now, H, Tl, frame) {
   fit(); const [vw, vh] = cssSize();
@@ -212,7 +239,7 @@ function draw(o, now, H, Tl, frame) {
   }
   const P = prog(o.m), [a, b, c, e] = o.p; gl.useProgram(P.p); if (P.u.uN) { gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, noise); gl.uniform1i(P.u.uN, 0); }
   if (P.u.uS) { const st = o.sprite && imgs[o.sprite] ? atlasTex(o.sprite) : null; gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, st); gl.uniform1i(P.u.uS, 1); gl.uniform1f(P.u.uHas, st ? 1 : 0); }
-  gl.uniform2f(P.u.uR, cv.width, cv.height); gl.uniform2f(P.u.uV, vw, vh); gl.uniform2f(P.u.uD, o.d[0], o.d[1]); gl.uniform1f(P.u.uTime, (now - o.t0) / 1000); gl.uniform1f(P.u.uH, H); gl.uniform1f(P.u.uT, Tl);
+  gl.uniform2f(P.u.uR, vp[0], vp[1]); gl.uniform2f(P.u.uV, vw, vh); gl.uniform2f(P.u.uD, o.d[0], o.d[1]); gl.uniform1f(P.u.uTime, (now - o.t0) / 1000); gl.uniform1f(P.u.uH, H); gl.uniform1f(P.u.uT, Tl);
   gl.uniform3fv(P.u.uA, a); if (P.u.uB) gl.uniform3fv(P.u.uB, b); if (P.u.uC) gl.uniform3fv(P.u.uC, c); if (P.u.uE) gl.uniform3fv(P.u.uE, e);
   gl.drawArrays(gl.TRIANGLES, 0, 3); o.lastH = H; o.lastT = Tl;
 }
@@ -223,20 +250,30 @@ function paint(now) {
   if (w.phase === "cover") { const p = Math.min(1, (now - w.t0) / o.cover), e = coverEase(p); w.p = p; const u = w.under;   // a wave that was interrupted holds its place underneath until the new one has covered it
     if (u) { gl.disable(gl.BLEND); u.forEach((x, i) => { draw(x, now, x.lastH, x.lastT, null); if (!i) { gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA); } }); }
     try { draw(o, now, -m + e * (1 + 2 * m), -m - .02, A ? e * A.fullCoverFrame : null); } finally { if (u) gl.disable(gl.BLEND); } return p >= 1; }
-  const p = Math.min(1, (now - w.rt) / w.rd), e = revealEase(p); w.p = p; draw(o, now, 1 + m + .02, -m - .02 + e * (1 + 2 * m + .04), A ? A.fullCoverFrame + e * (A.frames - 1 - A.fullCoverFrame) : null); return p >= 1;
+  if (!w.rt) unveil(now); const p = Math.min(1, (now - w.rt) / w.rd), e = revealEase(p); w.p = p; draw(o, now, 1 + m + .02, -m - .02 + e * (1 + 2 * m + .04), A ? A.fullCoverFrame + e * (A.frames - 1 - A.fullCoverFrame) : null); return p >= 1;
 }
 // Search: an input focused inside the tap, so an iPhone opens its keyboard; the real field takes the focus over at the swap
 function holdKeyboard() { const i = document.createElement("input"); i.type = "search"; i.tabIndex = -1; i.setAttribute("aria-label", "Search"); i.style.cssText = "position:fixed;left:0;top:0;width:1px;height:1px;opacity:0;font-size:16px;border:0;padding:0;pointer-events:none;z-index:14"; document.body.append(i); i.focus({ preventScroll: true }); proxy = i; }
 function dropKeyboard() { if (!proxy) return; const i = proxy; proxy = null; i.remove(); }
 function swap() {
   if (!w || w.swapped) return; if (w.phase === "cover") try { paint(w.t0 + w.o.cover); } catch {} // a late frame clock still swaps under a full cover
-  w.swapped = true; w.under = null; w.skip = true; const path = w.path; w.path = null; undo = null; if (path) commitNav(path, "wave"); dropKeyboard();
-  if (!w) return; w.phase = "reveal"; const t = performance.now(); w.rt = t; w.rd = Math.max(120, Math.min(w.o.ms, w.t0 + Math.min(MAX_MS, w.o.cover + w.o.ms) - t)); clearTimeout(w.goneT); w.goneT = setTimeout(finish, w.rd + 90);
+  w.swapped = true; w.under = null; w.skip = 2; const path = w.path; w.path = null; undo = null; if (path) commitNav(path, "wave"); dropKeyboard();
+  if (!w) return; w.phase = "reveal"; w.rt = 0; clearTimeout(w.goneT); w.goneT = setTimeout(finish, w.o.ms + 600);   // the reveal's clock starts at its first frame (unveil)
+}
+// The new page is built, styled and laid out in the frame after the swap, and on a slow phone that frame is long. The reveal clock starts
+// when the first frame after it arrives, so the screen holds at full cover through that frame and the wake then leaves in one smooth
+// pass, instead of jumping a third of the way the moment the frame lands.
+function unveil(now) {
+  w.rt = now; w.rd = Math.max(Math.round(w.o.ms * .8), Math.min(w.o.ms, w.t0 + Math.min(MAX_MS, w.o.cover + w.o.ms) - now));
+  clearTimeout(w.goneT); w.goneT = setTimeout(finish, w.rd + 400);   // the frame clock lands the end; this only catches a stalled one
 }
 function tick(now) {
   raf = 0; if (!w) return; raf = requestAnimationFrame(tick); now = Math.max(now, performance.now() - 40);
+  if (w.hold) { try { if (!release(now)) return; } catch (e) { console.error("fx-wave: " + e); broken = true; abort(); return; } now = w.t0; }
   const dt = now - w.last; w.last = now;
-  if (w.frames++ > 0 && !w.skip) { w.sum += dt; w.n++; } w.skip = false;   // frame times for the governor, leaving out the swap frame, which is long on purpose
+  if (w.frames++ > 0 && !w.skip) { w.sum += dt; w.n++;   // frame times for the governor, leaving out the swap and the frame that first paints the new page
+    w.slow = dt > 24 ? w.slow + 1 : 0; if (w.slow >= 3 && res > .5) { w.slow = 0; lower(res - .25); } }   // three slow frames in a row: fewer pixels from the next frame on, for the rest of the visit
+  w.skip = Math.max(0, w.skip - 1);
   try {
     const done = paint(now);
     if (w.phase === "cover" && done) { if (w.peak) swap(); else w.peak = true; }
@@ -246,12 +283,13 @@ function tick(now) {
 function clearTimers() { if (!w) return; clearTimeout(w.swapT); clearTimeout(w.goneT); }
 function hide() {
   if (raf) cancelAnimationFrame(raf); raf = 0; if (cv) cv.style.opacity = "0";   // it stays attached and keeps its size: WebKit stops presenting a WebGL canvas that was resized or re-attached. The compiled shaders stay warm
-  clearTimeout(freeTimer); freeTimer = setTimeout(freeTex, FREE_MS);
 }
-function freeTex() { if (w || !gl || gl.isContextLost()) return; for (const k in tex) { gl.deleteTexture(tex[k]); delete tex[k]; } }
+// the sheets stay on the GPU while the shop is on screen (re-uploading one inside a tap is a stutter); a tab left in the background gives them back
+function freeTex() { if (w || !gl || gl.isContextLost() || !document.hidden) return; for (const k in tex) { gl.deleteTexture(tex[k]); delete tex[k]; } }
+document.addEventListener("visibilitychange", () => { clearTimeout(freeTimer); if (document.hidden) freeTimer = setTimeout(freeTex, FREE_MS); else if (warmed) idle(upAll); });
 function finish() { const pending = w?.path; if (w?.n >= 2 && w.sum / w.n > 40 && tier < TIERS.length - 1) { tier++; try { sessionStorage.setItem("oss:wave-tier", tier); } catch {} } /* a slow device keeps its transitions and gets a lighter resolution from the next page load */ clearTimers(); w = null; hide(); undo = null; if (pending) commitNav(pending, proxy ? "wave" : "push"); dropKeyboard(); }
 function abort() { const pending = w?.path; clearTimers(); w = null; hide(); undo = null; if (pending) commitNav(pending, proxy ? "wave" : "push"); dropKeyboard(); }
-function lostGL() { gl = null; if (cv) cv.remove(); cv = null; progs = {}; tex = {}; noise = null; vao = null; if (w) abort(); }
+function lostGL() { gl = null; par = null; if (cv) cv.remove(); cv = null; progs = {}; tex = {}; noise = null; vao = null; warmed = false; if (w) abort(); }
 
 // Never more than two full-screen colour changes in any second, however fast someone taps: past that the plain page change runs.
 const starts = [], tooFast = t => { while (starts.length && t - starts[0] > 1000) starts.shift(); return starts.length >= 2; };
@@ -261,13 +299,23 @@ function play(key, path, under = null) {
   const base = W[key], o = { ...base, cover: base.c ?? 300, ms: base.ms ?? 480, t0: performance.now() }; if (base.atlas && atlas?.[base.atlas] && imgs[base.atlas]) o.atlasOn = atlas[base.atlas];
   if (key === "gifts") o.p = pageTone(path);
   if (key === "home" && lastD) o.d = [-lastD[0], -lastD[1]];   // home leaves the way you came
-  try { if (o.atlasOn) { if (!atlasTex(o.atlas)) o.atlasOn = null; else prog("flip"); } if (!o.atlasOn) prog(o.m); } catch (e) { console.error("fx-wave: " + e); broken = true; return false; }
+  // a tap that beats the warm-up to this material: the driver is still compiling it on its own threads, so the wave waits a frame or
+  // two for it with the page still answering, instead of freezing the page until the compile is done
+  const hold = !o.atlasOn && compiling(o.m);
+  try { if (o.atlasOn) { if (!atlasTex(o.atlas)) o.atlasOn = null; else prog("flip"); } if (!o.atlasOn && !hold) prog(o.m); } catch (e) { console.error("fx-wave: " + e); broken = true; return false; }
   clearTimeout(freeTimer); const t = performance.now(); lastD = o.d;
-  o.t0 = t; w = { key, o, path, under, t0: t, last: t, phase: "cover", frames: 0, sum: 0, n: 0, skip: false, swapped: false, peak: false, rt: t, rd: o.ms, p: 0 };
-  if (!cv.isConnected) document.body.append(cv); cv.style.opacity = "1"; if (key === "search") holdKeyboard();
-  underline(path); try { paint(t); } catch (e) { console.error("fx-wave: " + e); broken = true; w.path = null; undo?.(); abort(); return false; } w.swapT = setTimeout(swap, o.cover + 70);   // a stalled frame clock still lands the page
-  w.goneT = setTimeout(finish, Math.min(GONE_MS, o.cover + o.ms + 90)); raf = requestAnimationFrame(tick);
+  o.t0 = t; w = { key, o, path, under, t0: t, last: t, phase: "cover", frames: 0, sum: 0, n: 0, skip: 0, slow: 0, swapped: false, peak: false, rt: t, rd: o.ms, p: 0 };
+  if (!cv.isConnected) { document.body.append(cv); css = null; } cv.style.opacity = "1"; if (key === "search") holdKeyboard();
+  try { dispatchEvent(new CustomEvent("wave:start", { detail: { key, path } })); } catch {}   // the page behind can start its own slow setup while the wave covers it
+  underline(path); if (hold) { w.hold = true; raf = requestAnimationFrame(tick); return true; }
+  try { paint(t); } catch (e) { console.error("fx-wave: " + e); broken = true; w.path = null; undo?.(); abort(); return false; }
+  arm(); raf = requestAnimationFrame(tick);
   return true;
+}
+function arm() { w.swapT = setTimeout(swap, w.o.cover + 70); w.goneT = setTimeout(finish, Math.min(GONE_MS, w.o.cover + w.o.ms + 90)); }   // a stalled frame clock still lands the page
+function release(now) {   // the held material is ready (or 400 ms have gone): the wave starts now, from its first frame
+  if (compiling(w.o.m) && now - w.t0 < 400) return false;
+  w.hold = false; prog(w.o.m); const t = performance.now(); w.t0 = w.o.t0 = w.last = w.rt = t; arm(); return true;
 }
 // the page this wave was carrying is cancelled; the band itself keeps travelling, so nothing jumps
 function drop(restore) { if (!w?.path) return; w.path = null; if (restore) undo?.(); undo = null; dropKeyboard(); }
@@ -293,13 +341,47 @@ setNavGate({
   live: () => !!w,
 });
 // the work is done before the first tap: shaders on the first touch, flipbooks when the browser is idle
-const idle = window.requestIdleCallback || (f => setTimeout(f, 60));
-const warm = () => { if (RM.matches || saveData() || broken) return; const todo = [...new Set(Object.values(W).map(x => x.m))];   // one shader per idle moment, so a first touch never stutters
-  const next = () => { if (!todo.length || broken || w) { if (todo.length && w) setTimeout(() => idle(next), 1000); return; } try { if (glInit()) prog(todo.shift()); else return; } catch (e) { console.error("fx-wave: " + e); broken = true; return; } idle(next); }; idle(next); };
-addEventListener("pointerdown", warm, { once: true, passive: true, capture: true });
+const idle = (f, o) => window.requestIdleCallback ? requestIdleCallback(f, o) : setTimeout(f, 60);
+// WARM. After the page has loaded and gone quiet, every material is compiled, linked and drawn once into a single hidden pixel, so the
+// driver's last-minute work (it often finishes a program only at its first draw) is never paid inside a tap. With the parallel-compile
+// extension all of them compile at once off the main thread and are only asked for when done; without it, one per idle moment.
+// The first warm draw of the heaviest material is also timed: a device that cannot fill the screen in time starts at a lower render scale.
+let warmed = false, warming = false;
+const KEYS = () => [...new Set(Object.values(W).map(x => x.m))];
+function hush(k) { if (!gl || gl.isContextLost()) return; fit(); const [x, y] = vp; gl.viewport(0, cv.height - 1, 1, 1); const P = prog(k); gl.useProgram(P.p);   // one pixel, every uniform it reads set
+  if (P.u.uN) { gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, noise); gl.uniform1i(P.u.uN, 0); } if (P.u.uS) { gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, null); gl.uniform1i(P.u.uS, 1); gl.uniform1f(P.u.uHas, 0); }
+  gl.uniform2f(P.u.uR, x, y); gl.uniform2f(P.u.uV, 390, 844); gl.uniform2f(P.u.uD, 0, 1); gl.uniform1f(P.u.uTime, 0); gl.uniform1f(P.u.uH, .5); gl.uniform1f(P.u.uT, 0); gl.drawArrays(gl.TRIANGLES, 0, 3); view(); }
+function gauge() {   // a quarter-size full draw of the smoke, waited for: what one frame of the heaviest wave costs here
+  if (!gl || gl.isContextLost() || w) return; fit(); const keep = res; res = .5; view(); const P = prog("smoke"), [vw, vh] = cssSize(), px = new Uint8Array(4);
+  gl.useProgram(P.p); gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, noise); gl.uniform1i(P.u.uN, 0); gl.uniform2f(P.u.uR, vp[0], vp[1]); gl.uniform2f(P.u.uV, vw, vh); gl.uniform2f(P.u.uD, S2, S2); gl.uniform1f(P.u.uTime, .2); gl.uniform1f(P.u.uH, .6); gl.uniform1f(P.u.uT, -.1);
+  [C.bone, C.ash, C.coal, C.bonelt].forEach((c, i) => gl.uniform3fv(P.u[["uA", "uB", "uC", "uE"][i]], c));
+  gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px); let best = 1e9;   // the first wait flushes the warm draws
+  for (let i = 0; i < 2; i++) { const t = performance.now(); gl.drawArrays(gl.TRIANGLES, 0, 3); gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px); best = Math.min(best, performance.now() - t); }
+  res = keep; const full = best * 4; if (full > 22) lower(.5); else if (full > 12) lower(.75); view(); window.__wave.gauge = Math.round(best * 4 * 10) / 10;
+}
+function warm() {
+  if (warmed || warming || RM.matches || saveData() || broken || document.hidden) return; warming = true;
+  try { if (!glInit()) { warming = false; return; } } catch { warming = false; return; }
+  if (!cv.isConnected) { document.body.append(cv); css = null; }   // attached (invisible, never takes a tap) so it measures its real 100lvh now, not inside a tap
+  const todo = KEYS(); if (par) todo.forEach(k => { if (!progs[k]) progs[k] = start(srcOf(k)); });
+  const next = () => {
+    if (!gl || gl.isContextLost() || broken) { warming = false; return; }
+    if (w) { setTimeout(() => idle(next), 600); return; }   // never during a wave
+    const k = todo[0]; if (k == null) { warming = false; warmed = true; try { gauge(); } catch {} idle(upAll); return; }
+    if (compiling(k)) { setTimeout(() => idle(next, { timeout: 200 }), 40); return; }
+    try { hush(k); todo.shift(); } catch (e) { console.error("fx-wave: " + e); broken = true; warming = false; return; }
+    idle(next, { timeout: 200 });   // a page that is always animating has few idle moments: each step still runs within 200 ms
+  };
+  idle(next, { timeout: 200 });
+}
+// the decoded sheets go to the GPU in quiet moments too, one per moment, so no tap pays for an upload
+function upAll() { const k = Object.keys(imgs).find(x => !tex[x] && !x.endsWith(":flow")); if (!k || !gl || gl.isContextLost()) return; if (w) { setTimeout(() => idle(upAll), 600); return; } try { atlasTex(k); } catch {} idle(upAll, { timeout: 500 }); }
+const afterLoad = f => document.readyState === "complete" ? setTimeout(f, 500) : addEventListener("load", () => setTimeout(f, 500), { once: true });
+afterLoad(() => idle(warm, { timeout: 1000 }));
+addEventListener("pointerdown", () => warm(), { passive: true, capture: true });   // someone faster than the quiet moment
 addEventListener("pointerdown", e => {   // only the book this finger is about to open goes to the GPU, before the finger lifts
   const a = e.target.closest?.("a[href]"); if (!a) return; let u; try { u = new URL(a.href); } catch { return; } if (u.origin !== location.origin) return;
   const key = waveFor(u.pathname), k = key && (W[key].atlas || W[key].sprite); if (!k || !imgs[k]) return; idle(() => { if (!gl || w || gl.isContextLost()) return; try { atlasTex(k); } catch {} });
 }, { passive: true, capture: true });
 idle(loadAtlas);
-window.__wave = { palette: () => w ? w.o.p : null, get active() { return w ? { key: w.key, phase: w.phase, p: w.p, pending: w.path } : null; }, get canvas() { return cv; }, get tier() { return tier; }, sectionOf, waveFor };
+window.__wave = { palette: () => w ? w.o.p : null, get active() { return w ? { key: w.key, phase: w.phase, p: w.p, pending: w.path } : null; }, get canvas() { return cv; }, get tier() { return tier; }, get res() { return res; }, sectionOf, waveFor };

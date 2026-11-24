@@ -378,6 +378,7 @@ const FX = {
     const vh = innerHeight, todo = [];   // measure every card first, then start the moves
     for (const tile of document.querySelectorAll(".grid .card .tile")) {
       const s = tile.querySelector(".sticker"); if (!s || s.style.viewTransitionName) continue;
+      const cb = tile.closest(".card")?.getBoundingClientRect(); if (cb && (cb.top >= vh || cb.bottom <= 0)) continue;   // the card first: a card off screen skips drawing, and measuring the tile inside it would lay it out
       const r = tile.getBoundingClientRect(); if (r.top >= vh || r.bottom <= 0) continue;
       todo.push([tile, s, inward(s.getBoundingClientRect(), r, 1.3, 7)]);
     }

@@ -51,20 +51,33 @@ const ease = (a, b, x) => { x = Math.min(1, Math.max(0, (x - a) / (b - a))); ret
 const cv = document.createElement("canvas"); cv.className = "pour"; cv.setAttribute("aria-hidden", "true"); cv.width = cv.height = 0;
 let gl = null, P = {}, F = null, raf = 0, on = false, lost = false, last = 0, T = 0, heavy = false, drifts = [], iters = 14, slow = 0, owed = 0, skip = false, odd = false, parked = false, tried = false, lostTimer = 0, manual = false, head = null, chips = null, W = 0, Hh = 0, asp = 1;
 const phase = [Math.random() * 6.3, Math.random() * 6.3, Math.random() * 6.3], seed = Math.random() * 400;
+// The programs are handed to the driver early (launch), as soon as a wave sets off for the smoke page, so the driver compiles them on its
+// own threads while the wave covers the screen. setup() then only collects them; asking for a status is what would block.
+let pend = null;
+function launch() {
+  if (pend || gl || RM.matches || new URLSearchParams(location.search).has("still")) return;
+  const g = cv.getContext("webgl2", { alpha: false, antialias: false, depth: false, stencil: false, powerPreference: "low-power", preserveDrawingBuffer: false });
+  if (!g || !(g.getExtension("EXT_color_buffer_float") || g.getExtension("EXT_color_buffer_half_float"))) return;
+  const par = g.getExtension("KHR_parallel_shader_compile");   // compiles run in the background until a status is asked for
+  const sh = (t, s) => { const x = g.createShader(t); g.shaderSource(x, s); g.compileShader(x); return x; }, vs = sh(g.VERTEX_SHADER, V), list = {};
+  for (const k in SRC) { const fs = sh(g.FRAGMENT_SHADER, SRC[k]), p = g.createProgram(); g.attachShader(p, vs); g.attachShader(p, fs); g.bindAttribLocation(p, 0, "a"); g.linkProgram(p); list[k] = { p, fs }; }
+  pend = { g, vs, list, par, t: performance.now() };
+}
+// still compiling: the smoke starts a frame or two later instead of holding the page (never more than a second of waiting)
+const compiling = () => !!pend?.par && performance.now() - pend.t < 1000 && !pend.g.isContextLost() && Object.values(pend.list).some(x => !pend.g.getProgramParameter(x.p, pend.par.COMPLETION_STATUS_KHR));
+addEventListener("wave:start", e => { if (e.detail?.key === "hookahs" && !tried) requestAnimationFrame(() => setTimeout(launch, 0)); });   // after the wave's first frame, never inside the tap
 function setup() {
   if (new URLSearchParams(location.search).has("still")) return false;
-  const g = cv.getContext("webgl2", { alpha: false, antialias: false, depth: false, stencil: false, powerPreference: "low-power", preserveDrawingBuffer: false });
-  if (!g || !(g.getExtension("EXT_color_buffer_float") || g.getExtension("EXT_color_buffer_half_float"))) return false;
+  launch(); if (!pend) return false; const { g, vs, list } = pend; pend = null;
+  if (g.isContextLost()) return false;   // a vertex shader that failed shows up as a failed link below; asking for it on its own can stall
   const info = g.getExtension("WEBGL_debug_renderer_info"); lite = !!info && /swiftshader|llvmpipe|software|basic render/i.test(g.getParameter(info.UNMASKED_RENDERER_WEBGL) || "");   // no real graphics chip: skip the costly resting layer
-  const sh = (t, s) => { const x = g.createShader(t); g.shaderSource(x, s); g.compileShader(x); return g.getShaderParameter(x, g.COMPILE_STATUS) ? x : null; }, vs = sh(g.VERTEX_SHADER, V);
-  if (!vs) return false;
   P = {};
   for (const k in SRC) {
-    const fs = sh(g.FRAGMENT_SHADER, SRC[k]); if (!fs) return false;
-    const p = g.createProgram(); g.attachShader(p, vs); g.attachShader(p, fs); g.bindAttribLocation(p, 0, "a"); g.linkProgram(p); if (!g.getProgramParameter(p, g.LINK_STATUS)) return false;
+    const { p, fs } = list[k]; if (!g.getProgramParameter(p, g.LINK_STATUS)) return false; g.deleteShader(fs);
     const u = {}, n = g.getProgramParameter(p, g.ACTIVE_UNIFORMS); for (let i = 0; i < n; i++) { const name = g.getActiveUniform(p, i).name.replace("[0]", ""); u[name] = g.getUniformLocation(p, name); }
     P[k] = { p, u };
   }
+  g.deleteShader(vs);
   g.bindBuffer(g.ARRAY_BUFFER, g.createBuffer()); g.bufferData(g.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), g.STATIC_DRAW); g.enableVertexAttribArray(0); g.vertexAttribPointer(0, 2, g.FLOAT, false, 0, 0);
   g.disable(g.BLEND); gl = g; return true;
 }
@@ -138,6 +151,8 @@ function step(raw) {
 const show = () => pass("show", null, n => { gl.uniform1i(n.D, tex(0, F.d.a)); gl.uniform3fv(n.c, M.ramp); });
 function frame(now) {
   raf = 0; if (!on || lost || manual) return;
+  const wv = window.__wave?.active; if (wv && wv.phase === "cover" && wv.p > .92) { last = now; raf = requestAnimationFrame(frame); return; }   // under a wave's full body nothing here is seen: the GPU goes to the wave
+  if (pre) { last = now; lead(); raf = requestAnimationFrame(frame); return; }
   const ms = Math.min(120, Math.max(1, now - last)); last = now;
   // a phone that truly struggles does less work and keeps moving. A steady 30 fps (Low Power Mode) is fine and is left alone.
   slow = ms > 45 ? slow + 1 : Math.max(0, slow - 2);
@@ -165,7 +180,7 @@ function beginAir() {
   const c = document.createElement("canvas"); c.className = "pour pour--air"; c.setAttribute("aria-hidden", "true"); document.body.prepend(c);
   const g = c.getContext("2d"); if (!g) { c.width = c.height = 0; c.remove(); document.documentElement.classList.add("pour-still", "pour-mist", "pour-page"); return; }
   const dot = document.createElement("canvas"); dot.width = dot.height = 24; const x = dot.getContext("2d"), rg = x.createRadialGradient(12, 12, 0, 12, 12, 12); rg.addColorStop(0, "rgba(255,253,248,1)"); rg.addColorStop(.42, "rgba(255,253,248,.6)"); rg.addColorStop(1, "rgba(255,253,248,0)"); x.fillStyle = rg; x.fillRect(0, 0, 24, 24);
-  const rnd = (a, b) => a + Math.random() * (b - a); let w = 0, h = 0, drops = [], veil = [], limit = 1, slowFrames = 0, odd = false, prev = performance.now();
+  const rnd = (a, b) => a + Math.random() * (b - a); let w = 0, h = 0, drops = [], veil = [], limit = 1, slowFrames = 0, odd = false, wv2 = false, prev = performance.now();
   let t0 = performance.now(), hiddenAt = 0; const ox = () => org[0] * w, oy = () => (1 - org[1]) * h;
   const place = (p, now, first) => { const u = Math.random(), v = veil.length && Math.random() < .64 ? veil[Math.floor(Math.random() * veil.length)] : null, near = () => (Math.random() + Math.random() + Math.random() - 1.5) * .24; p.x = (v ? v.x + near() : rnd(-.02, 1.02)) * w; p.y = (v ? v.y + near() : rnd(-.02, 1.02)) * h; p.vx = rnd(-7, 7); p.vy = rnd(1.5, 11); p.r = .18 + .62 * u * u * u; p.a = rnd(.16, .58); p.life = rnd(6, 15); p.born = first ? now - rnd(0, p.life) : now + rnd(0, 700); p.tw = rnd(.5, 1.6); p.ph = rnd(0, 6.28); p.sw = rnd(2, 8); p.fly = 0; };
   const fit = () => { const d = Math.min(2, devicePixelRatio || 1), nw = c.clientWidth || innerWidth, nh = c.clientHeight || innerHeight, pw = Math.round(nw * d), ph = Math.round(nh * d); if (document.hidden && w) return; if (c.width && w === nw && Math.abs(h - nh) <= 140) return; w = nw; h = nh; W = w; Hh = h; c.width = pw; c.height = ph; g.setTransform(d, 0, 0, d, 0, 0); const n = Math.round(Math.min(2400, 300 + w * h / 620)), now = performance.now();
@@ -173,7 +188,9 @@ function beginAir() {
     while (drops.length < n) { const p = {}; place(p, now, !open); if (open) { p.born = t0 + rnd(650, 1150); p.fly = rnd(2.4, 4.2); p.life = rnd(8, 16); } drops.push(p); } drops.length = n; };
   fit(); aim();
   const run = now => {
-    if (!air) return; air.raf = requestAnimationFrame(run); const ms = now - prev; odd = !odd; const settled = now - t0 > 4600;
+    if (!air) return; air.raf = requestAnimationFrame(run);
+    const wv = window.__wave?.active; if (wv) { wv2 = !wv2; if (wv2 || wv.phase === "cover" && wv.p > .92) return; }   // half rate while a wave plays, nothing under its full body
+    const ms = now - prev; odd = !odd; const settled = now - t0 > 4600;
     if (settled && odd) return;   // the air moves slowly: every other frame is plenty once the spray has landed
     prev = now; slowFrames = ms > (settled ? 80 : 45) ? slowFrames + 1 : Math.max(0, slowFrames - 2); if (slowFrames > 40) { slowFrames = 0; limit = Math.max(.4, limit * .75); }
     g.clearRect(0, 0, w, h); const s = (now - t0) / 1000, grow = open ? Math.min(1, Math.max(0, (s - .7) / 1.6)) : 1, size = Math.max(w, h);
@@ -197,13 +214,22 @@ function begin() {
     if (RM.matches || new URLSearchParams(location.search).has("still")) { document.documentElement.classList.add("pour-still", "pour-mist", "pour-page"); return; }
     beginAir(); return;
   }
-  if (!RM.matches && !gl && !tried) { tried = true; if (!setup()) gl = null; }   // only the smoke and mist pages ever pay for this
+  if (!RM.matches && !gl && !tried) {   // only the smoke and mist pages ever pay for this
+    launch(); if (compiling()) { document.documentElement.classList.add("pour-page"); requestAnimationFrame(() => { if (modeName && !M.air && !on) begin(); }); return; }
+    tried = true; if (!setup()) gl = null; }
   if (RM.matches || !gl) { document.documentElement.classList.add("pour-still", "pour-page"); return; }
   document.body.prepend(cv); if (!size()) { toStill(); return; }
   on = true; parked = false; skip = false; odd = false; slow = 0; iters = 14; T = 0; drifts = []; aim(); heavy = firstOpen();
-  if (heavy && waved()) for (let i = 0; i < 9; i++) { T += 1 / 30; step(2); } // the smoke wave hands over to a bank already rising
-  if (!heavy) settle(); else if (M.radial) spritzAll(); // a later visit opens on air already drifting, with no second big entrance
-  document.documentElement.classList.remove("pour-still"); document.documentElement.classList.add("pour-page"); show(); requestAnimationFrame(() => { if (on) cv.classList.add("on"); }); kick();
+  // the head start is the same simulation as before, spread over the first frames (three steps a frame) instead of one burst at the page
+  // swap: the canvas stays clear until it is done, so what shows is exactly what the burst made
+  if (heavy && waved()) pre = 9; // the smoke wave hands over to a bank already rising
+  if (!heavy) { heavy = false; pre = 24; settling = true; } else if (M.radial) spritzAll(); // a later visit opens on air already drifting, with no second big entrance
+  document.documentElement.classList.remove("pour-still"); document.documentElement.classList.add("pour-page"); if (!pre) { show(); requestAnimationFrame(() => { if (on) cv.classList.add("on"); }); } kick();
+}
+let pre = 0, settling = false;
+function lead() {   // one frame's share of the head start
+  const n = Math.min(pre, 3); for (let i = 0; i < n; i++) { T += 1 / 30; step(2); } pre -= n;
+  if (!pre) { if (settling) { settling = false; bank(1, true); } show(); cv.classList.add("on"); }
 }
 // the cologne spritz: on first open, fine droplets leave the bottle and fly across the whole screen, over everything, then fall away.
 // Taps pass straight through it, and it is gone in about four seconds, leaving the mist behind the page.
@@ -226,7 +252,7 @@ function spritzAll() {
   };
   spray = { c, raf: requestAnimationFrame(run) };
 }
-function off() { endSpray(); endAir(); on = false; if (raf) cancelAnimationFrame(raf); raf = 0; cv.classList.remove("on"); release(); cv.width = cv.height = 0; cv.remove(); }
+function off() { endSpray(); endAir(); on = false; pre = 0; settling = false; if (raf) cancelAnimationFrame(raf); raf = 0; cv.classList.remove("on"); release(); cv.width = cv.height = 0; cv.remove(); }
 function stop() { document.documentElement.classList.remove("pour-page", "pour-still", "pour-mist"); if (on || air || spray || cv.isConnected) off(); }
 // the filter bar is see-through while it sits in the page, and solid once it sticks over the products
 function stick() { if (!head || !chips || !head.isConnected) return; chips.classList.toggle("is-stuck", head.getBoundingClientRect().bottom < chips.getBoundingClientRect().top - .5); }

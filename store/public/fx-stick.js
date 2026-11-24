@@ -14,12 +14,13 @@ function scan() {
   const again = stuck === location.pathname; stuck = location.pathname;
   if (again || RM.matches) return; // the same page re-drawn (add to cart, a quantity change): labels stay where they are
   const vh = innerHeight, gun = !!main.querySelector('.shophead[data-cat="misc"]'); let k = 0; // on misc the section entrance stamps the first screen
-  for (const t of main.querySelectorAll(".card .tile")) {
-    const s = t.querySelector(".sticker"); if (!s || s.style.viewTransitionName) continue; // the label travelling in the view transition is not re-stuck
-    const r = t.getBoundingClientRect();
-    if (r.bottom > 0 && r.top < vh) { if (painted && !gun) go(t, 140 + Math.min(k++, 6) * 55); }
-    else { t.dataset.stick = "wait"; io.observe(t); }
-  }
+  // every position is read first and every label written after: one layout for the whole page. Reading and writing in turn made the
+  // browser restyle the page once per tile, which on a long section held a page change for most of a second
+  const all = []; for (const t of main.querySelectorAll(".card .tile")) { const s = t.querySelector(".sticker"); if (s && !s.style.viewTransitionName) all.push(t); }   // the label travelling in the view transition is not re-stuck
+  // measured on the card, never the tile inside it: the cards skip drawing while off screen (content-visibility), and asking a tile
+  // inside one for its position makes the browser lay that card out after all, for every card on a long section
+  const on = all.map(t => { const r = (t.closest(".card") || t).getBoundingClientRect(); return r.bottom > 0 && r.top < vh; });
+  all.forEach((t, i) => { if (on[i]) { if (painted && !gun) go(t, 140 + Math.min(k++, 6) * 55); } else { t.dataset.stick = "wait"; io.observe(t); } });
 }
 new MutationObserver(scan).observe(main, { childList: true });
 scan();

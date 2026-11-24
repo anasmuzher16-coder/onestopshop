@@ -37,7 +37,7 @@ function sprite(kind, [r, g, b]) {
 }
 const soft = rgb => sprite("dot", rgb);
 
-let cv = null, g = null, raf = 0, now0 = 0, kind = null, want = null, w = 0, h = 0, drops = [], veil = [], lines = [], img = null, glow = null, odd = false, prev = 0, slowN = 0, limit = 1, level = 0, born = 0, stuckHead = null, stuckBar = null, popped = -1e9, surge = 0;
+let cv = null, g = null, raf = 0, now0 = 0, kind = null, want = null, w = 0, h = 0, drops = [], veil = [], lines = [], img = null, glow = null, odd = false, prev = 0, slowN = 0, limit = 1, level = 0, born = 0, stuckHead = null, stuckBar = null, popped = -1e9, surge = 0, wave = false;
 const played = new Set(); let arrivedBack = performance.getEntriesByType("navigation")[0]?.type === "back_forward";
 addEventListener("popstate", () => { popped = performance.now(); });
 function firstOpen(k) {
@@ -72,6 +72,7 @@ function draw(t) {
 }
 function loop(t) {
   raf = 0; if (!cv) return; if (!document.hidden) raf = requestAnimationFrame(loop);
+  const wv = window.__wave?.active; if (wv) { wave = !wave; if (wave || wv.phase === "cover" && wv.p > .92) return; }   // while a wave plays the air draws every other frame (drifting dust at 30 fps reads the same), and not at all under its full body: the wave gets the frame
   // a change of page: this air thins away, the next comes up
   if (want !== kind) { level = Math.max(0, level - (t - prev) / 180); if (level <= 0) { kind = want; fill(kind, firstOpen(kind)); now0 = t; born = t; } }
   else level = Math.min(1, level + Math.max(0, t - prev) / 450);
