@@ -1,0 +1,149 @@
+# Search and sharing (2026-11-24)
+
+What search engines, maps and link previews read about the store, why each piece is built the way it is, and the
+two switches that turn it on at launch. Code: `src/seo.js` (everything below), `src/worker.js` (wires it into each page),
+`tools/build-share.py` (share cards and per-photo versions), `tools/test-seo.mjs` (the checks).
+
+## Launch: the switches
+
+1. Set `SITE_ORIGIN` in `wrangler.jsonc` to the shop's own address, `https://<domain>` (no path, no slash).
+2. Set `LIVE` to `"1"`.
+3. Remove the `/*  X-Robots-Tag: noindex, nofollow` rule at the top of `public/_headers`. The Worker already drops the
+   header on indexable pages, but photos, fonts and scripts are served straight from the static files with that rule,
+   and a `noindex` image cannot appear in Google Images or a merchant listing.
+4. Deploy, then in Google Search Console add the domain, submit `https://<domain>/sitemap.xml`, and run the Rich Results
+   Test on the home page, one item on sale and one Price TBD item (it is online-only, so it is not part of the suites).
+5. Re-scrape the home page and one product in Facebook's Sharing Debugger so the first shares show the new cards.
+
+What changes on its own when the switches flip: the `<meta name="robots">` tag and `X-Robots-Tag` header go away on
+indexable pages, `/sitemap.xml` answers, `robots.txt` names it, and canonical, `og:url` and every structured-data address
+use `SITE_ORIGIN`. The `workers.dev` address keeps `noindex` and points its canonical at the domain, so the two copies
+never compete. Until both switches are set, every page says `noindex, nofollow` and there is no sitemap.
+`SITE_ORIGIN` accepts only `https://host`; anything else is ignored and the request's own address is used.
+
+## Rulings built in (owner)
+
+- Never a supplier price. The catalogue the pages read (`loadCatalog`) does not select the supplier price column, and
+  `test-seo` checks every Ace page against the master file's supplier prices.
+- No price for Price TBD or Coming soon items: no `Offer` at all, no price in the written content, the words "Price TBD"
+  or "Coming soon" instead. An item is offered only when it is switched on with the shop's own price (`sellable`).
+- Availability only from the shop's own count: `InStock` when stock is above 0, else `OutOfStock`. Never assumed.
+- No ID or age wording and no health claims: nothing new is said about products. The written content repeats the
+  product's own name, description and price line exactly as the page shows them.
+
+## 1. Content in the HTML (JavaScript SEO)
+
+The store draws its pages with JavaScript into an empty `<main>`. Google can run scripts, but "not all bots can run
+JavaScript" and server-side rendering "is still worth doing" [G-JS]. The Worker now writes a plain copy of each page's
+content into `<main>`: home (the shop, its sections, address and phone), Everything (each section with its first items),
+each section (one entry per item a shopper sees, with its photo, name and price or "Price TBD") and each product (trail,
+name, photo, description, price line, how it is delivered).
+
+It does not change how the page looks. A style in the head hides `.ssr` before the body is parsed, and the page's own
+render replaces `<main>` the moment it runs, so nobody with JavaScript ever sees it. Without JavaScript a `<noscript>`
+style shows it. Its pictures are `loading="lazy"` inside a hidden block, so browsers never download them for people;
+crawlers read the addresses from the HTML. `#main` keeps its full-screen height while only the copy is in it (the same
+rule as `#main:empty`), so the footer never jumps. Google renders the page, so what it indexes is the same content the
+page draws; nothing is shown only to crawlers.
+
+Robots: the page needs `/api/catalog-module` to draw its shelves and `/api/photo/*` for uploaded photos, so both stay
+crawlable even though `/api/` is disallowed: "Google Search won't render JavaScript from blocked files" [G-JS].
+
+## 2. Structured data (JSON-LD)
+
+- **Store** on the home page [G-LB]: name, full postal address, coordinates (Google wants at least 5 decimals), phone with
+  country code, `url`, `image`, `openingHoursSpecification` built from `SHOP_HOURS` in `public/rates-core.js` (the same
+  hours the checkout uses, one object per group of days, `hh:mm`), Instagram and TikTok as `sameAs`, and the merchant
+  return policy. Store is the specific LocalBusiness subtype Google asks for.
+- **Return policy**: `MerchantReturnNotPermitted`, country CA, on the Store (merchant level; a product-level policy is
+  only for overrides [G-ML]). The terms say all sales are final except faulty, wrong, damaged or undelivered items; those
+  are legal remedies, not a return window, so "returns not permitted" is the honest category.
+- **Product** on every product page: name, sku, url, description (the shop's own words), image (the product photo, not the
+  share card), brand only where the record has one (charcoal and shisha; Ace items carry other brands' names that the
+  shop has not confirmed, plan section 8, so none is stated).
+- **Offer**, only for items on sale: `price` (shop price, two decimals), `priceCurrency` CAD, `availability`,
+  `itemCondition` New, `url`, `seller` and `availableAtOrFrom` (the Store), `availableDeliveryMethod` OnSitePickup, plus
+  ParcelService for items that ship. Merchant listings require an Offer with a price above zero [G-ML]; a page without
+  an offer is simply not eligible for price rich results, which is the correct outcome for Price TBD items [G-PS].
+- **Shipping details are not marked up.** Google's `OfferShippingDetails` needs a fixed rate, destination and delivery
+  time [G-ML]; ours are live Canada Post quotes and a distance-priced local delivery. Stating a rate we do not charge would
+  be worse than none. Set shipping in Merchant Center if the shop opens a merchant feed.
+- **BreadcrumbList** on section and product pages (Home > Shop > section; Home > section > item), absolute addresses,
+  the last one the page's canonical.
+- **Hookah colours**: each colour has its own address, but the colours share one description and Ace's colour names are
+  not confirmed, so every colour's canonical is its family's lead colour (the card in the shop) and only that one is in the
+  sitemap. Google's variant guidance allows a single canonical for a group whose variants are chosen on one page [G-VAR].
+  When the shop confirms colours and prices, switching to per-colour canonicals with `ProductGroup` is a small change in
+  `canonicalSku` and `productLd`.
+
+Validation: Google's Rich Results Test only runs online, so `tools/test-seo.mjs` checks every JSON-LD block offline
+against schema.org's own vocabulary (`tools/fixtures/schema-org-subset.json`, cut from
+`https://schema.org/version/latest/schemaorg-current-https.jsonld` on 2026-11-24): every property must belong to its type
+or a parent type, and every enumeration value (`availability`, `itemCondition`, `returnPolicyCategory`,
+`availableDeliveryMethod`, `dayOfWeek`) must be a real member. It also checks Google's required fields.
+
+## 3. robots.txt and the sitemap
+
+`/robots.txt` (Worker route) disallows `/admin`, `/api/` (except the catalogue module and photos), `/account`,
+`/checkout`, `/cart` and `/order/`, and names the sitemap only when live. It never blocks the whole site: a page blocked
+in robots.txt can still be listed from links because the crawler "will never see the noindex rule" [G-NOINDEX], so the
+demo relies on `noindex` on every page instead. Private pages are both disallowed and `noindex`, the common pattern for
+carts and checkouts.
+
+`/sitemap.xml` exists only when live on the shop's own address. It lists only indexable pages, absolute and canonical
+[G-SM]: home, Everything, each section with something on view, Build a set, shipping, terms, privacy, and each item a
+shopper can open (one per hookah family). Never cart, checkout, account, search, gifts or order pages. No `priority` or
+`changefreq` (Google ignores them [G-SM]) and no `lastmod` (only worth sending when accurate [G-SM]).
+
+## 4. Share images (Open Graph)
+
+Facebook asks for at least 1200 x 630, close to 1.91:1, and caches images by URL, so a changed image needs a new URL
+[FB]. The product photos are 720 x 900 portraits, which previews crop to a slice of the middle. `tools/build-share.py`
+draws a 1200 x 630 card for every photo: coal ground, ONE STOP with SHOP on the counter sticker (the site's device, as in
+the favicon), the address, and the product standing on the bone tile. The shop's chassis never changes; the product is
+the one thing that does. No price and no product name on the card: prices change in the back office and an image cannot
+follow; the preview prints the page title beside it. The shop's own card (`img/share.jpg`, used by home, sections and
+items without a photo) now shows three of the shop's ticked Ace hookahs instead of the retired sample hookahs.
+
+Every page states `og:image` (absolute), `og:image:type`, `og:image:width`/`height` when known (so the first share renders
+at once [FB]), `og:image:alt` [OGP], `og:url` equal to the canonical, `og:locale` en_CA and `twitter:card`
+summary_large_image. An uploaded photo (back office) is shared as it is: it replaces the static photo, so a card drawn
+from the static one would show the wrong picture. `/api/photo/*` now also answers `HEAD`, which preview crawlers use.
+
+Run `python store/tools/build-share.py` after any photo change (it only redraws what changed). `test-seo` fails if a
+photo on disk no longer matches its recorded version.
+
+## 5. Per-photo versions
+
+Every photo used to share one version number (`?v=1794615693` in `app.js`), so changing one photo made every phone
+download every photo again. `build-share.py` records a short hash of each photo's files in `src/img-versions.json`; the
+catalogue hands it to the page as `iv` and the page asks for `img/pc/<photo>.webp?v=<iv>`. A changed photo gets a new
+address and nothing else moves. Photos without an entry keep the old shared number. The home hero preload uses the same
+address as the page, so the browser reuses that download.
+
+## 6. The public catalogue feed (`/api/catalog`)
+
+It was rebuilt as JSON on every request with `public, max-age=30`, so a browser could show stock 30 seconds old. It is now
+written once per copy of the catalogue (the same shared copy the pages use) and tagged: `Cache-Control: no-cache` with an
+`ETag`, so a reader always checks and an unchanged feed answers `304` with no body. Only public fields go out (an
+allowlist), items off sale show stock 0 and no price, and the import's placeholder weights (1 g, 2,500 g for unweighed
+hookahs) are `null`: unknown is not a fact.
+
+## 7. "Show more" after 48 cards: not built
+
+The polish branch (`polish-2026-11-24`, commit 8ab16fa) draws long sections in steps: the first screen at once, the rest
+as slots filled in idle moments, with Back landing on the remembered card. A "Show more" cut would fight that queue and
+its scroll restoration, so it is left out here; if still wanted, it belongs in that render code after the merge.
+
+## Sources
+
+- [G-JS] Google Search Central, JavaScript SEO basics: https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics
+- [G-ML] Merchant listing (Product, Offer) structured data: https://developers.google.com/search/docs/appearance/structured-data/merchant-listing
+- [G-PS] Product snippet structured data: https://developers.google.com/search/docs/appearance/structured-data/product-snippet
+- [G-VAR] Product variant structured data: https://developers.google.com/search/docs/appearance/structured-data/product-variants
+- [G-LB] Local business structured data: https://developers.google.com/search/docs/appearance/structured-data/local-business
+- [G-SM] Build and submit a sitemap: https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap
+- [G-NOINDEX] Block indexing with noindex: https://developers.google.com/search/docs/crawling-indexing/block-indexing
+- [OGP] The Open Graph protocol: https://ogp.me/
+- [FB] Meta for Developers, images in link shares: https://developers.facebook.com/docs/sharing/webmasters/images/
+- schema.org vocabulary: https://schema.org/version/latest/schemaorg-current-https.jsonld

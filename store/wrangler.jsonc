@@ -20,5 +20,7 @@
   "triggers": { "crons": ["0 8 * * *", "*/10 * * * *"] },   // the second: unpaid orders checked with Stripe (src/pay.js sweep)
   // Card payment turns on once STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET (secrets) are set: store/docs/PAYMENTS.md.
   // Order emails send once RESEND_API_KEY (a secret) and EMAIL_FROM are set. Until then they are written and held.
-  "vars": { "LIVE": "0", "SITE_NAME": "One Stop Shop" }
+  // Launch: set LIVE to "1" and SITE_ORIGIN to the shop's own address (https://the-domain, no slash). Pages, sitemap and robots.txt
+  // then index on that address only; the workers.dev copy keeps noindex and points its canonical there. store/docs/SEO.md.
+  "vars": { "LIVE": "0", "SITE_NAME": "One Stop Shop", "SITE_ORIGIN": "" }
 }
