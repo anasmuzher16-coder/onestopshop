@@ -270,17 +270,28 @@ def blank_shop(stock=None, stock_src=None, price=None, price_src=None):
 def carry_shop(old_master, new_master):
     """Copy every shop-owned field from the previous master into the new one, by SKU. A rebuild never loses them."""
     new_master["shop_answers"] = []
+    new_master["retired_shop"] = {}
     if not old_master:
         return
-    old ={v["sku"]: v.get("shop", {}) for f in old_master.get("families", []) for v in f["variants"]}
+    # shop cells of items that left the catalogue are parked, so they come back with the item
+    old = dict(old_master.get("retired_shop", {}))
+    old.update({v["sku"]: v.get("shop", {}) for f in old_master.get("families", []) for v in f["variants"]})
+    live = set()
     for f in new_master.get("families", []):
         for v in f["variants"]:
+            live.add(v["sku"])
             prev = old.get(v["sku"])
             if not prev:
                 continue
             for k in SHOP_FIELDS:
-                if k in prev and (prev[k].get("src") or "").startswith("shop:"):
+                ps = (prev.get(k) or {}).get("src") or ""
+                ns = (v["shop"][k].get("src") or "")
+                # the shop's answers always survive; a newer copy of the shop's own list replaces an older one
+                if ps.startswith("shop:") and (ps.startswith("shop:answers") or not ns.startswith("shop:")):
                     v["shop"][k] = prev[k]
+    for sku, shop in old.items():
+        if sku not in live and any((c.get("src") or "").startswith("shop:") for c in shop.values()):
+            new_master["retired_shop"][sku] = shop
     new_master["shop_answers"] = old_master.get("shop_answers", [])
 
 

@@ -296,6 +296,8 @@ def parse_answers(path: Path):
     for i, row in enumerate(ws.iter_rows(min_row=2, values_only=True), 2):
         sku = str(row[col["SKU"]] or "").strip()
         if not sku:
+            if any(row[col[h]] not in (None, "") for h in WRITE_COLS):
+                errs.append(f"row {i}: answers with no SKU (put the SKU back, or clear the row)")
             continue
         where = f"row {i} ({sku})"
         e = reg["skus"].get(sku)
@@ -311,6 +313,9 @@ def parse_answers(path: Path):
         seen.add(sku)
         a = {}
         pv = row[col["Your price ($, before tax)"]]
+        if isinstance(pv, bool):
+            errs.append(f"{where}: price '{pv}' is not a number")
+            pv = None
         if pv not in (None, ""):
             try:
                 t = float(str(pv).replace("$", "").replace(",", "").strip())
@@ -327,6 +332,8 @@ def parse_answers(path: Path):
         sv = row[col["Stock count"]]
         if sv not in (None, ""):
             try:
+                if isinstance(sv, bool):
+                    raise ValueError
                 n = float(sv)
                 if n != int(n) or n < 0 or n > 99999:
                     raise ValueError
@@ -354,25 +361,37 @@ def parse_answers(path: Path):
         out[sku] = a
     if errs:
         raise AnswersError("\n".join(errs))
-    return out
+    about = {}
+    if "_about" in wb.sheetnames:
+        for r in wb["_about"].iter_rows(values_only=True):
+            if r and r[0] and str(r[0]).startswith("master:"):
+                about[str(r[0])[7:]] = r[1]
+    return out, about
 
 
 def read_answers(path: Path, masters: dict | None = None, write=True):
     """Answers -> the shop-owned fields of the master files. All or nothing."""
     import shutil
-    ans = parse_answers(path)
+    ans, about = parse_answers(path)
     tag = f"shop:answers {path.name} sha256:{C.sha256_file(path)[:12]} {datetime.now().strftime('%Y-%m-%d')}"
     masters = masters if masters is not None else {s: C.load_master(s) for s in C.BLOCKS if C.load_master(s)}
-    changed, errs = {}, []
+    changed, errs, pending = {}, [], []
     by_sku = {}
     for s, m in masters.items():
         for f, v in C.iter_variants(m):
             by_sku[v["sku"]] = (s, v)
+    # a file made from an older master may not overwrite answers given since (the hidden _about sheet records it)
+    stale = {s for s, m in masters.items() if about.get(s) and about[s] != C.master_hash(m)} if about else set(masters)
     for sku, a in ans.items():
         if sku not in by_sku:
             errs.append(f"{sku}: not in any master file")
             continue
         s, v = by_sku[sku]
+        if s in stale:
+            for k, val in a.items():
+                cur = v["shop"].get(k) if not k.startswith("_") else None
+                if cur and (cur.get("src") or "").startswith("shop:answers") and cur["v"] != val:
+                    errs.append(f"{sku}.{k}: this file is older than the answer already recorded ({cur['src']}); make a fresh sheet")
         price_after = a.get("price_cents", v["shop"]["price_cents"]["v"])
         if a.get("active") and not price_after:
             errs.append(f"{sku}: 'turn on' needs the shop's price first")
@@ -381,10 +400,12 @@ def read_answers(path: Path, masters: dict | None = None, write=True):
             if k.startswith("_"):
                 continue
             if v["shop"][k]["v"] != val:
-                v["shop"][k] = C.cell(val, tag)
-                changed.setdefault(s, []).append(f"{sku}.{k}")
-    if errs:
+                pending.append((s, sku, v, k, val))
+    if errs:   # all or nothing: nothing has been changed yet
         raise AnswersError("\n".join(errs))
+    for s, sku, v, k, val in pending:
+        v["shop"][k] = C.cell(val, tag)
+        changed.setdefault(s, []).append(f"{sku}.{k}")
     reg = C.load_registry()
     for s in changed:
         masters[s].setdefault("shop_answers", []).append({"file": path.name, "sha256": C.sha256_file(path), "read": C.now_iso(),

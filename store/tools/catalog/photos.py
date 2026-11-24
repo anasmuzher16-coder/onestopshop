@@ -29,7 +29,8 @@ import src_ace  # noqa: E402
 
 W, H, PROD_H, FOOT, MAXW = 720, 900, 810, 45, 630
 SIZES = (("", (720, 900), 86), ("-m", (540, 675), 84), ("-s", (360, 450), 82))
-CHECK_SCALE = 1.25
+CHECK_SCALE = 1.25   # plan: gentle resize up to 1.25x is fine; above it a person looks (CHECK)
+HOLD_SCALE = 2.0     # design review 2026-11-24: 2.2x Techno shots showed JPEG blocks at 720; never shipped
 PUBLIC = C.STORE / "public" / "img" / "pc" / "ace"
 FONTS = C.STORE / "public" / "fonts"
 
@@ -250,7 +251,7 @@ def contact_sheet(entries, bg, path: Path, title: str, pal, tile=240, cols=10):
     rx = ImageFont.truetype(str(FONTS / "readex-latin.woff2"), 15)
     rxs = ImageFont.truetype(str(FONTS / "readex-latin.woff2"), 13)
     th = int(tile * 1.25)
-    gut, cap, head, margin = 8, 44, 96, 32
+    gut, cap, head, margin = 8, 62, 96, 32
     rows = max(1, -(-len(entries) // cols))
     S = Image.new("RGB", (margin * 2 + cols * tile + (cols - 1) * gut, head + rows * (th + cap + gut) + margin), pal["coal"])
     d = ImageDraw.Draw(S)
@@ -265,8 +266,10 @@ def contact_sheet(entries, bg, path: Path, title: str, pal, tile=240, cols=10):
         S.paste(t.convert("RGB"), (x, y))
         lab = f"{e.get('sku') or 'no SKU'}  {e.get('colour') or ''}"
         d.text((x, y + th + 4), lab, font=rx, fill=pal["bone"])
+        fname = (e.get("out") or "").split("/")[-1] or f"x{e['xref']}"
+        d.text((x, y + th + 40), fname[:34], font=rxs, fill=pal["ash"])
         st = e["status"]
-        col = pal["ember"] if st in ("CHECK", "hand_crop") else pal["ash"]
+        col = pal["ember"] if st in ("CHECK", "hand_crop", "needs_original") else pal["ash"]
         # status as data: a word plus a drawn glyph (the UI font has no geometric shapes)
         gx, gy, g = x + 1, y + th + 26, 8
         if st == "ready":
@@ -277,7 +280,7 @@ def contact_sheet(entries, bg, path: Path, title: str, pal, tile=240, cols=10):
             d.rectangle((gx, gy, gx + g, gy + g), outline=col, width=2)
         else:
             d.ellipse((gx, gy, gx + g, gy + g), outline=col, width=2)
-        word = {"ready": "ready", "CHECK": f"CHECK {e['scale']:.2f}x", "hand_crop": "hand crop", "gallery_only": "gallery only"}.get(st, st)
+        word = {"ready": "ready", "CHECK": f"CHECK {e['scale']:.2f}x", "hand_crop": "hand crop", "gallery_only": "gallery only", "needs_original": f"held {e['scale']:.2f}x"}.get(st, st)
         d.text((x + 14, y + th + 22), f"{word}   p{e['page']}", font=rxs, fill=col)
     path.parent.mkdir(parents=True, exist_ok=True)
     S.save(path, quality=86)
@@ -345,6 +348,11 @@ def run(pdf: Path, work: Path, publish: bool):
                     status, note = "hand_crop", "person checked: " + pov["why"]
                 elif pov and pov.get("role") == "gallery":
                     status, note = "gallery_only", "person checked: " + pov["why"]
+                elif pov and pov.get("role") == "check":
+                    status, note = "CHECK", "person checked: " + pov["why"]
+                if status in ("ready", "CHECK") and s > HOLD_SCALE:
+                    # too far from the source to look right on the site (review 2026-11-24): held until Ace sends originals
+                    status, note = "needs_original", f"enlarged {s:.2f}x from a small source: needs Ace's original"
                 tmp = framed / f"{f['family_id']}-p{r['page']}-x{xref}-{n}"
                 save_set(cv, tmp)
                 items.append({"page": r["page"], "xref": xref, "family_id": f["family_id"], "class": cls, "note": note,
@@ -362,8 +370,8 @@ def run(pdf: Path, work: Path, publish: bool):
             it["sku"] = key_to_sku.get(k)
             it["role"] = "hero" if it is hero else ("colour" if k else "unmatched")
         for it in items:
-            if it["status"] in ("hand_crop", "gallery_only"):
-                it["role"] = "hand_crop" if it["status"] == "hand_crop" else "gallery"
+            if it["status"] in ("hand_crop", "gallery_only", "needs_original"):
+                it["role"] = {"hand_crop": "hand_crop", "gallery_only": "gallery", "needs_original": "needs_original"}[it["status"]]
                 it["variant_key"] = it["sku"] = None
             cname = it.get("colour") or "x"
             base = f"{f['family_id']}-{cname}"

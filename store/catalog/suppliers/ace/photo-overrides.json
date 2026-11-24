@@ -9,6 +9,13 @@
   "p25-x2753-0": {"role": "gallery", "why": "the box with two stems in front of it"},
   "p32-x3006-0": {"role": "gallery", "why": "a display panel and tray, not the hookah"},
   "p40-x3291-0": {"role": "gallery", "why": "the open carry case"},
+  "p12-x2271-0": {"role": "gallery", "why": "the loose hose mouthpiece standing beside the hookah, not the hookah (design review)"},
+  "p12-x2273-0": {"role": "gallery", "why": "the loose hose mouthpiece standing beside the hookah, not the hookah (design review)"},
+  "p12-x2275-0": {"role": "gallery", "why": "the loose hose mouthpiece standing beside the hookah, not the hookah (design review)"},
+  "p25-x2753-1": {"role": "gallery", "why": "two different stems overlapping, no plate (design review)"},
+  "p26-x2781": {"role": "check", "why": "swing tag and Ace's baked-in grey shadow under the vase and bowl: mask them by hand"},
+  "p26-x2783": {"role": "check", "why": "swing tag and Ace's baked-in grey shadow under the vase and bowl: mask them by hand"},
+  "p26-x2785": {"role": "check", "why": "swing tag and Ace's baked-in grey shadow under the vase and bowl: mask them by hand"},
   "p54-x3817-2": {"role": "hand_crop", "why": "two hookahs (teal and green) touch in Ace's photo"},
   "p83-x4947-0": {"role": "hand_crop", "why": "two hookahs (red and bronze) touch in Ace's photo"}
  }

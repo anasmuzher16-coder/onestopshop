@@ -11,7 +11,7 @@
    "id": "oss-shisha-2026-11-24",
    "kind": "verified intake",
    "file": "shisha/catalogue.json",
-   "sha256": "7ed55d57c622da3355022a0cbafe0f8bb5c4fffb67791fa09e3f2222952e5403",
+   "sha256": "8b1dd37f3518af821bd267d1d5712da17b674f8ffde462573f0b75d1714847e9",
    "prepared": "2026-11-24",
    "original_list": "source-shisha-2026-11-24.txt"
   }
@@ -96,7 +96,7 @@
       },
       "display_name": {
        "v": "Zanobia Herbal Molasses Double Apple, 250 g",
-       "src": "shop:intake display name (VERIFIED x3)"
+       "src": "shop:intake display name (VERIFIED x2)"
       },
       "stock": {
        "v": 10,
@@ -142,7 +142,7 @@
       },
       "display_name": {
        "v": "Zanobia Herbal Molasses Blueberry Mint, 250 g",
-       "src": "shop:intake display name (VERIFIED x3)"
+       "src": "shop:intake display name (VERIFIED x2)"
       },
       "stock": {
        "v": 10,
@@ -186,7 +186,7 @@
       },
       "display_name": {
        "v": "Zanobia Herbal Molasses Orange Mint, 250 g",
-       "src": "shop:intake display name (VERIFIED x3)"
+       "src": "shop:intake display name (VERIFIED x2)"
       },
       "stock": {
        "v": 10,
@@ -219,12 +219,12 @@
      },
      "photo": {
       "img": null,
-      "status": "needs_store_photo",
-      "src": "no photo"
+      "status": "approved_not_published",
+      "src": "intake:shisha/photos/site-ready/oss-9604.webp (APPROVED (pending independent check); Retailer image: permission needed)"
      },
      "flags": [
-      "Photo held: only clean image is the 'Premium Molasses' pack; the Herbal pack image carries a Shisha Mart watermark",
-      "TWO PACKS: the Wee and MyHookah photo prints 'Premium Molasses', not 'Herbal Molasses'. It may be a different (possibly tobacco) line. Confirm the shop's tub says Herbal Molasses."
+      "Wee render prints Premium Molasses (held); MyHookah real photo prints Herbal Molasses, 250g (approved)",
+      "TWO PACKS: the Wee render prints 'Premium Molasses', not 'Herbal Molasses'. It may be a different (possibly tobacco) line. Confirm the shop's tub says Herbal Molasses."
      ],
      "shop": {
       "price_cents": {
@@ -233,7 +233,7 @@
       },
       "display_name": {
        "v": "Zanobia Herbal Molasses Watermelon Mint, 250 g",
-       "src": "shop:intake display name (VERIFIED x2)"
+       "src": "shop:intake display name (VERIFIED x1)"
       },
       "stock": {
        "v": 10,
@@ -277,7 +277,7 @@
       },
       "display_name": {
        "v": "Zanobia Herbal Molasses Mint, 250 g",
-       "src": "shop:intake display name (VERIFIED x3)"
+       "src": "shop:intake display name (VERIFIED x2)"
       },
       "stock": {
        "v": 10,
@@ -321,7 +321,7 @@
       },
       "display_name": {
        "v": "Zanobia Herbal Molasses Peach, 250 g",
-       "src": "shop:intake display name (VERIFIED x3)"
+       "src": "shop:intake display name (VERIFIED x2)"
       },
       "stock": {
        "v": 10,
@@ -415,7 +415,7 @@
       },
       "display_name": {
        "v": "Zanobia Herbal Molasses Mixed Fruits, 250 g",
-       "src": "shop:intake display name (VERIFIED x2)"
+       "src": "shop:intake display name (VERIFIED x1)"
       },
       "stock": {
        "v": 10,
@@ -505,7 +505,7 @@
       },
       "display_name": {
        "v": "Zanobia Herbal Molasses Strawberry, 250 g",
-       "src": "shop:intake display name (VERIFIED x2)"
+       "src": "shop:intake display name (VERIFIED x1)"
       },
       "stock": {
        "v": 10,
@@ -595,7 +595,7 @@
       },
       "display_name": {
        "v": "Zanobia Herbal Molasses Gum Mint, 250 g",
-       "src": "shop:intake display name (VERIFIED x3)"
+       "src": "shop:intake display name (VERIFIED x2)"
       },
       "stock": {
        "v": 10,
@@ -683,7 +683,7 @@
       },
       "display_name": {
        "v": "Zanobia Herbal Molasses Lemon Mint, 250 g",
-       "src": "shop:intake display name (VERIFIED x3)"
+       "src": "shop:intake display name (VERIFIED x2)"
       },
       "stock": {
        "v": 10,
@@ -2478,5 +2478,6 @@
   }
  ],
  "retired": {},
- "shop_answers": []
+ "shop_answers": [],
+ "retired_shop": {}
 }

@@ -192,14 +192,16 @@ def desired_rows(supplier: str, m):
         shop = v["shop"]
         facts = {k: c["v"] for k, c in f.get("facts", {}).items()}
         if supplier == "ace":
-            label = v["colour"]["v"] or ""
-            avail = "in_store_uncounted" if f["stamp"]["v"] != "none" else "special_order"
+            # the shop's corrected colour name wins over the photo's guess
+            label = shop["colour_confirmed"]["v"] or v["colour"]["v"] or ""
+            avail = "in_store_uncounted" if (f["stamp"]["v"] != "none" or shop["in_stock_here"]["v"]) else "special_order"
             facts.update({"group": f["group"]["v"], "page": f["page"], "stamp": f["stamp"]["v"]})
             sup = {"supplier_id": "ace", "supplier_ref": f["supplier_ref"]["v"], "supplier_price_cents": f["supplier_price_cents"]["v"],
                    "family": f["family_id"], "variant_label": label, "swatch_hex": v["swatch_hex"]["v"],
                    "img": v["photo"]["img"] or "", "height_cm": f["facts"]["height_cm"]["v"],
                    "facts_known": json.dumps(facts, sort_keys=True, ensure_ascii=False)}
-            shopcols = {"name": shop["display_name"]["v"] or placeholder_name(f["supplier_ref"]["v"], label or None),
+            # the colour lives in variant_label, never baked into the shop-owned name (a guess would freeze there)
+            shopcols = {"name": shop["display_name"]["v"] or placeholder_name(f["supplier_ref"]["v"], None),
                         "category_id": "hookahs", "price_cents": shop["price_cents"]["v"] or 0, "weight_g": 2500, "box_id": "T",
                         "glass": 1, "ship_class": "standard", "note": "", "stock": shop["stock"]["v"] or 0, "low_stock_at": 1,
                         "active": 1 if (shop["active"]["v"] and shop["price_cents"]["v"]) else 0, "sort": 5000 + i, "availability": avail}
@@ -265,6 +267,13 @@ def compute_plan(supplier, m, db_rows, reg=None):
                                  "db_price_cents": h.get("price_cents"), "shop_answer_cents": sp})
         elif sp is None and supplier == "ace" and not h.get("price_cents"):
             price_review.append({"sku": sku, "why": "waiting for the shop's own price", "supplier_price_cents": w["sup"]["supplier_price_cents"]})
+    returned = [sku for sku, w in want.items() if sku in have and have[sku].get("availability") == "dropped"]
+    for sku, w in want.items():
+        h = have.get(sku)
+        # a row made elsewhere (no supplier yet) is adopted only when it sits in the section this item belongs to
+        if h is not None and h.get("supplier_id") is None and h.get("category_id") != w["shop"]["category_id"]:
+            raise C.ValidationError(f"{sku} exists in the database in section {h.get('category_id')!r}, not {w['shop']['category_id']!r}: "
+                                    "refusing to take it over (a back-office number may have collided with the registry)")
     for sku, h in have.items():
         if h.get("supplier_id") == supplier and sku not in want and h.get("availability") != "dropped":
             retired.append(sku)
@@ -272,8 +281,8 @@ def compute_plan(supplier, m, db_rows, reg=None):
         e = reg["skus"].get(sku)
         if not e or e["status"] != "active":
             raise C.ValidationError(f"refusing to add {sku}: not an active registry SKU")
-    return {"supplier": supplier, "added": added, "changed": changed, "retired": retired,
-            "price_review": price_review, "unchanged": unchanged}
+    return {"supplier": supplier, "added": added, "changed": changed, "retired": retired, "returned": returned,
+            "price_review": price_review, "unchanged": unchanged - len([s for s in returned if s not in {c['sku'] for c in changed}])}
 
 
 def plan(args):
@@ -315,6 +324,9 @@ def ensure_schema(con):
 
 
 def apply_supplier(con, supplier, m, shop_fill=False, actor="catalog-import"):
+    C.validate_master(m, C.load_registry())   # a hand-edited master never reaches the database unchecked
+    if m["supplier"]["id"] != supplier:
+        raise C.ValidationError(f"this master belongs to {m['supplier']['id']}, not {supplier}")
     ensure_schema(con)
     cur = con.cursor()
     cur.row_factory = sqlite3.Row
@@ -345,6 +357,8 @@ def apply_supplier(con, supplier, m, shop_fill=False, actor="catalog-import"):
                         (*[c["fields"][k][1] for k in ks], c["sku"]))
         for sku in p["retired"]:
             con.execute("UPDATE products SET availability = 'dropped', updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE sku = ?", (sku,))
+        for sku in p["returned"]:   # back in the catalogue: undo our own 'dropped', nothing else
+            con.execute("UPDATE products SET availability = ? WHERE sku = ? AND availability = 'dropped'", (want[sku]["shop"]["availability"], sku))
         if shop_fill:
             # The shop's answered price goes in only where the database has never had one. A price the shop has
             # already set (in the back office or earlier) is never overwritten.
@@ -355,7 +369,18 @@ def apply_supplier(con, supplier, m, shop_fill=False, actor="catalog-import"):
                     on = 1 if w["shop_master"]["active"]["v"] else 0
                     con.execute("UPDATE products SET price_cents = ?, active = CASE WHEN ? = 1 THEN 1 ELSE active END WHERE sku = ? AND price_cents = 0", (sp, on, sku))
                     filled.append(sku)
-        n = len(p["added"]) + len(p["changed"]) + len(p["retired"]) + len(filled)
+                # the shop's first count goes in only if the item has no stock history at all
+                st = w["shop_master"]["stock"]["v"]
+                if st and h is not None and (w["shop_master"]["stock"]["src"] or "").startswith("shop:answers") and \
+                        not con.execute("SELECT 1 FROM stock_moves WHERE sku = ?", (sku,)).fetchone():
+                    con.execute("UPDATE products SET stock = ? WHERE sku = ?", (st, sku))
+                    con.execute("INSERT INTO stock_moves (sku, delta, reason, ref, actor) VALUES (?,?, 'count', 'shop answers sheet', ?)", (sku, st, actor))
+                    filled.append(sku + ":stock")
+                # "in stock here" moves an item from catalogue-order to in-store; a counted item is left alone
+                if w["shop_master"]["in_stock_here"]["v"] is True and h is not None and h.get("availability") == "special_order":
+                    con.execute("UPDATE products SET availability = 'in_store_uncounted' WHERE sku = ? AND availability = 'special_order'", (sku,))
+                    filled.append(sku + ":availability")
+        n = len(p["added"]) + len(p["changed"]) + len(p["retired"]) + len(p["returned"]) + len(filled)
         logged = con.execute("SELECT 1 FROM catalog_imports WHERE supplier_id = ? AND master_sha256 = ?", (supplier, msha)).fetchone()
         if n or not logged:
             con.execute("INSERT OR IGNORE INTO catalog_imports (supplier_id, source_sha256, master_sha256, edition, added, updated, retired, price_review, actor) "
@@ -401,6 +426,9 @@ def q(v):
 
 
 def seed_sql(supplier, m):
+    C.validate_master(m, C.load_registry())   # same gate as apply: no hand-edited master goes out unchecked
+    if m["supplier"]["id"] != supplier:
+        raise C.ValidationError(f"this master belongs to {m['supplier']['id']}, not {supplier}")
     rows = desired_rows(supplier, m)
     meta = SUPPLIER_META[supplier]
     msha = C.master_hash(m)
@@ -418,7 +446,10 @@ def seed_sql(supplier, m):
             out.append(f"INSERT INTO stock_moves (sku, delta, reason, ref, actor) SELECT {q(r['sku'])}, {cols['stock']}, 'count', 'catalogue import {supplier}', 'catalog-import' WHERE changes() = 1;")
         sets = ", ".join(f"{k} = {q(v)}" for k, v in r["sup"].items())
         cond = " OR ".join(f"{k} IS NOT {q(v)}" for k, v in r["sup"].items())
-        out.append(f"UPDATE products SET {sets}, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE sku = {q(r['sku'])} AND ({cond});")
+        # never take over a row that belongs to another supplier, or a back-office row in another section
+        own = f"(supplier_id = {q(supplier)} OR (supplier_id IS NULL AND category_id = {q(r['shop']['category_id'])}))"
+        out.append(f"UPDATE products SET {sets}, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE sku = {q(r['sku'])} AND {own} AND ({cond});")
+        out.append(f"UPDATE products SET availability = {q(r['shop']['availability'])} WHERE sku = {q(r['sku'])} AND supplier_id = {q(supplier)} AND availability = 'dropped';")
     live = [r["sku"] for r in rows]
     out.append(f"UPDATE products SET availability = 'dropped' WHERE supplier_id = {q(supplier)} AND availability != 'dropped' AND sku NOT IN ({', '.join(q(s) for s in live)});")
     out.append(f"INSERT OR IGNORE INTO catalog_imports (supplier_id, source_sha256, master_sha256, edition, added, updated, retired, price_review, actor) "

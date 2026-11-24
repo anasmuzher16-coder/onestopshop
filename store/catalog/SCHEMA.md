@@ -8,7 +8,7 @@ generated from it. Nobody edits two copies. Plan: life/dijji/clients/one-stop-sh
 |---|---|
 | `suppliers/ace/master.json` | Ace Hookah, from the October 2026 PDF (sha256 in `sources`) |
 | `suppliers/charcoal-foil/master.json` | The shop's own charcoal and foil list, verified 2026-11-23, plus the owner's rulings |
-| `suppliers/shisha/master.json` | STUB until `inventory-2026-11-23/shisha/catalogue.json` exists |
+| `suppliers/shisha/master.json` | Tobacco-free shisha, from `inventory-2026-11-23/shisha/catalogue.json` (all off until the lab certificates) |
 | `suppliers/ace/photos.json` | Photo manifest: one entry per extracted image (page, xref, crop, sku, colour, scale, status) |
 | `suppliers/ace/photo-overrides.json` | Decisions a person made on the contact sheets (gallery only, hand crop) |
 | `registry.json` | Every SKU ever issued. Numbers are never changed or reused |
@@ -34,8 +34,10 @@ source means unknown, said out loud.
 | Supplier | name as printed (`supplier_ref`), supplier price, page, stamp, colour squares, photos, facts | `catalog.py build`, every run |
 | Shop | its own price, display name, stock, on/off, confirmed colour name, in stock here, note | `catalog.py answers` (the Answers sheet) only |
 
-A rebuild carries every shop cell (source starting `shop:`) across by SKU, so a new catalogue can only add,
-change supplier facts, or retire. It never touches the shop's price or stock.
+A rebuild carries every shop cell (source starting `shop:`) across by SKU, including for items that leave the
+catalogue (parked in `retired_shop` until they come back), so a new catalogue can only add, change supplier facts,
+or retire. It never touches the shop's answers. `apply` and `seed` validate the master first and refuse a bad one.
+A filled sheet made from an older master cannot overwrite answers recorded since (hidden `_about` sheet).
 
 Rulings built in:
 - Ace: the shop has its own prices. Ace's price is stored as `supplier_price_cents` only. The shelf price
@@ -64,7 +66,7 @@ tick); pages 26, 36 and 57 are `stamped` with `needs_shop` because a small secon
 Ace group (Full size, Stem set, Compact and travel, Statement piece) is a written rule (`rule v1`), to confirm.
 
 Photo status: `ready`; `CHECK` (enlarged past 1.25x: ask Ace for the original); `hand_crop` (products touch, needs a
-drawn crop); `family_hero_only` (no photo of this colour, the family's main photo stands in); `none`;
+drawn crop); `needs_original` (enlarged past 2x: held back, never shipped); `family_hero_only` (no photo of this colour, the family's main photo stands in); `none`;
 `needs_store_photo` (charcoal and foil).
 
 ## SKUs: OSS-SSNNNN
