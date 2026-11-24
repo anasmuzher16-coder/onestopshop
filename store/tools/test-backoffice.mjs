@@ -26,6 +26,7 @@ ok(cleanSource({ utm_source: "GBP" }).source === "gbp", "utm_source=gbp is recor
 ok(cleanSource({ referrer: "https://l.instagram.com/x" }).source === "instagram" && cleanSource({}).source === "direct" && cleanSource(undefined).source === null, "referrer names the site; no codes is direct; an old page sends nothing");
 ok(cleanSource({ src: "=HYPERLINK(\"x\")", utm_source: "<script>", landing: "/a?email=x@y.z", referrer: "javascript:alert(1)" }).source === "direct" && cleanSource({ src: "=1+1" }).detail === "{}", "source codes that are not plain words are dropped");
 ok(cleanSource({ referrer: "http://127.0.0.1:4488/shop" }, "127.0.0.1").source === "direct", "our own pages are not a source");
+ok(cleanSource({ referrer: "http://a\"onmouseover=x'b&c.com/" }).detail === "{}", "a referrer that is not a plain site name is dropped");
 ok(share(100000, 500) === 5000 && share(12345, 500) === 617 && share(12350, 500) === 618 && share(-12350, 500) === -618 && share(0, 500) === 0, "5% share rounds once, half away from zero, in whole cents");
 ok(new Date(monthStart(2026, 11)).toISOString() === "2026-11-01T04:00:00.000Z" && new Date(monthStart(2026, 12)).toISOString() === "2026-12-01T05:00:00.000Z" && new Date(monthStart(2026, 3)).toISOString() === "2026-03-01T05:00:00.000Z", "months start at midnight Windsor time, summer and winter");
 ok(monthOf("2026-11") === "2026-11" && monthOf("2026-13") === null && monthOf("1999-01") === null && monthOf("2026-1") === null && /^\d{4}-\d\d$/.test(monthOf()), "month input is checked");
@@ -64,7 +65,9 @@ const same = await A(`/products/${SKU}/count`, { method: "POST", as: "staff", bo
 ok(same.status === 200 && same.data.delta === 0, "a count that matches is still recorded");
 const op1 = uuid(), twice = await Promise.all([1, 2, 3].map(() => A(`/products/${SKU}/count`, { method: "POST", as: "staff", body: { counted: s0, seen: s0 + 4, op: op1 } })));
 ok(twice.every(r => r.status === 200 && r.data.stock === s0) && (await prod(SKU)).stock === s0, "the same count sent three times at once lands once: " + twice.map(r => r.status));
-for (const bad of [-1, "abc", "", 1.5e9, null]) ok((await A(`/products/${SKU}/count`, { method: "POST", as: "staff", body: { counted: bad, op: uuid() } })).status === 400, "count refuses " + JSON.stringify(bad));
+for (const bad of [-1, "abc", "", 1.5e9, null, 2.6, true]) ok((await A(`/products/${SKU}/count`, { method: "POST", as: "staff", body: { counted: bad, seen: s0, op: uuid() } })).status === 400, "count refuses " + JSON.stringify(bad));
+ok((await A(`/products/${SKU}/count`, { method: "POST", as: "staff", body: { counted: 1, op: uuid() } })).status === 400 && (await prod(SKU)).stock === s0, "a count without the number the screen showed is refused");
+ok((await A(`/products/${SKU}/receive`, { method: "POST", as: "staff", body: { qty: 2.5, op: uuid() } })).status === 400 && (await A(`/products/${SKU}/stock`, { method: "POST", as: "staff", body: { delta: 0.4, op: uuid() } })).status === 400, "receive and adjust take whole numbers only");
 const op2 = uuid(), recv = await Promise.all([1, 2, 3].map(() => A(`/products/${SKU}/receive`, { method: "POST", as: "staff", body: { qty: 6, ref: "INV-2291", op: op2 } })));
 ok(recv.every(r => r.status === 200) && (await prod(SKU)).stock === s0 + 6, "receive: three copies of one tap add 6 once: " + recv.map(r => r.data.stock));
 ok((await A(`/products/${SKU}/receive`, { method: "POST", as: "staff", body: { qty: 0, op: uuid() } })).status === 400 && (await A(`/products/${SKU}/receive`, { method: "POST", as: "staff", body: { qty: 2, ref: "x".repeat(61) } })).status === 400, "receive refuses 0 and an over-long note");
@@ -116,6 +119,9 @@ ok(o3 && o3.status === 201, "a charcoal pickup order is placed");
 if (o3) {
   const id3 = o3.data.order.id, tick = await A(`/orders/${id3}/id-check`, { method: "POST", as: "staff", body: { checked: true } });
   ok(tick.status === 200 && tick.data.by === me.actor && (await A("/orders/" + id3)).data.order.id_checked_by === me.actor, "staff ticks ID checked, with their name");
+  const o5 = await place(coal.sku, 1); await A(`/orders/${o5.data.order.id}/cancel`, { method: "POST", body: { reason: "customer", op: uuid() } });
+  const was5 = (await A("/orders/" + o5.data.order.id)).data.order.updated_at;
+  ok((await A(`/orders/${o5.data.order.id}/id-check`, { method: "POST", body: { checked: true } })).status === 404 && (await A("/orders/" + o5.data.order.id)).data.order.updated_at === was5, "no ID tick on a cancelled order, and the tick never moves an order's date");
   ok((await A(`/orders/${id2}/id-check`, { method: "POST", body: { checked: true } })).status === 404 && (await A(`/orders/${id3}/id-check`, { method: "POST", body: { checked: "yes" } })).status === 400, "no ID tick on other orders; only true or false");
   const shopperSees = JSON.stringify(o3.data) + (await call("/order/" + id3, { as: "none" })).text + (await call("/api/catalog", { as: "none" })).text;
   ok(!/id_check|ID checked|Check ID/i.test(shopperSees), "nothing about ID reaches the shopper's confirmation, order page or catalogue");
@@ -159,11 +165,17 @@ ok((await A("/me", { as: "staff" })).status === 401, "their open sign-in stops w
 ok((await A("/login", { method: "POST", as: "staff", body: { name, pin } })).status === 401, "and they cannot sign in again");
 ok((await A(`/products/${SKU}/history`)).data.moves.some(m => m.actor === me.actor), "their past changes still carry their name");
 
+ok((await fetch(B + "/api/admin/login", { method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify({ passcode: KEY }) })).status === 400, "sign-in without the request marker (a plain form post) is refused");
 // ---- lockout (last: it locks local sign-in for 15 minutes) ----
 const wrongs = []; for (let i = 0; i < 5; i++) wrongs.push((await A("/login", { method: "POST", as: "staff", body: { name: add2.data.name, pin: "00000" + i }, headers: { "CF-Connecting-IP": "10.9.0." + i } })).status);
 const locked = await A("/login", { method: "POST", as: "staff", body: { name: add2.data.name, pin: "730519" }, headers: { "CF-Connecting-IP": "10.9.1.1" } });
 ok(wrongs.every(s => s === 401) && locked.status === 429, "five wrong PINs on one name lock that name, even with the right PIN: " + wrongs + "," + locked.status);
 const ghost = "Ghost" + letters(), gw = []; for (let i = 0; i < 6; i++) gw.push((await A("/login", { method: "POST", as: "staff", body: { name: ghost, pin: "00000" + i }, headers: { "CF-Connecting-IP": "10.8.0." + i } })).status);
 ok(gw[5] === 429, "a name that does not exist locks the same way, so the lock gives nobody away: " + gw);
+const burst = await Promise.all(Array.from({ length: 8 }, (_, i) => A("/login", { method: "POST", as: "staff", body: { name: "Burst" + letters(), pin: "00000" + i }, headers: { "CF-Connecting-IP": "10.7.7.7" } })));
+ok(burst.filter(r => r.status === 401).length <= 5 && burst.filter(r => r.status === 429).length >= 3, "eight tries at once from one place get at most five checks: " + burst.map(r => r.status));
+for (let i = 0; i < 42; i++) await A("/login", { method: "POST", as: "staff", body: { name: "Flood" + letters(), pin: "000000" }, headers: { "CF-Connecting-IP": "10.6." + Math.floor(i / 5) + "." + i } });
+const ownerStill = await A("/login", { method: "POST", as: "none", body: { passcode: KEY }, headers: { "CF-Connecting-IP": "10.5.5.5" } });
+ok(ownerStill.status === 200, "forty-plus wrong staff PINs from all over do not lock the owner out: " + ownerStill.status);
 ok((await A("/logout", { method: "POST", body: {} })).status === 200, "owner signs out");
 console.log(f ? `FAIL ${f} of ${n} checks` : `PASS ${n} checks`); process.exit(f ? 1 : 0);

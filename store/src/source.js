@@ -2,7 +2,7 @@
 // address with its query string (those can carry personal details), never anything that follows a person around.
 // The shopper's browser keeps the first visit's codes for 30 days and sends them with the order (public/source.js).
 const code = v => typeof v === "string" && /^[a-z0-9][a-z0-9._-]{0,39}$/i.test(v.trim()) ? v.trim().toLowerCase() : null;
-const host = v => { if (typeof v !== "string" || v.length > 300) return null; try { const u = new URL(v); return /^https?:$/.test(u.protocol) ? u.hostname.toLowerCase().replace(/^www\./, "").slice(0, 80) : null; } catch { return null; } };
+const host = v => { if (typeof v !== "string" || v.length > 300) return null; try { const u = new URL(v); const h = u.hostname.toLowerCase().replace(/^www\./, ""); return /^https?:$/.test(u.protocol) && /^[a-z0-9.-]{1,80}$/.test(h) ? h : null; } catch { return null; } };
 const path = v => typeof v === "string" && /^\/[A-Za-z0-9/_.-]{0,80}$/.test(v) ? v : null;
 // Sites that send people, named the way the shop would say them.
 const KNOWN = [[/(^|\.)google\./, "google"], [/(^|\.)bing\.com$/, "bing"], [/(^|\.)instagram\.com$/, "instagram"], [/(^|\.)(facebook\.com|fb\.com|m\.facebook\.com|l\.facebook\.com)$/, "facebook"],

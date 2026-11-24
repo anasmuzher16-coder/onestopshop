@@ -43,6 +43,7 @@ ALTER TABLE orders ADD COLUMN source_detail TEXT NOT NULL DEFAULT '{}';   -- {"u
 CREATE INDEX orders_created ON orders(created_at);
 CREATE INDEX orders_cancelled ON orders(cancelled_at) WHERE cancelled_at IS NOT NULL;
 UPDATE orders SET ready_at = updated_at WHERE status = 'ready' AND ready_at IS NULL;
+UPDATE orders SET cancelled_at = updated_at WHERE status IN ('cancelled','refunded') AND cancelled_at IS NULL;   -- a refund stays in the month it happened
 
 -- Who-did-what lookups for one product or one order.
 CREATE INDEX audit_log_target ON audit_log(target, id);

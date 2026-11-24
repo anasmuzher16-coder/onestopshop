@@ -46,26 +46,28 @@ export async function admin(request, env, url) {
   // a browser says when a request comes from another site (Fetch Metadata); any write that does is refused, sign-in included
   const site = request.headers.get("Sec-Fetch-Site");
   if (method !== "GET" && site && site !== "same-origin") return json({ error: "Wrong origin." }, 403);
+  if ((path === "/login" || path === "/logout") && method === "POST" && (!(request.headers.get("Content-Type") || "").startsWith("application/json") || request.headers.get("X-OSS-Admin") !== "1")) return json({ error: "Missing request marker." }, 400);   // no sign-in or sign-out from a plain form on another site
   if (path === "/login" && method === "POST") {
     if (!env.ADMIN_KEY) return json({ error: "The admin passcode has not been set up yet." }, 503);
     const body = await request.json().catch(() => ({}));
     const staffLogin = typeof body.name === "string" || typeof body.pin === "string";
+    if (staffLogin && env.LIVE === "1" && !env.PIN_PEPPER) return json({ error: "Staff sign-in is not set up yet. Sign in with the owner passcode." }, 503);
     const name = staffLogin ? cleanName(body.name) : null, nameKey = "n:" + await sha("name|" + (name || String(body.name || "")).toLowerCase());
-    // Five wrong tries from one place, five on one staff name from anywhere, or forty in all, locks sign-in for
-    // fifteen minutes. A name that does not exist locks the same way, so the lock does not reveal who works here.
+    // The try is written down BEFORE it is checked, so a burst of tries at once is counted in full. More than five
+    // tries from one place, more than five on one staff name from anywhere (names that do not exist lock the same way,
+    // so a lock does not reveal who works here), or more than forty staff tries in all, locks sign-in for fifteen
+    // minutes. The owner's passcode is not held back by other people's wrong PINs.
     const who = await sha("who|" + (request.headers.get("CF-Connecting-IP") || "local"));
-    const tries = await db.prepare("SELECT COALESCE(SUM(who = ?1 AND ok = 0),0) AS mine, COALESCE(SUM(who = ?2 AND ok = 0),0) AS this_name, COALESCE(SUM(ok = 0 AND who NOT LIKE 'n:%'),0) AS everyone FROM login_attempts WHERE at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-15 minutes')").bind(who, nameKey).first();
-    if (tries.mine >= 5 || tries.everyone >= 40 || (staffLogin && tries.this_name >= 5)) { log("login_locked", { staff: staffLogin }); return json({ error: LOCKED }, 429); }
+    const mark = await db.batch([db.prepare("INSERT INTO login_attempts (who, ok) VALUES (?, 0)").bind(who), ...(staffLogin ? [db.prepare("INSERT INTO login_attempts (who, ok) VALUES (?, 0)").bind(nameKey)] : [])]);
+    const tries = await db.prepare("SELECT COALESCE(SUM(who = ?1 AND ok = 0),0) AS mine, COALESCE(SUM(who = ?2 AND ok = 0),0) AS this_name, COALESCE(SUM(ok = 0 AND who LIKE 'n:%'),0) AS everyone FROM login_attempts WHERE at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-15 minutes')").bind(who, nameKey).first();
+    if (tries.mine > 5 || (staffLogin && (tries.this_name > 5 || tries.everyone > 40))) { log("login_locked", { staff: staffLogin }); return json({ error: LOCKED }, 429); }
     let right = false, staff = null;
     if (staffLogin) {
       staff = name ? await db.prepare("SELECT id, name, pin_hash FROM staff WHERE lower(name) = lower(?) AND active = 1").bind(name).first() : null;
       right = await checkPin(env, typeof body.pin === "string" ? body.pin : "", staff && staff.pin_hash) && !!staff;   // the same work whether or not the name exists
     } else right = typeof body.passcode === "string" && await sameSecret(body.passcode, env.ADMIN_KEY);
-    await db.batch([
-      db.prepare("INSERT INTO login_attempts (who, ok, staff_id) VALUES (?, ?, ?)").bind(who, right ? 1 : 0, staff ? staff.id : null),
-      ...(staffLogin && !right ? [db.prepare("INSERT INTO login_attempts (who, ok) VALUES (?, 0)").bind(nameKey)] : []),
-    ]);
-    if (!right) { log("login_failed", { staff: staffLogin }); return json({ error: staffLogin ? "That name and PIN do not match." : "That passcode is not right." }, 401); }
+    if (!right) { if (staff) await db.prepare("UPDATE login_attempts SET staff_id = ? WHERE id = ?").bind(staff.id, mark[0].meta.last_row_id).run(); log("login_failed", { staff: staffLogin }); return json({ error: staffLogin ? "That name and PIN do not match." : "That passcode is not right." }, 401); }
+    await db.batch([db.prepare("UPDATE login_attempts SET ok = 1, staff_id = ? WHERE id = ?").bind(staff ? staff.id : null, mark[0].meta.last_row_id), ...(staffLogin ? [db.prepare("DELETE FROM login_attempts WHERE id = ?").bind(mark[1].meta.last_row_id)] : [])]);
     const actor = staff ? `${staff.name} #${staff.id}` : "owner", t = hex(crypto.getRandomValues(new Uint8Array(32)));
     await db.batch([
       db.prepare(`INSERT INTO sessions (token_hash, expires_at, actor, staff_id, last_seen) VALUES (?, strftime('%Y-%m-%dT%H:%M:%SZ','now','+12 hours'), ?, ?, ${NOW})`).bind(await sha(t), actor, staff ? staff.id : null),
@@ -176,7 +178,7 @@ export async function admin(request, env, url) {
   const replayed = async op => { const r = await db.prepare("SELECT m.sku, p.stock FROM stock_moves m JOIN products p ON p.sku = m.sku WHERE m.op = ?").bind(op).first(); return r; };
   if ((m = path.match(/^\/products\/(OSS-\d{4,6})\/(stock|receive)$/)) && method === "POST") {
     const body = await request.json().catch(() => ({})), receive = m[2] === "receive", op = cleanOp(body.op);
-    const delta = receive ? clampInt(body.qty, 1, 9999) : clampInt(body.delta, -9999, 9999);
+    const delta = !Number.isInteger(receive ? body.qty : body.delta) ? null : receive ? clampInt(body.qty, 1, 9999) : clampInt(body.delta, -9999, 9999);
     const reason = receive ? "received" : ["received", "damaged", "correction", "return"].includes(body.reason) ? body.reason : "correction";
     const ref = receive ? text(body.ref ?? "", 60) : null;
     if (!delta) return json({ error: receive ? "Enter how many arrived, 1 or more." : "Nothing to change." }, 400);
@@ -188,7 +190,7 @@ export async function admin(request, env, url) {
       db.prepare("SELECT stock FROM products WHERE sku = ?").bind(m[1]),
     ]);
     if (!res[2].results.length) return json({ error: "No such product." }, 404);
-    if (!res[0].meta.changes) { const r = op && await replayed(op); if (r) return json({ ok: true, stock: r.stock, replayed: true }); return json({ error: "Stock cannot go below zero.", stock: res[2].results[0].stock }, 409); }
+    if (!res[0].meta.changes) { const r = op && await replayed(op); if (r) return r.sku === m[1] ? json({ ok: true, stock: r.stock, replayed: true }) : json({ error: "That tap key was already used." }, 409); return json({ error: "Stock cannot go below zero.", stock: res[2].results[0].stock }, 409); }
     return json({ ok: true, stock: res[2].results[0].stock });
   }
   // Count mode: the shelf count typed in. The server works out the difference and writes it as a "count" move, even
@@ -196,9 +198,10 @@ export async function admin(request, env, url) {
   // (seen no longer matches), nothing is saved and the new number is shown, so a sale is never counted away by mistake.
   if ((m = path.match(/^\/products\/(OSS-\d{4,6})\/count$/)) && method === "POST") {
     const body = await request.json().catch(() => ({})), counted = clampInt(body.counted, 0, 99999), op = cleanOp(body.op);
-    const seen = body.seen === undefined || body.seen === null ? null : clampInt(body.seen, 0, 99999);
-    if (counted === null || !(typeof body.counted === "number" || (typeof body.counted === "string" && /^\d{1,5}$/.test(body.counted.trim())))) return json({ error: "Type the number on the shelf, 0 or more." }, 400);
-    if (body.seen !== undefined && body.seen !== null && seen === null) return json({ error: "Reload the list and count again." }, 400);
+    const whole = v => (Number.isInteger(v) || (typeof v === "string" && /^\d{1,5}$/.test(v.trim()))) ? clampInt(v, 0, 99999) : null;
+    const seen = whole(body.seen);
+    if (whole(body.counted) === null) return json({ error: "Type the number on the shelf, a whole number, 0 or more." }, 400);
+    if (seen === null) return json({ error: "Reload the list and count again." }, 400);   // the number the screen showed is required: a count never overwrites a sale it did not see
     if (op) { const r = await replayed(op); if (r) return r.sku === m[1] ? json({ ok: true, stock: r.stock, replayed: true }) : json({ error: "That tap key was already used." }, 409); }
     const res = await db.batch([
       db.prepare(`INSERT INTO stock_moves (sku, delta, reason, ref, actor, op) SELECT sku, ?2 - stock, 'count', ?6, ?4, ?5 FROM products WHERE sku = ?1 AND (?3 IS NULL OR stock = ?3) AND (?5 IS NULL OR NOT EXISTS (SELECT 1 FROM stock_moves WHERE op = ?5))`).bind(m[1], counted, seen, actor, op, "counted " + counted),
@@ -208,7 +211,7 @@ export async function admin(request, env, url) {
     ]);
     if (!res[2].results.length) return json({ error: "No such product." }, 404);
     if (!res[0].meta.changes) {
-      const r = op && await replayed(op); if (r) return json({ ok: true, stock: r.stock, replayed: true });
+      const r = op && await replayed(op); if (r) return r.sku === m[1] ? json({ ok: true, stock: r.stock, replayed: true }) : json({ error: "That tap key was already used." }, 409);
       return json({ error: `An order changed this to ${res[2].results[0].stock} while you were counting. Check the shelf again.`, stock: res[2].results[0].stock, changed: true }, 409);
     }
     return json({ ok: true, stock: res[2].results[0].stock, delta: res[3].results[0]?.delta ?? null });
@@ -261,25 +264,27 @@ export async function admin(request, env, url) {
     if (!o) return json({ error: "No such order." }, 404);
     if (o.cancel_op && o.cancel_op === op) return json({ ok: true, status: "cancelled", replayed: true });
     if (!["paid", "packed", "ready"].includes(o.status)) return json({ error: o.status === "cancelled" ? "This order is already cancelled." : "Only orders not yet sent or collected can be cancelled here." }, 409);
-    const won = `EXISTS (SELECT 1 FROM orders WHERE id = ?1 AND cancel_op = ?2)`;
+    // Every statement asks the same question of the order as it was before this transaction: still open, never
+    // cancelled. The order is flipped last. A retry, or a second tap, sees the flipped order and changes nothing.
+    const open = `EXISTS (SELECT 1 FROM orders WHERE id = ?1 AND status IN ('paid','packed','ready') AND cancel_op IS NULL)`;
     const res = await db.batch([
+      db.prepare(`UPDATE products SET stock = stock + (SELECT qty FROM order_items i WHERE i.order_id = ?1 AND i.sku = products.sku), updated_at = ${NOW} WHERE sku IN (SELECT sku FROM order_items WHERE order_id = ?1) AND ${open}`).bind(m[1]),
+      db.prepare(`INSERT INTO stock_moves (sku, delta, reason, ref, actor) SELECT sku, qty, 'released', ?1, ?2 FROM order_items WHERE order_id = ?1 AND ${open}`).bind(m[1], actor),
+      db.prepare(`INSERT INTO audit_log (actor, action, target, before, after) SELECT ?2, 'order.cancel', ?1, ?3, ?4 WHERE ${open}`).bind(m[1], actor, JSON.stringify({ status: o.status }), JSON.stringify({ status: "cancelled", reason, ...(note ? { note } : {}) })),
       db.prepare(`UPDATE orders SET status = 'cancelled', cancelled_at = ${NOW}, cancelled_by = ?3, cancel_reason = ?4, cancel_note = ?5, cancel_op = ?2, updated_at = ${NOW} WHERE id = ?1 AND status IN ('paid','packed','ready') AND cancel_op IS NULL`).bind(m[1], op, actor, reason, note || null),
-      db.prepare(`UPDATE products SET stock = stock + (SELECT qty FROM order_items i WHERE i.order_id = ?1 AND i.sku = products.sku), updated_at = ${NOW} WHERE sku IN (SELECT sku FROM order_items WHERE order_id = ?1) AND ${won}`).bind(m[1], op),
-      db.prepare(`INSERT INTO stock_moves (sku, delta, reason, ref, actor) SELECT sku, qty, 'released', ?1, ?3 FROM order_items WHERE order_id = ?1 AND ${won}`).bind(m[1], op, actor),
-      db.prepare(`INSERT INTO audit_log (actor, action, target, before, after) SELECT ?3, 'order.cancel', ?1, ?4, ?5 WHERE ${won}`).bind(m[1], op, actor, JSON.stringify({ status: o.status }), JSON.stringify({ status: "cancelled", reason, ...(note ? { note } : {}) })),
       db.prepare("SELECT status, cancel_op FROM orders WHERE id = ?1").bind(m[1]),
     ]);
     const now = res[4].results[0];
-    if (now.cancel_op !== op) return json({ error: now.status === "cancelled" ? "This order is already cancelled." : "This order changed. Reload it." }, 409);
-    return json({ ok: true, status: "cancelled", restocked: res[2].meta.changes });
+    if (!res[3].meta.changes) return now.cancel_op === op ? json({ ok: true, status: "cancelled", replayed: true }) : json({ error: now.status === "cancelled" ? "This order is already cancelled." : "This order changed. Reload it." }, 409);
+    return json({ ok: true, status: "cancelled", restocked: res[1].meta.changes });
   }
   // Staff-only: the ID tick on a charcoal order. Never part of anything a customer sees (order page, emails, catalogue).
   if ((m = path.match(/^\/orders\/([A-Z0-9]{3,12})\/id-check$/)) && method === "POST") {
     const body = await request.json().catch(() => ({})), on = body.checked === true;
     if (typeof body.checked !== "boolean") return json({ error: "Send checked: true or false." }, 400);
-    const ok = await db.prepare(`SELECT o.id FROM orders o WHERE o.id = ? AND EXISTS (SELECT 1 FROM order_items i JOIN products p ON p.sku = i.sku WHERE i.order_id = o.id AND ${CHARCOAL_ITEM})`).bind(m[1]).first();
-    if (!ok) return json({ error: "Only charcoal orders have an ID check." }, 404);
-    await db.batch([db.prepare(`UPDATE orders SET id_checked_by = ?, id_checked_at = ${on ? NOW : "NULL"}, updated_at = ${NOW} WHERE id = ?`).bind(on ? actor : null, m[1]), audit("order.id_check", m[1], null, { checked: on })]);
+    const ok = await db.prepare(`SELECT o.id FROM orders o WHERE o.id = ? AND o.status IN ('paid','packed','ready','shipped','collected') AND EXISTS (SELECT 1 FROM order_items i JOIN products p ON p.sku = i.sku WHERE i.order_id = o.id AND ${CHARCOAL_ITEM})`).bind(m[1]).first();
+    if (!ok) return json({ error: "Only open or finished charcoal orders have an ID check." }, 404);
+    await db.batch([db.prepare(`UPDATE orders SET id_checked_by = ?, id_checked_at = ${on ? NOW : "NULL"} WHERE id = ?`).bind(on ? actor : null, m[1]), audit("order.id_check", m[1], null, { checked: on })]);
     return json({ ok: true, checked: on, by: on ? actor : null });
   }
   if ((m = path.match(/^\/orders\/([A-Z0-9]{3,12})\/status$/)) && method === "POST") {

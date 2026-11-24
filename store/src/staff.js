@@ -25,13 +25,15 @@ export async function hashPin(env, pin) {
   return `pbkdf2-sha256$${iter}$${hex(salt)}$${hex(await derive(env, pin, salt, iter))}`;
 }
 // A stored hash that is missing or malformed still costs the same work, so a wrong name and a wrong PIN take as long.
-const DUMMY = "pbkdf2-sha256$100000$00000000000000000000000000000000$" + "0".repeat(64);
+// The stand-in uses the same iteration count new PINs get, so a missing name costs the same as a real one.
 export async function checkPin(env, pin, stored) {
-  const [alg, it, salt, want] = String(stored || DUMMY).split("$"), iter = +it;
-  const ok = alg === "pbkdf2-sha256" && iter >= 1000 && iter <= MAX_ITER && /^[0-9a-f]{32}$/.test(salt) && /^[0-9a-f]{64}$/.test(want);
-  const got = await derive(env, String(pin), unhex(ok ? salt : DUMMY.split("$")[2]), ok ? iter : MAX_ITER);
-  const match = crypto.subtle.timingSafeEqual(got, unhex(ok ? want : DUMMY.split("$")[3]).buffer);
-  return ok && stored !== DUMMY && match;
+  const dummy = `pbkdf2-sha256$${iterations(env)}$${"0".repeat(32)}$${"0".repeat(64)}`;
+  const [alg, it, salt, want] = String(stored || dummy).split("$"), iter = +it;
+  const ok = !!stored && alg === "pbkdf2-sha256" && iter >= 1000 && iter <= MAX_ITER && /^[0-9a-f]{32}$/.test(salt) && /^[0-9a-f]{64}$/.test(want);
+  const [, dIt, dSalt, dWant] = dummy.split("$");
+  const got = await derive(env, String(pin), unhex(ok ? salt : dSalt), ok ? iter : +dIt);
+  const match = crypto.subtle.timingSafeEqual(got, unhex(ok ? want : dWant).buffer);
+  return ok && match;
 }
 // Six digits, and not one of the PINs everyone tries first.
 export function pinProblem(pin) {
