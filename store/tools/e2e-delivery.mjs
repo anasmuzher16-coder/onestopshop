@@ -8,7 +8,7 @@ const payThrough = async (p, timeout = 15000) => { await p.waitForURL(u => /\/pa
 let n = 0, f = 0; const t = (name, c, extra = "") => { n++; if (!c) { f++; console.log("FAIL", name, extra); } };
 let run = Date.now() % 100000;
 // Each engine buys five of the test piece, so make sure the sample shelf has enough before starting.
-{ const login = await fetch(B + "/api/admin/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ passcode: KEY }) }), Cookie = (login.headers.get("set-cookie") || "").split(";")[0];
+{ const login = await fetch(B + "/api/admin/login", { method: "POST", headers: { "Content-Type": "application/json", "X-OSS-Admin": "1" }, body: JSON.stringify({ passcode: KEY }) }), Cookie = (login.headers.get("set-cookie") || "").split(";")[0];
   const stocked = await fetch(B + "/api/admin/products/OSS-8004/stock", { method: "POST", headers: { "Content-Type": "application/json", "X-OSS-Admin": "1", Cookie }, body: JSON.stringify({ delta: 40, reason: "count" }) });
   if (!stocked.ok) { console.log("FAIL could not stock the test piece", stocked.status, await stocked.text()); process.exit(1); } }
 for (const [engine, w, h, mobile] of [["chromium", 390, 844, true], ["webkit", 390, 844, true], ["chromium", 1440, 900, false], ["webkit", 1440, 900, false]]) {

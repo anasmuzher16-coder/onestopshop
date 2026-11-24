@@ -31,11 +31,20 @@ async function signIn(email, from = ip()) {
   const v = await api("/verify", { method: "POST", body: { email, code: codeIn(lastMail(email)) }, ip: from });
   return { ...v, cookie: "oss_c=" + tokenOf(v.setCookie) };
 }
-const order = async (body, cookie) => { const r = await fetch(B + "/api/orders", { method: "POST", headers: { "Content-Type": "application/json", ...(cookie ? { Cookie: cookie } : {}) }, body: JSON.stringify(body) }); return { status: r.status, data: await r.json().catch(() => ({})) }; };
-const login = await fetch(B + "/api/admin/login", { method: "POST", headers: { "Content-Type": "application/json", "CF-Connecting-IP": ip() }, body: JSON.stringify({ passcode: KEY }) }), admin = (login.headers.get("set-cookie") || "").split(";")[0];
+// An order as a shopper places it. A card order is paid on the Stripe stand-in (tools/fake-stripe.mjs), whose signed
+// webhook marks it paid, so "placed" here means paid, as it does for a real shopper.
+const order = async (body, cookie) => {
+  const r = await fetch(B + "/api/orders", { method: "POST", headers: { "Content-Type": "application/json", ...(cookie ? { Cookie: cookie } : {}) }, body: JSON.stringify(body) });
+  const out = { status: r.status, data: await r.json().catch(() => ({})) };
+  if (out.status === 201 && out.data.pay?.url) { await fetch(out.data.pay.url, { method: "POST", redirect: "manual" }); await new Promise(res => setTimeout(res, 300)); }
+  return out;
+};
+const points = async cookie => (await api("/me", { cookie })).data.loyalty;
+const opKey = () => "op-" + run + "-" + Math.random().toString(36).slice(2, 14);
+const login = await fetch(B + "/api/admin/login", { method: "POST", headers: { "Content-Type": "application/json", "X-OSS-Admin": "1", "CF-Connecting-IP": ip() }, body: JSON.stringify({ passcode: KEY }) }), admin = (login.headers.get("set-cookie") || "").split(";")[0];
 const adm = async (path, method = "GET", body) => { const r = await fetch(B + "/api/admin" + path, { method, headers: { "Content-Type": "application/json", "X-OSS-Admin": "1", Cookie: admin }, body: body && JSON.stringify(body) }); return { status: r.status, data: await r.json().catch(() => ({})) }; };
 const cat = (await (await fetch(B + "/api/catalog")).json()).products;
-const inStock = cat.filter(p => p.stock >= 6 && p.ship_class !== "pickup_only" && p.price_cents >= 1000 && p.price_cents < 20000).sort((a, b) => a.price_cents - b.price_cents);
+const inStock = cat.filter(p => p.stock >= 6 && p.ship_class !== "pickup_only" && p.category_id !== "shisha" && p.cat !== "shisha" && p.price_cents >= 1000 && p.price_cents < 20000).sort((a, b) => a.price_cents - b.price_cents);
 const cheap = inStock[0], mid = inStock.find(p => p.price_cents >= 5000) || inStock[1];
 ok(cheap && mid, "found items with stock to order: " + cheap?.sku + " " + mid?.sku);
 
@@ -163,7 +172,7 @@ ok((await adm("/loyalty", "PUT", { points_per_dollar: 10, reward_points: 10, rew
 const on = await adm("/loyalty", "PUT", { on: true });
 ok(on.status === 200 && on.data.loyalty.on && on.data.loyalty.points_per_dollar === 1 && on.data.loyalty.reward_points === 100 && on.data.loyalty.reward_cents === 500 && /5 cents on every dollar/.test(on.data.cost), "points turn on with the defaults: 1 a dollar, $5 at 100 (" + on.data.cost + ")");
 const carol = (await signIn(`carol-${run}@example.com`)).cookie, carolEmail = `carol-${run}@example.com`;
-const big = cat.find(p => p.stock >= 3 && p.price_cents >= 15000 && p.ship_class !== "pickup_only");
+const big = cat.find(p => p.stock >= 3 && p.price_cents >= 15000 && p.ship_class !== "pickup_only" && p.category_id !== "shisha" && p.active !== 0);
 const o1 = await order({ name: "Carol", email: carolEmail, method: "pickup", lines: [{ sku: big.sku, qty: 1 }] }, carol);
 const earned = Math.floor(big.price_cents / 100);
 ok(o1.status === 201 && o1.data.order.points === earned, `a paid order earns 1 point a dollar of items: ${o1.data.order.points} for ${big.price_cents} cents`);
@@ -194,6 +203,36 @@ ok(sql("SELECT COUNT(*) AS n FROM orders WHERE status = 'pending'")[0].n === 0, 
 ok((await order({ name: "G", email: "g@example.com", method: "pickup", use_reward: true, lines: [{ sku: cheap.sku, qty: 1 }] })).status === 409, "a guest cannot take a reward");
 const forged = await order({ name: "Carol", email: carolEmail, method: "pickup", use_reward: true, reward_cents: 99999, points: 99999, lines: [{ sku: cheap.sku, qty: 1 }] }, carol);
 ok(forged.status === 409 && sql(`SELECT COUNT(*) AS n FROM loyalty_ledger WHERE customer_id = ${carolId} AND points > 1000`)[0].n === 0, "numbers sent by the phone are ignored");
+
+// ---- 7b. the real refund and cancel paths take points back (payments refund, back office cancel), never a hand edit
+const erinEmail = `erin-${run}@example.com`, erin = (await signIn(erinEmail)).cookie;
+const e1 = await order({ name: "Erin", email: erinEmail, method: "pickup", lines: [{ sku: big.sku, qty: 1 }] }, erin), e1pts = Math.floor(big.price_cents / 100);
+await adm(`/orders/${e1.data.order.id}/status`, "POST", { status: "ready" }); await adm(`/orders/${e1.data.order.id}/status`, "POST", { status: "collected" });
+ok((await points(erin)).points === e1pts, "a card order paid through Stripe and collected earns its points: " + e1pts);
+const paid1 = sql(`SELECT paid_cents FROM orders WHERE id = '${e1.data.order.id}'`)[0].paid_cents, half = Math.floor(paid1 / 2);
+const rf1 = await adm(`/orders/${e1.data.order.id}/refund`, "POST", { op: opKey(), amount_cents: half });
+ok(rf1.status === 200 && (await points(erin)).points === Math.floor(e1pts * (paid1 - half) / paid1), `a part refund takes back its share of the points: ${(await points(erin)).points} of ${e1pts}`);
+const rf2 = await adm(`/orders/${e1.data.order.id}/refund`, "POST", { op: opKey() });
+ok(rf2.status === 200 && rf2.data.order?.status === "refunded" && (await points(erin)).points === 0, "refunding the rest through the back office takes every point back");
+const e2 = await order({ name: "Erin", email: erinEmail, method: "pickup", lines: [{ sku: mid.sku, qty: 1 }] }, erin), e2pts = Math.floor(mid.price_cents / 100);
+ok((await points(erin)).coming === e2pts, "a paid order's points are on the way");
+const cx = await adm(`/orders/${e2.data.order.id}/cancel`, "POST", { op: opKey(), reason: "customer" });
+ok(cx.status === 200 && cx.data.refund_owed === true && (await points(erin)).coming === 0, "cancelling a paid order in the back office voids its points, and says the card refund is still owed");
+await adm(`/orders/${e2.data.order.id}/refund`, "POST", { op: opKey() });
+ok((await points(erin)).points === 0 && (await points(erin)).coming === 0, "refunding the cancelled order changes nothing more: " + JSON.stringify(await points(erin)));
+const e3 = await order({ name: "Erin", email: erinEmail, method: "pickup", pay: "at_pickup", lines: [{ sku: mid.sku, qty: 1 }] }, erin);
+ok(e3.status === 201 && (await points(erin)).coming === e2pts, "an order to pay at the counter shows its points on the way");
+const cx3 = await adm(`/orders/${e3.data.order.id}/cancel`, "POST", { op: opKey(), reason: "no_show" });
+ok(cx3.status === 200 && (await points(erin)).coming === 0 && (await points(erin)).points === 0, "a no-show cancelled in the back office earns nothing");
+// a reward spent on an order the back office cancels comes back
+const erinId = sql(`SELECT id FROM customers WHERE email = '${erinEmail}'`)[0].id;
+sql(`INSERT INTO loyalty_ledger (customer_id, kind, points, note) VALUES (${erinId}, 'adjust', 100, 'test')`);
+const e4 = await order({ name: "Erin", email: erinEmail, method: "pickup", use_reward: true, lines: [{ sku: mid.sku, qty: 1 }] }, erin);
+ok(e4.status === 201 && e4.data.order.reward_cents === 500 && (await points(erin)).points === 0, "the reward spent 100 points on a card order");
+const sess = sql(`SELECT pay_status, paid_cents, total_cents FROM orders WHERE id = '${e4.data.order.id}'`)[0];
+ok(sess.pay_status === "paid" && sess.paid_cents === sess.total_cents, "Stripe charged exactly the total after the reward: " + JSON.stringify(sess));
+await adm(`/orders/${e4.data.order.id}/cancel`, "POST", { op: opKey(), reason: "customer" });
+ok((await points(erin)).points === 100, "cancelling that order in the back office gives the 100 points back");
 
 // ---- 8. sign out, sign out everywhere, delete
 const dan = `dan-${run}@example.com`, d1 = (await signIn(dan)).cookie, d2 = (await signIn(dan)).cookie;

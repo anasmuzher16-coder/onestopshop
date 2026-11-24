@@ -41,7 +41,7 @@ ok((await post("/api/orders", { ...base, phone: "", address: at(`7 D5000 ${run} 
 ok((await post("/api/orders", { ...base, postal: "M5V 2T6", address: at(`7 D5000 ${run} St`), delivery_fee_cents: 1000 })).status === 409, "a Toronto postal code cannot get local delivery");
 // the $200 line, a forged free delivery, and a pickup-only piece, on a real order. Puts the sample product back afterwards.
 await new Promise(r => setTimeout(r, 61000));
-const login = await fetch(B + "/api/admin/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ passcode: KEY }) }), cookie = (login.headers.get("set-cookie") || "").split(";")[0];
+const login = await fetch(B + "/api/admin/login", { method: "POST", headers: { "Content-Type": "application/json", "X-OSS-Admin": "1" }, body: JSON.stringify({ passcode: KEY }) }), cookie = (login.headers.get("set-cookie") || "").split(";")[0];
 ok(login.status === 200, "signed in to change the test product");
 const edit = body => fetch(B + "/api/admin/products/OSS-8004", { method: "PUT", headers: { "Content-Type": "application/json", "X-OSS-Admin": "1", Cookie: cookie }, body: JSON.stringify(body) });
 const ten = at(`7 D3000 ${run} St`);

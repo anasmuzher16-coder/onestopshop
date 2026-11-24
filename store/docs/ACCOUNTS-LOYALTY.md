@@ -180,10 +180,12 @@ Not verified, and not relied on:
 ## 7. Merge notes
 - **Settings table.** This branch keeps its settings in `account_settings`. backoffice-ops creates its own
   `settings` table, so the two do not collide.
-- **Refunds on the payments branch.** Points stop counting when `orders.status` is cancelled or refunded. The
-  payments branch records refunds in `pay_status` instead. When the two merge, add
-  `OR o.pay_status = 'refunded'` to the two "does not count" tests in `src/loyalty.js` (POINTS and BALANCE).
-  That column does not exist on this branch, so it cannot be referenced here.
+- **Refunds and cancels (done at integration, 2026-11-24).** A full card refund sets `orders.status` to
+  `refunded` as well as `pay_status`, and the back office's cancel sets `cancelled`, so both void points with no
+  extra step. A part refund keeps the status: an earn row then counts only for the share of the payment kept
+  (`KEPT` in `src/loyalty.js`). A card order waiting on Stripe earns nothing yet; an order to pay at the counter
+  shows as "on the way". A reward goes to Stripe as one reduced items line, so the payment page adds up to the
+  order's total. test-account section 7b drives all of it through the real refund and cancel routes.
 - **No settings screen yet.** Points have no back-office screen on this branch. The owner turns them on with
   the API. The screen belongs to backoffice-ops.
 

@@ -63,8 +63,12 @@ ok(!P.some(p => /^OSS-1\d{3}$/.test(p.sku)), "no sample hookah is left on the si
 ok((await fetch(B + "/p/OSS-9999999", { redirect: "manual" })).status === 404, "an unknown item is still a real 404");
 
 // 4 shisha sells like any product; foil sells for pickup or local delivery until its weight is known
-const sh = await post({ ...who, ...to, method: "ship", service: "cp-exp", lines: [{ sku: shisha.sku, qty: 1 }] });
-ok(sh.status === 201 && sh.data.order.subtotal_cents === Math.round(shisha.price * 100), `shisha ships at the shop's price: ${sh.status} ${sh.data.error || ""}`);
+// Shisha is paid at the counter until the card company approves it (payments, docs/PAYMENTS.md; STRIPE_TOBACCO_OK unset here):
+// shipping it by card is refused with that reason, and a pickup paid at the counter sells it at the shop's price.
+const shCard = await post({ ...who, ...to, method: "ship", service: "cp-exp", lines: [{ sku: shisha.sku, qty: 1 }] });
+ok(shCard.status === 409 && shCard.data.counter_only === true, `shisha is not taken by card while the card company has not approved it: ${shCard.status} ${shCard.data.error || ""}`);
+const sh = await post({ ...who, method: "pickup", pay: "at_pickup", lines: [{ sku: shisha.sku, qty: 1 }] });
+ok(sh.status === 201 && sh.data.order.subtotal_cents === Math.round(shisha.price * 100), `shisha sells at the shop's price, paid at the counter: ${sh.status} ${sh.data.error || ""}`);
 ok(P.filter(p => p.cat === "shisha").length === 47 && P.filter(p => p.cat === "shisha" && p.stock === 0).length === 3, "all 47 shisha flavours are up, 3 sold out");
 const sold = P.find(p => p.cat === "shisha" && p.stock === 0); ok((await post({ ...who, method: "pickup", lines: [{ sku: sold.sku, qty: 1 }] })).status === 409, "a sold-out flavour cannot be ordered");
 const foil = P.filter(p => p.weightTbd && p.cat === "heat"); ok(foil.length === 15 && foil.every(p => p.state === "sale" && p.ship === "pickup_only"), "15 foil packs on sale, pickup or local delivery while the weight is TBD");

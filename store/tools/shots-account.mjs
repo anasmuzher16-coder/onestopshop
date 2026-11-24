@@ -19,7 +19,7 @@ try {
   const p = await ctx.newPage(), tag = ENGINE === "webkit" ? "390" : "1440";
   p.on("pageerror", e => errs.push("pageerror: " + e.message)); p.on("console", m => m.type() === "error" && !/interactive-widget/.test(m.text()) && errs.push("console: " + m.text()));
   const shot = async (name, full = true) => { await p.waitForTimeout(900); await p.screenshot({ path: `${out}/${tag}-${name}.png`, fullPage: full }); };
-  const admin = await p.request.post(B + "/api/admin/login", { data: { passcode: KEY }, headers: { "CF-Connecting-IP": "10.1.1." + (Math.random() * 200 | 0) } });
+  const admin = await p.request.post(B + "/api/admin/login", { data: { passcode: KEY }, headers: { "X-OSS-Admin": "1", "CF-Connecting-IP": "10.1.1." + (Math.random() * 200 | 0) } });
   const ah = { "X-OSS-Admin": "1", Cookie: (admin.headers()["set-cookie"] || "").split(";")[0] };
   await p.request.put(B + "/api/admin/loyalty", { data: { on: true }, headers: ah });
   // 1 sign in, through the screens

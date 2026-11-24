@@ -3,7 +3,8 @@
 // store/docs/ACCOUNTS-LOYALTY.md.
 //
 // How a balance is read: every ledger row is looked at beside its order's status at that moment.
-//   earn    on the way while the order is paid, packed or ready; points once it is shipped or collected;
+//   earn    on the way while the order is paid, packed or ready (or placed to pay at the counter); points once it is
+//           shipped or collected; a card order still waiting on Stripe earns nothing yet;
 //           nothing if the order is cancelled or refunded, and only the kept share after a part refund. Cancel or
 //           refund takes the points back with no extra step,
 //           whichever screen (or branch of the code) changed the status.
@@ -33,7 +34,7 @@ const POINTS = `COALESCE(SUM(CASE WHEN l.kind = 'earn' AND o.status IN ('shipped
     + COALESCE(SUM(CASE WHEN l.kind = 'adjust' THEN l.points END), 0)
     - COALESCE(SUM(CASE WHEN l.kind = 'redeem' AND o.status NOT IN ('cancelled','refunded') THEN l.points END), 0)`;
 const FROM = "FROM loyalty_ledger l LEFT JOIN orders o ON o.id = l.order_id WHERE l.customer_id = ?1";
-const BALANCE = `SELECT ${POINTS} AS points, COALESCE(SUM(CASE WHEN l.kind = 'earn' AND o.status IN ('paid','packed','ready') THEN ${KEPT} END), 0) AS coming ${FROM}`;
+const BALANCE = `SELECT ${POINTS} AS points, COALESCE(SUM(CASE WHEN l.kind = 'earn' AND (o.status IN ('paid','packed','ready') OR (o.status = 'pending' AND o.pay_status = 'pay_at_pickup')) THEN ${KEPT} END), 0) AS coming ${FROM}`;
 export async function balance(db, customerId) {
   const r = await db.prepare(BALANCE).bind(customerId).first();
   return { points: r?.points ?? 0, coming: r?.coming ?? 0 };

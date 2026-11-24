@@ -1,15 +1,20 @@
 // Back office round two, against the running local store: staff sign-in with PINs (hashed, locked out after wrong
 // tries, ended on removal), who-did-what on every change, Count and Receive (a repeated tap counts once), cancel with
 // restock (never twice), the staff-only ID tick, where orders came from, and the monthly report with its 5% share.
-// node store/tools/test-backoffice.mjs   (changes local data and locks local sign-in for 15 minutes at the end: reseed afterwards)
+// PERSIST=<the store's --persist-to folder> node store/tools/test-backoffice.mjs   (changes local data and locks local sign-in for 15 minutes at the end: reseed afterwards)
 import { readFileSync } from "node:fs";
 import { cleanSource } from "../src/source.js";
 import { share, monthStart, monthOf, reportCsv } from "../src/report.js";
 import { pinProblem } from "../src/staff.js";
+import { execFileSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 const B = (process.env.BASE || "http://127.0.0.1:4420").replace(/\/$/, "");
 const KEY = process.env.ADMIN_KEY || readFileSync(new URL("../.dev.vars", import.meta.url), "utf8").match(/ADMIN_KEY=(.+)/)[1].trim();
 let n = 0, f = 0; const ok = (c, msg) => { n++; if (!c) { f++; console.log("FAIL", msg); } };
 const jar = { owner: "", staff: "" };
+// the local server drops idle kept-alive connections while a database command runs beside it: a reset before any answer is retried
+const fetch = async (u, o) => { for (let i = 0; ; i++) try { return await globalThis.fetch(u, o); } catch (e) { if (i >= 2 || e?.cause?.code !== "ECONNRESET") throw e; } };
 const call = async (path, { method = "GET", body, as = "owner", headers = {} } = {}) => {
   const h = { ...headers }; if (jar[as]) h.Cookie = jar[as]; if (body !== undefined) { h["Content-Type"] = "application/json"; h["X-OSS-Admin"] = "1"; }
   const r = await fetch(B + path, { method, headers: h, body: body === undefined ? undefined : JSON.stringify(body) });
@@ -82,13 +87,19 @@ ok((await A(`/products/${SKU}/history`)).data.changes.some(c => c.action === "pr
 await A(`/products/${SKU}`, { method: "PUT", body: { price_cents: 5400 } });
 
 // ---- orders: source, cancel with restock, the ID tick ----
-const place = async (sku, qty, extra = {}) => (await call("/api/orders", { method: "POST", as: "none", body: { name: "Rhea Mbeki", email: "rhea@example.com", method: "pickup", lines: [{ sku, qty }], ...extra } }));
+// a shopper's order, paid on the Stripe stand-in (tools/fake-stripe.mjs): its signed webhook marks it paid, as for a real card
+const place = async (sku, qty, extra = {}) => {
+  const r = await call("/api/orders", { method: "POST", as: "none", body: { name: "Rhea Mbeki", email: "rhea@example.com", method: "pickup", lines: [{ sku, qty }], ...extra } });
+  if (r.status === 201 && r.data.pay?.url) { await fetch(r.data.pay.url, { method: "POST", redirect: "manual" }); await new Promise(res => setTimeout(res, 300)); }
+  return r;
+};
 const before = (await prod(SKU)).stock;
 const o1 = await place(SKU, 2, { source: { src: "card", referrer: "https://www.google.com/maps?q=me", landing: "/p/OSS-8004", utm_campaign: "fall" } });
 ok(o1.status === 201 && (await prod(SKU)).stock === before - 2, "an order takes stock");
 const d1 = (await A("/orders/" + o1.data.order.id)).data;
 ok(d1.order.source === "card" && JSON.parse(d1.order.source_detail).ref_host === "google.com" && JSON.parse(d1.order.source_detail).utm_campaign === "fall" && !d1.order.source_detail.includes("q=me") && !("cancel_op" in d1.order), "the order records where it came from, without the full address");
-ok(!JSON.stringify(o1.data).includes("card") && !JSON.stringify(o1.data).includes("source"), "the shopper's confirmation does not echo tracking data");
+{ const seen = JSON.stringify(o1.data);   // "card" is also the payment method in the answer, so the tracking values are checked one by one
+  ok(!seen.includes("source") && !seen.includes('"src"') && !seen.includes("google") && !seen.includes("fall") && !seen.includes("landing"), "the shopper's confirmation does not echo tracking data"); }
 const id1 = o1.data.order.id;
 ok((await A(`/orders/${id1}/cancel`, { method: "POST", as: "staff", body: {} })).status === 400, "cancel needs a reason");
 ok((await A(`/orders/${id1}/cancel`, { method: "POST", as: "staff", body: { reason: "other" } })).status === 400, "Other needs a few words");
@@ -128,7 +139,12 @@ if (o3) {
   const mail = (await A("/orders/" + id3)).data.emails.find(e => e.kind === "order_placed"), html = mail ? (await A("/emails/" + mail.id)).data.email.html : "";
   ok(html && !/\bID\b|age|young/i.test(html.replace(/<[^>]+>/g, " ")), "the order email says nothing about ID");
 }
-// pickups waiting 3 days or more
+// pickups waiting 3 days or more. The sample seed's own ready order ages with the calendar, so the test makes its own:
+// the order marked ready above is moved back four days in the local database (PERSIST, the store's --persist-to folder).
+if (process.env.PERSIST) {
+  const WRANGLER = process.env.WRANGLER_JS || join(execFileSync(process.platform === "win32" ? "npm.cmd" : "npm", ["root", "-g"], { encoding: "utf8", shell: process.platform === "win32" }).trim(), "wrangler", "bin", "wrangler.js");
+  execFileSync(process.execPath, [WRANGLER, "d1", "execute", "onestopshop", "--local", "--persist-to", process.env.PERSIST, "--command", `UPDATE orders SET ready_at = strftime('%Y-%m-%dT%H:%M:%SZ','now','-4 days') WHERE id = '${id2}' AND status = 'ready'`], { cwd: fileURLToPath(new URL("..", import.meta.url)), stdio: "ignore" });
+}
 const sum = (await A("/summary", { as: "staff" })).data;
 ok(typeof sum.todo.pickup_overdue === "number" && sum.todo.pickup_overdue >= 1, "Today counts pickups waiting 3 days or more: " + sum.todo.pickup_overdue);
 

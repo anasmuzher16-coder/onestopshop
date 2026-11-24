@@ -64,7 +64,7 @@ async function page(request, env, url, ctx) {
   const live = env.LIVE === "1";
   const canonical = url.origin + (url.pathname.replace(/\/+$/, "") || "/");
   const shell = await env.ASSETS.fetch(new URL("/index.html", url));
-  const extra = [`<link rel="canonical" href="${canonical}">`, `<meta name="oss-pay" content="${cardReady(env) ? "card" : "off"}">`,
+  const extra = [`<link rel="canonical" href="${canonical}">`, `<meta name="oss-pay" content="${cardReady(env) ? "card" : "off"}">`, `<meta name="oss-shisha-card" content="${env.STRIPE_TOBACCO_OK === "1" ? "1" : "0"}">`,
     `<meta property="og:type" content="${meta.product ? "product" : "website"}">`, `<meta property="og:site_name" content="${esc(site)}">`,
     `<meta property="og:title" content="${esc(meta.title)}">`, `<meta property="og:description" content="${esc(meta.desc)}">`, `<meta property="og:url" content="${canonical}">`];
   if (meta.product) {
@@ -123,7 +123,7 @@ function sitemap(cat, url) {
 export default {
   // every night: a full copy of the shop's records into the backup bucket
   async scheduled(event, env, ctx) {
-    if (event.cron === "*/10 * * * *") { ctx.waitUntil(sweep(env).then(r => console.log(JSON.stringify({ at: "pay-sweep", ...r })))); return; }   // every 10 minutes: unpaid orders checked with Stripe
+    if (event.cron === "*/10 * * * *") { ctx.waitUntil(sweep(env).then(r => { console.log(JSON.stringify({ at: "pay-sweep", ...r })); if (r.paid || r.released) dropCatalog(ctx); })); return; }   // every 10 minutes: unpaid orders checked with Stripe; stock it put back shows in the shop at once
     ctx.waitUntil(scrubCodes(env).then(() => nightly(env))); ctx.waitUntil(stockAlerts(env).then(() => restockReminders(env)));   // nightly: backup, and the customers' alerts and charcoal reminders
   },
   async fetch(request, env, ctx) {

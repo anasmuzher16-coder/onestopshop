@@ -770,9 +770,16 @@ function orderKeyDone() { state.orderKey = null; try { sessionStorage.removeItem
 // Card goes to Stripe's own page (the card number never touches this site). Pickup can also pay at the counter.
 // The server says whether card payment is switched on, in a meta tag it writes on every page.
 const CARD_ON = document.querySelector('meta[name="oss-pay"]')?.content === "card";
-const payWay = sc => !sc.pickup ? "card" : !CARD_ON ? "at_pickup" : state.pay === "at_pickup" ? "at_pickup" : "card";
+// Shisha is paid at the counter until the card company approves it in writing (src/checkout.js, docs/PAYMENTS.md):
+// a cart holding it is picked up and paid at the counter, and the page says so before the shopper taps anything.
+const SHISHA_CARD = document.querySelector('meta[name="oss-shisha-card"]')?.content === "1";
+const counterPay = p => !!p && p.cat === "shisha" && !SHISHA_CARD;
+const counterPayIn = lines => lines.filter(l => counterPay(l.product));
+const payWay = sc => !sc.pickup ? "card" : !CARD_ON || counterPayIn(cartLines()).length ? "at_pickup" : state.pay === "at_pickup" ? "at_pickup" : "card";
 const payLabel = (sc, total) => sc.local && deliveryFeeNow() === null ? "Check delivery price" : payWay(sc) === "card" ? `Pay ${money(total / 100)}` : "Place order";
 function payBlock(sc, total) {
+  const shisha = counterPayIn(cartLines());
+  if (shisha.length) return `<fieldset class="co__set co__pay"><legend class="h3">Payment</legend><p class="co__p">${sc.pickup ? "At the counter when you pick it up. Shisha is paid in the shop." : `Shisha is paid at the counter when you pick it up, so this order needs pickup. <a class="link" href="/cart">Choose pickup</a>, or take ${shisha.length === 1 ? esc(shisha[0].product.name) : "the shisha"} out to have the rest delivered.`}</p></fieldset>`;
   if (!sc.pickup) return `<fieldset class="co__set co__pay"><legend class="h3">Payment</legend><p class="co__p">${CARD_ON ? "By card on the next page. Apple Pay and Google Pay work there too." : "Card payment is not switched on yet. Choose pickup to pay at the counter, or call 519-255-2222."}</p></fieldset>`;
   if (!CARD_ON) return `<fieldset class="co__set co__pay"><legend class="h3">Payment</legend><p class="co__p">At the counter when you pick it up.</p></fieldset>`;
   const way = payWay(sc), opt = (v, name, small, right) => `<label class="opt"><input type="radio" name="pay" value="${v}" ${way === v ? "checked" : ""}><span class="opt__name">${name}<small>${small}</small></span><span class="num">${right}</span></label>`;
@@ -832,7 +839,7 @@ function viewCheckout() {
       ${payBlock(sc, shownTotals(lines, sc).total)}
       ${coTotals(lines, sc)}
       <p class="field__err" role="alert" data-co-err hidden></p>
-      <button class="btn btn--wide" type="submit" ${(!pickup && !state.dest.complete) || (!pickup && !CARD_ON) ? "disabled" : ""}>${payLabel(sc, shownTotals(lines, sc).total)}</button>
+      <button class="btn btn--wide" type="submit" ${(!pickup && !state.dest.complete) || (!pickup && !CARD_ON) || (!pickup && counterPayIn(lines).length) ? "disabled" : ""}>${payLabel(sc, shownTotals(lines, sc).total)}</button>
       ${CARD_ON ? `<p class="fine" data-pay-fine ${payWay(sc) === "card" ? "" : "hidden"}>Payment is taken by Stripe. We never see your card number.</p>` : ""}
     </form>
   </section>`;

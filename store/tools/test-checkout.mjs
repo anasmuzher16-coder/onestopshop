@@ -53,7 +53,7 @@ const last = await stockOf("OSS-7006");
 const race = await Promise.all([1, 2, 3].map(() => post({ ...who, method: "pickup", lines: [{ sku: "OSS-7006", qty: last }] })));
 ok(race.filter(r => r.status === 201).length === 1 && (await stockOf("OSS-7006")) === 0, `three shoppers after the last ${last}: exactly one gets it (${race.map(r => r.status).join(",")})`);
 // the shop sees it
-const login = await fetch(B + "/api/admin/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ passcode: KEY }) }), cookie = (login.headers.get("set-cookie") || "").split(";")[0];
+const login = await fetch(B + "/api/admin/login", { method: "POST", headers: { "Content-Type": "application/json", "X-OSS-Admin": "1" }, body: JSON.stringify({ passcode: KEY }) }), cookie = (login.headers.get("set-cookie") || "").split(";")[0];
 const orders = (await (await fetch(B + "/api/admin/orders", { headers: { Cookie: cookie } })).json()).orders;
 ok(a.status === 201 && orders.some(o => o.id === a.data.order.id && o.status === "pending" && o.pay_status === "awaiting"), "before payment the order waits, not To pack");
 if (a.data.pay?.url) await fetch(a.data.pay.url, { method: "POST", redirect: "manual" });   // pay on the Stripe stand-in: its signed webhook marks the order paid

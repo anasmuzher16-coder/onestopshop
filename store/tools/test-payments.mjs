@@ -18,18 +18,18 @@ const status = async s => (await (await fetch(B + "/api/pay/status?session=" + s
 const wait = ms => new Promise(r => setTimeout(r, ms));
 const who = { name: "Pay Tester", email: "pay@example.com" };
 const pickup = (sku, qty, extra = {}) => ({ ...who, method: "pickup", lines: [{ sku, qty }], ...extra });
-const login = await fetch(B + "/api/admin/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ passcode: KEY }) }); cookie = (login.headers.get("set-cookie") || "").split(";")[0];
+const login = await fetch(B + "/api/admin/login", { method: "POST", headers: { "Content-Type": "application/json", "X-OSS-Admin": "1" }, body: JSON.stringify({ passcode: KEY }) }); cookie = (login.headers.get("set-cookie") || "").split(";")[0];
 ok(login.status === 200, "signed in to the back office");
 
 // 1 tampering: prices, totals and amounts from the browser are ignored; Stripe is asked for the server's figure
-const s0 = await stockOf("OSS-1001");
-const t = await post({ ...who, postal: "M5V 2T6", address: { line1: "1 Test Street", city: "Toronto" }, method: "ship", service: "cp-exp", lines: [{ sku: "OSS-1001", qty: 1, price: 0.01, unit_cents: 1 }], total_cents: 1, amount: 1, subtotal_cents: 1 });
+const s0 = await stockOf("OSS-2001"), PRICE = (await (await fetch(B + "/api/catalog")).json()).products.find(p => p.sku === "OSS-2001").price_cents;   // the shelf price, read from the shop
+const t = await post({ ...who, postal: "M5V 2T6", address: { line1: "1 Test Street", city: "Toronto" }, method: "ship", service: "cp-exp", lines: [{ sku: "OSS-2001", qty: 1, price: 0.01, unit_cents: 1 }], total_cents: 1, amount: 1, subtotal_cents: 1 });
 ok(t.status === 201 && t.data.pay?.status === "awaiting" && /^http:\/\/127\.0\.0\.1:4498\/pay\/cs_/.test(t.data.pay?.url || ""), "card order opens a payment page: " + t.status + " " + (t.data.error || ""));
 const ts = await session(t.data.pay.session);
-ok(ts.amount_total === t.data.order.total_cents && ts.currency === "cad" && t.data.order.subtotal_cents === 64900, `Stripe is asked for the server's total ${t.data.order.total_cents}, got ${ts.amount_total}`);
-ok(ts.line_items_sent.some(l => l.price_data.unit_amount === "64900") && !ts.line_items_sent.some(l => l.price_data.unit_amount === "1"), "line prices come from the database");
+ok(ts.amount_total === t.data.order.total_cents && ts.currency === "cad" && t.data.order.subtotal_cents === PRICE, `Stripe is asked for the server's total ${t.data.order.total_cents}, got ${ts.amount_total}`);
+ok(ts.line_items_sent.some(l => l.price_data.unit_amount === String(PRICE)) && !ts.line_items_sent.some(l => l.price_data.unit_amount === "1"), "line prices come from the database");
 ok(ts.metadata.order_id === t.data.order.id && ts.client_reference_id === t.data.order.id, "the page carries the order code");
-ok((await stockOf("OSS-1001")) === s0 - 1, "stock is held while payment is open");
+ok((await stockOf("OSS-2001")) === s0 - 1, "stock is held while payment is open");
 ok((await order(t.data.order.id)).order.status === "pending", "not paid yet: the order waits");
 ok((await post({ ...who, method: "pickup", lines: [{ sku: "OSS-8004", qty: 1 }], expected_total_cents: 1 })).status === 409, "a total the shopper did not see is refused");
 ok((await post({ ...who, method: "pickup", pay: "bitcoin", lines: [{ sku: "OSS-8004", qty: 1 }] })).status === 400, "an unknown way to pay is refused");
@@ -62,7 +62,7 @@ const replayEv = completed(ts, { payment_intent: o1.order.pay_intent }); await h
 ok(r2.data.repeat === true, "the very same event id is recognised as a repeat");
 ok((await order(t.data.order.id)).emails.filter(e => e.kind === "order_placed").length === 1, "still one receipt after four deliveries");
 const lateExpire = await hook(B, expired(ts));
-ok(lateExpire.data.result === "repeat" && (await stockOf("OSS-1001")) === s0 - 1, "an expiry after payment puts no stock back");
+ok(lateExpire.data.result === "repeat" && (await stockOf("OSS-2001")) === s0 - 1, "an expiry after payment puts no stock back");
 ok(await status(ts.id) === "paid", "the order page's status call says paid");
 ok((await fetch(B + "/api/pay/status?session=nope")).status === 404, "the status call needs a real page id");
 
