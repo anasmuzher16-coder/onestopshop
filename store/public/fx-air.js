@@ -57,7 +57,7 @@ function fill(k, burst) {
   veil = []; for (let i = 0; i < 12; i++) veil.push({ x: Math.random(), y: Math.random(), r: rnd(.16, .32), vx: rnd(-.005, .005), vy: rnd(-.006, .003), ph: rnd(0, 6.28) });
 }
 // measured from the canvas itself (CSS 100lvh), so it is never stretched; a moving URL bar changes nothing and wipes nothing
-function size() { const d = Math.min(1.5, devicePixelRatio || 1), nw = cv.clientWidth || innerWidth, nh = cv.clientHeight || innerHeight, pw = Math.round(nw * d), ph = Math.round(nh * d); if (cv.width && w === nw && Math.abs(h - nh) <= 140) return false; /* the phone address bar moving is not a new page: nothing reshuffles */ w = nw; h = nh; cv.width = pw; cv.height = ph; g.setTransform(d, 0, 0, d, 0, 0); return true; }
+function size() { const d = Math.min(2, devicePixelRatio || 1), nw = cv.clientWidth || innerWidth, nh = cv.clientHeight || innerHeight, pw = Math.round(nw * d), ph = Math.round(nh * d); if (cv.width && w === nw && Math.abs(h - nh) <= 140) return false; /* the phone address bar moving is not a new page: nothing reshuffles */ w = nw; h = nh; cv.width = pw; cv.height = ph; g.setTransform(d, 0, 0, d, 0, 0); return true; }
 function draw(t) {
   const c = P[kind], s = (t - now0) / 1000, big = Math.max(w, h); g.clearRect(0, 0, w, h);
   for (const v of veil) { const x = ((v.x + v.vx * s) % 1.3 + 1.3) % 1.3 - .15, y = ((v.y + v.vy * s) % 1.3 + 1.3) % 1.3 - .15, z = v.r * big; g.globalAlpha = (c.haze + c.haze * .35 * Math.sin(s * .2 + v.ph)) * level * (1 + 1.9 * surge * Math.max(0, 1 - s / 4.6)); g.drawImage(glow, x * w - z, y * h - z, z * 2, z * 2); }
@@ -85,7 +85,7 @@ function start(k) {
   cv = document.createElement("canvas"); cv.className = "pour pour--air"; cv.setAttribute("aria-hidden", "true"); g = cv.getContext("2d"); if (!g) { cv.width = cv.height = 0; cv = null; still(k); return; }
   document.body.prepend(cv); size(); kind = k; fill(k, firstOpen(k)); now0 = born = prev = performance.now(); level = 0; raf = requestAnimationFrame(loop); requestAnimationFrame(() => { if (cv) cv.classList.add("on"); });
 }
-function end() { if (raf) cancelAnimationFrame(raf); raf = 0; if (cv) { cv.width = cv.height = 0; cv.remove(); cv = null; g = null; } kind = want = null; drops = []; lines = []; }
+function end() { if (raf) cancelAnimationFrame(raf); raf = 0; if (cv) { cv.width = cv.height = 0; cv.remove(); cv = null; g = null; } w = h = 0; /* the next canvas must measure itself, or it stays at the browser's 300x150 default and stretches */ kind = want = null; drops = []; lines = []; }
 function still(k) { root.classList.add("air-page", "air-still"); root.dataset.air = k; }
 function clear() { end(); root.classList.remove("air-page", "air-still"); root.removeAttribute("data-air"); }
 function stick() { if (stuckHead?.isConnected && stuckBar) stuckBar.classList.toggle("is-stuck", stuckHead.getBoundingClientRect().bottom < stuckBar.getBoundingClientRect().top - .5); }

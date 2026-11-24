@@ -79,10 +79,10 @@ function target(w, h) {
 const pair = (w, h) => { const x = { a: target(w, h), b: target(w, h), swap() { const s = x.a; x.a = x.b; x.b = s; } }; return x; };
 function release() { if (!F || !gl) { F = null; return; } for (const x of [F.u.a, F.u.b, F.d.a, F.d.b, F.p.a, F.p.b, F.div]) { gl.deleteTexture(x.t); gl.deleteFramebuffer(x.f); } F = null; }
 function size() {
-  W = Math.max(1, innerWidth); Hh = Math.max(1, innerHeight); asp = W / Hh;
-  const k = Math.min(1, 900 / Math.max(W, Hh)), long = Math.max(W, Hh), g = n => [Math.max(8, Math.round(n * W / long)), Math.max(8, Math.round(n * Hh / long))];
+  W = Math.max(1, cv.clientWidth || innerWidth); Hh = Math.max(1, cv.clientHeight || innerHeight); asp = W / Hh;   // measured from the canvas (CSS 100lvh): a phone's address bar can never stretch the smoke
+  const long = Math.max(W, Hh), k = lite ? Math.min(1, 900 / long) : Math.min(Math.min(2, devicePixelRatio || 1), 1440 / long), g = n => [Math.max(8, Math.round(n * W / long)), Math.max(8, Math.round(n * Hh / long))];
   const cw = Math.round(W * k), ch = Math.round(Hh * k); if (cv.width !== cw || cv.height !== ch) { cv.width = cw; cv.height = ch; }
-  release(); const [uw, uh] = g(170), [dw, dh] = g(560);
+  release(); const [uw, uh] = g(170), [dw, dh] = g(lite ? 560 : 760);
   F = { u: pair(uw, uh), p: pair(uw, uh), div: target(uw, uh), d: pair(dw, dh) };
   return F.u.a.ok && F.d.a.ok && F.p.a.ok && F.div.ok;
 }
@@ -168,7 +168,7 @@ function beginAir() {
   const rnd = (a, b) => a + Math.random() * (b - a); let w = 0, h = 0, drops = [], veil = [], limit = 1, slowFrames = 0, odd = false, prev = performance.now();
   let t0 = performance.now(), hiddenAt = 0; const ox = () => org[0] * w, oy = () => (1 - org[1]) * h;
   const place = (p, now, first) => { const u = Math.random(), v = veil.length && Math.random() < .64 ? veil[Math.floor(Math.random() * veil.length)] : null, near = () => (Math.random() + Math.random() + Math.random() - 1.5) * .24; p.x = (v ? v.x + near() : rnd(-.02, 1.02)) * w; p.y = (v ? v.y + near() : rnd(-.02, 1.02)) * h; p.vx = rnd(-7, 7); p.vy = rnd(1.5, 11); p.r = .18 + .62 * u * u * u; p.a = rnd(.16, .58); p.life = rnd(6, 15); p.born = first ? now - rnd(0, p.life) : now + rnd(0, 700); p.tw = rnd(.5, 1.6); p.ph = rnd(0, 6.28); p.sw = rnd(2, 8); p.fly = 0; };
-  const fit = () => { const d = Math.min(1.5, devicePixelRatio || 1), nw = c.clientWidth || innerWidth, nh = c.clientHeight || innerHeight, pw = Math.round(nw * d), ph = Math.round(nh * d); if (document.hidden && w) return; if (c.width && w === nw && Math.abs(h - nh) <= 140) return; w = nw; h = nh; W = w; Hh = h; c.width = pw; c.height = ph; g.setTransform(d, 0, 0, d, 0, 0); const n = Math.round(Math.min(2400, 300 + w * h / 620)), now = performance.now();
+  const fit = () => { const d = Math.min(2, devicePixelRatio || 1), nw = c.clientWidth || innerWidth, nh = c.clientHeight || innerHeight, pw = Math.round(nw * d), ph = Math.round(nh * d); if (document.hidden && w) return; if (c.width && w === nw && Math.abs(h - nh) <= 140) return; w = nw; h = nh; W = w; Hh = h; c.width = pw; c.height = ph; g.setTransform(d, 0, 0, d, 0, 0); const n = Math.round(Math.min(2400, 300 + w * h / 620)), now = performance.now();
     if (!veil.length) for (let i = 0; i < 18; i++) veil.push({ x: Math.random(), y: Math.random(), r: rnd(.16, .32), vx: rnd(-.006, .006), vy: rnd(.002, .008), ph: rnd(0, 6.28) });
     while (drops.length < n) { const p = {}; place(p, now, !open); if (open) { p.born = t0 + rnd(650, 1150); p.fly = rnd(2.4, 4.2); p.life = rnd(8, 16); } drops.push(p); } drops.length = n; };
   fit(); aim();
@@ -242,7 +242,7 @@ function place() {
   modeName = next; M = MODES[next]; begin(); stick(); settled();
 }
 addEventListener("scroll", stick, { passive: true });
-let rs = 0; addEventListener("resize", () => { clearTimeout(rs); rs = setTimeout(() => { if (on && !lost && !parked && (innerWidth !== W || Math.abs(innerHeight - Hh) > 140)) { if (size()) { if (heavy && T < M.end) show(); else settle(); } else toStill(); } }, 200); });
+let rs = 0; addEventListener("resize", () => { clearTimeout(rs); rs = setTimeout(() => { if (on && !lost && !parked && (cv.clientWidth !== W || Math.abs(cv.clientHeight - Hh) > 140)) { if (size()) { if (heavy && T < M.end) show(); else settle(); } else toStill(); } }, 200); });
 document.addEventListener("visibilitychange", kick);
 addEventListener("pagehide", () => { if (on && !lost) { if (raf) cancelAnimationFrame(raf); raf = 0; release(); parked = true; } });
 addEventListener("pageshow", () => { if (parked && on && !lost) { parked = false; if (size()) settle(); else { toStill(); return; } } kick(); });

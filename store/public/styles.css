@@ -565,6 +565,11 @@ html:not(.hero-seen) .piece .sticker{animation-timing-function:linear(0,.25 6%,.
 /* The Pour: live smoke on the black page ground only. Fixed under all content; the header band, tiles, labels and bars stay opaque above it. */
 .pour{position:fixed;inset:0;width:100vw;height:100lvh;z-index:-1;pointer-events:none;opacity:0;transition:opacity .35s var(--ease-state)}
 .pour.on{opacity:1}
+/* the living background stays put through a page change: it is never captured, slid or scaled with the page */
+.pour:not(.pour--spritz){view-transition-name:backdrop}
+::view-transition-group(backdrop){animation:none;z-index:-1}
+::view-transition-old(backdrop){display:none}
+::view-transition-new(backdrop){animation:none;opacity:1;width:100%;height:100%;object-fit:cover}
 .pour--spritz{z-index:40;opacity:1;transition:none}
 html.pour-still body::before{content:"";position:fixed;inset:0 0 auto;height:100lvh;z-index:-1;pointer-events:none;background:var(--coal-0) url(img/pour-still.webp) center / cover no-repeat}
 html.pour-page .top{background:var(--color-bg);-webkit-backdrop-filter:none;backdrop-filter:none}
