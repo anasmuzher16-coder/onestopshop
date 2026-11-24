@@ -1,6 +1,7 @@
 // One Stop Shop store Worker. Answers the page routes (each with its own title, description and a real 404),
 // serves the catalogue from the database, and passes every other request to the static files.
-import { loadCatalog, shopCatalog, dropCatalog, catalogModule, counterRow, CHARCOAL } from "./catalog.js";
+import { loadCatalog, shopCatalog, dropCatalog, catalogModule, counterRow, sellable, toStorefront, CHARCOAL } from "./catalog.js";
+import { heroPicks } from "../public/picks.js";
 import { admin, photo } from "./admin.js";
 import { placeOrder } from "./checkout.js";
 import { deliveryRoute } from "./delivery.js";
@@ -25,12 +26,15 @@ function describe(path, cat, site) {
   if (a === "shop") {
     if (!b) return { ...base, title: `Shop | ${site}` };
     const c = cat.categories.find(x => x.id === b); if (!c) return null;
-    const list = cat.products.filter(p => p.category_id === c.id), n = list.length, counter = n && list.every(counterRow);
+    const list = cat.products.filter(p => p.category_id === c.id), n = new Set(list.map(p => p.family || p.sku)).size, counter = n && list.every(counterRow);
+    // nothing in this section can be bought yet: say what stage it is at, never "in stock"
+    if (n && !list.some(sellable)) return { title: `${c.name} | ${site}`, desc: list.some(p => p.price_cents > 0) ? `${n} ${c.name.toLowerCase()} coming soon to our Windsor counter.` : `${n} ${c.name.toLowerCase()} from the catalogue. Shop prices are on the way.`, index: true };
     return { title: `${c.name} | ${site}`, desc: counter ? `${n} ${c.id === CHARCOAL ? "kinds of hookah charcoal" : c.name.toLowerCase()} at our Windsor counter. Pickup or local delivery only.` : `${n} ${c.name.toLowerCase()} in stock at our Windsor counter, shipped anywhere in Canada.`, index: true };
   }
   if (a === "p") {
     const p = cat.products.find(x => x.sku === b); if (!p) return null;
-    return { title: `${p.name} | ${site}`, desc: `${p.note}. ${money(p.price_cents)}. ${counterRow(p) ? "Pickup in Windsor or local delivery near Windsor. Not shipped." : "Shipped across Canada or free pickup in Windsor."}`, index: true, product: p };
+    const said = sellable(p) ? money(p.price_cents) : p.price_cents > 0 ? `${money(p.price_cents)}, coming soon` : "Price TBD";   // no shop price yet: nothing else stands in for it
+    return { title: `${p.name} | ${site}`, desc: `${p.note ? p.note + ". " : ""}${said}. ${counterRow(p) ? "Pickup in Windsor or local delivery near Windsor. Not shipped." : "Shipped across Canada or free pickup in Windsor."}`, index: true, product: p };
   }
   if (a === "order") return b && /^W[A-Z0-9]{6}$/.test(b) ? { ...base, title: `Order ${b} | ${site}`, index: false } : null;
   if (a === "gifts" && b && b !== "under-50" && b !== "under-150") return null;
@@ -40,10 +44,18 @@ function describe(path, cat, site) {
   return { ...base, title: `${fixed[a]} | ${site}`, index: ["shipping", "set", "privacy", "terms"].includes(a) };
 }
 
+// A product that has been taken off the shop (the demo's sample hookahs, 2026-11-24) is never deleted, because orders
+// point at it. Its old address sends people to its section instead of a dead end. One small read, and only on a miss.
+async function retiredTo(env, path) {
+  const m = path.match(/^\/p\/(OSS-\d{4,6})\/?$/); if (!m) return null;
+  const row = await env.DB.prepare("SELECT p.category_id FROM products p JOIN categories c ON c.id = p.category_id WHERE p.sku = ?1 AND p.active = 0 AND p.listed = 0 AND c.active = 1").bind(m[1]).first();
+  return row ? `/shop/${row.category_id}` : null;
+}
 async function page(request, env, url, ctx) {
   const cat = await shopCatalog(env, ctx);
   const site = env.SITE_NAME || "One Stop Shop";
   const d = describe(url.pathname, cat, site);
+  if (!d) { const to = await retiredTo(env, url.pathname); if (to) return new Response(null, { status: 301, headers: { Location: url.origin + to, "Cache-Control": "public, max-age=3600", "X-Robots-Tag": "noindex, nofollow" } }); }
   const meta = d || { title: `Page not found | ${site}`, desc: "That page does not exist.", index: false };
   const live = env.LIVE === "1";
   const canonical = url.origin + (url.pathname.replace(/\/+$/, "") || "/");
@@ -52,11 +64,12 @@ async function page(request, env, url, ctx) {
     `<meta property="og:type" content="${meta.product ? "product" : "website"}">`, `<meta property="og:site_name" content="${esc(site)}">`,
     `<meta property="og:title" content="${esc(meta.title)}">`, `<meta property="og:description" content="${esc(meta.desc)}">`, `<meta property="og:url" content="${canonical}">`];
   if (meta.product) {
-    const p = meta.product, img = p.img ? `${url.origin}/img/pc/${p.img}.webp` : `${url.origin}/img/share.jpg`;   // no photo yet: the shop's share image, never a broken link
-    extra.push(`<meta property="og:image" content="${img}">`);
-    const ld = { "@context": "https://schema.org", "@type": "Product", name: p.name, sku: p.sku, description: p.note, image: img,
-      offers: { "@type": "Offer", price: (p.price_cents / 100).toFixed(2), priceCurrency: "CAD", url: canonical, availability: "https://schema.org/" + (p.stock > 0 ? "InStock" : "OutOfStock"),
-        ...(counterRow(p) ? { availableDeliveryMethod: "http://purl.org/goodrelations/v1#DeliveryModePickUp" } : {}) } };
+    const p = meta.product, img = p.photo_ver ? `${url.origin}/api/photo/${p.sku}?v=${p.photo_ver}` : p.img ? `${url.origin}/img/pc/${p.img}.webp` : `${url.origin}/img/share.jpg`;   // no photo yet: the shop's share image, never a broken link
+    extra.push(`<meta property="og:image" content="${esc(img)}">`);
+    // an offer is stated only for something on sale at the shop's own price; an item on view without one has no offer at all
+    const ld = { "@context": "https://schema.org", "@type": "Product", name: p.name, sku: p.sku, ...(p.note ? { description: p.note } : {}), image: img,
+      ...(sellable(p) ? { offers: { "@type": "Offer", price: (p.price_cents / 100).toFixed(2), priceCurrency: "CAD", url: canonical, availability: "https://schema.org/" + (p.stock > 0 ? "InStock" : "OutOfStock"),
+        ...(counterRow(p) ? { availableDeliveryMethod: "http://purl.org/goodrelations/v1#DeliveryModePickUp" } : {}) } } : {}) };
     extra.push(`<script type="application/ld+json">${JSON.stringify(ld).replace(/</g, "\\u003c")}</script>`);
   }
   else extra.push(`<meta property="og:image" content="${url.origin}/img/share.jpg">`, `<meta property="og:image:width" content="1200">`, `<meta property="og:image:height" content="630">`, `<meta name="twitter:card" content="summary_large_image">`);
@@ -78,14 +91,20 @@ async function page(request, env, url, ctx) {
   if (!(live && meta.index)) headers.set("X-Robots-Tag", "noindex, nofollow"); else headers.delete("X-Robots-Tag");   // _headers marks everything noindex for the demo; a live, indexable page must drop it
   return new Response(out.body, { status: d ? 200 : 404, headers });
 }
-const esc = s => String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
-// The first hookah in the home hero, picked the way the page picks it, with the same image list, so the browser reuses this download.
-const HERO = ["Mamoun Hatshepsut", "Sultan Totem", "Mamoun Cafe Chiller", "Lounge Six", "Mamoun Star"], IMG_V = "?v=1794615693";   // IMG_V matches V in public/app.js
-function heroFirst(cat) {
-  const ok = p => p && p.category_id === "hookahs" && !p.img_dark && p.img && !p.photo_ver && p.stock !== 0;
-  return HERO.map(n => cat.products.find(p => p.name === n)).find(ok) || cat.products.find(ok) || null;
+// The public catalogue feed: what a shopper can already see, nothing more. Research notes, photo rights, source lines
+// and catalogue facts stay in the database; an item not on sale shows no stock count.
+const FEED = ["sku", "name", "category_id", "price_cents", "weight_g", "box_id", "glass", "ship_class", "height_cm", "note", "img", "stock"];
+function publicFeed(cat) {
+  return { categories: cat.categories, boxes: cat.boxes, products: cat.products.map(p => {
+    const o = {}; for (const k of FEED) o[k] = p[k];
+    o.for_sale = sellable(p); if (!o.for_sale) o.stock = 0; if (!(p.price_cents > 0)) o.price_cents = null;
+    return o; }) };
 }
-const heroPreload = p => { const u = s => `img/pc/${p.img}${s}.webp${IMG_V}`; return `<link rel="preload" as="image" fetchpriority="high" href="${u("")}" imagesrcset="${u("-s")} 360w, ${u("-m")} 540w, ${u("")} 720w${p.img_lw ? `, ${u("-l")} ${p.img_lw}w` : ""}" imagesizes="(min-width:960px) 42vw, 58vw">`; };
+const esc = s => String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+// The first hookah in the home hero, picked by the page's own rule (public/picks.js), with the same image list, so the browser reuses this download.
+const IMG_V = "?v=1794615693";   // IMG_V matches V in public/app.js
+const heroFirst = cat => heroPicks(toStorefront(cat).PRODUCTS, 1)[0] || null;
+const heroPreload = p => { const u = s => `img/pc/${p.img}${s}.webp${IMG_V}`; return `<link rel="preload" as="image" fetchpriority="high" href="${u("")}" imagesrcset="${u("-s")} 360w, ${u("-m")} 540w, ${u("")} 720w${p.lw ? `, ${u("-l")} ${p.lw}w` : ""}" imagesizes="(min-width:960px) 42vw, 58vw">`; };
 // The sitemap exists only once the shop is live: the demo stays out of search engines.
 function sitemap(cat, url) {
   const paths = ["/", "/shop", ...cat.categories.map(c => `/shop/${c.id}`), "/gifts/under-50", "/gifts/under-150", "/set", "/shipping", "/privacy", "/terms", ...cat.products.map(p => `/p/${p.sku}`)];
@@ -111,7 +130,7 @@ export default {
       }
       if (path === "/api/catalog") {
         if (request.method !== "GET") return json({ error: "Method not allowed" }, 405);
-        return json(await loadCatalog(env.DB));
+        return json(publicFeed(await loadCatalog(env.DB)));
       }
       if (path.startsWith("/api/admin/")) { const r = await admin(request, env, url); if (request.method !== "GET" && r.ok) dropCatalog(ctx); return r; } // a change in the back office shows in the shop at once
       if (path === "/api/orders") { if (request.method !== "POST") return json({ error: "Method not allowed" }, 405); const r = await placeOrder(request, env, url); if (r.ok) dropCatalog(ctx); return r; }

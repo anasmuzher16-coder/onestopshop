@@ -81,7 +81,7 @@ export async function admin(request, env, url) {
 
   if (path === "/products" && method === "GET") {
     const [p, c, b] = await db.batch([
-      db.prepare("SELECT sku, name, category_id, price_cents, cost_cents, weight_g, box_id, glass, ship_class, height_cm, note, img, img_dark, photo_ver, details, stock, low_stock_at, active, updated_at FROM products ORDER BY active DESC, sort, sku"),
+      db.prepare("SELECT sku, name, category_id, price_cents, cost_cents, weight_g, box_id, glass, ship_class, height_cm, note, img, img_dark, photo_ver, details, stock, low_stock_at, active, listed, family, variant_label, updated_at FROM products ORDER BY active DESC, sort, sku"),
       db.prepare("SELECT id, name, tone FROM categories ORDER BY sort"), db.prepare("SELECT id, label, l_cm, w_cm, h_cm FROM boxes ORDER BY l_cm * w_cm * h_cm"),
     ]);
     return json({ products: p.results, categories: c.results, boxes: b.results });
@@ -101,6 +101,9 @@ export async function admin(request, env, url) {
     if ("glass" in body) out.glass = body.glass ? 1 : 0;
     if ("active" in body) out.active = body.active ? 1 : 0;
     if ("note" in body) set("note", text(body.note, 200), "description");
+    // a catalogue colour's name (the photo's guess until the shop corrects it); an empty name is allowed and shows "Colours TBD"
+    // Kept in details (a shop column) so a later catalogue import, which refreshes variant_label, never overwrites the shop's word.
+    if ("variant_label" in body) { const v = body.variant_label === null ? "" : text(body.variant_label, 40); if (v === null) bad.push("colour name"); else out.colour = v; }
     if ("low_stock_at" in body) set("low_stock_at", clampInt(body.low_stock_at, 0, 9999), "low stock level");
     if ("details" in body) { const d = body.details || {}; out.details = JSON.stringify({ ...(clampInt(d.ml, 1, 5000) ? { ml: clampInt(d.ml, 1, 5000) } : {}), ...(text(d.kind, 40) ? { kind: text(d.kind, 40) } : {}), ...(text(d.notes, 120) ? { notes: text(d.notes, 120) } : {}) }); }
     return { out, bad };
@@ -110,6 +113,7 @@ export async function admin(request, env, url) {
   if (path === "/products" && method === "POST") {
     const body = await request.json().catch(() => ({}));
     const { out, bad } = await fields({ ship_class: "standard", note: "", low_stock_at: 1, ...body });
+    delete out.colour;   // colour names belong to catalogue colours, never to a new back-office item
     for (const k of ["name", "category_id", "price_cents", "weight_g", "box_id"]) if (!(k in out)) bad.push(k.replace(/_.*/, ""));
     if (bad.length) return json({ error: "Check: " + [...new Set(bad)].join(", ") + "." }, 400);
     if (out.category_id === CHARCOAL) charcoalRules(out, {});
@@ -132,6 +136,10 @@ export async function admin(request, env, url) {
     // source lines, a roll's box) is kept, so saving a charcoal item in the back office never erases its rules.
     let had = {}; try { had = JSON.parse(before.details || "{}"); } catch {}
     if ("details" in out) { const { ml, kind, notes, ...keep } = had; out.details = JSON.stringify({ ...keep, ...JSON.parse(out.details) }); }
+    if ("colour" in out) {   // the shop's confirmed colour name; empty takes it back to the photo's guess ("Colours TBD")
+      const base = "details" in out ? JSON.parse(out.details) : { ...had }; if (out.colour) base.colour = out.colour; else delete base.colour;
+      out.details = JSON.stringify(base); delete out.colour;
+    }
     if (had.charcoal) charcoalRules(out, had);   // charcoal stays charcoal; retired Heat pieces are never turned into it
     const cols = Object.keys(out); if (!cols.length) return json({ ok: true });
     const was = {}; for (const k of cols) was[k] = before[k];

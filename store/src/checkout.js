@@ -85,6 +85,8 @@ export async function placeOrder(request, env, url) {
   for (const [sku, qty] of want) {
     const p = bySku[sku];
     if (!p) return json({ error: "One of the items is no longer sold. Remove it and try again.", sku, stock: 0 }, 409);
+    // On view but not for sale: no shop price yet ("Price TBD"), or priced but not switched on ("Coming soon"). Never sold, whatever the request says.
+    if (p.state !== "sale") return json({ error: p.state === "tbd" ? `${p.name} has no shop price yet, so it cannot be ordered. Remove it and try again.` : `${p.name} is not on sale yet. Remove it and try again.`, sku, stock: 0, not_for_sale: true }, 409);
     if (p.stock < qty) return json({ error: p.stock ? `Only ${p.stock} left of ${p.name}.` : `${p.name} has just sold out.`, sku, stock: p.stock }, 409);
     // Charcoal (and anything stored as pickup_only) goes by pickup or our own local delivery, never by Canada Post or any
     // carrier (owner, 2026-11-24). Every service other than "local" is a carrier service, so all of them are refused.
@@ -137,7 +139,8 @@ export async function placeOrder(request, env, url) {
     return again.row ? replay(db, again.row) : stillOpen();
   }
   const took = await db.batch(lines.flatMap(l => [
-    db.prepare("UPDATE products SET stock = stock - ?1, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE sku = ?2 AND stock >= ?1").bind(l.qty, l.product.sku),
+    // the guard repeats the sale rule in the same statement, so a price or switch changed mid-checkout still cannot sell it
+    db.prepare("UPDATE products SET stock = stock - ?1, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE sku = ?2 AND stock >= ?1 AND active = 1 AND price_cents > 0").bind(l.qty, l.product.sku),
     db.prepare("INSERT INTO stock_moves (sku, delta, reason, ref, actor) SELECT ?2, -?1, 'sale', ?3, 'store' WHERE changes() = 1").bind(l.qty, l.product.sku, id),
   ]));
   const failed = lines.filter((l, i) => !took[i * 2].meta.changes);

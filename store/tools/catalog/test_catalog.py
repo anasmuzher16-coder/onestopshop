@@ -26,6 +26,7 @@ def fresh_db(path: Path, with_0005=True):
     con.executescript((C.STORE / "seed" / "seed.sql").read_text(encoding="utf-8"))
     if with_0005:
         con.executescript((MIG / "0005_catalog.sql").read_text(encoding="utf-8"))
+        con.executescript((MIG / "0006_listed.sql").read_text(encoding="utf-8"))
     return con
 
 
@@ -232,7 +233,9 @@ class TestApply(Base):
 
     def test_charcoal_over_existing_rows_keeps_shop_values(self):
         # rows already made by another path (as the charcoal-in-Heat seed does), with the shop's own numbers
-        self.con.execute("INSERT INTO products (sku,name,category_id,price_cents,weight_g,box_id,ship_class,stock) VALUES ('OSS-9101','Shop typed name','heat',1234,1,'XS','pickup_only',4)")
+        # since section-waves merged, seed.sql already holds OSS-9101 (the charcoal-in-Heat seed itself): give it the shop's own numbers
+        self.con.execute("INSERT OR IGNORE INTO products (sku,name,category_id,price_cents,weight_g,box_id,ship_class,stock) VALUES ('OSS-9101','Shop typed name','heat',1234,1,'XS','pickup_only',4)")
+        self.con.execute("UPDATE products SET name='Shop typed name', price_cents=1234, stock=4, supplier_id=NULL WHERE sku='OSS-9101'")
         K.apply_supplier(self.con, "charcoal-foil", self.char)
         row = self.con.execute("SELECT name, price_cents, stock, supplier_id FROM products WHERE sku='OSS-9101'").fetchone()
         self.assertEqual(row, ("Shop typed name", 1234, 4, "charcoal-foil"))

@@ -180,14 +180,42 @@ def build(args):
 
 # ------------------------------------------------------------------ rows for the database
 
+ACRONYMS = {"DMX", "EGY", "XME", "XM", "SS", "UFO", "ST3", "RX", "MR", "EL", "D"}
+
+
 def placeholder_name(ref: str, label: str | None):
-    t = " ".join(w if any(c.isdigit() for c in w) else w.capitalize() for w in ref.replace("  ", " ").split())
+    import re
+    ref = re.sub(r"\s*-\s*", "-", ref.replace("  ", " ").strip()).strip("-")   # "ISAC -ACE" -> "ISAC-ACE"
+    word = lambda w: w if any(c.isdigit() for c in w) else (w.upper() if w.upper() in ACRONYMS else w.capitalize())
+    t = " ".join("-".join(word(p) for p in w.split("-")) for w in ref.split())
     return f"{t}, {label}" if label else t
+
+
+def public_name(f) -> str:
+    """The shop-owned name a catalogue item starts with. A name that carries another brand's name is withheld until the
+    shop confirms the piece is genuine (plan 2026-11-24 section 8): it starts as 'Hookah No. <catalogue page>'."""
+    if any("another brand's name" in x for x in f.get("flags", [])):
+        return f"Hookah No. {f['page']}"
+    return placeholder_name(f["supplier_ref"]["v"], None)
+
+
+USABLE_PHOTO = ("ready", "CHECK")   # held, hand-crop and gallery-only images are never a main photo
+
+
+def photo_colours():
+    """Measured colour of each published Ace photo (photos.json), so a colour chip matches the photo it shows."""
+    man = C.load_json(C.SUPPLIERS / "ace" / "photos.json", {}) or {}
+    out = {}
+    for im in man.get("images", []):
+        if im.get("out") and im.get("rgb") and im.get("status") in USABLE_PHOTO:
+            out[im["out"]] = "#%02x%02x%02x" % tuple(im["rgb"])
+    return out
 
 
 def desired_rows(supplier: str, m):
     """Each variant as a products row: supplier columns (kept in step) and first-insert defaults for shop columns."""
     rows = []
+    hexes = photo_colours() if supplier == "ace" else {}
     for i, (f, v) in enumerate(C.iter_variants(m)):
         shop = v["shop"]
         facts = {k: c["v"] for k, c in f.get("facts", {}).items()}
@@ -196,15 +224,23 @@ def desired_rows(supplier: str, m):
             label = shop["colour_confirmed"]["v"] or v["colour"]["v"] or ""
             avail = "in_store_uncounted" if (f["stamp"]["v"] != "none" or shop["in_stock_here"]["v"]) else "special_order"
             facts.update({"group": f["group"]["v"], "page": f["page"], "stamp": f["stamp"]["v"]})
+            # photo: this colour's own usable photo (ready, CHECK), the family's main photo standing in, or none
+            st = v["photo"]["status"]
+            facts["photo"] = "own" if st in USABLE_PHOTO and v["photo"]["img"] else ("family" if st == "family_hero_only" and v["photo"]["img"] else "none")
+            facts["colour_confirmed"] = bool(shop["colour_confirmed"]["v"])   # a photo's guess is shown as "Colours TBD", never as fact
+            if facts["photo"] == "own" and v["photo"]["img"] in hexes:
+                facts["photo_hex"] = hexes[v["photo"]["img"]]
             sup = {"supplier_id": "ace", "supplier_ref": f["supplier_ref"]["v"], "supplier_price_cents": f["supplier_price_cents"]["v"],
                    "family": f["family_id"], "variant_label": label, "swatch_hex": v["swatch_hex"]["v"],
                    "img": v["photo"]["img"] or "", "height_cm": f["facts"]["height_cm"]["v"],
                    "facts_known": json.dumps(facts, sort_keys=True, ensure_ascii=False)}
             # the colour lives in variant_label, never baked into the shop-owned name (a guess would freeze there)
-            shopcols = {"name": shop["display_name"]["v"] or placeholder_name(f["supplier_ref"]["v"], None),
+            shopcols = {"name": shop["display_name"]["v"] or public_name(f),
                         "category_id": "hookahs", "price_cents": shop["price_cents"]["v"] or 0, "weight_g": 2500, "box_id": "T",
                         "glass": 1, "ship_class": "standard", "note": "", "stock": shop["stock"]["v"] or 0, "low_stock_at": 1,
-                        "active": 1 if (shop["active"]["v"] and shop["price_cents"]["v"]) else 0, "sort": 5000 + i, "availability": avail}
+                        "active": 1 if (shop["active"]["v"] and shop["price_cents"]["v"]) else 0, "sort": 5000 + i, "availability": avail,
+                        # on view with "Price TBD" from the start (owner, 2026-11-24); buyable only once priced and on
+                        "listed": 1}
         else:
             charcoal = f["category"] == "charcoal"
             sup = {"supplier_id": supplier, "supplier_ref": f["supplier_ref"]["v"], "supplier_price_cents": None,
@@ -321,6 +357,8 @@ def ensure_schema(con):
         raise SystemExit("This database has no catalogue columns: apply migration 0005_catalog.sql to it first.")
     if not con.execute("SELECT 1 FROM sqlite_master WHERE name = 'catalog_imports'").fetchone():
         raise SystemExit("catalog_imports table missing: apply migration 0005_catalog.sql first.")
+    if "listed" not in cols:
+        raise SystemExit("This database has no listed column: apply migration 0006_listed.sql to it first.")
 
 
 def apply_supplier(con, supplier, m, shop_fill=False, actor="catalog-import"):
@@ -425,11 +463,16 @@ def q(v):
     return "'" + str(v).replace("'", "''") + "'"
 
 
-def seed_sql(supplier, m):
+def seed_sql(supplier, m, category=None):
     C.validate_master(m, C.load_registry())   # same gate as apply: no hand-edited master goes out unchecked
     if m["supplier"]["id"] != supplier:
         raise C.ValidationError(f"this master belongs to {m['supplier']['id']}, not {supplier}")
     rows = desired_rows(supplier, m)
+    if category:   # one part of a supplier's list (for example only the foil): nothing else is inserted, refreshed or dropped
+        fam = {f["family_id"] for f in m["families"] if f.get("category") == category}
+        rows = [r for r in rows if r["sup"]["family"] in fam]
+        if not rows:
+            raise C.ValidationError(f"no {supplier} items in category {category!r}")
     meta = SUPPLIER_META[supplier]
     msha = C.master_hash(m)
     src = (m.get("sources") or [{}])[0]
@@ -451,6 +494,8 @@ def seed_sql(supplier, m):
         out.append(f"UPDATE products SET {sets}, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE sku = {q(r['sku'])} AND {own} AND ({cond});")
         out.append(f"UPDATE products SET availability = {q(r['shop']['availability'])} WHERE sku = {q(r['sku'])} AND supplier_id = {q(supplier)} AND availability = 'dropped';")
     live = [r["sku"] for r in rows]
+    if category:
+        return "\n".join(out) + "\n"
     out.append(f"UPDATE products SET availability = 'dropped' WHERE supplier_id = {q(supplier)} AND availability != 'dropped' AND sku NOT IN ({', '.join(q(s) for s in live)});")
     out.append(f"INSERT OR IGNORE INTO catalog_imports (supplier_id, source_sha256, master_sha256, edition, added, updated, retired, price_review, actor) "
                f"VALUES ({q(supplier)}, {q(src.get('sha256', ''))}, {q(msha)}, {q(src.get('edition', ''))}, 0, 0, 0, 0, 'catalog-seed');")
@@ -460,8 +505,9 @@ def seed_sql(supplier, m):
 def seed(args):
     C.OUT.mkdir(parents=True, exist_ok=True)
     for s in ([args.supplier] if args.supplier else suppliers_present()):
-        p = C.OUT / f"seed-{s}.sql"
-        p.write_text(seed_sql(s, C.load_master(s)), encoding="utf-8", newline="\n")
+        cat = getattr(args, "category", None)
+        p = C.OUT / (f"seed-{s}-{cat}.sql" if cat else f"seed-{s}.sql")
+        p.write_text(seed_sql(s, C.load_master(s), cat), encoding="utf-8", newline="\n")
         print("wrote", p)
 
 
@@ -503,6 +549,7 @@ def main(argv=None):
     ay.add_argument("--shop-fill", action="store_true")
     sd = sub.add_parser("seed")
     sd.add_argument("--supplier")
+    sd.add_argument("--category", help="only this category of the supplier's list, for example foil")
     args = ap.parse_args(argv)
     return {"build": build, "xlsx": xlsx, "answers": answers, "plan": plan, "apply": apply, "seed": seed}[args.cmd](args)
 

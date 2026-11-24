@@ -70,6 +70,9 @@ out.push("UPDATE products SET active = 0 WHERE img IN ('hookah50','bowl30','acc0
 // Heat becomes charcoal (owner, 2026-11-23: "All the charcoals are going to replace what's currently in the heat
 // section"). The old Heat pieces are hidden, not deleted: their rows, stock and history stay, so they can come back.
 out.push("UPDATE products SET active = 0 WHERE category_id = 'heat'; -- retired 2026-11-23, replaced by the shop's charcoal");
+// The sample hookahs are switched off, never deleted (sample orders point at them); Ace Hookah's catalogue replaces them
+// (owner, 2026-11-24). Their old addresses redirect to /shop/hookahs. The Ace rows come from store/catalog (seed-ace.sql).
+out.push("UPDATE products SET active = 0 WHERE category_id = 'hookahs' AND sku LIKE 'OSS-1___'; -- retired 2026-11-24, replaced by Ace Hookah's catalogue");
 // The shop's real charcoal (store/seed/charcoal.json, from the verified inventory). Prices are the shop's.
 // Pickup or local delivery only, never Canada Post (ship class pickup_only). Stock: 10 each, the shop's ruling of
 // 2026-11-24; it updates the counts as items sell.
