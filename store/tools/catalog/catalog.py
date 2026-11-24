@@ -200,6 +200,15 @@ def public_name(f) -> str:
     return placeholder_name(f["supplier_ref"]["v"], None)
 
 
+def public_group(f):
+    """The kind a shopper sees. The master's group rule also uses the supplier price (<= $30 compact, >= $150 statement);
+    a heading built from it would tell anyone the supplier price band, so the public kind is worked out from the name
+    and the printed facts only (breaker, 2026-11-24). The master's own group stays as it is, for the shop."""
+    import src_ace
+    tags = (["without_base"] if f["facts"]["includes_base"]["v"] is False else []) + (["acrylic"] if f["facts"]["acrylic"]["v"] else [])
+    return src_ace.group_for(f["supplier_ref"]["v"], None, tags)[0]
+
+
 USABLE_PHOTO = ("ready", "CHECK")   # held, hand-crop and gallery-only images are never a main photo
 
 
@@ -259,7 +268,7 @@ def desired_rows(supplier: str, m):
             # the shop's corrected colour name wins over the photo's guess
             label = shop["colour_confirmed"]["v"] or v["colour"]["v"] or ""
             avail = "in_store_uncounted" if (f["stamp"]["v"] != "none" or shop["in_stock_here"]["v"]) else "special_order"
-            facts.update({"group": f["group"]["v"], "page": f["page"], "stamp": f["stamp"]["v"]})
+            facts.update({"group": public_group(f), "page": f["page"], "stamp": f["stamp"]["v"]})
             # photo: this colour's own usable photo (ready, CHECK), the family's main photo standing in, or none
             st = v["photo"]["status"]
             facts["photo"] = "own" if st in USABLE_PHOTO and v["photo"]["img"] else ("family" if st == "family_hero_only" and v["photo"]["img"] else "none")
@@ -570,13 +579,15 @@ def descriptions_sql(path=DESCRIPTIONS):
     seen = set()
     for r in rows:
         sku, d = str(r.get("sku", "")), " ".join(str(r.get("description") or "").split())
-        if not C.SKU_RE.match(sku) and not C.LEGACY_RE.match(sku) or not d or sku in seen:
+        fam = sku.startswith("ace-")   # an Ace family: one description shared by every colour
+        if not (fam or C.SKU_RE.match(sku) or C.LEGACY_RE.match(sku)) or not d or sku in seen:
             continue
         if len(d) > 600 or "<" in d:
             raise C.ValidationError(f"{sku}: a description must be plain text under 600 characters")
         seen.add(sku)
+        where = f"family = {q(sku)} AND supplier_id = 'ace'" if fam else f"sku = {q(sku)}"
         out.append(f"UPDATE products SET details = json_set(CASE WHEN json_valid(details) THEN details ELSE '{{}}' END, '$.description', {q(d)}), "
-                   f"updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE sku = {q(sku)};")
+                   f"updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE {where};")
     return "\n".join(out) + "\n", len(seen)
 
 

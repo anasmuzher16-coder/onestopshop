@@ -3,7 +3,7 @@
 import { createRequire } from "node:module";
 const { webkit, devices } = createRequire("C:/dev/puckempire-arena/package.json")("playwright");
 const out = process.argv[2] || ".", B = process.env.BASE || "http://127.0.0.1:4420";
-const PAGES = (process.env.PAGES || "/shop/hookahs,/shop/cologne,/shop/heat,/set,/search,/cart,/p/OSS-1001").split(",");
+const PAGES = (process.env.PAGES || "/shop/hookahs,/shop/cologne,/shop/heat,/set,/search,/cart,/p/OSS-100024,/shop/shisha").split(",");
 const b = await webkit.launch(); let bad = 0;
 try {
   const ctx = await b.newContext({ ...devices["iPhone 15 Plus"] });

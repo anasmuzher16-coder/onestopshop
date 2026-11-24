@@ -344,6 +344,14 @@ class TestNoPriceLeak(unittest.TestCase):
         for p in (pub / "img" / "pc" / "ace").glob("*"):
             self.assertRegex(p.name, r"^ace-[a-z0-9-]+(-m|-s)?\.webp$")
 
+    def test_public_group_does_not_follow_the_supplier_price(self):
+        m = copy.deepcopy(C.load_master("ace"))
+        before = {r["sku"]: json.loads(r["sup"]["facts_known"])["group"] for r in K.desired_rows("ace", m)}
+        for f in m["families"]:
+            f["supplier_price_cents"]["v"] = 1 if (f["supplier_price_cents"]["v"] or 0) > 10000 else 999999
+        after = {r["sku"]: json.loads(r["sup"]["facts_known"])["group"] for r in K.desired_rows("ace", m)}
+        self.assertEqual(before, after)
+
     def test_facts_known_has_no_price(self):
         for r in K.desired_rows("ace", C.load_master("ace")):
             self.assertNotIn("price", r["sup"]["facts_known"])

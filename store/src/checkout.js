@@ -139,8 +139,8 @@ export async function placeOrder(request, env, url) {
     return again.row ? replay(db, again.row) : stillOpen();
   }
   const took = await db.batch(lines.flatMap(l => [
-    // the guard repeats the sale rule in the same statement, so a price or switch changed mid-checkout still cannot sell it
-    db.prepare("UPDATE products SET stock = stock - ?1, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE sku = ?2 AND stock >= ?1 AND active = 1 AND price_cents > 0").bind(l.qty, l.product.sku),
+    // the guard repeats the sale rule in the same statement: switched off, unpriced, or repriced since this order was worked out, it does not sell
+    db.prepare("UPDATE products SET stock = stock - ?1, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE sku = ?2 AND stock >= ?1 AND active = 1 AND price_cents > 0 AND price_cents = ?3").bind(l.qty, l.product.sku, cents(l.product.price)),
     db.prepare("INSERT INTO stock_moves (sku, delta, reason, ref, actor) SELECT ?2, -?1, 'sale', ?3, 'store' WHERE changes() = 1").bind(l.qty, l.product.sku, id),
   ]));
   const failed = lines.filter((l, i) => !took[i * 2].meta.changes);
@@ -150,8 +150,10 @@ export async function placeOrder(request, env, url) {
       ...got.flatMap(l => [db.prepare("UPDATE products SET stock = stock + ? WHERE sku = ?").bind(l.qty, l.product.sku), db.prepare("INSERT INTO stock_moves (sku, delta, reason, ref, actor) VALUES (?, ?, 'released', ?, 'store')").bind(l.product.sku, l.qty, id)]),
       db.prepare("DELETE FROM order_items WHERE order_id = ?").bind(id), db.prepare("DELETE FROM orders WHERE id = ?").bind(id),
     ]);
-    const left = await db.prepare("SELECT stock FROM products WHERE sku = ?").bind(failed[0].product.sku).first("stock");
-    return json({ error: `${failed[0].product.name} sold out while you were checking out.`, sku: failed[0].product.sku, stock: left ?? 0 }, 409);
+    const now = await db.prepare("SELECT stock, price_cents, active FROM products WHERE sku = ?").bind(failed[0].product.sku).first();
+    if (now && now.stock >= failed[0].qty && (now.price_cents !== cents(failed[0].product.price) || now.active !== 1))   // not sold out: its price or its switch changed
+      return json({ error: `${failed[0].product.name} changed while you were checking out. Refresh to see it now.`, sku: failed[0].product.sku, changed: true }, 409);
+    return json({ error: `${failed[0].product.name} sold out while you were checking out.`, sku: failed[0].product.sku, stock: now?.stock ?? 0 }, 409);
   }
   await db.prepare("UPDATE orders SET status = 'paid', updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = ?").bind(id).run();
   // the receipt to the shopper, and a note to the shop if this order took anything down to its warning level

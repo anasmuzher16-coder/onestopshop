@@ -24,16 +24,17 @@ try {
     t("1 Windsor code moves a nationwide shopper to local delivery", await p.locator('input[name="ship"][value="local"]').isChecked());
     await c.close();
   }
-  { // 2 and 3 stock limits; the sold Resin Bishop cannot be bought from any saved cart
-    const { c, p } = await open({ cart: [{ sku: "OSS-1008", qty: 2 }, { sku: "OSS-8004", qty: 1 }, { sku: "OSS-7008", qty: 1 }, { sku: "OSS-1007", qty: 5 }], postal: "M5V 2T6" });
+  { // 2 and 3 stock limits; a sold-out flavour cannot be bought from any saved cart (the sample Resin Bishop was retired 2026-11-24)
+    const { c, p } = await open({ cart: [{ sku: "OSS-9616", qty: 2 }, { sku: "OSS-8004", qty: 1 }, { sku: "OSS-7008", qty: 1 }, { sku: "OSS-7006", qty: 5 }], postal: "M5V 2T6" });
     await go(p, "/cart"); const body = await main(p), saved = await cart(p);
-    t("3 a saved Resin Bishop is taken out", !saved.some(l => l.sku === "OSS-1008") && !/Resin Bishop, Clear Blue\s*\n\s*OSS/.test(body), JSON.stringify(saved));
-    t("3 the cart says the Bishop has sold", /Resin Bishop, Clear Blue has sold/.test(await p.locator("[data-cart-news]").innerText()));
+    t("3 a saved sold-out flavour is taken out", !saved.some(l => l.sku === "OSS-9616") && !/English Master, 250 g\s*\n\s*OSS/.test(body), JSON.stringify(saved));
+    t("3 the cart says the flavour has sold", /English Master, 250 g has sold/.test(await p.locator("[data-cart-news]").innerText()));
     t("2 a sold-out line is taken out", !saved.some(l => l.sku === "OSS-7008"));
-    const one = saved.find(l => l.sku === "OSS-1007");
+    const one = saved.find(l => l.sku === "OSS-7006");
     t("2 a one-of-one cannot exceed its stock", one && one.qty === 1, JSON.stringify(one));
-    t("2 the plus button stops at the stock", await p.locator('[data-qty="OSS-1007"][aria-label^="One more"]').isDisabled());
-    await go(p, "/p/OSS-1008"); t("3 the Bishop page has no add button", await p.locator("[data-add]").count() === 0);
+    t("2 the plus button stops at the stock", await p.locator('[data-qty="OSS-7006"][aria-label^="One more"]').isDisabled());
+    await go(p, "/p/OSS-9616"); t("3 the sold-out page has no add button", await p.locator("[data-add]").count() === 0);
+    await go(p, "/p/OSS-100024"); t("3 a Price TBD hookah has no add button", await p.locator("[data-add]").count() === 0 && !(await cart(p)).some(l => l.sku === "OSS-100024"));
     await p.evaluate(() => document.dispatchEvent(new CustomEvent("x"))); await c.close();
   }
   { // 6 two tabs share one cart

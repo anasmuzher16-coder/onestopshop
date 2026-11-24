@@ -12,18 +12,19 @@ const post = async body => { const r = await fetch(B + "/api/orders", { method: 
 const stockOf = async sku => (await (await fetch(B + "/api/catalog")).json()).products.find(p => p.sku === sku)?.stock;
 const who = { name: "Test Shopper", email: "test@example.com" }, to = { postal: "M5V 2T6", address: { line1: "1 Test Street", city: "Toronto" } };
 
-// a hookah to Toronto: shipping must equal the mockup's verified engine, tax must be Ontario HST on items plus shipping
-const hk = PRODUCTS.find(p => p.sku === "OSS-1001"), ref = quote(parsePostal("M5V 2T6"), pack([{ product: hk, qty: 1 }]), fuelOn().pct).find(o => o.id === "cp-exp");
-const before = await stockOf("OSS-1001");
-const a = await post({ ...who, ...to, method: "ship", service: "cp-exp", lines: [{ sku: "OSS-1001", qty: 1, price: 1, unit_cents: 1 }], total_cents: 1 });
+// a glass piece to Toronto: shipping must equal the mockup's verified engine, tax must be Ontario HST on items plus shipping.
+// (The sample hookahs were retired on 2026-11-24 and the Ace hookahs have no shop price yet, so a glass base stands in.)
+const hk = PRODUCTS.find(p => p.sku === "OSS-2001"), ref = quote(parsePostal("M5V 2T6"), pack([{ product: hk, qty: 1 }]), fuelOn().pct).find(o => o.id === "cp-exp");
+const before = await stockOf("OSS-2001");
+const a = await post({ ...who, ...to, method: "ship", service: "cp-exp", lines: [{ sku: "OSS-2001", qty: 1, price: 1, unit_cents: 1 }], total_cents: 1 });
 ok(a.status === 201, "ship order placed: " + a.status + " " + (a.data.error || ""));
 if (a.status === 201) {
   const o = a.data.order;
-  ok(o.subtotal_cents === 64900, "price comes from the database, not the request: " + o.subtotal_cents);
+  ok(o.subtotal_cents === 30900, "price comes from the database, not the request: " + o.subtotal_cents);
   ok(o.shipping_cents === Math.round(ref.total * 100), `shipping ${o.shipping_cents} equals the verified engine ${Math.round(ref.total * 100)}`);
   ok(o.tax_cents === Math.round((o.subtotal_cents + o.shipping_cents) * 0.13) && o.total_cents === o.subtotal_cents + o.shipping_cents + o.tax_cents, "Ontario HST 13% on items plus shipping");
   ok(/^W[A-Z0-9]{6}$/.test(o.id), "order code " + o.id);
-  ok((await stockOf("OSS-1001")) === before - 1, "stock came down by one");
+  ok((await stockOf("OSS-2001")) === before - 1, "stock came down by one");
 }
 // Alberta: GST 5%. Nova Scotia: 14%.
 const ab = await post({ ...who, postal: "T2P 1J9", address: { line1: "2 Test Ave", city: "Calgary" }, method: "ship", service: "cp-exp", lines: [{ sku: "OSS-8003", qty: 1 }] });
@@ -55,15 +56,16 @@ ok(race.filter(r => r.status === 201).length === 1 && (await stockOf("OSS-7006")
 const login = await fetch(B + "/api/admin/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ passcode: KEY }) }), cookie = (login.headers.get("set-cookie") || "").split(";")[0];
 const orders = (await (await fetch(B + "/api/admin/orders", { headers: { Cookie: cookie } })).json()).orders;
 ok(a.status === 201 && orders.some(o => o.id === a.data.order.id && o.status === "paid"), "the new order is in the back office as To pack");
-const hist = (await (await fetch(B + "/api/admin/products/OSS-1001/history", { headers: { Cookie: cookie } })).json()).moves;
+const hist = (await (await fetch(B + "/api/admin/products/OSS-2001/history", { headers: { Cookie: cookie } })).json()).moves;
 ok(hist[0].reason === "sale" && hist[0].delta === -1, "the sale is in the stock history");
 const lost = orders.filter(o => o.status === "pending").length; ok(lost === 0, "no half-made orders left behind: " + lost);
 
 // CHARCOAL (owner, 2026-11-24): pickup or our own local delivery only, never Canada Post or any carrier, and no age or ID
 // step anywhere a customer can see (staff check ID in person).
-const cat = await (await fetch(B + "/api/catalog")).json(), coal = cat.products.filter(p => p.category_id === "heat");
+const cat = await (await fetch(B + "/api/catalog")).json(), coal = cat.products.filter(p => p.category_id === "heat" && JSON.parse(p.details).charcoal === true), foilFeed = cat.products.filter(p => p.category_id === "heat" && !JSON.parse(p.details).charcoal);
 const coalSku = "OSS-9104", c0 = await stockOf(coalSku);
-ok(coal.length === 69 && coal.every(p => p.ship_class === "pickup_only" && JSON.parse(p.details).charcoal === true), "the heat section is the shop's 69 charcoal items, all pickup or local delivery only: " + coal.length);
+ok(coal.length === 69 && coal.every(p => p.ship_class === "pickup_only"), "the heat section holds the shop's 69 charcoal items, all pickup or local delivery only: " + coal.length);
+ok(foilFeed.length === 15 && foilFeed.every(p => p.for_sale), "and its 15 foil packs (since 2026-11-24): " + foilFeed.length);
 ok(!cat.products.some(p => /^OSS-40/.test(p.sku)), "the old Heat pieces are off the shelf");
 ok(coal.every(p => p.stock === 10), "every charcoal item starts at 10 in stock");
 // regression: no carrier service, on its own or mixed in, ever turns charcoal into a shipped order

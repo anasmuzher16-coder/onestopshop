@@ -29,7 +29,8 @@ ok(s.value.units > 0 && s.value.retail_cents > s.value.cost_cents, "stock value 
 
 // stock: up, down, never below zero, history
 const list = (await call("/products")).data; const p = list.products.find(x => x.sku === "OSS-8004"), start = p.stock;
-ok(list.products.length === 98 && list.categories.length === 8, `catalogue ${list.products.length} products, ${list.categories.length} sections`);
+// 98 sample rows (hookahs kept, switched off) + 69 charcoal + 15 foil + 47 shisha + 296 Ace colours; Shisha is the ninth section
+ok(list.products.length === 98 + 69 + 15 + 47 + 296 && list.categories.length === 9, `catalogue ${list.products.length} products, ${list.categories.length} sections`);
 const up = await call("/products/OSS-8004/stock", { method: "POST", body: { delta: 3, reason: "received" } }); ok(up.data.stock === start + 3, "stock +3");
 const dn = await call("/products/OSS-8004/stock", { method: "POST", body: { delta: -3, reason: "correction" } }); ok(dn.data.stock === start, "stock -3");
 const neg = await call("/products/OSS-8004/stock", { method: "POST", body: { delta: -(start + 1) } }); ok(neg.status === 409 && neg.data.stock === start, "stock cannot go below zero: " + neg.status);

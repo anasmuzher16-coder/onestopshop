@@ -28,7 +28,7 @@ ok((await post({ ...who, method: "pickup", lines: [{ sku: "OSS-1001", qty: 1 }] 
 const login = await fetch(B + "/api/admin/login", { method: "POST", headers: { "Content-Type": "application/json", "X-OSS-Admin": "1" }, body: JSON.stringify({ key: KEY }) });
 const cookie = (login.headers.get("set-cookie") || "").split(";")[0];
 const on = await fetch(B + `/api/admin/products/${tbd.sku}`, { method: "PUT", headers: { "Content-Type": "application/json", "X-OSS-Admin": "1", Cookie: cookie }, body: JSON.stringify({ active: true }) });
-ok(!on.ok, "switching a TBD item on without a price is refused: " + on.status);
+ok(on.status === 409 && /Set the shop price/.test((await on.json().catch(() => ({}))).error || ""), "switching a TBD item on without a price is refused with the reason: " + on.status);
 ok((await post({ ...who, method: "pickup", lines: [{ sku: tbd.sku, qty: 1 }] })).status === 409, "and it still cannot be ordered afterwards");
 
 // 2 the supplier's price is nowhere a shopper can reach
@@ -36,7 +36,9 @@ ok(!/supplier/i.test(mod) && !JSON.stringify(feed).includes("supplier"), "no sup
 const leak = (p, cents) => [p.price, p.price_cents].some(v => v != null && Math.round(v * (p.price_cents != null ? 1 : 100)) === cents);
 ok(!ace.some(p => leak(p, supplier.get(p.sku))), "no Ace item carries its supplier price in the catalogue module");
 ok(!feed.products.filter(p => supplier.has(p.sku)).some(p => p.price_cents !== null || p.for_sale), "the public feed gives TBD items no price and marks them not for sale");
-ok(!feed.products.some(p => "facts_known" in p || "details" in p || "availability" in p), "the public feed carries no research notes, photo rights or catalogue facts");
+const ALLOWED = ["charcoal", "brand", "variant", "shape", "box_sku", "description", "ml", "kind", "notes"];
+ok(!feed.products.some(p => "facts_known" in p || "availability" in p || "supplier_ref" in p || Object.keys(JSON.parse(p.details || "{}")).some(k => !ALLOWED.includes(k))), "the public feed's details hold only the public keys (no photo rights, sources, research notes or catalogue facts)");
+ok(feed.products.filter(p => /^OSS-93/.test(p.sku)).every(p => p.ship_class === "pickup_only"), "the feed says foil is pickup or local delivery while its weight is TBD");
 let pageLeak = 0, offers = 0;
 for (const p of ace.filter(x => x.lead).slice(0, 25)) {
   const t = await (await fetch(B + "/p/" + p.sku)).text(), c = supplier.get(p.sku); if (!c) continue;
@@ -50,6 +52,10 @@ const page = await (await fetch(B + "/p/" + tbd.sku)).text();
 ok(/og:description" content="[^"]*Price TBD/.test(page) && /og:image" content="[^"]+\/img\/pc\/ace\//.test(page), "a TBD item shares its own photo and says Price TBD");
 ok((await fetch(B + "/sitemap.xml")).status === 404, "no sitemap while the shop is not live");
 
+const foilPage = await (await fetch(B + "/p/OSS-9301")).text(), heatPage = await (await fetch(B + "/shop/heat")).text();
+ok(/og:description" content="[^"]*Not shipped/.test(foilPage) && !/Shipped across Canada/.test(foilPage), "a foil page says pickup or local delivery, never shipped, while its weight is TBD");
+ok(/name="description" content="[^"]*Pickup or local delivery only/.test(heatPage), "the Heat section still says pickup or local delivery only");
+const shPage = await (await fetch(B + "/shop/shisha")).text(); ok(/content="47 shisha/.test(shPage), "the shisha section counts its 47 flavours");
 // 3 the sample hookahs are gone, their links land on the section
 const r1 = await fetch(B + "/p/OSS-1001", { redirect: "manual" });
 ok(r1.status === 301 && new URL(r1.headers.get("location")).pathname === "/shop/hookahs", "an old sample hookah link redirects to /shop/hookahs: " + r1.status);
