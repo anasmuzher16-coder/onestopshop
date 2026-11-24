@@ -392,7 +392,8 @@ body:not([data-route]) .foot{visibility:hidden}
 .pick__opt{flex:0 0 132px;display:grid;gap:2px;justify-items:start;padding:0 0 var(--s-2);border:0;background:none;text-align:left;cursor:pointer;scroll-snap-align:start;font-size:var(--t-12);color:var(--color-muted)}
 /* 110 picks with photos: the ones off screen (to the right of each row, or below) skip layout until they come near, so the set page lands
    inside a wave's swap instead of holding it. The stand-in height is under a real pick's, so the row is always sized by the real ones */
-.pick__opt{content-visibility:auto;contain-intrinsic-size:auto 132px 150px}
+.pick__opt{content-visibility:auto;contain-intrinsic-size:auto 132px auto 200px}
+html.restoring .pick__opt{content-visibility:visible}
 .pick__opt .tile{width:100%;margin-bottom:var(--s-2);box-shadow:inset 0 0 0 0 var(--color-strong);transition:box-shadow var(--dur-micro) var(--ease-state)}
 .pick__opt[aria-pressed="true"] .tile{outline:3px solid var(--color-strong);outline-offset:-3px}
 .pick__opt[aria-pressed="true"]{color:var(--color-strong)}

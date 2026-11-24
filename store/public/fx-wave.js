@@ -191,7 +191,7 @@ function upload(key, unit, im) {
 }
 function atlasTex(k) { const im = imgs[k]; if (!im) return null; if (imgs[k + ":flow"]) upload(k + ":flow", gl.TEXTURE2, imgs[k + ":flow"]); return upload(k, gl.TEXTURE1, im); }
 function fit() {   // sized once: the shaders work in CSS pixels, so a later rotation only stretches the buffer. A slower tier applies from the next page load.
-  if (cv.width < 2) { const cw = cv.clientWidth || innerWidth, ch = cv.clientHeight || innerHeight, dp = Math.min(2, devicePixelRatio || 1), long = Math.min(TIERS[tier], Math.max(cw, ch) * dp), k = long / Math.max(cw, ch); cv.width = Math.max(2, Math.round(cw * k)); cv.height = Math.max(2, Math.round(ch * k)); }
+  if (cv.width < 2) { const [cw, ch] = cssSize(), dp = Math.min(2, devicePixelRatio || 1), long = Math.min(TIERS[tier], Math.max(cw, ch) * dp), k = long / Math.max(cw, ch); cv.width = Math.max(2, Math.round(cw * k)); cv.height = Math.max(2, Math.round(ch * k)); }
   view();
 }
 // THE RENDER SCALE. The effect can draw into the top-left part of its buffer and the canvas is stretched back over the screen with a
@@ -227,7 +227,9 @@ function underline(path) {
 // the canvas's CSS size, read once and again only after a resize: reading it inside a frame right after the page swap forced the browser
 // to lay out the whole new page there and then
 let css = null; addEventListener("resize", () => { css = null; }, { passive: true });
-const cssSize = () => css || (css = [cv.clientWidth || innerWidth, cv.clientHeight || innerHeight]);
+// Before the canvas is on the page (it is only attached by the first wave) a stand-in of the same CSS box is measured, at a quiet moment
+function box() { const d = document.createElement("div"); d.style.cssText = "position:fixed;left:0;top:0;width:100vw;height:100lvh;visibility:hidden;pointer-events:none"; document.body.append(d); const r = [d.clientWidth || innerWidth, d.clientHeight || innerHeight]; d.remove(); return r; }
+const cssSize = () => css || (css = cv?.isConnected ? [cv.clientWidth || innerWidth, cv.clientHeight || innerHeight] : box());
 const margin = o => { const [x, y] = cssSize(), L = Math.abs(o.d[0]) * x + Math.abs(o.d[1]) * y; return Math.max(o.r || 0, (o.e || 0) / L) + .005; };   // how far past the frame the edge has to start and finish
 function draw(o, now, H, Tl, frame) {
   fit(); const [vw, vh] = cssSize();
@@ -272,7 +274,8 @@ function tick(now) {
   if (w.hold) { try { if (!release(now)) return; } catch (e) { console.error("fx-wave: " + e); broken = true; abort(); return; } now = w.t0; }
   const dt = now - w.last; w.last = now;
   if (w.frames++ > 0 && !w.skip) { w.sum += dt; w.n++;   // frame times for the governor, leaving out the swap and the frame that first paints the new page
-    w.slow = dt > 24 ? w.slow + 1 : 0; if (w.slow >= 3 && res > .5) { w.slow = 0; lower(res - .25); } }   // three slow frames in a row: fewer pixels from the next frame on, for the rest of the visit
+    // three frames in a row under 25 fps: fewer pixels from the next frame on, for the rest of the visit. A steady 30 fps (Low Power Mode) is left alone
+    w.slow = dt > 40 ? w.slow + 1 : 0; if (w.slow >= 3 && res > .5) { w.slow = 0; lower(res - .25); } }
   w.skip = Math.max(0, w.skip - 1);
   try {
     const done = paint(now);
@@ -301,13 +304,13 @@ function play(key, path, under = null) {
   if (key === "home" && lastD) o.d = [-lastD[0], -lastD[1]];   // home leaves the way you came
   // a tap that beats the warm-up to this material: the driver is still compiling it on its own threads, so the wave waits a frame or
   // two for it with the page still answering, instead of freezing the page until the compile is done
-  const hold = !o.atlasOn && compiling(o.m);
+  let hold = false; try { hold = !o.atlasOn && compiling(o.m); } catch { hold = false; }
   try { if (o.atlasOn) { if (!atlasTex(o.atlas)) o.atlasOn = null; else prog("flip"); } if (!o.atlasOn && !hold) prog(o.m); } catch (e) { console.error("fx-wave: " + e); broken = true; return false; }
   clearTimeout(freeTimer); const t = performance.now(); lastD = o.d;
   o.t0 = t; w = { key, o, path, under, t0: t, last: t, phase: "cover", frames: 0, sum: 0, n: 0, skip: 0, slow: 0, swapped: false, peak: false, rt: t, rd: o.ms, p: 0 };
-  if (!cv.isConnected) { document.body.append(cv); css = null; } cv.style.opacity = "1"; if (key === "search") holdKeyboard();
+  if (!cv.isConnected) document.body.append(cv); cv.style.opacity = "1"; if (key === "search") holdKeyboard();
   try { dispatchEvent(new CustomEvent("wave:start", { detail: { key, path } })); } catch {}   // the page behind can start its own slow setup while the wave covers it
-  underline(path); if (hold) { w.hold = true; raf = requestAnimationFrame(tick); return true; }
+  underline(path); if (hold) { w.hold = true; w.swapT = setTimeout(() => { if (w?.hold) { try { release(1e12); } catch { abort(); } } }, 450); raf = requestAnimationFrame(tick); return true; }   // a hidden tab has no frames: the timer still starts it
   try { paint(t); } catch (e) { console.error("fx-wave: " + e); broken = true; w.path = null; undo?.(); abort(); return false; }
   arm(); raf = requestAnimationFrame(tick);
   return true;
@@ -315,10 +318,11 @@ function play(key, path, under = null) {
 function arm() { w.swapT = setTimeout(swap, w.o.cover + 70); w.goneT = setTimeout(finish, Math.min(GONE_MS, w.o.cover + w.o.ms + 90)); }   // a stalled frame clock still lands the page
 function release(now) {   // the held material is ready (or 400 ms have gone): the wave starts now, from its first frame
   if (compiling(w.o.m) && now - w.t0 < 400) return false;
-  w.hold = false; prog(w.o.m); const t = performance.now(); w.t0 = w.o.t0 = w.last = w.rt = t; arm(); return true;
+  w.hold = false; clearTimeout(w.swapT); prog(w.o.m); const t = performance.now(); w.t0 = w.o.t0 = w.last = w.rt = t; arm(); return true;
 }
 // the page this wave was carrying is cancelled; the band itself keeps travelling, so nothing jumps
-function drop(restore) { if (!w?.path) return; w.path = null; if (restore) undo?.(); undo = null; dropKeyboard(); }
+function drop(restore) { if (!w?.path) return; if (w.hold) { if (restore) undo?.(); undo = null; w.path = null; abort(); return; }   // a held wave has drawn nothing yet: it never starts for a page that was cancelled
+  w.path = null; if (restore) undo?.(); undo = null; dropKeyboard(); }
 const keeper = () => { const list = [...(w.under || [])]; if (w.o.lastH != null) list.push(w.o); return list.length ? list.slice(-4) : null; };
 setNavGate({
   // true: the wave owns this navigation and will commit it at full cover
@@ -352,17 +356,21 @@ function hush(k) { if (!gl || gl.isContextLost()) return; fit(); const [x, y] = 
   if (P.u.uN) { gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, noise); gl.uniform1i(P.u.uN, 0); } if (P.u.uS) { gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, null); gl.uniform1i(P.u.uS, 1); gl.uniform1f(P.u.uHas, 0); }
   gl.uniform2f(P.u.uR, x, y); gl.uniform2f(P.u.uV, 390, 844); gl.uniform2f(P.u.uD, 0, 1); gl.uniform1f(P.u.uTime, 0); gl.uniform1f(P.u.uH, .5); gl.uniform1f(P.u.uT, 0); gl.drawArrays(gl.TRIANGLES, 0, 3); view(); }
 function gauge() {   // a quarter-size full draw of the smoke, waited for: what one frame of the heaviest wave costs here
-  if (!gl || gl.isContextLost() || w) return; fit(); const keep = res; res = .5; view(); const P = prog("smoke"), [vw, vh] = cssSize(), px = new Uint8Array(4);
+  if (!gl || gl.isContextLost() || w) return; fit(); const keep = res, P = prog("smoke"), [vw, vh] = cssSize(), px = new Uint8Array(4); res = .5; view();
   gl.useProgram(P.p); gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, noise); gl.uniform1i(P.u.uN, 0); gl.uniform2f(P.u.uR, vp[0], vp[1]); gl.uniform2f(P.u.uV, vw, vh); gl.uniform2f(P.u.uD, S2, S2); gl.uniform1f(P.u.uTime, .2); gl.uniform1f(P.u.uH, .6); gl.uniform1f(P.u.uT, -.1);
   [C.bone, C.ash, C.coal, C.bonelt].forEach((c, i) => gl.uniform3fv(P.u[["uA", "uB", "uC", "uE"][i]], c));
-  gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px); let best = 1e9;   // the first wait flushes the warm draws
-  for (let i = 0; i < 2; i++) { const t = performance.now(); gl.drawArrays(gl.TRIANGLES, 0, 3); gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px); best = Math.min(best, performance.now() - t); }
-  res = keep; const full = best * 4; if (full > 22) lower(.5); else if (full > 12) lower(.75); view(); window.__wave.gauge = Math.round(best * 4 * 10) / 10;
+  let best = 1e9, trip = 1e9;
+  try {
+    gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);   // the first wait flushes the warm draws
+    for (let i = 0; i < 2; i++) { let t = performance.now(); gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px); trip = Math.min(trip, performance.now() - t);   // the round trip alone, taken off the draw's time
+      t = performance.now(); gl.drawArrays(gl.TRIANGLES, 0, 3); gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px); best = Math.min(best, performance.now() - t); }
+  } finally { res = keep; }
+  const full = Math.max(0, best - trip) * 4; if (full > 30) lower(.5); else if (full > 18) lower(.75); view(); window.__wave.gauge = Math.round(full * 10) / 10;   // a 60 fps frame is 16.7 ms: only a device that clearly cannot fill the screen in time draws fewer pixels
 }
 function warm() {
   if (warmed || warming || RM.matches || saveData() || broken || document.hidden) return; warming = true;
   try { if (!glInit()) { warming = false; return; } } catch { warming = false; return; }
-  if (!cv.isConnected) { document.body.append(cv); css = null; }   // attached (invisible, never takes a tap) so it measures its real 100lvh now, not inside a tap
+  cssSize();   // its real 100lvh box, measured now rather than inside a tap
   const todo = KEYS(); if (par) todo.forEach(k => { if (!progs[k]) progs[k] = start(srcOf(k)); });
   const next = () => {
     if (!gl || gl.isContextLost() || broken) { warming = false; return; }

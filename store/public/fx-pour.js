@@ -65,7 +65,7 @@ function launch() {
 }
 // still compiling: the smoke starts a frame or two later instead of holding the page (never more than a second of waiting)
 const compiling = () => !!pend?.par && performance.now() - pend.t < 1000 && !pend.g.isContextLost() && Object.values(pend.list).some(x => !pend.g.getProgramParameter(x.p, pend.par.COMPLETION_STATUS_KHR));
-addEventListener("wave:start", e => { if (e.detail?.key === "hookahs" && !tried) requestAnimationFrame(() => setTimeout(launch, 0)); });   // after the wave's first frame, never inside the tap
+addEventListener("wave:start", e => { if (e.detail?.key === "hookahs" && !tried) setTimeout(() => { if (!gl && !tried) launch(); }, 240); });   // the context is made once the wave's body covers the screen, never inside the tap or mid-motion
 function setup() {
   if (new URLSearchParams(location.search).has("still")) return false;
   launch(); if (!pend) return false; const { g, vs, list } = pend; pend = null;
