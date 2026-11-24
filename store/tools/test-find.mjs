@@ -11,6 +11,8 @@ const mod = await (await fetch(B + "/api/catalog-module")).text();
 const { PRODUCTS, CATEGORIES } = await import("data:text/javascript;base64," + Buffer.from(mod).toString("base64"));
 const F = await import(new URL("../public/find-core.js", import.meta.url));
 const S = await import(new URL("../public/search-core.js", import.meta.url));
+// the page modules load too (a syntax error in one stops the whole storefront)
+for (const m of ["find.js", "search.js"]) { let e = null; try { await import(new URL("../public/" + m, import.meta.url)); } catch (x) { e = x; } ok(!e, `${m} loads: ${e && e.message}`); }
 const heat = PRODUCTS.filter(p => p.cat === "heat"), hk = PRODUCTS.filter(p => p.cat === "hookahs");
 const keys = F.groupsFor("heat", heat).map(g => g.key);
 ok(["type", "shape", "brand"].every(k => keys.includes(k)), "Heat filters by type, shape and brand: " + keys);
