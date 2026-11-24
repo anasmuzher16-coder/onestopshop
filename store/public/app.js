@@ -665,8 +665,8 @@ function payBlock(sc, total) {
   if (!CARD_ON) return `<fieldset class="co__set co__pay"><legend class="h3">Payment</legend><p class="co__p">At the counter when you pick it up.</p></fieldset>`;
   const way = payWay(sc), opt = (v, name, small, right) => `<label class="opt"><input type="radio" name="pay" value="${v}" ${way === v ? "checked" : ""}><span class="opt__name">${name}<small>${small}</small></span><span class="num">${right}</span></label>`;
   return `<fieldset class="co__set co__pay"><legend class="h3">Payment</legend><div class="opts">
-    ${opt("card", "Pay now by card", "Card, Apple Pay or Google Pay, on the next page", money(total / 100))}
-    ${opt("at_pickup", "Pay at the counter", "When you pick it up", "Later")}</div></fieldset>`;
+    ${opt("card", "Pay now by card", "Card, Apple Pay or Google Pay", "Now")}
+    ${opt("at_pickup", "Pay at the counter", "When you pick it up", "At pickup")}</div></fieldset>`;
 }
 // What the order page knows about the payment, kept with the order on this device only.
 const paidKey = id => "oss:order:" + id;
@@ -732,9 +732,9 @@ function payWords(o) {
     head: closed ? "This payment did not go through." : p.method === "card" && p.status !== "paid" ? `One moment, ${first}.` : `Thank you, ${first}.`,
     lead: closed ? `Nothing was charged. <a class="link" href="/cart">Your cart</a> is still here.`
       : p.method === "at_pickup" ? `Pay at the counter when you pick it up. We email ${esc(o.email)} when it is ready.`
-      : p.status === "paid" ? `Paid. Your receipt is on its way to ${esc(o.email)}.`
+      : p.status === "paid" ? `Paid. Your receipt is on its way to ${esc(o.email)}. ${o.method === "pickup" ? "We email you again when it is ready." : o.service === "Local delivery" ? "Our driver calls before coming." : "The tracking number follows when it ships."}`
       : p.slow ? `Your payment is still being confirmed. The receipt comes to ${esc(o.email)} as soon as it is.`
-      : "Confirming your payment.",
+      : "Confirming your payment. This page updates by itself.",
     door: p.status === "paid" ? "Paid" : p.method === "at_pickup" ? "To pay at pickup" : "Total",
   };
 }

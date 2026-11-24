@@ -60,8 +60,11 @@ The counter reader is a separate decision. Square's is cheaper in store (2.5%) a
    webhook has landed. Nothing says "paid" before that.
 5. `POST /api/pay/webhook` checks the `Stripe-Signature` header itself: HMAC-SHA256 of `"<t>.<raw body>"` with the
    endpoint secret, compared in constant time, refused if older than 5 minutes ([webhooks](https://docs.stripe.com/webhooks)).
-   Then `checkout.session.completed` (or `async_payment_succeeded`, or `payment_intent.succeeded`) marks the order
-   paid only if the session id, amount, currency and mode match. The update is guarded (`status = 'pending' AND
+   Then `checkout.session.completed` (or `async_payment_succeeded`) marks the order paid only if the session id,
+   amount, currency and test/live mode match. `payment_intent.succeeded` never pays an order: a PaymentIntent cannot
+   prove which Checkout page it belongs to. A payment that lands on an order already closed (expired, or cancelled
+   by the shop) is recorded as paid on that closed order, so the back office shows a refund is owed; it never
+   revives the order or takes stock. The update is guarded (`status = 'pending' AND
    pay_status = 'awaiting'`), so the order turns paid once and the receipt is written once, however many times Stripe
    sends it. Event ids are kept in `pay_events`. This follows Stripe's fulfilment guide: webhooks required, the
    handler safe to run many times ([fulfil orders](https://docs.stripe.com/checkout/fulfillment?ui=full-page)).
@@ -77,7 +80,8 @@ The counter reader is a separate decision. Square's is cheaper in store (2.5%) a
 
 For pickup only. The order is placed `pending` with pay `pay_at_pickup`, its stock is held, and the email says to
 pay at the counter. In the back office it can be marked ready before payment but cannot be marked collected until
-the shop taps "mark paid" (`POST /api/admin/orders/<code>/paid`).
+the shop taps "Mark paid at the counter" (`POST /api/admin/orders/<code>/paid`). Open item for the back-office
+branch: a counter order never collected holds its stock until the shop cancels it with restock.
 
 ## Refunds
 
@@ -85,7 +89,9 @@ the shop taps "mark paid" (`POST /api/admin/orders/<code>/paid`).
 No amount means the whole remainder. The amount is booked in `refunds` first, by one statement that checks what is
 left (pending refunds count), so two taps at once can never refund more than was paid. The Stripe call carries
 `Idempotency-Key: refund-<op>`, so the same tap sent twice refunds once. A refund Stripe refuses is marked failed
-and books nothing. Counter payments are refunded at the till. Refunds do not put stock back: a returned item is
+and books nothing; if Stripe does not answer at all, the refund stays booked as pending and the same tap can be
+sent again safely. A refund Stripe reports as still pending is booked as done (card refunds normally settle at
+once; refund-update and dispute events are not handled yet). Counter payments are refunded at the till. Refunds do not put stock back: a returned item is
 counted in with the stock button ("return").
 
 ## Switching it on (the shop does this; nothing here deploys)
