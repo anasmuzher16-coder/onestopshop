@@ -277,6 +277,7 @@ const band = (fx, tone, title, note = "") => `<section class="shophead shophead-
 // is drawn as a dashed empty slot on the coal, and the section's own drawn object (the one its band plays with) stands in it,
 // still. Beside it one claim, one sentence and the one action, the counter's phone; beside that, what is on the shelf now,
 // counted, as a ledger. No form: the shop answers the phone.
+const soonBand = () => `${openLine()}. <a class="tel" href="tel:+15192552222">Call 519-255-2222</a>`;   // the band line of every coming-soon page
 const SOON_NOUN = { parts: "parts and care pieces", misc: "odds and ends", heat: "heat pieces", cologne: "colognes" };
 const shelfNow = c => { const l = SHELF.filter(p => p.cat === c.id), sale = l.filter(forSale).length; return [c, l.length, sale]; };
 // the drawings are the band's own (fx-objects.js, already fetched by the effects); a slot is filled once they are here
@@ -416,7 +417,7 @@ function viewShop(cat) {
   return `
   <section class="shophead" data-tone="${c ? c.tone : "bone"}" ${c ? `data-cat="${c.id}"` : `data-fx="all"`}>
     <h1 class="shophead__h">${c ? c.name : "Everything"}</h1>
-    <p class="shophead__n">${empty ? `${openLine()}. <a class="tel" href="tel:+15192552222">Call 519-255-2222</a>` : bandNote(c, list)}</p>
+    <p class="shophead__n">${empty ? soonBand() : bandNote(c, list)}</p>
   </section>
   <nav class="chips" aria-label="Categories"><a href="/shop" ${!c ? 'aria-current="page"' : ""}>All</a>${CATEGORIES.map(x => `<a href="/shop/${x.id}" ${c && c.id === x.id ? 'aria-current="page"' : ""}>${x.name}</a>`).join("")}<a href="/gifts/under-50">Gifts</a></nav>
   ${empty ? soonSection(c) : f ? f.html(() => shopGrid(cat)) : shopGrid(cat)}`;
@@ -527,7 +528,7 @@ function viewGifts(kind) {
   return `
   <section class="shophead" data-tone="${under ? "emerald" : "cobalt"}" data-fx="gifts">
     <h1 class="shophead__h">${under ? "Under $50" : "Under $150"}</h1>
-    <p class="shophead__n">${list.length ? `<span class="num">${list.length}</span> gifts, packed at the counter` : openLine()}</p>
+    <p class="shophead__n">${list.length ? `<span class="num">${list.length}</span> gifts, packed at the counter` : soonBand()}</p>
   </section>
   <nav class="chips chips--on" aria-label="Gifts"><a href="/shop">Everything</a><a href="/gifts/under-50" ${under ? 'aria-current="page"' : ""}>Under $50</a><a href="/gifts/under-150" ${!under ? 'aria-current="page"' : ""}>Under $150</a><a href="/set">The full setup</a></nav>
   ${list.length ? `<div class="grid grid--shop">${list.map(card).join("")}</div>`
@@ -573,7 +574,7 @@ function viewSet() {
   if (!setReady()) return `
   <section class="shophead" data-tone="ruby" data-fx="set">
     <h1 class="shophead__h">Build a set</h1>
-    <p class="shophead__n">${openLine()}</p>
+    <p class="shophead__n">${soonBand()}</p>
   </section>
   ${soonShelf({ tone: "ruby", obj: "set", lead: `A set is a hookah, a bowl and a hose that go together. ${setWhy()} Call the counter and we will help you put one together from the shelf.` })}`;
   return `

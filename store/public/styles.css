@@ -943,14 +943,14 @@ a[href^="tel:"]{white-space:nowrap}
 .soon{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--s-6);padding:var(--s-6) var(--gutter) var(--s-16)}
 .soon__slot.tile.fx{position:relative;inset:auto;z-index:auto;overflow:hidden;order:2;aspect-ratio:4 / 3;background:none;
   border:1px dashed var(--tile);border-radius:var(--radius);color:var(--tile)}
-.soon__art{position:absolute;inset:var(--s-8) var(--s-4) var(--s-4)}
+.soon__art{position:absolute;inset:var(--s-12) var(--s-6) var(--s-6)}
 .soon__art svg{display:block;width:100%;height:100%;overflow:visible}
 /* the drawing as an outline: fills off, every line a dashed hairline in the jewel; a state its band hides at rest shows */
-.soon__art svg *{fill:none !important;stroke:currentColor !important;stroke-width:.7px !important;stroke-dasharray:2 1.4 !important;vector-effect:non-scaling-stroke;opacity:1 !important}
+.soon__art svg *{fill:none !important;stroke:currentColor !important;stroke-width:1.5px !important;stroke-dasharray:4 2.5 !important;vector-effect:non-scaling-stroke;opacity:1 !important}
 .soon__art svg :is(defs,clipPath,clipPath *){stroke:none !important}
 .soon__slot .sticker.sticker--tbd{top:var(--s-3);right:var(--s-3);bottom:auto;color:var(--tile);border-color:var(--tile);background:none;box-shadow:none;transform:none;animation:tbd-in var(--dur-state) var(--ease-state) 380ms backwards}
 .soon__copy{order:1;display:grid;gap:var(--s-4);align-content:start}
-.soon__h{margin:0;font:400 var(--t-d2)/.92 var(--font-display);letter-spacing:-.01em;color:var(--color-strong);text-wrap:balance;padding-top:.1em}
+.soon__h{margin:0;font:400 var(--t-d1)/.95 var(--font-display);letter-spacing:-.01em;color:var(--color-strong);text-wrap:balance;padding-top:.1em}
 .soon__p{margin:0;max-width:46ch;font-size:var(--t-16);line-height:1.5;text-wrap:pretty}
 .soon__acts{display:flex;flex-wrap:wrap;align-items:center;gap:var(--s-4) var(--s-6);margin:var(--s-2) 0 0}
 .srch__nonep + .soon__acts{margin:var(--s-5) 0 var(--s-2)}
@@ -980,3 +980,5 @@ a[href^="tel:"]{white-space:nowrap}
 .cats__soon .link{display:inline-block;padding:0;margin:0}
 /* four sections with stock: the hookahs tile runs the height of the other three, stacked beside it */
 @media (min-width:960px){.cats:has(> .cat:nth-child(4):last-child) .cat:first-child{grid-row:span 3} .cats:has(> .cat:nth-child(4):last-child) .cat:not(:first-child){grid-column:span 6;min-height:180px}}
+/* the band's call is the phone's first-screen action; from 640 px the Call button is in the first screen, so it is said once */
+@media (min-width:640px){.shophead__n .tel{display:none}}
