@@ -281,16 +281,16 @@ const SOON_NOUN = { parts: "parts and care pieces", misc: "odds and ends", heat:
 const shelfNow = c => { const l = SHELF.filter(p => p.cat === c.id), sale = l.filter(forSale).length; return [c, l.length, sale]; };
 // the drawings are the band's own (fx-objects.js, already fetched by the effects); a slot is filled once they are here
 let objs = null, slotN = 0;
-const fillSlots = () => (objs ||= import("./fx-objects.js")).then(({ OBJ }) => { for (const s of document.querySelectorAll(".soon__slot[data-obj]:empty")) { const o = OBJ[s.dataset.obj]; if (o) s.innerHTML = `<svg viewBox="0 0 100 100" aria-hidden="true">${o.replaceAll("ID", "soon" + (++slotN))}</svg>`; } }).catch(() => {});
+const fillSlots = () => (objs ||= import("./fx-objects.js")).then(({ OBJ }) => { for (const s of document.querySelectorAll(".soon__art[data-obj]:empty")) { const o = OBJ[s.dataset.obj]; if (o) s.innerHTML = `<svg viewBox="0 0 100 100" aria-hidden="true">${o.replaceAll("ID", "soon" + (++slotN))}</svg>`; } }).catch(() => {});
 function nowLedger() {
-  const now = CATEGORIES.map(shelfNow).filter(([, n]) => n);
+  const now = CATEGORIES.map(shelfNow).filter(([, n]) => n).sort((a, b) => (b[2] > 0) - (a[2] > 0));   // sections with something to buy first; prices TBD last
   return now.length ? `<nav class="soonnow" aria-labelledby="soonnow-h"><h2 class="soonnow__h" id="soonnow-h">On the shelf now</h2>
       <ul>${now.map(([c, n, sale]) => `<li><a href="/shop/${c.id}" data-tone="${c.tone}"><span class="soonnow__sw" aria-hidden="true"></span><span class="soonnow__n">${esc(c.name)}</span><span class="soonnow__c"><span class="num">${n}</span>${sale ? "" : ` ${TBD("Prices")}`}</span></a></li>`).join("")}</ul></nav>` : "";
 }
-function soonShelf({ tone, obj, title = "Stock arriving soon.", lead }) {
+function soonShelf({ tone, obj, title = "Coming soon to the site.", lead }) {
   setTimeout(fillSlots, 0);   // after the page has put this in
   return `<section class="soon" data-tone="${tone}" aria-labelledby="soon-h">
-    <div class="soon__slot fx" data-obj="${obj}" aria-hidden="true"></div>
+    <div class="soon__slot tile fx" aria-hidden="true"><span class="soon__art" data-obj="${obj}"></span><span class="sticker sticker--tbd"><span class="sticker__k">Ask</span><span class="sticker__v">the counter</span></span></div>
     <div class="soon__copy">
       <h2 class="soon__h" id="soon-h">${title}</h2>
       <p class="soon__p">${lead}</p>
@@ -299,7 +299,8 @@ function soonShelf({ tone, obj, title = "Stock arriving soon.", lead }) {
     ${nowLedger()}
   </section>`;
 }
-const soonSection = c => soonShelf({ tone: c.tone, obj: c.id, lead: `Our ${SOON_NOUN[c.id] || c.name.toLowerCase()} are not on the site yet. Call the counter and we will check the shelf for you.` });function viewHome() {
+const soonSection = c => soonShelf({ tone: c.tone, obj: c.id, lead: `Our ${SOON_NOUN[c.id] || c.name.toLowerCase()} are not online yet. Call the counter and we will check the shelf for you.` });
+function viewHome() {
   // the first screen and the counter picks: the shop's ticked (in-store) hookahs with their own photo, one per family (public/picks.js, the Worker preloads the same first one)
   const ranked = heroPicks(PRODUCTS, 13), stars = ranked.slice(0, 5), picks = ranked.slice(5, 13);
   for (const p of SHELF.filter(x => x.cat === "hookahs" && !x.dark)) { if (picks.length >= 8) break; if (!picks.includes(p) && !stars.includes(p)) picks.push(p); }
@@ -415,7 +416,7 @@ function viewShop(cat) {
   return `
   <section class="shophead" data-tone="${c ? c.tone : "bone"}" ${c ? `data-cat="${c.id}"` : `data-fx="all"`}>
     <h1 class="shophead__h">${c ? c.name : "Everything"}</h1>
-    <p class="shophead__n">${empty ? openLine() : bandNote(c, list)}</p>
+    <p class="shophead__n">${empty ? `${openLine()}. <a class="tel" href="tel:+15192552222">Call 519-255-2222</a>` : bandNote(c, list)}</p>
   </section>
   <nav class="chips" aria-label="Categories"><a href="/shop" ${!c ? 'aria-current="page"' : ""}>All</a>${CATEGORIES.map(x => `<a href="/shop/${x.id}" ${c && c.id === x.id ? 'aria-current="page"' : ""}>${x.name}</a>`).join("")}<a href="/gifts/under-50">Gifts</a></nav>
   ${empty ? soonSection(c) : f ? f.html(() => shopGrid(cat)) : shopGrid(cat)}`;
@@ -530,7 +531,7 @@ function viewGifts(kind) {
   </section>
   <nav class="chips chips--on" aria-label="Gifts"><a href="/shop">Everything</a><a href="/gifts/under-50" ${under ? 'aria-current="page"' : ""}>Under $50</a><a href="/gifts/under-150" ${!under ? 'aria-current="page"' : ""}>Under $150</a><a href="/set">The full setup</a></nav>
   ${list.length ? `<div class="grid grid--shop">${list.map(card).join("")}</div>`
-    : soonShelf({ tone: under ? "emerald" : "cobalt", obj: "gifts", title: "Gifts arriving soon.", lead: "Nothing in this price range is on the site yet. Call the counter and we will check the shelf for you, and pack it as a gift." })}`;
+    : soonShelf({ tone: under ? "emerald" : "cobalt", obj: "gifts", lead: "Nothing in this price range is online yet. Call the counter and we will check the shelf for you, and pack it as a gift." })}`;
 }
 
 // ---------- build a set ----------
@@ -574,7 +575,7 @@ function viewSet() {
     <h1 class="shophead__h">Build a set</h1>
     <p class="shophead__n">${openLine()}</p>
   </section>
-  ${soonShelf({ tone: "ruby", obj: "set", title: "Sets arriving soon.", lead: `A set is a hookah, a bowl and a hose that go together. ${setWhy()} Call the counter and we will help you put one together from the shelf.` })}`;
+  ${soonShelf({ tone: "ruby", obj: "set", lead: `A set is a hookah, a bowl and a hose that go together. ${setWhy()} Call the counter and we will help you put one together from the shelf.` })}`;
   return `
   <section class="shophead" data-tone="ruby" data-fx="set">
     <h1 class="shophead__h">Build a set</h1>
@@ -585,7 +586,7 @@ function viewSet() {
       <section class="pick" aria-labelledby="pick-${slot}">
         <h2 class="h3" id="pick-${slot}"><span class="num">${i + 1}</span> ${label}</h2>
         ${!setOpts(cat).length && slot === "hookah" ? `<p class="pick__none">Hookahs join sets once the shop sets their prices. <a class="link" href="/shop/hookahs">See the hookahs</a></p>`
-          : !setOpts(cat).length && !OPTIONAL.has(slot) ? `<p class="pick__none">${esc(catById[cat]?.name || label)}: stock arriving soon. <a class="link" href="tel:+15192552222">Call the counter</a></p>` : ""}
+          : !setOpts(cat).length && !OPTIONAL.has(slot) ? `<p class="pick__none">${esc(catById[cat]?.name || label)}: coming soon to the site. <a class="link" href="tel:+15192552222">Call the counter</a></p>` : ""}
         <div class="pick__row" role="group" aria-label="${label}">${setOpts(cat).map(p => `<button class="pick__opt" type="button" data-set="${slot}" data-sku="${p.sku}" aria-pressed="${picks[i]?.sku === p.sku}" data-tone="${toneOf(p)}"><span class="tile">${shot(p, { small: true, use: "thumb" })}${sticker(p)}</span><span class="pick__name">${esc(p.name)}</span></button>`).join("")}</div>
       </section>`).join("")}</div>
     <aside class="set__sum" data-set-summary>${setSummary()}</aside>

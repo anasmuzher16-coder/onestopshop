@@ -97,7 +97,7 @@ export function searchOut(q) {
     if (u.pages.length) return said + pages;
     const near = nearest(IX, q);
     // a word naming a section whose stock is not on the site yet: the same empty state as the section (no link back into it)
-    if (soon.length) return `<h2 class="srch__none">${X.esc(soonNames)}: stock arriving soon.</h2><p class="srch__nonep">Our ${X.esc(soonNames.toLowerCase())} are not on the site yet. Call the counter and we will check the shelf for you.</p>
+    if (soon.length) return `<h2 class="srch__none">${X.esc(soonNames)}: coming soon to the site.</h2><p class="srch__nonep">Our ${X.esc(soonNames.toLowerCase())} are not online yet. Call the counter and we will check the shelf for you.</p>
       <p class="soon__acts"><a class="btn" href="tel:+15192552222">Call 519-255-2222</a></p>${X.nowLedger ? X.nowLedger() : ways()}`;
     return `<h2 class="srch__none">No “${X.esc(q)}” on the shelf.</h2><p class="srch__nonep">${near.alone.length ? "Here is the nearest we have, or ask us to get it in." : near.mean ? "" : "Try one of these, or ask us to get it in."}</p>
       ${near.mean ? `<p class="meant">Did you mean <a class="link" href="/search?q=${encodeURIComponent(near.mean)}">${X.esc(near.mean)}</a>?</p>` : ""}
@@ -106,7 +106,7 @@ export function searchOut(q) {
       <p class="srch__ask">Look through <a class="link" href="/shop">everything</a>, or ask us to stock it: call <a class="link" href="tel:+15192552222">519-255-2222</a>.</p>`;
   }
   const groups = grouped(IX, hits);
-  return `${said}${soon.length ? `<p class="meant">${X.esc(soonNames)}: stock arriving soon. See ${soonLink}, or call <a class="link" href="tel:+15192552222">519-255-2222</a>.</p>` : ""}${pages}${js.length ? `<ul class="jumps">${js.map(jumpRow).join("")}</ul>` : ""}
+  return `${said}${soon.length ? `<p class="meant">${X.esc(soonNames)}: coming soon to the site. See ${soonLink}, or call <a class="link" href="tel:+15192552222">519-255-2222</a>.</p>` : ""}${pages}${js.length ? `<ul class="jumps">${js.map(jumpRow).join("")}</ul>` : ""}
     <p class="sr" role="status">${hits.length} ${hits.length === 1 ? "match" : "matches"}</p>
     ${groups.map(g => { const more = g.items.length > 4, coal = g.cat.id === "charcoal";
       return `<section class="rgroup" data-tone="${g.cat.tone}"><div class="rgroup__h"><h2>${X.esc(g.cat.name)}</h2><span class="num">${g.items.length}</span></div>${coal ? `<p class="rgroup__note">Charcoal is pickup or local delivery only.</p>` : ""}

@@ -43,7 +43,7 @@ ok(coal.length === 69 && heat.length === 15 && !heat.some(p => p.details.charcoa
 // the sections the samples leave empty: still there, answering 200, saying the stock is on its way and the phone, kept out of search
 const empty = m.CATEGORIES.filter(c => !m.PRODUCTS.some(p => p.cat === c.id)).map(c => c.id);
 ok(["bases", "bowls", "hoses", "parts", "cologne", "misc"].every(id => empty.includes(id)) && empty.length === 6, "six sections wait for their stock: " + empty.join(","));
-for (const id of empty) { const s = await get("/shop/" + id); ok(s.r.status === 200 && /stock arriving soon/i.test(s.t) && /tel:\+15192552222/.test(s.t) && /<meta name="robots" content="noindex, nofollow">/.test(s.t) && !/"@type":"(ItemList|Product)"/.test(s.t), `/shop/${id}: 200, says stock arriving soon with the phone, noindex, no product data`); }
+for (const id of empty) { const s = await get("/shop/" + id); ok(s.r.status === 200 && /coming soon to our site/i.test(s.t) && /tel:\+15192552222/.test(s.t) && /<meta name="robots" content="noindex, nofollow">/.test(s.t) && !/"@type":"(ItemList|Product)"/.test(s.t), `/shop/${id}: 200, says coming soon to our site with the phone, noindex, no product data`); }
 // every switched-off sample's old address goes to its own section, which says what is coming (one request each)
 { const all = [...SAMPLE_SKUS]; let wrong = [];
   for (const sku of all) { const r = await fetch(B + "/p/" + sku, { redirect: "manual" }); if (["OSS-7005", "OSS-7007", "OSS-7009"].includes(sku)) { if (r.status !== 404) wrong.push(`${sku}:${r.status}`); continue; }   // listed in case a database kept them; this one never had them

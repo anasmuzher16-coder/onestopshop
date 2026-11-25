@@ -130,7 +130,7 @@ export function seoFor({ env, url, cat, meta, site }) {
     const c = cat.categories.find(x => x.id === b); if (!c) return out;
     const list = shelf(cat, cat.products.filter(p => p.category_id === c.id));
     out.head.push(ld(crumbsLd([...home, shopCrumb, [c.name, `${origin}/shop/${c.id}`]])));
-    out.body = `<section class="ssr">${crumbNav([["Home", "/"], ["Shop", "/shop"], [c.name, `/shop/${c.id}`]])}<h1>${esc(c.name)}</h1><p>${esc(meta.desc)}</p>${list.length ? `<ul>${list.map(item).join("")}</ul>` : `<p>Stock arriving soon. Call <a href="tel:+15192552222">519-255-2222</a> and we will check the shelf.</p>`}</section>`;
+    out.body = `<section class="ssr">${crumbNav([["Home", "/"], ["Shop", "/shop"], [c.name, `/shop/${c.id}`]])}<h1>${esc(c.name)}</h1><p>${esc(meta.desc)}</p>${list.length ? `<ul>${list.map(item).join("")}</ul>` : `<p>Coming soon to our site. Call <a href="tel:+15192552222">519-255-2222</a> and we will check the shelf.</p>`}</section>`;
   } else if (a === "p" && meta.product) {
     const p = meta.product, c = cat.categories.find(x => x.id === p.category_id), sku = canonicalSku(cat, p.sku), canon = `${origin}/p/${sku}`;
     out.canonical = canon; out.share = shareImage(origin, p, site);
