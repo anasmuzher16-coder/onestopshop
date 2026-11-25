@@ -978,7 +978,7 @@ a[href^="tel:"]{white-space:nowrap}
 /* the home page: sections whose stock is not online yet are one quiet line under the tiles, never a tile of their own */
 .cats__soon{margin:0;padding:var(--s-4) var(--gutter) 0;font-size:var(--t-14);line-height:44px;color:var(--color-text)}
 .cats__soon .tbd{margin-right:var(--s-2)}
-.cats__soon .link{display:inline-block;padding:0;margin:0}
+.cats__soon .link{display:inline-block;min-width:44px;padding:0;margin:0}
 /* four sections with stock: the hookahs tile runs the height of the other three, stacked beside it */
 @media (min-width:960px){.cats:has(> .cat:nth-child(4):last-child) .cat:first-child{grid-row:span 3} .cats:has(> .cat:nth-child(4):last-child) .cat:not(:first-child){grid-column:span 6;min-height:180px}}
 /* the band's call is the phone's first-screen action; from 640 px the Call button is in the first screen, so it is said once */
