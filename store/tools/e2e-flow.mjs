@@ -102,8 +102,9 @@ try {
   t("order moves from To pack to Packed", /packed/i.test(await p.locator("dialog[open] .sheet__top .state").innerText()));
   } else { const st0 = await p.locator("dialog[open] .sheet__top .state").innerText(); await p.locator("[data-next]").tap();
     const moved = await p.waitForFunction(s => (document.querySelector("dialog[open] .sheet__top .state")?.textContent || s) !== s, st0, { timeout: 8000 }).then(() => true, () => false);
-    t("no keys: the pickup order moves along", moved && /ready/i.test(await p.locator("dialog[open] .sheet__top .state").innerText()), st0); }
+    t("no keys: the pickup order moves along", moved && /ready/i.test(await p.locator("dialog[open] .sheet__top .state").innerText()), st0); await p.waitForTimeout(800); }   // the sheet redraws once the ready email is written
   await p.locator("dialog[open] .sheet__act [data-close]").tap();
+  t("the order sheet closes", await p.waitForFunction(() => !document.querySelector("dialog[open]"), null, { timeout: 4000 }).then(() => true, () => false));
   await p.locator('[data-tab="stock"]').tap(); await p.waitForSelector(".row[data-sku]"); await p.fill("#q", "Olive snapback"); await p.waitForTimeout(300);
   const row = p.locator('.row[data-sku="OSS-8003"]'), was = +(await row.locator("output").innerText());
   await row.locator('[data-step="1"]').tap(); await p.waitForTimeout(600);
