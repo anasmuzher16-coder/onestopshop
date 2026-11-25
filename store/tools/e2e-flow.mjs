@@ -8,6 +8,9 @@ const B = process.env.BASE || "http://127.0.0.1:4420", shots = process.argv[2];
 const payThrough = async (p, timeout = 15000) => { await p.waitForURL(u => /\/pay\/cs_/.test(String(u)) || /\/order\/W[A-Z0-9]{6}$/.test(String(u)), { timeout }); if (/\/pay\/cs_/.test(p.url())) { await p.locator("[data-fake-pay]").click(); await p.waitForURL(/\/order\/W[A-Z0-9]{6}$/, { timeout }); await p.waitForSelector('[data-pay-state="paid"]', { timeout }); } };
 const KEY = readFileSync(new URL("../.dev.vars", import.meta.url), "utf8").match(/ADMIN_KEY=(.+)/)[1].trim();
 let n = 0, f = 0; const t = (name, c, extra = "") => { n++; if (!c) { f++; console.log("FAIL", name, extra); } };
+// With no card keys (the live demo) shipping cannot be ordered: checkout says so with the shop's number, and the same cart is
+// ordered for pickup, paid at the counter. With keys the journey is the card one.
+const CARD = /<meta name="oss-pay" content="card">/.test(await (await fetch(B + "/")).text());
 const b = await chromium.launch(); const errs = [];
 try {
   const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
@@ -24,9 +27,15 @@ try {
   await p.locator('input[name="ship"][value="cp-exp"]').check(); await p.waitForTimeout(300); await snap("flow-cart");
   await p.locator('a[href="/checkout"]:visible').first().tap(); await p.waitForURL(/\/checkout$/);
   await snap("flow-checkout");
+  if (!CARD) {
+    t("no keys: shipping cannot be paid yet, and checkout gives the shop's number", await p.locator('[data-checkout] button[type="submit"]').isDisabled() && /519-255-2222/.test(await p.locator(".co__pay").innerText()));
+    await p.goto(B + "/cart", { waitUntil: "networkidle" }); await p.locator('input[name="ship"][value="pickup"]').check(); await p.waitForTimeout(300);
+    await p.locator('a[href="/checkout"]:visible').first().tap(); await p.waitForURL(/\/checkout$/);
+    t("no keys: the same cart picked up is paid at the counter", /At the counter/.test(await p.locator(".co__pay").innerText()));
+  }
   await p.locator('[data-checkout] button[type="submit"]').tap(); await p.waitForTimeout(300);
   t("empty form is stopped with a message", await p.locator("[data-co-err]").isVisible());
-  await p.fill("#co-name", "Sam Sample"); await p.fill("#co-email", "sam@example.com"); await p.fill("#co-line1", "1 Test Street"); await p.fill("#co-city", "Toronto");
+  await p.fill("#co-name", "Sam Sample"); await p.fill("#co-email", "sam@example.com"); if (CARD) { await p.fill("#co-line1", "1 Test Street"); await p.fill("#co-city", "Toronto"); }
   const shown = await p.locator(".totals__door dd").innerText();
   await p.locator('[data-checkout] button[type="submit"]').tap(); await payThrough(p, 15000);
   const id1 = new URL(p.url()).pathname.split("/").pop(), paid = await p.locator(".totals__door dd").innerText();
@@ -84,11 +93,16 @@ try {
   t("both new orders are waiting in the back office", await p.locator(`[data-order="${id1}"]`).count() === 1 && await p.locator(`[data-order="${id2}"]`).count() === 1);
   await p.locator(`[data-order="${id3}"]`).tap(); await p.waitForSelector("dialog[open] [data-next]");
   t("staff, and only staff, get a discreet ID note on the charcoal order", /Check ID if the customer looks young/.test(await p.locator("dialog[open]").innerText()));
-  t("a card-paid order shows it is paid and offers a refund to the card", /Payment\s*Paid, card/.test(await p.locator("dialog[open]").innerText()) && await p.locator("dialog[open] [data-refundform]").count() === 1);
+  if (CARD) t("a card-paid order shows it is paid and offers a refund to the card", /Payment\s*Paid, card/.test(await p.locator("dialog[open]").innerText()) && await p.locator("dialog[open] [data-refundform]").count() === 1);
+  else t("no keys: the order is to be paid at the counter, with no card refund", /counter/i.test(await p.locator("dialog[open]").innerText()) && await p.locator("dialog[open] [data-refundform]").count() === 0, (await p.locator("dialog[open]").innerText()).slice(0, 300));
   await p.locator("dialog[open] .sheet__act [data-close]").tap(); await p.waitForTimeout(200);
   await p.locator(`[data-order="${id1}"]`).tap(); await p.waitForSelector("dialog[open] [data-next]"); await snap("flow-admin-order");
+  if (CARD) {
   await p.locator("[data-next]").tap(); await p.waitForFunction(() => /Mark shipped/.test(document.querySelector("dialog[open] [data-next]")?.textContent || ""), null, { timeout: 8000 });
   t("order moves from To pack to Packed", /packed/i.test(await p.locator("dialog[open] .sheet__top .state").innerText()));
+  } else { const st0 = await p.locator("dialog[open] .sheet__top .state").innerText(); await p.locator("[data-next]").tap();
+    const moved = await p.waitForFunction(s => (document.querySelector("dialog[open] .sheet__top .state")?.textContent || s) !== s, st0, { timeout: 8000 }).then(() => true, () => false);
+    t("no keys: the pickup order moves along", moved && /ready/i.test(await p.locator("dialog[open] .sheet__top .state").innerText()), st0); }
   await p.locator("dialog[open] .sheet__act [data-close]").tap();
   await p.locator('[data-tab="stock"]').tap(); await p.waitForSelector(".row[data-sku]"); await p.fill("#q", "Olive snapback"); await p.waitForTimeout(300);
   const row = p.locator('.row[data-sku="OSS-8003"]'), was = +(await row.locator("output").innerText());

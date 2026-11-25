@@ -24,9 +24,11 @@ if (!CARD) {
     ["cologne by Expedited", { ...who, ...to, method: "ship", service: "cp-exp", lines: [{ sku: "OSS-7001", qty: 1 }] }],
     ["charcoal by Canada Post", { ...who, ...to, method: "ship", service: "cp-exp", lines: [{ sku: coalSku, qty: 1 }] }],
     ["charcoal by our local delivery", { ...who, phone: "519-555-0101", postal: "N9A 1A1", address: { line1: "7 D3000 Coal St", city: "Windsor" }, method: "ship", service: "local", delivery_fee_cents: 1000, lines: [{ sku: coalSku, qty: 1 }, { sku: "OSS-8003", qty: 1 }] }],
-    ["a card pickup", { ...who, method: "pickup", lines: [{ sku: "OSS-8004", qty: 1 }] }]]) {
+    ]) {
     const r = await post(body); ok(noKeys(r), `no keys: ${what} is refused with the shop's number: ${r.status} ${r.data.error || ""}`);
   }
+  { const r = await post({ ...who, method: "pickup", lines: [{ sku: "OSS-8004", qty: 1 }] });
+    ok(r.status === 503 && r.data.pay_off === true && /pay at the counter/i.test(r.data.error || "") && !r.data.order, "no keys: a card pickup is told to pay at the counter: " + r.status + " " + (r.data.error || "")); }
   ok((await stockOf("OSS-2001")) === s2001 && (await stockOf(coalSku)) === c0, "no keys: refused orders hold no stock");
   const pu = await post({ ...who, ...at, method: "pickup", lines: [{ sku: "OSS-8004", qty: 2 }, { sku: "OSS-2001", qty: 1 }] });
   ok(pu.status === 201 && pu.data.order.shipping_cents === 0 && pu.data.order.tax_cents === Math.round(pu.data.order.subtotal_cents * 0.13) && pu.data.order.subtotal_cents === 2 * (await (await fetch(B + "/api/catalog")).json()).products.find(p => p.sku === "OSS-8004").price_cents + 30900, "no keys: a pickup paid at the counter is free, Ontario tax, the database's prices: " + pu.status + " " + (pu.data.error || JSON.stringify(pu.data.order?.subtotal_cents)));

@@ -107,6 +107,7 @@ const pk = /<meta name="oss-pay" content="card">/.test((await call("/", { as: "n
 const place = async (sku, qty, extra = {}) => {
   const r = await call("/api/orders", { method: "POST", as: "none", body: { name: "Rhea Mbeki", email: "rhea@example.com", method: "pickup", ...pk, lines: [{ sku, qty }], ...extra } });
   if (r.status === 201 && r.data.pay?.url) { await fetch(r.data.pay.url, { method: "POST", redirect: "manual" }); await new Promise(res => setTimeout(res, 300)); }
+  else if (r.status === 201 && pk.pay && extra.pay === undefined) await A(`/orders/${r.data.order.id}/paid`, { method: "POST", body: {} });   // no keys: paid at the counter, so it is a sale as a card payment would be
   return r;
 };
 const before = (await prod(SKU)).stock;
