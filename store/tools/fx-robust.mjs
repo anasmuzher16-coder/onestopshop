@@ -110,11 +110,12 @@ const clear = p => p.evaluate(() => {
 // ---------- 1. what is in the shop ----------
 const p = await open();
 await load(p, "");
-const shop = await p.evaluate(async () => { const m = await import("/api/catalog-module"); return { cats: m.CATEGORIES.map(c => c.id), prods: m.PRODUCTS.map(x => ({ sku: x.sku, cat: x.cat, photo: !!(x.dark || x.photo) })) }; });
+const shop = await p.evaluate(async () => { const m = await import("/api/catalog-module"); return { cats: m.CATEGORIES.map(c => c.id), prods: m.PRODUCTS.map(x => ({ sku: x.sku, cat: x.cat, photo: !!(x.dark || x.photo), img: !!x.img })) }; });
 const only = (process.env.ONLY || "").split(",").filter(Boolean);
 const SECS = ["hookahs", "bases", "bowls", "heat", "charcoal", "hoses", "parts", "cologne", "misc"].filter(c => shop.cats.includes(c) && (!only.length || only.includes(c)));
 const CANVAS = new Set([]), LONG = new Set(["hookahs", "hoses"]), SMOKY = new Set(["hookahs"]);
-const pick = c => shop.prods.find(x => x.cat === c && !x.photo) || shop.prods.find(x => x.cat === c);
+// a piece with a drawn-on-tile photo (the act plays on it); since the samples came off (2026-11-24) some sections hold items with no photo yet
+const pick = c => shop.prods.find(x => x.cat === c && !x.photo && x.img) || shop.prods.find(x => x.cat === c && !x.photo) || shop.prods.find(x => x.cat === c);
 t("the shop has the nine sections (charcoal its own since 2026-11-24)", SECS.length === 9 || only.length > 0, SECS.join(","));
 
 // ---------- 2. every section: direct load, in-site arrival, three re-draws, six seconds on, five taps ----------
@@ -123,7 +124,9 @@ for (const c of SECS) {
   t(c + ": the layer appears on a direct load", await ready(p));
   let q = await probe(p);
   t(c + ": one layer and one object on a direct load", q.layers === 1 && q.allLayers === 1 && q.objs === 1 && q.objW >= 44, J(q));
-  if (c === "misc") t("misc: a direct load never hides a price already on screen", (await lowest(p, ".grid .card .sticker", 1200)) === 1);
+  if (c === "misc" && shop.prods.some(x => x.cat === "misc")) t("misc: a direct load never hides a price already on screen", (await lowest(p, ".grid .card .sticker", 1200)) === 1);
+  // a section with no stock online (2026-11-24): the band still plays its act over the coming-soon state, which is on the page
+  if (!shop.prods.some(x => x.cat === c)) t(c + ": with no stock online the coming-soon state is on the page", await p.locator(".soon .soon__slot").count() === 1);
 
   await nav(p, "/"); await wait(p, 500);
   await nav(p, "/shop/" + c); const t0 = Date.now(); await wait(p, 500);
@@ -201,7 +204,7 @@ for (const c of shop.cats) {
 
 // ---------- 4. back and forward ----------
 {
-  const c = SECS.includes("cologne") ? "cologne" : SECS[0];
+  const c = ["cologne", ...SECS].find(x => SECS.includes(x) && shop.prods.some(y => y.cat === x && y.cat !== "hookahs")) || SECS[0];   // a section with cards to open
   await load(p, "shop/" + c); await ready(p); await wait(p, 600);
   await p.locator(".grid [data-piece]").first().click(); await p.waitForURL(/\/p\//); await wait(p, 900);
   for (const [step, name] of [[() => p.goBack(), "back"], [() => p.goForward(), "forward"], [() => p.goBack(), "back again"]]) {
