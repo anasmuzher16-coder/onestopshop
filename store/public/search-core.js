@@ -144,7 +144,13 @@ export function jumps(ix, q, { terms } = understand(ix, q)) {
   return out.sort((a, b) => (a.whole || 0) - (b.whole || 0) || b.label.split(" ").length - a.label.split(" ").length || b.n - a.n).slice(0, 3);
 }
 // a word that names a whole section opens it
-const SECTION_WORDS = { hookahs: ["hookah"], bases: ["base"], bowls: ["bowl"], charcoal: ["charcoal"], heat: ["foil", "heat management"], hoses: ["hose"], parts: ["part", "brush", "cleaner"], cologne: ["cologne"] };
+const SECTION_WORDS = { hookahs: ["hookah"], bases: ["base"], bowls: ["bowl"], charcoal: ["charcoal"], heat: ["foil", "heat management"], hoses: ["hose"], parts: ["part", "brush", "cleaner"], cologne: ["cologne"], misc: ["misc"] };
+// a word that names a section with nothing in it yet (its stock is on the way): the page says so and links the section
+export function arriving(ix, q, { terms } = understand(ix, q)) {
+  // the words as typed count too (singular), before any typo fix: "parts" must not become "pari", nor "misc" "mic"
+  const raw = String(q || "").toLowerCase().split(/[^a-z]+/).filter(Boolean).map(w => w.replace(/s$/, ""));
+  return ix.CATEGORIES.filter(c => { const w = SECTION_WORDS[c.id]; return w && !ix.PRODUCTS.some(p => p.cat === c.id) && (raw.some(x => w.includes(x)) || terms.some(t => t.alts.some(x => w.includes(x)))); });
+}
 // nothing matched: each word on its own, then the closest shop word
 export function nearest(ix, q) {
   const u = understand(ix, q), words = u.terms.map(t => t.w), alone = [];

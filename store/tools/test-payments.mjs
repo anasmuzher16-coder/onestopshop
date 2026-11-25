@@ -3,9 +3,12 @@
 // webhook marks an order paid, repeats and doubles count once, an expired page gives the stock back exactly once,
 // a lost webhook is caught by the sweep, pay at the counter, charcoal never offered a carrier, and refunds.
 // node store/tools/test-payments.mjs   (store started with the fake Stripe vars and --test-scheduled; changes local data: reseed afterwards)
+import { samplesOn } from "./fixtures/samples-on.mjs";
 import { readFileSync } from "node:fs";
 import { post as hook, completed, expired, intentSucceeded, event } from "./fixtures/stripe-webhooks.mjs";
 const B = (process.env.BASE || "http://127.0.0.1:4489").replace(/\/$/, ""), S = (process.env.STRIPE || "http://127.0.0.1:4498").replace(/\/$/, "");
+// the made-up sample rows this suite buys, switched back on in its own throwaway database (tools/fixtures/samples-on.mjs)
+await samplesOn(B, ["OSS-2001", "OSS-8001", "OSS-8002", "OSS-8003", "OSS-8004"]);
 const KEY = process.env.ADMIN_KEY || readFileSync(new URL("../.dev.vars", import.meta.url), "utf8").match(/ADMIN_KEY=(.+)/)[1].trim();
 let n = 0, f = 0, cookie = ""; const ok = (c, msg) => { n++; if (!c) { f++; console.log("FAIL", msg); } };
 // the shop's brake allows 12 new orders a minute: this suite makes more, so a 429 waits out the minute and goes again

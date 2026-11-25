@@ -61,7 +61,7 @@ function usualLabel(o) {
     <header class="label__band"><span>ONE STOP</span><span>${o ? "Your usual" : "Your card"}</span></header>
     <div class="label__body">
       ${o ? `<h2 class="label__h" id="usual-h">Your last order, ${esc(day(o.created_at))}</h2>
-        <ul class="label__items">${items.map(i => `<li><span class="num">${i.qty}</span> <span>${esc(i.name)}</span>${bySku[i.sku] && bySku[i.sku].stock !== 0 ? "" : ` <span class="label__gone">sold out</span>`}</li>`).join("")}</ul>
+        <ul class="label__items">${items.map(i => `<li><span class="num">${i.qty}</span> <span>${esc(i.name)}</span>${bySku[i.sku] && bySku[i.sku].stock !== 0 ? "" : ` <span class="label__gone">${bySku[i.sku] ? "sold out" : "no longer sold online"}</span>`}</li>`).join("")}</ul>
         <p class="label__total"><span>Total</span> <b class="num">${money(o.total_cents)}</b></p>
         ${can.length ? `<button class="btn btn--wide" type="button" data-again="${esc(o.id)}">${gone ? `Add the ${can.length} ${can.length === 1 ? "item" : "items"} still in stock` : "Buy again"}</button>` : `<p class="label__p">Everything in it has sold out. <a class="link" href="/shop">See what is on the counter</a>.</p>`}`
       : `<h2 class="label__h" id="usual-h">Nothing here yet</h2><p class="label__p">Your first order lands on this label, ready to buy again in one tap.</p><a class="btn btn--wide" href="/shop/charcoal">Shop charcoal</a>`}

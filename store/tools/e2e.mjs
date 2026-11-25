@@ -1,7 +1,10 @@
 // End-to-end checks in a phone viewport. Needs `node tools/serve.mjs`. Prints PASS n/n or FAILs; exits non-zero on failure.
+import { samplesOn } from "./fixtures/samples-on.mjs";
 import { createRequire } from "node:module";
 const { chromium, devices } = createRequire("C:/dev/puckempire-arena/package.json")("playwright");
 const base = process.env.BASE || "http://127.0.0.1:4420/";
+// the buying walk needs a piece a carrier ships: the shop has none online yet (2026-11-24), so the sample bowls are switched back on in this suite's own database (tools/fixtures/samples-on.mjs)
+await samplesOn(base, ["OSS-3001", "OSS-3003", "OSS-3006", "OSS-3007", "OSS-3008", "OSS-3009", "OSS-3010", "OSS-3011", "OSS-3012", "OSS-3013"]);
 let n = 0, f = 0; const t = (name, ok, extra = "") => { n++; if (!ok) { f++; console.log("FAIL", name, extra); } };
 const b = await chromium.launch(); const ctx = await b.newContext({ ...devices["iPhone 13"] }); const p = await ctx.newPage();
 const errs = []; p.on("pageerror", e => errs.push(e.message)); p.on("console", m => m.type() === "error" && !/status of 404/.test(m.text()) && errs.push(m.text()));

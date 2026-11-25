@@ -1,8 +1,11 @@
 // Local delivery checks: the fee at every edge, then the running local store with the stand-in map service.
 // Needs tools/fake-geoapify.mjs and the store on 4420 with GEOAPIFY_KEY:test and GEOAPIFY_BASE. Changes local sample data.
+import { samplesOn } from "./fixtures/samples-on.mjs";
 import { readFileSync } from "node:fs";
 import { deliveryFee, localDue, localEta, localArea, parsePostal } from "../public/rates-core.js";
 const B = process.env.BASE || "http://127.0.0.1:4420", MAP = process.env.MAP || "http://127.0.0.1:4499";
+// the made-up sample rows this suite buys, switched back on in its own throwaway database (tools/fixtures/samples-on.mjs)
+await samplesOn(B, ["OSS-8004"]);
 const KEY = process.env.ADMIN_KEY || readFileSync(new URL("../.dev.vars", import.meta.url), "utf8").match(/ADMIN_KEY=(.+)/)[1].trim();
 let n = 0, f = 0; const ok = (c, msg) => { n++; if (!c) { f++; console.log("FAIL", msg); } };
 for (const [m, want] of [[0, 1000], [500, 1000], [10000, 1000], [10000.01, 1500], [10010, 1500], [25000, 1500], [25000.01, null], [25010, null], [-1, null], [NaN, null], [Infinity, null]]) ok(deliveryFee(m) === want, `fee at ${m} m is ${want}, got ${deliveryFee(m)}`);

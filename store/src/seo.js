@@ -130,7 +130,7 @@ export function seoFor({ env, url, cat, meta, site }) {
     const c = cat.categories.find(x => x.id === b); if (!c) return out;
     const list = shelf(cat, cat.products.filter(p => p.category_id === c.id));
     out.head.push(ld(crumbsLd([...home, shopCrumb, [c.name, `${origin}/shop/${c.id}`]])));
-    out.body = `<section class="ssr">${crumbNav([["Home", "/"], ["Shop", "/shop"], [c.name, `/shop/${c.id}`]])}<h1>${esc(c.name)}</h1><p>${esc(meta.desc)}</p><ul>${list.map(item).join("")}</ul></section>`;
+    out.body = `<section class="ssr">${crumbNav([["Home", "/"], ["Shop", "/shop"], [c.name, `/shop/${c.id}`]])}<h1>${esc(c.name)}</h1><p>${esc(meta.desc)}</p>${list.length ? `<ul>${list.map(item).join("")}</ul>` : `<p><a href="tel:+15192552222">519-255-2222</a></p>`}</section>`;
   } else if (a === "p" && meta.product) {
     const p = meta.product, c = cat.categories.find(x => x.id === p.category_id), sku = canonicalSku(cat, p.sku), canon = `${origin}/p/${sku}`;
     out.canonical = canon; out.share = shareImage(origin, p, site);
@@ -158,9 +158,13 @@ export function robots(env, url) {
 }
 // Only pages that say "index": the sections with something on view, each item a shopper can open (one per hookah
 // family), and the help pages. Never the cart, checkout, account, search, gifts or order pages.
+// Build a set needs at least one piece on sale in its three main picks (hookah, bowl, hose); until then the page says the
+// pieces are on their way, so it is not indexed or listed (worker.js describe() uses the same rule).
+export const SET_SECTIONS = ["hookahs", "bowls", "hoses"];
+export const setReady = cat => cat.products.some(p => SET_SECTIONS.includes(p.category_id) && sellable(p) && p.stock > 0);
 export function sitemap(env, url, cat) {
   const origin = siteOrigin(env, url), secs = cat.categories.filter(c => cat.products.some(p => p.category_id === c.id));
   const items = cat.products.filter(p => canonicalSku(cat, p.sku) === p.sku).map(p => `/p/${p.sku}`);   // every page that is its own canonical
-  const paths = ["/", "/shop", ...secs.map(c => `/shop/${c.id}`), "/set", "/shipping", "/terms", "/privacy", ...items];
+  const paths = ["/", "/shop", ...secs.map(c => `/shop/${c.id}`), ...(setReady(cat) ? ["/set"] : []), "/shipping", "/terms", "/privacy", ...items];
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${paths.map(p => `<url><loc>${esc(origin + p)}</loc></url>`).join("\n")}\n</urlset>\n`;
 }

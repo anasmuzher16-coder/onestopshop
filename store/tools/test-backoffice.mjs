@@ -2,6 +2,7 @@
 // tries, ended on removal), who-did-what on every change, Count and Receive (a repeated tap counts once), cancel with
 // restock (never twice), the staff-only ID tick, where orders came from, and the monthly report with its 5% share.
 // PERSIST=<the store's --persist-to folder> node store/tools/test-backoffice.mjs   (changes local data and locks local sign-in for 15 minutes at the end: reseed afterwards)
+import { samplesOn } from "./fixtures/samples-on.mjs";
 import { readFileSync } from "node:fs";
 import { cleanSource } from "../src/source.js";
 import { share, monthStart, monthOf, reportCsv } from "../src/report.js";
@@ -10,6 +11,8 @@ import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 const B = (process.env.BASE || "http://127.0.0.1:4420").replace(/\/$/, "");
+// the made-up sample rows this suite buys, switched back on in its own throwaway database (tools/fixtures/samples-on.mjs)
+await samplesOn(B, ["OSS-8003", "OSS-8004"]);
 const KEY = process.env.ADMIN_KEY || readFileSync(new URL("../.dev.vars", import.meta.url), "utf8").match(/ADMIN_KEY=(.+)/)[1].trim();
 let n = 0, f = 0; const ok = (c, msg) => { n++; if (!c) { f++; console.log("FAIL", msg); } };
 const jar = { owner: "", staff: "" };

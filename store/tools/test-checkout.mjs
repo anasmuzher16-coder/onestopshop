@@ -1,11 +1,14 @@
 // Checkout checks against the running local store: the server prices the order itself, tax follows the province,
 // stock comes down and never oversells, cologne cannot take the fast service, bad input is refused.
 // node store/tools/test-checkout.mjs   (changes the local sample data: reseed afterwards)
+import { samplesOn } from "./fixtures/samples-on.mjs";
 import { readFileSync } from "node:fs";
 import { parsePostal, pack, quote } from "../../site/rates.js";
 import { PRODUCTS } from "../../site/catalog.js";
 import { fuelOn } from "../public/rates-core.js";   // the fuel rate changes weekly: the sample engine is given this week's, so it still checks packing and rates
 const B = process.env.BASE || "http://127.0.0.1:4420";
+// the made-up sample rows this suite buys, switched back on in its own throwaway database (tools/fixtures/samples-on.mjs)
+await samplesOn(B, ["OSS-2001", "OSS-7001", "OSS-7002", "OSS-7006", "OSS-7008", "OSS-8003", "OSS-8004"]);
 const KEY = readFileSync(new URL("../.dev.vars", import.meta.url), "utf8").match(/ADMIN_KEY=(.+)/)[1].trim();
 let n = 0, f = 0; const ok = (c, msg) => { n++; if (!c) { f++; console.log("FAIL", msg); } };
 const post = async body => { const r = await fetch(B + "/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }); return { status: r.status, data: await r.json().catch(() => ({})) }; };
@@ -123,7 +126,11 @@ const cat = await (await fetch(B + "/api/catalog")).json(), coal = cat.products.
 const coalSku = "OSS-9104", c0 = await stockOf(coalSku);
 ok(coal.length === 69 && coal.every(p => p.ship_class === "pickup_only"), "the Charcoal section holds the shop's 69 charcoal items, all pickup or local delivery only: " + coal.length);
 ok(foilFeed.length === 15 && foilFeed.every(p => p.for_sale), "and Heat its 15 foil packs (since 2026-11-24): " + foilFeed.length);
-{ const back = cat.products.filter(p => /^OSS-40/.test(p.sku)); ok(back.length > 0 && back.every(p => p.category_id === "heat" && p.ship_class === "standard" && !JSON.parse(p.details || "{}").charcoal), "the Heat pieces hidden when charcoal moved in are back in Heat, shippable and not charcoal: " + back.map(p => p.sku).join(",")); }
+// the Heat pieces hidden when charcoal moved in are made-up samples: kept in Heat in the database, shippable and not charcoal,
+// and switched off with every other sample (owner, 2026-11-24: "Hide samples, show coming soon"), so the shop never shows them
+{ const all = (await (await fetch(B + "/api/admin/products", { headers: { Cookie: cookie } })).json()).products, back = all.filter(p => /^OSS-40\d\d$/.test(p.sku));
+  ok(back.length === 9 && back.every(p => p.category_id === "heat" && p.ship_class === "standard" && !JSON.parse(p.details || "{}").charcoal && p.active === 0), "the sample Heat pieces stay in Heat, shippable, not charcoal, and switched off: " + back.map(p => p.sku + ":" + p.active).join(","));
+  ok(!cat.products.some(p => /^OSS-40\d\d$/.test(p.sku)), "and none of them is in the shop's catalogue"); }
 ok(coal.every(p => p.stock === 10), "every charcoal item starts at 10 in stock");
 // regression: no carrier service, on its own or mixed in, ever turns charcoal into a shipped order
 const carrierIds = [...new Set(quote(parsePostal("M5V 2T6"), pack([{ product: PRODUCTS.find(p => p.sku === "OSS-1001"), qty: 1 }]), fuelOn().pct).map(o => o.id))];

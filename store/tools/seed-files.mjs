@@ -15,6 +15,7 @@ export const SEED_FILES = [
   "catalog/live/on-view-2026-11-24.sql",        // the on-view switch: samples off, shisha and foil on
   "catalog/out/descriptions.sql",               // the writer's descriptions
   "catalog/live/charcoal-section-2026-11-24.sql", // Charcoal its own section; Heat keeps foil and gets its old pieces back
+  "catalog/live/samples-off-2026-11-24.sql",    // every made-up sample off (kept, never deleted); empty sections say "stock arriving soon"
 ];
 export const seedPath = f => fileURLToPath(new URL(f, STORE));
 

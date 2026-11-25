@@ -1,9 +1,12 @@
 // The whole loop in a phone-sized browser: shop, cart, checkout (ship and pickup), confirmation, then the back
 // office sees the order, moves it along, and changes stock and a product. One browser. Changes the local sample
 // data: reseed afterwards. node store/tools/e2e-flow.mjs [screenshotDir]
+import { samplesOn } from "./fixtures/samples-on.mjs";
 import { createRequire } from "node:module"; import { readFileSync } from "node:fs";
 const { chromium } = createRequire("C:/dev/puckempire-arena/package.json")("playwright");
 const B = process.env.BASE || "http://127.0.0.1:4420", shots = process.argv[2];
+// the made-up sample rows this suite buys, switched back on in its own throwaway database (tools/fixtures/samples-on.mjs)
+await samplesOn(B, ["OSS-7001", "OSS-7008", "OSS-8003", "OSS-8004"]);
 // Card orders go to Stripe's page (the local stand-in, tools/fake-stripe.mjs): pay there, come back, wait for the signed webhook.
 const payThrough = async (p, timeout = 15000) => { await p.waitForURL(u => /\/pay\/cs_/.test(String(u)) || /\/order\/W[A-Z0-9]{6}$/.test(String(u)), { timeout }); if (/\/pay\/cs_/.test(p.url())) { await p.locator("[data-fake-pay]").click(); await p.waitForURL(/\/order\/W[A-Z0-9]{6}$/, { timeout }); await p.waitForSelector('[data-pay-state="paid"]', { timeout }); } };
 const KEY = readFileSync(new URL("../.dev.vars", import.meta.url), "utf8").match(/ADMIN_KEY=(.+)/)[1].trim();
