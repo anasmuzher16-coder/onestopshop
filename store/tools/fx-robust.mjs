@@ -276,7 +276,8 @@ if (SECS.includes("hookahs")) {
   }
   if (SECS.includes("misc")) { // an in-site arrival is where the price gun would fire
     await nav(r, "/"); await wait(r, 300); await nav(r, "/shop/misc"); await wait(r, 200); let q = await probe(r);
-    t("misc: reduced motion shows every price on arrival", q.hidden === 0 && q.stickers > 0, J(q));
+    const miscStock = shop.prods.some(x => x.cat === "misc");   // no stock online since 2026-11-24: then no price to show, and the coming-soon state stands in
+    t("misc: reduced motion shows every price on arrival", q.hidden === 0 && (miscStock ? q.stickers > 0 : await r.locator(".soon .soon__slot").count() === 1), J(q));
     await wait(r, 1300); q = await probe(r); t("misc: reduced motion, nothing running after arrival", q.running === 0 && q.fxCanvas === 0, J(q));
   }
   for (const c of ["hookahs", "cologne", "misc"].filter(x => shop.cats.includes(x))) {
