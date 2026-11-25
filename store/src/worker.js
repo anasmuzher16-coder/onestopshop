@@ -37,7 +37,7 @@ function describe(path, cat, site) {
     if (!n) return { title: `${c.name} | ${site}`, desc: `${c.name}: stock arriving soon at our Windsor counter. Call 519-255-2222 to ask what is on the shelf today.`, index: false, soon: true };
     // nothing in this section can be bought yet: say what stage it is at, never "in stock"
     if (n && !list.some(sellable)) return { title: `${c.name} | ${site}`, desc: list.some(p => p.price_cents > 0) ? `${n} ${c.name.toLowerCase()} coming soon to our Windsor counter.` : `${n} ${c.name.toLowerCase()} from the catalogue. Shop prices are on the way.`, index: true };
-    return { title: `${c.name} | ${site}`, desc: counter ? `${n} ${c.id === CHARCOAL ? "kinds of hookah charcoal" : c.name.toLowerCase()} at our Windsor counter. Pickup or local delivery only.` : `${n} ${c.name.toLowerCase()} at our Windsor counter, shipped across Canada except Quebec, for now.`, index: true };   // never "in stock": the count includes sold-out items
+    return { title: `${c.name} | ${site}`, desc: counter ? `${n} ${c.id === CHARCOAL ? "kinds of hookah charcoal" : c.id === "heat" ? "foil and heat items" : c.name.toLowerCase()} at our Windsor counter. Pickup or local delivery only.` : `${n} ${c.id === "heat" ? "foil and heat items" : c.name.toLowerCase()} at our Windsor counter, shipped across Canada except Quebec, for now.`, index: true };   // never "in stock": the count includes sold-out items
   }
   if (a === "p") {
     const p = cat.products.find(x => x.sku === b); if (!p) return null;

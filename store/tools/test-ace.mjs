@@ -55,7 +55,9 @@ ok((await fetch(B + "/sitemap.xml")).status === 404, "no sitemap while the shop 
 const foilPage = await (await fetch(B + "/p/OSS-9301")).text(), coalPage = await (await fetch(B + "/shop/charcoal")).text(), heatPage = await (await fetch(B + "/shop/heat")).text();
 ok(/og:description" content="[^"]*Not shipped/.test(foilPage) && !/Shipped across Canada/.test(foilPage), "a foil page says pickup or local delivery, never shipped, while its weight is TBD");
 ok(/name="description" content="69 kinds of hookah charcoal[^"]*Pickup or local delivery only/.test(coalPage), "the Charcoal section says pickup or local delivery only");
-ok(!/name="description" content="[^"]*Pickup or local delivery only/.test(heatPage), "Heat no longer says it all: its heat management pieces ship");
+// Heat holds only the 15 foil packs since the sample heat pieces came off (2026-11-24); their weight is TBD, so the section is
+// pickup or local delivery, and says so. It says "shipped" again once anything in it can ship.
+ok(/name="description" content="15 foil and heat items at our Windsor counter\. Pickup or local delivery only/.test(heatPage), "Heat (foil only, weight TBD) says pickup or local delivery only");
 const shPage = await (await fetch(B + "/shop/shisha")).text(); ok(/content="47 shisha/.test(shPage), "the shisha section counts its 47 flavours");
 // 3 the sample hookahs are gone, their links land on the section
 const r1 = await fetch(B + "/p/OSS-1001", { redirect: "manual" });

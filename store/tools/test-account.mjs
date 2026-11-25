@@ -11,7 +11,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 const B = (process.env.BASE || "http://127.0.0.1:4420").replace(/\/$/, ""), PERSIST = process.env.PERSIST;
 // the made-up sample rows this suite buys, switched back on in its own throwaway database (tools/fixtures/samples-on.mjs)
-await samplesOn(B, ["OSS-8003", "OSS-8004"]);
+await samplesOn(B, ["OSS-2001", "OSS-8003", "OSS-8004"]);
 if (!PERSIST) { console.log("FAIL set PERSIST to the store's --persist-to folder"); process.exit(1); }
 const KEY = process.env.ADMIN_KEY || readFileSync(new URL("../.dev.vars", import.meta.url), "utf8").match(/ADMIN_KEY=(.+)/)[1].trim();
 let n = 0, f = 0; const ok = (c, msg) => { n++; if (!c) { f++; console.log("FAIL", msg); } };
