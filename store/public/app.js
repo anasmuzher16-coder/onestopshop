@@ -282,7 +282,7 @@ const SOON_NOUN = { parts: "parts and care pieces", misc: "odds and ends", heat:
 const shelfNow = c => { const l = SHELF.filter(p => p.cat === c.id), sale = l.filter(forSale).length; return [c, l.length, sale]; };
 // the drawings are the band's own (fx-objects.js, already fetched by the effects); a slot is filled once they are here
 let objs = null, slotN = 0;
-const fillSlots = () => (objs ||= import("./fx-objects.js")).then(({ OBJ }) => { for (const s of document.querySelectorAll(".soon__art[data-obj]:empty")) { const o = OBJ[s.dataset.obj]; if (o) s.innerHTML = `<svg viewBox="0 0 100 100" aria-hidden="true">${o.replaceAll("ID", "soon" + (++slotN))}</svg>`; } }).catch(() => {});
+const fillSlots = () => (objs ||= import("./fx-objects.js")).then(({ OBJ }) => { for (const s of document.querySelectorAll(".soon__art[data-obj]:empty")) { const o = OBJ[s.dataset.obj]; if (o) s.innerHTML = `<svg viewBox="0 0 100 100" aria-hidden="true">${o.replaceAll("ID", "soon" + (++slotN))}</svg>`; } }).catch(() => { objs = null; });   // a failed fetch is tried again on the next page
 function nowLedger() {
   const now = CATEGORIES.map(shelfNow).filter(([, n]) => n).sort((a, b) => (b[2] > 0) - (a[2] > 0));   // sections with something to buy first; prices TBD last
   return now.length ? `<nav class="soonnow" aria-labelledby="soonnow-h"><h2 class="soonnow__h" id="soonnow-h">On the shelf now</h2>
@@ -291,7 +291,7 @@ function nowLedger() {
 function soonShelf({ tone, obj, title = "Coming soon to the site.", lead }) {
   setTimeout(fillSlots, 0);   // after the page has put this in
   return `<section class="soon" data-tone="${tone}" aria-labelledby="soon-h">
-    <div class="soon__slot tile fx" aria-hidden="true"><span class="soon__art" data-obj="${obj}"></span><span class="sticker sticker--tbd"><span class="sticker__k">Ask</span><span class="sticker__v">the counter</span></span></div>
+    <div class="soon__slot tile" aria-hidden="true"><span class="soon__art" data-obj="${obj}"></span><span class="sticker sticker--tbd"><span class="sticker__k">Ask</span><span class="sticker__v">the counter</span></span></div>
     <div class="soon__copy">
       <h2 class="soon__h" id="soon-h">${title}</h2>
       <p class="soon__p">${lead}</p>

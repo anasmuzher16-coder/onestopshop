@@ -941,13 +941,14 @@ a[href^="tel:"]{white-space:nowrap}
    like every primary action); the band line also carries the call, so a phone has it in the first screen. Beside it, what
    is on the shelf now, counted, on hairlines. 4 px ladder, the jewel tokens only, no new colours. */
 .soon{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--s-6);padding:var(--s-6) var(--gutter) var(--s-16)}
-.soon__slot.tile.fx{position:relative;inset:auto;z-index:auto;overflow:hidden;order:2;aspect-ratio:4 / 3;background:none;
+.soon__slot.tile{position:relative;overflow:hidden;order:2;aspect-ratio:4 / 3;background:none;
   border:1px dashed var(--tile);border-radius:var(--radius);color:var(--tile)}
 .soon__art{position:absolute;inset:var(--s-12) var(--s-6) var(--s-6)}
 .soon__art svg{display:block;width:100%;height:100%;overflow:visible}
 /* the drawing as an outline: fills off, every line a dashed hairline in the jewel; a state its band hides at rest shows */
 .soon__art svg *{fill:none !important;stroke:currentColor !important;stroke-width:1.5px !important;stroke-dasharray:4 2.5 !important;vector-effect:non-scaling-stroke;opacity:1 !important}
 .soon__art svg :is(defs,clipPath,clipPath *){stroke:none !important}
+.soon__art :is(.tongs,.gun){display:none}   /* the hands of the band's act (the tongs, the price gun) are not part of the object at rest */
 .soon__slot .sticker.sticker--tbd{top:var(--s-3);right:var(--s-3);bottom:auto;color:var(--tile);border-color:var(--tile);background:none;box-shadow:none;transform:none;animation:tbd-in var(--dur-state) var(--ease-state) 380ms backwards}
 .soon__copy{order:1;display:grid;gap:var(--s-4);align-content:start}
 .soon__h{margin:0;font:400 var(--t-d1)/.95 var(--font-display);letter-spacing:-.01em;color:var(--color-strong);text-wrap:balance;padding-top:.1em}
@@ -968,7 +969,7 @@ a[href^="tel:"]{white-space:nowrap}
 @media (prefers-reduced-motion:reduce){.soon__slot .sticker.sticker--tbd{animation:none}}
 @media (min-width:640px){
   .soon{grid-template-columns:repeat(3,minmax(0,1fr));column-gap:var(--s-3);row-gap:var(--s-8)}
-  .soon__slot.tile.fx{order:0;grid-column:1;grid-row:1 / 3;align-self:start;aspect-ratio:4 / 5}
+  .soon__slot.tile{order:0;grid-column:1;grid-row:1 / 3;align-self:start;aspect-ratio:4 / 5}
   .soon__copy{order:0;grid-column:2 / -1;grid-row:1;padding-left:var(--s-3)}
   .soon .soonnow{order:0;grid-column:2 / -1;grid-row:2;margin:0;padding-left:var(--s-3)}
 }

@@ -15,7 +15,9 @@ export const SAMPLE_SKUS = new Set([
   "OSS-4001", "OSS-4002", "OSS-4003", "OSS-4004", "OSS-4005", "OSS-4006", "OSS-4007", "OSS-4008", "OSS-4009",
   "OSS-5001", "OSS-5002", "OSS-5003", "OSS-5005", "OSS-5006", "OSS-5007", "OSS-5008", "OSS-5009", "OSS-5011", "OSS-5012",
   "OSS-6002", "OSS-6003", "OSS-6004", "OSS-6005", "OSS-6006", "OSS-6008", "OSS-6009", "OSS-6010",
-  "OSS-7001", "OSS-7002", "OSS-7003", "OSS-7004", "OSS-7005", "OSS-7006", "OSS-7007", "OSS-7008", "OSS-7009",   // 7005, 7007, 7009: seeded for about an hour on 2026-11-14, then dropped; listed in case a database kept them
+  "OSS-7001", "OSS-7002", "OSS-7003", "OSS-7004", "OSS-7005", "OSS-7006", "OSS-7007", "OSS-7008",   // 7005, 7007: seeded for about an hour on 2026-11-14, then dropped; listed in case a database kept them
+  // (OSS-7009, "Glacier Mint", went the same way, but 7009 is also the number the back office gives its next cologne, so it is
+  //  never listed here: the live step switches it off only by its sample name, catalog/live/samples-off-2026-11-24.sql)
   "OSS-8001", "OSS-8002", "OSS-8003", "OSS-8004", "OSS-8005", "OSS-8006",
 ]);
 export const isSample = sku => SAMPLE_SKUS.has(String(sku || ""));

@@ -93,8 +93,8 @@ export function searchOut(q) {
   const pages = u.pages.length ? `<ul class="jumps jumps--pages">${u.pages.map(pageRow).join("")}</ul>` : "";
   const soon = arriving(IX, q, u), soonNames = soon.map(c => c.name).join(" and ");
   const soonLink = soon.map(c => `<a class="link" href="/shop/${c.id}">${X.esc(c.name)}</a>`).join(", ");
-  if (!hits.length) {
-    if (u.pages.length) return said + pages;
+  if (!hits.length || (soon.length && u.fixed.length)) {   // a typo fix that drifted off a section name with no stock online ("parts" to "pari") is not a result
+    if (u.pages.length && !soon.length) return said + pages;
     const near = nearest(IX, q);
     // a word naming a section whose stock is not on the site yet: the same empty state as the section (no link back into it)
     if (soon.length) return `<h2 class="srch__none">${X.esc(soonNames)}: coming soon to the site.</h2><p class="srch__nonep">Our ${X.esc(soonNames.toLowerCase())} are not online yet. Call the counter and we will check the shelf for you.</p>

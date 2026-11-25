@@ -213,7 +213,7 @@ ok(locs.includes("https://shop.example.ca/set"), "sitemap: /set while a bowl is 
 { const { SAMPLE_SKUS } = await import("../src/samples.js"), sql = readFileSync(new URL("../catalog/live/samples-off-2026-11-24.sql", import.meta.url), "utf8");
   const lists = [...sql.matchAll(/sku IN \(([^)]*)\)/g)].map(x => [...x[1].matchAll(/'(OSS-\d+)'/g)].map(y => y[1]).sort().join(","));
   const want = [...SAMPLE_SKUS].filter(s => !/^OSS-1/.test(s)).sort().join(",");
-  ok(lists.length === 2 && lists.every(l => l === want) && want.split(",").length === 65, "samples-off SQL switches off exactly the 65 non-hookah sample numbers of src/samples.js, in both statements"); }
+  ok(lists.length === 2 && lists.every(l => l === want) && want.split(",").length === 64, "samples-off SQL switches off exactly the 64 non-hookah sample numbers of src/samples.js, in both statements"); }
 // an empty section (all six since 2026-11-24) answers 200, says noindex and the stock is coming, and is not in the demo's page data as a list of products
 { const e = await get("/shop/bowls"); ok(e.r.status === 200 && /<meta name="robots" content="noindex, nofollow">/.test(e.t) && /Bowls: coming soon to our site/.test(e.t) && !/"ItemList"/.test(e.t), "an empty section: 200, noindex, says it is coming soon to the site"); }
 
