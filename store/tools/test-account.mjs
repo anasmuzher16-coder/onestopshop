@@ -4,11 +4,14 @@
 // Needs the store running with --test-scheduled, and PERSIST set to its --persist-to folder (sign-in codes are read
 // from the local outbox, the way a customer reads them from their inbox; nothing is sent).
 //   PERSIST=<folder> BASE=http://127.0.0.1:4490 node store/tools/test-account.mjs   (changes local sample data: reseed afterwards)
+import { samplesOn } from "./fixtures/samples-on.mjs";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 const B = (process.env.BASE || "http://127.0.0.1:4420").replace(/\/$/, ""), PERSIST = process.env.PERSIST;
+// the made-up sample rows this suite buys, switched back on in its own throwaway database (tools/fixtures/samples-on.mjs)
+await samplesOn(B, ["OSS-2001", "OSS-8003", "OSS-8004"]);
 if (!PERSIST) { console.log("FAIL set PERSIST to the store's --persist-to folder"); process.exit(1); }
 const KEY = process.env.ADMIN_KEY || readFileSync(new URL("../.dev.vars", import.meta.url), "utf8").match(/ADMIN_KEY=(.+)/)[1].trim();
 let n = 0, f = 0; const ok = (c, msg) => { n++; if (!c) { f++; console.log("FAIL", msg); } };

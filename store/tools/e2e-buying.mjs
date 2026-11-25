@@ -1,8 +1,11 @@
 // Regression checks for the 2026-11-23 audit: buying and trust. Needs the store and tools/fake-geoapify.mjs running.
 // node store/tools/e2e-buying.mjs   (changes local sample data: reseed afterwards)
+import { samplesOn } from "./fixtures/samples-on.mjs";
 import { createRequire } from "node:module";
 const { chromium } = createRequire("C:/dev/puckempire-arena/package.json")("playwright");
 const B = (process.env.BASE || "http://127.0.0.1:4420").replace(/\/$/, "");
+// the made-up sample rows this suite buys, switched back on in its own throwaway database (tools/fixtures/samples-on.mjs)
+await samplesOn(B, ["OSS-5001", "OSS-7006", "OSS-7008", "OSS-8003", "OSS-8004"]);
 // Card orders go to Stripe's page (the local stand-in, tools/fake-stripe.mjs): pay there, come back, wait for the signed webhook.
 const payThrough = async (p, timeout = 15000) => { await p.waitForURL(u => /\/pay\/cs_/.test(String(u)) || /\/order\/W[A-Z0-9]{6}$/.test(String(u)), { timeout }); if (/\/pay\/cs_/.test(p.url())) { await p.locator("[data-fake-pay]").click(); await p.waitForURL(/\/order\/W[A-Z0-9]{6}$/, { timeout }); await p.waitForSelector('[data-pay-state="paid"]', { timeout }); } };
 let n = 0, f = 0; const t = (name, c, extra = "") => { n++; if (!c) { f++; console.log("FAIL", name, extra); } };
@@ -25,6 +28,15 @@ try {
     await p.waitForSelector('input[name="ship"][value="local"]'); await p.waitForTimeout(300);
     t("1 Windsor code moves a nationwide shopper to local delivery", await p.locator('input[name="ship"][value="local"]').isChecked());
     await c.close();
+  }
+  { // 1b a saved cart still holding a made-up sample (switched off 2026-11-24): taken out with a note, even when another line
+    // also changes (a sold-out flavour), and the rest of the cart is kept
+    const { c, p } = await open({ cart: [{ sku: "OSS-2001", qty: 1 }, { sku: "OSS-9616", qty: 1 }, { sku: "OSS-8004", qty: 1 }] });
+    await go(p, "/cart"); const news = await p.locator("[data-cart-news]").innerText().catch(() => ""), saved = await cart(p);
+    t("1b the sample is taken out of the saved cart", !saved.some(l => l.sku === "OSS-2001") && saved.some(l => l.sku === "OSS-8004"), JSON.stringify(saved));
+    t("1b the cart says so, beside the sold-out note", /no longer sold online/.test(news) && /has sold/.test(news), news);
+    await go(p, "/p/OSS-2001"); t("1b its old address lands on its section", new URL(p.url()).pathname === "/shop/bases" && /Coming soon to the site/.test(await main(p)), p.url());
+    t("1b no page errors", !p.errs.length, p.errs.join(" | ")); await c.close();
   }
   { // 2 and 3 stock limits; a sold-out flavour cannot be bought from any saved cart (the sample Resin Bishop was retired 2026-11-24)
     const { c, p } = await open({ cart: [{ sku: "OSS-9616", qty: 2 }, { sku: "OSS-8004", qty: 1 }, { sku: "OSS-7008", qty: 1 }, { sku: "OSS-7006", qty: 5 }], postal: "M5V 2T6" });

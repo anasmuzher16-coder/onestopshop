@@ -29,21 +29,22 @@ for (const [tag, type, ctx] of [["webkit390", webkit, { viewport: { width: 390, 
     if (tag === "webkit390") { await open("/shop/parts"); t(`${tag} 18 chips are their own layer in a page change`, await p.evaluate(() => getComputedStyle(document.querySelector(".chips")).viewTransitionName) === "chips"); }
     // 19 current page
     if (tag === "chromium1440") {
-      await open("/p/OSS-3001"); t(`${tag} 19 a product marks its section`, await p.locator('.top__nav a[href="/shop/bowls"][aria-current]').count() === 1 || await p.locator(".top__nav a[aria-current]").count() === 1);
+      await open("/p/OSS-9601"); t(`${tag} 19 a product marks its section`, await p.locator('.top__nav a[href="/shop/shisha"][aria-current]').count() === 1 || await p.locator(".top__nav a[aria-current]").count() === 1);
       await open("/gifts/under-150"); t(`${tag} 19 Gifts is marked`, await p.locator('.top__nav a[href="/gifts/under-50"][aria-current]').count() === 1);
       await open("/cart"); t(`${tag} 19 Cart is marked`, await p.locator(".top__cart[aria-current]").count() === 1);
       t(`${tag} 17 nav stays on one line`, await p.evaluate(() => { const n = document.querySelector(".top__nav"); return new Set([...n.children].map(a => Math.round(a.getBoundingClientRect().top))).size === 1; }));
     } else { await open("/gifts/under-150"); t(`${tag} 19 dock marks Shop on Gifts`, await p.locator('.dock a[href="/shop"][aria-current]').count() === 1); }
     // 15 dock Back is the real Back
     if (tag === "webkit390") {
-      // the search word was "brass" until the sample hookahs (Egyptian brass) were retired on 2026-11-24; "bowl" finds real pieces
-      await open("/search"); await p.fill("#q", "bowl"); await wait(250); const s = await p.evaluate(() => { const a = document.querySelector("[data-search-out] a[data-piece]"); a.click(); return a.dataset.piece; }); await p.waitForURL("**/p/" + s); await wait(250);
+      // the search word was "brass", then "bowl", until the samples were retired on 2026-11-24; "mint" finds real shisha flavours
+      await open("/search"); await p.fill("#q", "mint"); await wait(250); const s = await p.evaluate(() => { const a = document.querySelector("[data-search-out] a[data-piece]"); a.click(); return a.dataset.piece; }); await p.waitForURL("**/p/" + s); await wait(250);
       await p.locator(".dock a.dock__side", { hasText: "Back" }).click(); await p.waitForURL(/\/search/); await wait(250);
-      t(`${tag} 15 dock Back returns to the search`, /\/search\?q=bowl$/.test(p.url()) && await p.inputValue("#q") === "bowl", p.url());
+      t(`${tag} 15 dock Back returns to the search`, /\/search\?q=mint$/.test(p.url()) && await p.inputValue("#q") === "mint", p.url());
       await open("/p/OSS-100024"); await p.locator(".dock a.dock__side", { hasText: "Back" }).click(); await p.waitForURL("**/shop/hookahs"); t(`${tag} 15 from a shared link Back goes to the section`, true);
     }
     // 20 search and addresses
-    await open("/search?q=bowl"); t(`${tag} 20 /search?q= runs the search`, await p.inputValue("#q") === "bowl" && await p.locator("[data-search-out] a[data-piece]").count() > 0);
+    await open("/search?q=mint"); t(`${tag} 20 /search?q= runs the search`, await p.inputValue("#q") === "mint" && await p.locator("[data-search-out] a[data-piece]").count() > 0);
+    for (const w of ["bowl", "parts", "misc"]) { await open("/search?q=" + w); t(`${tag} 20 a search naming a section with no stock online says it is coming soon (${w})`, /coming soon to the site/i.test(await p.locator("[data-search-out]").innerText()) && await p.locator('[data-search-out] a[href="tel:+15192552222"]').count() > 0); }
     await p.fill("#q", "zzzqqq"); await wait(200); t(`${tag} 20 no results offers a way on`, await p.locator('[data-search-out] a[href="/shop"]').count() === 1);
     const lower = await p.goto(B + "/p/oss-100024", { waitUntil: "domcontentloaded" }); await p.waitForSelector("#main > *"); t(`${tag} 20 a lowercase item number opens the item`, lower.status() === 200 && /\/p\/OSS-100024$/.test(p.url()) && /DMX Hookah/.test(await p.locator("h1").innerText()), p.url());
     for (const u of ["/cart/extra", "/set/extra", "/shop/hookahs/extra", "/gifts/nope", "/order/nope", "/search/x"]) { const r = await p.goto(B + u, { waitUntil: "domcontentloaded" }); await p.waitForSelector("#main > *"); await wait(120); t(`${tag} 20 ${u} is a real 404`, r.status() === 404 && /Nothing at this address/.test(await p.locator("h1").innerText()) && /^Page not found/.test(await p.title()), r.status() + " " + await p.locator("h1").innerText()); }

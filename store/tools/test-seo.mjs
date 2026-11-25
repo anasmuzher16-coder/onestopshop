@@ -204,13 +204,26 @@ const s1 = seo.seoFor({ env, url: u("https://onestopshop-store.anas-dev.workers.
 ok(s1.canonical === "https://shop.example.ca/p/OSS-100001", "canonical on the demo address points at the shop's own address and the family lead: " + s1.canonical);
 const s2 = seo.seoFor({ env, url: own, cat: fake, meta: { title: "x", desc: "x", index: true, product: fake.products[3] }, site: "One Stop Shop" });
 ok(!/"offers"|"Product"/.test(s2.head.join("")) && /\$9\.99, coming soon/.test(s2.body), "a priced item not switched on: no Product or offer data; the written content says its shop price, coming soon, as the page does");
+// Build a set is listed only when a set can be built (something on sale and in stock in hookahs, bowls or hoses): the
+// samples came off on 2026-11-24, and a page that only says "arriving soon" is kept out of the sitemap (and says noindex)
+ok(locs.includes("https://shop.example.ca/set"), "sitemap: /set while a bowl is on sale");
+{ const none = { ...fake, products: fake.products.filter(p => !(p.active && ["hookahs", "bowls", "hoses"].includes(p.category_id))) }, nm = seo.sitemap(env, own, none);
+  ok(!nm.includes("/set</loc>") && !seo.setReady(none) && seo.setReady(fake), "sitemap: no /set while no set can be built"); }
+// the live switch and the samples list are the same SKUs (the hookahs went off earlier, with the Ace catalogue)
+{ const { SAMPLE_SKUS } = await import("../src/samples.js"), sql = readFileSync(new URL("../catalog/live/samples-off-2026-11-24.sql", import.meta.url), "utf8");
+  const lists = [...sql.matchAll(/sku IN \(([^)]*)\)/g)].map(x => [...x[1].matchAll(/'(OSS-\d+)'/g)].map(y => y[1]).sort().join(","));
+  const want = [...SAMPLE_SKUS].filter(s => !/^OSS-1/.test(s)).sort().join(",");
+  ok(lists.length === 2 && lists.every(l => l === want) && want.split(",").length === 64, "samples-off SQL switches off exactly the 64 non-hookah sample numbers of src/samples.js, in both statements"); }
+// an empty section (all six since 2026-11-24) answers 200, says noindex and the stock is coming, and is not in the demo's page data as a list of products
+{ const e = await get("/shop/bowls"); ok(e.r.status === 200 && /<meta name="robots" content="noindex, nofollow">/.test(e.t) && /Bowls: coming soon to our site/.test(e.t) && !/"ItemList"/.test(e.t), "an empty section: 200, noindex, says it is coming soon to the site"); }
 
 // ---------- 8 a second store started with LIVE "1" (optional) ----------
 if (BL) {
   const h = await get("/", BL), p = await get("/p/" + sale[0].sku, BL), sm2 = await get("/sitemap.xml", BL), rb2 = await get("/robots.txt", BL);
   ok(!/name="robots"/.test(h.t) && !h.r.headers.get("x-robots-tag"), "live: the home page can be indexed");
   ok(!/name="robots"/.test(p.t) && !p.r.headers.get("x-robots-tag"), "live: a product page can be indexed");
-  for (const q of ["/account", "/cart", "/checkout", "/search", "/order/WABCDEF", "/gifts/under-50"]) { const g = await get(q, BL); ok(/noindex/.test(g.r.headers.get("x-robots-tag") || "") && /<meta name="robots" content="noindex/.test(g.t), "live: still noindex " + q); }
+  // an empty section (2026-11-24) and a set that cannot be built stay noindex when live
+  for (const q of ["/account", "/cart", "/checkout", "/search", "/order/WABCDEF", "/gifts/under-50", "/shop/bowls", ...(sm2.t.includes("/set</loc>") ? [] : ["/set"])]) { const g = await get(q, BL); ok(/noindex/.test(g.r.headers.get("x-robots-tag") || "") && /<meta name="robots" content="noindex/.test(g.t), "live: still noindex " + q); }
   ok((await get("/admin", BL)).r.headers.get("x-robots-tag") === "noindex, nofollow", "live: the back office stays noindex");
   ok(sm2.r.status === 200 && /<urlset/.test(sm2.t) && !/\/(cart|checkout|account|admin|gifts)/.test(sm2.t) && rb2.t.includes(`Sitemap: ${BL}/sitemap.xml`), "live: sitemap served and named in robots.txt");
   const locs2 = [...sm2.t.matchAll(/<loc>([^<]+)<\/loc>/g)].map(x => x[1].replace(BL, ""));

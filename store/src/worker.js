@@ -1,7 +1,7 @@
 // One Stop Shop store Worker. Answers the page routes (each with its own title, description and a real 404),
 // serves the catalogue from the database, and passes every other request to the static files.
 import { shopCatalog, dropCatalog, catalogModule, counterRow, sellable, weightUnknown, CHARCOAL, isCharcoalRow, PUBLIC_PHOTO } from "./catalog.js";
-import { seoFor, liveHere, robots, sitemap, view, SSR_STYLE, originProblem } from "./seo.js";
+import { seoFor, liveHere, robots, sitemap, view, SSR_STYLE, originProblem, setReady } from "./seo.js";
 import { heroPicks } from "../public/picks.js";
 import { admin, photo, signedIn } from "./admin.js";
 import { accountRoute, stockAlerts, restockReminders, scrubCodes } from "./account.js";
@@ -10,6 +10,7 @@ import { placeOrder } from "./checkout.js";
 import { webhook, payStatus, sweep, cardReady } from "./pay.js";
 import { deliveryRoute } from "./delivery.js";
 import { nightly } from "./backup.js";
+import { isSample } from "./samples.js";
 
 const SECURITY = {
   "Content-Security-Policy": "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'",
@@ -24,16 +25,19 @@ const money = cents => "$" + (cents / 100).toLocaleString("en-CA", { minimumFrac
 // What each page says about itself. Returns null for an address that does not exist.
 function describe(path, cat, site) {
   const [a, b, extra] = path.split("/").filter(Boolean);
-  const base = { title: `${site} | Hookahs and accessories, Windsor, shipped across Canada`, desc: "Hookahs, bases, bowls and hoses from our Windsor counter. Shipped across Canada except Quebec, for now.", index: true };
+  const base = { title: `${site} | Hookahs and accessories, Windsor, shipped across Canada`, desc: "Hookahs, charcoal, shisha and foil from our Windsor counter. Pickup, local delivery, and shipping across Canada except Quebec, for now.", index: true };
   if (!a) return base;
   if (extra) return null;
   if (a === "shop") {
     if (!b) return { ...base, title: `Shop | ${site}` };
     const c = cat.categories.find(x => x.id === b); if (!c) return null;
     const list = cat.products.filter(p => p.category_id === c.id), n = new Set(list.map(p => p.family && p.family.startsWith("ace-") ? p.family : p.sku)).size, counter = n && list.every(counterRow);
+    // nothing on the shelf yet (the samples came off, 2026-11-24): the page says the stock is on its way, and is kept out
+    // of search results and the sitemap until it holds something (a page with no products is thin content)
+    if (!n) return { title: `${c.name} | ${site}`, desc: `${c.name}: coming soon to our site. Call 519-255-2222 to ask what is on the shelf today.`, index: false };
     // nothing in this section can be bought yet: say what stage it is at, never "in stock"
     if (n && !list.some(sellable)) return { title: `${c.name} | ${site}`, desc: list.some(p => p.price_cents > 0) ? `${n} ${c.name.toLowerCase()} coming soon to our Windsor counter.` : `${n} ${c.name.toLowerCase()} from the catalogue. Shop prices are on the way.`, index: true };
-    return { title: `${c.name} | ${site}`, desc: counter ? `${n} ${c.id === CHARCOAL ? "kinds of hookah charcoal" : c.name.toLowerCase()} at our Windsor counter. Pickup or local delivery only.` : `${n} ${c.name.toLowerCase()} at our Windsor counter, shipped across Canada except Quebec, for now.`, index: true };   // never "in stock": the count includes sold-out items
+    return { title: `${c.name} | ${site}`, desc: counter ? `${n} ${c.id === CHARCOAL ? "kinds of hookah charcoal" : c.id === "heat" ? "foil and heat items" : c.name.toLowerCase()} at our Windsor counter. Pickup or local delivery only.` : `${n} ${c.id === "heat" ? "foil and heat items" : c.name.toLowerCase()} at our Windsor counter, shipped across Canada except Quebec, for now.`, index: true };   // never "in stock": the count includes sold-out items
   }
   if (a === "p") {
     const p = cat.products.find(x => x.sku === b); if (!p) return null;
@@ -45,14 +49,15 @@ function describe(path, cat, site) {
   if (b && a !== "gifts") return null;
   const fixed = { account: "Your account", privacy: "Privacy", terms: "Terms of sale", checkout: "Checkout", cart: "Cart", shipping: "Shipping and returns", set: "Build a set", search: "Search", gifts: "Gifts" };
   if (!Object.hasOwn(fixed, a)) return null;
-  return { ...base, title: `${fixed[a]} | ${site}`, index: ["shipping", "set", "privacy", "terms"].includes(a) };
+  return { ...base, title: `${fixed[a]} | ${site}`, index: ["shipping", "privacy", "terms"].includes(a) || (a === "set" && setReady(cat)) };
 }
 
-// A product that has been taken off the shop (the demo's sample hookahs, 2026-11-24) is never deleted, because orders
-// point at it. Its old address sends people to its section instead of a dead end. One small read, and only on a miss.
+// A product that has been taken off the shop (the demo's made-up samples, 2026-11-24) is never deleted, because orders
+// point at it. Its old address sends people to its section (which says what is coming) instead of a dead end. One small
+// read, and only on a miss.
 async function retiredTo(env, path) {
   const m = path.match(/^\/p\/(OSS-\d{4,6})\/?$/); if (!m) return null;
-  if (!/^OSS-1\d{3}$/.test(m[1])) return null;   // only the retired sample hookahs; anything else the shop switches off is a plain 404
+  if (!isSample(m[1])) return null;   // only the retired samples (src/samples.js); anything else the shop switches off is a plain 404
   const row = await env.DB.prepare("SELECT p.category_id FROM products p JOIN categories c ON c.id = p.category_id WHERE p.sku = ?1 AND p.active = 0 AND p.listed = 0 AND p.supplier_id IS NULL AND c.active = 1").bind(m[1]).first();
   return row ? `/shop/${row.category_id}` : null;
 }

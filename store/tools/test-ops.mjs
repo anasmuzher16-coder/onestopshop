@@ -1,9 +1,12 @@
 // Checks for the pieces around the store: order emails are written (and never claimed as sent), backups download,
 // privacy and terms pages exist, a sign-in can be ended, and wrong passcodes lock sign-in.
 // node store/tools/test-ops.mjs   (changes local data and locks local sign-in for 15 minutes: reseed afterwards)
+import { samplesOn } from "./fixtures/samples-on.mjs";
 import { readFileSync } from "node:fs";
 import { seededProductCount } from "./seed-files.mjs";   // the shelf the seed builds, not a typed number
 const B = process.env.BASE || "http://127.0.0.1:4420";
+// the made-up sample rows this suite buys, switched back on in its own throwaway database (tools/fixtures/samples-on.mjs)
+await samplesOn(B, ["OSS-7006", "OSS-8001", "OSS-8003"]);
 const KEY = readFileSync(new URL("../.dev.vars", import.meta.url), "utf8").match(/ADMIN_KEY=(.+)/)[1].trim();
 let n = 0, f = 0, cookie = ""; const ok = (c, msg) => { n++; if (!c) { f++; console.log("FAIL", msg); } };
 const call = async (path, { method = "GET", body } = {}) => {

@@ -4,6 +4,7 @@ import { CHARCOAL } from "./catalog.js";
 import { adminPay } from "./pay.js";
 import { sameSecret, hashPin, checkPin, pinProblem, cleanName } from "./staff.js";
 import { report, reportCsv, monthOf } from "./report.js";
+import { isSample } from "./samples.js";
 // The shop's back office: sign-in, shop numbers, stock and orders. Every route here needs the admin cookie,
 // and every write also needs a same-site JSON request, so another website cannot trigger one.
 // Two kinds of sign-in: the owner's passcode (ADMIN_KEY), and named staff with a 6-digit PIN. Every change is
@@ -120,7 +121,8 @@ export async function admin(request, env, url) {
       db.prepare("SELECT sku, name, category_id, price_cents, cost_cents, weight_g, box_id, glass, ship_class, height_cm, note, img, img_dark, photo_ver, details, stock, low_stock_at, active, listed, family, variant_label, updated_at FROM products ORDER BY active DESC, sort, sku"),
       db.prepare("SELECT id, name, tone FROM categories ORDER BY sort"), db.prepare("SELECT id, label, l_cm, w_cm, h_cm FROM boxes ORDER BY l_cm * w_cm * h_cm"),
     ]);
-    return json({ products: p.results, categories: c.results, boxes: b.results });
+    // the demo's made-up samples are marked, so nobody switches one back on taking it for the shop's own stock (2026-11-24)
+    return json({ products: p.results.map(r => isSample(r.sku) ? { ...r, sample: true } : r), categories: c.results, boxes: b.results });
   }
 
   // one product: fields to save, validated here so nothing odd reaches the storefront

@@ -93,7 +93,7 @@ const stockState = p => p.stock <= 0 ? ["out", "Out"] : p.stock <= p.low_stock_a
 function stockRow(p) {
   const c = catOf(p.category_id), [k, label] = stockState(p);
   return `<div class="row ${p.active ? "" : "off"}" data-sku="${p.sku}">${thumb(p, c.tone)}
-    <button class="row__main" type="button" data-edit="${p.sku}"><span class="row__name">${esc(p.name)}</span><span class="row__meta">${p.sku} &middot; ${esc(c.name)}${p.active ? "" : " &middot; hidden"}${!p.photo_ver && /"photo":"coming"/.test(p.details || "") ? " &middot; photo coming" : ""}</span></button>
+    <button class="row__main" type="button" data-edit="${p.sku}"><span class="row__name">${esc(p.name)}</span><span class="row__meta">${p.sku} &middot; ${esc(c.name)}${p.active ? "" : " &middot; hidden"}${p.sample ? " &middot; made-up sample" : ""}${!p.photo_ver && /"photo":"coming"/.test(p.details || "") ? " &middot; photo coming" : ""}</span></button>
     <span class="row__price num">${money(p.price_cents)}</span>
     <span class="state ${k}" data-state>${label}</span>
     <span class="step"><button type="button" data-step="-1" aria-label="One fewer ${esc(p.name)}" ${p.stock <= 0 ? "disabled" : ""}>&minus;</button><output class="num" aria-label="In stock">${p.stock}</output><button type="button" data-step="1" aria-label="One more ${esc(p.name)}">+</button></span></div>`;
@@ -169,7 +169,7 @@ function editSheet(p) {
       <label class="field"><span>Warn me at</span><input class="input num" name="low_stock_at" inputmode="numeric" value="${esc(p.low_stock_at)}"></label></div>
     ${isNew ? `<label class="field"><span>How many on the shelf now</span><input class="input num" name="stock" inputmode="numeric" value="0"></label>` : ""}
     <label class="check"><input type="checkbox" name="glass" ${p.glass ? "checked" : ""}> Glass, pack with care</label>
-    <label class="check"><input type="checkbox" name="active" ${p.active ? "checked" : ""}> Show in the store</label>
+    <label class="check"><input type="checkbox" name="active" ${p.active ? "checked" : ""}> Show in the store</label>${p.sample ? `<p class="fineprint">A made-up sample from the demo, not the shop's stock. Leave it hidden; add the real item as a new product.</p>` : ""}
     <p class="err" role="alert" data-err></p>
     <div class="sheet__act"><button class="btn" type="submit">${isNew ? "Add product" : "Save"}</button><button class="btn btn--ghost" type="button" data-close>Cancel</button></div>
     ${isNew ? "" : `<section><h3 class="meta" style="margin-bottom:var(--s-2)">Stock history</h3><div class="hist" data-hist><div><span>Loading</span></div></div></section><section><h3 class="meta" style="margin-bottom:var(--s-2)">Edits</h3><div class="hist" data-changes><div><span>None yet.</span></div></div></section>`}</form>`;

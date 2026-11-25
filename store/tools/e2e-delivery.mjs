@@ -1,8 +1,11 @@
 // Local delivery in a real browser, phone and desktop, Chrome and Safari's engine. Needs the store on 4420 with the stand-in
 // map service. Changes local sample data. node store/tools/e2e-delivery.mjs [screenshotDir]
+import { samplesOn } from "./fixtures/samples-on.mjs";
 import { createRequire } from "node:module"; import { readFileSync } from "node:fs";
 const pw = createRequire("C:/dev/puckempire-arena/package.json")("playwright");
 const B = process.env.BASE || "http://127.0.0.1:4420", shots = process.argv[2], KEY = readFileSync(new URL("../.dev.vars", import.meta.url), "utf8").match(/ADMIN_KEY=(.+)/)[1].trim();
+// the made-up sample rows this suite buys, switched back on in its own throwaway database (tools/fixtures/samples-on.mjs)
+await samplesOn(B, ["OSS-8004"]);
 // Card orders go to Stripe's page (the local stand-in, tools/fake-stripe.mjs): pay there, come back, wait for the signed webhook.
 const payThrough = async (p, timeout = 15000) => { await p.waitForURL(u => /\/pay\/cs_/.test(String(u)) || /\/order\/W[A-Z0-9]{6}$/.test(String(u)), { timeout }); if (/\/pay\/cs_/.test(p.url())) { await p.locator("[data-fake-pay]").click(); await p.waitForURL(/\/order\/W[A-Z0-9]{6}$/, { timeout }); await p.waitForSelector('[data-pay-state="paid"]', { timeout }); } };
 let n = 0, f = 0; const t = (name, c, extra = "") => { n++; if (!c) { f++; console.log("FAIL", name, extra); } };

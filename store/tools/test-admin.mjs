@@ -1,8 +1,11 @@
 // Back office checks against the running local store: sign-in wall, shop numbers, stock changes, product edits,
 // order steps, photo upload. Reads the local passcode from .dev.vars. node store/tools/test-admin.mjs
+import { samplesOn } from "./fixtures/samples-on.mjs";
 import { readFileSync } from "node:fs";
 import { seededProductCount } from "./seed-files.mjs";
 const B = process.env.BASE || "http://127.0.0.1:4420";
+// the made-up sample rows this suite buys, switched back on in its own throwaway database (tools/fixtures/samples-on.mjs)
+await samplesOn(B, ["OSS-7001", "OSS-7002", "OSS-7003", "OSS-7004", "OSS-7006", "OSS-7008", "OSS-8004"]);
 const KEY = process.env.ADMIN_KEY || readFileSync(new URL("../.dev.vars", import.meta.url), "utf8").match(/ADMIN_KEY=(.+)/)[1].trim();
 let n = 0, f = 0, cookie = "";
 const ok = (c, msg) => { n++; if (!c) { f++; console.log("FAIL", msg); } };
