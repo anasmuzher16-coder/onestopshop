@@ -45,7 +45,13 @@ const order = async (body, cookie) => {
   let r = await send();
   // the shop-wide brake (12 orders a minute, checkout.js) is a real feature: a fast machine running this suite's orders in a burst
   // trips it, so wait it out once, as a shopper would, rather than fail an account check on it
-  if (r.status === 429) { console.log("order brake hit; waiting a minute"); await new Promise(res => setTimeout(res, 61000)); r = await send(); }
+  if (r.status === 429) {
+    // only wait when the brake was right to fire (12 or more orders in the last minute, checkout.js); a brake that fires earlier
+    // is a regression and fails here (breaker, 2026-11-26)
+    const recent = sql("SELECT COUNT(*) AS n FROM orders WHERE created_at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 minute')")[0].n;
+    ok(recent >= 12, `the order brake fired only after 12 orders in a minute (it fired at ${recent})`);
+    if (recent >= 12) { console.log("order brake hit at", recent, "orders in the last minute; waiting it out"); await new Promise(res => setTimeout(res, 61000)); r = await send(); }
+  }
   const out = { status: r.status, data: await r.json().catch(() => ({})) };
   if (out.status === 201 && out.data.pay?.url) { await fetch(out.data.pay.url, { method: "POST", redirect: "manual" }); await new Promise(res => setTimeout(res, 300)); }
   if (out.status === 201 && counter) { const p = await adm(`/orders/${out.data.order.id}/paid`, "POST", {}); if (p.status !== 200) console.log("counter payment not recorded", out.data.order.id, p.status); }
@@ -210,6 +216,8 @@ ok((await order({ name: "Carol", email: carolEmail, method: "pickup", use_reward
 // two orders at once cannot spend the same 100 points
 const carolId = sql(`SELECT id FROM customers WHERE email = '${carolEmail}'`)[0].id;
 sql(`INSERT INTO loyalty_ledger (customer_id, kind, points, note) VALUES (${carolId}, 'adjust', 100, 'test')`);
+// the three must really race: if the minute's brake could catch one of them, wait for the window to clear first (breaker, 2026-11-26)
+if (sql("SELECT COUNT(*) AS n FROM orders WHERE created_at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 minute')")[0].n > 8) await new Promise(res => setTimeout(res, 61000));
 const race = await Promise.all([1, 2, 3].map(() => order({ name: "Carol", email: carolEmail, method: "pickup", use_reward: true, lines: [{ sku: cheap.sku, qty: 1 }] }, carol)));
 ok(race.filter(r => r.status === 201).length === 1 && race.filter(r => r.data.reward_gone).length === 2, "three orders at once with 100 points: exactly one gets the reward (" + race.map(r => r.status) + ")");
 ok(sql("SELECT COUNT(*) AS n FROM orders WHERE status = 'pending'")[0].n === 0, "the refused ones leave no half-made order");
