@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 concurrency:
   group: store-tests-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false   # a push queues behind the running check instead of cancelling it, so every commit gets a full result
 jobs:
   suites:
     runs-on: ubuntu-latest
