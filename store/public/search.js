@@ -99,11 +99,11 @@ export function searchOut(q) {
     // a word naming a section whose stock is not on the site yet: the same empty state as the section (no link back into it)
     if (soon.length) return `<h2 class="srch__none">${X.esc(soonNames)}: coming soon to the site.</h2><p class="srch__nonep">Our ${X.esc(soonNames.toLowerCase())} are not online yet. Call the counter and we will check the shelf for you.</p>
       <p class="soon__acts"><a class="btn" href="tel:+15192552222">Call 519-255-2222</a></p>${X.nowLedger ? X.nowLedger() : ways()}`;
-    return `<h2 class="srch__none">No “${X.esc(q)}” on the shelf.</h2><p class="srch__nonep">${near.alone.length ? "Here is the nearest we have, or ask us to get it in." : near.mean ? "" : "Try one of these, or ask us to get it in."}</p>
+    return `<h2 class="srch__none">No “${X.esc(q)}” on the shelf.</h2><p class="srch__nonep">${near.alone.length ? "Here is the nearest we have, or call the counter and we will check the shelf." : near.mean ? "" : "Try one of these, or call the counter and we will check the shelf."}</p>
       ${near.mean ? `<p class="meant">Did you mean <a class="link" href="/search?q=${encodeURIComponent(near.mean)}">${X.esc(near.mean)}</a>?</p>` : ""}
       ${near.alone.map(a => `<h3 class="srch__h">With just “${X.esc(a.word)}” <span class="num">${a.n}</span></h3>${a.jumps.length ? `<ul class="jumps">${a.jumps.map(jumpRow).join("")}</ul>` : ""}<ul class="rows">${a.hits.map(p => row(p, [a.word])).join("")}</ul>`).join("")}
       <h3 class="srch__h">Or start here</h3>${ways()}
-      <p class="srch__ask">Look through <a class="link" href="/shop">everything</a>, or ask us to stock it: call <a class="link" href="tel:+15192552222">519-255-2222</a>.</p>`;
+      <p class="srch__ask">Look through <a class="link" href="/shop">everything</a>, or call the counter and we will check the shelf: <a class="link" href="tel:+15192552222">519-255-2222</a>.</p>`;
   }
   const groups = grouped(IX, hits);
   return `${said}${soon.length ? `<p class="meant">${X.esc(soonNames)}: coming soon to the site. See ${soonLink}, or call <a class="link" href="tel:+15192552222">519-255-2222</a>.</p>` : ""}${pages}${js.length ? `<ul class="jumps">${js.map(jumpRow).join("")}</ul>` : ""}

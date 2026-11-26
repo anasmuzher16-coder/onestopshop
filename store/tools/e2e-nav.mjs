@@ -44,7 +44,10 @@ for (const [tag, type, ctx] of [["webkit390", webkit, { viewport: { width: 390, 
     }
     // 20 search and addresses
     await open("/search?q=mint"); t(`${tag} 20 /search?q= runs the search`, await p.inputValue("#q") === "mint" && await p.locator("[data-search-out] a[data-piece]").count() > 0);
-    for (const w of ["bowl", "parts", "misc"]) { await open("/search?q=" + w); t(`${tag} 20 a search naming a section with no stock online says it is coming soon (${w})`, /coming soon to the site/i.test(await p.locator("[data-search-out]").innerText()) && await p.locator('[data-search-out] a[href="tel:+15192552222"]').count() > 0); }
+    // Bowls and Parts hold the ticked Ace accessories since 2026-11-26 (Price TBD), so they are no longer empty: Misc and
+    // Cologne are the sections with nothing online, and a search for one still says so; a bowl search now finds the bowls
+    await open("/search?q=bowl"); t(`${tag} 20 a search for bowl finds the ticked Ace bowls`, await p.locator("[data-search-out] a[data-piece]").count() > 0);
+    for (const w of ["misc", "cologne"]) { await open("/search?q=" + w); t(`${tag} 20 a search naming a section with no stock online says it is coming soon (${w})`, /coming soon to the site/i.test(await p.locator("[data-search-out]").innerText()) && await p.locator('[data-search-out] a[href="tel:+15192552222"]').count() > 0); }
     await p.fill("#q", "zzzqqq"); await wait(200); t(`${tag} 20 no results offers a way on`, await p.locator('[data-search-out] a[href="/shop"]').count() === 1);
     const lower = await p.goto(B + "/p/oss-100024", { waitUntil: "domcontentloaded" }); await p.waitForSelector("#main > *"); t(`${tag} 20 a lowercase item number opens the item`, lower.status() === 200 && /\/p\/OSS-100024$/.test(p.url()) && /DMX Hookah/.test(await p.locator("h1").innerText()), p.url());
     for (const u of ["/cart/extra", "/set/extra", "/shop/hookahs/extra", "/gifts/nope", "/order/nope", "/search/x"]) { const r = await p.goto(B + u, { waitUntil: "domcontentloaded" }); await p.waitForSelector("#main > *"); await wait(120); t(`${tag} 20 ${u} is a real 404`, r.status() === 404 && /Nothing at this address/.test(await p.locator("h1").innerText()) && /^Page not found/.test(await p.title()), r.status() + " " + await p.locator("h1").innerText()); }
