@@ -206,11 +206,12 @@ body:not([data-route]) .foot{visibility:hidden}
 .pdp__tile.tile--photo{background:#000}
 .pdp__info{padding:var(--s-5) var(--gutter) var(--s-8)}
 .crumb{margin:0 0 var(--s-2);font-size:var(--t-14)} .crumb a{display:inline-block;min-width:44px;padding:13px 0;margin:-13px 0;color:var(--color-muted)}
-.pdp__name{font:400 var(--t-d2)/.92 var(--font-display);letter-spacing:-.025em;color:var(--color-strong);margin:0;padding-top:.06em;text-wrap:balance}
-.pdp__note{margin:var(--s-2) 0 var(--s-4);color:var(--color-muted)}
-.pdp__price{font:400 var(--t-d1)/1 var(--font-display);color:var(--color-strong);margin:var(--s-2) 0 var(--s-3);padding-top:.1em}
-.pdp__name--long{font-size:var(--t-d1);line-height:1}
+.pdp__name{font:400 var(--t-d2)/.92 var(--font-display);color:var(--color-strong);margin:0 0 var(--s-3);padding-top:.06em;text-wrap:balance}
+.pdp__note{margin:0 0 var(--s-4);color:var(--color-muted)}
+.pdp__price{font:400 2.2rem/1 var(--font-display);color:var(--color-strong);margin:var(--s-2) 0 var(--s-3);padding-top:.1em}
+.pdp__name--long{font-size:var(--t-d1);line-height:1;letter-spacing:-.025em;word-spacing:.08em}
 .spec__open dd .tbd{margin-left:var(--s-1)}
+.pickline{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:var(--s-3);margin:var(--s-3) 0 0;padding:var(--s-3) 0;border-top:1px solid var(--color-line)}.pickline span:not(.num){grid-column:1;color:var(--color-muted);font-size:var(--t-14)}.pickline .num{grid-column:2;grid-row:1}
 .ways__to{margin:0 0 var(--s-3);font-size:var(--t-14);color:var(--color-muted)}
 .price{margin:0 0 var(--s-5);display:grid}
 .price>div{display:flex;justify-content:space-between;align-items:baseline;gap:var(--s-4);padding:var(--s-3) 0;border-top:1px solid var(--color-line)}
@@ -851,7 +852,7 @@ html.restoring .grid--shop .card{content-visibility:visible}
 .pdp__tile .sticker--tbd .sticker__v{font-size:1.6rem}
 /* One quiet style for every unknown: the meta register, never a colour of its own. */
 .tbd{font:600 var(--t-12)/1.4 var(--font-ui);letter-spacing:.08em;text-transform:uppercase;color:var(--color-muted);white-space:nowrap}
-.pdp__avail{margin:0 0 var(--s-3);color:var(--color-text)}
+.pdp__avail{margin:0 0 var(--s-3);text-wrap:pretty;color:var(--color-text)}
 .pick__none{margin:0 0 var(--s-3);padding:0 var(--gutter);color:var(--color-muted)}
 /* THE COLOUR SWITCHER. The chips are the product's own colours: content, so they are the only saturated marks here.
    44 px targets on the product page, 32 px on cards (WCAG 2.5.8 floor is 24). Chosen = a bone ring outside a coal gap;

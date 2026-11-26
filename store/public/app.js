@@ -463,7 +463,7 @@ function factsSpec(p, fam) {
           ${Array.isArray(f.includes) && f.includes.length ? `<div><dt>Comes with</dt><dd>${esc(f.includes.join(", "))}</dd></div>` : ""}
           <div><dt>Colours</dt><dd>${fam.length > 1 ? `<span class="num">${fam.length}</span> in the catalogue${named ? ": " + esc(fam.map(v => v.colour).join(", ")) : ""}` : named ? esc(fam.map(v => v.colour).join(", ")) : "One"}</dd></div>` : ""}
           ${p.family && ticked(p) ? `<div><dt>Availability</dt><dd>In the shop</dd></div>` : ""}
-          <div class="spec__open"><dt>Waiting on the shop</dt><dd>${list[0].toUpperCase() + list.slice(1)}. ${TBD("")}</dd></div>
+          <div class="spec__open"><dt>Still to come</dt><dd>${list[0].toUpperCase() + list.slice(1)}. ${TBD("")}</dd></div>
           ${!p.img ? `<div><dt>Photo</dt><dd>Coming. The drawing stands in until the photo is ready.</dd></div>` : p.family && f.photo === "family" ? `<div><dt>Photo</dt><dd>Shows another colour of this hookah.</dd></div>` : ""}
           ${p.family ? `<div><dt>From</dt><dd>Ace Hookah\u2019s catalogue</dd></div>` : ""}
           <div><dt>Item</dt><dd class="num">${p.sku}</dd></div>
@@ -508,7 +508,7 @@ function viewProduct(sku) {
         <tr><td>Pick up at ${SHOP_STREET}</td><td>${pickupDay()}</td><td class="r num">Free</td></tr></tbody></table>`
         : `<p class="ways__to">Local delivery from $10 near Windsor. Free pickup. ${localOnly(p) ? "" : p.ship === "ground_only" ? "Ships by ground across Canada, except Quebec for now." : "Ships across Canada, except Quebec for now."}</p>`}
       </section>`}
-      ${!sale || counterPay(p) ? "" : localOnly(p) ? counterSpec(p) : `<section class="spec" aria-labelledby="spec-h">
+      ${!sale ? "" : counterPay(p) ? `<section class="spec" aria-labelledby="spec-h"><h2 class="h3" id="spec-h">Details</h2><dl class="spec__list"><div><dt>Item</dt><dd class="num">${p.sku}</dd></div>${p.facts?.size || p.note ? `<div><dt>Size</dt><dd>${esc(p.facts?.size || p.note)}</dd></div>` : ""}<div><dt>Getting it</dt><dd>Pickup at the counter, paid in the shop</dd></div></dl></section>` : localOnly(p) ? counterSpec(p) : `<section class="spec" aria-labelledby="spec-h">
         <h2 class="h3" id="spec-h">Packed size</h2>
         <dl class="spec__list">
           <div><dt>Item</dt><dd class="num">${p.sku}</dd></div>
@@ -732,7 +732,7 @@ function viewCart() {
       ${chosen ? `<details class="why" ${state.whyOpen ? "open" : ""}><summary>What makes up ${money(chosen.total)}</summary><dl>
         ${chosen.perParcel.map((p, i) => `<div><dt>Box ${i + 1}, billed at ${p.billableKg} kg</dt><dd class="num">${money(p.freight)}</dd></div>`).join("")}
         ${chosen.cover ? `<div><dt>Glass coverage and signature</dt><dd class="num">${money(chosen.cover)}</dd></div>` : ""}
-        <div><dt>Carrier fuel charge, ${(fuelOn().pct * 100).toFixed(1)}%, ${fuelOn().stale ? "the last rate we have, for" : "the rate posted for"} ${fuelOn().week}</dt><dd class="num">${money(chosen.fuel)}</dd></div></dl></details>` : ""}` : `<fieldset class="opts"><legend>${counter && state.dest ? `Getting it to ${esc(state.dest.full)} <button class="link" type="button" data-open-postal>Change</button>` : counter ? "Choose one" : atCounter ? "Pickup" : "Or skip shipping"}</legend><label class="opt"><input type="radio" name="ship" value="pickup" ${pickup ? "checked" : ""}><span class="opt__name">Pick up at the Windsor counter<small>${SHOP_STREET}, Windsor. ${pickupReady()}</small></span><span class="num">Free</span></label>${mixed && !atCounter ? dropOpt(lines) : ""}</fieldset>`}
+        <div><dt>Carrier fuel charge, ${(fuelOn().pct * 100).toFixed(1)}%, ${fuelOn().stale ? "the last rate we have, for" : "the rate posted for"} ${fuelOn().week}</dt><dd class="num">${money(chosen.fuel)}</dd></div></dl></details>` : ""}` : atCounter ? `<p class="pickline"><b>Pick up at the Windsor counter</b> <span>${SHOP_STREET}, Windsor. ${pickupReady()}</span> <span class="num">Free</span></p>` : `<fieldset class="opts"><legend>${counter && state.dest ? `Getting it to ${esc(state.dest.full)} <button class="link" type="button" data-open-postal>Change</button>` : counter ? "Choose one" : "Or skip shipping"}</legend><label class="opt"><input type="radio" name="ship" value="pickup" ${pickup ? "checked" : ""}><span class="opt__name">Pick up at the Windsor counter<small>${SHOP_STREET}, Windsor. ${pickupReady()}</small></span><span class="num">Free</span></label>${mixed && !atCounter ? dropOpt(lines) : ""}</fieldset>`}
     </section>
     <div class="giftnote"><label class="field__label" for="note">Gift note <span class="fine">optional, written on a card with your order</span></label>
       <textarea class="field field--text field--area" id="note" data-note maxlength="240" rows="2" placeholder="Happy birthday, from all of us">${esc(state.note)}</textarea></div>
