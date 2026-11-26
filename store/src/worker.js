@@ -160,6 +160,7 @@ async function intakeSave(request, env) {
   if (!body || typeof body.answers !== "object" || Array.isArray(body.answers)) return json({ error: "Nothing to save" }, 400);
   const text = JSON.stringify({ ...body, receivedAt: new Date().toISOString() });
   await env.BACKUPS.put(`intake/${new Date().toISOString().replace(/[:.]/g, "-")}-${crypto.randomUUID().slice(0, 8)}.json`, text, { httpMetadata: { contentType: "application/json" } });
+  await env.BACKUPS.put("intake/latest.json", text, { httpMetadata: { contentType: "application/json" } });   // the newest send, at a name that never changes
   return json({ ok: true });
 }
 async function route(request, env, ctx) {

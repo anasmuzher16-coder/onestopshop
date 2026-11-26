@@ -397,6 +397,20 @@ export async function admin(request, env, url) {
     const mo = monthOf(url.searchParams.get("month")); if (!mo) return json({ error: "Month looks like 2026-11." }, 400);
     return new Response(reportCsv(await report(db, mo, true)), { headers: { "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": `attachment; filename="one-stop-shop-sales-${mo}.csv"`, "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" } });
   }
+  // the shop's questionnaire answers (public/intake.js): the owner reads the list of sends, or one send by its key
+  if (path === "/intake" && method === "GET") {
+    if (!session.owner) return json({ error: "Only the owner can read the shop's answers." }, 403);
+    const key = url.searchParams.get("key");
+    if (key) {
+      if (!/^intake\/[\w.-]+\.json$/.test(key)) return json({ error: "No such send." }, 400);
+      const o = await env.BACKUPS.get(key); if (!o) return json({ error: "No such send." }, 404);
+      return new Response(o.body, { headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" } });
+    }
+    const sends = []; let cursor;
+    do { const l = await env.BACKUPS.list({ prefix: "intake/", cursor, limit: 1000 }); for (const o of l.objects) sends.push({ key: o.key, size: o.size, at: o.uploaded }); cursor = l.truncated ? l.cursor : undefined; } while (cursor && sends.length < 5000);
+    sends.sort((a, b) => b.key.localeCompare(a.key));
+    return json({ sends });
+  }
   if (path === "/backup" && method === "GET") {
     const snap = await snapshot(db);
     return new Response(JSON.stringify(snap, null, 1), { headers: { "Content-Type": "application/json; charset=utf-8", "Content-Disposition": `attachment; filename="one-stop-shop-backup-${snap.taken_at.slice(0, 10)}.json"`, "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" } });

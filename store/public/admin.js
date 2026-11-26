@@ -288,7 +288,7 @@ async function mailView(id) {
 // ---------- Office (owner only): the monthly report, the 5% basis, the team ----------
 const shiftMonth = (mo, d) => { const [y, m] = mo.split("-").map(Number), t = new Date(Date.UTC(y, m - 1 + d, 1)); return t.toISOString().slice(0, 7); };
 const monthName = mo => new Date(mo + "-15T12:00:00Z").toLocaleDateString("en-CA", { month: "long", year: "numeric", timeZone: "UTC" });
-function viewOffice(r, staff, settings) {
+function viewOffice(r, staff, settings, intake) {
   const s = r.studio, mo = r.month, thisMonth = new Date(Date.now() - 5 * 36e5).toISOString().slice(0, 7), pct = (s.rate_bp / 100).toLocaleString("en-CA");
   const line = (label, n, c, cls = "") => `<tr class="${cls}"><td>${label}</td><td class="r num">${n}</td><td class="r num">${money(c)}</td></tr>`;
   const smax = Math.max(1, ...r.sources.map(x => x.subtotal));
@@ -315,7 +315,16 @@ function viewOffice(r, staff, settings) {
       <form class="addstaff" data-addstaff novalidate><label class="field"><span>First name</span><input class="input" name="sname" maxlength="30" autocomplete="off" required></label>
         <label class="field"><span>PIN, 6 digits</span><input class="input num" name="spin" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="new-password" required></label>
         <button class="btn" type="submit">Add</button><p class="err" role="alert" data-err></p></form>
-      <p class="fineprint">Every stock count, price change and order step is saved with the name of whoever made it. Removing someone ends their sign-in at once.</p></section></div>`;
+      <p class="fineprint">Every stock count, price change and order step is saved with the name of whoever made it. Removing someone ends their sign-in at once.</p></section>
+    ${intakeView(intake)}</div>`;
+}
+// the shop's questionnaire (the private /intake page): the newest send, read here so nobody digs through storage
+function intakeView(q) {
+  if (!q || !q.sends) return "";
+  if (!q.sends.length) return `<section class="wide"><h2 class="h2">Shop answers</h2><p class="empty">No answers sent yet. The questionnaire link is /intake/YL9eEO5a.</p></section>`;
+  const rows = (q.latest && Array.isArray(q.latest.rows) ? q.latest.rows : []).map(r => `<tr><td>${esc(r.item ? r.item + " (" + r.key.replace(/-OSS-\d+$/, "") + ")" : r.key)}</td><td>${esc(Array.isArray(r.value) ? r.value.join(", ") : r.value === true ? "yes" : String(r.value))}</td></tr>`).join("");
+  return `<section class="wide"><h2 class="h2">Shop answers</h2><p class="fineprint">${q.sends.filter(x => x.key !== "intake/latest.json").length} sends. Newest${q.latest?.receivedAt ? ", " + when(q.latest.receivedAt) : ""}:</p>
+    <table class="ledger"><thead><tr><th scope="col">Question</th><th scope="col">Answer</th></tr></thead><tbody>${rows || `<tr><td colspan="2">The newest send could not be read.</td></tr>`}</tbody></table></section>`;
 }
 // ---------- shell ----------
 async function loadProducts() { const r = await api("/products"); state.products = r.products; state.categories = r.categories; state.boxes = r.boxes; }
@@ -328,7 +337,7 @@ async function render() {
   chrome();
   if (state.tab === "stock") main.innerHTML = viewStock();
   else if (state.tab === "orders") main.innerHTML = viewOrders();
-  else if (state.tab === "office" && state.me.owner) { const [r, st, se] = await Promise.all([api("/report?month=" + (state.month || "")), api("/staff"), api("/settings")]); state.month = r.month; if (state.tab === "office") main.innerHTML = viewOffice(r, st.staff, se.settings); }
+  else if (state.tab === "office" && state.me.owner) { const [r, st, se, iq] = await Promise.all([api("/report?month=" + (state.month || "")), api("/staff"), api("/settings"), api("/intake").catch(() => null)]); const latest = iq?.sends?.some(x => x.key === "intake/latest.json") ? await api("/intake?key=intake/latest.json").catch(() => null) : null; state.month = r.month; if (state.tab === "office") main.innerHTML = viewOffice(r, st.staff, se.settings, iq && { ...iq, latest }); }
   else { const s = await api("/summary"); if (state.tab === "home") main.innerHTML = viewHome(s); }
 }
 async function boot() {
