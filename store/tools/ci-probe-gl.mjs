@@ -3,8 +3,8 @@
 import { createRequire } from "node:module";
 const pw = createRequire(process.env.PW_FROM || "C:/dev/puckempire-arena/package.json")("playwright");
 const B = (process.env.BASE || "http://127.0.0.1:4420").replace(/\/$/, "");
-const V = [["default", {}], ["swiftshader", { args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"] }], ["angle-gl (mesa)", { args: ["--use-gl=angle", "--use-angle=gl"] }],
-  ["angle-gl-egl", { args: ["--use-angle=gl-egl"] }], ["new headless", { channel: "chromium" }], ["new headless angle-gl", { channel: "chromium", args: ["--use-gl=angle", "--use-angle=gl"] }]];
+const V = [["default", {}], ["no-gpu-compositing", { args: ["--disable-gpu-compositing"] }], ["no-gpu-compositing+raster", { args: ["--disable-gpu-compositing", "--disable-gpu-rasterization"] }],
+  ["in-process-gpu", { args: ["--in-process-gpu"] }], ["no-gpu-compositing+in-process", { args: ["--disable-gpu-compositing", "--in-process-gpu"] }], ["default again", {}]];
 for (const [name, opt] of V) {
   let b; try { b = await pw.chromium.launch(opt); } catch (e) { console.log(name, "launch failed", e.message.split("\n")[0]); continue; }
   try {
