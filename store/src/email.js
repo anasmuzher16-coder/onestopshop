@@ -95,7 +95,7 @@ const atMs = s => Date.parse(String(s).endsWith("Z") ? s : s + "Z");
 // When the next try is due after `tries` tries of an email written at `at`, or null once the day is used up.
 function nextTry(env, at, tries) {
   const u = unit(env), due = Date.now() + WAIT[Math.min(tries - 1, WAIT.length - 1)] * u;
-  return due <= atMs(at) + WINDOW * u ? iso(due) : null;
+  return due <= atMs(at) + (WINDOW - 60) * u ? iso(due) : null;
 }
 // Who a reply goes to, fixed when the email is written: a customer's reply reaches the shop inbox (OWNER_EMAIL; EMAIL_FROM
 // may be a sending-only address), and a reply to the shop's new-order note reaches the customer, if theirs is a plain address.
@@ -137,10 +137,14 @@ export async function writeEmail(env, orderId, to, mail) {
     const row = await env.DB.prepare(`INSERT INTO emails (order_id, kind, recipient, subject, html, body, send_key, sent_from, reply_to, tries, next_try_at, status, detail) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING id, at`)
       .bind(orderId, mail.kind, to, mail.subject, mail.html, mail.body, key, live ? env.EMAIL_FROM : null, replyTo(env, mail.kind, to, mail.customer), ok ? 1 : 0, ok && RETRIED.has(mail.kind) ? iso(Date.now() + LEASE_MS) : null,
         live && !ok ? "failed" : "held", live && !ok ? "not sent: the address is not one the mail service takes" : null).first()
-      .catch(async err => {   // a database without migration 0011 yet: keep the email (held, shown in the back office) rather than lose it
+      .catch(async err => {   // a database without migration 0011 yet: keep the email in the old columns and send it once, as before
         if (!/no such column|has no column/i.test(String(err && err.message))) throw err;
-        console.error(JSON.stringify({ at: "email", problem: "migration 0011_email_retry.sql is not applied: email kept, not sent" }));
-        await env.DB.prepare("INSERT INTO emails (order_id, kind, recipient, subject, html, body) VALUES (?,?,?,?,?,?)").bind(orderId, mail.kind, to, mail.subject, mail.html, mail.body).run();
+        console.error(JSON.stringify({ at: "email", problem: "migration 0011_email_retry.sql is not applied: sent once, no retries" }));
+        const old = await env.DB.prepare("INSERT INTO emails (order_id, kind, recipient, subject, html, body) VALUES (?,?,?,?,?,?) RETURNING id").bind(orderId, mail.kind, to, mail.subject, mail.html, mail.body).first();
+        if (ok) {
+          const r = await post(env, { recipient: to, subject: mail.subject, html: mail.html, body: mail.body, send_key: key, sent_from: env.EMAIL_FROM, reply_to: replyTo(env, mail.kind, to, mail.customer) });
+          await env.DB.prepare("UPDATE emails SET status = ?, detail = ? WHERE id = ?").bind(r.ok ? "sent" : "failed", r.ok ? "" : `not sent: ${r.detail}`, old.id).run();
+        }
         return null;
       });
     if (!ok || !row) return;
@@ -163,7 +167,7 @@ export async function retryEmails(env) {
     const n = e.tries + 1;
     if (!strictAddr(e.recipient)) { await db.prepare("UPDATE emails SET status = 'failed', next_try_at = NULL, detail = 'not sent: the address is not one the mail service takes' WHERE id = ? AND tries = ?").bind(e.id, e.tries).run(); continue; }
     // a try booked inside the day is still made even if this run is a little late; only a row stranded well past it is closed
-    if (atMs(e.at) + (WINDOW + 120) * unit(env) < Date.now()) { await db.prepare("UPDATE emails SET status = 'failed', next_try_at = NULL, detail = 'gave up after ' || tries || ' tries in a day' WHERE id = ? AND tries = ?").bind(e.id, e.tries).run(); continue; }
+    if (atMs(e.at) + WINDOW * unit(env) < Date.now()) { await db.prepare("UPDATE emails SET status = 'failed', next_try_at = NULL, detail = 'gave up after ' || tries || ' tries in a day' WHERE id = ? AND tries = ?").bind(e.id, e.tries).run(); continue; }
     e.send_key ||= [...crypto.getRandomValues(new Uint8Array(16))].map(b => b.toString(16).padStart(2, "0")).join("");
     if (!(await claim(db, e, n, env)).meta.changes) continue;
     e.sent_from ||= env.EMAIL_FROM;
@@ -174,8 +178,8 @@ export async function retryEmails(env) {
 // The back office's "Send again" on an email that gave up (owner only, logged by admin.js): one more try now, with the
 // same key and words. Answers the new state.
 export async function resendEmail(env, id) {
-  const db = env.DB, e = await db.prepare("SELECT id, at, kind, recipient, subject, html, body, send_key, sent_from, reply_to, tries, status, next_try_at FROM emails WHERE id = ?").bind(id).first();
-  if (!e || !RETRIED.has(e.kind)) return { error: "No such order email.", status: 404 };
+  const db = env.DB, e = await db.prepare("SELECT id, order_id, at, kind, recipient, subject, html, body, send_key, sent_from, reply_to, tries, status, next_try_at FROM emails WHERE id = ?").bind(id).first();
+  if (!e || !RETRIED.has(e.kind) || !e.order_id) return { error: "No such order email.", status: 404 };   // a customer's account mail is theirs, never the back office's
   if (!mailReady(env)) return { error: "The mail service is not connected.", status: 503 };
   if (e.status === "sent") return { error: "This email was already sent.", status: 409 };
   if (e.next_try_at) return { error: "This email is still being tried. Wait for it to finish.", status: 409 };

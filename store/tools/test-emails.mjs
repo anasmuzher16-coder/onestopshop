@@ -118,7 +118,7 @@ if (UNIT > 0 && UNIT <= 20) {
   const log = await mail(), last = log.calls.filter(c => c.failed === 503).pop(), mine = log.calls.filter(c => c.key && c.key === last?.key);
   const span = mine.length > 1 ? mine[mine.length - 1].at - mine[0].at : 0, dd = (await admin("/emails/" + dn.id)).data.email.detail;
   ok(dn.status === "failed" && !dn.next_try_at && dn.gave_up && /^gave up after \d+ tries in a day/.test(dd || ""), "after the day it stops, still Failed, and says so: " + dd);
-  ok(span >= 1440 * UNIT * 0.75 && mine.length >= 8, `the tries span the whole day with backoff: ${mine.length} tries over ${span} ms`);
+  ok(span >= 1440 * UNIT * 0.75 && span <= 1440 * UNIT && mine.length >= 8, `the tries span the day with backoff, never past the key window: ${mine.length} tries over ${span} ms`);
   ok(mine.slice(1).every((c, i) => c.at - mine[i].at >= 9 * UNIT), "never two tries closer than the first wait");
   await fetch(R + "/__fail?n=0", { method: "POST" });
   const re = await admin(`/emails/${dn.id}/resend`, {});
