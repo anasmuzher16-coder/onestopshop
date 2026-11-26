@@ -1,7 +1,7 @@
 // End-to-end checks in a phone viewport. Needs `node tools/serve.mjs`. Prints PASS n/n or FAILs; exits non-zero on failure.
 import { samplesOn } from "./fixtures/samples-on.mjs";
 import { createRequire } from "node:module";
-const { chromium, devices } = createRequire("C:/dev/puckempire-arena/package.json")("playwright");
+const { chromium, devices } = createRequire(process.env.PW_FROM || "C:/dev/puckempire-arena/package.json")("playwright");
 const base = process.env.BASE || "http://127.0.0.1:4420/";
 // the buying walk needs a piece a carrier ships: the shop has none online yet (2026-11-24), so the sample bowls are switched back on in this suite's own database (tools/fixtures/samples-on.mjs)
 await samplesOn(base, ["OSS-3001", "OSS-3003", "OSS-3006", "OSS-3007", "OSS-3008", "OSS-3009", "OSS-3010", "OSS-3011", "OSS-3012", "OSS-3013"]);

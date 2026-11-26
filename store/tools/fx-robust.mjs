@@ -40,7 +40,7 @@ const end = () => { console.log((f ? "FAIL " + f + "/" + n : "PASS " + n + "/" +
 }
 
 // ---------- browser ----------
-const pw = createRequire("C:/dev/puckempire-arena/package.json")("playwright");
+const pw = createRequire(process.env.PW_FROM || "C:/dev/puckempire-arena/package.json")("playwright");
 const b = await pw[engine].launch();
 const errs = [];
 async function open(opts = {}) {

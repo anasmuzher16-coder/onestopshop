@@ -1,8 +1,8 @@
 // Frame-by-frame contact sheets of the product-page acts, one PNG per product, big enough to judge.
 // node tools/fx-piece-sheet.mjs <out dir> [width]     SKUS=OSS-7001,... TIMES=...  ENGINE=webkit  COLS=4
 import { createRequire } from "node:module";
-const pw = createRequire("C:/dev/puckempire-arena/package.json")("playwright");
-const sharp = createRequire("C:/dev/dijji-crm/package.json")("sharp");
+const pw = createRequire(process.env.PW_FROM || "C:/dev/puckempire-arena/package.json")("playwright");
+const sharp = createRequire(process.env.PW_FROM || "C:/dev/dijji-crm/package.json")("sharp");
 const [out, width = "390"] = process.argv.slice(2), B = process.env.BASE || "http://127.0.0.1:4420", W = +width, webkit = process.env.ENGINE === "webkit";
 const SKUS = (process.env.SKUS || "OSS-1001,OSS-7001,OSS-2001,OSS-3001,OSS-4003,OSS-5001,OSS-6002,OSS-8001").split(",");
 const TIMES = (process.env.TIMES || "420,560,700,860,1050,1300,1700,2600").split(",").map(Number), COLS = +(process.env.COLS || 4);

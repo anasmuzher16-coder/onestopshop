@@ -2,7 +2,7 @@
 // map service. Changes local sample data. node store/tools/e2e-delivery.mjs [screenshotDir]
 import { samplesOn } from "./fixtures/samples-on.mjs";
 import { createRequire } from "node:module"; import { readFileSync } from "node:fs";
-const pw = createRequire("C:/dev/puckempire-arena/package.json")("playwright");
+const pw = createRequire(process.env.PW_FROM || "C:/dev/puckempire-arena/package.json")("playwright");
 const B = process.env.BASE || "http://127.0.0.1:4420", shots = process.argv[2], KEY = readFileSync(new URL("../.dev.vars", import.meta.url), "utf8").match(/ADMIN_KEY=(.+)/)[1].trim();
 // the made-up sample rows this suite buys, switched back on in its own throwaway database (tools/fixtures/samples-on.mjs)
 await samplesOn(B, ["OSS-8004"]);

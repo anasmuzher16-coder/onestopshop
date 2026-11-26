@@ -1,6 +1,6 @@
 // Screenshots: the email preview inside an order in the back office, and the privacy page. node store/tools/shots-ops.mjs <outDir>
 import { createRequire } from "node:module"; import { readFileSync } from "node:fs";
-const { chromium } = createRequire("C:/dev/puckempire-arena/package.json")("playwright");
+const { chromium } = createRequire(process.env.PW_FROM || "C:/dev/puckempire-arena/package.json")("playwright");
 const B = process.env.BASE || "http://127.0.0.1:4420", out = process.argv[2];
 const KEY = readFileSync(new URL("../.dev.vars", import.meta.url), "utf8").match(/ADMIN_KEY=(.+)/)[1].trim();
 const b = await chromium.launch(); const errs = [];

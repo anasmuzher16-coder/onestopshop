@@ -3,7 +3,7 @@
 // Prints, per page, first visit and repeat visit: first paint, largest paint, when the page is usable,
 // requests, bytes over the wire, long main-thread tasks, layout shift.
 import { createRequire } from "node:module";
-const { chromium } = createRequire("C:/dev/puckempire-arena/package.json")("playwright");
+const { chromium } = createRequire(process.env.PW_FROM || "C:/dev/puckempire-arena/package.json")("playwright");
 const B = process.env.BASE || "http://127.0.0.1:4420";
 const PAGES = (process.env.PAGES || "/,/shop/hookahs,/p/OSS-1001,/set,/search,/cart").split(",");
 const b = await chromium.launch(); const rows = [];

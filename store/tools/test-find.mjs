@@ -65,7 +65,7 @@ ok(!S.search(ix, "xqzv").length, "nonsense finds nothing");
 ok(S.dist("cocnut", "coconut") === 1 && S.dist("ab", "ba") === 1, "edit distance");
 
 // ---------- part 2: the page ----------
-const { chromium } = createRequire("C:/dev/puckempire-arena/package.json")("playwright");
+const { chromium } = createRequire(process.env.PW_FROM || "C:/dev/puckempire-arena/package.json")("playwright");
 const b = process.env.FIND_RULES_ONLY ? null : await chromium.launch();   // FIND_RULES_ONLY=1: part 1 only, no browser
 if (b) try {
   const p = await b.newPage({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true }), errs = [];

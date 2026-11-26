@@ -1,6 +1,6 @@
 // Debug probe: samples the section layer over time after arriving on a section page.
 import { createRequire } from "node:module";
-const { chromium } = createRequire("C:/dev/puckempire-arena/package.json")("playwright");
+const { chromium } = createRequire(process.env.PW_FROM || "C:/dev/puckempire-arena/package.json")("playwright");
 const B = "http://127.0.0.1:4420", cat = process.argv[2] || "bases";
 const b = await chromium.launch({ args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"] });
 try {

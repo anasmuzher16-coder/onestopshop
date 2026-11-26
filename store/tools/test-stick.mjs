@@ -1,7 +1,7 @@
 // Price labels never stay hidden on screen (fx-stick.js): first load, a section by tap, Back from a product to a long section, Misc.
 // Chromium and WebKit, phone size. Needs the store running. node store/tools/test-stick.mjs
 import { createRequire } from "node:module";
-const { chromium, webkit } = createRequire("C:/dev/puckempire-arena/package.json")("playwright");
+const { chromium, webkit } = createRequire(process.env.PW_FROM || "C:/dev/puckempire-arena/package.json")("playwright");
 const B = (process.env.BASE || "http://127.0.0.1:4420").replace(/\/$/, "");
 let n = 0, f = 0; const t = (name, c, extra = "") => { n++; if (!c) { f++; console.log("FAIL", name, extra); } };
 // a label counts as hidden only on a tile at least half on screen (the stick waits for 35% of a tile, by design)

@@ -1,0 +1,59 @@
+# The store's test suites on GitHub's machines instead of the laptop (owner, 2026-11-26: "increase the pace while
+# maintaining quality"). The same suites, the same local database and the same no-card-keys mode as the laptop runner,
+# split across four machines that run at once. Nothing here deploys or touches the live database.
+name: store tests
+on:
+  push:
+    branches: [shop-quality, section-waves]
+    paths: ["store/**", ".github/workflows/store-tests.yml"]
+  workflow_dispatch:
+concurrency:
+  group: store-tests-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  suites:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - shard: server
+            suites: smoke-http test-admin test-backoffice test-ops test-orders test-quality test-checkout test-delivery test-payments test-account test-ace test-find test-seo
+          - shard: buying
+            suites: e2e e2e-buying e2e-delivery e2e-flow
+          - shard: pages
+            suites: e2e-nav webkit-check phone-audit whitebox test-chunk test-stick
+          - shard: motion
+            suites: fx-robust allwaves
+    name: ${{ matrix.shard }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "22" }
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Tools (pinned to the laptop's versions)
+        run: npm install --no-save --no-audit --no-fund wrangler@4.124.0 playwright@1.61.1 sharp@0.35.2
+      - name: Browsers
+        run: npx playwright install --with-deps chromium webkit
+      - name: Catalogue seed files (generated from the master files, as on the laptop)
+        run: |
+          python store/tools/catalog/catalog.py seed
+          python store/tools/catalog/catalog.py seed --supplier charcoal-foil --category foil
+          python store/tools/catalog/catalog.py seed --supplier charcoal-foil --category charcoal
+      - name: Catalogue unit tests
+        if: matrix.shard == 'server'
+        working-directory: store/tools/catalog
+        run: python -m unittest test_catalog
+      - name: Suites
+        env:
+          PW_FROM: ${{ github.workspace }}/package.json
+        run: node store/tools/ci-suites.mjs ${{ matrix.suites }}
+      - name: Keep the outputs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: out-${{ matrix.shard }}
+          path: store/.ci/out
+          retention-days: 7

@@ -2,7 +2,7 @@
 // 44px, text under 12px, clipped text, controls hidden under the fixed dock or top bar at rest, broken images,
 // console errors, and too much fixed chrome. One browser, closed at the end. Needs `node tools/serve.mjs`.
 import { createRequire } from "node:module";
-const { chromium } = createRequire("C:/dev/puckempire-arena/package.json")("playwright");
+const { chromium } = createRequire(process.env.PW_FROM || "C:/dev/puckempire-arena/package.json")("playwright");
 const base = process.env.BASE || "http://127.0.0.1:4420/";
 const SIZES = [[360, 740], [375, 667], [390, 844], [412, 915], [844, 390]];
 const ROUTES = ["", "shop", "shop/hookahs", "shop/bowls", "p/OSS-100024", "p/OSS-9616", "p/OSS-9104", "cart", "shipping", "set", "search", "gifts/under-50", "gifts/under-150", "shop/cologne", "shop/misc", "p/OSS-9308", "p/OSS-9113", "checkout", "privacy", "terms"];

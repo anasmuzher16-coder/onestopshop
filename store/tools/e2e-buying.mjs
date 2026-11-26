@@ -2,7 +2,7 @@
 // node store/tools/e2e-buying.mjs   (changes local sample data: reseed afterwards)
 import { samplesOn } from "./fixtures/samples-on.mjs";
 import { createRequire } from "node:module";
-const { chromium } = createRequire("C:/dev/puckempire-arena/package.json")("playwright");
+const { chromium } = createRequire(process.env.PW_FROM || "C:/dev/puckempire-arena/package.json")("playwright");
 const B = (process.env.BASE || "http://127.0.0.1:4420").replace(/\/$/, "");
 // the made-up sample rows this suite buys, switched back on in its own throwaway database (tools/fixtures/samples-on.mjs)
 await samplesOn(B, ["OSS-5001", "OSS-7006", "OSS-7008", "OSS-8003", "OSS-8004"]);

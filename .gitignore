@@ -3,3 +3,5 @@ shots/
 assets-src/
 
 __pycache__/
+
+store/.ci/

@@ -4,7 +4,7 @@
 //   ROUNDS=2 walks every section twice: round 1 is the first tap ever (cold), round 2 is warm. PROFILE=1 adds the hottest functions.
 // Per transition: p50, p95 and worst rAF gap from the tap to the wave's end, long tasks over 50 ms, and tap -> first moving frame.
 import { createRequire } from "node:module";
-const { chromium, webkit } = createRequire("C:/dev/puckempire-arena/package.json")("playwright");
+const { chromium, webkit } = createRequire(process.env.PW_FROM || "C:/dev/puckempire-arena/package.json")("playwright");
 const B = (process.env.BASE || "http://127.0.0.1:4420").replace(/\/+$/, ""), ENGINE = process.env.ENGINE === "webkit" ? "webkit" : "chromium";
 const DESK = process.env.VIEW === "desk", RATE = +(process.env.RATE || (ENGINE === "webkit" ? 1 : 4)), ROUNDS = +(process.env.ROUNDS || 2), JSONOUT = process.env.JSON;
 const R = (process.env.ONLY ? process.env.ONLY.split(",") : null);

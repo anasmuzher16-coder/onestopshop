@@ -3,7 +3,7 @@
 // data: reseed afterwards. node store/tools/e2e-flow.mjs [screenshotDir]
 import { samplesOn } from "./fixtures/samples-on.mjs";
 import { createRequire } from "node:module"; import { readFileSync } from "node:fs";
-const { chromium } = createRequire("C:/dev/puckempire-arena/package.json")("playwright");
+const { chromium } = createRequire(process.env.PW_FROM || "C:/dev/puckempire-arena/package.json")("playwright");
 const B = process.env.BASE || "http://127.0.0.1:4420", shots = process.argv[2];
 // the made-up sample rows this suite buys, switched back on in its own throwaway database (tools/fixtures/samples-on.mjs)
 await samplesOn(B, ["OSS-7001", "OSS-7008", "OSS-8003", "OSS-8004"]);

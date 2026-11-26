@@ -1,7 +1,7 @@
 // Renders two still frames of the smoke from the live shader, for the fallback layer. node store/tools/smoke-stills.mjs
 import { createRequire } from "node:module";
-const { chromium } = createRequire("C:/dev/puckempire-arena/package.json")("playwright");
-const sharp = createRequire("C:/dev/dijji-crm/package.json")("sharp");
+const { chromium } = createRequire(process.env.PW_FROM || "C:/dev/puckempire-arena/package.json")("playwright");
+const sharp = createRequire(process.env.PW_FROM || "C:/dev/dijji-crm/package.json")("sharp");
 const B = process.env.BASE || "http://127.0.0.1:4420";
 const b = await chromium.launch();
 try {

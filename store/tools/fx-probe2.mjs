@@ -1,5 +1,5 @@
 import { createRequire } from "node:module";
-const { chromium } = createRequire("C:/dev/puckempire-arena/package.json")("playwright");
+const { chromium } = createRequire(process.env.PW_FROM || "C:/dev/puckempire-arena/package.json")("playwright");
 const b = await chromium.launch(process.env.SW ? { args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"] } : {});
 try {
   const p = await b.newPage({ viewport: { width: 390, height: 844 } });

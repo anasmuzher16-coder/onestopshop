@@ -1,6 +1,6 @@
 // Checks the two till moments: the cart total rolls when a quantity changes, the order number is stamped once.
 import { createRequire } from "node:module";
-const { chromium } = createRequire("C:/dev/puckempire-arena/package.json")("playwright");
+const { chromium } = createRequire(process.env.PW_FROM || "C:/dev/puckempire-arena/package.json")("playwright");
 const B = "http://127.0.0.1:4420", out = process.argv[2];
 const b = await chromium.launch(); const errs = [];
 try {

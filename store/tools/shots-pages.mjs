@@ -1,7 +1,7 @@
 // Full-page pictures of every page that is not a shop section, at phone and desktop width, for design review.
 // node tools/shots-pages.mjs <out dir> [width]     (BASE=https://... for the live site)
 import { createRequire } from "node:module";
-const { chromium } = createRequire("C:/dev/puckempire-arena/package.json")("playwright");
+const { chromium } = createRequire(process.env.PW_FROM || "C:/dev/puckempire-arena/package.json")("playwright");
 const [out, width = "390"] = process.argv.slice(2), B = process.env.BASE || "http://127.0.0.1:4420", W = +width;
 const PAGES = (process.env.PAGES || "home=/,shop=/shop,set=/set,search=/search,gifts=/gifts,cart=/cart,shipping=/shipping,checkout=/checkout,terms=/terms,missing=/nothing-here").split(",").map(x => x.split("="));
 const b = await chromium.launch(); const errs = [];

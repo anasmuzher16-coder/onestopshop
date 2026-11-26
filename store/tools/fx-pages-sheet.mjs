@@ -1,8 +1,8 @@
 // Frame-by-frame contact sheet of the page bands that are not shop sections (set, search, cart, ...).
 // One row per page, moments left to right. node tools/fx-pages-sheet.mjs <out.png> [width]
 import { createRequire } from "node:module";
-const { chromium } = createRequire("C:/dev/puckempire-arena/package.json")("playwright");
-const sharp = createRequire("C:/dev/dijji-crm/package.json")("sharp");
+const { chromium } = createRequire(process.env.PW_FROM || "C:/dev/puckempire-arena/package.json")("playwright");
+const sharp = createRequire(process.env.PW_FROM || "C:/dev/dijji-crm/package.json")("sharp");
 const [out, width = "390"] = process.argv.slice(2), B = process.env.BASE || "http://127.0.0.1:4420", W = +width;
 const ROWS = (process.env.ROWS || "/set,/search,/cart,/checkout,/shipping,/gifts,/terms,/privacy,/nothing-here,/shop").split(",");
 const TIMES = (process.env.TIMES || "300,450,600,800,1100,1500,2200,3500").split(",").map(Number);

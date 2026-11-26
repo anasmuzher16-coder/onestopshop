@@ -4,7 +4,7 @@
 // screen's cards are in before the wave leaves, and Back to a card far down the list lands on that card.
 //   BASE=http://127.0.0.1:4493 node store/tools/test-chunk.mjs
 import { createRequire } from "node:module";
-const { chromium, webkit } = createRequire("C:/dev/puckempire-arena/package.json")("playwright");
+const { chromium, webkit } = createRequire(process.env.PW_FROM || "C:/dev/puckempire-arena/package.json")("playwright");
 const B = (process.env.BASE || "http://127.0.0.1:4420").replace(/\/$/, "");
 let n = 0, f = 0; const ok = (c, msg) => { n++; if (!c) { f++; console.log("FAIL", msg); } };
 // the local server drops idle kept-alive connections while a database command runs beside it: a reset before any answer is retried (as test-backoffice does)

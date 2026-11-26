@@ -1,7 +1,7 @@
 // What the browser itself spends time on while a page loads (style, layout, paint, image decode, script), 4x CPU slowdown.
 // node tools/perf-trace.mjs /        Prints main-thread time by kind, and the biggest single events.
 import { createRequire } from "node:module";
-const { chromium } = createRequire("C:/dev/puckempire-arena/package.json")("playwright");
+const { chromium } = createRequire(process.env.PW_FROM || "C:/dev/puckempire-arena/package.json")("playwright");
 const B = process.env.BASE || "http://127.0.0.1:4420", path = process.argv[2] || "/", HOLD = +(process.env.HOLD || 3000);
 const b = await chromium.launch();
 try {

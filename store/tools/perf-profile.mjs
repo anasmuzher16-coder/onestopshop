@@ -1,6 +1,6 @@
 // Where the main thread's time goes while a page loads (4x CPU slowdown). node tools/perf-profile.mjs /cart
 import { createRequire } from "node:module";
-const { chromium } = createRequire("C:/dev/puckempire-arena/package.json")("playwright");
+const { chromium } = createRequire(process.env.PW_FROM || "C:/dev/puckempire-arena/package.json")("playwright");
 const B = process.env.BASE || "http://127.0.0.1:4420", path = process.argv[2] || "/";
 const b = await chromium.launch();
 try {

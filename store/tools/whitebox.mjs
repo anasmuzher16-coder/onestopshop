@@ -1,8 +1,8 @@
 // Looks for white boxes: samples the corner pixels of every product image as actually rendered on the page.
 // A corner that renders near-white on a coloured tile means the photo's background is showing.
 import { createRequire } from "node:module";
-const pw = createRequire("C:/dev/puckempire-arena/package.json")("playwright"), chromium = pw[process.env.ENGINE || "chromium"]; // ENGINE=webkit checks the Safari engine
-const sharp = createRequire("C:/dev/dijji-crm/package.json")("sharp");
+const pw = createRequire(process.env.PW_FROM || "C:/dev/puckempire-arena/package.json")("playwright"), chromium = pw[process.env.ENGINE || "chromium"]; // ENGINE=webkit checks the Safari engine
+const sharp = createRequire(process.env.PW_FROM || "C:/dev/dijji-crm/package.json")("sharp");
 const base = process.env.BASE || "http://127.0.0.1:4420/";
 const b = await chromium.launch(); let bad = 0, n = 0;
 try {

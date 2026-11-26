@@ -1,7 +1,7 @@
 // What an iPhone actually gets: loads pages in WebKit (Safari's engine) with an iPhone profile and reports script
 // errors, whether the section object and smoke are present, and saves a picture. node tools/webkit-check.mjs <out dir>
 import { createRequire } from "node:module";
-const { webkit, devices } = createRequire("C:/dev/puckempire-arena/package.json")("playwright");
+const { webkit, devices } = createRequire(process.env.PW_FROM || "C:/dev/puckempire-arena/package.json")("playwright");
 const out = process.argv[2] || ".", B = process.env.BASE || "http://127.0.0.1:4420";
 const PAGES = (process.env.PAGES || "/shop/hookahs,/shop/cologne,/shop/heat,/set,/search,/cart,/p/OSS-100024,/shop/shisha").split(",");
 const b = await webkit.launch(); let bad = 0;
