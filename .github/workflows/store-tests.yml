@@ -21,11 +21,11 @@ jobs:
           - shard: server
             suites: smoke-http test-admin test-backoffice test-ops test-orders test-quality test-checkout test-delivery test-payments test-account test-ace test-find test-seo
           - shard: buying
-            suites: e2e e2e-buying e2e-delivery e2e-flow
+            suites: ci-warm e2e e2e-buying e2e-delivery e2e-flow
           - shard: pages
-            suites: e2e-nav webkit-check phone-audit whitebox test-chunk test-stick
+            suites: ci-warm e2e-nav webkit-check phone-audit whitebox test-chunk test-stick
           - shard: motion
-            suites: fx-robust allwaves
+            suites: ci-warm fx-robust allwaves
     name: ${{ matrix.shard }}
     steps:
       - uses: actions/checkout@v4
@@ -74,6 +74,7 @@ jobs:
           sudo dmesg -T | tail -80 > store/.ci/out/dmesg.txt || true
           grep -iE "oom|killed process|segfault|traps:|protection fault|out of memory" store/.ci/out/dmesg.txt || echo "no oom or crash lines in the kernel log"
           free -m
+          cp -r ~/.config/.wrangler/logs store/.ci/out/wrangler-logs 2>/dev/null || true   # wrangler's own log: why a store exited
       - name: Keep the outputs
         if: always()
         uses: actions/upload-artifact@v4

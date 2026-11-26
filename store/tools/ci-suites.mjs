@@ -4,7 +4,7 @@
 //   node store/tools/ci-suites.mjs smoke-http e2e-nav ...      (from the repo root; needs wrangler and playwright installed)
 // Env: PW_FROM (a package.json whose node_modules has playwright), PORT (default 4493).
 // Each suite's line says how it ended and whether the store was still up afterwards, so a crash is never mistaken for a
-// failed check: "store DIED (signal ...)" means the store process went away during the suite.
+// failed check: "store DIED" means the store process went away during the suite, "CRASH" names what crashed.
 import { spawn, spawnSync } from "node:child_process";
 import { cpSync, rmSync, mkdirSync, writeFileSync, existsSync, openSync, closeSync } from "node:fs";
 import { connect } from "node:net";
@@ -17,11 +17,17 @@ const STORE = fileURLToPath(new URL("../", import.meta.url)), WORK = join(proces
   PORT = +(process.env.PORT || 4493);
 const GOLD = join(WORK, "gold"), STATE = join(WORK, "state"), OUT = process.env.CI_OUT || join(STORE, ".ci", "out"), WIN = process.platform === "win32";
 // suites that take the store's base URL with a trailing slash, and those that take an output folder argument (as suites.ps1)
-const SLASH = new Set(["e2e", "phone-audit", "whitebox", "fx-robust"]), NOARG = new Set(["smoke-http", "phone-audit", "test-ace", "test-account", "test-payments", "whitebox", "fx-robust", "ci-warm"]);
+const SLASH = new Set(["e2e", "phone-audit", "whitebox", "fx-robust"]), NOARG = new Set(["smoke-http", "phone-audit", "test-ace", "test-account", "test-payments", "whitebox", "fx-robust", "ci-warm",
+  // e2e-flow runs without its screenshot folder here: a full-page screenshot resizes the page while the checkout's page-change
+  // animation (a view transition) is still running on these slow machines, Chrome aborts the transition ("Transition was aborted
+  // because of invalid state") and the suite's "no page errors" check sees it. With screenshots it failed 5 of 5 times on GitHub;
+  // without them it passed 2 of 2 (runs 45901104803, 45901810149, ci-reliable branch). Every check runs either way.
+  "e2e-flow"]);
 const list = process.argv.slice(2); if (!list.length) { console.error("name the suites to run"); process.exit(2); }
 const npx = (args, opt = {}) => spawnSync(WIN ? "npx.cmd" : "npx", args, { cwd: STORE, encoding: "utf8", shell: WIN, ...opt });
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const stamp = () => new Date().toISOString().slice(11, 19);
+const NL = String.fromCharCode(10);
 // is anything listening on the port? (a refused connection means the old store has let go of it)
 const listening = port => new Promise(res => { const s = connect({ host: "127.0.0.1", port }); s.once("connect", () => { s.destroy(); res(true); }); s.once("error", () => res(false)); s.setTimeout(2000, () => { s.destroy(); res(true); }); });
 const alive = async () => { try { const ac = new AbortController(), tm = setTimeout(() => ac.abort(), 10000); const r = await fetch(`http://127.0.0.1:${PORT}/`, { signal: ac.signal, headers: { Connection: "close" } }); clearTimeout(tm); await r.arrayBuffer(); return r.status; } catch (e) { return String(e?.cause?.code || e?.name || e); } };
@@ -38,45 +44,66 @@ async function stop(p) {
   }
   if (!WIN) { try { process.kill(-p.pid, "SIGKILL"); } catch {} }   // anything left in the group (workerd ignores a parent's death)
   for (let i = 0; i < 300 && await listening(PORT); i++) await sleep(100);
-  if (await listening(PORT)) console.log(`   !! port ${PORT} still taken 30 s after the store was stopped\n   ${workerds()}`);
-  const left = workerds(); if (left) console.log(`   !! workerd still running after the stop:\n   ${left.replace(/\n/g, "\n   ")}`);
+  if (await listening(PORT)) console.log(`   !! port ${PORT} still taken 30 s after the store was stopped: ${workerds()}`);
+  const left = workerds(); if (left) console.log(`   !! workerd still running after the stop: ${left.split(NL).join(" | ")}`);
 }
+
+// Crash evidence. A suite is run a second time only when it failed AND a process crashed under it: the store exited, the kernel
+// logged a browser or store process crash (segfault, trap, protection fault) while it ran, or Playwright reported the browser,
+// page or context gone. A failed check with no crash is never run again, and a suite that fails twice counts as failed.
+const CRASHER = /WPEWebProcess|WPENetwork|WebCore|MiniBrowser|eadedCompositor|llvmpipe|chrome|headless_shell|workerd/;
+const kernel = () => { if (WIN) return []; const r = spawnSync("sudo", ["-n", "dmesg"], { encoding: "utf8" }); return r.status ? [] : r.stdout.split(NL).filter(l => /segfault|traps:|general protection/.test(l)); };
+const GONE = /Target page, context or browser has been closed|Browser has been closed|browser has disconnected|Target crashed|Page crashed/;
 
 // the seeded database, built once: migrations, then the seed files in order
 rmSync(WORK, { recursive: true, force: true }); mkdirSync(OUT, { recursive: true });
-writeFileSync(join(STORE, ".dev.vars"), "ADMIN_KEY=int-local-only\n");
+writeFileSync(join(STORE, ".dev.vars"), "ADMIN_KEY=int-local-only" + NL);
 let r = npx(["wrangler", "d1", "migrations", "apply", "onestopshop", "--local", "--persist-to", GOLD]);
-if (r.status) { console.error("migrations failed\n" + r.stdout + r.stderr); process.exit(1); }
-for (const f of SEED_FILES) { r = npx(["wrangler", "d1", "execute", "onestopshop", "--local", "--persist-to", GOLD, "--file", seedPath(f)]); if (r.status) { console.error("seed failed: " + f + "\n" + (r.stdout + r.stderr).slice(-800)); process.exit(1); } }
+if (r.status) { console.error("migrations failed" + NL + r.stdout + r.stderr); process.exit(1); }
+for (const f of SEED_FILES) { r = npx(["wrangler", "d1", "execute", "onestopshop", "--local", "--persist-to", GOLD, "--file", seedPath(f)]); if (r.status) { console.error("seed failed: " + f + NL + (r.stdout + r.stderr).slice(-800)); process.exit(1); } }
 
 const geo = spawn(process.execPath, [join(STORE, "tools", "fake-geoapify.mjs")], { stdio: "ignore", detached: !WIN });
+
+async function runOnce(t, tag) {
+  rmSync(STATE, { recursive: true, force: true }); cpSync(GOLD, STATE, { recursive: true });
+  if (await listening(PORT)) console.log(`   !! port ${PORT} is taken before ${t} starts: ${workerds()}`);
+  const fd = openSync(join(OUT, t + tag + ".dev.log"), "w"), t0 = Date.now(), k0 = kernel().length;
+  const dev = spawn(WIN ? "npx.cmd" : "npx", ["wrangler", "dev", "--local", "--test-scheduled", "--ip", "127.0.0.1", "--port", String(PORT), "--persist-to", STATE,
+    "--var", "ADMIN_KEY:int-local-only", "--var", "GEOAPIFY_KEY:test", "--var", "GEOAPIFY_BASE:http://127.0.0.1:4499"], { cwd: STORE, stdio: ["ignore", fd, fd], shell: WIN, detached: !WIN });
+  let died = null; dev.once("exit", (code, signal) => { died = { code, signal, after: Math.round((Date.now() - t0) / 1000) }; });
+  let up = false; for (let i = 0; i < 120 && !up && !died; i++) { try { up = (await fetch(`http://127.0.0.1:${PORT}/`)).status === 200; } catch {} if (!up) await sleep(1000); }
+  await sleep(2000);
+  const script = join(STORE, "tools", t + ".mjs"), args = existsSync(script) ? ["--import", pathToFileURL(join(STORE, "tools", "ci-preload.mjs")).href, script] : null;
+  let code = 1, text = `no such suite: ${t}`;
+  if (args && up && !died) {
+    if (!NOARG.has(t)) { mkdirSync(join(OUT, t), { recursive: true }); args.push(join(OUT, t)); }
+    // async, so the store's exit is seen the moment it happens rather than after the suite
+    const run = spawn(process.execPath, args, { cwd: join(STORE, ".."), env: { ...process.env, BASE: `http://127.0.0.1:${PORT}${SLASH.has(t) ? "/" : ""}`, PERSIST: STATE, ADMIN_KEY: "int-local-only", STRIPE: "http://127.0.0.1:4498" } });
+    const chunks = []; run.stdout.on("data", c => chunks.push(c)); run.stderr.on("data", c => chunks.push(c));
+    const limit = setTimeout(() => { chunks.push(Buffer.from(NL + "[ci] the suite ran past 40 minutes and was stopped" + NL)); run.kill("SIGKILL"); }, 40 * 60 * 1000);
+    const [c, sig] = await new Promise(res => run.once("close", (c, s) => res([c, s]))); clearTimeout(limit);
+    code = c ?? 1; text = Buffer.concat(chunks).toString("utf8") + (sig ? NL + `[ci] the suite process ended by ${sig}` + NL : "");
+  } else if (args) text = died ? `the store did not start (it exited: code ${died.code}, signal ${died.signal})` : "the store did not start";
+  const after = died ? `store DIED during the suite (code ${died.code}, signal ${died.signal}, ${died.after} s after start)` : `store after the suite: ${await alive()}`;
+  await stop(dev); closeSync(fd);
+  const crashes = kernel().slice(k0).filter(l => CRASHER.test(l));
+  const crash = [died && "the store exited", crashes.length && "kernel: " + crashes.map(l => l.replace(/^\[[^\]]*\]\s*/, "").slice(0, 110)).join(" | "), GONE.test(text) && "Playwright: browser, page or context gone"].filter(Boolean).join("; ");
+  writeFileSync(join(OUT, t + tag + ".txt"), text + NL + `[ci] ${after}` + NL + (crash ? `[ci] crash: ${crash}` + NL : ""));
+  const tail = text.split(/\r?\n/).filter(l => /FAIL|PASS|passed|Error|waves played|closed|crash/i.test(l)).slice(-8).join(NL + "   ");
+  console.log(`== ${t}${tag} exit ${code} (${Math.round((Date.now() - t0) / 1000)} s, ended ${stamp()}; ${after})` + (crash ? NL + `   CRASH: ${crash}` : "") + (tail ? NL + "   " + tail : ""));
+  return { code, crash };
+}
+
 const results = [];
 try {
   for (const t of list) {
-    rmSync(STATE, { recursive: true, force: true }); cpSync(GOLD, STATE, { recursive: true });
-    if (await listening(PORT)) console.log(`   !! port ${PORT} is taken before ${t} starts\n   ${workerds()}`);
-    const fd = openSync(join(OUT, t + ".dev.log"), "w"), t0 = Date.now();
-    const dev = spawn(WIN ? "npx.cmd" : "npx", ["wrangler", "dev", "--local", "--test-scheduled", "--ip", "127.0.0.1", "--port", String(PORT), "--persist-to", STATE,
-      "--var", "ADMIN_KEY:int-local-only", "--var", "GEOAPIFY_KEY:test", "--var", "GEOAPIFY_BASE:http://127.0.0.1:4499"], { cwd: STORE, stdio: ["ignore", fd, fd], shell: WIN, detached: !WIN });
-    let died = null; dev.once("exit", (code, signal) => { died = { code, signal, after: Math.round((Date.now() - t0) / 1000) }; });
-    let up = false; for (let i = 0; i < 120 && !up && !died; i++) { try { up = (await fetch(`http://127.0.0.1:${PORT}/`)).status === 200; } catch {} if (!up) await sleep(1000); }
-    await sleep(2000);
-    const script = join(STORE, "tools", t + ".mjs"), args = existsSync(script) ? ["--import", pathToFileURL(join(STORE, "tools", "ci-preload.mjs")).href, script] : null;
-    let code = 1, text = `no such suite: ${t}`;
-    if (args && up) {
-      if (!NOARG.has(t)) { mkdirSync(join(OUT, t), { recursive: true }); args.push(join(OUT, t)); }
-      // async, so the store's exit is seen the moment it happens rather than after the suite
-      const run = spawn(process.execPath, args, { cwd: join(STORE, ".."), env: { ...process.env, BASE: `http://127.0.0.1:${PORT}${SLASH.has(t) ? "/" : ""}`, PERSIST: STATE, ADMIN_KEY: "int-local-only", STRIPE: "http://127.0.0.1:4498" } });
-      const chunks = []; run.stdout.on("data", c => chunks.push(c)); run.stderr.on("data", c => chunks.push(c));
-      const limit = setTimeout(() => { chunks.push(Buffer.from("\n[ci] the suite ran past 40 minutes and was stopped\n")); run.kill("SIGKILL"); }, 40 * 60 * 1000);
-      const [c, sig] = await new Promise(res => run.once("close", (c, s) => res([c, s]))); clearTimeout(limit);
-      code = c ?? 1; text = Buffer.concat(chunks).toString("utf8") + (sig ? `\n[ci] the suite process ended by ${sig}\n` : "");
-    } else if (!up) text = died ? `the store did not start (it exited: code ${died.code}, signal ${died.signal})` : "the store did not start";
-    const after = died ? `store DIED during the suite (code ${died.code}, signal ${died.signal}, ${died.after} s after start)` : `store after the suite: ${await alive()}`;
-    writeFileSync(join(OUT, t + ".txt"), text + `\n[ci] ${after}\n`);
-    const tail = text.split(/\r?\n/).filter(l => /FAIL|PASS|passed|Error|waves played|closed|crash/i.test(l)).slice(-8).join("\n   ");
-    console.log(`== ${t} exit ${code} (${Math.round((Date.now() - t0) / 1000)} s, ended ${stamp()}; ${after})${tail ? "\n   " + tail : ""}`); results.push([t, code]);
-    await stop(dev); closeSync(fd);
+    let { code, crash } = await runOnce(t, "");
+    if (code !== 0 && crash) {   // one more try, for a crash only; the first try's output is kept beside the second's
+      cpSync(join(OUT, t + ".txt"), join(OUT, t + ".try1.txt")); cpSync(join(OUT, t + ".dev.log"), join(OUT, t + ".try1.dev.log"));
+      console.log(`   ${t} failed with a crash under it: running it once more (the first try is kept as ${t}.try1.txt)`);
+      ({ code } = await runOnce(t, ""));
+    }
+    results.push([t, code]);
   }
 } finally { if (WIN) spawnSync("taskkill", ["/PID", String(geo.pid), "/T", "/F"]); else { try { process.kill(-geo.pid, "SIGKILL"); } catch { geo.kill("SIGKILL"); } } rmSync(join(STORE, ".dev.vars"), { force: true }); }
 const bad = results.filter(([, c]) => c !== 0);
