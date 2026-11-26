@@ -11,7 +11,7 @@ for (const [n, t, a] of [["webkit", webkit, []], ["chromium", chromium, GL]]) {
     if (await p.evaluate(() => location.pathname) === h) { await p.evaluate(() => { const a = document.createElement("a"); a.href = "/terms"; a.style.display = "none"; document.body.append(a); a.click(); }); await p.waitForTimeout(1100); await p.goto(B + "/shop/misc", { waitUntil: "load" }); await p.waitForTimeout(800); }
     const got = await p.evaluate(x => { let a = document.querySelector(`a[href="${x}"]`); if (!a) { a = document.createElement("a"); a.href = x; a.style.display = "none"; document.body.append(a); } a.click(); return window.__wave.active?.key || null; }, h);
     if (got === k) ok++; else { bad++; console.log("  miss", n, k, got); }
-    await p.waitForTimeout(1050);
+    await p.waitForTimeout(+(process.env.WAVE_SETTLE || 1050));
     const left = await p.evaluate(() => ({ active: !!window.__wave.active, op: window.__wave.canvas?.style.opacity, at: location.pathname })); if (left.active || left.op !== "0" || left.at !== h.split("?")[0]) { bad++; console.log("  stuck", n, k, JSON.stringify(left)); }
   }
   console.log(n, "waves played", ok + "/" + R.length, "shader or page errors", errs.length, errs[0] || ""); bad += errs.length; await b.close();

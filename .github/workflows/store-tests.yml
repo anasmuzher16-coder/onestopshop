@@ -35,6 +35,8 @@ jobs:
         with: { python-version: "3.12" }
       - name: Tools (pinned to the laptop's versions)
         run: npm install --no-save --no-audit --no-fund wrangler@4.124.0 playwright@1.61.1 sharp@0.35.2
+      - name: Python tools (the laptop's openpyxl)
+        run: pip install openpyxl==3.1.5
       - name: Browsers
         run: npx playwright install --with-deps chromium webkit
       - name: Catalogue seed files (generated from the master files, as on the laptop)
@@ -49,6 +51,8 @@ jobs:
       - name: Suites
         env:
           PW_FROM: ${{ github.workspace }}/package.json
+          WRANGLER_JS: ${{ github.workspace }}/node_modules/wrangler/bin/wrangler.js
+          WAVE_SETTLE: "2500"   # software rendering on these machines: a wave gets longer to end before it counts as stuck
         run: node store/tools/ci-suites.mjs ${{ matrix.suites }}
       - name: Keep the outputs
         if: always()
