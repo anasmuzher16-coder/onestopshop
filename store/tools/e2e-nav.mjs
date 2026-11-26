@@ -36,7 +36,7 @@ for (const [tag, type, ctx] of [["webkit390", webkit, { viewport: { width: 390, 
       t(`${tag} 17 nav stays on one line`, await p.evaluate(() => { const n = document.querySelector(".top__nav"); return new Set([...n.children].filter(a => !a.hidden).map(a => Math.round(a.getBoundingClientRect().top))).size === 1; }));
       // no link is ever cut off or scrolled out of sight: what does not fit sits behind "More" (owner, 2026-11-26)
       t(`${tag} 17 no menu link cut off`, await p.evaluate(() => { const n = document.querySelector(".top__nav"), r = n.getBoundingClientRect(); return n.scrollWidth <= n.clientWidth + 1 && [...n.querySelectorAll(":scope > a, :scope > .top__more:not([hidden])")].every(a => { const b = a.getBoundingClientRect(); return b.left >= r.left - 8 && b.right <= r.right + 8; }); }));
-    } else { await open("/gifts/under-150"); t(`${tag} 19 dock marks Shop on Gifts`, await p.locator('.dock a[href="/shop"][aria-current]').count() === 1); }
+    } else { await open("/shop/hookahs"); t(`${tag} 19 dock marks Shop on a section`, await p.locator('.dock a[href="/shop"][aria-current]').count() === 1); }
     // 15 dock Back is the real Back
     if (tag === "webkit390") {
       // the search word was "brass", then "bowl", until the samples were retired on 2026-11-24; "mint" finds real shisha flavours
@@ -53,7 +53,7 @@ for (const [tag, type, ctx] of [["webkit390", webkit, { viewport: { width: 390, 
     for (const w of ["misc", "cologne"]) { await open("/search?q=" + w); t(`${tag} 20 a search naming a section with no stock online says it is coming soon (${w})`, /coming soon to the site/i.test(await p.locator("[data-search-out]").innerText()) && await p.locator('[data-search-out] a[href="tel:+15192552222"]').count() > 0); }
     await p.fill("#q", "zzzqqq"); await wait(200); t(`${tag} 20 no results offers a way on`, await p.locator('[data-search-out] a[href="/shop"]').count() === 1);
     const lower = await p.goto(B + "/p/oss-100024", { waitUntil: "domcontentloaded" }); await p.waitForSelector("#main > *"); t(`${tag} 20 a lowercase item number opens the item`, lower.status() === 200 && /\/p\/OSS-100024$/.test(p.url()) && /DMX Hookah/.test(await p.locator("h1").innerText()), p.url());
-    for (const u of ["/cart/extra", "/set/extra", "/shop/hookahs/extra", "/gifts/nope", "/order/nope", "/search/x"]) { const r = await p.goto(B + u, { waitUntil: "domcontentloaded" }); await p.waitForSelector("#main > *"); await wait(120); t(`${tag} 20 ${u} is a real 404`, r.status() === 404 && /Nothing at this address/.test(await p.locator("h1").innerText()) && /^Page not found/.test(await p.title()), r.status() + " " + await p.locator("h1").innerText()); }
+    for (const u of ["/cart/extra", "/set/extra", "/shop/hookahs/extra", "/order/nope", "/search/x"]) { const r = await p.goto(B + u, { waitUntil: "domcontentloaded" }); await p.waitForSelector("#main > *"); await wait(120); t(`${tag} 20 ${u} is a real 404`, r.status() === 404 && /Nothing at this address/.test(await p.locator("h1").innerText()) && /^Page not found/.test(await p.title()), r.status() + " " + await p.locator("h1").innerText()); }
     t(`${tag} no script errors`, !errs.length, errs[0] || "");
     await c.close();
     // the air draws in a worker where the engine can (2026-11-25): it starts, follows a change of section, and leaves one canvas

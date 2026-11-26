@@ -323,7 +323,7 @@ function viewHome() {
     <div class="hero__in">
       <h1 class="hero__h"><span class="hero__lead">Hookahs,</span> <span class="hero__rest">and everything that goes with them.</span></h1>
       <div class="hero__side">
-        <p class="hero__p">Local delivery from $10 near Windsor, free pickup, and shipping across Canada except Quebec, for now.</p>
+        <p class="hero__p">${PRODUCTS.some(p => forSale(p) && !localOnly(p) && !counterPay(p)) ? "Local delivery from $10 near Windsor, free pickup, and shipping across Canada except Quebec, for now." : "Pickup in Windsor and local delivery from $10. Shipping across Canada once prices are in."}</p>
         <div class="hero__cta"><a class="btn" href="/shop/hookahs">Shop hookahs</a><a class="btn btn--ghost" href="/shop">All ${SHELF.length} pieces</a></div>
       </div>
     </div>
@@ -336,13 +336,6 @@ function viewHome() {
     return waiting.length ? `<p class="cats__soon"><span class="tbd">Not on the site yet</span> ${waiting.map(c => `<a class="link" href="/shop/${c.id}">${esc(c.name)}</a>`).join(", ")}. Call <a class="link" href="tel:+15192552222">519-255-2222</a> to ask.</p>` : ""; })()}  <section class="shelf">
     <header class="shelf__head"><h2 class="h2">Counter picks</h2><a class="link" href="/shop/hookahs">All ${SHELF.filter(p => p.cat === "hookahs").length} hookahs</a></header>
     <div class="grid">${picks.map((p, i) => card(p, i + 8)).join("")}</div>
-  </section>
-  <section class="gifts" aria-labelledby="gift-h">
-    <header class="shelf__head"><h2 class="h2" id="gift-h">Gifts</h2><p class="gifts__note">Packed at the counter. Add a note in the cart.</p></header>
-    <div class="gifts__row">
-      ${[["under-50", "Under $50", "emerald", giftList(true)[0] || liveCat("bowls")[0]], ["under-150", "Under $150", "cobalt", giftList(false)[0]], ["set", "The full setup", "ruby", liveCat("hookahs")[0] || liveCat("bowls")[0]]].filter(g => g[3]).map(([id, label, tone, lead]) =>
-        `<a class="gift" data-tone="${tone}" href="${id === "set" ? "/set" : "/gifts/" + id}">${shot(lead, { small: true, use: "cat", cls: "gift__img" })}<span class="gift__name">${label}</span><span class="gift__sub">${id === "set" ? (liveCat("hookahs").length ? "Hookah, bowl, hose" : "Bowl and hose, hookahs once priced") : giftList(id === "under-50").length + " pieces"}</span></a>`).join("")}
-    </div>
   </section>
   ${tall.length >= 3 ? `<section class="lineup" aria-labelledby="lu-h">
     <header class="lineup__head"><h2 class="h2 h2--xl" id="lu-h">Compare heights.</h2><p class="lineup__note">From the shelf, tallest to shortest.</p></header>

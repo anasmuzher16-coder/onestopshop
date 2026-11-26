@@ -233,7 +233,9 @@ async function route(request, env, ctx) {
       }
       if (path === "/robots.txt") return new Response(robots(env, url), { headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "public, max-age=3600" } });
       if (path === "/index.html") return Response.redirect(url.origin + "/", 301);
-      { const to = charcoalMoved(url); if (to) return new Response(null, { status: 301, headers: { ...SECURITY, Location: url.origin + to, "Cache-Control": "public, max-age=86400" } }); }
+      // the Gifts section is gone (owner, 2026-11-26: "it just adds clutter"): its old addresses go to the whole shop
+  if (/^\/gifts(\/|$)/.test(url.pathname)) return new Response(null, { status: 301, headers: { ...SECURITY, Location: url.origin + "/shop", "Cache-Control": "public, max-age=86400" } });
+  { const to = charcoalMoved(url); if (to) return new Response(null, { status: 301, headers: { ...SECURITY, Location: url.origin + to, "Cache-Control": "public, max-age=86400" } }); }
       const lower = path.match(/^\/p\/([A-Za-z]+-\d+)\/?$/); if (lower && lower[1] !== lower[1].toUpperCase()) return Response.redirect(`${url.origin}/p/${lower[1].toUpperCase()}`, 301);   // an item number typed in small letters
       if (path === "/intake.html") return new Response("Not found", { status: 404, headers: SECURITY });   // the questionnaire is only at its link
       if (/\.[a-z0-9]{2,5}$/i.test(path)) return env.ASSETS.fetch(request); // a file that is not there: plain 404

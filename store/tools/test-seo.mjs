@@ -226,7 +226,7 @@ if (BL) {
   ok(!/name="robots"/.test(h.t) && !h.r.headers.get("x-robots-tag"), "live: the home page can be indexed");
   ok(!/name="robots"/.test(p.t) && !p.r.headers.get("x-robots-tag"), "live: a product page can be indexed");
   // an empty section (2026-11-24) and a set that cannot be built stay noindex when live
-  for (const q of ["/account", "/cart", "/checkout", "/search", "/order/WABCDEF", "/gifts/under-50", "/shop/misc", ...(sm2.t.includes("/set</loc>") ? [] : ["/set"])]) { const g = await get(q, BL); ok(/noindex/.test(g.r.headers.get("x-robots-tag") || "") && /<meta name="robots" content="noindex/.test(g.t), "live: still noindex " + q); }
+  for (const q of ["/account", "/cart", "/checkout", "/search", "/order/WABCDEF", "/shop/misc", ...(sm2.t.includes("/set</loc>") ? [] : ["/set"])]) { const g = await get(q, BL); ok(/noindex/.test(g.r.headers.get("x-robots-tag") || "") && /<meta name="robots" content="noindex/.test(g.t), "live: still noindex " + q); }
   ok((await get("/admin", BL)).r.headers.get("x-robots-tag") === "noindex, nofollow", "live: the back office stays noindex");
   ok(sm2.r.status === 200 && /<urlset/.test(sm2.t) && !/\/(cart|checkout|account|admin|gifts)/.test(sm2.t) && rb2.t.includes(`Sitemap: ${BL}/sitemap.xml`), "live: sitemap served and named in robots.txt");
   const locs2 = [...sm2.t.matchAll(/<loc>([^<]+)<\/loc>/g)].map(x => x[1].replace(BL, ""));
