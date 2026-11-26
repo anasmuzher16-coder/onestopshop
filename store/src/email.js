@@ -141,6 +141,7 @@ export async function writeEmail(env, orderId, to, mail) {
         if (!/no such column|has no column/i.test(String(err && err.message))) throw err;
         console.error(JSON.stringify({ at: "email", problem: "migration 0011_email_retry.sql is not applied: sent once, no retries" }));
         const old = await env.DB.prepare("INSERT INTO emails (order_id, kind, recipient, subject, html, body) VALUES (?,?,?,?,?,?) RETURNING id").bind(orderId, mail.kind, to, mail.subject, mail.html, mail.body).first();
+        if (live && !ok) await env.DB.prepare("UPDATE emails SET status = 'failed', detail = 'not sent: the address is not one the mail service takes' WHERE id = ?").bind(old.id).run();
         if (ok) {
           const r = await post(env, { recipient: to, subject: mail.subject, html: mail.html, body: mail.body, send_key: key, sent_from: env.EMAIL_FROM, reply_to: replyTo(env, mail.kind, to, mail.customer) });
           await env.DB.prepare("UPDATE emails SET status = ?, detail = ? WHERE id = ?").bind(r.ok ? "sent" : "failed", r.ok ? "" : `not sent: ${r.detail}`, old.id).run();
@@ -178,10 +179,12 @@ export async function retryEmails(env) {
 // The back office's "Send again" on an email that gave up (owner only, logged by admin.js): one more try now, with the
 // same key and words. Answers the new state.
 export async function resendEmail(env, id) {
+  if (!(await env.DB.prepare("SELECT next_try_at FROM emails LIMIT 0").all().then(() => true, () => false))) return { error: "Apply migration 0011_email_retry.sql first.", status: 503 };
   const db = env.DB, e = await db.prepare("SELECT id, order_id, at, kind, recipient, subject, html, body, send_key, sent_from, reply_to, tries, status, next_try_at FROM emails WHERE id = ?").bind(id).first();
   if (!e || !RETRIED.has(e.kind) || !e.order_id) return { error: "No such order email.", status: 404 };   // a customer's account mail is theirs, never the back office's
   if (!mailReady(env)) return { error: "The mail service is not connected.", status: 503 };
   if (e.status === "sent") return { error: "This email was already sent.", status: 409 };
+  if (e.status !== "failed") return { error: "Only an email that could not be sent can be sent again.", status: 409 };   // held = written before mail was connected: never sent late
   if (e.next_try_at) return { error: "This email is still being tried. Wait for it to finish.", status: 409 };
   if (!strictAddr(e.recipient)) return { error: "This address is not one the mail service takes. Phone the customer instead.", status: 409 };
   e.send_key ||= [...crypto.getRandomValues(new Uint8Array(16))].map(b => b.toString(16).padStart(2, "0")).join("");

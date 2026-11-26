@@ -2,7 +2,7 @@
 // note to the shop inbox (OWNER_EMAIL) from EMAIL_FROM, with the order lines, the totals and how it goes (pickup, delivery,
 // shipping), and one receipt to the customer; a card order sends nothing until Stripe's signed webhook says paid; a send the
 // mail service refuses is kept as Failed with its reason, shown in the back office, and sent again by the 10-minute job with
-// the same Idempotency-Key (never a second copy); after 5 tries it stops and says so. Works with or without card keys.
+// the same Idempotency-Key (never a second copy), backing off for 23 hours; after a day it stops, says so, and the owner can send it again. Works with or without card keys.
 // node store/tools/test-emails.mjs   (store started with the fake Resend vars, see fake-resend.mjs; changes local data: reseed afterwards)
 import { readFileSync } from "node:fs";
 import { samplesOn } from "./fixtures/samples-on.mjs";
