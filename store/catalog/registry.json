@@ -4,12 +4,14 @@
  "blocks": {
   "10": "ace",
   "20": "charcoal-foil",
-  "30": "shisha"
+  "30": "shisha",
+  "11": "ace-acc"
  },
  "next": {
   "10": 297,
   "20": 1,
-  "30": 1
+  "30": 1,
+  "11": 40
  },
  "skus": {
   "OSS-100001": {
@@ -2753,6 +2755,240 @@
    "status": "active",
    "assigned": "2026-11-24",
    "legacy": true
+  },
+  "OSS-110001": {
+   "supplier": "ace-acc",
+   "key": "acc-p6",
+   "status": "active",
+   "assigned": "2026-11-26"
+  },
+  "OSS-110002": {
+   "supplier": "ace-acc",
+   "key": "acc-p9",
+   "status": "active",
+   "assigned": "2026-11-26"
+  },
+  "OSS-110003": {
+   "supplier": "ace-acc",
+   "key": "acc-p10",
+   "status": "active",
+   "assigned": "2026-11-26"
+  },
+  "OSS-110004": {
+   "supplier": "ace-acc",
+   "key": "acc-p11",
+   "status": "active",
+   "assigned": "2026-11-26"
+  },
+  "OSS-110005": {
+   "supplier": "ace-acc",
+   "key": "acc-p12",
+   "status": "active",
+   "assigned": "2026-11-26"
+  },
+  "OSS-110006": {
+   "supplier": "ace-acc",
+   "key": "acc-p13",
+   "status": "active",
+   "assigned": "2026-11-26"
+  },
+  "OSS-110007": {
+   "supplier": "ace-acc",
+   "key": "acc-p16",
+   "status": "active",
+   "assigned": "2026-11-26"
+  },
+  "OSS-110008": {
+   "supplier": "ace-acc",
+   "key": "acc-p17",
+   "status": "active",
+   "assigned": "2026-11-26"
+  },
+  "OSS-110009": {
+   "supplier": "ace-acc",
+   "key": "acc-p21",
+   "status": "active",
+   "assigned": "2026-11-26"
+  },
+  "OSS-110010": {
+   "supplier": "ace-acc",
+   "key": "acc-p22",
+   "status": "active",
+   "assigned": "2026-11-26"
+  },
+  "OSS-110011": {
+   "supplier": "ace-acc",
+   "key": "acc-p24",
+   "status": "active",
+   "assigned": "2026-11-26"
+  },
+  "OSS-110012": {
+   "supplier": "ace-acc",
+   "key": "acc-p30",
+   "status": "active",
+   "assigned": "2026-11-26"
+  },
+  "OSS-110013": {
+   "supplier": "ace-acc",
+   "key": "acc-p31",
+   "status": "active",
+   "assigned": "2026-11-26"
+  },
+  "OSS-110014": {
+   "supplier": "ace-acc",
+   "key": "acc-p37",
+   "status": "active",
+   "assigned": "2026-11-26"
+  },
+  "OSS-110015": {
+   "supplier": "ace-acc",
+   "key": "acc-p38",
+   "status": "active",
+   "assigned": "2026-11-26"
+  },
+  "OSS-110016": {
+   "supplier": "ace-acc",
+   "key": "acc-p45",
+   "status": "active",
+   "assigned": "2026-11-26"
+  },
+  "OSS-110017": {
+   "supplier": "ace-acc",
+   "key": "acc-p46",
+   "status": "active",
+   "assigned": "2026-11-26"
+  },
+  "OSS-110018": {
+   "supplier": "ace-acc",
+   "key": "acc-p50",
+   "status": "active",
+   "assigned": "2026-11-26"
+  },
+  "OSS-110019": {
+   "supplier": "ace-acc",
+   "key": "acc-p52",
+   "status": "active",
+   "assigned": "2026-11-26"
+  },
+  "OSS-110020": {
+   "supplier": "ace-acc",
+   "key": "acc-p58",
+   "status": "active",
+   "assigned": "2026-11-26"
+  },
+  "OSS-110021": {
+   "supplier": "ace-acc",
+   "key": "acc-p63",
+   "status": "active",
+   "assigned": "2026-11-26"
+  },
+  "OSS-110022": {
+   "supplier": "ace-acc",
+   "key": "acc-p65",
+   "status": "active",
+   "assigned": "2026-11-26"
+  },
+  "OSS-110023": {
+   "supplier": "ace-acc",
+   "key": "acc-p70",
+   "status": "active",
+   "assigned": "2026-11-26"
+  },
+  "OSS-110024": {
+   "supplier": "ace-acc",
+   "key": "acc-p72",
+   "status": "active",
+   "assigned": "2026-11-26"
+  },
+  "OSS-110025": {
+   "supplier": "ace-acc",
+   "key": "acc-p75",
+   "status": "active",
+   "assigned": "2026-11-26"
+  },
+  "OSS-110026": {
+   "supplier": "ace-acc",
+   "key": "acc-p76",
+   "status": "active",
+   "assigned": "2026-11-26"
+  },
+  "OSS-110027": {
+   "supplier": "ace-acc",
+   "key": "acc-p77",
+   "status": "active",
+   "assigned": "2026-11-26"
+  },
+  "OSS-110028": {
+   "supplier": "ace-acc",
+   "key": "acc-p78",
+   "status": "active",
+   "assigned": "2026-11-26"
+  },
+  "OSS-110029": {
+   "supplier": "ace-acc",
+   "key": "acc-p79",
+   "status": "active",
+   "assigned": "2026-11-26"
+  },
+  "OSS-110030": {
+   "supplier": "ace-acc",
+   "key": "acc-p80",
+   "status": "active",
+   "assigned": "2026-11-26"
+  },
+  "OSS-110031": {
+   "supplier": "ace-acc",
+   "key": "acc-p81",
+   "status": "active",
+   "assigned": "2026-11-26"
+  },
+  "OSS-110032": {
+   "supplier": "ace-acc",
+   "key": "acc-p82",
+   "status": "active",
+   "assigned": "2026-11-26"
+  },
+  "OSS-110033": {
+   "supplier": "ace-acc",
+   "key": "acc-p83",
+   "status": "active",
+   "assigned": "2026-11-26"
+  },
+  "OSS-110034": {
+   "supplier": "ace-acc",
+   "key": "acc-p84",
+   "status": "active",
+   "assigned": "2026-11-26"
+  },
+  "OSS-110035": {
+   "supplier": "ace-acc",
+   "key": "acc-p95",
+   "status": "active",
+   "assigned": "2026-11-26"
+  },
+  "OSS-110036": {
+   "supplier": "ace-acc",
+   "key": "acc-p96",
+   "status": "active",
+   "assigned": "2026-11-26"
+  },
+  "OSS-110037": {
+   "supplier": "ace-acc",
+   "key": "acc-p97",
+   "status": "active",
+   "assigned": "2026-11-26"
+  },
+  "OSS-110038": {
+   "supplier": "ace-acc",
+   "key": "acc-p99",
+   "status": "active",
+   "assigned": "2026-11-26"
+  },
+  "OSS-110039": {
+   "supplier": "ace-acc",
+   "key": "acc-p101",
+   "status": "active",
+   "assigned": "2026-11-26"
   }
  }
 }

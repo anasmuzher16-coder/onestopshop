@@ -448,5 +448,62 @@ class TestAnswers(unittest.TestCase):
         self.rejects({self.masters["ace"]["families"][0]["variants"][0]["sku"]: {"In stock here? (yes/no)": "maybe"}})
 
 
+class TestAceAccessories(Base):
+    """The shop's ticked pages from Ace's accessories catalogue (2026-11-26): on view with Price TBD, never sold."""
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.acc = C.load_master("ace-acc")
+
+    def test_master_validates_and_counts(self):
+        C.validate_master(self.acc, self.reg)
+        fams = self.acc["families"]
+        self.assertEqual(len(fams), 39)
+        self.assertEqual(sorted({f["category"] for f in fams}), ["bases", "bowls", "heat", "hoses", "parts"])
+        self.assertTrue(all(len(f["variants"]) == 1 for f in fams))   # no colour variants from Ace's generic squares
+        self.assertTrue(all(re.fullmatch(r"OSS-11\d{4}", v["sku"]) for _, v in C.iter_variants(self.acc)))
+
+    def test_prices_private_and_missing_ones_asked(self):
+        for f, v in C.iter_variants(self.acc):
+            self.assertIsNone(v["shop"]["price_cents"]["v"], v["sku"])
+            self.assertFalse(v["shop"]["active"]["v"], v["sku"])
+        byp = {f["page"]: f for f in self.acc["families"]}
+        self.assertEqual({p for p, f in byp.items() if f["supplier_price_cents"]["v"] is None}, {77, 79, 80})
+        self.assertEqual(byp[81]["supplier_price_cents"]["v"], 250)   # printed "$2.5"
+        self.assertEqual(byp[77]["stamp"]["v"], "unclear")
+
+    def test_rows_on_view_tbd_pickup_until_weighed(self):
+        rows = K.desired_rows("ace-acc", self.acc)
+        self.assertEqual(len(rows), 39)
+        for r in rows:
+            s, f = r["shop"], json.loads(r["sup"]["facts_known"])
+            self.assertEqual((s["price_cents"], s["active"], s["listed"]), (0, 0, 1), r["sku"])
+            self.assertTrue(r["sup"]["family"].startswith("acc-"))   # never grouped with the hookah families
+            self.assertEqual(s["weight_g"], 1)
+            self.assertIn("weight_g", f)
+            self.assertIsNone(f["weight_g"])   # unknown weight: pickup or local delivery once priced
+        names = {r["sup"]["family"]: r["shop"]["name"] for r in rows}
+        # another maker's brand on the page: the name waits for the shop to confirm the piece is genuine
+        for p in (6, 13, 16, 17, 72):
+            self.assertRegex(names[f"acc-p{p}"], rf"No\. {p}$")
+        self.assertNotIn("Quasar", " ".join(names.values()))
+
+    def test_apply_twice_is_stable(self):
+        p1 = K.apply_supplier(self.con, "ace-acc", self.acc)
+        self.assertEqual(len(p1["added"]), 39)
+        p2 = K.apply_supplier(self.con, "ace-acc", self.acc)
+        self.assertEqual((len(p2["added"]), len(p2["changed"]), len(p2["retired"])), (0, 0, 0))
+        n = self.con.execute("SELECT COUNT(*) FROM products WHERE supplier_id = 'ace-acc' AND listed = 1 AND active = 0 AND price_cents = 0").fetchone()[0]
+        self.assertEqual(n, 39)
+
+    def test_photos_exist(self):
+        for f, v in C.iter_variants(self.acc):
+            if v["photo"]["img"]:
+                for suf in ("", "-m", "-s"):
+                    self.assertTrue((C.STORE / "public" / "img" / "pc" / (v["photo"]["img"] + suf + ".webp")).exists(), v["photo"]["img"])
+        none = [f["page"] for f, v in C.iter_variants(self.acc) if not v["photo"]["img"]]
+        self.assertEqual(none, [83])
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=1)

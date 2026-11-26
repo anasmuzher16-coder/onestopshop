@@ -1,0 +1,4085 @@
+{
+ "schema": "oss-catalog/1",
+ "supplier": {
+  "id": "ace-acc",
+  "name": "Ace Hookah (accessories)",
+  "sku_block": "OSS-11NNNN",
+  "credit": "Credit Ace as text only. No Ace logo, marble or 'ACE IT' artwork on the site."
+ },
+ "sources": [
+  {
+   "id": "ace-acc-2026",
+   "kind": "pdf",
+   "file": "b9cd9c7f-ACE_ACCESSORIES_compressed.pdf",
+   "sha256": "200ff2f8e963786ad1e7048a6b4d6419e3d9b2bfb238f5bda88adb5316ee8c18",
+   "pages": 108,
+   "products": 39,
+   "edition": "Accessories, received 2026-11-26",
+   "received": "2026-11-26"
+  }
+ ],
+ "rulings": [
+  "owner 2026-11-26: only the pages the shop ticked go on the site, each with Price TBD; unticked pages stay off",
+  "Ace's prices are stored only as the supplier price; the shop sets its own",
+  "pickup or local delivery only until each item's weight is known"
+ ],
+ "families": [
+  {
+   "family_id": "acc-p6",
+   "page": 6,
+   "category": "heat",
+   "name": {
+    "v": "T-Sar HMD",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm; printed 'T-sar HMD'"
+   },
+   "withheld_name": {
+    "v": "Heat Management Device No. 6",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm"
+   },
+   "supplier_ref": {
+    "v": "T-sar HMD",
+    "src": "pdf:ace-acc-2026#p6:text"
+   },
+   "supplier_price_cents": {
+    "v": 1000,
+    "src": "pdf:ace-acc-2026#p6:text '$10'"
+   },
+   "price_basis": {
+    "v": "unknown",
+    "src": "the catalogue does not say retail or wholesale"
+   },
+   "group": {
+    "v": "heat",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm"
+   },
+   "stamp": {
+    "v": "stamped",
+    "src": "pdf:ace-acc-2026#p6:stamp annotation",
+    "needs_shop": false,
+    "question": null,
+    "annotations": [
+     {
+      "rect": [
+       1792,
+       193,
+       2522,
+       769
+      ],
+      "author": "Mobile User",
+      "modified": "D:20261123182315-05'00'"
+     }
+    ]
+   },
+   "facts": {
+    "glass": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    },
+    "size": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "The name carries another maker's brand: confirm it is genuine before naming it on the site"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-110001",
+     "key": "acc-p6",
+     "photo": {
+      "img": "acc/acc-p6",
+      "status": "ready",
+      "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "acc-p9",
+   "page": 9,
+   "category": "heat",
+   "name": {
+    "v": "HMD Tray Y03",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm; printed 'Y03 TRAY-HMD'"
+   },
+   "withheld_name": {
+    "v": null,
+    "src": null
+   },
+   "supplier_ref": {
+    "v": "Y03 TRAY-HMD",
+    "src": "pdf:ace-acc-2026#p9:text"
+   },
+   "supplier_price_cents": {
+    "v": 500,
+    "src": "pdf:ace-acc-2026#p9:text '$5'"
+   },
+   "price_basis": {
+    "v": "unknown",
+    "src": "the catalogue does not say retail or wholesale"
+   },
+   "group": {
+    "v": "heat",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm"
+   },
+   "stamp": {
+    "v": "stamped",
+    "src": "pdf:ace-acc-2026#p9:stamp annotation",
+    "needs_shop": false,
+    "question": null,
+    "annotations": [
+     {
+      "rect": [
+       2004,
+       211,
+       2570,
+       716
+      ],
+      "author": "Mobile User",
+      "modified": "D:20261123182315-05'00'"
+     }
+    ]
+   },
+   "facts": {
+    "glass": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    },
+    "size": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [],
+   "variants": [
+    {
+     "sku": "OSS-110002",
+     "key": "acc-p9",
+     "photo": {
+      "img": "acc/acc-p9",
+      "status": "ready",
+      "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "acc-p10",
+   "page": 10,
+   "category": "heat",
+   "name": {
+    "v": "HMD Tray Y05",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm; printed 'Y05 TRAY-HMD'"
+   },
+   "withheld_name": {
+    "v": null,
+    "src": null
+   },
+   "supplier_ref": {
+    "v": "Y05 TRAY-HMD",
+    "src": "pdf:ace-acc-2026#p10:text"
+   },
+   "supplier_price_cents": {
+    "v": 500,
+    "src": "pdf:ace-acc-2026#p10:text '$5'"
+   },
+   "price_basis": {
+    "v": "unknown",
+    "src": "the catalogue does not say retail or wholesale"
+   },
+   "group": {
+    "v": "heat",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm"
+   },
+   "stamp": {
+    "v": "stamped",
+    "src": "pdf:ace-acc-2026#p10:stamp annotation",
+    "needs_shop": false,
+    "question": null,
+    "annotations": [
+     {
+      "rect": [
+       1768,
+       -55,
+       2560,
+       666
+      ],
+      "author": "Mobile User",
+      "modified": "D:20261123182315-05'00'"
+     }
+    ]
+   },
+   "facts": {
+    "glass": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    },
+    "size": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [],
+   "variants": [
+    {
+     "sku": "OSS-110003",
+     "key": "acc-p10",
+     "photo": {
+      "img": "acc/acc-p10",
+      "status": "ready",
+      "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "acc-p11",
+   "page": 11,
+   "category": "heat",
+   "name": {
+    "v": "Spider HMD",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm; printed 'SPIDER -HMD'"
+   },
+   "withheld_name": {
+    "v": null,
+    "src": null
+   },
+   "supplier_ref": {
+    "v": "SPIDER -HMD",
+    "src": "pdf:ace-acc-2026#p11:text"
+   },
+   "supplier_price_cents": {
+    "v": 600,
+    "src": "pdf:ace-acc-2026#p11:text '$6'"
+   },
+   "price_basis": {
+    "v": "unknown",
+    "src": "the catalogue does not say retail or wholesale"
+   },
+   "group": {
+    "v": "heat",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm"
+   },
+   "stamp": {
+    "v": "stamped",
+    "src": "pdf:ace-acc-2026#p11:stamp annotation",
+    "needs_shop": false,
+    "question": null,
+    "annotations": [
+     {
+      "rect": [
+       1984,
+       166,
+       2348,
+       584
+      ],
+      "author": "Mobile User",
+      "modified": "D:20261123182315-05'00'"
+     }
+    ]
+   },
+   "facts": {
+    "glass": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    },
+    "size": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [],
+   "variants": [
+    {
+     "sku": "OSS-110004",
+     "key": "acc-p11",
+     "photo": {
+      "img": "acc/acc-p11",
+      "status": "ready",
+      "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "acc-p12",
+   "page": 12,
+   "category": "heat",
+   "name": {
+    "v": "Frankfurt Classic HMD",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm; printed 'FRANKFURT CLASSIC'"
+   },
+   "withheld_name": {
+    "v": null,
+    "src": null
+   },
+   "supplier_ref": {
+    "v": "FRANKFURT CLASSIC",
+    "src": "pdf:ace-acc-2026#p12:text"
+   },
+   "supplier_price_cents": {
+    "v": 1200,
+    "src": "pdf:ace-acc-2026#p12:text '$12'"
+   },
+   "price_basis": {
+    "v": "unknown",
+    "src": "the catalogue does not say retail or wholesale"
+   },
+   "group": {
+    "v": "heat",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm"
+   },
+   "stamp": {
+    "v": "stamped",
+    "src": "pdf:ace-acc-2026#p12:stamp annotation",
+    "needs_shop": false,
+    "question": null,
+    "annotations": [
+     {
+      "rect": [
+       1788,
+       272,
+       2482,
+       866
+      ],
+      "author": "Mobile User",
+      "modified": "D:20261123182315-05'00'"
+     }
+    ]
+   },
+   "facts": {
+    "glass": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    },
+    "size": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [],
+   "variants": [
+    {
+     "sku": "OSS-110005",
+     "key": "acc-p12",
+     "photo": {
+      "img": "acc/acc-p12",
+      "status": "ready",
+      "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "acc-p13",
+   "page": 13,
+   "category": "heat",
+   "name": {
+    "v": "Silicone Quasar",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm; printed 'Silicone QAUSAR'"
+   },
+   "withheld_name": {
+    "v": "Heat Management Device No. 13",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm"
+   },
+   "supplier_ref": {
+    "v": "Silicone QAUSAR",
+    "src": "pdf:ace-acc-2026#p13:text"
+   },
+   "supplier_price_cents": {
+    "v": 1000,
+    "src": "pdf:ace-acc-2026#p13:text '$10'"
+   },
+   "price_basis": {
+    "v": "unknown",
+    "src": "the catalogue does not say retail or wholesale"
+   },
+   "group": {
+    "v": "heat",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm"
+   },
+   "stamp": {
+    "v": "stamped",
+    "src": "pdf:ace-acc-2026#p13:stamp annotation",
+    "needs_shop": false,
+    "question": null,
+    "annotations": [
+     {
+      "rect": [
+       1982,
+       -6,
+       2566,
+       753
+      ],
+      "author": "Mobile User",
+      "modified": "D:20261123182315-05'00'"
+     }
+    ]
+   },
+   "facts": {
+    "glass": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    },
+    "size": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "The name carries another maker's brand: confirm it is genuine before naming it on the site"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-110006",
+     "key": "acc-p13",
+     "photo": {
+      "img": "acc/acc-p13",
+      "status": "CHECK",
+      "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "acc-p16",
+   "page": 16,
+   "category": "heat",
+   "name": {
+    "v": "Quasar 2",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm; printed 'QAUSAR-2'"
+   },
+   "withheld_name": {
+    "v": "Heat Management Device No. 16",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm"
+   },
+   "supplier_ref": {
+    "v": "QAUSAR-2",
+    "src": "pdf:ace-acc-2026#p16:text"
+   },
+   "supplier_price_cents": {
+    "v": 1800,
+    "src": "pdf:ace-acc-2026#p16:text '$18'"
+   },
+   "price_basis": {
+    "v": "unknown",
+    "src": "the catalogue does not say retail or wholesale"
+   },
+   "group": {
+    "v": "heat",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm"
+   },
+   "stamp": {
+    "v": "stamped",
+    "src": "pdf:ace-acc-2026#p16:stamp annotation",
+    "needs_shop": false,
+    "question": null,
+    "annotations": [
+     {
+      "rect": [
+       1702,
+       323,
+       2262,
+       1007
+      ],
+      "author": "Mobile User",
+      "modified": "D:20261123182315-05'00'"
+     }
+    ]
+   },
+   "facts": {
+    "glass": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    },
+    "size": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "The name carries another maker's brand: confirm it is genuine before naming it on the site"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-110007",
+     "key": "acc-p16",
+     "photo": {
+      "img": "acc/acc-p16",
+      "status": "CHECK",
+      "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "acc-p17",
+   "page": 17,
+   "category": "heat",
+   "name": {
+    "v": "Huqqabaz",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm; printed 'HUQQABAZ'"
+   },
+   "withheld_name": {
+    "v": "Heat Management Device No. 17",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm"
+   },
+   "supplier_ref": {
+    "v": "HUQQABAZ",
+    "src": "pdf:ace-acc-2026#p17:text"
+   },
+   "supplier_price_cents": {
+    "v": 2000,
+    "src": "pdf:ace-acc-2026#p17:text '$20'"
+   },
+   "price_basis": {
+    "v": "unknown",
+    "src": "the catalogue does not say retail or wholesale"
+   },
+   "group": {
+    "v": "heat",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm"
+   },
+   "stamp": {
+    "v": "stamped",
+    "src": "pdf:ace-acc-2026#p17:stamp annotation",
+    "needs_shop": false,
+    "question": null,
+    "annotations": [
+     {
+      "rect": [
+       1814,
+       -122,
+       2460,
+       736
+      ],
+      "author": "Mobile User",
+      "modified": "D:20261123182315-05'00'"
+     }
+    ]
+   },
+   "facts": {
+    "glass": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    },
+    "size": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "The name carries another maker's brand: confirm it is genuine before naming it on the site"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-110008",
+     "key": "acc-p17",
+     "photo": {
+      "img": "acc/acc-p17",
+      "status": "ready",
+      "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "acc-p21",
+   "page": 21,
+   "category": "heat",
+   "name": {
+    "v": "Big HMD 07",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm; printed 'BIG HMD-07'"
+   },
+   "withheld_name": {
+    "v": null,
+    "src": null
+   },
+   "supplier_ref": {
+    "v": "BIG HMD-07",
+    "src": "pdf:ace-acc-2026#p21:text"
+   },
+   "supplier_price_cents": {
+    "v": 500,
+    "src": "pdf:ace-acc-2026#p21:text '$5'"
+   },
+   "price_basis": {
+    "v": "unknown",
+    "src": "the catalogue does not say retail or wholesale"
+   },
+   "group": {
+    "v": "heat",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm"
+   },
+   "stamp": {
+    "v": "stamped",
+    "src": "pdf:ace-acc-2026#p21:stamp annotation",
+    "needs_shop": false,
+    "question": null,
+    "annotations": [
+     {
+      "rect": [
+       328,
+       196,
+       2521,
+       722
+      ],
+      "author": "Mobile User",
+      "modified": "D:20261123182315-05'00'"
+     }
+    ]
+   },
+   "facts": {
+    "glass": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    },
+    "size": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [],
+   "variants": [
+    {
+     "sku": "OSS-110009",
+     "key": "acc-p21",
+     "photo": {
+      "img": "acc/acc-p21",
+      "status": "CHECK",
+      "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "acc-p22",
+   "page": 22,
+   "category": "heat",
+   "name": {
+    "v": "HMD King",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm; printed 'HMD-KING'"
+   },
+   "withheld_name": {
+    "v": null,
+    "src": null
+   },
+   "supplier_ref": {
+    "v": "HMD-KING",
+    "src": "pdf:ace-acc-2026#p22:text"
+   },
+   "supplier_price_cents": {
+    "v": 300,
+    "src": "pdf:ace-acc-2026#p22:text '$3'"
+   },
+   "price_basis": {
+    "v": "unknown",
+    "src": "the catalogue does not say retail or wholesale"
+   },
+   "group": {
+    "v": "heat",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm"
+   },
+   "stamp": {
+    "v": "stamped",
+    "src": "pdf:ace-acc-2026#p22:stamp annotation",
+    "needs_shop": false,
+    "question": null,
+    "annotations": [
+     {
+      "rect": [
+       1636,
+       17,
+       2118,
+       847
+      ],
+      "author": "Mobile User",
+      "modified": "D:20261123182315-05'00'"
+     }
+    ]
+   },
+   "facts": {
+    "glass": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    },
+    "size": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [],
+   "variants": [
+    {
+     "sku": "OSS-110010",
+     "key": "acc-p22",
+     "photo": {
+      "img": "acc/acc-p22",
+      "status": "ready",
+      "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "acc-p24",
+   "page": 24,
+   "category": "hoses",
+   "name": {
+    "v": "Ice Hose",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm; printed 'ICE HOSE'"
+   },
+   "withheld_name": {
+    "v": null,
+    "src": null
+   },
+   "supplier_ref": {
+    "v": "ICE HOSE",
+    "src": "pdf:ace-acc-2026#p24:text"
+   },
+   "supplier_price_cents": {
+    "v": 600,
+    "src": "pdf:ace-acc-2026#p24:text '$6'"
+   },
+   "price_basis": {
+    "v": "unknown",
+    "src": "the catalogue does not say retail or wholesale"
+   },
+   "group": {
+    "v": "hoses",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm"
+   },
+   "stamp": {
+    "v": "stamped",
+    "src": "pdf:ace-acc-2026#p24:stamp annotation",
+    "needs_shop": false,
+    "question": null,
+    "annotations": [
+     {
+      "rect": [
+       1676,
+       342,
+       2242,
+       874
+      ],
+      "author": "Mobile User",
+      "modified": "D:20261123182315-05'00'"
+     }
+    ]
+   },
+   "facts": {
+    "glass": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    },
+    "size": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [],
+   "variants": [
+    {
+     "sku": "OSS-110011",
+     "key": "acc-p24",
+     "photo": {
+      "img": "acc/acc-p24",
+      "status": "needs_original",
+      "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "acc-p30",
+   "page": 30,
+   "category": "heat",
+   "name": {
+    "v": "Black Charcoal Holder",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm; printed 'BLACK CHARCOAL HOLDER'"
+   },
+   "withheld_name": {
+    "v": null,
+    "src": null
+   },
+   "supplier_ref": {
+    "v": "BLACK CHARCOAL HOLDER",
+    "src": "pdf:ace-acc-2026#p30:text"
+   },
+   "supplier_price_cents": {
+    "v": 1200,
+    "src": "pdf:ace-acc-2026#p30:text '$12'"
+   },
+   "price_basis": {
+    "v": "unknown",
+    "src": "the catalogue does not say retail or wholesale"
+   },
+   "group": {
+    "v": "heat",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm"
+   },
+   "stamp": {
+    "v": "stamped",
+    "src": "pdf:ace-acc-2026#p30:stamp annotation",
+    "needs_shop": false,
+    "question": null,
+    "annotations": [
+     {
+      "rect": [
+       1558,
+       257,
+       2406,
+       863
+      ],
+      "author": "Mobile User",
+      "modified": "D:20261123182315-05'00'"
+     }
+    ]
+   },
+   "facts": {
+    "glass": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    },
+    "size": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [],
+   "variants": [
+    {
+     "sku": "OSS-110012",
+     "key": "acc-p30",
+     "photo": {
+      "img": "acc/acc-p30",
+      "status": "ready",
+      "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "acc-p31",
+   "page": 31,
+   "category": "heat",
+   "name": {
+    "v": "Charcoal Holder",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm; printed 'CHARCOAL HOLDER'"
+   },
+   "withheld_name": {
+    "v": null,
+    "src": null
+   },
+   "supplier_ref": {
+    "v": "CHARCOAL HOLDER",
+    "src": "pdf:ace-acc-2026#p31:text"
+   },
+   "supplier_price_cents": {
+    "v": 1200,
+    "src": "pdf:ace-acc-2026#p31:text '$12'"
+   },
+   "price_basis": {
+    "v": "unknown",
+    "src": "the catalogue does not say retail or wholesale"
+   },
+   "group": {
+    "v": "heat",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm"
+   },
+   "stamp": {
+    "v": "stamped",
+    "src": "pdf:ace-acc-2026#p31:stamp annotation",
+    "needs_shop": false,
+    "question": null,
+    "annotations": [
+     {
+      "rect": [
+       276,
+       72,
+       2532,
+       842
+      ],
+      "author": "Mobile User",
+      "modified": "D:20261123182315-05'00'"
+     }
+    ]
+   },
+   "facts": {
+    "glass": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    },
+    "size": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [],
+   "variants": [
+    {
+     "sku": "OSS-110013",
+     "key": "acc-p31",
+     "photo": {
+      "img": "acc/acc-p31",
+      "status": "needs_original",
+      "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "acc-p37",
+   "page": 37,
+   "category": "heat",
+   "name": {
+    "v": "Charcoal Burner Turbo",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm; printed 'Charcoal Burner TURBO'"
+   },
+   "withheld_name": {
+    "v": null,
+    "src": null
+   },
+   "supplier_ref": {
+    "v": "Charcoal Burner TURBO",
+    "src": "pdf:ace-acc-2026#p37:text"
+   },
+   "supplier_price_cents": {
+    "v": 2000,
+    "src": "pdf:ace-acc-2026#p37:text '$20'"
+   },
+   "price_basis": {
+    "v": "unknown",
+    "src": "the catalogue does not say retail or wholesale"
+   },
+   "group": {
+    "v": "heat",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm"
+   },
+   "stamp": {
+    "v": "stamped",
+    "src": "pdf:ace-acc-2026#p37:stamp annotation",
+    "needs_shop": false,
+    "question": null,
+    "annotations": [
+     {
+      "rect": [
+       1948,
+       539,
+       2604,
+       968
+      ],
+      "author": "Mobile User",
+      "modified": "D:20261123182315-05'00'"
+     }
+    ]
+   },
+   "facts": {
+    "glass": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    },
+    "size": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [],
+   "variants": [
+    {
+     "sku": "OSS-110014",
+     "key": "acc-p37",
+     "photo": {
+      "img": "acc/acc-p37",
+      "status": "ready",
+      "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "acc-p38",
+   "page": 38,
+   "category": "heat",
+   "name": {
+    "v": "Charcoal Burner, Big",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm; printed 'Charcoal Burner-BIG'"
+   },
+   "withheld_name": {
+    "v": null,
+    "src": null
+   },
+   "supplier_ref": {
+    "v": "Charcoal Burner-BIG",
+    "src": "pdf:ace-acc-2026#p38:text"
+   },
+   "supplier_price_cents": {
+    "v": 1700,
+    "src": "pdf:ace-acc-2026#p38:text '$17'"
+   },
+   "price_basis": {
+    "v": "unknown",
+    "src": "the catalogue does not say retail or wholesale"
+   },
+   "group": {
+    "v": "heat",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm"
+   },
+   "stamp": {
+    "v": "stamped",
+    "src": "pdf:ace-acc-2026#p38:stamp annotation",
+    "needs_shop": false,
+    "question": null,
+    "annotations": [
+     {
+      "rect": [
+       278,
+       213,
+       2359,
+       695
+      ],
+      "author": "Mobile User",
+      "modified": "D:20261123182315-05'00'"
+     }
+    ]
+   },
+   "facts": {
+    "glass": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    },
+    "size": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [],
+   "variants": [
+    {
+     "sku": "OSS-110015",
+     "key": "acc-p38",
+     "photo": {
+      "img": "acc/acc-p38",
+      "status": "ready",
+      "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "acc-p45",
+   "page": 45,
+   "category": "bowls",
+   "name": {
+    "v": "Flat Rope Bowl",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm; printed 'FLAT ROPE HEAD'"
+   },
+   "withheld_name": {
+    "v": null,
+    "src": null
+   },
+   "supplier_ref": {
+    "v": "FLAT ROPE HEAD",
+    "src": "pdf:ace-acc-2026#p45:text"
+   },
+   "supplier_price_cents": {
+    "v": 500,
+    "src": "pdf:ace-acc-2026#p45:text '$5'"
+   },
+   "price_basis": {
+    "v": "unknown",
+    "src": "the catalogue does not say retail or wholesale"
+   },
+   "group": {
+    "v": "bowls",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm"
+   },
+   "stamp": {
+    "v": "stamped",
+    "src": "pdf:ace-acc-2026#p45:stamp annotation",
+    "needs_shop": false,
+    "question": null,
+    "annotations": [
+     {
+      "rect": [
+       1089,
+       1120,
+       1980,
+       1761
+      ],
+      "author": "Mobile User",
+      "modified": "D:20261123182315-05'00'"
+     }
+    ]
+   },
+   "facts": {
+    "glass": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    },
+    "size": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "The colour squares on this page are Ace's standard row, not this item's colours: which colours does the shop have?"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-110016",
+     "key": "acc-p45",
+     "photo": {
+      "img": "acc/acc-p45",
+      "status": "ready",
+      "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "acc-p46",
+   "page": 46,
+   "category": "bowls",
+   "name": {
+    "v": "Rope Bowl",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm; printed 'ROPE HEAD'"
+   },
+   "withheld_name": {
+    "v": null,
+    "src": null
+   },
+   "supplier_ref": {
+    "v": "ROPE HEAD",
+    "src": "pdf:ace-acc-2026#p46:text"
+   },
+   "supplier_price_cents": {
+    "v": 500,
+    "src": "pdf:ace-acc-2026#p46:text '$5'"
+   },
+   "price_basis": {
+    "v": "unknown",
+    "src": "the catalogue does not say retail or wholesale"
+   },
+   "group": {
+    "v": "bowls",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm"
+   },
+   "stamp": {
+    "v": "stamped",
+    "src": "pdf:ace-acc-2026#p46:stamp annotation",
+    "needs_shop": false,
+    "question": null,
+    "annotations": [
+     {
+      "rect": [
+       1398,
+       754,
+       1917,
+       1251
+      ],
+      "author": "Mobile User",
+      "modified": "D:20261123182315-05'00'"
+     }
+    ]
+   },
+   "facts": {
+    "glass": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    },
+    "size": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "The colour squares on this page are Ace's standard row, not this item's colours: which colours does the shop have?"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-110017",
+     "key": "acc-p46",
+     "photo": {
+      "img": "acc/acc-p46",
+      "status": "ready",
+      "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "acc-p50",
+   "page": 50,
+   "category": "bowls",
+   "name": {
+    "v": "Bowl 3",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm; printed 'BOWL-3'"
+   },
+   "withheld_name": {
+    "v": null,
+    "src": null
+   },
+   "supplier_ref": {
+    "v": "BOWL-3",
+    "src": "pdf:ace-acc-2026#p50:text"
+   },
+   "supplier_price_cents": {
+    "v": 500,
+    "src": "pdf:ace-acc-2026#p50:text '$5'"
+   },
+   "price_basis": {
+    "v": "unknown",
+    "src": "the catalogue does not say retail or wholesale"
+   },
+   "group": {
+    "v": "bowls",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm"
+   },
+   "stamp": {
+    "v": "stamped",
+    "src": "pdf:ace-acc-2026#p50:stamp annotation",
+    "needs_shop": false,
+    "question": null,
+    "annotations": [
+     {
+      "rect": [
+       1708,
+       553,
+       2580,
+       1127
+      ],
+      "author": "Mobile User",
+      "modified": "D:20261123182315-05'00'"
+     }
+    ]
+   },
+   "facts": {
+    "glass": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    },
+    "size": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "The colour squares on this page are Ace's standard row, not this item's colours: which colours does the shop have?"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-110018",
+     "key": "acc-p50",
+     "photo": {
+      "img": "acc/acc-p50",
+      "status": "ready",
+      "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "acc-p52",
+   "page": 52,
+   "category": "bowls",
+   "name": {
+    "v": "Bowl C-07",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm; printed 'BOWL C-07'"
+   },
+   "withheld_name": {
+    "v": null,
+    "src": null
+   },
+   "supplier_ref": {
+    "v": "BOWL C-07",
+    "src": "pdf:ace-acc-2026#p52:text"
+   },
+   "supplier_price_cents": {
+    "v": 400,
+    "src": "pdf:ace-acc-2026#p52:text '$4'"
+   },
+   "price_basis": {
+    "v": "unknown",
+    "src": "the catalogue does not say retail or wholesale"
+   },
+   "group": {
+    "v": "bowls",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm"
+   },
+   "stamp": {
+    "v": "stamped",
+    "src": "pdf:ace-acc-2026#p52:stamp annotation",
+    "needs_shop": false,
+    "question": null,
+    "annotations": [
+     {
+      "rect": [
+       1908,
+       729,
+       2566,
+       1113
+      ],
+      "author": "Mobile User",
+      "modified": "D:20261123182315-05'00'"
+     }
+    ]
+   },
+   "facts": {
+    "glass": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    },
+    "size": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "The colour squares on this page are Ace's standard row, not this item's colours: which colours does the shop have?"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-110019",
+     "key": "acc-p52",
+     "photo": {
+      "img": "acc/acc-p52",
+      "status": "ready",
+      "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "acc-p58",
+   "page": 58,
+   "category": "bowls",
+   "name": {
+    "v": "D-61 Bowl",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm; printed 'D-61'"
+   },
+   "withheld_name": {
+    "v": null,
+    "src": null
+   },
+   "supplier_ref": {
+    "v": "D-61",
+    "src": "pdf:ace-acc-2026#p58:text"
+   },
+   "supplier_price_cents": {
+    "v": 500,
+    "src": "pdf:ace-acc-2026#p58:text '$5'"
+   },
+   "price_basis": {
+    "v": "unknown",
+    "src": "the catalogue does not say retail or wholesale"
+   },
+   "group": {
+    "v": "bowls",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm"
+   },
+   "stamp": {
+    "v": "stamped",
+    "src": "pdf:ace-acc-2026#p58:stamp annotation",
+    "needs_shop": false,
+    "question": null,
+    "annotations": [
+     {
+      "rect": [
+       502,
+       850,
+       1285,
+       1655
+      ],
+      "author": "Mobile User",
+      "modified": "D:20261123182315-05'00'"
+     }
+    ]
+   },
+   "facts": {
+    "glass": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    },
+    "size": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "The colour squares on this page are Ace's standard row, not this item's colours: which colours does the shop have?"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-110020",
+     "key": "acc-p58",
+     "photo": {
+      "img": "acc/acc-p58",
+      "status": "CHECK",
+      "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "acc-p63",
+   "page": 63,
+   "category": "bowls",
+   "name": {
+    "v": "Silicone Bowl",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm; printed 'SILICORN HEAD'"
+   },
+   "withheld_name": {
+    "v": null,
+    "src": null
+   },
+   "supplier_ref": {
+    "v": "SILICORN HEAD",
+    "src": "pdf:ace-acc-2026#p63:text"
+   },
+   "supplier_price_cents": {
+    "v": 400,
+    "src": "pdf:ace-acc-2026#p63:text '$4'"
+   },
+   "price_basis": {
+    "v": "unknown",
+    "src": "the catalogue does not say retail or wholesale"
+   },
+   "group": {
+    "v": "bowls",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm"
+   },
+   "stamp": {
+    "v": "stamped",
+    "src": "pdf:ace-acc-2026#p63:stamp annotation",
+    "needs_shop": false,
+    "question": null,
+    "annotations": [
+     {
+      "rect": [
+       522,
+       581,
+       2477,
+       1693
+      ],
+      "author": "Mobile User",
+      "modified": "D:20261123182315-05'00'"
+     }
+    ]
+   },
+   "facts": {
+    "glass": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    },
+    "size": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "The colour squares on this page are Ace's standard row, not this item's colours: which colours does the shop have?"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-110021",
+     "key": "acc-p63",
+     "photo": {
+      "img": "acc/acc-p63",
+      "status": "ready",
+      "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "acc-p65",
+   "page": 65,
+   "category": "bowls",
+   "name": {
+    "v": "Ice Cream Bowl",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm; printed 'ice cream head'"
+   },
+   "withheld_name": {
+    "v": null,
+    "src": null
+   },
+   "supplier_ref": {
+    "v": "ice cream head",
+    "src": "pdf:ace-acc-2026#p65:text"
+   },
+   "supplier_price_cents": {
+    "v": 300,
+    "src": "pdf:ace-acc-2026#p65:text '$3'"
+   },
+   "price_basis": {
+    "v": "unknown",
+    "src": "the catalogue does not say retail or wholesale"
+   },
+   "group": {
+    "v": "bowls",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm"
+   },
+   "stamp": {
+    "v": "stamped",
+    "src": "pdf:ace-acc-2026#p65:stamp annotation",
+    "needs_shop": false,
+    "question": null,
+    "annotations": [
+     {
+      "rect": [
+       1714,
+       467,
+       2498,
+       1047
+      ],
+      "author": "Mobile User",
+      "modified": "D:20261123182315-05'00'"
+     }
+    ]
+   },
+   "facts": {
+    "glass": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    },
+    "size": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "The colour squares on this page are Ace's standard row, not this item's colours: which colours does the shop have?"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-110022",
+     "key": "acc-p65",
+     "photo": {
+      "img": "acc/acc-p65",
+      "status": "ready",
+      "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "acc-p70",
+   "page": 70,
+   "category": "hoses",
+   "name": {
+    "v": "Mouthpiece",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm; printed 'MOUTHPEICE'"
+   },
+   "withheld_name": {
+    "v": null,
+    "src": null
+   },
+   "supplier_ref": {
+    "v": "MOUTHPEICE",
+    "src": "pdf:ace-acc-2026#p70:text"
+   },
+   "supplier_price_cents": {
+    "v": 300,
+    "src": "pdf:ace-acc-2026#p70:text '$3'"
+   },
+   "price_basis": {
+    "v": "unknown",
+    "src": "the catalogue does not say retail or wholesale"
+   },
+   "group": {
+    "v": "hoses",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm"
+   },
+   "stamp": {
+    "v": "stamped",
+    "src": "pdf:ace-acc-2026#p70:stamp annotation",
+    "needs_shop": false,
+    "question": null,
+    "annotations": [
+     {
+      "rect": [
+       1336,
+       242,
+       2256,
+       1004
+      ],
+      "author": "Mobile User",
+      "modified": "D:20261123182315-05'00'"
+     }
+    ]
+   },
+   "facts": {
+    "glass": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    },
+    "size": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [],
+   "variants": [
+    {
+     "sku": "OSS-110023",
+     "key": "acc-p70",
+     "photo": {
+      "img": "acc/acc-p70",
+      "status": "ready",
+      "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "acc-p72",
+   "page": 72,
+   "category": "heat",
+   "name": {
+    "v": "Quasar Glass",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm; printed 'QAUSAR GLASS'"
+   },
+   "withheld_name": {
+    "v": "HMD Glass No. 72",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm"
+   },
+   "supplier_ref": {
+    "v": "QAUSAR GLASS",
+    "src": "pdf:ace-acc-2026#p72:text"
+   },
+   "supplier_price_cents": {
+    "v": 500,
+    "src": "pdf:ace-acc-2026#p72:text '$5'"
+   },
+   "price_basis": {
+    "v": "unknown",
+    "src": "the catalogue does not say retail or wholesale"
+   },
+   "group": {
+    "v": "heat",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm"
+   },
+   "stamp": {
+    "v": "stamped",
+    "src": "pdf:ace-acc-2026#p72:stamp annotation",
+    "needs_shop": false,
+    "question": null,
+    "annotations": [
+     {
+      "rect": [
+       1562,
+       297,
+       2195,
+       964
+      ],
+      "author": "Mobile User",
+      "modified": "D:20261123182315-05'00'"
+     }
+    ]
+   },
+   "facts": {
+    "glass": {
+     "v": true,
+     "src": "pdf:ace-acc-2026#p72:photo (glass piece)"
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    },
+    "size": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "The name carries another maker's brand: confirm it is genuine before naming it on the site"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-110024",
+     "key": "acc-p72",
+     "photo": {
+      "img": "acc/acc-p72",
+      "status": "ready",
+      "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "acc-p75",
+   "page": 75,
+   "category": "parts",
+   "name": {
+    "v": "Bowl Rubber",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm; printed 'RUBBER FOR HEAD'"
+   },
+   "withheld_name": {
+    "v": null,
+    "src": null
+   },
+   "supplier_ref": {
+    "v": "RUBBER FOR HEAD",
+    "src": "pdf:ace-acc-2026#p75:text"
+   },
+   "supplier_price_cents": {
+    "v": 2000,
+    "src": "pdf:ace-acc-2026#p75:text '$20'"
+   },
+   "price_basis": {
+    "v": "unknown",
+    "src": "the catalogue does not say retail or wholesale"
+   },
+   "group": {
+    "v": "parts",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm"
+   },
+   "stamp": {
+    "v": "stamped",
+    "src": "pdf:ace-acc-2026#p75:stamp annotation",
+    "needs_shop": false,
+    "question": null,
+    "annotations": [
+     {
+      "rect": [
+       1636,
+       802,
+       2440,
+       1310
+      ],
+      "author": "Mobile User",
+      "modified": "D:20261123182315-05'00'"
+     }
+    ]
+   },
+   "facts": {
+    "glass": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    },
+    "size": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "4 colour squares on the page: which colours does the shop have?"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-110025",
+     "key": "acc-p75",
+     "photo": {
+      "img": "acc/acc-p75",
+      "status": "ready",
+      "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "acc-p76",
+   "page": 76,
+   "category": "hoses",
+   "name": {
+    "v": "Hose Rubber",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm; printed 'RUBBER FOR HOSE'"
+   },
+   "withheld_name": {
+    "v": null,
+    "src": null
+   },
+   "supplier_ref": {
+    "v": "RUBBER FOR HOSE",
+    "src": "pdf:ace-acc-2026#p76:text"
+   },
+   "supplier_price_cents": {
+    "v": 2000,
+    "src": "pdf:ace-acc-2026#p76:text '$20'"
+   },
+   "price_basis": {
+    "v": "unknown",
+    "src": "the catalogue does not say retail or wholesale"
+   },
+   "group": {
+    "v": "hoses",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm"
+   },
+   "stamp": {
+    "v": "stamped",
+    "src": "pdf:ace-acc-2026#p76:stamp annotation",
+    "needs_shop": false,
+    "question": null,
+    "annotations": [
+     {
+      "rect": [
+       236,
+       522,
+       412,
+       687
+      ],
+      "author": "Mobile User",
+      "modified": "D:20261123182315-05'00'"
+     }
+    ]
+   },
+   "facts": {
+    "glass": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    },
+    "size": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "4 colour squares on the page: which colours does the shop have?"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-110026",
+     "key": "acc-p76",
+     "photo": {
+      "img": "acc/acc-p76",
+      "status": "needs_original",
+      "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "acc-p77",
+   "page": 77,
+   "category": "hoses",
+   "name": {
+    "v": "Hose Spring",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm; printed 'SPRING FOR HOSE'"
+   },
+   "withheld_name": {
+    "v": null,
+    "src": null
+   },
+   "supplier_ref": {
+    "v": "SPRING FOR HOSE",
+    "src": "pdf:ace-acc-2026#p77:text"
+   },
+   "supplier_price_cents": {
+    "v": null,
+    "src": null
+   },
+   "price_basis": {
+    "v": "unknown",
+    "src": "the catalogue does not say retail or wholesale"
+   },
+   "group": {
+    "v": "hoses",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm"
+   },
+   "stamp": {
+    "v": "unclear",
+    "src": "pdf:ace-acc-2026#p77:stamp annotation",
+    "needs_shop": true,
+    "question": "The tick on page 77 sits mostly off the top of the page and does not show. Is the hose spring in stock?",
+    "annotations": [
+     {
+      "rect": [
+       1042,
+       -275,
+       2309,
+       614
+      ],
+      "author": "Mobile User",
+      "modified": "D:20261123182315-05'00'"
+     }
+    ]
+   },
+   "facts": {
+    "glass": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    },
+    "size": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: no price on Ace's page; what does the shop sell it for?",
+    "NEEDS SHOP: The tick on page 77 sits mostly off the top of the page and does not show. Is the hose spring in stock?"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-110027",
+     "key": "acc-p77",
+     "photo": {
+      "img": "acc/acc-p77",
+      "status": "ready",
+      "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "acc-p78",
+   "page": 78,
+   "category": "hoses",
+   "name": {
+    "v": "Two-Hose Connector",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm; printed '2 HOSE CONNECTOR'"
+   },
+   "withheld_name": {
+    "v": null,
+    "src": null
+   },
+   "supplier_ref": {
+    "v": "2 HOSE CONNECTOR",
+    "src": "pdf:ace-acc-2026#p78:text"
+   },
+   "supplier_price_cents": {
+    "v": 300,
+    "src": "pdf:ace-acc-2026#p78:text '$3'"
+   },
+   "price_basis": {
+    "v": "unknown",
+    "src": "the catalogue does not say retail or wholesale"
+   },
+   "group": {
+    "v": "hoses",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm"
+   },
+   "stamp": {
+    "v": "stamped",
+    "src": "pdf:ace-acc-2026#p78:stamp annotation",
+    "needs_shop": false,
+    "question": null,
+    "annotations": [
+     {
+      "rect": [
+       638,
+       801,
+       1485,
+       1293
+      ],
+      "author": "Mobile User",
+      "modified": "D:20261123182315-05'00'"
+     }
+    ]
+   },
+   "facts": {
+    "glass": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    },
+    "size": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [],
+   "variants": [
+    {
+     "sku": "OSS-110028",
+     "key": "acc-p78",
+     "photo": {
+      "img": "acc/acc-p78",
+      "status": "CHECK",
+      "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "acc-p79",
+   "page": 79,
+   "category": "bowls",
+   "name": {
+    "v": "Replacement Glass Bowl",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm; printed 'Replacement Bowl'"
+   },
+   "withheld_name": {
+    "v": null,
+    "src": null
+   },
+   "supplier_ref": {
+    "v": "Replacement Bowl",
+    "src": "pdf:ace-acc-2026#p79:text"
+   },
+   "supplier_price_cents": {
+    "v": null,
+    "src": null
+   },
+   "price_basis": {
+    "v": "unknown",
+    "src": "the catalogue does not say retail or wholesale"
+   },
+   "group": {
+    "v": "bowls",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm"
+   },
+   "stamp": {
+    "v": "stamped",
+    "src": "pdf:ace-acc-2026#p79:stamp annotation",
+    "needs_shop": false,
+    "question": null,
+    "annotations": [
+     {
+      "rect": [
+       214,
+       370,
+       2271,
+       1061
+      ],
+      "author": "Mobile User",
+      "modified": "D:20261123182315-05'00'"
+     }
+    ]
+   },
+   "facts": {
+    "glass": {
+     "v": true,
+     "src": "pdf:ace-acc-2026#p79:photo (glass piece)"
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    },
+    "size": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: no price on Ace's page; what does the shop sell it for?"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-110029",
+     "key": "acc-p79",
+     "photo": {
+      "img": "acc/acc-p79",
+      "status": "needs_original",
+      "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "acc-p80",
+   "page": 80,
+   "category": "heat",
+   "name": {
+    "v": "Replacement Screen",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm; printed 'Replacement Screen'"
+   },
+   "withheld_name": {
+    "v": null,
+    "src": null
+   },
+   "supplier_ref": {
+    "v": "Replacement Screen",
+    "src": "pdf:ace-acc-2026#p80:text"
+   },
+   "supplier_price_cents": {
+    "v": null,
+    "src": null
+   },
+   "price_basis": {
+    "v": "unknown",
+    "src": "the catalogue does not say retail or wholesale"
+   },
+   "group": {
+    "v": "heat",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm"
+   },
+   "stamp": {
+    "v": "stamped",
+    "src": "pdf:ace-acc-2026#p80:stamp annotation",
+    "needs_shop": false,
+    "question": null,
+    "annotations": [
+     {
+      "rect": [
+       1429,
+       586,
+       2327,
+       926
+      ],
+      "author": "Mobile User",
+      "modified": "D:20261123182315-05'00'"
+     }
+    ]
+   },
+   "facts": {
+    "glass": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    },
+    "size": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: no price on Ace's page; what does the shop sell it for?"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-110030",
+     "key": "acc-p80",
+     "photo": {
+      "img": "acc/acc-p80",
+      "status": "CHECK",
+      "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "acc-p81",
+   "page": 81,
+   "category": "parts",
+   "name": {
+    "v": "Stem Brush, Long",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm; printed 'STEM BRUSH'"
+   },
+   "withheld_name": {
+    "v": null,
+    "src": null
+   },
+   "supplier_ref": {
+    "v": "STEM BRUSH",
+    "src": "pdf:ace-acc-2026#p81:text"
+   },
+   "supplier_price_cents": {
+    "v": 250,
+    "src": "pdf:ace-acc-2026#p81:text '$2.5'"
+   },
+   "price_basis": {
+    "v": "unknown",
+    "src": "the catalogue does not say retail or wholesale"
+   },
+   "group": {
+    "v": "parts",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm"
+   },
+   "stamp": {
+    "v": "stamped",
+    "src": "pdf:ace-acc-2026#p81:stamp annotation",
+    "needs_shop": false,
+    "question": null,
+    "annotations": [
+     {
+      "rect": [
+       212,
+       499,
+       2138,
+       1177
+      ],
+      "author": "Mobile User",
+      "modified": "D:20261123182315-05'00'"
+     }
+    ]
+   },
+   "facts": {
+    "glass": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    },
+    "size": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [],
+   "variants": [
+    {
+     "sku": "OSS-110031",
+     "key": "acc-p81",
+     "photo": {
+      "img": "acc/acc-p81",
+      "status": "CHECK",
+      "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "acc-p82",
+   "page": 82,
+   "category": "parts",
+   "name": {
+    "v": "Stem Brushes, Short",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm; printed 'STEM BRUSH'"
+   },
+   "withheld_name": {
+    "v": null,
+    "src": null
+   },
+   "supplier_ref": {
+    "v": "STEM BRUSH",
+    "src": "pdf:ace-acc-2026#p82:text"
+   },
+   "supplier_price_cents": {
+    "v": 300,
+    "src": "pdf:ace-acc-2026#p82:text '$3'"
+   },
+   "price_basis": {
+    "v": "unknown",
+    "src": "the catalogue does not say retail or wholesale"
+   },
+   "group": {
+    "v": "parts",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm"
+   },
+   "stamp": {
+    "v": "stamped",
+    "src": "pdf:ace-acc-2026#p82:stamp annotation",
+    "needs_shop": false,
+    "question": null,
+    "annotations": [
+     {
+      "rect": [
+       266,
+       240,
+       2171,
+       904
+      ],
+      "author": "Mobile User",
+      "modified": "D:20261123182315-05'00'"
+     }
+    ]
+   },
+   "facts": {
+    "glass": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    },
+    "size": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [],
+   "variants": [
+    {
+     "sku": "OSS-110032",
+     "key": "acc-p82",
+     "photo": {
+      "img": "acc/acc-p82",
+      "status": "needs_original",
+      "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "acc-p83",
+   "page": 83,
+   "category": "heat",
+   "name": {
+    "v": "Charcoal Tongs No. 83",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm; printed 'shisha Tongs'"
+   },
+   "withheld_name": {
+    "v": null,
+    "src": null
+   },
+   "supplier_ref": {
+    "v": "shisha Tongs",
+    "src": "pdf:ace-acc-2026#p83:text"
+   },
+   "supplier_price_cents": {
+    "v": 80,
+    "src": "pdf:ace-acc-2026#p83:text '$0.80'"
+   },
+   "price_basis": {
+    "v": "unknown",
+    "src": "the catalogue does not say retail or wholesale"
+   },
+   "group": {
+    "v": "heat",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm"
+   },
+   "stamp": {
+    "v": "stamped",
+    "src": "pdf:ace-acc-2026#p83:stamp annotation",
+    "needs_shop": false,
+    "question": null,
+    "annotations": [
+     {
+      "rect": [
+       1746,
+       481,
+       2364,
+       961
+      ],
+      "author": "Mobile User",
+      "modified": "D:20261123182315-05'00'"
+     }
+    ]
+   },
+   "facts": {
+    "glass": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    },
+    "size": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "Ace's page has the tongs printed into its background, with no cut-out: needs a photo"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-110033",
+     "key": "acc-p83",
+     "photo": {
+      "img": null,
+      "status": "none",
+      "src": null
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "acc-p84",
+   "page": 84,
+   "category": "heat",
+   "name": {
+    "v": "Charcoal Tongs No. 84",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm; printed 'shisha Tongs'"
+   },
+   "withheld_name": {
+    "v": null,
+    "src": null
+   },
+   "supplier_ref": {
+    "v": "shisha Tongs",
+    "src": "pdf:ace-acc-2026#p84:text"
+   },
+   "supplier_price_cents": {
+    "v": 60,
+    "src": "pdf:ace-acc-2026#p84:text '$0.60'"
+   },
+   "price_basis": {
+    "v": "unknown",
+    "src": "the catalogue does not say retail or wholesale"
+   },
+   "group": {
+    "v": "heat",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm"
+   },
+   "stamp": {
+    "v": "stamped",
+    "src": "pdf:ace-acc-2026#p84:stamp annotation",
+    "needs_shop": false,
+    "question": null,
+    "annotations": [
+     {
+      "rect": [
+       1649,
+       381,
+       2124,
+       850
+      ],
+      "author": "Mobile User",
+      "modified": "D:20261123182315-05'00'"
+     }
+    ]
+   },
+   "facts": {
+    "glass": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    },
+    "size": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [],
+   "variants": [
+    {
+     "sku": "OSS-110034",
+     "key": "acc-p84",
+     "photo": {
+      "img": "acc/acc-p84",
+      "status": "ready",
+      "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "acc-p95",
+   "page": 95,
+   "category": "bases",
+   "name": {
+    "v": "Clear Glass Base",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm; printed 'Clear Base'"
+   },
+   "withheld_name": {
+    "v": null,
+    "src": null
+   },
+   "supplier_ref": {
+    "v": "Clear Base",
+    "src": "pdf:ace-acc-2026#p95:text"
+   },
+   "supplier_price_cents": {
+    "v": 2000,
+    "src": "pdf:ace-acc-2026#p95:text '$20'"
+   },
+   "price_basis": {
+    "v": "unknown",
+    "src": "the catalogue does not say retail or wholesale"
+   },
+   "group": {
+    "v": "bases",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm"
+   },
+   "stamp": {
+    "v": "stamped",
+    "src": "pdf:ace-acc-2026#p95:stamp annotation",
+    "needs_shop": false,
+    "question": null,
+    "annotations": [
+     {
+      "rect": [
+       1257,
+       447,
+       2294,
+       942
+      ],
+      "author": "Mobile User",
+      "modified": "D:20261123182315-05'00'"
+     }
+    ]
+   },
+   "facts": {
+    "glass": {
+     "v": true,
+     "src": "pdf:ace-acc-2026#p95:photo (glass piece)"
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    },
+    "size": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [],
+   "variants": [
+    {
+     "sku": "OSS-110035",
+     "key": "acc-p95",
+     "photo": {
+      "img": "acc/acc-p95",
+      "status": "ready",
+      "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "acc-p96",
+   "page": 96,
+   "category": "bases",
+   "name": {
+    "v": "Clear Black Glass Base",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm; printed 'CLEAR BLACK'"
+   },
+   "withheld_name": {
+    "v": null,
+    "src": null
+   },
+   "supplier_ref": {
+    "v": "CLEAR BLACK",
+    "src": "pdf:ace-acc-2026#p96:text"
+   },
+   "supplier_price_cents": {
+    "v": 2000,
+    "src": "pdf:ace-acc-2026#p96:text '$20'"
+   },
+   "price_basis": {
+    "v": "unknown",
+    "src": "the catalogue does not say retail or wholesale"
+   },
+   "group": {
+    "v": "bases",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm"
+   },
+   "stamp": {
+    "v": "stamped",
+    "src": "pdf:ace-acc-2026#p96:stamp annotation",
+    "needs_shop": false,
+    "question": null,
+    "annotations": [
+     {
+      "rect": [
+       257,
+       129,
+       2455,
+       1057
+      ],
+      "author": "Mobile User",
+      "modified": "D:20261123182315-05'00'"
+     }
+    ]
+   },
+   "facts": {
+    "glass": {
+     "v": true,
+     "src": "pdf:ace-acc-2026#p96:photo (glass piece)"
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    },
+    "size": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [],
+   "variants": [
+    {
+     "sku": "OSS-110036",
+     "key": "acc-p96",
+     "photo": {
+      "img": "acc/acc-p96",
+      "status": "CHECK",
+      "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "acc-p97",
+   "page": 97,
+   "category": "bases",
+   "name": {
+    "v": "Crystal Drip Glass Base",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm; printed 'CRYSTAL DRIP'"
+   },
+   "withheld_name": {
+    "v": null,
+    "src": null
+   },
+   "supplier_ref": {
+    "v": "CRYSTAL DRIP",
+    "src": "pdf:ace-acc-2026#p97:text"
+   },
+   "supplier_price_cents": {
+    "v": 2000,
+    "src": "pdf:ace-acc-2026#p97:text '$20'"
+   },
+   "price_basis": {
+    "v": "unknown",
+    "src": "the catalogue does not say retail or wholesale"
+   },
+   "group": {
+    "v": "bases",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm"
+   },
+   "stamp": {
+    "v": "stamped",
+    "src": "pdf:ace-acc-2026#p97:stamp annotation",
+    "needs_shop": false,
+    "question": null,
+    "annotations": [
+     {
+      "rect": [
+       1405,
+       17,
+       2242,
+       1093
+      ],
+      "author": "Mobile User",
+      "modified": "D:20261123182315-05'00'"
+     }
+    ]
+   },
+   "facts": {
+    "glass": {
+     "v": true,
+     "src": "pdf:ace-acc-2026#p97:photo (glass piece)"
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    },
+    "size": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [],
+   "variants": [
+    {
+     "sku": "OSS-110037",
+     "key": "acc-p97",
+     "photo": {
+      "img": "acc/acc-p97",
+      "status": "CHECK",
+      "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "acc-p99",
+   "page": 99,
+   "category": "bases",
+   "name": {
+    "v": "Crystal Drip Glass Base, Clear Black",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm; printed 'CRYSTAL DRIP Clear Black'"
+   },
+   "withheld_name": {
+    "v": null,
+    "src": null
+   },
+   "supplier_ref": {
+    "v": "CRYSTAL DRIP Clear Black",
+    "src": "pdf:ace-acc-2026#p99:text"
+   },
+   "supplier_price_cents": {
+    "v": 2000,
+    "src": "pdf:ace-acc-2026#p99:text '$20'"
+   },
+   "price_basis": {
+    "v": "unknown",
+    "src": "the catalogue does not say retail or wholesale"
+   },
+   "group": {
+    "v": "bases",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm"
+   },
+   "stamp": {
+    "v": "stamped",
+    "src": "pdf:ace-acc-2026#p99:stamp annotation",
+    "needs_shop": false,
+    "question": null,
+    "annotations": [
+     {
+      "rect": [
+       1512,
+       296,
+       2032,
+       929
+      ],
+      "author": "Mobile User",
+      "modified": "D:20261123182315-05'00'"
+     }
+    ]
+   },
+   "facts": {
+    "glass": {
+     "v": true,
+     "src": "pdf:ace-acc-2026#p99:photo (glass piece)"
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    },
+    "size": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [],
+   "variants": [
+    {
+     "sku": "OSS-110038",
+     "key": "acc-p99",
+     "photo": {
+      "img": "acc/acc-p99",
+      "status": "needs_original",
+      "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "acc-p101",
+   "page": 101,
+   "category": "bases",
+   "name": {
+    "v": "Glass Base without Lid (L)",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm; printed 'BASE WITHOUT LID (L)'"
+   },
+   "withheld_name": {
+    "v": null,
+    "src": null
+   },
+   "supplier_ref": {
+    "v": "BASE WITHOUT LID (L)",
+    "src": "pdf:ace-acc-2026#p101:text"
+   },
+   "supplier_price_cents": {
+    "v": 2000,
+    "src": "pdf:ace-acc-2026#p101:text '$20'"
+   },
+   "price_basis": {
+    "v": "unknown",
+    "src": "the catalogue does not say retail or wholesale"
+   },
+   "group": {
+    "v": "bases",
+    "src": "rule v2 2026-11-26: section and name from the printed name and the photo, to confirm"
+   },
+   "stamp": {
+    "v": "stamped",
+    "src": "pdf:ace-acc-2026#p101:stamp annotation",
+    "needs_shop": false,
+    "question": null,
+    "annotations": [
+     {
+      "rect": [
+       1422,
+       309,
+       1884,
+       1014
+      ],
+      "author": "Mobile User",
+      "modified": "D:20261123182315-05'00'"
+     }
+    ]
+   },
+   "facts": {
+    "glass": {
+     "v": true,
+     "src": "pdf:ace-acc-2026#p101:photo (glass piece)"
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    },
+    "size": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [],
+   "variants": [
+    {
+     "sku": "OSS-110039",
+     "key": "acc-p101",
+     "photo": {
+      "img": "acc/acc-p101",
+      "status": "CHECK",
+      "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  }
+ ],
+ "retired": {},
+ "shop_answers": [],
+ "retired_shop": {}
+}
