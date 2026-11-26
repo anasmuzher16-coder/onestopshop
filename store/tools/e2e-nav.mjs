@@ -50,6 +50,19 @@ for (const [tag, type, ctx] of [["webkit390", webkit, { viewport: { width: 390, 
     for (const u of ["/cart/extra", "/set/extra", "/shop/hookahs/extra", "/gifts/nope", "/order/nope", "/search/x"]) { const r = await p.goto(B + u, { waitUntil: "domcontentloaded" }); await p.waitForSelector("#main > *"); await wait(120); t(`${tag} 20 ${u} is a real 404`, r.status() === 404 && /Nothing at this address/.test(await p.locator("h1").innerText()) && /^Page not found/.test(await p.title()), r.status() + " " + await p.locator("h1").innerText()); }
     t(`${tag} no script errors`, !errs.length, errs[0] || "");
     await c.close();
+    // the air draws in a worker where the engine can (2026-11-25): it starts, follows a change of section, and leaves one canvas
+    {
+      const c2 = await b.newContext({ viewport: { width: 390, height: 844 } }), q = await c2.newPage();
+      await q.goto(B + "/shop/heat", { waitUntil: "domcontentloaded" }); await q.waitForSelector("#main > *"); await wait(1500);
+      const a1 = await q.evaluate(() => ({ kind: window.__air?.kind, worker: window.__air?.worker, n: document.querySelectorAll("canvas.pour--air").length }));
+      t(`${tag} air: heat air is up in a worker`, a1.kind === "heat" && a1.n === 1 && (type !== chromium || a1.worker === true), JSON.stringify(a1));
+      await q.evaluate(() => document.querySelector('a[href="/shop/bowls"]')?.click()); await wait(2600);
+      const a2 = await q.evaluate(() => ({ at: location.pathname, kind: window.__air?.kind, n: document.querySelectorAll("canvas.pour--air").length }));
+      t(`${tag} air: a change of section brings that section's air`, a2.at === "/shop/bowls" && a2.kind === "bowls" && a2.n === 1, JSON.stringify(a2));
+      await q.goto(B + "/shop/hookahs", { waitUntil: "domcontentloaded" }); await q.waitForSelector("#main > *"); await wait(900);
+      t(`${tag} air: the hookah page has no air canvas (its smoke is its own)`, await q.evaluate(() => !document.querySelector("canvas.pour--air") && !window.__air?.kind));
+      await c2.close();
+    }
   } finally { await b.close(); }
 }
 console.log(f ? `FAIL ${f} of ${n} checks` : `PASS ${n} checks`); process.exit(f ? 1 : 0);
