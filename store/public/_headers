@@ -1,6 +1,6 @@
 /*
   Strict-Transport-Security: max-age=31536000
-https://onestopshop-store.anas-dev.workers.dev/*
+https://:preview.anas-dev.workers.dev/*
   X-Robots-Tag: noindex, nofollow
 /*.js
   Cache-Control: public, max-age=300, must-revalidate

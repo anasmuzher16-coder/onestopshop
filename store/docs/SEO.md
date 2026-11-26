@@ -9,9 +9,11 @@ settings proved on three local copies: the domain, the workers.dev address and t
 
 1. Set `SITE_ORIGIN` in `wrangler.jsonc` to the shop's own address, `https://<domain>` (no path, no slash).
 2. Set `LIVE` to `"1"`.
-3. Nothing to change in `public/_headers`: its noindex rule names the workers.dev address only
-   (`https://onestopshop-store.anas-dev.workers.dev/*`), so photos, fonts and scripts on the shop's own domain can be
-   indexed (Google Images, merchant listings) while the demo's stay out. Worker answers set their own header.
+3. Nothing to change in `public/_headers`: its noindex rule names the workers.dev addresses only
+   (`https://:preview.anas-dev.workers.dev/*`: the demo and its preview and version addresses), so photos, fonts and
+   scripts on the shop's own domain can be indexed (Google Images, merchant listings) while the demo's stay out. Worker
+   answers set their own header. Known gap, accepted: once the domain is attached and before LIVE is "1", its static
+   files (photos) carry no noindex; its pages still do, so nothing on it is listed as a page. Flip LIVE soon after.
 4. Deploy, then in Google Search Console add the domain, submit `https://<domain>/sitemap.xml`, and run the Rich Results
    Test on the home page, one item on sale and one Price TBD item (it is online-only, so it is not part of the suites).
 5. Re-scrape the home page and one product in Facebook's Sharing Debugger so the first shares use the shop's own address.
@@ -20,7 +22,8 @@ What changes on its own when the switches flip: the `<meta name="robots">` tag a
 indexable pages, `/sitemap.xml` answers, `robots.txt` names it, and canonical, `og:url` and every structured-data address
 use `SITE_ORIGIN`. The `workers.dev` address keeps `noindex` and points its canonical at the domain, so the two copies
 never compete. Until both switches are set, every page says `noindex, nofollow` and there is no sitemap; redirects, errors, API answers
-and uploaded photos carry the same `X-Robots-Tag` (worker.js `demoNoindex`).
+and uploaded photos carry the same `X-Robots-Tag` (worker.js `demoNoindex`); static files carry it on the workers.dev
+addresses only (step 3).
 `SITE_ORIGIN` must be exactly `https://host` (one trailing slash is forgiven). Left empty, the request's own address is
 used, except that a `*.workers.dev` address is never indexable whatever the settings. Set but malformed (no scheme, `http`, a port or a path), it fails closed: nothing is indexable anywhere and the
 Worker logs the problem, so a typo can never put the workers.dev copy into search.

@@ -1,12 +1,13 @@
-// The go-live switch, proved before a domain exists (docs/SEO.md "Launch", inventory GO-LIVE.md). Starts three copies of
-// the store with the launch settings, LIVE "1" and SITE_ORIGIN https://www.example-oss.ca, each answering as one address:
+// The go-live switch, proved before a domain exists (docs/SEO.md "Launch", inventory GO-LIVE.md). Starts copies of
+// the store with the launch settings, LIVE "1" and SITE_ORIGIN https://www.example-oss.ca, each answering as one address
+// (plus a fourth, a workers.dev preview address, for the static files' noindex):
 //   own   https://www.example-oss.ca                      the shop's domain: indexable, sitemap, every address on it
 //   copy  https://onestopshop-store.anas-dev.workers.dev  the demo address: noindex everywhere, canonical points at own
 //   apex  https://example-oss.ca                           the bare domain: noindex, canonical points at own
 // (wrangler dev --host X --upstream-protocol https makes every request arrive as https://X, as Cloudflare would deliver it.)
 // Server only, no browser. Changes nothing: each copy runs on its own copy of the local database.
 //   PERSIST=<seeded local state> node store/tools/test-golive.mjs        (in CI, store/tools/ci-suites.mjs sets PERSIST)
-// Env: GOLIVE_PORT (default 4521, uses three ports), WRANGLER_JS (wrangler's bin/wrangler.js; else npx wrangler).
+// Env: GOLIVE_PORT (default 4521, uses four ports), WRANGLER_JS (wrangler's bin/wrangler.js; else npx wrangler).
 import { spawn, spawnSync } from "node:child_process";
 import { cpSync, rmSync, mkdtempSync, existsSync, openSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -14,31 +15,30 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 
 const STORE = fileURLToPath(new URL("../", import.meta.url)), WIN = process.platform === "win32";
-const OWN = "https://www.example-oss.ca", COPY = "https://onestopshop-store.anas-dev.workers.dev", APEX = "https://example-oss.ca";
+const OWN = "https://www.example-oss.ca", COPY = "https://onestopshop-store.anas-dev.workers.dev", APEX = "https://example-oss.ca", PREVIEW = "https://abc12345-onestopshop-store.anas-dev.workers.dev";
 const PORT = +(process.env.GOLIVE_PORT || 4521), PERSIST = process.env.PERSIST;
 let n = 0, f = 0; const ok = (c, msg) => { n++; if (!c) { f++; console.log("FAIL", msg); } };
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 // ---------- 0 the rule itself, no server: the workers.dev address is never indexable ----------
 const seo = await import(new URL("../src/seo.js", import.meta.url));
-for (const env of [{ LIVE: "1" }, { LIVE: "1", SITE_ORIGIN: OWN }, { LIVE: "1", SITE_ORIGIN: COPY }])
-  ok(!seo.liveHere(env, new URL(COPY + "/")) && !seo.robots(env, new URL(COPY + "/")).includes("Sitemap:"), `workers.dev is never indexable (${JSON.stringify(env)})`);
+for (const env of [{ LIVE: "1" }, { LIVE: "1", SITE_ORIGIN: OWN }, { LIVE: "1", SITE_ORIGIN: COPY }]) for (const host of [COPY, PREVIEW, COPY + ".", "https://ONESTOPSHOP-STORE.ANAS-DEV.WORKERS.DEV"])
+  ok(!seo.liveHere(env, new URL(host + "/")) && !seo.robots(env, new URL(host + "/")).includes("Sitemap:"), `workers.dev is never indexable (${host}, ${JSON.stringify(env)})`);
 ok(seo.liveHere({ LIVE: "1", SITE_ORIGIN: OWN }, new URL(OWN + "/shop")) && !seo.liveHere({ LIVE: "1", SITE_ORIGIN: OWN }, new URL(APEX + "/shop")), "with SITE_ORIGIN set, only that exact address is indexable (www, not the bare domain)");
 
 if (!PERSIST || !existsSync(PERSIST)) { console.log("FAIL PERSIST must name a seeded local store state"); process.exit(1); }
 
-// ---------- start the three copies ----------
-const work = mkdtempSync(join(process.env.RUNNER_TEMP || tmpdir(), "oss-golive-"));
+// ---------- start the four copies ----------
+const work = mkdtempSync(join(process.env.RUNNER_TEMP || tmpdir(), "oss-golive-")), copies = [];
 const wrangler = process.env.WRANGLER_JS ? [process.execPath, [process.env.WRANGLER_JS]] : [WIN ? "npx.cmd" : "npx", ["wrangler"]];
 const kill = p => { if (!p || p.exitCode !== null) return; if (WIN) spawnSync("taskkill", ["/PID", String(p.pid), "/T", "/F"]); else { try { process.kill(-p.pid, "SIGKILL"); } catch { p.kill("SIGKILL"); } } };
-const copies = [["own", OWN], ["copy", COPY], ["apex", APEX]].map(([name, origin], i) => {
+const start = (name, origin, i) => {
   const state = join(work, name); cpSync(PERSIST, state, { recursive: true });
   const port = PORT + i, host = new URL(origin).host, logFile = join(work, name + ".log"), log = openSync(logFile, "w");
   const proc = spawn(wrangler[0], [...wrangler[1], "dev", "--local", "--ip", "127.0.0.1", "--port", String(port), "--persist-to", state, "--host", host, "--upstream-protocol", "https",
     "--var", "LIVE:1", "--var", "SITE_ORIGIN:" + OWN], { cwd: STORE, stdio: ["ignore", log, log], shell: WIN && !process.env.WRANGLER_JS, detached: !WIN });
-  return { name, origin, base: `http://127.0.0.1:${port}`, proc, logFile };
-});
-const [own, copy, apex] = copies;
+  copies.push({ name, origin, base: `http://127.0.0.1:${port}`, proc, logFile });
+};
 const get = async (c, p) => { const r = await fetch(c.base + p, { redirect: "manual", signal: AbortSignal.timeout(20000) }); return { r, t: await r.text() }; };
 const tag = (t, re) => (t.match(re) || [])[1];
 const canon = t => tag(t, /<link rel="canonical" href="([^"]+)">/), ogUrl = t => tag(t, /<meta property="og:url" content="([^"]+)">/), ogImg = t => tag(t, /<meta property="og:image" content="([^"]+)">/);
@@ -49,6 +49,9 @@ const urlsIn = (o, out = []) => { if (typeof o === "string") { if (/^https?:\/\/
 const OTHER = ["https://schema.org/", "https://schema.org", "https://www.instagram.com/", "https://www.tiktok.com/"];   // vocabulary and the shop's own social pages
 
 try {
+  // started inside the try, so a failed copy of the database never leaves an earlier store running
+  [["own", OWN], ["copy", COPY], ["apex", APEX], ["preview", PREVIEW]].forEach(([name, origin], i) => start(name, origin, i));
+  const [own, copy, apex, preview] = copies;
   for (const c of copies) { let up = false; for (let i = 0; i < 120 && !up; i++) { try { up = (await fetch(c.base + "/robots.txt", { signal: AbortSignal.timeout(3000) })).status === 200; } catch {} if (!up) await sleep(1000); } ok(up, c.name + ": the store started"); if (!up) console.log(readFileSync(c.logFile, "utf8").slice(-1500)); }
   if (f) throw new Error("a store did not start");
   await sleep(1500);
@@ -111,7 +114,8 @@ try {
     }
   }
   // the demo's own photos and scripts stay noindex too (public/_headers names the workers.dev address)
-  for (const p of ["/img/share.jpg", "/app.js"]) { const r = await fetch(copy.base + p, { signal: AbortSignal.timeout(20000) }); await r.arrayBuffer(); ok(r.status === 200 && hdrNoindex(r), `copy ${p}: a static file on workers.dev says noindex: ${r.status} ${r.headers.get("x-robots-tag")}`); }
+  for (const c of [copy, preview]) for (const p of ["/img/share.jpg", "/app.js", "/styles.css"]) { const r = await fetch(c.base + p, { signal: AbortSignal.timeout(20000) }); await r.arrayBuffer(); ok(r.status === 200 && r.headers.get("x-robots-tag") === "noindex, nofollow", `${c.name} ${p}: a static file on a workers.dev address says noindex, once: ${r.status} ${r.headers.get("x-robots-tag")}`); }
+  { const g = await get(preview, "/"); ok(metaNoindex(g.t) && hdrNoindex(g.r) && canon(g.t) === OWN + "/", "preview: the home page is noindex and points at the shop's address"); }
 } catch (e) { ok(false, "stopped early: " + (e && e.message || e)); } finally {
   for (const c of copies) kill(c.proc);
   await sleep(1500); try { rmSync(work, { recursive: true, force: true }); } catch {}

@@ -20,7 +20,7 @@ export function siteOrigin(env, url) { const s = setting(env); return s.ok ? s.o
 // malformed fails closed (nothing is indexable anywhere) instead of letting the workers.dev copy into search.
 // The workers.dev address is never indexable, even with LIVE "1" and SITE_ORIGIN forgotten (go-live check, 2026-11-26):
 // otherwise the demo copy and the shop's own domain would both be in search, each its own canonical.
-export const liveHere = (env, url) => { if (env.LIVE !== "1" || /(^|\.)workers\.dev$/i.test(url.hostname)) return false; const s = setting(env); return !s.set || (s.ok && s.origin === url.origin); };
+export const liveHere = (env, url) => { if (env.LIVE !== "1" || /(^|\.)workers\.dev\.?$/i.test(url.hostname)) return false; const s = setting(env); return !s.set || (s.ok && s.origin === url.origin); };
 export const originProblem = env => { const s = setting(env); return s.set && !s.ok ? `SITE_ORIGIN "${env.SITE_ORIGIN}" is not https://host: every page stays noindex until it is fixed` : ""; };
 
 const esc = s => String(s ?? "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
