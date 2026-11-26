@@ -2,15 +2,16 @@
 
 What search engines, maps and link previews read about the store, why each piece is built the way it is, and the
 two switches that turn it on at launch. Code: `src/seo.js` (everything below), `src/worker.js` (wires it into each page),
-`tools/photo-versions.mjs` (per-photo versions), `tools/test-seo.mjs` (the checks).
+`tools/photo-versions.mjs` (per-photo versions), `tools/test-seo.mjs` (the checks), `tools/test-golive.mjs` (the launch
+settings proved on three local copies: the domain, the workers.dev address and the bare domain).
 
 ## Launch: the switches
 
 1. Set `SITE_ORIGIN` in `wrangler.jsonc` to the shop's own address, `https://<domain>` (no path, no slash).
 2. Set `LIVE` to `"1"`.
-3. Remove the `/*  X-Robots-Tag: noindex, nofollow` rule at the top of `public/_headers`. The Worker already drops the
-   header on indexable pages, but photos, fonts and scripts are served straight from the static files with that rule,
-   and a `noindex` image cannot appear in Google Images or a merchant listing.
+3. Nothing to change in `public/_headers`: its noindex rule names the workers.dev address only
+   (`https://onestopshop-store.anas-dev.workers.dev/*`), so photos, fonts and scripts on the shop's own domain can be
+   indexed (Google Images, merchant listings) while the demo's stay out. Worker answers set their own header.
 4. Deploy, then in Google Search Console add the domain, submit `https://<domain>/sitemap.xml`, and run the Rich Results
    Test on the home page, one item on sale and one Price TBD item (it is online-only, so it is not part of the suites).
 5. Re-scrape the home page and one product in Facebook's Sharing Debugger so the first shares use the shop's own address.
@@ -21,7 +22,7 @@ use `SITE_ORIGIN`. The `workers.dev` address keeps `noindex` and points its cano
 never compete. Until both switches are set, every page says `noindex, nofollow` and there is no sitemap; redirects, errors, API answers
 and uploaded photos carry the same `X-Robots-Tag` (worker.js `demoNoindex`).
 `SITE_ORIGIN` must be exactly `https://host` (one trailing slash is forgiven). Left empty, the request's own address is
-used. Set but malformed (no scheme, `http`, a port or a path), it fails closed: nothing is indexable anywhere and the
+used, except that a `*.workers.dev` address is never indexable whatever the settings. Set but malformed (no scheme, `http`, a port or a path), it fails closed: nothing is indexable anywhere and the
 Worker logs the problem, so a typo can never put the workers.dev copy into search.
 
 ## Rulings built in (owner)
