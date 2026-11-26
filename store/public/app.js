@@ -250,13 +250,17 @@ function drawThrough(sku) {
   // the scroll has not landed yet, so these labels wait for their cards to come into view, as on any Back
 }
 
+// A shisha card leads with its flavour; the maker and the tub size go on a quiet line under it (council, 2026-11-26: 47 names
+// that all began "Zanobia Herbal Molasses" wrapped two or three lines and hid what makes each one different). Product pages,
+// titles and search keep the full name.
+const shishaName = p => { const m = p.cat === "shisha" && /^(.+?) Herbal Molasses (.+), (\d+ ?g)$/.exec(p.name || ""); return m ? { flavour: m[2], line: `${m[1]} herbal molasses, ${m[3]}` } : null; };
 function cardHTML(p, i = 9) {
-  const tone = toneOf(p);
+  const tone = toneOf(p), sh = shishaName(p);
   return `
   <article class="card" data-tone="${tone}" ${p.family ? `data-family="${p.sku}"` : ""}>
     <a class="card__a" href="/p/${p.sku}" data-piece="${p.sku}">
       <div class="tile ${p.dark || p.photo ? "tile--photo" : ""}">${colourShot(p, { small: true, eager: i < 2 })}${sticker(p)}</div>
-      <h3 class="card__name">${esc(p.name)}</h3>
+      <h3 class="card__name">${sh ? `${esc(sh.flavour)}<span class="sr">, ${esc(sh.line)}</span>` : esc(p.name)}</h3>${sh ? `<p class="card__maker" aria-hidden="true">${esc(sh.line)}</p>` : ""}
     </a>
     ${cardMeta(p)}${localOnly(p) ? `<p class="card__pick">Pickup or local delivery only</p>` : ""}
   </article>`;
