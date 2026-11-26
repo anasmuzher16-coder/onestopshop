@@ -101,8 +101,8 @@
     794,
     532
    ],
-   "scale": 1.339,
-   "status": "CHECK",
+   "scale": 1.142,
+   "status": "ready",
    "out": "acc/acc-p12",
    "note": "single cut-out"
   },
@@ -191,10 +191,10 @@
     155,
     188
    ],
-   "scale": 4.0,
+   "scale": 3.412,
    "status": "needs_original",
    "out": "acc/acc-p24",
-   "note": "single cut-out; enlarged 4.00x from a small source: needs Ace's original"
+   "note": "single cut-out; enlarged 3.41x from a small source: needs Ace's original"
   },
   {
    "page": 30,
@@ -210,7 +210,7 @@
     354,
     755
    ],
-   "scale": 0.942,
+   "scale": 0.803,
    "status": "ready",
    "out": "acc/acc-p30",
    "note": "single cut-out"
@@ -229,10 +229,10 @@
     457,
     357
    ],
-   "scale": 2.282,
-   "status": "needs_original",
+   "scale": 1.946,
+   "status": "CHECK",
    "out": "acc/acc-p31",
-   "note": "single cut-out; enlarged 2.28x from a small source: needs Ace's original"
+   "note": "single cut-out"
   },
   {
    "page": 37,
@@ -248,7 +248,7 @@
     693,
     786
    ],
-   "scale": 0.884,
+   "scale": 0.754,
    "status": "ready",
    "out": "acc/acc-p37",
    "note": "single cut-out"
@@ -267,7 +267,7 @@
     767,
     754
    ],
-   "scale": 0.805,
+   "scale": 0.771,
    "status": "ready",
    "out": "acc/acc-p38",
    "note": "single cut-out"
@@ -324,7 +324,7 @@
     586,
     775
    ],
-   "scale": 0.95,
+   "scale": 0.81,
    "status": "ready",
    "out": "acc/acc-p50",
    "note": "single cut-out"
@@ -400,7 +400,7 @@
     582,
     681
    ],
-   "scale": 1.009,
+   "scale": 0.861,
    "status": "ready",
    "out": "acc/acc-p65",
    "note": "single cut-out"
@@ -419,7 +419,7 @@
     566,
     726
    ],
-   "scale": 0.937,
+   "scale": 0.799,
    "status": "ready",
    "out": "acc/acc-p70",
    "note": "single cut-out"
@@ -525,7 +525,7 @@
     343,
     377
    ],
-   "scale": 1.813,
+   "scale": 1.547,
    "status": "CHECK",
    "out": "acc/acc-p79",
    "note": "single cut-out"
@@ -563,7 +563,7 @@
     469,
     558
    ],
-   "scale": 1.219,
+   "scale": 1.039,
    "status": "ready",
    "out": "acc/acc-p81",
    "note": "single cut-out, 5 loose speck(s) left out"
@@ -582,10 +582,10 @@
     237,
     233
    ],
-   "scale": 3.2,
+   "scale": 3.152,
    "status": "needs_original",
    "out": "acc/acc-p82",
-   "note": "single cut-out; enlarged 3.20x from a small source: needs Ace's original"
+   "note": "single cut-out; enlarged 3.15x from a small source: needs Ace's original"
   },
   {
    "page": 83,
@@ -631,7 +631,7 @@
     704,
     763
    ],
-   "scale": 0.918,
+   "scale": 0.791,
    "status": "ready",
    "out": "acc/acc-p95",
    "note": "single cut-out"
@@ -650,8 +650,8 @@
     470,
     643
    ],
-   "scale": 1.363,
-   "status": "CHECK",
+   "scale": 1.162,
+   "status": "ready",
    "out": "acc/acc-p96",
    "note": "single cut-out"
   },
@@ -669,7 +669,7 @@
     424,
     747
    ],
-   "scale": 1.122,
+   "scale": 0.957,
    "status": "ready",
    "out": "acc/acc-p97",
    "note": "single cut-out"
@@ -688,10 +688,10 @@
     327,
     379
    ],
-   "scale": 2.105,
-   "status": "needs_original",
+   "scale": 1.796,
+   "status": "CHECK",
    "out": "acc/acc-p99",
-   "note": "single cut-out; enlarged 2.11x from a small source: needs Ace's original"
+   "note": "single cut-out"
   },
   {
    "page": 101,
@@ -707,8 +707,8 @@
     462,
     649
    ],
-   "scale": 1.318,
-   "status": "CHECK",
+   "scale": 1.153,
+   "status": "ready",
    "out": "acc/acc-p101",
    "note": "single cut-out"
   }

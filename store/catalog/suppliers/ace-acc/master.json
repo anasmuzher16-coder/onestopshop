@@ -505,7 +505,7 @@
      "key": "acc-p12",
      "photo": {
       "img": "acc/acc-p12",
-      "status": "CHECK",
+      "status": "ready",
       "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
      },
      "shop": {
@@ -1335,7 +1335,7 @@
      "key": "acc-p31",
      "photo": {
       "img": "acc/acc-p31",
-      "status": "needs_original",
+      "status": "CHECK",
       "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
      },
      "shop": {
@@ -3733,7 +3733,7 @@
      "key": "acc-p96",
      "photo": {
       "img": "acc/acc-p96",
-      "status": "CHECK",
+      "status": "ready",
       "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
      },
      "shop": {
@@ -3939,7 +3939,7 @@
      "key": "acc-p99",
      "photo": {
       "img": "acc/acc-p99",
-      "status": "needs_original",
+      "status": "CHECK",
       "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
      },
      "shop": {
@@ -4042,7 +4042,7 @@
      "key": "acc-p101",
      "photo": {
       "img": "acc/acc-p101",
-      "status": "CHECK",
+      "status": "ready",
       "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
      },
      "shop": {

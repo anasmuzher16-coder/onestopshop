@@ -28,9 +28,10 @@ import src_ace_acc as S  # noqa: E402
 
 PUBLIC = C.STORE / "public" / "img" / "pc" / "acc"
 # Smaller than a hookah's 810 x 630: accessories are wide or squat, so a full-size one ran under the Price TBD sticker
-# (top right) and the "Photo to be upscaled" label (bottom) on a phone (design review, 2026-11-26). 680 x 560, centred,
-# leaves about 110 px clear above and below and 80 px each side.
-PROD_H, MAXW = 680, 560
+# (top right) and the "Photo to be upscaled" label (bottom, two lines on a phone) (design review, 2026-11-26). 580 x 560,
+# centred, leaves 160 px (18%) clear above and below: measured on the 390 WebKit grid, the sticker reaches 15% down the
+# tile and the two-line label 17% up.
+PROD_H, MAXW = 580, 560
 
 
 def clean(a, largest_only=False):
