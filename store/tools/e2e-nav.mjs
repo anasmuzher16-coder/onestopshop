@@ -30,9 +30,12 @@ for (const [tag, type, ctx] of [["webkit390", webkit, { viewport: { width: 390, 
     // 19 current page
     if (tag === "chromium1440") {
       await open("/p/OSS-9601"); t(`${tag} 19 a product marks its section`, await p.locator('.top__nav a[href="/shop/shisha"][aria-current]').count() === 1 || await p.locator(".top__nav a[aria-current]").count() === 1);
-      await open("/gifts/under-150"); t(`${tag} 19 Gifts is marked`, await p.locator('.top__nav a[href="/gifts/under-50"][aria-current]').count() === 1);
+      // Gifts left the menu (owner, 2026-11-26: "it just adds clutter")
+      t(`${tag} 19 no Gifts in the menu`, await p.locator('.top__nav a[href^="/gifts"]').count() === 0);
       await open("/cart"); t(`${tag} 19 Cart is marked`, await p.locator(".top__cart[aria-current]").count() === 1);
-      t(`${tag} 17 nav stays on one line`, await p.evaluate(() => { const n = document.querySelector(".top__nav"); return new Set([...n.children].map(a => Math.round(a.getBoundingClientRect().top))).size === 1; }));
+      t(`${tag} 17 nav stays on one line`, await p.evaluate(() => { const n = document.querySelector(".top__nav"); return new Set([...n.children].filter(a => !a.hidden).map(a => Math.round(a.getBoundingClientRect().top))).size === 1; }));
+      // no link is ever cut off or scrolled out of sight: what does not fit sits behind "More" (owner, 2026-11-26)
+      t(`${tag} 17 no menu link cut off`, await p.evaluate(() => { const n = document.querySelector(".top__nav"), r = n.getBoundingClientRect(); return n.scrollWidth <= n.clientWidth + 1 && [...n.querySelectorAll(":scope > a, :scope > .top__more:not([hidden])")].every(a => { const b = a.getBoundingClientRect(); return b.left >= r.left - 8 && b.right <= r.right + 8; }); }));
     } else { await open("/gifts/under-150"); t(`${tag} 19 dock marks Shop on Gifts`, await p.locator('.dock a[href="/shop"][aria-current]').count() === 1); }
     // 15 dock Back is the real Back
     if (tag === "webkit390") {

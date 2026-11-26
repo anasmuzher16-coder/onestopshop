@@ -20,7 +20,9 @@ const isSold = p => forSale(p) && p.stock === 0;   // stock is the one truth: th
 const stockFor = p => !forSale(p) || isSold(p) ? 0 : Number.isInteger(p.stock) ? Math.min(MAX_QTY, Math.max(0, p.stock)) : MAX_QTY;   // the most of this piece one cart can hold
 // Anything not known yet is said plainly, in one quiet style, never guessed and never left blank.
 const TBD = what => `<span class="tbd">${what ? what + " " : ""}TBD</span>`;   // TBD("") when the label beside it already names the fact
-const SHELF = shelfOf(PRODUCTS);   // one card per hookah family; every other item is its own card
+// one card per hookah family; every other item is its own card. Items with their own photo come first, in shelf order, so a
+// section never opens on a row of drawn stand-ins (design review, 2026-11-26: Heat opened on four "photo coming" cards)
+const SHELF = (l => [...l.filter(p => p.img), ...l.filter(p => !p.img)])(shelfOf(PRODUCTS));
 const FAMILIES = new Map(); for (const p of PRODUCTS) if (p.family) { if (!FAMILIES.has(p.family)) FAMILIES.set(p.family, []); FAMILIES.get(p.family).push(p); }   // built once: every card used to filter the whole catalogue for its colours
 const familyOf = p => p && p.family ? FAMILIES.get(p.family) || [p] : p ? [p] : [];
 const GROUPS = [["full_size", "Full size"], ["stem_set", "Stem sets"], ["compact_travel", "Compact and travel"], ["statement", "Statement pieces"]];
@@ -775,13 +777,33 @@ function viewShipping() {
 }
 
 // ---------- chrome, sheet, router ----------
+// The desktop menu never cuts a link off (owner, 2026-11-26: "fix every issue like that"): links that do not fit move, from
+// the end, behind a labelled "More" button, in the same order. Whole links only; nothing scrolls out of sight.
+function fitNav() {
+  const nav = $("[data-nav]"); if (!nav || !nav.offsetWidth) return;   // phones hide the row (the dock and the /shop chips carry it)
+  const more = nav.querySelector(".top__more"), menu = more.querySelector(".top__menu");
+  for (const a of [...menu.children]) more.before(a);   // start from the whole row
+  more.hidden = true; more.open = false;
+  if (nav.scrollWidth <= nav.clientWidth) return;
+  more.hidden = false;
+  const links = [...nav.querySelectorAll(":scope > a")];
+  while (nav.scrollWidth > nav.clientWidth && links.length > 1) menu.prepend(links.pop());
+  if (menu.querySelector("[aria-current]")) more.querySelector("summary").setAttribute("aria-current", "true"); else more.querySelector("summary").removeAttribute("aria-current");
+}
+let fitRaf = 0; addEventListener("resize", () => { cancelAnimationFrame(fitRaf); fitRaf = requestAnimationFrame(fitNav); }, { passive: true });
+document.fonts?.ready.then(fitNav).catch(() => {});
+addEventListener("click", e => { const m = document.querySelector(".top__more[open]"); if (m && !m.contains(e.target)) m.open = false; });
+addEventListener("keydown", e => { if (e.key === "Escape") { const m = document.querySelector(".top__more[open]"); if (m) { m.open = false; m.querySelector("summary").focus(); } } });
 function syncChrome() {
   $$("[data-cart-count]").forEach(e => e.textContent = cartCount());
   const h = route() || "#/";
   const [ra, rb] = h.replace(/^#\/?/, "").split("/"), asked = bySku[new URLSearchParams(location.search).get("colour")], base = ra === "p" ? bySku[rb] : null;
   const prod = base && base.family && asked && asked.family === base.family ? asked : base;   // the dock buys the colour shown
   const here = (on, exact = on) => on ? `aria-current="${exact ? "page" : "true"}"` : "";   // the page itself, or the section a product belongs to
-  $("[data-nav]").innerHTML = `<a href="/shop" ${here(h === "#/shop")}>Everything</a>` + CATEGORIES.map(c => `<a href="/shop/${c.id}" ${here(h === "#/shop/" + c.id || prod?.cat === c.id, h === "#/shop/" + c.id)}>${c.name}</a>`).join("") + `<a href="/gifts/under-50" ${here(ra === "gifts")}>Gifts</a><a href="/set" ${here(h === "#/set")}>Build a set</a><a href="/search" ${here(h === "#/search")}>Search</a>`;
+  // Gifts is gone from the menu (owner, 2026-11-26: "it just adds clutter")
+  $("[data-nav]").innerHTML = `<a href="/shop" ${here(h === "#/shop")}>Everything</a>` + CATEGORIES.map(c => `<a href="/shop/${c.id}" ${here(h === "#/shop/" + c.id || prod?.cat === c.id, h === "#/shop/" + c.id)}>${c.name}</a>`).join("") + `<a href="/set" ${here(h === "#/set")}>Build a set</a><a href="/search" ${here(h === "#/search")}>Search</a>`
+    + `<details class="top__more" hidden><summary>More</summary><div class="top__menu" role="list"></div></details>`;
+  fitNav();
   const topCart = $(".top__cart"); if (h === "#/cart") topCart.setAttribute("aria-current", "page"); else topCart.removeAttribute("aria-current");
   const count = `<span data-cart-count>${cartCount()}</span>`, dock = $(".dock");
   dock.classList.toggle("dock--buy", !!prod);

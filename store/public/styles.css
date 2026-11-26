@@ -787,10 +787,18 @@ html.restoring .grid--shop .card{content-visibility:visible}
 ::view-transition-old(chips){display:none}
 ::view-transition-new(chips){animation:none}
 @media (min-width:960px){
-  /* twelve places to go: the row stays one line and slides sideways when the window is narrow, the way the chips do on a phone */
-  .top__nav{min-width:0;padding-block:2px;padding-inline:7px;margin-inline:-7px;overflow-x:auto;scrollbar-width:none;white-space:nowrap}   /* room for the links' 7 px of extra target at both ends of the row */
-  .top__nav::-webkit-scrollbar{display:none}
+  /* one line; when the window is narrow the links that do not fit move behind "More" (app.js fitNav), never cut or scrolled away */
+  .top__nav{position:relative;min-width:0;padding-block:2px;padding-inline:7px;margin-inline:-7px;overflow:visible;white-space:nowrap}   /* room for the links' 7 px of extra target at both ends of the row */
   .top__nav a{flex:none}
+  .top__more{position:relative;flex:none}
+  .top__more > summary{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 7px;margin:0 -7px;list-style:none;cursor:pointer;color:var(--color-text)}
+  .top__more > summary::-webkit-details-marker{display:none}
+  .top__more > summary::after{content:"";width:6px;height:6px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:translateY(-2px) rotate(45deg)}
+  .top__more > summary:hover,.top__more[open] > summary{color:var(--color-strong)}
+  .top__more > summary[aria-current]{color:var(--color-strong);text-decoration:underline 2px;text-underline-offset:9px}
+  .top__menu{position:absolute;top:calc(100% + var(--s-2));right:-7px;z-index:30;display:grid;min-width:180px;padding:var(--s-2) 0;background:var(--color-bg);border:1px solid var(--color-line);border-radius:var(--radius);box-shadow:0 12px 32px rgb(0 0 0 / .45)}
+  .top__menu a{display:flex;min-height:44px;margin:0;padding:0 var(--s-4)}
+  .top__menu a:hover{background:var(--color-line)}
   .top__nav a:focus-visible{outline-offset:-2px}
   .top__cart{flex:none}
   .top__cart[aria-current]{color:var(--color-strong);box-shadow:0 2px 0 var(--color-strong)}
