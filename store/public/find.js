@@ -71,7 +71,9 @@ function emptyHTML(cat, list, sel) {
 const gridHTML = (cat, list, sel) => { const out = apply(cat, list, sel); return out.length ? `<div class="grid grid--shop">${out.map((p, i) => X.card(p, i)).join("")}</div>` : emptyHTML(cat, list, sel); };
 function resultsHTML(cat, list, sel) {
   const n = apply(cat, list, sel).length, k = activeCount(sel);
-  return `<div class="fres"><p class="fres__n" role="status"><b class="num">${n}</b>${noun(cat, n)}</p>${k || sel.sort ? `<a class="link" href="/shop/${cat}" data-f-go>Clear all</a>` : ""}</div>`;
+  // the band already says the section's count: this line shows only once a filter or sort is on, and stays for screen readers
+  // either way (council, 2026-11-26: the count was said twice before the first product)
+  return `<div class="fres${k || sel.sort ? "" : " fres--quiet"}"><p class="fres__n" role="status"><b class="num">${n}</b>${noun(cat, n)}</p>${k || sel.sort ? `<a class="link" href="/shop/${cat}" data-f-go>Clear all</a>` : ""}</div>`;
 }
 
 // What the section view shows. Returns null when the section has nothing to filter by (it keeps its own grid).
