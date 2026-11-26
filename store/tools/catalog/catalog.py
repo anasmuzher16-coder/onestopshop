@@ -299,8 +299,10 @@ def desired_rows(supplier: str, m):
                         "category_id": "hookahs", "price_cents": shop["price_cents"]["v"] or 0, "weight_g": 2500, "box_id": "T",
                         "glass": 1, "ship_class": "standard", "note": "", "stock": shop["stock"]["v"] or 0, "low_stock_at": 1,
                         "active": 1 if (shop["active"]["v"] and shop["price_cents"]["v"]) else 0, "sort": 5000 + i, "availability": avail,
-                        # on view with "Price TBD" from the start (owner, 2026-11-24); buyable only once priced and on
-                        "listed": 1}
+                        # on view with "Price TBD" from the start (owner, 2026-11-24); buyable only once priced and on.
+                        # Only what the shop ticked is on view: a tick means it is in the shop, in stock, and nothing is
+                        # ordered in (owner, 2026-11-26). An unticked page stays in the master, off the site.
+                        "listed": 1 if f["stamp"]["v"] != "none" else 0}
         else:
             charcoal = f["category"] == "charcoal"
             sup = {"supplier_id": supplier, "supplier_ref": f["supplier_ref"]["v"], "supplier_price_cents": None,

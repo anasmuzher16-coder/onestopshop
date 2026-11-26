@@ -384,12 +384,13 @@ function viewHome() {
 
 function shopGrid(cat) {
   const c = catById[cat] || null, list = c ? SHELF.filter(p => p.cat === c.id) : SHELF;
-  // Hookahs: the shop's ticked (in-store) pieces first, then the rest of the catalogue, each grouped by kind
+  // Hookahs: the shop's ticked pieces, grouped by kind. A tick means it is in the shop, in stock; nothing is ordered in, so an
+  // unticked catalogue page is never shown (owner, 2026-11-26), and there is no "In the shop" / "From the catalogue" split.
   const fams = list.filter(p => p.family), byKind = l => GROUPS.map(([k, name]) => [name, l.filter(p => (p.facts.group || "full_size") === k)]).filter(g => g[1].length);
-  const tiers = cat === "hookahs" && fams.length ? [["In the shop", "Pieces the shop has in. Prices and counts TBD.", byKind(fams.filter(ticked))], ["From the catalogue", "From Ace Hookah\u2019s catalogue. Ask the counter about one.", byKind(fams.filter(p => !ticked(p)))]].filter(t => t[2].length) : null;
+  const tiers = cat === "hookahs" && fams.length ? [["", "", byKind(fams.filter(ticked))]].filter(t => t[2].length) : null;
   const groups = tiers ? null : cat === "hookahs" ? [...Object.keys(SERIES).map(k => [k, list.filter(p => seriesOf(p) === k)]), ["More from the shelf", list.filter(p => !seriesOf(p) && !p.dark)], ["One of one", list.filter(p => p.dark)]].filter(g => g[1].length) : [["", list]];
   const range = items => { const pr = items.filter(forSale).map(x => x.price); return pr.length === items.length && pr.length ? `, ${whole(Math.min(...pr))} to ${whole(Math.max(...pr))}` : ""; };
-  return `${tiers ? tiers.map(([t, note, gs]) => `<section class="tier" aria-label="${t}"><header class="tier__head"><h2 class="tier__h">${t}</h2><p class="tier__n"><span class="num">${gs.reduce((a, g) => a + g[1].length, 0)}</span>&nbsp;hookahs. ${note}</p></header>
+  return `${tiers ? tiers.map(([t, note, gs]) => `<section class="tier"${t ? ` aria-label="${t}"` : ""}>${t ? `<header class="tier__head"><h2 class="tier__h">${t}</h2><p class="tier__n"><span class="num">${gs.reduce((a, g) => a + g[1].length, 0)}</span>&nbsp;hookahs. ${note}</p></header>` : ""}
     <div class="grid grid--shop">${gs.map(([name, items]) => `<h3 class="series">${name} <span class="num">${items.length} ${items.length === 1 ? "hookah" : "hookahs"}</span></h3>` + items.map(card).join("")).join("")}</div></section>`).join("")
   : `<div class="grid grid--shop">${groups.map(([name, items]) => (name ? `<h2 class="series" data-tone="${SERIES[name] || ""}">${name} <span class="num">${items.length} pieces${range(items)}</span></h2>` : "") + items.map(card).join("")).join("")}</div>`}`;
 }
@@ -496,7 +497,7 @@ function viewProduct(sku) {
       ${chips}
       ${p.details && p.details.notes ? `<p class="pdp__notes"><span>Notes</span> ${esc(p.details.notes)}</p>` : ""}
       ${localOnly(p) ? counterLine(p) : ""}
-      ${!sale ? `${p.state === "tbd" ? `<p class="pdp__avail">${TBD("Price")} ${p.family ? (ticked(p) ? "In the shop now. " : "Ordered in through the shop. ") : ""}The shop sets the price and confirms stock.</p>` : `<p class="soldline">Coming soon.</p>`}<a class="btn btn--ghost btn--call btn--ask" href="tel:+15192552222">Ask the counter, 519-255-2222</a>`
+      ${!sale ? `${p.state === "tbd" ? `<p class="pdp__avail">${TBD("Price")} ${p.family ? "In the shop now. " : ""}The shop sets the price and confirms stock.</p>` : `<p class="soldline">Coming soon.</p>`}<a class="btn btn--ghost btn--call btn--ask" href="tel:+15192552222">Ask the counter, 519-255-2222</a>`
         : sold ? `<p class="soldline">${p.dark ? "This one has sold. Each resin stem is poured once." : "Sold out for now."}</p><a class="btn btn--ghost btn--call" href="tel:+15192552222">Call the counter</a>`
         : `<p class="pdp__price num">${whole(p.price)}</p>${inCart ? `<a class="btn btn--wide" href="/cart">In your cart. View cart</a>` : `<button class="btn btn--wide" type="button" data-add="${p.sku}">Add to cart</button>`}`}
       ${sale ? deliveryLine(p, opts) : ""}

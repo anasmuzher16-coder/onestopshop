@@ -54,7 +54,6 @@ const HEAT = [
   { key: "brand", label: "Brand", of: p => brandOf(p) && slug(brandOf(p)), opts: "dyn", fmt: (v, list) => brandOf(list.find(p => slug(brandOf(p)) === v)) || v, top: 8 },
 ];
 const HOOKAHS = [
-  { key: "where", label: "Where it is", of: hereOf, opts: [["here", "In the shop now"], ["order", "We order it in"]], quick: ["here"] },
   { key: "kind", label: "Kind", of: kindOf, opts: [["full", "Full size"], ["small", "Small and travel"], ["show", "Display pieces"], ["stem", "Stem only, no base"]], quick: true },
   { key: "colour", label: "Colour", of: colourOf, opts: "dyn", fmt: v => v[0].toUpperCase() + v.slice(1), family: true, note: l => cover(l, colourOf, "Colours named") },
 ];

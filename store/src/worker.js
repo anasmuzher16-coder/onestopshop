@@ -36,7 +36,7 @@ function describe(path, cat, site) {
     // of search results and the sitemap until it holds something (a page with no products is thin content)
     if (!n) return { title: `${c.name} | ${site}`, desc: `${c.name}: coming soon to our site. Call 519-255-2222 to ask what is on the shelf today.`, index: false };
     // nothing in this section can be bought yet: say what stage it is at, never "in stock"
-    if (n && !list.some(sellable)) return { title: `${c.name} | ${site}`, desc: list.some(p => p.price_cents > 0) ? `${n} ${c.name.toLowerCase()} coming soon to our Windsor counter.` : `${n} ${c.name.toLowerCase()} from the catalogue. Shop prices are on the way.`, index: true };
+    if (n && !list.some(sellable)) return { title: `${c.name} | ${site}`, desc: list.some(p => p.price_cents > 0) ? `${n} ${c.name.toLowerCase()} coming soon to our Windsor counter.` : `${n} ${c.name.toLowerCase()} in the shop at our Windsor counter. Shop prices are on the way.`, index: true };
     if (n && list.every(counterPayRow)) return { title: `${c.name} | ${site}`, desc: `${n} ${c.name.toLowerCase()} at our Windsor counter. Pickup, paid in the shop.`, index: true };   // shisha while card payment for it waits on approval
     return { title: `${c.name} | ${site}`, desc: counter ? `${n} ${c.id === CHARCOAL ? "kinds of hookah charcoal" : c.id === "heat" ? "foil and heat items" : c.name.toLowerCase()} at our Windsor counter. Pickup or local delivery only.` : `${n} ${c.id === "heat" ? "foil and heat items" : c.name.toLowerCase()} at our Windsor counter, shipped across Canada except Quebec, for now.`, index: true };   // never "in stock": the count includes sold-out items
   }

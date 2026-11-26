@@ -11,14 +11,17 @@ const who = { name: "Test Shopper", email: "test@example.com" }, to = { postal: 
 const CARD = /<meta name="oss-pay" content="card">/.test(await (await fetch(B + "/")).text()), pk = CARD ? {} : { pay: "at_pickup" };
 const noKeys = r => r.status === 503 && r.data.pay_off === true && /519-255-2222/.test(r.data.error || "");
 const master = JSON.parse(readFileSync(new URL("../catalog/suppliers/ace/master.json", import.meta.url), "utf8"));
-const supplier = new Map(); for (const fam of master.families) for (const v of fam.variants) supplier.set(v.sku, fam.supplier_price_cents.v);
+// only what the shop ticked is on view (owner, 2026-11-26: a tick means in the shop, in stock; nothing is ordered in)
+const tickedFams = master.families.filter(f => f.stamp.v !== "none"), unticked = new Set(master.families.filter(f => f.stamp.v === "none").flatMap(f => f.variants.map(v => v.sku)));
+const supplier = new Map(); for (const fam of tickedFams) for (const v of fam.variants) supplier.set(v.sku, fam.supplier_price_cents.v);
 const mod = await (await fetch(B + "/api/catalog-module")).text(), { PRODUCTS: P } = await import("data:text/javascript," + encodeURIComponent(mod));
 const feed = await (await fetch(B + "/api/catalog")).json(), stockOf = async sku => (await (await fetch(B + "/api/catalog")).json()).products.find(p => p.sku === sku)?.stock;
 const ace = P.filter(p => supplier.has(p.sku)), tbd = ace[0];
 
 // 1 on view, never for sale
-ok(ace.length === supplier.size, `every Ace colour is on the site: ${ace.length} of ${supplier.size}`);
-ok(new Set(ace.filter(p => p.lead).map(p => p.family)).size === master.families.length, "one card per Ace family");
+ok(ace.length === supplier.size, `every ticked Ace colour is on the site: ${ace.length} of ${supplier.size}`);
+ok(!P.some(p => unticked.has(p.sku)), `no unticked Ace colour is on the site: ${P.filter(p => unticked.has(p.sku)).length} of ${unticked.size}`);
+ok(new Set(ace.filter(p => p.lead).map(p => p.family)).size === tickedFams.length, "one card per ticked Ace family");
 ok(ace.every(p => p.state === "tbd" && p.price === null && p.stock === 0), "every Ace item shows Price TBD: no price, no stock count");
 for (const body of [{ ...who, ...pk, method: "pickup", lines: [{ sku: tbd.sku, qty: 1 }] }, { ...who, ...to, method: "ship", service: "cp-exp", lines: [{ sku: tbd.sku, qty: 1, price: 1, unit_cents: 100 }] }]) {
   const r = await post(body); ok(!CARD && body.method === "ship" ? noKeys(r) : r.status === 409 && r.data.not_for_sale === true, `a TBD item is refused by the server (${body.method}): ${r.status} ${r.data.error || ""}`);

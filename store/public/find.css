@@ -140,8 +140,11 @@ html.fsheet-open{overflow:hidden}
 @media (min-width:640px){.ways2{grid-template-columns:repeat(3,1fr)} .srch__box{max-width:calc((100% - 2 * var(--s-2)) / 3 * 2 + var(--s-2))}}
 @media (min-width:960px){
   .fbar{display:none}
-  .fwrap{display:grid;grid-template-columns:272px minmax(0,1fr);gap:var(--s-12);padding:0 var(--gutter)}
-  .frail{display:block;position:sticky;top:96px;align-self:start;max-height:calc(100svh - 112px);overflow-y:auto;padding:var(--s-6) 0 var(--s-12);scrollbar-width:thin}
+  .fwrap{display:grid;grid-template-columns:288px minmax(0,1fr);gap:var(--s-12);padding:0 var(--gutter)}
+  /* the rail scrolls on its own when it is taller than the window: its scrollbar gets its own gutter outside the rows, so a
+     classic (Windows) scrollbar can never sit over the counts (owner, 2026-11-26: counts were cut off on Shisha at 1920) */
+  .frail{display:block;position:sticky;top:96px;align-self:start;max-height:calc(100svh - 112px);overflow:hidden auto;scrollbar-gutter:stable;padding:var(--s-6) var(--s-3) var(--s-12) 0;scrollbar-width:thin;scrollbar-color:var(--color-line) transparent}
+  .frail > *{min-width:0}
   .fwrap .fres{padding:var(--s-6) 0 0}
   .fapplied{display:flex;flex-wrap:wrap;gap:var(--s-2);padding-top:var(--s-3)}
   .fwrap .finderlink{margin-inline:0;width:100%}
