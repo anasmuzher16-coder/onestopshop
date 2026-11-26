@@ -8,7 +8,7 @@
 import { spawn, spawnSync } from "node:child_process";
 import { cpSync, rmSync, mkdirSync, writeFileSync, existsSync, openSync, closeSync } from "node:fs";
 import { connect } from "node:net";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { SEED_FILES, seedPath } from "./seed-files.mjs";
@@ -61,7 +61,7 @@ try {
     let died = null; dev.once("exit", (code, signal) => { died = { code, signal, after: Math.round((Date.now() - t0) / 1000) }; });
     let up = false; for (let i = 0; i < 120 && !up && !died; i++) { try { up = (await fetch(`http://127.0.0.1:${PORT}/`)).status === 200; } catch {} if (!up) await sleep(1000); }
     await sleep(2000);
-    const script = join(STORE, "tools", t + ".mjs"), args = existsSync(script) ? [script] : null;
+    const script = join(STORE, "tools", t + ".mjs"), args = existsSync(script) ? ["--import", pathToFileURL(join(STORE, "tools", "ci-preload.mjs")).href, script] : null;
     let code = 1, text = `no such suite: ${t}`;
     if (args && up) {
       if (!NOARG.has(t)) { mkdirSync(join(OUT, t), { recursive: true }); args.push(join(OUT, t)); }

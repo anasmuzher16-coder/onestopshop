@@ -12,10 +12,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { name: wk-base, os: ubuntu-24.04, env: "", suites: "webkit-check test-stick e2e-delivery allwaves ci-probe-nav" }
-          - { name: wk-cpu-a, os: ubuntu-24.04, env: "WEBKIT_SKIA_ENABLE_CPU_RENDERING=1", suites: "webkit-check test-stick e2e-delivery allwaves ci-probe-nav" }
-          - { name: wk-cpu-b, os: ubuntu-24.04, env: "WEBKIT_SKIA_ENABLE_CPU_RENDERING=1", suites: "webkit-check test-stick e2e-delivery allwaves" }
-          - { name: gl-probe, os: ubuntu-24.04, env: "", suites: "ci-probe-gl" }
+          - { name: nav-cold-warm, os: ubuntu-24.04, env: "WEBKIT_SKIA_ENABLE_CPU_RENDERING=1", suites: "e2e-nav ci-probe-nav e2e-nav" }
+          - { name: flow-twice, os: ubuntu-24.04, env: "WEBKIT_SKIA_ENABLE_CPU_RENDERING=1", suites: "e2e-flow e2e-flow" }
     name: ${{ matrix.name }}
     steps:
       - uses: actions/checkout@v4

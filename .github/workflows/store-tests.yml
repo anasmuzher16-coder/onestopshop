@@ -25,7 +25,7 @@ jobs:
           - shard: pages
             suites: e2e-nav webkit-check phone-audit whitebox test-chunk test-stick
           - shard: motion
-            suites: ci-probe fx-robust allwaves
+            suites: fx-robust allwaves
     name: ${{ matrix.shard }}
     steps:
       - uses: actions/checkout@v4
@@ -51,7 +51,7 @@ jobs:
         run: python -m unittest test_catalog
       - name: Machine
         run: |
-          nproc; free -m; df -h / /dev/shm; ulimit -a | head -20
+          nproc; free -m; df -h / /dev/shm
           mkdir -p store/.ci/out
           # memory and the biggest processes every 5 s, kept with the outputs, so a crash can be matched to memory
           nohup bash -c 'while true; do echo "== $(date +%T)"; free -m | sed -n 2,3p; ps -eo rss,pcpu,comm --sort=-rss | head -6; sleep 5; done' > store/.ci/out/machine.log 2>&1 &
@@ -61,12 +61,18 @@ jobs:
           WRANGLER_JS: ${{ github.workspace }}/node_modules/wrangler/bin/wrangler.js
           WAVE_SETTLE: "2500"   # software rendering on these machines: a wave gets longer to end before it counts as stuck
           DEBUG: pw:browser   # the browsers' own output goes into each suite's .txt, so a browser crash says why
+          # WebKit (WPE) draws canvases with the CPU instead of through Mesa's software GL. With GL drawing, WebKit's page
+          # process crashed in most WebKit suites here: "WebCore: Worker ... trap invalid opcode in libWPEWebKit" (the air's
+          # OffscreenCanvas worker, fx-air-worker.js) and "WPEWebProcess segfault in libgallium" (Mesa). A/B in run 45899447119:
+          # 4 of 4 WebKit suites failed with 5 kernel-logged crashes without it, 9 of 9 passed with no crash with it.
+          # These machines have no GPU, so both ways are software drawing; only the crashing path is avoided.
+          WEBKIT_SKIA_ENABLE_CPU_RENDERING: "1"
         run: node store/tools/ci-suites.mjs ${{ matrix.suites }}
       - name: Kernel log (out-of-memory kills, crashes)
         if: always()
         run: |
           sudo dmesg -T | tail -80 > store/.ci/out/dmesg.txt || true
-          grep -iE "oom|killed process|segfault|trap|out of memory" store/.ci/out/dmesg.txt || echo "no oom or crash lines in the kernel log"
+          grep -iE "oom|killed process|segfault|traps:|protection fault|out of memory" store/.ci/out/dmesg.txt || echo "no oom or crash lines in the kernel log"
           free -m
       - name: Keep the outputs
         if: always()
