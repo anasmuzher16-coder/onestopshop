@@ -37,6 +37,7 @@ function describe(path, cat, site) {
     if (!n) return { title: `${c.name} | ${site}`, desc: `${c.name}: coming soon to our site. Call 519-255-2222 to ask what is on the shelf today.`, index: false };
     // nothing in this section can be bought yet: say what stage it is at, never "in stock"
     if (n && !list.some(sellable)) return { title: `${c.name} | ${site}`, desc: list.some(p => p.price_cents > 0) ? `${n} ${c.name.toLowerCase()} coming soon to our Windsor counter.` : `${n} ${c.name.toLowerCase()} from the catalogue. Shop prices are on the way.`, index: true };
+    if (n && list.every(counterPayRow)) return { title: `${c.name} | ${site}`, desc: `${n} ${c.name.toLowerCase()} at our Windsor counter. Pickup, paid in the shop.`, index: true };   // shisha while card payment for it waits on approval
     return { title: `${c.name} | ${site}`, desc: counter ? `${n} ${c.id === CHARCOAL ? "kinds of hookah charcoal" : c.id === "heat" ? "foil and heat items" : c.name.toLowerCase()} at our Windsor counter. Pickup or local delivery only.` : `${n} ${c.id === "heat" ? "foil and heat items" : c.name.toLowerCase()} at our Windsor counter, shipped across Canada except Quebec, for now.`, index: true };   // never "in stock": the count includes sold-out items
   }
   if (a === "p") {
@@ -148,17 +149,23 @@ function demoNoindex(r, env, request) {
   if (liveHere(env, new URL(request.url)) || r.headers.get("X-Robots-Tag")) return r;
   const out = new Response(r.body, r); out.headers.set("X-Robots-Tag", "noindex, nofollow"); return out;
 }
-const INTAKE = "YL9eEO5a";   // the questionnaire's private link: /intake/YL9eEO5a
+const INTAKE = "ij9A2jg3vBRk";   // the questionnaire's private link: /intake/ij9A2jg3vBRk
 async function intakeSave(request, env) {
   if (request.method !== "POST") return json({ error: "Method not allowed" }, 405);
+  const site = request.headers.get("Sec-Fetch-Site"), origin = request.headers.get("Origin");
+  if ((site && site !== "same-origin") || (origin && origin !== new URL(request.url).origin)) return json({ error: "Wrong origin." }, 403);
+  if (!(request.headers.get("Content-Type") || "").startsWith("application/json")) return json({ error: "Send it from the questionnaire page." }, 415);
   if (+(request.headers.get("content-length") || 0) > 200000) return json({ error: "That is too long to send" }, 413);
   // read at most 200 KB whatever the headers say (a body sent in chunks has no length to check)
   const reader = request.body?.getReader(), parts = []; let size = 0;
   if (!reader) return json({ error: "Nothing to save" }, 400);
   for (;;) { const { done, value } = await reader.read(); if (done) break; size += value.byteLength; if (size > 200000) { try { await reader.cancel(); } catch {} return json({ error: "That is too long to send" }, 413); } parts.push(value); }
   let body; try { body = JSON.parse(new TextDecoder().decode(await new Blob(parts).arrayBuffer())); } catch { return json({ error: "That did not arrive whole" }, 400); }
-  if (!body || typeof body.answers !== "object" || Array.isArray(body.answers)) return json({ error: "Nothing to save" }, 400);
-  const text = JSON.stringify({ ...body, receivedAt: new Date().toISOString() });
+  if (!body || typeof body.answers !== "object" || body.answers === null || Array.isArray(body.answers)) return json({ error: "Nothing to save" }, 400);
+  const plain = v => typeof v === "string" ? v.slice(0, 20000) : v === true ? true : Array.isArray(v) ? v.slice(0, 50).map(x => String(x).slice(0, 120)) : String(v ?? "").slice(0, 2000);
+  const answers = Object.fromEntries(Object.entries(body.answers).slice(0, 600).filter(([k]) => /^[\w-]{1,60}$/.test(k)).map(([k, v]) => [k, plain(v)]));
+  const rows = (Array.isArray(body.rows) ? body.rows : []).filter(r => r && typeof r === "object" && typeof r.key === "string" && /^[\w-]{1,60}$/.test(r.key)).slice(0, 600).map(r => ({ key: r.key, ...(typeof r.item === "string" ? { item: r.item.slice(0, 120) } : {}), value: plain(r.value) }));
+  const text = JSON.stringify({ answers, rows, sentAt: typeof body.sentAt === "string" ? body.sentAt.slice(0, 40) : null, receivedAt: new Date().toISOString() });
   await env.BACKUPS.put(`intake/${new Date().toISOString().replace(/[:.]/g, "-")}-${crypto.randomUUID().slice(0, 8)}.json`, text, { httpMetadata: { contentType: "application/json" } });
   await env.BACKUPS.put("intake/latest.json", text, { httpMetadata: { contentType: "application/json" } });   // the newest send, at a name that never changes
   return json({ ok: true });
@@ -222,6 +229,7 @@ async function route(request, env, ctx) {
       if (path === "/index.html") return Response.redirect(url.origin + "/", 301);
       { const to = charcoalMoved(url); if (to) return new Response(null, { status: 301, headers: { ...SECURITY, Location: url.origin + to, "Cache-Control": "public, max-age=86400" } }); }
       const lower = path.match(/^\/p\/([A-Za-z]+-\d+)\/?$/); if (lower && lower[1] !== lower[1].toUpperCase()) return Response.redirect(`${url.origin}/p/${lower[1].toUpperCase()}`, 301);   // an item number typed in small letters
+      if (path === "/intake.html") return new Response("Not found", { status: 404, headers: SECURITY });   // the questionnaire is only at its link
       if (/\.[a-z0-9]{2,5}$/i.test(path)) return env.ASSETS.fetch(request); // a file that is not there: plain 404
       if (request.method !== "GET" && request.method !== "HEAD") return new Response("Method not allowed", { status: 405 });
       return await page(request, env, url, ctx);

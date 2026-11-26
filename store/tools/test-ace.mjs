@@ -61,6 +61,8 @@ ok(/og:description" content="[^"]*Not shipped/.test(foilPage) && !/Shipped acros
 const shishaPage = await (await fetch(B + "/p/OSS-9601")).text();
 ok(/og:description" content="[^"]*Pickup in Windsor, paid in the shop/.test(shishaPage) && !/Shipped across Canada/.test(shishaPage) && !/ParcelService/.test(shishaPage), "a shisha page says pickup, paid in the shop, never shipped");
 ok(feed.products.filter(p => /^OSS-96/.test(p.sku)).every(p => p.ship_class === "pickup_only"), "the feed says shisha is pickup while it is paid at the counter");
+const shishaSec = await (await fetch(B + "/shop/shisha")).text();
+ok(/name="description" content="[^"]*Pickup, paid in the shop/.test(shishaSec) && !/shipped across Canada/i.test(shishaSec.match(/name="description" content="[^"]*/)?.[0] || ""), "the Shisha section says pickup, paid in the shop");
 ok(/name="description" content="69 kinds of hookah charcoal[^"]*Pickup or local delivery only/.test(coalPage), "the Charcoal section says pickup or local delivery only");
 // Heat holds only the 15 foil packs since the sample heat pieces came off (2026-11-24); their weight is TBD, so the section is
 // pickup or local delivery, and says so. It says "shipped" again once anything in it can ship.

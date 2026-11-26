@@ -321,8 +321,9 @@ function viewOffice(r, staff, settings, intake) {
 // the shop's questionnaire (the private /intake page): the newest send, read here so nobody digs through storage
 function intakeView(q) {
   if (!q || !q.sends) return "";
-  if (!q.sends.length) return `<section class="wide"><h2 class="h2">Shop answers</h2><p class="empty">No answers sent yet. The questionnaire link is /intake/YL9eEO5a.</p></section>`;
-  const rows = (q.latest && Array.isArray(q.latest.rows) ? q.latest.rows : []).map(r => `<tr><td>${esc(r.item ? r.item + " (" + r.key.replace(/-OSS-\d+$/, "") + ")" : r.key)}</td><td>${esc(Array.isArray(r.value) ? r.value.join(", ") : r.value === true ? "yes" : String(r.value))}</td></tr>`).join("");
+  if (!q.sends.length) return `<section class="wide"><h2 class="h2">Shop answers</h2><p class="empty">No answers sent yet.</p></section>`;
+  // what was stored is never trusted: a row that is not a plain object with a text key is skipped, never allowed to break the tab
+  const rows = (q.latest && Array.isArray(q.latest.rows) ? q.latest.rows : []).filter(r => r && typeof r === "object" && typeof r.key === "string").slice(0, 500).map(r => { const k = r.key.slice(0, 80), v = Array.isArray(r.value) ? r.value.map(String).join(", ") : r.value === true ? "yes" : String(r.value ?? ""); return `<tr><td>${esc(typeof r.item === "string" ? r.item.slice(0, 120) + " (" + k.replace(/-OSS-\d+$/, "") + ")" : k)}</td><td>${esc(v.slice(0, 2000))}</td></tr>`; }).join("");
   return `<section class="wide"><h2 class="h2">Shop answers</h2><p class="fineprint">${q.sends.filter(x => x.key !== "intake/latest.json").length} sends. Newest${q.latest?.receivedAt ? ", " + when(q.latest.receivedAt) : ""}:</p>
     <table class="ledger"><thead><tr><th scope="col">Question</th><th scope="col">Answer</th></tr></thead><tbody>${rows || `<tr><td colspan="2">The newest send could not be read.</td></tr>`}</tbody></table></section>`;
 }
@@ -337,7 +338,7 @@ async function render() {
   chrome();
   if (state.tab === "stock") main.innerHTML = viewStock();
   else if (state.tab === "orders") main.innerHTML = viewOrders();
-  else if (state.tab === "office" && state.me.owner) { const [r, st, se, iq] = await Promise.all([api("/report?month=" + (state.month || "")), api("/staff"), api("/settings"), api("/intake").catch(() => null)]); const latest = iq?.sends?.some(x => x.key === "intake/latest.json") ? await api("/intake?key=intake/latest.json").catch(() => null) : null; state.month = r.month; if (state.tab === "office") main.innerHTML = viewOffice(r, st.staff, se.settings, iq && { ...iq, latest }); }
+  else if (state.tab === "office" && state.me.owner) { const [r, st, se, iq] = await Promise.all([api("/report?month=" + (state.month || "")), api("/staff"), api("/settings"), api("/intake").catch(() => null)]); const latest = iq?.sends?.some(x => x.key === "intake/latest.json") ? await api("/intake?key=intake/latest.json").catch(() => null) : null; state.month = r.month; if (state.tab === "office") { let extra = iq && { ...iq, latest }; try { intakeView(extra); } catch { extra = null; } main.innerHTML = viewOffice(r, st.staff, se.settings, extra); } }
   else { const s = await api("/summary"); if (state.tab === "home") main.innerHTML = viewHome(s); }
 }
 async function boot() {

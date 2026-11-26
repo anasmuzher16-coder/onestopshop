@@ -34,6 +34,11 @@ try {
     t("C3 an unpriced hookah names its unknowns once, in one row", tbds === 1 && /Still to come/.test(m) && /Price TBD|PRICE TBD/i.test(m), "spec TBDs " + tbds);
     t("C3 the colour line names the colour without its own TBD", !(await p.locator(".swatches__n .tbd").count()));
     t("C3 one Ask the counter on a phone", (await p.locator('a:visible:has-text("Ask the counter")').count()) === 1);
+    // a section that never ships does not ask how to send it (design review, 2026-11-26)
+    const { c: c4, p: p4 } = await open({});
+    for (const sec of ["charcoal", "shisha", "heat"]) { await go(p4, "/shop/" + sec); t(`C4 ${sec}: no delivery chooser`, await p4.locator("[data-delivery-strip]").isHidden()); }
+    await go(p4, "/shop"); t("C4 the shop front still asks how to send it", await p4.locator("[data-delivery-strip]").isVisible());
+    await c4.close();
     t("C no page errors", !p.errs.length, p.errs.join(" | "));
     await c.close();
   }

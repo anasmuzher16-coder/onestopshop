@@ -10,11 +10,15 @@ const want = { "/": 200, "/shop": 200, "/shop/hookahs": 200, "/shop/nope": 404, 
 for (const [p, code] of Object.entries(want)) { const { r } = await get(p); ok(r.status === code, `${p} gave ${r.status}, wanted ${code}`); }
 
 // the shop's questionnaire (2026-11-25): its private page, and a Send that only takes JSON, never a GET
-{ const q = await get("/intake/YL9eEO5a"); ok(q.r.status === 200 && /Before the site goes live/.test(q.t) && q.r.headers.get("x-robots-tag") === "noindex, nofollow", "intake page: " + q.r.status);
+{ const q = await get("/intake/ij9A2jg3vBRk"); ok(q.r.status === 200 && /Before the site goes live/.test(q.t) && q.r.headers.get("x-robots-tag") === "noindex, nofollow", "intake page: " + q.r.status);
   ok((await get("/intake/nope")).r.status === 404, "a wrong intake link is a 404");
-  ok((await get("/api/intake/YL9eEO5a")).r.status === 405, "intake send refuses a GET");
-  const bad = await fetch(B + "/api/intake/YL9eEO5a", { method: "POST", body: "not json", signal: AbortSignal.timeout(15000) }); ok(bad.status === 400, "intake send refuses a broken body: " + bad.status);
-  const big = await fetch(B + "/api/intake/YL9eEO5a", { method: "POST", body: JSON.stringify({ answers: { x: "y".repeat(210000) } }), signal: AbortSignal.timeout(15000) }); ok(big.status === 413, "intake send refuses an oversized body: " + big.status); }
+  ok((await get("/api/intake/ij9A2jg3vBRk")).r.status === 405, "intake send refuses a GET");
+  const bad = await fetch(B + "/api/intake/ij9A2jg3vBRk", { method: "POST", headers: { "Content-Type": "application/json" }, body: "not json", signal: AbortSignal.timeout(15000) }); ok(bad.status === 400, "intake send refuses a broken body: " + bad.status);
+  const form = await fetch(B + "/api/intake/ij9A2jg3vBRk", { method: "POST", body: "a=b", signal: AbortSignal.timeout(15000) }); ok(form.status === 415, "intake send refuses a plain form post: " + form.status);
+  const away = await fetch(B + "/api/intake/ij9A2jg3vBRk", { method: "POST", headers: { "Content-Type": "application/json", Origin: "https://example.com" }, body: "{}", signal: AbortSignal.timeout(15000) }); ok(away.status === 403, "intake send refuses another site: " + away.status);
+  const big = await fetch(B + "/api/intake/ij9A2jg3vBRk", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ answers: { x: "y".repeat(210000) } }), signal: AbortSignal.timeout(15000) }); ok(big.status === 413, "intake send refuses an oversized body: " + big.status);
+  ok((await get("/intake.html")).r.status === 404, "the questionnaire file is not reachable without its link");
+  ok(!(await get("/admin.js")).t.includes("ij9A2jg3vBRk"), "the questionnaire link is not printed in a public file"); }
 // the sample hookahs are retired (2026-11-24): a real product on sale (a shisha flavour) carries these checks now
 const prod = await get("/p/OSS-9601"), h = prod.r.headers;
 ok(/<title>Zanobia Herbal Molasses Double Apple, 250 g \| One Stop Shop<\/title>/.test(prod.t), "product title: " + (prod.t.match(/<title>[^<]*/) || [""])[0]);

@@ -482,12 +482,12 @@ function viewProduct(sku) {
   const n = parseInt(p.sku.slice(-3), 10), nth = (c, k) => { const l = liveCat(c); return l.length ? l[(n + k) % l.length] : null; };
   const goes = p.cat === "hookahs" ? [nth("bowls", 0), nth("charcoal", 1), nth("hoses", 2), nth("parts", 3)].filter(Boolean) : [];
   // a hookah family's colours: each chip shows its colour and swaps the photo; a name the shop has not confirmed is never stated as fact
-  const chips = fam.length > 1 ? `<p class="swatches__n" id="colour-h">Colour <b data-colour-name ${p.colour ? "" : "hidden"}>${esc(p.colour || "")}</b> <span class="num">${fam.indexOf(p) + 1} of ${fam.length}</span></p>
+  const chips = fam.length > 1 ? `<p class="swatches__n" id="colour-h">Colour <b data-colour-name ${p.named ? "" : "hidden"}>${esc(p.named ? p.colour : "")}</b> <span class="num">${fam.indexOf(p) + 1} of ${fam.length}</span></p>
       ${swatchGroup(fam, p, { label: "Colour" })}` : "";
   const sold = isSold(p);
   return `
   <article class="pdp" data-tone="${toneOf(p)}" data-cat="${p.cat}">
-    <div data-stage="${p.sku}" class="pdp__tile tile ${p.dark || p.photo ? "tile--photo" : ""}">${p.family ? colourShot(p, { eager: true, alt: p.colour ? `${p.name}, ${p.colour}` : p.name }) : colourShot(p, { eager: true, alt: p.name })}${sticker(p, { big: true })}</div>
+    <div data-stage="${p.sku}" class="pdp__tile tile ${p.dark || p.photo ? "tile--photo" : ""}">${p.family ? colourShot(p, { eager: true, alt: p.named && p.colour ? `${p.name}, ${p.colour}` : p.name }) : colourShot(p, { eager: true, alt: p.name })}${sticker(p, { big: true })}</div>
     <div class="pdp__info">
       <p class="crumb"><a href="/shop/${p.cat}">${c.name}</a></p>
       <h1 class="pdp__name${p.name.length > 30 ? " pdp__name--long" : ""}">${esc(p.name)}</h1>
@@ -657,7 +657,10 @@ function deliveryLine(p, opts) {
 }
 function syncDelivery() {
   const box = $("[data-delivery-strip]"), btn = $(".dstrip__btn", box), on = route().replace(/^#\/?/, "").split("/")[0], answered = !!state.reach || (!!state.dest && (state.dest.complete || !localArea(state.dest))),
-    choosing = on === "shop" && !answered && !store.get("choose-off"), show = choosing || (!["cart", "checkout", "order", "shop", "p"].includes(on) && !answered && !store.get("strip-off"));   // gone once we have their answer, or once they close it. The product page and cart can still take one
+    // a section that never ships (charcoal: pickup or local; shisha: paid at the counter, so pickup) never asks how to send it (design review, 2026-11-26)
+    sec = route().replace(/^#\/?/, "").split("/")[1] || "", card = document.querySelector('meta[name="oss-shisha-card"]')?.content === "1", forSec = PRODUCTS.filter(p => p.cat === sec && p.state === "sale"),
+    neverShips = on === "shop" && forSec.length > 0 && forSec.every(p => localOnly(p) || ((p.cat === "shisha" || p.details?.tobacco) && !card)),
+    choosing = on === "shop" && !neverShips && !answered && !store.get("choose-off"), show = !neverShips &&choosing || (!["cart", "checkout", "order", "shop", "p"].includes(on) && !answered && !store.get("strip-off"));   // gone once we have their answer, or once they close it. The product page and cart can still take one
   box.hidden = !show; box.dataset.mode = choosing ? "choose" : "slim"; btn.hidden = choosing; $(".dchoose", box).hidden = !choosing;
   btn.toggleAttribute("data-open-postal", show && !choosing);   // a hidden strip must never be the control that opens the sheet
   if (!show || choosing) return;
@@ -848,7 +851,7 @@ function pickColour(btn, focus) {
   if (forSale(v) || forSale(was)) { render(); const b = $(`[data-swatch="${v.sku}"]`); if (b && focus) b.focus(); return; }
   stage.dataset.stage = v.sku;
   paintColour(stage, v, v.colour ? `${v.name}, ${v.colour}` : v.name);
-  const name = $("[data-colour-name]"); if (name) { name.textContent = v.colour || ""; name.hidden = !v.colour; name.nextElementSibling.textContent = `${familyOf(v).indexOf(v) + 1} of ${familyOf(v).length}`; }
+  const name = $("[data-colour-name]"); if (name) { name.textContent = v.named ? v.colour : ""; name.hidden = !v.named;   /* a colour the shop has not confirmed is never named as fact */ name.nextElementSibling.textContent = `${familyOf(v).indexOf(v) + 1} of ${familyOf(v).length}`; }
   // the address and the share link name the colour (set above); the page itself is the same piece, so history gets no new entry
 }
 // Arrow keys move through the colours like any radio group; Home and End jump to the ends.
