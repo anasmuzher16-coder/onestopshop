@@ -504,6 +504,17 @@ class TestAceAccessories(Base):
         none = [f["page"] for f, v in C.iter_variants(self.acc) if not v["photo"]["img"]]
         self.assertEqual(none, [83])
 
+    def test_workbook_names_every_accessory(self):
+        import openpyxl
+        p = Path(self.tmp.name) / "wb.xlsx"
+        sheet.write_workbook(p, {s: C.load_master(s) for s in C.BLOCKS if C.load_master(s)})
+        wb = openpyxl.load_workbook(p)
+        self.assertIn("Catalogue Ace accessories", wb.sheetnames)
+        rows = [[c.value for c in r] for r in wb["Answers"].iter_rows(min_row=2)]
+        acc = [r for r in rows if str(r[0]).startswith("OSS-11")]
+        self.assertEqual(len(acc), 39)
+        self.assertTrue(all(r[2] for r in acc))   # the shop can see what it is pricing
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=1)

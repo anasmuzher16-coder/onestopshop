@@ -41,18 +41,23 @@ const m = await import("data:text/javascript;base64," + Buffer.from(mod.t).toStr
 const ref = await import("../../site/catalog.js");
 const { SAMPLE_SKUS } = await import("../src/samples.js");
 // Every made-up sample is off since 2026-11-24 (owner: "Hide samples, show coming soon"). What is on view is the real stock:
-// 69 charcoal items, 15 foil packs (Heat), 47 shisha flavours, 296 Ace colours (Price TBD). All ten sections stay; the ones
-// left with nothing say "stock arriving soon".
+// 69 charcoal items, 15 foil packs (Heat), 47 shisha flavours, 296 Ace colours (Price TBD), 39 Ace accessories the shop
+// ticked (Price TBD, 2026-11-26). All ten sections stay; the ones left with nothing say "stock arriving soon".
 const coal = m.PRODUCTS.filter(p => p.cat === "charcoal"), heat = m.PRODUCTS.filter(p => p.cat === "heat"), foil = heat.filter(p => /foil/i.test(p.name));
-ok(m.PRODUCTS.length === 69 + 15 + 47 + 296 && m.CATEGORIES.length === ref.CATEGORIES.length + 4, `catalogue size ${m.PRODUCTS.length}/${69 + 15 + 47 + 296}, sections ${m.CATEGORIES.length}`);
+const acc = m.PRODUCTS.filter(p => p.acc), accBy = id => acc.filter(p => p.cat === id).length;
+ok(m.PRODUCTS.length === 69 + 15 + 47 + 296 + 39 && m.CATEGORIES.length === ref.CATEGORIES.length + 4, `catalogue size ${m.PRODUCTS.length}/${69 + 15 + 47 + 296 + 39}, sections ${m.CATEGORIES.length}`);
+ok(acc.length === 39 && accBy("heat") === 18 && accBy("bowls") === 8 && accBy("hoses") === 5 && accBy("bases") === 5 && accBy("parts") === 3 && accBy("charcoal") === 0,
+  `39 Ace accessories in their sections, none in Charcoal: ${["heat", "bowls", "hoses", "bases", "parts", "charcoal"].map(id => id + " " + accBy(id)).join(", ")}`);
+ok(acc.every(p => p.state === "tbd" && p.price === null && p.stock === 0 && p.weightTbd && !p.family && !/QUASAR|QAUSAR|HUQQABAZ|T-SAR/i.test(p.name)),
+  "every accessory: Price TBD, no price, nothing to sell, weight TBD (pickup or local once priced, like the hookahs), one card each, no other maker's name");
 ok(m.CATEGORIES.findIndex(c => c.id === "charcoal") === m.CATEGORIES.findIndex(c => c.id === "heat") + 1, "Charcoal sits right after Heat");
 ok(foil.length === 15 && foil.every(p => p.state === "sale" && p.ship === "pickup_only" && p.weightTbd), "15 foil packs: on sale, pickup or local delivery while their weight is TBD");
 ok(!m.PRODUCTS.some(p => SAMPLE_SKUS.has(p.sku)) && SAMPLE_SKUS.size === 100 && !SAMPLE_SKUS.has("OSS-7009"), "no made-up sample is left in the catalogue (100 sample numbers, never 7009, the back office's next cologne; 98 are in this database, kept and switched off)");
 ok(ref.PRODUCTS.every(a => SAMPLE_SKUS.has(a.sku)), "every row of the mockup's sample file is in the samples list");
-ok(coal.length === 69 && heat.length === 15 && !heat.some(p => p.details.charcoal), `Charcoal holds the 69 charcoal items; Heat holds the 15 foil packs and no charcoal: ${coal.length}/${heat.length}`);
+ok(coal.length === 69 && heat.length === 15 + 18 && foil.length === 15 && !heat.some(p => p.details.charcoal), `Charcoal holds the 69 charcoal items; Heat holds the 15 foil packs, 18 accessories and no charcoal: ${coal.length}/${heat.length}`);
 // the sections the samples leave empty: still there, answering 200, saying the stock is on its way and the phone, kept out of search
 const empty = m.CATEGORIES.filter(c => !m.PRODUCTS.some(p => p.cat === c.id)).map(c => c.id);
-ok(["bases", "bowls", "hoses", "parts", "cologne", "misc"].every(id => empty.includes(id)) && empty.length === 6, "six sections wait for their stock: " + empty.join(","));
+ok(["cologne", "misc"].every(id => empty.includes(id)) && empty.length === 2, "two sections wait for their stock (Bases, Bowls, Hoses and Parts have Ace accessories since 2026-11-26): " + empty.join(","));
 for (const id of empty) { const s = await get("/shop/" + id); ok(s.r.status === 200 && /coming soon to our site/i.test(s.t) && /tel:\+15192552222/.test(s.t) && /<meta name="robots" content="noindex, nofollow">/.test(s.t) && !/"@type":"(ItemList|Product)"/.test(s.t), `/shop/${id}: 200, says coming soon to our site with the phone, noindex, no product data`); }
 // every switched-off sample's old address goes to its own section, which says what is coming (one request each)
 { const all = [...SAMPLE_SKUS]; let wrong = [];

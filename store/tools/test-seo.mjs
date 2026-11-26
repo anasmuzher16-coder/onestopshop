@@ -214,8 +214,11 @@ ok(locs.includes("https://shop.example.ca/set"), "sitemap: /set while a bowl is 
   const lists = [...sql.matchAll(/sku IN \(([^)]*)\)/g)].map(x => [...x[1].matchAll(/'(OSS-\d+)'/g)].map(y => y[1]).sort().join(","));
   const want = [...SAMPLE_SKUS].filter(s => !/^OSS-1/.test(s)).sort().join(",");
   ok(lists.length === 2 && lists.every(l => l === want) && want.split(",").length === 64, "samples-off SQL switches off exactly the 64 non-hookah sample numbers of src/samples.js, in both statements"); }
-// an empty section (all six since 2026-11-24) answers 200, says noindex and the stock is coming, and is not in the demo's page data as a list of products
-{ const e = await get("/shop/bowls"); ok(e.r.status === 200 && /<meta name="robots" content="noindex, nofollow">/.test(e.t) && /Bowls: coming soon to our site/.test(e.t) && !/"ItemList"/.test(e.t), "an empty section: 200, noindex, says it is coming soon to the site"); }
+// an empty section (Cologne and Misc since 2026-11-26; Bowls and the rest hold Ace accessories) answers 200, says noindex and
+// the stock is coming, and is not in the demo's page data as a list of products
+{ const e = await get("/shop/misc"); ok(e.r.status === 200 && /<meta name="robots" content="noindex, nofollow">/.test(e.t) && /Misc: coming soon to our site/.test(e.t) && !/"ItemList"/.test(e.t), "an empty section: 200, noindex, says it is coming soon to the site"); }
+// a section holding only Price TBD accessories: a real page with its items, and no price or "in stock" offer in its data
+{ const b = await get("/shop/bowls"); ok(b.r.status === 200 && !/Bowls: coming soon to our site/.test(b.t) && !/"price"\s*:/.test(b.t) && !/InStock/.test(b.t), "Bowls (Ace accessories, Price TBD): a real section page, no price or in-stock offer in its data"); }
 
 // ---------- 8 a second store started with LIVE "1" (optional) ----------
 if (BL) {
@@ -223,7 +226,7 @@ if (BL) {
   ok(!/name="robots"/.test(h.t) && !h.r.headers.get("x-robots-tag"), "live: the home page can be indexed");
   ok(!/name="robots"/.test(p.t) && !p.r.headers.get("x-robots-tag"), "live: a product page can be indexed");
   // an empty section (2026-11-24) and a set that cannot be built stay noindex when live
-  for (const q of ["/account", "/cart", "/checkout", "/search", "/order/WABCDEF", "/gifts/under-50", "/shop/bowls", ...(sm2.t.includes("/set</loc>") ? [] : ["/set"])]) { const g = await get(q, BL); ok(/noindex/.test(g.r.headers.get("x-robots-tag") || "") && /<meta name="robots" content="noindex/.test(g.t), "live: still noindex " + q); }
+  for (const q of ["/account", "/cart", "/checkout", "/search", "/order/WABCDEF", "/gifts/under-50", "/shop/misc", ...(sm2.t.includes("/set</loc>") ? [] : ["/set"])]) { const g = await get(q, BL); ok(/noindex/.test(g.r.headers.get("x-robots-tag") || "") && /<meta name="robots" content="noindex/.test(g.t), "live: still noindex " + q); }
   ok((await get("/admin", BL)).r.headers.get("x-robots-tag") === "noindex, nofollow", "live: the back office stays noindex");
   ok(sm2.r.status === 200 && /<urlset/.test(sm2.t) && !/\/(cart|checkout|account|admin|gifts)/.test(sm2.t) && rb2.t.includes(`Sitemap: ${BL}/sitemap.xml`), "live: sitemap served and named in robots.txt");
   const locs2 = [...sm2.t.matchAll(/<loc>([^<]+)<\/loc>/g)].map(x => x[1].replace(BL, ""));

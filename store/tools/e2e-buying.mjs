@@ -55,7 +55,7 @@ try {
     await go(p, "/cart"); const news = await p.locator("[data-cart-news]").innerText().catch(() => ""), saved = await cart(p);
     t("1b the sample is taken out of the saved cart", !saved.some(l => l.sku === "OSS-2001") && saved.some(l => l.sku === "OSS-8004"), JSON.stringify(saved));
     t("1b the cart says so, beside the sold-out note", /no longer sold online/.test(news) && /has sold/.test(news), news);
-    await go(p, "/p/OSS-2001"); t("1b its old address lands on its section", new URL(p.url()).pathname === "/shop/bases" && /Coming soon to the site/.test(await main(p)), p.url());
+    await go(p, "/p/OSS-2001"); t("1b its old address lands on its section", new URL(p.url()).pathname === "/shop/bases" && /Price\s*TBD|TBD/.test(await main(p)), p.url());   // Bases holds Ace accessories (Price TBD) since 2026-11-26
     t("1b no page errors", !p.errs.length, p.errs.join(" | ")); await c.close();
   }
   { // 2 and 3 stock limits; a sold-out flavour cannot be bought from any saved cart (the sample Resin Bishop was retired 2026-11-24)

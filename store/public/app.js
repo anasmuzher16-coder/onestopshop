@@ -452,7 +452,7 @@ function counterSpec(p) {
 function factsSpec(p, fam) {
   const f = p.facts || {}, named = fam.every(v => v.named), base = f.includes_base === true ? "Included" : f.includes_base === false ? "Not included: stem set, no base" : null;
   // the shop's unknowns are said once, together, as TBD: never guessed, never left out, never one TBD per row (council, 2026-11-25)
-  const open = [p.family && base === null && "base", p.family && !f.height_cm && "height", p.family && !named && (fam.length > 1 ? "colour names" : "colour name"), p.acc && "size, weight and colours", "stock count"].filter(Boolean);
+  const open = [p.family && base === null && "base", p.family && !f.height_cm && "height", p.family && !named && (fam.length > 1 ? "colour names" : "colour name"), ...(p.acc ? ["size", "weight", "colours"] : []), "stock count"].filter(Boolean);
   const list = open.length > 1 ? open.slice(0, -1).join(", ") + " and " + open.at(-1) : open[0];
   return `<section class="spec" aria-labelledby="spec-h">
         <h2 class="h3" id="spec-h">Details</h2>
