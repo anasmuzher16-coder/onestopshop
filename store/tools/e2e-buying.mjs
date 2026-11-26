@@ -91,7 +91,7 @@ try {
   { // 11 sold pieces are not promoted
     const { c, p } = await open(); await go(p, "/");
     t("11 home picks hold no sold piece and stay full", await p.locator(".shelf .grid .sticker--sold").count() === 0 && await p.locator(".shelf .grid .card").count() === 8);
-    for (const r of ["/shop", "/shop/shisha"]) { /* Gifts is gone (owner, 2026-11-26): the same check on the whole shop */ await go(p, r); t("11 no sold piece on " + r, await p.locator(".sticker--sold").count() === 0); }
+    /* 11 (no sold piece on the gift pages) retired with the Gifts section, owner 2026-11-26 */
     await c.close();
   }
   { // 12 a missing order is not dressed as a real one

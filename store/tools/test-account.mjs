@@ -271,7 +271,7 @@ const rep7 = (await adm("/report")).data.refunds;
 ok((await adm(`/orders/${e6id}/counter-refund`, "POST", { op: opKey(), reason: "returned" })).status === 409 && (await adm("/report")).data.refunds.total === rep7.total, "a cancelled order takes no counter refund: the report already counts it given back, and stays as it was");
 // part given back at the till, then a cancel: the cancel is refused (it would count the order whole while only the part
 // is on the report, and lock the rest out), and the rest can still be recorded as a counter refund
-const e7 = await order({ name: "Erin", email: erinEmail, method: "pickup", pay: "at_pickup", lines: [{ sku: mid.sku, qty: 1 }] }, erin), e7id = e7.data.order.id;
+const e7 = await order({ name: "Erin", email: erinEmail, method: "pickup", pay: "at_pickup", lines: [{ sku: mid.sku, qty: 1 }] }, erin); ok(e7.data && e7.data.order, "Erin's order placed: " + e7.status + " " + JSON.stringify(e7.data).slice(0, 240)); if (!e7.data?.order) { console.log(`FAIL ${f}/${n}`); process.exit(1); } const e7id = e7.data.order.id;
 for (const step of [["status", { status: "ready" }], ["paid", {}]]) await adm(`/orders/${e7id}/${step[0]}`, "POST", step[1]);
 const paid7 = sql(`SELECT paid_cents FROM orders WHERE id = '${e7id}'`)[0].paid_cents, stock7 = sql(`SELECT stock FROM products WHERE sku = '${mid.sku}'`)[0].stock;
 const cr7 = await adm(`/orders/${e7id}/counter-refund`, "POST", { op: opKey(), amount_cents: Math.floor(paid7 / 2), reason: "one returned" });
