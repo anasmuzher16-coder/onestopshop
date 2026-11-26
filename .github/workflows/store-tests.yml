@@ -19,7 +19,7 @@ jobs:
       matrix:
         include:
           - shard: server
-            suites: smoke-http test-admin test-backoffice test-ops test-orders test-quality test-checkout test-delivery test-payments test-account test-ace test-find test-seo
+            suites: smoke-http test-admin test-backoffice test-ops test-orders test-quality test-checkout test-delivery test-payments test-account test-ace test-find test-seo test-golive
           - shard: buying
             suites: e2e e2e-buying e2e-delivery e2e-flow
           - shard: pages

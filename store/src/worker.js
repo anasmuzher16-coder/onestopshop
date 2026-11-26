@@ -114,7 +114,7 @@ async function page(request, env, url, ctx) {
   headers.set("Content-Type", "text/html; charset=utf-8");
   headers.set("Cache-Control", "no-cache");
   if (url.pathname.startsWith("/account")) headers.set("Referrer-Policy", "no-referrer");   // sign-in and unsubscribe links never leak onward
-  if (!(live && meta.index)) headers.set("X-Robots-Tag", "noindex, nofollow"); else headers.delete("X-Robots-Tag");   // _headers marks everything noindex for the demo; a live, indexable page must drop it
+  if (!(live && meta.index)) headers.set("X-Robots-Tag", "noindex, nofollow"); else headers.delete("X-Robots-Tag");   // the shell came from the static files: a live, indexable page must never carry a copied noindex
   return new Response(out.body, { status: d ? 200 : 404, headers });
 }
 // The public catalogue feed: what a shopper can already see, nothing more. Research notes, photo rights, source lines
@@ -152,7 +152,7 @@ export default {
   async fetch(request, env, ctx) { setShishaCard(env.STRIPE_TOBACCO_OK); return demoNoindex(await route(request, env, ctx), env, request); },
 };
 // While the shop is not live on this address, every answer says noindex: redirects, errors, API answers and uploaded
-// photos too (the static files get it from public/_headers). A page sets its own header in page().
+// photos too (static files on the workers.dev addresses get it from public/_headers). A page sets its own header in page().
 function demoNoindex(r, env, request) {
   if (liveHere(env, new URL(request.url)) || r.headers.get("X-Robots-Tag")) return r;
   const out = new Response(r.body, r); out.headers.set("X-Robots-Tag", "noindex, nofollow"); return out;
