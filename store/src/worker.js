@@ -148,6 +148,20 @@ function demoNoindex(r, env, request) {
   if (liveHere(env, new URL(request.url)) || r.headers.get("X-Robots-Tag")) return r;
   const out = new Response(r.body, r); out.headers.set("X-Robots-Tag", "noindex, nofollow"); return out;
 }
+const INTAKE = "YL9eEO5a";   // the questionnaire's private link: /intake/YL9eEO5a
+async function intakeSave(request, env) {
+  if (request.method !== "POST") return json({ error: "Method not allowed" }, 405);
+  if (+(request.headers.get("content-length") || 0) > 200000) return json({ error: "That is too long to send" }, 413);
+  // read at most 200 KB whatever the headers say (a body sent in chunks has no length to check)
+  const reader = request.body?.getReader(), parts = []; let size = 0;
+  if (!reader) return json({ error: "Nothing to save" }, 400);
+  for (;;) { const { done, value } = await reader.read(); if (done) break; size += value.byteLength; if (size > 200000) { try { await reader.cancel(); } catch {} return json({ error: "That is too long to send" }, 413); } parts.push(value); }
+  let body; try { body = JSON.parse(new TextDecoder().decode(await new Blob(parts).arrayBuffer())); } catch { return json({ error: "That did not arrive whole" }, 400); }
+  if (!body || typeof body.answers !== "object" || Array.isArray(body.answers)) return json({ error: "Nothing to save" }, 400);
+  const text = JSON.stringify({ ...body, receivedAt: new Date().toISOString() });
+  await env.BACKUPS.put(`intake/${new Date().toISOString().replace(/[:.]/g, "-")}-${crypto.randomUUID().slice(0, 8)}.json`, text, { httpMetadata: { contentType: "application/json" } });
+  return json({ ok: true });
+}
 async function route(request, env, ctx) {
     const url = new URL(request.url);
     const path = url.pathname;
@@ -180,6 +194,15 @@ async function route(request, env, ctx) {
       if (path === "/api/pay/webhook") { const r = await webhook(request, env); if (r.ok) dropCatalog(ctx); return r; }   // Stripe calls this; the signature is the only way in
       if (path === "/api/pay/status") return await payStatus(request, env, url);
       const ph = path.match(/^\/api\/photo\/(OSS-\d{4,6})$/); if (ph && (request.method === "GET" || request.method === "HEAD")) { const r = await photo(env, ph[1]); return request.method === "HEAD" ? new Response(null, r) : r; }   // link-preview crawlers often ask HEAD first
+      // the shop's questionnaire (2026-11-25): a private link, one page; each Send is kept as its own file in the backups bucket
+      if (path === "/api/intake/" + INTAKE) return await intakeSave(request, env);
+      if (path === "/intake/" + INTAKE) {
+        const page = await env.ASSETS.fetch(new URL("/intake.html", url)); if (!page.ok) return new Response("Not found", { status: 404, headers: SECURITY });
+        const headers = new Headers(page.headers);
+        for (const [k, v] of Object.entries(SECURITY)) headers.set(k, v);
+        headers.set("X-Robots-Tag", "noindex, nofollow"); headers.set("Cache-Control", "no-cache"); headers.set("Referrer-Policy", "no-referrer");
+        return new Response(page.body, { status: 200, headers });
+      }
       if (path.startsWith("/api/")) return json({ error: "Not found" }, 404);
       if (path === "/admin" || path.startsWith("/admin/")) {
         if (path !== "/admin") return Response.redirect(url.origin + "/admin", 302);

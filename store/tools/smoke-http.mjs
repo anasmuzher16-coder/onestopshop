@@ -9,6 +9,12 @@ const want = { "/": 200, "/shop": 200, "/shop/hookahs": 200, "/shop/nope": 404, 
   "/api/x": 404, "/admin": 200, "/privacy": 200, "/terms": 200, "/checkout": 200, "/order/WABC234": 200, "/order/nope": 404, "/app.js": 200, "/route.js": 200, "/img/pc/hookah00.webp": 200, "/nothing.png": 404 };
 for (const [p, code] of Object.entries(want)) { const { r } = await get(p); ok(r.status === code, `${p} gave ${r.status}, wanted ${code}`); }
 
+// the shop's questionnaire (2026-11-25): its private page, and a Send that only takes JSON, never a GET
+{ const q = await get("/intake/YL9eEO5a"); ok(q.r.status === 200 && /Before the site goes live/.test(q.t) && q.r.headers.get("x-robots-tag") === "noindex, nofollow", "intake page: " + q.r.status);
+  ok((await get("/intake/nope")).r.status === 404, "a wrong intake link is a 404");
+  ok((await get("/api/intake/YL9eEO5a")).r.status === 405, "intake send refuses a GET");
+  const bad = await fetch(B + "/api/intake/YL9eEO5a", { method: "POST", body: "not json", signal: AbortSignal.timeout(15000) }); ok(bad.status === 400, "intake send refuses a broken body: " + bad.status);
+  const big = await fetch(B + "/api/intake/YL9eEO5a", { method: "POST", body: JSON.stringify({ answers: { x: "y".repeat(210000) } }), signal: AbortSignal.timeout(15000) }); ok(big.status === 413, "intake send refuses an oversized body: " + big.status); }
 // the sample hookahs are retired (2026-11-24): a real product on sale (a shisha flavour) carries these checks now
 const prod = await get("/p/OSS-9601"), h = prod.r.headers;
 ok(/<title>Zanobia Herbal Molasses Double Apple, 250 g \| One Stop Shop<\/title>/.test(prod.t), "product title: " + (prod.t.match(/<title>[^<]*/) || [""])[0]);
