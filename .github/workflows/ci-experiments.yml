@@ -1,0 +1,42 @@
+# TEMPORARY (ci-reliable branch only): A/B runs to find why browsers crash and slow down on GitHub's machines. Removed before merge.
+name: ci experiments
+on:
+  push:
+    branches: [ci-reliable]
+    paths: [".github/workflows/ci-experiments.yml"]
+jobs:
+  x:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: wk-base, os: ubuntu-24.04, env: "", suites: "webkit-check test-stick e2e-delivery allwaves ci-probe-nav" }
+          - { name: wk-cpu-a, os: ubuntu-24.04, env: "WEBKIT_SKIA_ENABLE_CPU_RENDERING=1", suites: "webkit-check test-stick e2e-delivery allwaves ci-probe-nav" }
+          - { name: wk-cpu-b, os: ubuntu-24.04, env: "WEBKIT_SKIA_ENABLE_CPU_RENDERING=1", suites: "webkit-check test-stick e2e-delivery allwaves" }
+          - { name: gl-probe, os: ubuntu-24.04, env: "", suites: "ci-probe-gl" }
+    name: ${{ matrix.name }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "22" }
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: npm install --no-save --no-audit --no-fund wrangler@4.124.0 playwright@1.61.1 sharp@0.35.2
+      - run: npx playwright install --with-deps chromium webkit
+      - run: |
+          python store/tools/catalog/catalog.py seed
+          python store/tools/catalog/catalog.py seed --supplier charcoal-foil --category foil
+          python store/tools/catalog/catalog.py seed --supplier charcoal-foil --category charcoal
+      - name: Suites
+        env:
+          PW_FROM: ${{ github.workspace }}/package.json
+          WRANGLER_JS: ${{ github.workspace }}/node_modules/wrangler/bin/wrangler.js
+          WAVE_SETTLE: "2500"
+        run: env ${{ matrix.env }} node store/tools/ci-suites.mjs ${{ matrix.suites }} || true
+      - if: always()
+        run: sudo dmesg -T | grep -iE "oom|killed process|segfault|trap|protection" || echo "no crash lines in the kernel log"
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with: { name: "x-${{ matrix.name }}", path: store/.ci/out, retention-days: 3 }
