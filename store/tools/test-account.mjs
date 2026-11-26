@@ -41,7 +41,11 @@ async function signIn(email, from = ip()) {
 const CARD = /<meta name="oss-pay" content="card">/.test(await (await fetch(B + "/")).text());
 const order = async (body, cookie) => {
   const counter = !CARD && body.method === "pickup" && body.pay === undefined; if (counter) body = { ...body, pay: "at_pickup" };
-  const r = await fetch(B + "/api/orders", { method: "POST", headers: { "Content-Type": "application/json", ...(cookie ? { Cookie: cookie } : {}) }, body: JSON.stringify(body) });
+  const send = () => fetch(B + "/api/orders", { method: "POST", headers: { "Content-Type": "application/json", ...(cookie ? { Cookie: cookie } : {}) }, body: JSON.stringify(body) });
+  let r = await send();
+  // the shop-wide brake (12 orders a minute, checkout.js) is a real feature: a fast machine running this suite's orders in a burst
+  // trips it, so wait it out once, as a shopper would, rather than fail an account check on it
+  if (r.status === 429) { console.log("order brake hit; waiting a minute"); await new Promise(res => setTimeout(res, 61000)); r = await send(); }
   const out = { status: r.status, data: await r.json().catch(() => ({})) };
   if (out.status === 201 && out.data.pay?.url) { await fetch(out.data.pay.url, { method: "POST", redirect: "manual" }); await new Promise(res => setTimeout(res, 300)); }
   if (out.status === 201 && counter) { const p = await adm(`/orders/${out.data.order.id}/paid`, "POST", {}); if (p.status !== 200) console.log("counter payment not recorded", out.data.order.id, p.status); }
