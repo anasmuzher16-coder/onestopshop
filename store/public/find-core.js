@@ -31,8 +31,6 @@ export const perPiece = p => p.price && countOf(p) ? p.price / countOf(p) : null
 // hookahs from a supplier catalogue: one card per family
 const KINDS = { full_size: "full", compact_travel: "small", statement: "show", stem_set: "stem" };
 export const kindOf = p => KINDS[F(p).group] || null;
-// the same rule as the shop's own "In the shop" tier (picks.js ticked): any tick on the catalogue page, even an unclear one
-export const hereOf = p => !F(p).stamp ? null : F(p).stamp !== "none" ? "here" : "order";
 export const colourOf = p => p.named && p.colour ? low(p.colour) : null;
 
 // ---------- the groups, per section ----------

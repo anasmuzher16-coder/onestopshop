@@ -58,8 +58,14 @@ function describe(path, cat, site) {
 // read, and only on a miss.
 async function retiredTo(env, path) {
   const m = path.match(/^\/p\/(OSS-\d{4,6})\/?$/); if (!m) return null;
-  if (!isSample(m[1])) return null;   // only the retired samples (src/samples.js); anything else the shop switches off is a plain 404
-  const row = await env.DB.prepare("SELECT p.category_id FROM products p JOIN categories c ON c.id = p.category_id WHERE p.sku = ?1 AND p.active = 0 AND p.listed = 0 AND p.supplier_id IS NULL AND c.active = 1").bind(m[1]).first();
+  if (isSample(m[1])) {   // the retired samples (src/samples.js)
+    const row = await env.DB.prepare("SELECT p.category_id FROM products p JOIN categories c ON c.id = p.category_id WHERE p.sku = ?1 AND p.active = 0 AND p.listed = 0 AND p.supplier_id IS NULL AND c.active = 1").bind(m[1]).first();
+    return row ? `/shop/${row.category_id}` : null;
+  }
+  // an unticked catalogue page, on view until 2026-11-26 (owner: a tick means in the shop; the rest came off): its old address goes
+  // to its section. Anything else the shop switches off is a plain 404.
+  if (!/^OSS-1[01]\d{4}$/.test(m[1])) return null;
+  const row = await env.DB.prepare("SELECT p.category_id FROM products p JOIN categories c ON c.id = p.category_id WHERE p.sku = ?1 AND p.supplier_id IN ('ace', 'ace-acc') AND json_extract(p.facts_known, '$.stamp') = 'none' AND c.active = 1").bind(m[1]).first();
   return row ? `/shop/${row.category_id}` : null;
 }
 // Charcoal left Heat for its own section (2026-11-24). Old links to the charcoal side of Heat (the coal finder, its boxes,

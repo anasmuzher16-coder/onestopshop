@@ -391,8 +391,8 @@ function shopGrid(cat) {
   const tiers = cat === "hookahs" && fams.length ? [["", "", byKind(fams.filter(ticked))]].filter(t => t[2].length) : null;
   const groups = tiers ? null : cat === "hookahs" ? [...Object.keys(SERIES).map(k => [k, list.filter(p => seriesOf(p) === k)]), ["More from the shelf", list.filter(p => !seriesOf(p) && !p.dark)], ["One of one", list.filter(p => p.dark)]].filter(g => g[1].length) : [["", list]];
   const range = items => { const pr = items.filter(forSale).map(x => x.price); return pr.length === items.length && pr.length ? `, ${whole(Math.min(...pr))} to ${whole(Math.max(...pr))}` : ""; };
-  return `${tiers ? tiers.map(([t, note, gs]) => `<section class="tier"${t ? ` aria-label="${t}"` : ""}>${t ? `<header class="tier__head"><h2 class="tier__h">${t}</h2><p class="tier__n"><span class="num">${gs.reduce((a, g) => a + g[1].length, 0)}</span>&nbsp;hookahs. ${note}</p></header>` : ""}
-    <div class="grid grid--shop">${gs.map(([name, items]) => `<h3 class="series">${name} <span class="num">${items.length} ${items.length === 1 ? "hookah" : "hookahs"}</span></h3>` + items.map(card).join("")).join("")}</div></section>`).join("")
+  return `${tiers ? tiers.map(([, , gs]) => `<section class="tier">
+    <div class="grid grid--shop">${gs.map(([name, items]) => `<h2 class="series">${name} <span class="num">${items.length} ${items.length === 1 ? "hookah" : "hookahs"}</span></h2>` + items.map(card).join("")).join("")}</div></section>`).join("")
   : `<div class="grid grid--shop">${groups.map(([name, items]) => (name ? `<h2 class="series" data-tone="${SERIES[name] || ""}">${name} <span class="num">${items.length} pieces${range(items)}</span></h2>` : "") + items.map(card).join("")).join("")}</div>`}`;
 }
 // The band's line under a section name, from the section's own items, counted: Heat says how many are charcoal and how
@@ -463,11 +463,11 @@ function factsSpec(p, fam) {
           ${f.height_cm ? `<div><dt>Height</dt><dd><span class="num">${f.height_cm} cm</span></dd></div>` : ""}
           ${f.acrylic ? `<div><dt>Material</dt><dd>Acrylic</dd></div>` : ""}
           ${Array.isArray(f.includes) && f.includes.length ? `<div><dt>Comes with</dt><dd>${esc(f.includes.join(", "))}</dd></div>` : ""}
-          <div><dt>Colours</dt><dd>${fam.length > 1 ? `<span class="num">${fam.length}</span> in the catalogue${named ? ": " + esc(fam.map(v => v.colour).join(", ")) : ""}` : named ? esc(fam.map(v => v.colour).join(", ")) : "One"}</dd></div>` : ""}
+          <div><dt>Colours</dt><dd>${fam.length > 1 ? `<span class="num">${fam.length}</span> shown${named ? ": " + esc(fam.map(v => v.colour).join(", ")) : ""}. Which the shop has: ${TBD("")}` : named ? esc(fam.map(v => v.colour).join(", ")) : "One"}</dd></div>` : ""}
           ${catItem(p) && ticked(p) ? `<div><dt>Availability</dt><dd>In the shop</dd></div>` : ""}
           <div class="spec__open"><dt>Still to come</dt><dd>${list[0].toUpperCase() + list.slice(1)}. ${TBD("")}</dd></div>
           ${!p.img ? `<div><dt>Photo</dt><dd>Coming. The drawing stands in until the photo is ready.</dd></div>` : p.family && f.photo === "family" ? `<div><dt>Photo</dt><dd>Shows another colour of this hookah.</dd></div>` : ""}
-          ${catItem(p) ? `<div><dt>From</dt><dd>Ace Hookah\u2019s catalogue</dd></div>` : ""}
+          ${catItem(p) ? `<div><dt>Supplier</dt><dd>Ace Hookah</dd></div>` : ""}
           <div><dt>Item</dt><dd class="num">${p.sku}</dd></div>
         </dl>
       </section>`;

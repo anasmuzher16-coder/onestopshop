@@ -472,6 +472,16 @@ class TestAceAccessories(Base):
         self.assertEqual(byp[81]["supplier_price_cents"]["v"], 250)   # printed "$2.5"
         self.assertEqual(byp[77]["stamp"]["v"], "unclear")
 
+    def test_only_ticked_pages_listed(self):
+        # owner 2026-11-26: a tick means in the shop, in stock; nothing is ordered in. Unticked pages never go on view.
+        ace = C.load_master("ace")
+        for supplier, m in (("ace", ace), ("ace-acc", self.acc)):
+            stamp = {v["sku"]: f["stamp"]["v"] for f, v in C.iter_variants(m)}
+            for r in K.desired_rows(supplier, m):
+                self.assertEqual(r["shop"]["listed"], 0 if stamp[r["sku"]] == "none" else 1, (supplier, r["sku"]))
+        unticked = [f for f in self.acc["families"] if f["stamp"]["v"] == "none"]
+        self.assertEqual(unticked, [], "the accessories master holds only ticked pages")
+
     def test_rows_on_view_tbd_pickup_until_weighed(self):
         rows = K.desired_rows("ace-acc", self.acc)
         self.assertEqual(len(rows), 39)
