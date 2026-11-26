@@ -23,6 +23,10 @@ createServer(async (req, res) => {
   if (fail.n > 0) { fail.n--; calls[calls.length - 1].failed = fail.status; return reply(res, { statusCode: fail.status, name: "application_error", message: "The stand-in was told to fail" }, fail.status); }
   let m; try { m = JSON.parse(raw); } catch { return reply(res, { statusCode: 422, name: "validation_error", message: "Body is not JSON" }, 422); }
   if (!m.from || !Array.isArray(m.to) || !m.to.length || !m.subject || !(m.html || m.text)) return reply(res, { statusCode: 422, name: "validation_error", message: "from, to, subject and html or text are required" }, 422);
+  // like Resend, an address it cannot parse is refused (and refused again on every retry)
+  const addr = s => typeof s === "string" && /^[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}$/.test(s) && !s.includes("..");
+  if (!m.to.every(addr)) return reply(res, { statusCode: 422, name: "validation_error", message: "Invalid `to` field." }, 422);
+  if (m.reply_to !== undefined && !(Array.isArray(m.reply_to) ? m.reply_to : [m.reply_to]).every(addr)) return reply(res, { statusCode: 422, name: "validation_error", message: "Invalid `reply_to` field." }, 422);
   if (key && idem.has(key)) {
     const was = idem.get(key);
     if (was.raw !== raw) return reply(res, { statusCode: 409, name: "invalid_idempotent_request", message: "Same idempotency key used with a different request payload" }, 409);

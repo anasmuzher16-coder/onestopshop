@@ -20,7 +20,7 @@ const GOLD = join(WORK, "gold"), STATE = join(WORK, "state"), OUT = process.env.
 const SLASH = new Set(["e2e", "phone-audit", "whitebox", "fx-robust"]), NOARG = new Set(["smoke-http", "phone-audit", "test-ace", "test-account", "test-payments", "test-pay-card", "test-emails", "whitebox", "fx-robust"]);
 const CARD = process.env.CARD === "1", MAIL = new Set(["test-emails"]);
 const CARD_VARS = ["STRIPE_SECRET_KEY:sk_test_local", "STRIPE_WEBHOOK_SECRET:whsec_local_test", "STRIPE_API_BASE:http://127.0.0.1:4498"];
-const MAIL_VARS = ["RESEND_API_KEY:re_test_local", "EMAIL_FROM:One Stop Shop <orders@shop.test>", "OWNER_EMAIL:counter@shop.test", "RESEND_API_BASE:http://127.0.0.1:4497"];
+const MAIL_VARS = ["RESEND_API_KEY:re_test_local", "EMAIL_FROM:One Stop Shop <orders@shop.test>", "OWNER_EMAIL:counter@shop.test", "RESEND_API_BASE:http://127.0.0.1:4497", "EMAIL_RETRY_UNIT_MS:10"];   // retry minutes become 10 ms (honoured only against a local stand-in)
 const list = process.argv.slice(2); if (!list.length) { console.error("name the suites to run"); process.exit(2); }
 const npx = (args, opt = {}) => spawnSync(WIN ? "npx.cmd" : "npx", args, { cwd: STORE, encoding: "utf8", shell: WIN, ...opt });
 const logFd = t => openSync(join(OUT, t + ".dev.log"), "w");
@@ -53,7 +53,7 @@ try {
     if (args && up) {
       if (!NOARG.has(name)) { mkdirSync(join(OUT, t), { recursive: true }); args.push(join(OUT, t)); }
       const run = spawnSync(process.execPath, args, { cwd: join(STORE, ".."), encoding: "utf8", timeout: 40 * 60 * 1000, maxBuffer: 64 * 1024 * 1024,
-        env: { ...process.env, BASE: `http://127.0.0.1:${PORT}${SLASH.has(name) ? "/" : ""}`, PERSIST: STATE, ADMIN_KEY: "int-local-only", STRIPE: "http://127.0.0.1:4498", RESEND: "http://127.0.0.1:4497" } });
+        env: { ...process.env, EXPECT_TOBACCO: flags.includes("tobacco") ? "1" : "0", EMAIL_RETRY_UNIT_MS: "10", BASE: `http://127.0.0.1:${PORT}${SLASH.has(name) ? "/" : ""}`, PERSIST: STATE, ADMIN_KEY: "int-local-only", STRIPE: "http://127.0.0.1:4498", RESEND: "http://127.0.0.1:4497" } });
       code = run.status ?? 1; text = (run.stdout || "") + (run.stderr || "");
     } else if (!up) text = "the store did not start";
     writeFileSync(join(OUT, t + ".txt"), text);

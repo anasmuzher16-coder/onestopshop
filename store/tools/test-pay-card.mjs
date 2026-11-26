@@ -13,6 +13,8 @@ let n = 0, f = 0; const ok = (c, msg) => { n++; if (!c) { f++; console.log("FAIL
 const home = await (await fetch(B + "/")).text();
 if (!/<meta name="oss-pay" content="card">/.test(home)) { console.log("FAIL this suite needs card mode: start the store with the fake Stripe keys"); process.exit(1); }
 const TOBACCO = /<meta name="oss-shisha-card" content="1">/.test(home);
+// the runner says which mode it started the store in (ci-suites.mjs: "+tobacco" runs set EXPECT_TOBACCO=1); a store in the other mode fails here
+if (process.env.EXPECT_TOBACCO !== undefined && (process.env.EXPECT_TOBACCO === "1") !== TOBACCO) { console.log(`FAIL expected shisha by card ${process.env.EXPECT_TOBACCO === "1" ? "on" : "off"}, the store says ${TOBACCO ? "on" : "off"}`); process.exit(1); }
 await samplesOn(B, ["OSS-8003", "OSS-8004"]);
 const login = await fetch(B + "/api/admin/login", { method: "POST", headers: { "Content-Type": "application/json", "X-OSS-Admin": "1" }, body: JSON.stringify({ passcode: KEY }) });
 const cookie = (login.headers.get("set-cookie") || "").split(";")[0];

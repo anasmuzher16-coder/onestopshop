@@ -1,4 +1,4 @@
-import { orderShipped, pickupReady, writeEmail } from "./email.js";
+import { orderShipped, pickupReady, writeEmail, resendEmail, mailReady } from "./email.js";
 import { snapshot } from "./backup.js";
 import { CHARCOAL } from "./catalog.js";
 import { adminPay } from "./pay.js";
@@ -269,11 +269,11 @@ export async function admin(request, env, url) {
   }
   if ((m = path.match(/^\/orders\/([A-Z0-9]{3,12})$/)) && method === "GET") {
     const [o, i, mail, trail] = await db.batch([db.prepare("SELECT * FROM orders WHERE id = ?").bind(m[1]), db.prepare("SELECT i.sku, i.name, i.qty, i.unit_cents, p.img, p.img_dark, p.photo_ver, p.box_id, p.category_id, p.details FROM order_items i LEFT JOIN products p ON p.sku = i.sku WHERE i.order_id = ?").bind(m[1]),
-      db.prepare("SELECT id, kind, recipient, subject, status, at FROM emails WHERE order_id = ? ORDER BY id").bind(m[1]),
+      db.prepare("SELECT id, kind, recipient, subject, status, at, tries, next_try_at, detail LIKE 'gave up%' AS gave_up FROM emails WHERE order_id = ? ORDER BY id").bind(m[1]),
       db.prepare("SELECT action, actor, before, after, at FROM audit_log WHERE target = ? ORDER BY id").bind(m[1])]);
     if (!o.results.length) return json({ error: "No such order." }, 404);
     const { cancel_op, ...order } = o.results[0];
-    return json({ order, items: i.results, emails: mail.results, trail: trail.results });
+    return json({ order, items: i.results, emails: mail.results, trail: trail.results, mail_on: mailReady(env) });
   }
   // Cancel and put the stock back. Exactly one request can win the change to "cancelled" (the row records that
   // request's own key), and only the winner's statements put stock back, all in one transaction. A second tap,
@@ -342,8 +342,15 @@ export async function admin(request, env, url) {
   if ((m = path.match(/^\/orders\/([A-Z0-9]{3,12})\/refunds$/)) && method === "GET") return json({ refunds: (await db.prepare("SELECT amount_cents, status, reason, actor, detail, at FROM refunds WHERE order_id = ? ORDER BY id").bind(m[1]).all()).results });
   if ((m = path.match(/^\/emails\/(\d{1,9})$/)) && method === "GET") {
     // only order and stock emails open here: a customer's sign-in code (and their account mail) is theirs, never the back office's
-    const e = await db.prepare("SELECT id, kind, recipient, subject, html, status, detail, at FROM emails WHERE id = ? AND kind IN ('order_placed','order_shipped','pickup_ready','low_stock','new_order')").bind(+m[1]).first();
+    const e = await db.prepare("SELECT id, kind, recipient, subject, html, status, detail, at, tries, next_try_at FROM emails WHERE id = ? AND kind IN ('order_placed','order_shipped','pickup_ready','low_stock','new_order')").bind(+m[1]).first();
     return e ? json({ email: e }) : json({ error: "No such email." }, 404);
+  }
+  // Send again, by hand, an order email that gave up after a day of tries (owner only; src/email.js resendEmail). Logged.
+  if ((m = path.match(/^\/emails\/(\d{1,9})\/resend$/)) && method === "POST") {
+    if (!session.owner) { log("forbidden", { actor, path }); return json({ error: "Only the owner can send an email again." }, 403); }
+    const r = await resendEmail(env, +m[1]), e = await db.prepare("SELECT order_id, status FROM emails WHERE id = ?").bind(+m[1]).first();
+    if (e && r.status !== 404) await audit("email.resend", e.order_id || String(m[1]), null, { email: +m[1], sent: !!r.ok, ...(r.ok ? {} : { why: r.error }) }).run();
+    return r.ok ? json({ ok: true, email: r.email }) : json({ error: r.error }, r.status);
   }
   // ---- owner only: staff, settings, the monthly report ----
   if (path === "/staff" && method === "GET") {

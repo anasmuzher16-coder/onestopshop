@@ -147,6 +147,7 @@ const heroPreload = p => { const u = s => `img/pc/${p.img}${s}.webp${p.iv ? "?v=
 export default {
   // every night: a full copy of the shop's records into the backup bucket
   async scheduled(event, env, ctx) {
+    env = withCtx(env, ctx);
     if (event.cron === "*/10 * * * *") {   // every 10 minutes: unpaid orders checked with Stripe (stock it put back shows in the shop at once), and order emails the mail service refused sent again
       ctx.waitUntil(sweep(env).then(r => { console.log(JSON.stringify({ at: "pay-sweep", ...r })); if (r.paid || r.released) dropCatalog(ctx); }));
       ctx.waitUntil(retryEmails(env).then(r => { if (r.tried) console.log(JSON.stringify({ at: "email-retry", ...r })); }).catch(e => console.error(JSON.stringify({ at: "email-retry", message: String(e && e.message || e) }))));
@@ -154,8 +155,11 @@ export default {
     }
     ctx.waitUntil(scrubCodes(env).then(() => nightly(env))); ctx.waitUntil(stockAlerts(env).then(() => restockReminders(env)));   // nightly: backup, and the customers' alerts and charcoal reminders
   },
-  async fetch(request, env, ctx) { setShishaCard(env.STRIPE_TOBACCO_OK); return demoNoindex(await route(request, env, ctx), env, request); },
+  async fetch(request, env, ctx) { setShishaCard(env.STRIPE_TOBACCO_OK); env = withCtx(env, ctx); return demoNoindex(await route(request, env, ctx), env, request); },
 };
+// The request's env with one extra: env.waitUntil, so code deep in the order flow (src/email.js) can finish a send after
+// the answer has gone, without every function passing ctx along. Bindings and settings are read through to the real env.
+const withCtx = (env, ctx) => Object.create(env, { waitUntil: { value: p => ctx.waitUntil(p) } });
 // While the shop is not live on this address, every answer says noindex: redirects, errors, API answers and uploaded
 // photos too (the static files get it from public/_headers). A page sets its own header in page().
 function demoNoindex(r, env, request) {

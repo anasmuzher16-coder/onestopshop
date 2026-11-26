@@ -250,7 +250,7 @@ function viewOrders() {
     <div class="rows">${list.map(o => { const k = ORDER_STATE[o.status][0], label = stateLabel(o); return `<button class="row order" type="button" data-order="${o.id}"><span class="row__main"><span class="row__name">${esc(o.name)}</span><span class="row__meta">${o.id} &middot; ${when(o.created_at)} &middot; ${o.units} ${o.units === 1 ? "item" : "items"} &middot; ${o.method === "pickup" ? "Pickup" : isLocal(o) ? "Delivery" : esc(o.tax_province || "")}</span></span><span class="order__r"><b class="num">${money(o.total_cents)}</b><span class="state ${k}">${label}</span>${waitDays(o) >= 3 ? `<b class="wait">Waiting ${waitDays(o)} days</b>` : ""}</span></button>`; }).join("") || `<p class="empty">Nothing waiting. New orders show up here.</p>`}</div>`;
 }
 async function orderSheet(id) {
-  const { order: o, items, emails = [], trail = [] } = await api("/orders/" + id), k = ORDER_STATE[o.status][0], label = stateLabel(o), next = NEXT(o);
+  const { order: o, items, emails = [], trail = [], mail_on = false } = await api("/orders/" + id), k = ORDER_STATE[o.status][0], label = stateLabel(o), next = NEXT(o);
   const charcoal = items.some(i => i.category_id === "charcoal" || /"charcoal":true/.test(i.details || "")), canCancel = ["paid", "packed", "ready"].includes(o.status) || (o.status === "pending" && o.pay_status === "pay_at_pickup"), wait = waitDays(o), units = items.reduce((a, i) => a + i.qty, 0), src = pj(o.source_detail);
   sheet.innerHTML = `<div class="sheet__in" data-ordersheet="${o.id}">
     <div class="sheet__top"><div><p class="meta">Order ${o.id} &middot; ${when(o.created_at)}</p><h2 class="h2" style="margin:0">${esc(o.name)}</h2><span class="state ${k}">${label}</span></div><button class="sheet__x" type="button" data-close>Close</button></div>
@@ -264,8 +264,8 @@ async function orderSheet(id) {
       ${payFacts(o)}${o.tracking ? `<div><dt>Tracking</dt><dd class="num">${esc(o.tracking)}</dd></div>` : ""}${dropInfo(o)}
       <div><dt>Found us through</dt><dd>${esc(o.source || "Not recorded")}${src.landing && src.landing !== "/" ? `, first page ${esc(src.landing)}` : ""}</dd></div></dl>
     ${trail.length ? `<section><h3 class="meta" style="margin-bottom:var(--s-2)">Who did what</h3><div class="hist">${trailHtml(trail)}</div></section>` : ""}
-    <section><h3 class="meta" style="margin-bottom:var(--s-2)">Emails to the customer</h3><div class="hist">${emails.map(e => `<button class="mailrow" type="button" data-mail="${e.id}"><span>${esc(MAIL[e.kind] || e.kind)}, ${when(e.at)}</span><span class="state ${e.status === "sent" ? "done" : e.status === "failed" ? "out" : "low"}">${e.status === "sent" ? "Sent" : e.status === "failed" ? "Failed" : "Written, not sent"}</span></button>`).join("") || `<div><span>None yet.</span></div>`}</div>
-      ${emails.some(e => e.status === "held") ? `<p class="fineprint">Emails are written and kept here. They start sending once the shop's mail service is connected.</p>` : ""}${emails.some(e => e.status === "failed") ? `<p class="fineprint" data-mailfail>An email did not go out. The shop tries it again every 10 minutes for a day; open it to see why.</p>` : ""}<div data-mailview></div></section>
+    <section><h3 class="meta" style="margin-bottom:var(--s-2)">Emails to the customer</h3><div class="hist">${emails.map(e => { const st = mailState(e, mail_on); return `<button class="mailrow" type="button" data-mail="${e.id}"><span>${esc(MAIL[e.kind] || e.kind)}, ${when(e.at)}</span><span class="state ${st[0]}">${st[1]}</span></button>`; }).join("") || `<div><span>None yet.</span></div>`}</div>
+      ${emails.some(e => mailState(e, mail_on)[2] === "off") ? `<p class="fineprint">Emails are written and kept here while the shop's mail service is not connected. Ones written before it is connected are not sent later.</p>` : ""}${emails.some(e => mailState(e, mail_on)[2] === "retry") ? `<p class="fineprint" data-mailretry>An email has not gone out yet. The shop tries it again after 10, 20 and 40 minutes, then every hour, for a day.</p>` : ""}${emails.some(e => mailState(e, mail_on)[2] === "gaveup") ? `<p class="fineprint" data-mailgaveup>An email could not be sent${state.me.owner ? ". Open it to see why, fix the cause, then send it again" : ". Open it to see why; the owner can send it again"}.</p>` : ""}<div data-mailview></div></section>
     ${payActs(o)}
     <p class="err" role="alert" data-err></p>
     <div class="sheet__act">${next ? `<button class="btn" type="button" data-next="${next[0]}">${next[1]}</button>` : ""}<button class="btn btn--ghost" type="button" data-close>Close</button></div>
@@ -278,11 +278,15 @@ async function orderSheet(id) {
   if (!sheet.open) sheet.showModal();
 }
 
+// What an email row shows: [colour, label, group]. A failed email with a next try booked is still being tried; one with none has given up.
+const mailState = (e, on) => e.status === "sent" ? ["done", "Sent", "sent"] : e.status === "failed" ? (e.next_try_at ? ["low", "Trying again", "retry"] : ["out", "Not sent", "gaveup"])
+  : on && e.next_try_at ? ["low", "Sending", "retry"] : on ? ["out", "Not sent", "gaveup"] : ["low", "Written, not sent", "off"];
 const MAIL = { order_placed: "Order received", order_shipped: "Shipped", pickup_ready: "Ready for pickup", low_stock: "Low stock note to the shop", new_order: "New order note to the shop" };
 async function mailView(id) {
   const box = $("[data-mailview]", sheet); if (!box) return;
   const { email: e } = await api("/emails/" + id);
-  box.innerHTML = `<p class="fineprint" style="margin-top:var(--s-4)">To ${esc(e.recipient)} &middot; ${esc(e.subject)}${e.status === "failed" && e.detail ? ` &middot; Not sent: ${esc(e.detail)}` : ""}</p><iframe class="mail" title="Email preview" sandbox=""></iframe>`;
+  const gaveUp = e.status === "failed" && !e.next_try_at;
+  box.innerHTML = `<p class="fineprint" style="margin-top:var(--s-4)">To ${esc(e.recipient)} &middot; ${esc(e.subject)}${e.status === "failed" && e.detail ? ` &middot; ${gaveUp ? "Not sent" : "Not sent yet"}: ${esc(e.detail)}` : ""}</p>${gaveUp && state.me.owner ? `<button class="btn btn--ghost" type="button" data-resendmail="${e.id}">Send it again</button>` : ""}<iframe class="mail" title="Email preview" sandbox=""></iframe>`;
   $("iframe", box).srcdoc = e.html; // sandboxed: the preview cannot run scripts or touch the back office
 }
 // ---------- Office (owner only): the monthly report, the 5% basis, the team ----------
@@ -363,6 +367,7 @@ document.addEventListener("click", async e => {
   if ((el = t.closest("[data-repin]"))) { const pin = prompt(`New 6-digit PIN for ${el.dataset.name}`); if (pin === null) return; try { await api(`/staff/${el.dataset.repin}/pin`, { method: "POST", body: { pin: pin.trim() } }); toast("PIN changed. Their old sign-ins ended."); } catch (er) { toast(er.message); } return; }
   if ((el = t.closest("[data-edit]"))) return editSheet(state.products.find(p => p.sku === el.dataset.edit));
   if ((el = t.closest("[data-order]"))) return orderSheet(el.dataset.order).catch(er => toast(er.message));
+  if ((el = t.closest("[data-resendmail]"))) { el.disabled = true; const oid = $("[data-ordersheet]", sheet)?.dataset.ordersheet; try { await api(`/emails/${el.dataset.resendmail}/resend`, { method: "POST", body: {} }); toast("Sent."); } catch (er) { toast(er.message); } if (oid) return orderSheet(oid).catch(er => toast(er.message)); return; }
   if ((el = t.closest("[data-mail]"))) return mailView(el.dataset.mail).catch(er => toast(er.message));
   if (t.closest("[data-close]")) return sheet.close();
   if (t.closest("[data-logout]")) { await api("/logout", { method: "POST", body: {} }).catch(() => {}); state.in = false; state.tab = "home"; state.smode = "adjust"; state.counted = new Set(); state.month = null; sheet.open && sheet.close(); return gate(); }   // the next person starts fresh
