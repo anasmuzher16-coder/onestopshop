@@ -336,8 +336,8 @@ function viewHome() {
     </div>
   </section>
   <section class="cats" aria-label="Shop by category">
-    ${CATEGORIES.filter(c => SHELF.some(p => p.cat === c.id)).map((c, i) => { const n = SHELF.filter(p => p.cat === c.id).length; const lead = (c.id === "hookahs" && stars[0]) || SHELF.find(p => p.cat === c.id && !p.dark && p.img) || SHELF.find(p => p.cat === c.id && !p.dark);
-      return `<a class="cat" data-tone="${c.tone}" href="/shop/${c.id}">${shot(lead, { small: i > 0, use: i ? "cat" : "cat1", cls: "cat__img" })}<span class="cat__name">${c.name}</span><span class="cat__n num">${n}</span></a>`; }).join("")}
+    ${defer(() => CATEGORIES.filter(c => SHELF.some(p => p.cat === c.id)).map((c, i) => { const n = SHELF.filter(p => p.cat === c.id).length; const lead = (c.id === "hookahs" && stars[0]) || SHELF.find(p => p.cat === c.id && !p.dark && p.img) || SHELF.find(p => p.cat === c.id && !p.dark);
+      return `<a class="cat" data-tone="${c.tone}" href="/shop/${c.id}">${shot(lead, { small: i > 0, use: i ? "cat" : "cat1", cls: "cat__img" })}<span class="cat__name">${c.name}</span><span class="cat__n num">${n}</span></a>`; }).join(""))}
   </section>
   ${(() => { const waiting = CATEGORIES.filter(c => !SHELF.some(p => p.cat === c.id));   // sections whose stock is not on the site yet: one quiet line, never a tile (2026-11-24)
     return waiting.length ? `<p class="cats__soon"><span class="tbd">Not on the site yet</span> ${waiting.map(c => `<a class="link" href="/shop/${c.id}">${esc(c.name)}</a>`).join(", ")}. Call <a class="link" href="tel:+15192552222">519-255-2222</a> to ask.</p>` : ""; })()}  <section class="shelf">
@@ -1194,6 +1194,10 @@ function render({ chunk = false } = {}) {
   // a long section reached by a tap: the page now, its cards in the tasks after. Short sections draw whole, as before (the Misc
   // act stamps the labels already on its first screen at the swap, so its cards must be there).
   queue = chunk && real && a === "shop" && (b ? SHELF.filter(p => p.cat === b).length : SHELF.length) > 24 ? { q: [], first: firstScreen(), wide: innerWidth >= 960 } : null;   // the window's size read before the page changes, so reading it forces no layout
+  // Home reached by a tap: the hero is the first screen; the section tiles and the counter picks below it come in the frames
+  // after the swap (wave-perf 2x, 2026-11-26: Home's build, style and layout took 55-70 ms inside the swap)
+  // (wide: the tiles, a part, are drawn before the cards and still under the wave's cover, so nothing pops in on screen)
+  if (chunk && real && !a) queue = { q: [], first: 1, wide: true };
   let html, q; try { html = !real ? viewMissing() : a === "shop" ? viewShop(b) : a === "p" ? viewProduct(b) : a === "cart" ? viewCart() : a === "shipping" ? viewShipping() : a === "set" ? viewSet() : a === "search" ? viewSearch() : a === "privacy" ? viewPrivacy() : a === "terms" ? viewTerms() : a === "checkout" ? viewCheckout() : a === "order" ? viewOrder(b) : a === "account" ? accountView(band) : !a ? viewHome() : viewMissing(); } finally { q = queue; queue = null; }
   $("#main").innerHTML = html; laterStart(q);
   document.body.dataset.route = a || "home";

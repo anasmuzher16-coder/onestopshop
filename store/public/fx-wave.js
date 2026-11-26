@@ -263,9 +263,12 @@ function paint(now) {
 // Only on a touch screen (iPhone, iPad, Android): iOS and Android open the on-screen keyboard only for a focus made inside the
 // tap, while a desktop with a mouse has no such rule and the search field is focused once the page is in (app.js). On Windows
 // the early focus woke the system's text services and held the next frame 68-100 ms at 2x CPU (wave-perf, 2026-11-26).
-// pointer: coarse rather than the user agent: an iPad reports itself as a Mac but still has a coarse pointer.
-const TOUCH_KEYBOARD = matchMedia("(pointer: coarse)");
-function holdKeyboard() { if (!TOUCH_KEYBOARD.matches) return; const i = document.createElement("input"); i.type = "search"; i.tabIndex = -1; i.setAttribute("aria-label", "Search"); i.style.cssText = "position:fixed;left:0;top:0;width:1px;height:1px;opacity:0;font-size:16px;border:0;padding:0;pointer-events:none;z-index:14"; document.body.append(i); i.focus({ preventScroll: true }); proxy = i; }
+// The tap itself decides: the last pointer down was a finger or a pen (a 2-in-1 or a tablet with a mouse still taps with a
+// finger), or, before any pointer event, a coarse primary pointer (never the user agent: an iPad reports itself as a Mac).
+const COARSE = matchMedia("(pointer: coarse)"); let lastPointer = "";
+addEventListener("pointerdown", e => { lastPointer = e.pointerType || ""; }, { capture: true, passive: true });
+const touchTap = () => lastPointer ? lastPointer === "touch" || lastPointer === "pen" : COARSE.matches;
+function holdKeyboard() { if (!touchTap()) return; const i = document.createElement("input"); i.type = "search"; i.tabIndex = -1; i.setAttribute("aria-label", "Search"); i.style.cssText = "position:fixed;left:0;top:0;width:1px;height:1px;opacity:0;font-size:16px;border:0;padding:0;pointer-events:none;z-index:14"; document.body.append(i); i.focus({ preventScroll: true }); proxy = i; }
 function dropKeyboard() { if (!proxy) return; const i = proxy; proxy = null; i.remove(); }
 function swap() {
   if (!w || w.swapped) return; if (w.phase === "cover") try { paint(w.t0 + w.o.cover); } catch {} // a late frame clock still swaps under a full cover

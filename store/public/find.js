@@ -43,6 +43,9 @@ function groupHTML(cat, list, sel, g) {
   const opts = optionsOf(g, list), top = g.top || (g.key === "mm" ? 4 : 0), many = top && opts.length > top + 1 && !open.has(g.key);
   const row = ([v, label], i) => {
     const on = (sel[g.key] || []).includes(v), n = countFor(cat, list, sel, g, v);
+    // an option nothing in the whole section has (Hookahs "Stem only, no base" once only ticked pieces are on view) is not
+    // offered at all; one that other filters have narrowed to 0 stays, greyed, so the choices do not jump (design review, 2026-11-26)
+    if (!on && !n && !countFor(cat, list, {}, g, v)) return "";
     if (g.drawn) return `<button class="fshape" type="button" role="checkbox" aria-checked="${on}" ${!n && !on ? 'aria-disabled="true"' : ""} data-f-toggle="${g.key}" data-v="${X.esc(v)}">${DRAWN[v] || ""}<span>${X.esc(label)}</span><span class="num">${n}</span>${TICK}</button>`;
     return `<button class="frow" type="button" role="checkbox" aria-checked="${on}" ${!n && !on ? 'aria-disabled="true"' : ""} data-f-toggle="${g.key}" data-v="${X.esc(v)}" ${many && i >= top && !on ? "data-more hidden" : ""}><span class="frow__box">${TICK}</span><span class="frow__l">${X.esc(label)}</span><span class="num">${n}</span></button>`;
   };
