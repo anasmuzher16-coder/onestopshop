@@ -9,6 +9,7 @@ import { loyaltyAdmin } from "./loyalty.js";
 import { placeOrder } from "./checkout.js";
 import { webhook, payStatus, sweep, cardReady } from "./pay.js";
 import { deliveryRoute } from "./delivery.js";
+import { retryEmails } from "./email.js";
 import { nightly } from "./backup.js";
 import { isSample } from "./samples.js";
 
@@ -146,7 +147,11 @@ const heroPreload = p => { const u = s => `img/pc/${p.img}${s}.webp${p.iv ? "?v=
 export default {
   // every night: a full copy of the shop's records into the backup bucket
   async scheduled(event, env, ctx) {
-    if (event.cron === "*/10 * * * *") { ctx.waitUntil(sweep(env).then(r => { console.log(JSON.stringify({ at: "pay-sweep", ...r })); if (r.paid || r.released) dropCatalog(ctx); })); return; }   // every 10 minutes: unpaid orders checked with Stripe; stock it put back shows in the shop at once
+    if (event.cron === "*/10 * * * *") {   // every 10 minutes: unpaid orders checked with Stripe (stock it put back shows in the shop at once), and order emails the mail service refused sent again
+      ctx.waitUntil(sweep(env).then(r => { console.log(JSON.stringify({ at: "pay-sweep", ...r })); if (r.paid || r.released) dropCatalog(ctx); }));
+      ctx.waitUntil(retryEmails(env).then(r => { if (r.tried) console.log(JSON.stringify({ at: "email-retry", ...r })); }).catch(e => console.error(JSON.stringify({ at: "email-retry", message: String(e && e.message || e) }))));
+      return;
+    }
     ctx.waitUntil(scrubCodes(env).then(() => nightly(env))); ctx.waitUntil(stockAlerts(env).then(() => restockReminders(env)));   // nightly: backup, and the customers' alerts and charcoal reminders
   },
   async fetch(request, env, ctx) { setShishaCard(env.STRIPE_TOBACCO_OK); return demoNoindex(await route(request, env, ctx), env, request); },

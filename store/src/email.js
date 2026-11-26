@@ -42,10 +42,16 @@ export function pickupReady(site, o, items) {
 // To the shop (OWNER_EMAIL): a new order to get ready. Short, so it reads on a phone at the counter.
 export function newOrder(site, o, items, how = "at_pickup") {
   const paid = how === "paid", way = o.method === "pickup" ? "Pickup at the counter" : o.ship_service === "Local delivery" ? "Local delivery" : `Shipping, ${esc(o.ship_service || "")}`;
-  const rows = [...lines(items), ["How", way], [paid ? "Paid by card" : "To pay at pickup", money(o.total_cents), true]];
-  const say = e => `${e(o.name)}${o.phone ? `, ${e(o.phone)}` : ""}. ${paid ? "Paid by card." : "Pays at the counter."} Open it in the back office to get it ready.`;
+  const a = (() => { try { return JSON.parse(o.address || "{}"); } catch { return {}; } })();
+  const where = o.method === "ship" && a.line1 ? [a.line1, a.city, a.province, a.postal].filter(Boolean).join(", ") : "";
+  // the figures the customer was shown, line for line, so the counter can answer "what did I pay for delivery" from the note
+  const rows = [...lines(items), ["Items", money(o.subtotal_cents)], ...(o.reward_cents ? [["Points reward", "−" + money(o.reward_cents)]] : []),
+    [way, o.method === "pickup" || !o.shipping_cents ? "Free" : money(o.shipping_cents)], [`Tax, ${esc(o.tax_province || "")}`, money(o.tax_cents)],
+    ...(where ? [["Deliver to", esc(where)]] : []), ...(a.note ? [["Note", esc(a.note)]] : []),
+    [paid ? "Paid by card" : "To pay at pickup", money(o.total_cents), true]];
+  const say = e => `${e(o.name)}${o.phone ? `, ${e(o.phone)}` : ""}${o.email ? `, ${e(o.email)}` : ""}. ${paid ? "Paid by card." : "Pays at the counter."} Open it in the back office to get it ready.`;
   const heading = `New order ${esc(o.id)}`, intro = say(esc);
-  return { kind: "new_order", subject: `${site}: new order ${o.id}, ${money(o.total_cents)}${paid ? "" : ", pay at pickup"}`, html: frame(site, heading, intro, rows, "Sent to the shop for every new order."), body: plain(`New order ${o.id}`, say(String), rows, "") };   // the plain text carries the name as typed (O'Brien, not O&#39;Brien)
+  return { kind: "new_order", customer: o.email, subject: `${site}: new order ${o.id}, ${money(o.total_cents)}, ${o.method === "pickup" ? "pickup" : o.ship_service === "Local delivery" ? "local delivery" : "ship"}${paid ? "" : ", pay at pickup"}`, html: frame(site, heading, intro, rows, "Sent to the shop for every new order. Reply to reach the customer."), body: plain(`New order ${o.id}`, say(String), rows, "") };   // the plain text carries the name as typed (O'Brien, not O&#39;Brien)
 }
 export function lowStock(site, list) {
   const rows = list.map(p => [esc(p.name), p.stock <= 0 ? "Out" : `${p.stock} left`]);
@@ -53,17 +59,65 @@ export function lowStock(site, list) {
   return { kind: "low_stock", subject: `${site}: stock running low`, html: frame(site, heading, intro, rows, "Change the warning level on each product in the back office."), body: plain(heading, intro, rows, "") };
 }
 
+// Where the mail service lives. Tests point it at the local stand-in (tools/fake-resend.mjs); nothing else is accepted,
+// so a typo can never send the mail key to a stranger.
+function resendBase(env) {
+  const b = String(env.RESEND_API_BASE || "https://api.resend.com").replace(/\/+$/, "");
+  if (b === "https://api.resend.com" || /^http:\/\/(127\.0\.0\.1|localhost):\d{2,5}$/.test(b)) return b;
+  throw new Error("RESEND_API_BASE must be https://api.resend.com");
+}
+const isAddr = s => /^[^\s@]+@[^\s@]+$/.test(String(s || ""));
+export const mailReady = env => !!(env.RESEND_API_KEY && env.EMAIL_FROM);
+// The emails tried again when the mail service fails (sign-in codes are not: a late code is no use).
+const RETRY_KINDS = ["order_placed", "order_shipped", "pickup_ready", "low_stock", "new_order"], MAX_TRIES = 5;
+// Who a reply goes to: a customer's reply reaches the shop inbox (OWNER_EMAIL; EMAIL_FROM may be a sending-only
+// address), and a reply to the shop's new-order note reaches the customer.
+function replyTo(env, kind, to, customer) {
+  if (kind === "new_order") return isAddr(customer) ? customer : undefined;
+  if (kind === "low_stock") return undefined;
+  return isAddr(env.OWNER_EMAIL) && env.OWNER_EMAIL !== to ? env.OWNER_EMAIL : undefined;
+}
+// One send. The row id is the Idempotency-Key, so a retry after a lost answer never sends a second copy.
+async function send(env, id, to, subject, html, text, reply) {
+  try {
+    const r = await fetch(resendBase(env) + "/emails", { method: "POST", headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "Content-Type": "application/json", "Idempotency-Key": `oss-email-${id}` },
+      body: JSON.stringify({ from: env.EMAIL_FROM, to: [to], subject, html, text, ...(reply ? { reply_to: reply } : {}) }), signal: AbortSignal.timeout(8000) });
+    if (r.ok) return { ok: true };
+    const why = (await r.json().catch(() => null))?.message;
+    return { ok: false, detail: `mail service answered ${r.status}${why ? ": " + String(why).slice(0, 120) : ""}` };
+  } catch (e) { return { ok: false, detail: String(e && e.message || e).slice(0, 120) }; }
+}
+const failNote = (tries, detail) => tries >= MAX_TRIES ? `gave up after ${tries} tries: ${detail}` : `try ${tries}: ${detail}`;
+const failLog = (id, kind, tries, detail) => console.error(JSON.stringify({ at: "email", problem: tries >= MAX_TRIES ? "not sent, gave up: see the order in the back office" : "not sent, tried again within 10 minutes", email: id, kind, tries, detail }));
+
 // Save it, then send it if a mail service is connected. Never throws: a mail problem must not undo an order.
+// A failed send stays 'failed' with its reason ("try 1: ..."), is logged, shows as Failed on the order in the back office,
+// and is sent again by retryEmails (every 10 minutes, up to 5 tries within a day).
 export async function writeEmail(env, orderId, to, mail) {
   try {
     const row = await env.DB.prepare("INSERT INTO emails (order_id, kind, recipient, subject, html, body) VALUES (?,?,?,?,?,?) RETURNING id").bind(orderId, mail.kind, to, mail.subject, mail.html, mail.body).first();
-    if (!env.RESEND_API_KEY || !env.EMAIL_FROM || !/^[^\s@]+@[^\s@]+$/.test(to)) return;
-    let status = "failed", detail = "";
-    try {
-      const r = await fetch("https://api.resend.com/emails", { method: "POST", headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ from: env.EMAIL_FROM, to: [to], subject: mail.subject, html: mail.html, text: mail.body }), signal: AbortSignal.timeout(8000) });
-      status = r.ok ? "sent" : "failed"; detail = r.ok ? "" : `mail service answered ${r.status}`;
-    } catch (e) { detail = String(e && e.message || e).slice(0, 120); }
-    await env.DB.prepare("UPDATE emails SET status = ?, detail = ? WHERE id = ?").bind(status, detail, row.id).run();
+    if (!mailReady(env) || !isAddr(to)) return;
+    const r = await send(env, row.id, to, mail.subject, mail.html, mail.body, replyTo(env, mail.kind, to, mail.customer));
+    if (!r.ok) failLog(row.id, mail.kind, 1, r.detail);
+    await env.DB.prepare("UPDATE emails SET status = ?, detail = ? WHERE id = ?").bind(r.ok ? "sent" : "failed", r.ok ? "" : failNote(1, r.detail), row.id).run();
   } catch (e) { console.error(JSON.stringify({ at: "email", message: String(e && e.message || e) })); }
+}
+// Every 10 minutes (worker.js scheduled): order and stock emails that failed within the last day are sent again.
+// Each row is claimed first (its note moves to the next try), so two runs at once never both send it.
+export async function retryEmails(env) {
+  if (!mailReady(env)) return { tried: 0, sent: 0 };
+  const db = env.DB, list = (await db.prepare(`SELECT e.id, e.kind, e.recipient, e.subject, e.html, e.body, e.detail, o.email AS customer FROM emails e LEFT JOIN orders o ON o.id = e.order_id
+    WHERE e.status = 'failed' AND e.kind IN (${RETRY_KINDS.map(() => "?").join(",")}) AND e.detail LIKE 'try %' AND e.at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 day') ORDER BY e.id LIMIT 20`).bind(...RETRY_KINDS).all()).results;
+  let tried = 0, sent = 0;
+  for (const e of list) {
+    const was = +((/^try (\d+):/.exec(e.detail || "") || [])[1] || 1), now = was + 1;
+    if (!isAddr(e.recipient)) continue;
+    const claim = await db.prepare("UPDATE emails SET detail = ? WHERE id = ? AND status = 'failed' AND detail = ?").bind(`try ${now}: sending`, e.id, e.detail).run();
+    if (!claim.meta.changes) continue;
+    tried++;
+    const r = await send(env, e.id, e.recipient, e.subject, e.html, e.body, replyTo(env, e.kind, e.recipient, e.customer));
+    if (r.ok) sent++; else failLog(e.id, e.kind, now, r.detail);
+    await db.prepare("UPDATE emails SET status = ?, detail = ? WHERE id = ?").bind(r.ok ? "sent" : "failed", r.ok ? "" : failNote(now, r.detail), e.id).run();
+  }
+  return { tried, sent };
 }

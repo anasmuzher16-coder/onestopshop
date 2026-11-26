@@ -265,7 +265,7 @@ async function orderSheet(id) {
       <div><dt>Found us through</dt><dd>${esc(o.source || "Not recorded")}${src.landing && src.landing !== "/" ? `, first page ${esc(src.landing)}` : ""}</dd></div></dl>
     ${trail.length ? `<section><h3 class="meta" style="margin-bottom:var(--s-2)">Who did what</h3><div class="hist">${trailHtml(trail)}</div></section>` : ""}
     <section><h3 class="meta" style="margin-bottom:var(--s-2)">Emails to the customer</h3><div class="hist">${emails.map(e => `<button class="mailrow" type="button" data-mail="${e.id}"><span>${esc(MAIL[e.kind] || e.kind)}, ${when(e.at)}</span><span class="state ${e.status === "sent" ? "done" : e.status === "failed" ? "out" : "low"}">${e.status === "sent" ? "Sent" : e.status === "failed" ? "Failed" : "Written, not sent"}</span></button>`).join("") || `<div><span>None yet.</span></div>`}</div>
-      ${emails.some(e => e.status === "held") ? `<p class="fineprint">Emails are written and kept here. They start sending once the shop's mail service is connected.</p>` : ""}<div data-mailview></div></section>
+      ${emails.some(e => e.status === "held") ? `<p class="fineprint">Emails are written and kept here. They start sending once the shop's mail service is connected.</p>` : ""}${emails.some(e => e.status === "failed") ? `<p class="fineprint" data-mailfail>An email did not go out. The shop tries it again every 10 minutes for a day; open it to see why.</p>` : ""}<div data-mailview></div></section>
     ${payActs(o)}
     <p class="err" role="alert" data-err></p>
     <div class="sheet__act">${next ? `<button class="btn" type="button" data-next="${next[0]}">${next[1]}</button>` : ""}<button class="btn btn--ghost" type="button" data-close>Close</button></div>
@@ -282,7 +282,7 @@ const MAIL = { order_placed: "Order received", order_shipped: "Shipped", pickup_
 async function mailView(id) {
   const box = $("[data-mailview]", sheet); if (!box) return;
   const { email: e } = await api("/emails/" + id);
-  box.innerHTML = `<p class="fineprint" style="margin-top:var(--s-4)">To ${esc(e.recipient)} &middot; ${esc(e.subject)}</p><iframe class="mail" title="Email preview" sandbox=""></iframe>`;
+  box.innerHTML = `<p class="fineprint" style="margin-top:var(--s-4)">To ${esc(e.recipient)} &middot; ${esc(e.subject)}${e.status === "failed" && e.detail ? ` &middot; Not sent: ${esc(e.detail)}` : ""}</p><iframe class="mail" title="Email preview" sandbox=""></iframe>`;
   $("iframe", box).srcdoc = e.html; // sandboxed: the preview cannot run scripts or touch the back office
 }
 // ---------- Office (owner only): the monthly report, the 5% basis, the team ----------

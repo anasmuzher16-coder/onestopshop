@@ -77,7 +77,7 @@ createServer(async (req, res) => {
     const currencies = new Set(items.map(i => i.price_data.currency));
     const total = items.reduce((a, i) => a + Number(i.price_data.unit_amount) * Number(i.quantity), 0);
     const s = { id: id("cs"), object: "checkout.session", mode: p.mode, status: "open", payment_status: "unpaid", amount_total: total, currency: [...currencies][0],
-      customer_email: p.customer_email, client_reference_id: p.client_reference_id, metadata: p.metadata || {}, success_url: p.success_url, cancel_url: p.cancel_url, expires_at: exp || now + 86400, payment_intent: null, livemode: false, line_items_sent: items };
+      customer_email: p.customer_email, client_reference_id: p.client_reference_id, metadata: p.metadata || {}, success_url: p.success_url, cancel_url: p.cancel_url, expires_at: exp || now + 86400, payment_intent: null, livemode: false, line_items_sent: items, payment_method_types: p.payment_method_types ? Object.values(p.payment_method_types) : null };
     s.url = `http://127.0.0.1:${PORT}/pay/${s.id}`;
     sessions.set(s.id, s); return remember(s);
   }
