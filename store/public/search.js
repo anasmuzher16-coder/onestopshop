@@ -53,7 +53,6 @@ function ways() {
     ["/shop/charcoal?find=coal", tone("charcoal", "ash"), "coal", "Need coals", "Pick the right box in two taps", X.PRODUCTS.some(p => heatKind(p) === "box")],
     ["/shop/shisha", tone("shisha", "amethyst"), "jar", "Flavours", `${flav} tobacco-free flavours`, flav > 0],
     ["/shop/heat?type=foil", tone("heat", "ember"), "foil", "Foil", `${foil} packs, by size and thickness`, foil > 0],
-    ["/gifts/under-50", "emerald", "gift", "A gift", "Packed at the counter", X.PRODUCTS.some(p => buyable(p) && p.ship !== "pickup_only" && !(p.details && p.details.charcoal) && !p.dark && p.price < 50)],
     ["/shop/parts", tone("parts", "gilt"), "part", "Parts and care", `${X.PRODUCTS.filter(p => p.cat === "parts").length} pieces to fix or clean your setup`, has("parts")],
     ["/shop/cologne", tone("cologne", "amethyst"), "scent", "Smell good", "Cologne and fragrance", has("cologne")],
   ].filter(w => w[5]).slice(0, 6);

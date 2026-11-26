@@ -366,16 +366,6 @@ body:not([data-route]) .foot{visibility:hidden}
 .field--text{font:400 var(--t-16)/1.4 var(--font-ui);letter-spacing:0;text-transform:none}
 .field--area{padding:var(--s-3) var(--s-4);min-height:72px;resize:vertical}
 
-/* gifts */
-.gifts{padding:var(--s-12) var(--gutter) 0}
-.gifts__note{margin:0;font-size:var(--t-14);color:var(--color-muted)}
-.gifts .shelf__head{flex-wrap:wrap}
-.gifts__row{display:grid;gap:var(--s-2)}
-.gift{position:relative;display:grid;grid-template-columns:minmax(0,1fr) 34%;grid-template-rows:1fr auto auto;column-gap:var(--s-3);min-height:120px;padding:var(--s-3);background:var(--tile);color:var(--color-on-tile);text-decoration:none;border-radius:var(--radius);overflow:hidden}
-.gift .gift__img{grid-column:2;grid-row:1 / 4;width:100%;height:100%;min-height:0;object-fit:contain;object-position:50% 100%}
-.gift__name{grid-column:1;grid-row:2;font:400 1.9rem/1 var(--font-display);padding-top:.1em}
-.gift__sub{grid-column:1;grid-row:3;font-size:var(--t-14);font-weight:500}
-.gift:hover .gift__name{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:.12em}
 .chips--on{display:flex !important}
 
 /* product page: parts + in the box */
@@ -436,10 +426,7 @@ html.restoring .pick__opt{content-visibility:visible}
 .visit__hours .is-today th,.visit__hours .is-today td{color:var(--color-strong);font-weight:600}
 
 @media (max-width:959px){.set__sum .btn--wide{display:none}}
-@media (min-width:640px){.gifts__row{grid-template-columns:repeat(3,1fr)} .gift{min-height:200px;grid-template-columns:minmax(0,1fr) 44%}}
 @media (min-width:960px){
-  .gifts{padding-top:var(--s-24)}
-  .gift{min-height:260px} .gift__name{font-size:2.6rem}
   .set{grid-template-columns:minmax(0,1fr) 380px;align-items:start;padding-top:var(--s-12)}
   .set__sum{position:sticky;top:100px;padding:0 var(--gutter) 0 0}
   .pick__opt{flex-basis:160px}

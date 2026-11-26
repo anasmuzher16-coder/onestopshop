@@ -23,8 +23,8 @@ for (const [tag, type, ctx] of [["webkit390", webkit, { viewport: { width: 390, 
     await p.goForward(); await wait(450); t(`${tag} 14 Forward returns to the place on the product`, Math.abs((await y()) - 300) <= 4, String(await y()));
     // 16 titles
     for (const [u, want] of [["/shop/bowls", /^Bowls \|/], ["/cart", /^Cart \|/], ["/p/OSS-9601", /^Zanobia Herbal Molasses Double Apple, 250 g \|/]]) { await open("/terms"); await p.evaluate(x => { const a = document.createElement("a"); a.href = x; a.style.display = "none"; document.body.append(a); a.click(); a.remove(); }, u); await p.waitForURL("**" + u); await wait(250); t(`${tag} 16 title changes on ${u}`, want.test(await p.title()), await p.title()); }
-    // 17 Everything and Gifts from anywhere
-    for (const u of ["/shop/hookahs", "/p/OSS-100024", "/cart", "/set"]) { await open(u); const v = await p.evaluate(() => [...document.querySelectorAll("a[href]")].filter(a => a.getBoundingClientRect().width > 0).map(a => a.getAttribute("href"))); t(`${tag} 17 ${u} reaches Everything and Gifts`, v.includes("/shop") && v.some(h => h.startsWith("/gifts/")), v.length + " links"); }
+    // 17 Everything from anywhere (Gifts is gone, owner 2026-11-26)
+    for (const u of ["/shop/hookahs", "/p/OSS-100024", "/cart", "/set"]) { await open(u); const v = await p.evaluate(() => [...document.querySelectorAll("a[href]")].filter(a => a.getBoundingClientRect().width > 0).map(a => a.getAttribute("href"))); t(`${tag} 17 ${u} reaches Everything, and no Gifts link`, v.includes("/shop") && !v.some(h => h.startsWith("/gifts")), v.length + " links"); }
     // 18 chips hold still
     if (tag === "webkit390") { await open("/shop/parts"); t(`${tag} 18 chips are their own layer in a page change`, await p.evaluate(() => getComputedStyle(document.querySelector(".chips")).viewTransitionName) === "chips"); }
     // 19 current page

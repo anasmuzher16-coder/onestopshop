@@ -327,7 +327,7 @@ function viewHome() {
     <div class="hero__in">
       <h1 class="hero__h"><span class="hero__lead">Hookahs,</span> <span class="hero__rest">and everything that goes with them.</span></h1>
       <div class="hero__side">
-        <p class="hero__p">${PRODUCTS.some(p => forSale(p) && !localOnly(p) && !counterPay(p)) ? "Local delivery from $10 near Windsor, free pickup, and shipping across Canada except Quebec, for now." : "Pickup in Windsor and local delivery from $10. Shipping across Canada once prices are in."}</p>
+        <p class="hero__p">${PRODUCTS.some(p => forSale(p) && !isSold(p) && !localOnly(p) && !counterPay(p)) ? "Local delivery from $10 near Windsor, free pickup, and shipping across Canada except Quebec, for now." : "Pickup in Windsor and local delivery from $10. Shipping across Canada once prices are in."}</p>
         <div class="hero__cta"><a class="btn" href="/shop/hookahs">Shop hookahs</a><a class="btn btn--ghost" href="/shop">All ${SHELF.length} pieces</a></div>
       </div>
     </div>
@@ -420,7 +420,7 @@ function viewShop(cat) {
     <h1 class="shophead__h">${c ? c.name : "Everything"}</h1>
     <p class="shophead__n">${empty ? soonBand() : bandNote(c, list)}</p>
   </section>
-  <nav class="chips" aria-label="Categories"><a href="/shop" ${!c ? 'aria-current="page"' : ""}>All</a>${CATEGORIES.map(x => `<a href="/shop/${x.id}" ${c && c.id === x.id ? 'aria-current="page"' : ""}>${x.name}</a>`).join("")}<a href="/gifts/under-50">Gifts</a></nav>
+  <nav class="chips" aria-label="Categories"><a href="/shop" ${!c ? 'aria-current="page"' : ""}>All</a>${CATEGORIES.map(x => `<a href="/shop/${x.id}" ${c && c.id === x.id ? 'aria-current="page"' : ""}>${x.name}</a>`).join("")}</nav>
   ${empty ? soonSection(c) : f ? f.html(() => shopGrid(cat)) : shopGrid(cat)}`;
 }
 
@@ -526,19 +526,6 @@ function viewProduct(sku) {
   ${more.length ? `<section class="shelf"><header class="shelf__head"><h2 class="h2">More ${localOnly(p) ? "charcoal" : c.name.toLowerCase()}</h2><a class="link" href="/shop/${p.cat}">All ${localOnly(p) ? "charcoal" : c.name.toLowerCase()}</a></header><div class="grid">${more.map(card).join("")}</div></section>` : ""}`;
 }
 
-// ---------- gifts ----------
-function giftList(under) { return SHELF.filter(p => forSale(p) && !p.dark && !isSold(p) && !localOnly(p) && (under ? p.price < 50 : p.price >= 50 && p.price <= 150)).sort((a, b) => b.price - a.price); }
-function viewGifts(kind) {
-  const under = kind !== "under-150", list = giftList(under);
-  return `
-  <section class="shophead" data-tone="${under ? "emerald" : "cobalt"}" data-fx="gifts">
-    <h1 class="shophead__h">${under ? "Under $50" : "Under $150"}</h1>
-    <p class="shophead__n">${list.length ? `<span class="num">${list.length}</span> gifts, packed at the counter` : soonBand()}</p>
-  </section>
-  <nav class="chips chips--on" aria-label="Gifts"><a href="/shop">Everything</a><a href="/gifts/under-50" ${under ? 'aria-current="page"' : ""}>Under $50</a><a href="/gifts/under-150" ${!under ? 'aria-current="page"' : ""}>Under $150</a><a href="/set">The full setup</a></nav>
-  ${list.length ? `<div class="grid grid--shop">${list.map(card).join("")}</div>`
-    : soonShelf({ tone: under ? "emerald" : "cobalt", obj: "gifts", lead: "Nothing in this price range is online yet. Call the counter and we will check the shelf for you, and pack it as a gift." })}`;
-}
 
 // ---------- build a set ----------
 // The heat section is charcoal now: pickup or local delivery only, so it is an optional pick, never put in a set by default.
@@ -799,7 +786,7 @@ function syncChrome() {
   const here = (on, exact = on) => on ? `aria-current="${exact ? "page" : "true"}"` : "";   // the page itself, or the section a product belongs to
   // Gifts is gone from the menu (owner, 2026-11-26: "it just adds clutter")
   $("[data-nav]").innerHTML = `<a href="/shop" ${here(h === "#/shop")}>Everything</a>` + CATEGORIES.map(c => `<a href="/shop/${c.id}" ${here(h === "#/shop/" + c.id || prod?.cat === c.id, h === "#/shop/" + c.id)}>${c.name}</a>`).join("") + `<a href="/set" ${here(h === "#/set")}>Build a set</a><a href="/search" ${here(h === "#/search")}>Search</a>`
-    + `<details class="top__more" hidden><summary>More</summary><div class="top__menu" role="list"></div></details>`;
+    + `<details class="top__more" hidden><summary>More</summary><div class="top__menu"></div></details>`;
   fitNav();
   const topCart = $(".top__cart"); if (h === "#/cart") topCart.setAttribute("aria-current", "page"); else topCart.removeAttribute("aria-current");
   const count = `<span data-cart-count>${cartCount()}</span>`, dock = $(".dock");
@@ -814,7 +801,7 @@ function syncChrome() {
     ? `<a class="dock__side" href="/shop">Shop</a>${setPicks().some(Boolean) ? `<button class="dock__buy" type="button" data-add-set>Add the set <span class="num">${whole(setPicks().filter(Boolean).reduce((a, p) => a + p.price, 0))}</span></button>` : `<a class="dock__buy dock__buy--off" href="/shop">See what is in stock</a>`}<a class="dock__side" href="/cart" aria-label="Cart">${count}</a>`
     : ra === "cart" && lines.length
     ? `<a class="dock__side" href="/shop">Shop</a>${canPay ? `<a class="dock__buy" href="/checkout">Check out <span class="num">${money(sub + (ship ? ship.total : sc && sc.local ? sc.localFee || 0 : 0))}</span></a>` : sc && sc.counter ? `<button class="dock__buy dock__buy--ask" type="button" data-pickup-jump>Choose how you get it</button>` : sc && sc.checking ? `<span class="dock__buy dock__buy--off">Checking delivery</span>` : `<button class="dock__buy" type="button" data-open-postal>${state.dest ? "Change postal code" : "Add postal code for shipping"}</button>`}<span class="dock__side">${count}</span>`
-    : `<a href="/" ${h === "#/" ? 'aria-current="page"' : ""}>Home</a><a href="/shop" ${here(h.startsWith("#/shop") || ra === "gifts", h === "#/shop")}>Shop</a><a href="/search" ${h === "#/search" ? 'aria-current="page"' : ""}>Search</a><a href="/cart" ${h === "#/cart" ? 'aria-current="page"' : ""}>Cart ${count}</a>`;
+    : `<a href="/" ${h === "#/" ? 'aria-current="page"' : ""}>Home</a><a href="/shop" ${here(h.startsWith("#/shop"), h === "#/shop")}>Shop</a><a href="/search" ${h === "#/search" ? 'aria-current="page"' : ""}>Search</a><a href="/cart" ${h === "#/cart" ? 'aria-current="page"' : ""}>Cart ${count}</a>`;
   syncDelivery();
 }
 const sheet = $("[data-postal-sheet]"), postalInput = $("#postal"), postalErr = $("#postal-err");
@@ -1181,13 +1168,13 @@ const SITE = "One Stop Shop", HOME_TITLE = document.title, PLAIN = { account: "Y
 // The same addresses the server answers. Anything else is the missing page, never a page that merely looks right.
 function realPage(a, b, more) {
   if (more) return false; if (!a) return true;
-  if (a === "shop") return !b || !!catById[b]; if (a === "p") return !!b; if (a === "gifts") return !b || b === "under-50" || b === "under-150";
+  if (a === "shop") return !b || !!catById[b]; if (a === "p") return !!b;
   if (a === "order") return !!b && /^W[A-Z0-9]{6}$/.test(b);
   return !b && Object.hasOwn(PLAIN, a);
 }
 function pageTitle(a, b, real) {
   if (!real || (a === "p" && !bySku[b])) return `Page not found | ${SITE}`; if (!a) return HOME_TITLE;
-  const name = a === "shop" ? (b ? catById[b].name : "Shop") : a === "p" ? bySku[b].name : a === "gifts" ? "Gifts" : a === "order" ? `Order ${b}` : PLAIN[a];
+  const name = a === "shop" ? (b ? catById[b].name : "Shop") : a === "p" ? bySku[b].name : a === "order" ? `Order ${b}` : PLAIN[a];
   return `${name} | ${SITE}`;
 }
 function render({ chunk = false } = {}) {
@@ -1198,7 +1185,7 @@ function render({ chunk = false } = {}) {
   // a long section reached by a tap: the page now, its cards in the tasks after. Short sections draw whole, as before (the Misc
   // act stamps the labels already on its first screen at the swap, so its cards must be there).
   queue = chunk && real && a === "shop" && (b ? SHELF.filter(p => p.cat === b).length : SHELF.length) > 24 ? { q: [], first: firstScreen(), wide: innerWidth >= 960 } : null;   // the window's size read before the page changes, so reading it forces no layout
-  let html, q; try { html = !real ? viewMissing() : a === "shop" ? viewShop(b) : a === "p" ? viewProduct(b) : a === "cart" ? viewCart() : a === "shipping" ? viewShipping() : a === "gifts" ? viewGifts(b) : a === "set" ? viewSet() : a === "search" ? viewSearch() : a === "privacy" ? viewPrivacy() : a === "terms" ? viewTerms() : a === "checkout" ? viewCheckout() : a === "order" ? viewOrder(b) : a === "account" ? accountView(band) : !a ? viewHome() : viewMissing(); } finally { q = queue; queue = null; }
+  let html, q; try { html = !real ? viewMissing() : a === "shop" ? viewShop(b) : a === "p" ? viewProduct(b) : a === "cart" ? viewCart() : a === "shipping" ? viewShipping() : a === "set" ? viewSet() : a === "search" ? viewSearch() : a === "privacy" ? viewPrivacy() : a === "terms" ? viewTerms() : a === "checkout" ? viewCheckout() : a === "order" ? viewOrder(b) : a === "account" ? accountView(band) : !a ? viewHome() : viewMissing(); } finally { q = queue; queue = null; }
   $("#main").innerHTML = html; laterStart(q);
   document.body.dataset.route = a || "home";
   syncChrome();

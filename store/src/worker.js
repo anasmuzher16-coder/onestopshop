@@ -25,7 +25,10 @@ const money = cents => "$" + (cents / 100).toLocaleString("en-CA", { minimumFrac
 // What each page says about itself. Returns null for an address that does not exist.
 function describe(path, cat, site) {
   const [a, b, extra] = path.split("/").filter(Boolean);
-  const base = { title: `${site} | Hookahs and accessories, Windsor, shipped across Canada`, desc: "Hookahs, charcoal, shisha and foil from our Windsor counter. Pickup, local delivery, and shipping across Canada except Quebec, for now.", index: true };
+  // the home line follows the hero (owner, 2026-11-26): shipping is promised only once something that can ship is on sale
+  const ships = cat.products.some(p => sellable(p) && p.stock > 0 && !counterRow(p) && !counterPayRow(p));
+  const base = ships ? { title: `${site} | Hookahs and accessories, Windsor, shipped across Canada`, desc: "Hookahs, charcoal, shisha and foil from our Windsor counter. Pickup, local delivery, and shipping across Canada except Quebec, for now.", index: true }
+    : { title: `${site} | Hookahs and accessories, Windsor`, desc: "Hookahs, charcoal, shisha and foil from our Windsor counter. Pickup in Windsor and local delivery from $10. Shipping across Canada once prices are in.", index: true };
   if (!a) return base;
   if (extra) return null;
   if (a === "shop") {
@@ -46,9 +49,8 @@ function describe(path, cat, site) {
     return { title: `${p.name} | ${site}`, desc: `${(() => { try { const d = JSON.parse(p.details || "{}").description; return d ? d + " " : p.note ? p.note + ". " : ""; } catch { return p.note ? p.note + ". " : ""; } })()}${said}.${!sellable(p) ? "" : counterPayRow(p) ? " Pickup in Windsor, paid in the shop." : counterRow(p) ? " Pickup in Windsor or local delivery near Windsor. Not shipped." : " Shipped across Canada except Quebec, or free pickup in Windsor."}`, index: true, product: p };
   }
   if (a === "order") return b && /^W[A-Z0-9]{6}$/.test(b) ? { ...base, title: `Order ${b} | ${site}`, index: false } : null;
-  if (a === "gifts" && b && b !== "under-50" && b !== "under-150") return null;
-  if (b && a !== "gifts") return null;
-  const fixed = { account: "Your account", privacy: "Privacy", terms: "Terms of sale", checkout: "Checkout", cart: "Cart", shipping: "Shipping and returns", set: "Build a set", search: "Search", gifts: "Gifts" };
+  if (b) return null;
+  const fixed = { account: "Your account", privacy: "Privacy", terms: "Terms of sale", checkout: "Checkout", cart: "Cart", shipping: "Shipping and returns", set: "Build a set", search: "Search" };
   if (!Object.hasOwn(fixed, a)) return null;
   return { ...base, title: `${fixed[a]} | ${site}`, index: ["shipping", "privacy", "terms"].includes(a) || (a === "set" && setReady(cat)) };
 }
@@ -234,7 +236,7 @@ async function route(request, env, ctx) {
       if (path === "/robots.txt") return new Response(robots(env, url), { headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "public, max-age=3600" } });
       if (path === "/index.html") return Response.redirect(url.origin + "/", 301);
       // the Gifts section is gone (owner, 2026-11-26: "it just adds clutter"): its old addresses go to the whole shop
-  if (/^\/gifts(\/|$)/.test(url.pathname)) return new Response(null, { status: 301, headers: { ...SECURITY, Location: url.origin + "/shop", "Cache-Control": "public, max-age=86400" } });
+      if (/^\/gifts(\/|$)/.test(url.pathname)) return new Response(null, { status: 301, headers: { ...SECURITY, Location: url.origin + "/shop", "Cache-Control": "public, max-age=86400" } });
   { const to = charcoalMoved(url); if (to) return new Response(null, { status: 301, headers: { ...SECURITY, Location: url.origin + to, "Cache-Control": "public, max-age=86400" } }); }
       const lower = path.match(/^\/p\/([A-Za-z]+-\d+)\/?$/); if (lower && lower[1] !== lower[1].toUpperCase()) return Response.redirect(`${url.origin}/p/${lower[1].toUpperCase()}`, 301);   // an item number typed in small letters
       if (path === "/intake.html") return new Response("Not found", { status: 404, headers: SECURITY });   // the questionnaire is only at its link
