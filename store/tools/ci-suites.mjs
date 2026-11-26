@@ -84,10 +84,11 @@ async function runOnce(t, tag) {
     const [c, sig] = await new Promise(res => run.once("close", (c, s) => res([c, s]))); clearTimeout(limit);
     code = c ?? 1; text = Buffer.concat(chunks).toString("utf8") + (sig ? NL + `[ci] the suite process ended by ${sig}` + NL : "");
   } else if (args) text = died ? `the store did not start (it exited: code ${died.code}, signal ${died.signal})` : "the store did not start";
-  const after = died ? `store DIED during the suite (code ${died.code}, signal ${died.signal}, ${died.after} s after start)` : `store after the suite: ${await alive()}`;
+  const gone = died;   // read before the stop below, which ends the store on purpose
+  const after = gone ? `store DIED during the suite (code ${gone.code}, signal ${gone.signal}, ${gone.after} s after start)` : `store after the suite: ${await alive()}`;
   await stop(dev); closeSync(fd);
   const crashes = kernel().slice(k0).filter(l => CRASHER.test(l));
-  const crash = [died && "the store exited", crashes.length && "kernel: " + crashes.map(l => l.replace(/^\[[^\]]*\]\s*/, "").slice(0, 110)).join(" | "), GONE.test(text) && "Playwright: browser, page or context gone"].filter(Boolean).join("; ");
+  const crash = [gone && "the store exited", crashes.length && "kernel: " + crashes.map(l => l.replace(/^\[[^\]]*\]\s*/, "").slice(0, 110)).join(" | "), GONE.test(text) && "Playwright: browser, page or context gone"].filter(Boolean).join("; ");
   writeFileSync(join(OUT, t + tag + ".txt"), text + NL + `[ci] ${after}` + NL + (crash ? `[ci] crash: ${crash}` + NL : ""));
   const tail = text.split(/\r?\n/).filter(l => /FAIL|PASS|passed|Error|waves played|closed|crash/i.test(l)).slice(-8).join(NL + "   ");
   console.log(`== ${t}${tag} exit ${code} (${Math.round((Date.now() - t0) / 1000)} s, ended ${stamp()}; ${after})` + (crash ? NL + `   CRASH: ${crash}` : "") + (tail ? NL + "   " + tail : ""));
