@@ -25,7 +25,7 @@ jobs:
           - shard: pages
             suites: e2e-nav webkit-check phone-audit whitebox test-chunk test-stick
           - shard: motion
-            suites: fx-robust allwaves
+            suites: ci-probe fx-robust allwaves
     name: ${{ matrix.shard }}
     steps:
       - uses: actions/checkout@v4
@@ -49,12 +49,25 @@ jobs:
         if: matrix.shard == 'server'
         working-directory: store/tools/catalog
         run: python -m unittest test_catalog
+      - name: Machine
+        run: |
+          nproc; free -m; df -h / /dev/shm; ulimit -a | head -20
+          mkdir -p store/.ci/out
+          # memory and the biggest processes every 5 s, kept with the outputs, so a crash can be matched to memory
+          nohup bash -c 'while true; do echo "== $(date +%T)"; free -m | sed -n 2,3p; ps -eo rss,pcpu,comm --sort=-rss | head -6; sleep 5; done' > store/.ci/out/machine.log 2>&1 &
       - name: Suites
         env:
           PW_FROM: ${{ github.workspace }}/package.json
           WRANGLER_JS: ${{ github.workspace }}/node_modules/wrangler/bin/wrangler.js
           WAVE_SETTLE: "2500"   # software rendering on these machines: a wave gets longer to end before it counts as stuck
+          DEBUG: pw:browser   # the browsers' own output goes into each suite's .txt, so a browser crash says why
         run: node store/tools/ci-suites.mjs ${{ matrix.suites }}
+      - name: Kernel log (out-of-memory kills, crashes)
+        if: always()
+        run: |
+          sudo dmesg -T | tail -80 > store/.ci/out/dmesg.txt || true
+          grep -iE "oom|killed process|segfault|trap|out of memory" store/.ci/out/dmesg.txt || echo "no oom or crash lines in the kernel log"
+          free -m
       - name: Keep the outputs
         if: always()
         uses: actions/upload-artifact@v4
