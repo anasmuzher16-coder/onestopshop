@@ -53,6 +53,7 @@ ok(acc.length === 39 && accBy("heat") === 18 && accBy("bowls") === 8 && accBy("h
   `39 Ace accessories in their sections, none in Charcoal: ${["heat", "bowls", "hoses", "bases", "parts", "charcoal"].map(id => id + " " + accBy(id)).join(", ")}`);
 ok(acc.every(p => p.state === "tbd" && p.price === null && p.stock === 0 && p.weightTbd && !p.family && !/QUASAR|QAUSAR|HUQQABAZ|T-SAR/i.test(p.name)),
   "every accessory: Price TBD, no price, nothing to sell, weight TBD (pickup or local once priced, like the hookahs), one card each, no other maker's name");
+ok(m.PRODUCTS.filter(p => p.cat === "shisha").every(p => p.details && p.details.tobacco === true), "every shisha carries its pay-at-the-counter rule itself (not only by its section)");
 // the menu order (owner, 2026-11-26): hookahs, shisha, charcoal, heat, then the parts
 ok(m.CATEGORIES.map(c => c.id).join(",") === "hookahs,shisha,charcoal,heat,bowls,hoses,bases,parts,cologne,misc", "menu order " + m.CATEGORIES.map(c => c.id).join(","));
 ok(foil.length === 15 && foil.every(p => p.state === "sale" && p.ship === "pickup_only" && p.weightTbd), "15 foil packs: on sale, pickup or local delivery while their weight is TBD");
