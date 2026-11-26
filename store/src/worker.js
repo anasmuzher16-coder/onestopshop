@@ -9,6 +9,7 @@ import { loyaltyAdmin } from "./loyalty.js";
 import { placeOrder } from "./checkout.js";
 import { webhook, payStatus, sweep, cardReady } from "./pay.js";
 import { deliveryRoute } from "./delivery.js";
+import { retryEmails } from "./email.js";
 import { nightly } from "./backup.js";
 import { isSample } from "./samples.js";
 
@@ -114,7 +115,7 @@ async function page(request, env, url, ctx) {
   headers.set("Content-Type", "text/html; charset=utf-8");
   headers.set("Cache-Control", "no-cache");
   if (url.pathname.startsWith("/account")) headers.set("Referrer-Policy", "no-referrer");   // sign-in and unsubscribe links never leak onward
-  if (!(live && meta.index)) headers.set("X-Robots-Tag", "noindex, nofollow"); else headers.delete("X-Robots-Tag");   // _headers marks everything noindex for the demo; a live, indexable page must drop it
+  if (!(live && meta.index)) headers.set("X-Robots-Tag", "noindex, nofollow"); else headers.delete("X-Robots-Tag");   // the shell came from the static files: a live, indexable page must never carry a copied noindex
   return new Response(out.body, { status: d ? 200 : 404, headers });
 }
 // The public catalogue feed: what a shopper can already see, nothing more. Research notes, photo rights, source lines
@@ -146,13 +147,21 @@ const heroPreload = p => { const u = s => `img/pc/${p.img}${s}.webp${p.iv ? "?v=
 export default {
   // every night: a full copy of the shop's records into the backup bucket
   async scheduled(event, env, ctx) {
-    if (event.cron === "*/10 * * * *") { ctx.waitUntil(sweep(env).then(r => { console.log(JSON.stringify({ at: "pay-sweep", ...r })); if (r.paid || r.released) dropCatalog(ctx); })); return; }   // every 10 minutes: unpaid orders checked with Stripe; stock it put back shows in the shop at once
+    env = withCtx(env, ctx);
+    if (event.cron === "*/10 * * * *") {   // every 10 minutes: unpaid orders checked with Stripe (stock it put back shows in the shop at once), and order emails the mail service refused sent again
+      ctx.waitUntil(sweep(env).then(r => { console.log(JSON.stringify({ at: "pay-sweep", ...r })); if (r.paid || r.released) dropCatalog(ctx); }));
+      ctx.waitUntil(retryEmails(env).then(r => { if (r.tried) console.log(JSON.stringify({ at: "email-retry", ...r })); }).catch(e => console.error(JSON.stringify({ at: "email-retry", message: String(e && e.message || e) }))));
+      return;
+    }
     ctx.waitUntil(scrubCodes(env).then(() => nightly(env))); ctx.waitUntil(stockAlerts(env).then(() => restockReminders(env)));   // nightly: backup, and the customers' alerts and charcoal reminders
   },
-  async fetch(request, env, ctx) { setShishaCard(env.STRIPE_TOBACCO_OK); return demoNoindex(await route(request, env, ctx), env, request); },
+  async fetch(request, env, ctx) { setShishaCard(env.STRIPE_TOBACCO_OK); env = withCtx(env, ctx); return demoNoindex(await route(request, env, ctx), env, request); },
 };
+// The request's env with one extra: env.waitUntil, so code deep in the order flow (src/email.js) can finish a send after
+// the answer has gone, without every function passing ctx along. Bindings and settings are read through to the real env.
+const withCtx = (env, ctx) => Object.create(env, { waitUntil: { value: p => ctx.waitUntil(p) } });
 // While the shop is not live on this address, every answer says noindex: redirects, errors, API answers and uploaded
-// photos too (the static files get it from public/_headers). A page sets its own header in page().
+// photos too (static files on the workers.dev addresses get it from public/_headers). A page sets its own header in page().
 function demoNoindex(r, env, request) {
   if (liveHere(env, new URL(request.url)) || r.headers.get("X-Robots-Tag")) return r;
   const out = new Response(r.body, r); out.headers.set("X-Robots-Tag", "noindex, nofollow"); return out;
