@@ -1264,7 +1264,9 @@ window.addEventListener("routechange", () => {
     setTimeout(() => delete root.dataset.swapping, 1500);
     return;
   }
-  if (!navInfo().instant && document.startViewTransition && !matchMedia("(prefers-reduced-motion: reduce)").matches) document.startViewTransition(go); else go();   // a wave is already covering the change
+  // a wave is already covering the change. A transition the browser cuts short (a resize or a second tap mid-change) rejects its
+  // promises; the page itself has already changed, so that is not an error (CI review, 2026-11-26: it surfaced as uncaught)
+  if (!navInfo().instant && document.startViewTransition && !matchMedia("(prefers-reduced-motion: reduce)").matches) { const vt = document.startViewTransition(go); vt.ready.catch(() => {}); vt.finished.catch(() => {}); vt.updateCallbackDone?.catch(() => {}); } else go();
 });
 find.init({ PRODUCTS, esc, card, render, navigate, grid: shopGrid, defer });
 finder.init({ PRODUCTS, CATEGORIES, esc, shot, sticker, nowLedger, setQ: q => { state.q = q; } });
