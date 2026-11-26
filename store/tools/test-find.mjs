@@ -99,6 +99,11 @@ if (b) try {
   // the finder offer steps aside once a filter is set; opening and closing it changes nothing
   await p.goto(B + "/shop/charcoal?type=roll", { waitUntil: "load" }); await p.waitForSelector("[data-fbar]");
   ok(!(await p.locator("[data-f-finder]").count()), "no finder offer once a filter is set");
+  // the results count shows once a filter is on, and is only for screen readers when none is (the band already says it)
+  ok(await p.locator(".fres:not(.fres--quiet) .fres__n").first().isVisible(), "with a filter on, the results count shows");
+  await p.goto(B + "/shop/charcoal", { waitUntil: "load" }); await p.waitForSelector("[data-fbar]");
+  ok(await p.locator(".fres.fres--quiet").count() > 0 && await p.locator(".fres:not(.fres--quiet)").count() === 0 && (await p.locator(".fres__n").first().textContent()).trim().length > 0, "with no filter, the count is said once (by the band) and kept for screen readers");
+  await p.goto(B + "/shop/charcoal?type=roll", { waitUntil: "load" }); await p.waitForSelector("[data-fbar]");
   await p.goto(B + "/shop/heat?type=foil", { waitUntil: "load" }); await p.waitForSelector("[data-fbar]");
   ok(new URL(p.url()).pathname === "/shop/heat" && !(await p.locator("[data-f-finder]").count()) && await p.locator(".grid--shop .card").count() === 15, "Heat keeps its foil filter and has no coal finder");
   await p.goto(B + "/shop/charcoal", { waitUntil: "load" }); await p.waitForSelector("[data-f-finder]");

@@ -750,14 +750,22 @@ button.dline:active{background:var(--color-line)}
 .dstrip__btn[hidden],.dchoose[hidden]{display:none}
 /* The chooser: in the page flow under the header, so it can never sit on a product. Two coal plates on the teal band. */
 .dstrip[data-mode="choose"] .dstrip__x{top:var(--s-1);margin-top:0}
-.dchoose{padding:var(--s-2) var(--gutter) var(--s-3)}   /* compact on a phone: the first products come into view (council, 2026-11-26) */
-.dchoose__h{min-height:28px;margin:0 var(--s-8) var(--s-2) 0;font-size:var(--t-16);font-weight:600;line-height:28px}
+.dchoose{padding:var(--s-3) var(--gutter) var(--s-4)}
+.dchoose__h{min-height:36px;margin:0 var(--s-8) var(--s-2) 0;font-size:var(--t-16);font-weight:600;line-height:36px}
 .dchoose__row{display:grid;grid-template-columns:1fr 1fr;gap:var(--s-2)}
-.dchoose__opt{display:flex;flex-direction:column;justify-content:space-between;gap:var(--s-1);min-width:0;min-height:72px;padding:var(--s-3);border:0;border-radius:var(--radius);background:var(--ink);color:var(--color-strong);text-align:left;cursor:pointer;touch-action:manipulation;transition:background var(--dur-micro) var(--ease-state)}
-.dchoose__opt:hover{background:var(--coal-2)}
+.dchoose__opt{display:flex;flex-direction:column;justify-content:space-between;gap:var(--s-2);min-width:0;min-height:112px;padding:var(--s-3);border:0;border-radius:var(--radius);background:var(--ink);color:var(--color-strong);text-align:left;cursor:pointer;touch-action:manipulation;transition:background var(--dur-micro) var(--ease-state)}
+/* compact on a phone so the first products come into view (council, 2026-11-26). The option row starts at 52px, below the
+   close button's 44px target (it spans 4-48px), so a tap on Nationwide can never land on the X (breaker, 2026-11-26); the
+   heading's line height is relative, so a large text setting wraps it without the lines touching. */
+@media (max-width:959px){
+  .dchoose{padding-top:var(--s-2);padding-bottom:var(--s-3)}
+  .dchoose__h{line-height:1.25;padding-block:4px}
+  .dchoose__opt{gap:var(--s-1);min-height:72px}
+  .dchoose__name{font-size:var(--t-18)}
+}.dchoose__opt:hover{background:var(--coal-2)}
 .dchoose__opt:active{background:var(--coal-1)}
 .dchoose__opt:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
-.dchoose__name{font-family:var(--font-display);font-size:var(--t-18);line-height:1.05;letter-spacing:.01em;text-transform:uppercase}
+.dchoose__name{font-family:var(--font-display);font-size:var(--t-22);line-height:1.05;letter-spacing:.01em;text-transform:uppercase}
 .dchoose__sub{color:var(--bone);font-size:var(--t-12);line-height:16px}
 @media (min-width:960px){
   .dchoose{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);align-items:center;column-gap:var(--s-6);padding-right:calc(var(--gutter) + 40px)}
