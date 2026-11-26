@@ -1,5 +1,5 @@
 import { PRODUCTS, CATEGORIES, BOXES } from "/api/catalog-module";
-import { route, navigate, navInfo, spotHere, canGoBack, setQuery, setSpotAnchor } from "./route.js";
+import { route, navigate, navInfo, spotHere, canGoBack, setQuery, setSpotAnchor, afterSwap } from "./route.js";
 import { parsePostal, pack, quote, money, days, MAX_QTY, fuelOn, orderTotals, taxRate, taxLabel, localArea, localDue, localEta, FREE_LOCAL_CENTS, SHOP_HOURS } from "./rates.js";
 import { accountView, afterRender, rewardCents, rewardRow, rewardFlag, rewardGone } from "./account.js";
 import { visitSource } from "./source.js";   // where the visit came from, sent with the order (back office report)
@@ -107,8 +107,11 @@ const SHOP_STREET = "760 Wyandotte St E", SHOP_ADDRESS = "760 Wyandotte St E, Wi
 const directions = (label = "Get directions") => `<a class="link" href="${SHOP_MAP}" target="_blank" rel="noopener">${label}</a>`;
 const HOURS = SHOP_HOURS, DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const h12 = h => (h % 12 || 12) + (h < 12 ? " am" : " pm");
+// one formatter, made once: building an Intl.DateTimeFormat is slow, and the home page asks for the time once per row of its hours table, inside the wave's swap
+let WINDSOR = null;
 function nowInWindsor() {
-  const parts = Object.fromEntries(new Intl.DateTimeFormat("en-CA", { timeZone: "America/Toronto", weekday: "long", hour: "numeric", minute: "numeric", hour12: false }).formatToParts(new Date()).map(x => [x.type, x.value]));
+  WINDSOR ||= new Intl.DateTimeFormat("en-CA", { timeZone: "America/Toronto", weekday: "long", hour: "numeric", minute: "numeric", hour12: false });
+  const parts = Object.fromEntries(WINDSOR.formatToParts(new Date()).map(x => [x.type, x.value]));
   return { day: DAYS.indexOf(parts.weekday), t: (+parts.hour % 24) + +parts.minute / 60 };
 }
 function openLine() {
@@ -763,7 +766,10 @@ function viewShipping() {
 // ---------- chrome, sheet, router ----------
 // The desktop menu never cuts a link off (owner, 2026-11-26: "fix every issue like that"): links that do not fit move, from
 // the end, behind a labelled "More" button, in the same order. Whole links only; nothing scrolls out of sight.
+// Under 960 px the row is display:none (styles.css): that is asked of the media query, not of offsetWidth, which made the whole new
+// page lay out inside the wave's page swap on every phone tap (trace, 2x CPU, 2026-11-26: 10-56 ms of style and layout at fitNav)
 function fitNav() {
+  if (!WIDE.matches) return;
   const nav = $("[data-nav]"); if (!nav || !nav.offsetWidth) return;   // phones hide the row (the dock and the /shop chips carry it)
   const more = nav.querySelector(".top__more"), menu = more.querySelector(".top__menu");
   for (const a of [...menu.children]) more.before(a);   // start from the whole row
@@ -1177,6 +1183,9 @@ function pageTitle(a, b, real) {
   const name = a === "shop" ? (b ? catById[b].name : "Shop") : a === "p" ? bySku[b].name : a === "order" ? `Order ${b}` : PLAIN[a];
   return `${name} | ${SITE}`;
 }
+// the section you are in sits centred in the chip row. Reading its place lays the page out, so at a wave's swap it is read in the
+// frame after (route.js afterSwap), still under the wave's cover, once that layout is done anyway
+const centreChip = afterSwap(() => { const chip = $(".chips [aria-current]"); if (chip) chip.parentNode.scrollLeft = chip.offsetLeft - (chip.parentNode.clientWidth - chip.offsetWidth) / 2; });
 function render({ chunk = false } = {}) {
   const keep = focusKey(document.activeElement);
   const [a, b, more] = route().replace(/^#\/?/, "").split("/").filter(Boolean), real = realPage(a, b, more);
@@ -1189,7 +1198,7 @@ function render({ chunk = false } = {}) {
   $("#main").innerHTML = html; laterStart(q);
   document.body.dataset.route = a || "home";
   syncChrome();
-  const chip = $(".chips [aria-current]"); if (chip) chip.parentNode.scrollLeft = chip.offsetLeft - (chip.parentNode.clientWidth - chip.offsetWidth) / 2;   // the section you are in sits centred in the row
+  centreChip();
   if (keep) { const el = document.querySelector(keep); if (el) el.focus({ preventScroll: true }); }
   priceLocal();
   preloadColours();

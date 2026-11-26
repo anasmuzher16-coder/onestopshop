@@ -25,6 +25,33 @@ const mark = (cause, instant) => { info = { cause, at: performance.now(), instan
 export const navInfo = () => info;
 export const waved = () => info.cause === "wave" && performance.now() - info.at < 1500;
 export const setNavGate = g => { gate = g; };
+// A section's effects (its band act, its smoke, mist or air) attach to a page the wave has just put in under its full cover in the
+// frame after the swap, not inside it: the swap frame then carries the new page alone, and each frame stays short (2x CPU trace,
+// 2026-11-26: band, smoke, mist and air setup were 20-45 ms of a 50-110 ms swap). The wave still covers the whole page in those
+// frames (its wake starts past the screen edge), so the effect is in place before any of the page shows, and nothing appears late. Outside a
+// wave (a first load, Back without a wave, a re-draw after add to cart) it runs at once, as before.
+// "The frame after" is the task that follows the next rendering update (a frame callback, then a message task): a page put in from a
+// frame callback (the wave's swap) and one put in from a plain task (a long section, app.js) both get the swap's frame to themselves.
+// The waiting jobs share one queue and one frame takes about 8 ms of them (always at least one), lowest rank first: the band act
+// (rank 0) is in the page in the first frame after the swap; the backgrounds (rank 1: smoke, mist, air, which fade in over 0.35 s)
+// and what sits below the first screen (rank 2) follow a frame or two later, still under the wave.
+const post = (() => { const ch = new MessageChannel(), fns = []; ch.port1.onmessage = () => fns.shift()?.(); return f => { fns.push(f); ch.port2.postMessage(0); }; })();
+const jobs = []; let armed = false;
+function pump() {
+  armed = false; const t0 = performance.now();
+  do { const j = jobs.shift(); if (!j) break; try { j.f(); } catch (e) { console.error(e); } } while (jobs.length && performance.now() - t0 < 8);
+  if (jobs.length) arm();
+}
+function arm() { if (armed) return; armed = true; requestAnimationFrame(() => post(pump)); }
+export function afterSwap(f, rank = 0) {
+  const j = { f, rank };
+  return () => {
+    const at = jobs.indexOf(j);
+    if (!gate?.live()) { if (at >= 0) jobs.splice(at, 1); f(); return; }   // no wave: at once, and a run still waiting is now stale
+    if (at >= 0) return;
+    const i = jobs.findIndex(x => x.rank > rank); jobs.splice(i < 0 ? jobs.length : i, 0, j); arm();
+  };
+}
 export function navigate(path, replace = false) {
   if (path === location.pathname + location.search || path === location.pathname) { gate?.same(); return; }   // the same page, with or without its search words
   if (gate?.take(path, replace)) return;

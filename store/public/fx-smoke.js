@@ -9,6 +9,7 @@
 // crosses a word or a price label. No library, no blend modes. Timed by the clock, so a phone that halves its
 // frame rate shows the same motion. With motion turned off it is shown settled. Where the phone cannot draw it
 // live (no context, no high precision, a lost context that does not come back) two drifting stills stand in.
+import { afterSwap } from "./route.js";
 const RM = matchMedia("(prefers-reduced-motion: reduce)");
 const SIZE = { bank: [320, 72], stage: [176, 220], hero: [176, 220] }; // drawn small and scaled up: smoke is soft
 const FRAG = `
@@ -182,7 +183,7 @@ function place() {
   kick();
 }
 if (!setup()) still();
-new MutationObserver(place).observe(document.getElementById("main"), { childList: true }); place();
+new MutationObserver(afterSwap(place, 1)).observe(document.getElementById("main"), { childList: true }); place();   // a background: at a wave's swap, just after the band act (route.js)
 if (gl) window.__smoke = { canvas: cv, at: s => { t0 = performance.now() - (s - 40) * 1000; }, roll: v => { fixedRoll = v; } }; // for the frame-capture tool
 
 // Cart puff: it bursts outward in a fan where the piece lands, then lifts and thins. Transform and opacity only.

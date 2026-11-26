@@ -2,6 +2,7 @@
 // so a 74 cm hookah stands exactly 74 cm on the ruler), a fixed cm ruler sits behind the shelf, and a height line
 // glides to the centred piece so every other piece can be read against it. Scroll work is one rAF, transform only.
 import { bounds, imgName } from "./fx-bounds.js";
+import { afterSwap } from "./route.js";
 const main = document.getElementById("main");
 let off = () => {};
 function setup() {
@@ -39,5 +40,5 @@ function setup() {
   measure();
   off = () => { removeEventListener("resize", measure); cancelAnimationFrame(raf); off = () => {}; };
 }
-new MutationObserver(setup).observe(main, { childList: true });
+new MutationObserver(afterSwap(setup, 2)).observe(main, { childList: true });   // it measures the row: at a wave's swap, the frame after (route.js)
 setup();

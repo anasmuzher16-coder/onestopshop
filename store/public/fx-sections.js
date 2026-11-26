@@ -15,7 +15,7 @@
 // crosses it does so on purpose: the stems the bowl and the heat keeper stand on run off it, and the tongs, the
 // price gun, the ice cube and the tossed hose come in from outside it.
 import { OBJ } from "./fx-objects.js";
-import { waved } from "./route.js";
+import { waved, afterSwap } from "./route.js";
 const RM = matchMedia("(prefers-reduced-motion: reduce)");
 let T0 = 450, WIND = T0 - 140;                                           // contact, and the earliest wind-up
 const clock = replay => { T0 = replay ? 140 : waved() ? 520 : 450; WIND = T0 - 140; };   // a tap has no page change to wait for
@@ -1034,7 +1034,7 @@ function place() {
   clock(again);
   try { run(layer, fresh && !RM.matches, host, head ? again : cat); } catch (e) { console.error("fx " + key + ": " + (e && e.stack || e)); layer.remove(); live = null; } // an effect that fails is simply absent, and says why
 }
-new MutationObserver(place).observe(document.getElementById("main"), { childList: true });
+new MutationObserver(afterSwap(place)).observe(document.getElementById("main"), { childList: true });   // at a wave's swap, the frame after (route.js)
 addEventListener("routechange", () => { if (location.pathname !== lastPath) { lastPath = location.pathname; arrivals++; playedKey = ""; live = null; } }); // arriving again plays it again
 // the object is measured against the title, so it is measured again when the title can change size
 const refit = () => { const o = document.querySelector(".shophead > .fx > .fx-obj"); if (o) fit(o.parentNode, o); };

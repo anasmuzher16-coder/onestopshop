@@ -2,7 +2,7 @@
 // Hookahs open with thick smoke rising from the bottom. Cologne opens with mist bursting from the bottle across the page. Both settle into a living background.
 // Nothing is looped or played back: the flow is computed live and new drifts start at random, so it never repeats.
 // WebGL2, no library, no images. With motion turned off, or on a phone that cannot run it, a designed still stands in.
-import { waved } from "./route.js";
+import { waved, afterSwap } from "./route.js";
 const RM = matchMedia("(prefers-reduced-motion: reduce)"), KEY = "oss:pour-open";
 const HOLD = 3.2, SETTLE = 4.8, CELLS = 422; // seconds; CELLS sets the size of one unit of flow against the height of the screen
 const V = `#version 300 es
@@ -276,5 +276,5 @@ RM.addEventListener("change", () => { if (modeName) { stop(); place(); } });
 const giveUp = () => { if (!lost || !on) return; if (document.hidden) { lostTimer = setTimeout(giveUp, 2000); return; } lost = false; F = null; toStill(); };
 cv.addEventListener("webglcontextlost", e => { e.preventDefault(); lost = true; if (raf) cancelAnimationFrame(raf); raf = 0; F = null; clearTimeout(lostTimer); lostTimer = setTimeout(giveUp, 2000); });
 cv.addEventListener("webglcontextrestored", () => { clearTimeout(lostTimer); lost = false; parked = false; gl = null; const live = on, ok = setup(); if (!live) return; if (!ok || !size()) { toStill(); return; } if (heavy && T < M.end) show(); else settle(); kick(); });
-new MutationObserver(place).observe(document.getElementById("main"), { childList: true }); place();
+new MutationObserver(afterSwap(place, 1)).observe(document.getElementById("main"), { childList: true }); place();   // a background: at a wave's swap, just after the band act (route.js)
 window.__pour = { canvas: cv, hold() { manual = true; if (raf) cancelAnimationFrame(raf); raf = 0; }, advance(sec, fps = 60) { const n = Math.round(sec * fps); for (let i = 0; i < n; i++) { T += 1 / fps; step(60 / fps); } show(); return T; }, get t() { return T; } };

@@ -8,7 +8,7 @@
 // The drawing (air-core.js) runs in a worker on its own canvas (fx-air-worker.js), so the main thread never pays for hundreds of
 // drops a frame: a page swap cannot stall the air and the air cannot stall a swap (profile, 2026-11-25: 150-250 ms of drawImage per
 // transition on a 4x-throttled phone, the largest single cost). A browser without OffscreenCanvas draws it here, as before.
-import { waved } from "./route.js";
+import { waved, afterSwap } from "./route.js";
 import { makeAir } from "./air-core.js";
 const RM = matchMedia("(prefers-reduced-motion: reduce)"), KEY = "oss:air:", root = document.documentElement;
 const CATS = new Set(["bases", "bowls", "heat", "charcoal", "hoses", "parts", "misc"]);
@@ -82,5 +82,5 @@ document.addEventListener("visibilitychange", () => {
 });
 addEventListener("pageshow", () => { if (document.hidden) return; if (local && !raf) raf = requestAnimationFrame(loop); if (worker) { worker.postMessage({ type: "show", gap: 0 }); if (!wraf) wraf = requestAnimationFrame(watch); } });
 RM.addEventListener("change", () => { end(); place(); });
-new MutationObserver(place).observe(document.getElementById("main"), { childList: true }); place();
+new MutationObserver(afterSwap(place, 1)).observe(document.getElementById("main"), { childList: true }); place();   // a background: at a wave's swap, just after the band act (route.js)
 window.__air = { get kind() { return kind; }, get canvas() { return cv; }, get worker() { return !!worker; } };
