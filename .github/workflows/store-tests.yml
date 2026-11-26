@@ -1,10 +1,12 @@
 # The store's test suites on GitHub's machines instead of the laptop (owner, 2026-11-26: "increase the pace while
 # maintaining quality"). The same suites, the same local database and the same no-card-keys mode as the laptop runner,
-# split across four machines that run at once. Nothing here deploys or touches the live database.
+# split across machines that run at once. Nothing here deploys or touches the live database.
+# The card shard runs the payment and email suites the way suites.ps1 -Mode stripe does: the Stripe stand-in
+# (store/tools/fake-stripe.mjs) and the Resend stand-in (store/tools/fake-resend.mjs) with test keys only. No real keys, ever.
 name: store tests
 on:
   push:
-    branches: [shop-quality, section-waves]
+    branches: [shop-quality, section-waves, pay-email-ready]
     paths: ["store/**", ".github/workflows/store-tests.yml"]
   workflow_dispatch:
 concurrency:
@@ -19,7 +21,10 @@ jobs:
       matrix:
         include:
           - shard: server
-            suites: smoke-http test-admin test-backoffice test-ops test-orders test-quality test-checkout test-delivery test-payments test-account test-ace test-find test-seo test-golive
+            suites: smoke-http test-admin test-backoffice test-ops test-orders test-quality test-checkout test-delivery test-payments test-account test-ace test-find test-seo test-emails test-golive
+          - shard: card
+            card: "1"
+            suites: test-payments test-pay-card test-pay-card+tobacco test-emails test-checkout test-ace test-delivery test-orders e2e-buying
           - shard: buying
             suites: e2e e2e-buying e2e-delivery e2e-flow
           - shard: pages
@@ -53,6 +58,7 @@ jobs:
         env:
           PW_FROM: ${{ github.workspace }}/package.json
           WRANGLER_JS: ${{ github.workspace }}/node_modules/wrangler/bin/wrangler.js
+          CARD: ${{ matrix.card || '' }}   # "1" on the card shard: fake Stripe keys and the stand-in started per suite
           WAVE_SETTLE: "2500"   # software rendering on these machines: a wave gets longer to end before it counts as stuck
         run: node store/tools/ci-suites.mjs ${{ matrix.suites }}
       - name: Keep the outputs

@@ -115,3 +115,8 @@ a pretend payment page, and webhooks signed the way Stripe signs them. Run the s
 `--var STRIPE_SECRET_KEY:sk_test_local --var STRIPE_WEBHOOK_SECRET:whsec_local_test --var STRIPE_API_BASE:http://127.0.0.1:4498 --test-scheduled`,
 then `node store/tools/test-payments.mjs`. Signed event fixtures are in `store/tools/fixtures/stripe-webhooks.mjs`.
 `STRIPE_API_BASE` accepts only `https://api.stripe.com` or a localhost address, so a typo can never send the key elsewhere.
+On GitHub the `card` shard of `store tests` does this on every push (`CARD=1 node store/tools/ci-suites.mjs ...`):
+`test-payments`, `test-pay-card` (wallets, delayed payments, live-mode events, shisha with `STRIPE_TOBACCO_OK` off, and
+again as `test-pay-card+tobacco` with it on, charcoal never by carrier) and `test-emails` against the Resend stand-in
+(`store/tools/fake-resend.mjs`, port 4497; `RESEND_API_BASE` accepts only `https://api.resend.com` or localhost).
+The owner's switch-on steps are in `inventory-2026-11-24-next/PAYMENTS-EMAIL-LIVE.md`.
