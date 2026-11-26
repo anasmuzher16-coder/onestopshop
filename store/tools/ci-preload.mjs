@@ -12,18 +12,3 @@ globalThis.fetch = (input, init = {}) => {
   if (!headers.has("connection")) headers.set("connection", "close");
   return real(input, { ...init, headers });
 };
-
-// TEMPORARY (CI diagnosis): CI_PAGE_LOG=1 prints every page's console, errors and navigations, with times, to the suite output.
-if (process.env.CI_PAGE_LOG) {
-  const { createRequire } = await import("node:module");
-  const pw = createRequire(process.env.PW_FROM)("playwright"), t0 = Date.now(), ts = () => ((Date.now() - t0) / 1000).toFixed(2);
-  const watch = p => { p.on("console", m => console.error(`[page ${ts()}] ${m.type()} ${m.text().slice(0, 300)}`)); p.on("pageerror", e => console.error(`[page ${ts()}] pageerror ${(e.stack || e.message).slice(0, 600)}`));
-    p.on("framenavigated", f => { if (f === p.mainFrame()) console.error(`[page ${ts()}] nav ${f.url()}`); });
-    const shot = p.screenshot.bind(p); p.screenshot = async o => { console.error(`[page ${ts()}] screenshot start ${o?.fullPage ? "fullPage" : ""}`); const r = await shot(o); console.error(`[page ${ts()}] screenshot end`); return r; }; };
-  for (const type of [pw.chromium, pw.webkit]) {
-    const launch = type.launch.bind(type);
-    type.launch = async (...a) => { const b = await launch(...a), nc = b.newContext.bind(b), np = b.newPage.bind(b);
-      b.newContext = async (...o) => { const c = await nc(...o); c.on("page", watch); const cnp = c.newPage.bind(c); c.newPage = async () => { const p = await cnp(); return p; }; return c; };
-      b.newPage = async (...o) => { const p = await np(...o); watch(p); return p; }; return b; };
-  }
-}
