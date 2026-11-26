@@ -449,20 +449,24 @@ function counterSpec(p) {
 }
 // What is known about an item on view, and what is not yet: unknowns are said as "TBD", never guessed or left out.
 function factsSpec(p, fam) {
-  const f = p.facts || {}, base = f.includes_base === true ? "Included" : f.includes_base === false ? "Not included: stem set, no base" : TBD("");
+  const f = p.facts || {}, named = fam.every(v => v.named), base = f.includes_base === true ? "Included" : f.includes_base === false ? "Not included: stem set, no base" : null;
+  // the shop's unknowns are said once, together, as TBD: never guessed, never left out, never one TBD per row (council, 2026-11-25)
+  const open = [p.family && base === null && "base", p.family && !f.height_cm && "height", p.family && !named && (fam.length > 1 ? "colour names" : "colour name"), "stock count"].filter(Boolean);
+  const list = open.length > 1 ? open.slice(0, -1).join(", ") + " and " + open.at(-1) : open[0];
   return `<section class="spec" aria-labelledby="spec-h">
         <h2 class="h3" id="spec-h">Details</h2>
         <dl class="spec__list">
-          <div><dt>Item</dt><dd class="num">${p.sku}</dd></div>
-          <div><dt>Price</dt><dd>${p.state === "tbd" ? TBD("") : `<span class="num">${whole(p.price)}</span>, coming soon`}</dd></div>
-          ${p.family ? `<div><dt>Base</dt><dd>${base}</dd></div>
-          <div><dt>Height</dt><dd>${f.height_cm ? `<span class="num">${f.height_cm} cm</span>` : TBD("")}</dd></div>
+          ${p.state === "tbd" ? "" : `<div><dt>Price</dt><dd><span class="num">${whole(p.price)}</span>, coming soon</dd></div>`}
+          ${p.family ? `${base ? `<div><dt>Base</dt><dd>${base}</dd></div>` : ""}
+          ${f.height_cm ? `<div><dt>Height</dt><dd><span class="num">${f.height_cm} cm</span></dd></div>` : ""}
           ${f.acrylic ? `<div><dt>Material</dt><dd>Acrylic</dd></div>` : ""}
           ${Array.isArray(f.includes) && f.includes.length ? `<div><dt>Comes with</dt><dd>${esc(f.includes.join(", "))}</dd></div>` : ""}
-          <div><dt>Colours</dt><dd>${fam.length > 1 ? `<span class="num">${fam.length}</span> in the catalogue. ` : ""}${fam.every(v => v.named) ? esc(fam.map(v => v.colour).join(", ")) : TBD("Colour names")}</dd></div>` : ""}
-          <div><dt>Availability</dt><dd>${p.family && ticked(p) ? "In the shop. " : ""}${TBD("Count")}</dd></div>
+          <div><dt>Colours</dt><dd>${fam.length > 1 ? `<span class="num">${fam.length}</span> in the catalogue${named ? ": " + esc(fam.map(v => v.colour).join(", ")) : ""}` : named ? esc(fam.map(v => v.colour).join(", ")) : "One"}</dd></div>` : ""}
+          ${p.family && ticked(p) ? `<div><dt>Availability</dt><dd>In the shop</dd></div>` : ""}
+          <div class="spec__open"><dt>Waiting on the shop</dt><dd>${list[0].toUpperCase() + list.slice(1)}. ${TBD("")}</dd></div>
           ${!p.img ? `<div><dt>Photo</dt><dd>Coming. The drawing stands in until the photo is ready.</dd></div>` : p.family && f.photo === "family" ? `<div><dt>Photo</dt><dd>Shows another colour of this hookah.</dd></div>` : ""}
-          ${p.family ? `<div><dt>From</dt><dd>Ace Hookah\u2019s October 2026 catalogue</dd></div>` : ""}
+          ${p.family ? `<div><dt>From</dt><dd>Ace Hookah\u2019s catalogue</dd></div>` : ""}
+          <div><dt>Item</dt><dd class="num">${p.sku}</dd></div>
         </dl>
       </section>`;
 }
@@ -478,7 +482,7 @@ function viewProduct(sku) {
   const n = parseInt(p.sku.slice(-3), 10), nth = (c, k) => { const l = liveCat(c); return l.length ? l[(n + k) % l.length] : null; };
   const goes = p.cat === "hookahs" ? [nth("bowls", 0), nth("charcoal", 1), nth("hoses", 2), nth("parts", 3)].filter(Boolean) : [];
   // a hookah family's colours: each chip shows its colour and swaps the photo; a name the shop has not confirmed is never stated as fact
-  const chips = fam.length > 1 ? `<p class="swatches__n" id="colour-h">Colour <b data-colour-name ${p.colour ? "" : "hidden"}>${esc(p.colour || "")}</b> <span class="num">${fam.indexOf(p) + 1} of ${fam.length}</span> ${fam.every(v => v.named) ? "" : TBD("Colours")}</p>
+  const chips = fam.length > 1 ? `<p class="swatches__n" id="colour-h">Colour <b data-colour-name ${p.colour ? "" : "hidden"}>${esc(p.colour || "")}</b> <span class="num">${fam.indexOf(p) + 1} of ${fam.length}</span></p>
       ${swatchGroup(fam, p, { label: "Colour" })}` : "";
   const sold = isSold(p);
   return `
@@ -486,17 +490,17 @@ function viewProduct(sku) {
     <div data-stage="${p.sku}" class="pdp__tile tile ${p.dark || p.photo ? "tile--photo" : ""}">${p.family ? colourShot(p, { eager: true, alt: p.colour ? `${p.name}, ${p.colour}` : p.name }) : colourShot(p, { eager: true, alt: p.name })}${sticker(p, { big: true })}</div>
     <div class="pdp__info">
       <p class="crumb"><a href="/shop/${p.cat}">${c.name}</a></p>
-      <h1 class="pdp__name">${esc(p.name)}</h1>
-      ${p.family ? (stemSet(p) ? `<p class="pdp__note">Stem set, no base.</p>` : "") : `<p class="pdp__note">${esc(p.note || p.facts?.size || "")}${p.height ? `. Stands ${p.height} cm.` : /[.!?]$/.test(p.note || p.facts?.size || ".") ? "" : "."}</p>`}
+      <h1 class="pdp__name${p.name.length > 30 ? " pdp__name--long" : ""}">${esc(p.name)}</h1>
+      ${p.family ? (stemSet(p) ? `<p class="pdp__note">Stem set, no base.</p>` : "") : (p.note || p.facts?.size || p.height) && !(!p.height && p.name.toLowerCase().includes(String(p.note || p.facts?.size).toLowerCase().replace(/\.$/, ""))) ? `<p class="pdp__note">${esc(p.note || p.facts?.size || "")}${p.height ? `${p.note || p.facts?.size ? ". " : ""}Stands ${p.height} cm.` : /[.!?]$/.test(p.note || p.facts?.size || ".") ? "" : "."}</p>` : ""}
       ${p.details?.description ? `<p class="pdp__desc">${esc(p.details.description)}</p>` : ""}
       ${chips}
       ${p.details && p.details.notes ? `<p class="pdp__notes"><span>Notes</span> ${esc(p.details.notes)}</p>` : ""}
       ${localOnly(p) ? counterLine(p) : ""}
-      ${!sale ? `${p.state === "tbd" ? `<p class="pdp__avail">${TBD("Price")} The shop sets it. Call <a class="link tel" href="tel:+15192552222">519-255-2222</a> to ask.</p>` : `<p class="soldline">Coming soon.</p>`}<p class="pdp__avail">${p.family ? (ticked(p) ? `In the shop. ${TBD("Availability")}` : `From Ace Hookah\u2019s catalogue. ${TBD("Availability")}`) : TBD("Availability")}</p><a class="btn btn--ghost btn--call" href="tel:+15192552222">Ask the counter</a>`
+      ${!sale ? `${p.state === "tbd" ? `<p class="pdp__avail">${TBD("Price")} ${p.family ? (ticked(p) ? "In the shop now. " : "Ordered in through the shop. ") : ""}The shop sets the price and confirms stock.</p>` : `<p class="soldline">Coming soon.</p>`}<a class="btn btn--ghost btn--call btn--ask" href="tel:+15192552222">Ask the counter, 519-255-2222</a>`
         : sold ? `<p class="soldline">${p.dark ? "This one has sold. Each resin stem is poured once." : "Sold out for now."}</p><a class="btn btn--ghost btn--call" href="tel:+15192552222">Call the counter</a>`
-        : inCart ? `<a class="btn btn--wide" href="/cart">In your cart. View cart</a>` : `<button class="btn btn--wide" type="button" data-add="${p.sku}">Add to cart</button>`}
+        : `<p class="pdp__price num">${whole(p.price)}</p>${inCart ? `<a class="btn btn--wide" href="/cart">In your cart. View cart</a>` : `<button class="btn btn--wide" type="button" data-add="${p.sku}">Add to cart</button>`}`}
       ${sale ? deliveryLine(p, opts) : ""}
-      ${!sale ? factsSpec(p, fam) : `<section class="ways" aria-labelledby="ways-h">
+      ${!sale ? factsSpec(p, fam) : counterPay(p) ? "" : `<section class="ways" aria-labelledby="ways-h">
         <h2 class="h3" id="ways-h">Delivery, shipping and pickup</h2>
         ${opts.length || (state.dest && localOnly(p)) ? `<p class="ways__to">To ${esc(state.dest.full)}${state.dest.city ? ", " + esc(state.dest.city) : ""}. <button class="link" type="button" data-open-postal>Change</button></p>
         <table class="ledger"><thead><tr><th scope="col">Service</th><th scope="col">Arrives</th><th scope="col" class="r">Cost</th></tr></thead>
@@ -504,7 +508,7 @@ function viewProduct(sku) {
         <tr><td>Pick up at ${SHOP_STREET}</td><td>${pickupDay()}</td><td class="r num">Free</td></tr></tbody></table>`
         : `<p class="ways__to">Local delivery from $10 near Windsor. Free pickup. ${localOnly(p) ? "" : p.ship === "ground_only" ? "Ships by ground across Canada, except Quebec for now." : "Ships across Canada, except Quebec for now."}</p>`}
       </section>`}
-      ${!sale ? "" : localOnly(p) ? counterSpec(p) : `<section class="spec" aria-labelledby="spec-h">
+      ${!sale || counterPay(p) ? "" : localOnly(p) ? counterSpec(p) : `<section class="spec" aria-labelledby="spec-h">
         <h2 class="h3" id="spec-h">Packed size</h2>
         <dl class="spec__list">
           <div><dt>Item</dt><dd class="num">${p.sku}</dd></div>
@@ -641,6 +645,10 @@ function deliveryNow(subCents = cartCents()) {
 }
 function deliveryLine(p, opts) {
   if (isSold(p) || !forSale(p)) return "";
+  // shisha is paid at the counter until the card company approves it, so it is a pickup: never promise shipping the cart will not offer
+  if (counterPay(p)) return `<p class="dline dline--fixed"><span class="dline__msg">Pickup at the Windsor counter</span><span class="dline__sub">Paid in the shop for now, free and ready ${esc(pickupDay().toLowerCase())}. Shipping and card payment for shisha are on the way.</span></p>`;
+  // another item, with shisha already in the cart: the whole order is a pickup, so say that before anyone counts on shipping
+  if (counterPayIn(cartLines()).length) return `<p class="dline dline--fixed"><span class="dline__msg">Your order is a pickup while it has shisha</span><span class="dline__sub">Shisha is paid at the counter for now, so the whole order is picked up in Windsor</span></p>`;
   let s = deliveryNow(cartCents() + (state.cart.some(l => l.sku === p.sku) ? 0 : toCents(p.price)));
   if (localOnly(p) && (s.key === "far" || s.key === "ship" || s.key === "down")) s = { msg: "This one goes by local delivery or pickup", sub: "Canada Post does not carry it. Pickup is free", act: "Change" };
   else if (toQuebec()) s = { msg: "We do not ship to Quebec yet", sub: "The site is in English only for now. Pickup in Windsor is free", act: "Change" };
@@ -689,7 +697,7 @@ function viewCart() {
   if (!lines.length) return `${band("cart", "gilt", "Your cart", "Nothing in it yet.")}<section class="empty">${news}<p class="lead">${(() => { const on = CATEGORIES.filter(c => liveCat(c.id).length).slice(0, 3).map(c => `<a class="link" href="/shop/${c.id}">${esc(c.name.toLowerCase())}</a>`); return on.length ? `Start with the ${on.length > 1 ? on.slice(0, -1).join(", ") + " or the " + on.at(-1) : on[0]}.` : `See <a class="link" href="/shop">everything on the shelf</a>.`; })()}</p></section>`;
   const was = shipChoice(lines); if (state.ship === "local" && !was.canLocal && !was.checking) { state.ship = null; store.set("ship", null); }   // the cart is where a new way of sending it is shown and chosen
   const { parcels, opts, canLocal, checking, localFee, status, pickup, local, chosen, counter, mixed } = shipChoice(lines), sub = lines.reduce((a, l) => a + l.product.price * l.qty, 0);
-  const ready = pickup || local || !!chosen, otherWay = carried(lines) ? "You can still ship it or pick it up free." : "You can still pick it up free.";
+  const atCounter = counterPayIn(lines).length > 0, ready = pickup || local || !!chosen, otherWay = carried(lines) ? "You can still ship it or pick it up free." : "You can still pick it up free.";
   const localNote = !state.dest ? "" : !state.dest.complete && localArea(state.dest) ? `<p class="note">Add your full postal code to see your delivery price. <button class="link" type="button" data-open-postal>Add it</button></p>`
     : checking ? `<p class="note" role="status">Checking delivery to ${esc(state.dest.full)}.</p>`
     : status === "far" || (state.dest.complete && !localArea(state.dest) && state.dest.prov === "ON" && /^N[089]/.test(state.dest.fsa)) ? `<p class="note">${esc(state.dest.full)} is past our 25 km delivery area. ${otherWay}</p>`
@@ -702,19 +710,19 @@ function viewCart() {
     <ul class="lines">${lines.map(({ product: p, qty }) => `
       <li class="line" data-tone="${toneOf(p)}">
         <a class="line__tile tile ${p.dark || p.photo ? "tile--photo" : ""}" href="/p/${p.sku}" aria-label="${esc(p.name)}">${shot(p, { small: true, use: "thumb" })}</a>
-        <div class="line__body"><a class="line__name" href="/p/${p.sku}">${esc(p.name)}</a><p class="line__meta num">${p.sku} &middot; ${localOnly(p) ? `<b class="line__pick">Pickup or local delivery only</b>` : `${p.kg} kg`}${qty >= stockFor(p) && stockFor(p) < MAX_QTY ? ` &middot; only ${stockFor(p)} in stock` : ""}</p>
+        <div class="line__body"><a class="line__name" href="/p/${p.sku}">${esc(p.name)}</a><p class="line__meta num">${p.sku} &middot; ${counterPay(p) ? `<b class="line__pick">Pickup only, paid in the shop</b>` : localOnly(p) ? `<b class="line__pick">${atCounter ? "Pickup with this order" : "Pickup or local delivery only"}</b>` : `${p.kg} kg`}${qty >= stockFor(p) && stockFor(p) < MAX_QTY ? ` &middot; only ${stockFor(p)} in stock` : ""}</p>
           <div class="qty"><button type="button" aria-label="One less ${esc(p.name)}" data-qty="${p.sku}" data-n="${qty - 1}">&minus;</button><span class="num" aria-live="polite">${qty}</span><button type="button" aria-label="One more ${esc(p.name)}" data-qty="${p.sku}" data-n="${qty + 1}" ${qty >= stockFor(p) ? "disabled" : ""}>+</button></div></div>
         <p class="line__price num">${money(p.price * qty)}</p>
       </li>`).join("")}</ul>
     <section class="cartship" data-pickup-choice tabindex="-1">
-      <h2 class="h3">${counter ? "How you get it" : "How we pack it"}</h2>
-      ${counter ? "" : `<ol class="boxes">${parcels.map(p => `<li><span class="num">${p.l} \u00d7 ${p.w} \u00d7 ${p.h} cm, ${p.kg} kg</span> ${esc(p.label.toLowerCase())}, ${p.items.length} ${p.items.length === 1 ? "item" : "items"}</li>`).join("")}</ol>`}
-      ${!state.dest && WIDE.matches ? `<button class="btn btn--wide" type="button" data-open-postal>Check delivery to my postal code</button>` : ""}
-      ${localNote}
-      ${counter ? `<p class="note">${canLocal ? "Choose local delivery or free pickup for the whole order" : "Choose free pickup for the whole order"}${mixed ? ", or leave the charcoal out to ship the rest" : ""}. Charcoal goes by pickup or local delivery only, never by Canada Post.${state.dest?.complete && !canLocal && !checking && !localArea(state.dest) ? ` Local delivery does not reach ${esc(state.dest.full)}.` : ""}</p>` : ""}
-      ${toQuebec() && carried(lines) ? `<p class="note">${QC_NOTE}</p>` : ""}
-      ${tooHeavy ? `<p class="note">One of these boxes is over the 30 kg carrier limit. Call the counter at 519-255-2222 and we will quote it by hand.</p>` : ""}
-      ${opts.length || canLocal ? `<fieldset class="opts"><legend>Getting it to ${esc(state.dest.full)} <button class="link" type="button" data-open-postal>Change</button></legend>
+      <h2 class="h3">${counter || atCounter ? "How you get it" : "How we pack it"}</h2>
+      ${counter || atCounter ? "" : `<ol class="boxes">${parcels.map(p => `<li><span class="num">${p.l} \u00d7 ${p.w} \u00d7 ${p.h} cm, ${p.kg} kg</span> ${esc(p.label.toLowerCase())}, ${p.items.length} ${p.items.length === 1 ? "item" : "items"}</li>`).join("")}</ol>`}
+      ${!state.dest && WIDE.matches && !atCounter ? `<button class="btn btn--wide" type="button" data-open-postal>Check delivery to my postal code</button>` : ""}
+      ${atCounter ? `<p class="note">Shisha is picked up and paid for at the counter until card payment for it is approved, so this order is a pickup.</p>` : localNote}
+      ${counter && !atCounter ? `<p class="note">${canLocal ? "Choose local delivery or free pickup for the whole order" : "Choose free pickup for the whole order"}${mixed ? ", or leave the charcoal out to ship the rest" : ""}. Charcoal goes by pickup or local delivery only, never by Canada Post.${state.dest?.complete && !canLocal && !checking && !localArea(state.dest) ? ` Local delivery does not reach ${esc(state.dest.full)}.` : ""}</p>` : ""}
+      ${toQuebec() && carried(lines) && !atCounter ? `<p class="note">${QC_NOTE}</p>` : ""}
+      ${tooHeavy && !atCounter ? `<p class="note">One of these boxes is over the 30 kg carrier limit. Call the counter at 519-255-2222 and we will quote it by hand.</p>` : ""}
+      ${!atCounter && (opts.length || canLocal) ? `<fieldset class="opts"><legend>Getting it to ${esc(state.dest.full)} <button class="link" type="button" data-open-postal>Change</button></legend>
         ${canLocal ? `<label class="opt"><input type="radio" name="ship" value="local" ${local ? "checked" : ""}><span class="opt__name">Local delivery<small>${localFee !== null ? localEta() : "We price it from your street address at checkout"}</small></span><span class="num">${localFee !== null ? feeText(localFee) : "At checkout"}</span></label>` : ""}
         <label class="opt"><input type="radio" name="ship" value="pickup" ${pickup ? "checked" : ""}><span class="opt__name">Pick up at the Windsor counter<small>${SHOP_STREET}, Windsor. ${pickupReady()}</small></span><span class="num">Free</span></label>
         ${opts.map(o => `<label class="opt"><input type="radio" name="ship" value="${o.id}" ${chosen && o.id === chosen.id ? "checked" : ""}><span class="opt__name">${o.carrier} ${o.service}<small>${days(o.days)}</small></span><span class="num">${money(o.total)}</span></label>`).join("")}
@@ -724,9 +732,9 @@ function viewCart() {
       ${chosen ? `<details class="why" ${state.whyOpen ? "open" : ""}><summary>What makes up ${money(chosen.total)}</summary><dl>
         ${chosen.perParcel.map((p, i) => `<div><dt>Box ${i + 1}, billed at ${p.billableKg} kg</dt><dd class="num">${money(p.freight)}</dd></div>`).join("")}
         ${chosen.cover ? `<div><dt>Glass coverage and signature</dt><dd class="num">${money(chosen.cover)}</dd></div>` : ""}
-        <div><dt>Carrier fuel charge, ${(fuelOn().pct * 100).toFixed(1)}%, ${fuelOn().stale ? "the last rate we have, for" : "the rate posted for"} ${fuelOn().week}</dt><dd class="num">${money(chosen.fuel)}</dd></div></dl></details>` : ""}` : `<fieldset class="opts"><legend>${counter && state.dest ? `Getting it to ${esc(state.dest.full)} <button class="link" type="button" data-open-postal>Change</button>` : counter ? "Choose one" : "Or skip shipping"}</legend><label class="opt"><input type="radio" name="ship" value="pickup" ${pickup ? "checked" : ""}><span class="opt__name">Pick up at the Windsor counter<small>${SHOP_STREET}, Windsor. ${pickupReady()}</small></span><span class="num">Free</span></label>${mixed ? dropOpt(lines) : ""}</fieldset>`}
+        <div><dt>Carrier fuel charge, ${(fuelOn().pct * 100).toFixed(1)}%, ${fuelOn().stale ? "the last rate we have, for" : "the rate posted for"} ${fuelOn().week}</dt><dd class="num">${money(chosen.fuel)}</dd></div></dl></details>` : ""}` : `<fieldset class="opts"><legend>${counter && state.dest ? `Getting it to ${esc(state.dest.full)} <button class="link" type="button" data-open-postal>Change</button>` : counter ? "Choose one" : atCounter ? "Pickup" : "Or skip shipping"}</legend><label class="opt"><input type="radio" name="ship" value="pickup" ${pickup ? "checked" : ""}><span class="opt__name">Pick up at the Windsor counter<small>${SHOP_STREET}, Windsor. ${pickupReady()}</small></span><span class="num">Free</span></label>${mixed && !atCounter ? dropOpt(lines) : ""}</fieldset>`}
     </section>
-    <div class="giftnote"><label class="field__label" for="note">Gift note <span class="fine">optional, written on a card in the box</span></label>
+    <div class="giftnote"><label class="field__label" for="note">Gift note <span class="fine">optional, written on a card with your order</span></label>
       <textarea class="field field--text field--area" id="note" data-note maxlength="240" rows="2" placeholder="Happy birthday, from all of us">${esc(state.note)}</textarea></div>
     <dl class="totals">
       <div><dt>Items</dt><dd class="num">${money(sub)}</dd></div>
@@ -944,7 +952,7 @@ const CARD_ON = document.querySelector('meta[name="oss-pay"]')?.content === "car
 // Shisha is paid at the counter until the card company approves it in writing (src/checkout.js, docs/PAYMENTS.md):
 // a cart holding it is picked up and paid at the counter, and the page says so before the shopper taps anything.
 const SHISHA_CARD = document.querySelector('meta[name="oss-shisha-card"]')?.content === "1";
-const counterPay = p => !!p && p.cat === "shisha" && !SHISHA_CARD;
+const counterPay = p => !!p && (p.cat === "shisha" || !!p.details?.tobacco) && !SHISHA_CARD;   // the same rule as checkout.js tobacco()
 const counterPayIn = lines => lines.filter(l => counterPay(l.product));
 const payWay = sc => !sc.pickup ? "card" : !CARD_ON || counterPayIn(cartLines()).length ? "at_pickup" : state.pay === "at_pickup" ? "at_pickup" : "card";
 const payLabel = (sc, total) => sc.local && deliveryFeeNow() === null ? "Check delivery price" : payWay(sc) === "card" ? `Pay ${money(total / 100)}` : "Place order";

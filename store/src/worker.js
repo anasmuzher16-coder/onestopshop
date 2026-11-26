@@ -1,6 +1,6 @@
 // One Stop Shop store Worker. Answers the page routes (each with its own title, description and a real 404),
 // serves the catalogue from the database, and passes every other request to the static files.
-import { shopCatalog, dropCatalog, catalogModule, counterRow, sellable, weightUnknown, CHARCOAL, isCharcoalRow, PUBLIC_PHOTO } from "./catalog.js";
+import { shopCatalog, dropCatalog, catalogModule, counterRow, counterPayRow, setShishaCard, sellable, weightUnknown, CHARCOAL, isCharcoalRow, PUBLIC_PHOTO } from "./catalog.js";
 import { seoFor, liveHere, robots, sitemap, view, SSR_STYLE, originProblem, setReady } from "./seo.js";
 import { heroPicks } from "../public/picks.js";
 import { admin, photo, signedIn } from "./admin.js";
@@ -42,7 +42,7 @@ function describe(path, cat, site) {
   if (a === "p") {
     const p = cat.products.find(x => x.sku === b); if (!p) return null;
     const said = sellable(p) ? money(p.price_cents) : p.price_cents > 0 ? `${money(p.price_cents)}, coming soon` : "Price TBD";   // no shop price yet: nothing else stands in for it
-    return { title: `${p.name} | ${site}`, desc: `${(() => { try { const d = JSON.parse(p.details || "{}").description; return d ? d + " " : p.note ? p.note + ". " : ""; } catch { return p.note ? p.note + ". " : ""; } })()}${said}.${!sellable(p) ? "" : counterRow(p) ? " Pickup in Windsor or local delivery near Windsor. Not shipped." : " Shipped across Canada except Quebec, or free pickup in Windsor."}`, index: true, product: p };
+    return { title: `${p.name} | ${site}`, desc: `${(() => { try { const d = JSON.parse(p.details || "{}").description; return d ? d + " " : p.note ? p.note + ". " : ""; } catch { return p.note ? p.note + ". " : ""; } })()}${said}.${!sellable(p) ? "" : counterPayRow(p) ? " Pickup in Windsor, paid in the shop." : counterRow(p) ? " Pickup in Windsor or local delivery near Windsor. Not shipped." : " Shipped across Canada except Quebec, or free pickup in Windsor."}`, index: true, product: p };
   }
   if (a === "order") return b && /^W[A-Z0-9]{6}$/.test(b) ? { ...base, title: `Order ${b} | ${site}`, index: false } : null;
   if (a === "gifts" && b && b !== "under-50" && b !== "under-150") return null;
@@ -122,7 +122,7 @@ function publicFeed(cat) {
     if (isCharcoalRow(p)) d.charcoal = true;   // the mark follows the section and the charcoal list, as on the storefront
     if ("photo" in d && !PUBLIC_PHOTO.includes(d.photo)) delete d.photo;   // only the photo states a page shows; other photo notes stay private
     o.details = JSON.stringify(Object.fromEntries(FEED_DETAILS.filter(k => k in d).map(k => [k, d[k]])));
-    if (counterRow(p)) o.ship_class = "pickup_only";   // charcoal, and anything whose weight is not known yet
+    if (counterRow(p) || counterPayRow(p)) o.ship_class = "pickup_only";   // counterPayRow: shisha, paid at the counter until card payment is approved   // charcoal, and anything whose weight is not known yet
     return o; }) };
 }
 // If-None-Match may carry a list of tags, weak or strong (RFC 9110 13.1.2): any one of them matching is a hit.
@@ -140,7 +140,7 @@ export default {
     if (event.cron === "*/10 * * * *") { ctx.waitUntil(sweep(env).then(r => { console.log(JSON.stringify({ at: "pay-sweep", ...r })); if (r.paid || r.released) dropCatalog(ctx); })); return; }   // every 10 minutes: unpaid orders checked with Stripe; stock it put back shows in the shop at once
     ctx.waitUntil(scrubCodes(env).then(() => nightly(env))); ctx.waitUntil(stockAlerts(env).then(() => restockReminders(env)));   // nightly: backup, and the customers' alerts and charcoal reminders
   },
-  async fetch(request, env, ctx) { return demoNoindex(await route(request, env, ctx), env, request); },
+  async fetch(request, env, ctx) { setShishaCard(env.STRIPE_TOBACCO_OK); return demoNoindex(await route(request, env, ctx), env, request); },
 };
 // While the shop is not live on this address, every answer says noindex: redirects, errors, API answers and uploaded
 // photos too (the static files get it from public/_headers). A page sets its own header in page().

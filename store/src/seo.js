@@ -4,7 +4,7 @@
 // One switch turns it on. While LIVE is not "1" every page says noindex and there is no sitemap. Once LIVE is "1",
 // the pages on the shop's own address (SITE_ORIGIN, e.g. https://onestopshopwindsor.ca) are indexable; the same pages
 // reached any other way (the workers.dev demo address) keep noindex and point their canonical at SITE_ORIGIN.
-import { sellable, counterRow, toStorefront, IMG_VERSIONS } from "./catalog.js";
+import { sellable, counterRow, counterPayRow, toStorefront, IMG_VERSIONS } from "./catalog.js";
 import { SHOP_HOURS } from "../public/rates-core.js";
 
 const SHOP = { phone: "+1-519-255-2222", street: "760 Wyandotte St E", city: "Windsor", region: "ON", postal: "N9A 3J4", country: "CA",
@@ -92,7 +92,7 @@ export function productLd(origin, p, site, canonical) {
   // (loadCatalog does not even read it).
   o.offers = { "@type": "Offer", url: canonical, price: (p.price_cents / 100).toFixed(2), priceCurrency: "CAD", itemCondition: "https://schema.org/NewCondition",
     availability: "https://schema.org/" + (p.stock > 0 ? "InStock" : "OutOfStock"),   // the shop's own count, never assumed
-    availableDeliveryMethod: counterRow(p) ? "https://schema.org/OnSitePickup" : ["https://schema.org/OnSitePickup", "https://schema.org/ParcelService"],
+    availableDeliveryMethod: counterRow(p) || counterPayRow(p) ? "https://schema.org/OnSitePickup" : ["https://schema.org/OnSitePickup", "https://schema.org/ParcelService"],
     availableAtOrFrom: storeRef(origin, site), seller: storeRef(origin, site) };
   return o;
 }
@@ -138,7 +138,7 @@ export function seoFor({ env, url, cat, meta, site }) {
     out.head.push(...(pl ? [ld(pl)] : []), ld(crumbsLd([...home, ...(c ? [[c.name, `${origin}/shop/${c.id}`]] : []), [p.name, canon]])));
     const src = photoUrl("", p), desc = describeText(p);
     out.body = `<article class="ssr">${crumbNav([["Home", "/"], ...(c ? [[c.name, `/shop/${c.id}`]] : []), [p.name, `/p/${p.sku}`]])}<h1>${esc(p.name)}</h1>${src ? `<img src="${esc(src)}" alt="${esc(p.name)}" width="720" height="900" loading="lazy" decoding="async">` : ""}`
-      + `${desc ? `<p>${esc(desc)}</p>` : ""}<p>${esc(priceWords(p))}</p>${sellable(p) ? `<p>${counterRow(p) ? "Pickup in Windsor or local delivery near Windsor. Not shipped." : "Shipped across Canada except Quebec, or free pickup in Windsor."}</p>` : `<p>Ask the counter: <a href="tel:+15192552222">519-255-2222</a>.</p>`}</article>`;
+      + `${desc ? `<p>${esc(desc)}</p>` : ""}<p>${esc(priceWords(p))}</p>${sellable(p) ? `<p>${counterPayRow(p) ? "Pickup in Windsor, paid in the shop." : counterRow(p) ? "Pickup in Windsor or local delivery near Windsor. Not shipped." : "Shipped across Canada except Quebec, or free pickup in Windsor."}</p>` : `<p>Ask the counter: <a href="tel:+15192552222">519-255-2222</a>.</p>`}</article>`;
   }
   return out;
 }

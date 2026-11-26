@@ -57,6 +57,10 @@ ok((await fetch(B + "/sitemap.xml")).status === 404, "no sitemap while the shop 
 
 const foilPage = await (await fetch(B + "/p/OSS-9301")).text(), coalPage = await (await fetch(B + "/shop/charcoal")).text(), heatPage = await (await fetch(B + "/shop/heat")).text();
 ok(/og:description" content="[^"]*Not shipped/.test(foilPage) && !/Shipped across Canada/.test(foilPage), "a foil page says pickup or local delivery, never shipped, while its weight is TBD");
+// shisha is paid at the counter until card payment for it is approved, so its page, search results and the feed say pickup (council, 2026-11-25)
+const shishaPage = await (await fetch(B + "/p/OSS-9601")).text();
+ok(/og:description" content="[^"]*Pickup in Windsor, paid in the shop/.test(shishaPage) && !/Shipped across Canada/.test(shishaPage) && !/ParcelService/.test(shishaPage), "a shisha page says pickup, paid in the shop, never shipped");
+ok(feed.products.filter(p => /^OSS-96/.test(p.sku)).every(p => p.ship_class === "pickup_only"), "the feed says shisha is pickup while it is paid at the counter");
 ok(/name="description" content="69 kinds of hookah charcoal[^"]*Pickup or local delivery only/.test(coalPage), "the Charcoal section says pickup or local delivery only");
 // Heat holds only the 15 foil packs since the sample heat pieces came off (2026-11-24); their weight is TBD, so the section is
 // pickup or local delivery, and says so. It says "shipped" again once anything in it can ship.

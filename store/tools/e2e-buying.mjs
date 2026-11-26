@@ -22,6 +22,21 @@ const go = async (p, path) => { await p.goto(B + path, { waitUntil: "domcontentl
 const main = p => p.locator("#main").innerText();
 const cart = p => p.evaluate(() => JSON.parse(localStorage.getItem("oss:cart") || "[]"));
 try {
+  { // council 2026-11-25: shisha says pickup and paid in the shop; a shisha + charcoal cart tells one story; an unpriced hookah says its unknowns once
+    const { c, p } = await open({ cart: [{ sku: "OSS-9601", qty: 1 }, { sku: "OSS-9104", qty: 1 }], postal: "N9A 1A1" });
+    await go(p, "/p/OSS-9601"); let m = await main(p);
+    t("C1 a shisha page says pickup, paid in the shop, and never promises shipping", /Pickup at the Windsor counter/.test(m) && /Paid in the shop/.test(m) && !/Ships across Canada|Ships by ground|Billed as/.test(m), m.slice(0, 400));
+    t("C1 a shisha page shows its price above Add to cart", await p.locator(".pdp__price").count() === 1);
+    await go(p, "/cart"); m = await main(p);
+    t("C2 a shisha + charcoal cart is one pickup story", /Pickup only, paid in the shop/.test(m) && /this order is a pickup/.test(m) && !/Choose local delivery|ship the rest|Leave the charcoal out/.test(m) && await p.locator('input[name="ship"][value="pickup"]').isChecked(), m.slice(0, 600));
+    await go(p, "/p/OSS-100024"); m = await main(p);
+    const tbds = await p.locator("#main .spec .tbd").count();
+    t("C3 an unpriced hookah names its unknowns once, in one row", tbds === 1 && /Waiting on the shop/.test(m) && /Price TBD|PRICE TBD/i.test(m), "spec TBDs " + tbds);
+    t("C3 the colour line names the colour without its own TBD", !(await p.locator(".swatches__n .tbd").count()));
+    t("C3 one Ask the counter on a phone", (await p.locator('a:visible:has-text("Ask the counter")').count()) === 1);
+    t("C no page errors", !p.errs.length, p.errs.join(" | "));
+    await c.close();
+  }
   { // 1 a shopper who chose nationwide, then gives a Windsor code, sees local delivery first
     const { c, p } = await open({ cart: [{ sku: "OSS-8004", qty: 1 }], postal: "M5V 2T6", reach: "nationwide", ship: "cp-exp" });
     await go(p, "/cart"); await p.locator("legend [data-open-postal]").click(); await p.fill("#postal", "N9A 1A1"); await p.locator('[data-postal-form] button[type="submit"]').click();

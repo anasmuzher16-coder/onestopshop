@@ -99,6 +99,11 @@ export function toStorefront(cat) {
 export const CHARCOAL = "charcoal";
 // Storefront products: charcoal (always pickup or local delivery, never a carrier).
 export const isCharcoal = p => !!(p && p.details && p.details.charcoal);
+// Shisha (and anything flagged tobacco) is paid at the counter until the card company approves it (STRIPE_TOBACCO_OK=1, set
+// per request by the worker), so it is a pickup: pages, search results and the feed never promise shipping for it. checkout.js holds the same rule.
+let shishaCard = false;
+export const setShishaCard = v => { shishaCard = v === "1"; };
+export const counterPayRow = p => !!p && !shishaCard && (p.category_id === "shisha" || !!parse(p.details).tobacco);
 export const counterRow = p => { if (!p) return false; if (p.ship_class === "pickup_only" || isCharcoalRow(p) || weightUnknown(p)) return true; try { return !!JSON.parse(p.details || "{}").charcoal; } catch { return false; } };
 // A database row is charcoal by its section (anything in Charcoal but foil), or by coming from the charcoal list (family
 // charcoal-...), so moving an item out of Charcoal in the back office never makes it shippable (breaker, 2026-11-24).
