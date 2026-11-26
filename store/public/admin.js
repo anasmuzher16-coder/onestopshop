@@ -265,7 +265,7 @@ async function orderSheet(id) {
       <div><dt>Found us through</dt><dd>${esc(o.source || "Not recorded")}${src.landing && src.landing !== "/" ? `, first page ${esc(src.landing)}` : ""}</dd></div></dl>
     ${trail.length ? `<section><h3 class="meta" style="margin-bottom:var(--s-2)">Who did what</h3><div class="hist">${trailHtml(trail)}</div></section>` : ""}
     <section><h3 class="meta" style="margin-bottom:var(--s-2)">Emails to the customer</h3><div class="hist">${emails.map(e => { const st = mailState(e, mail_on); return `<button class="mailrow" type="button" data-mail="${e.id}"><span>${esc(MAIL[e.kind] || e.kind)}, ${when(e.at)}</span><span class="state ${st[0]}">${st[1]}</span></button>`; }).join("") || `<div><span>None yet.</span></div>`}</div>
-      ${emails.some(e => mailState(e, mail_on)[2] === "off") ? `<p class="fineprint">Emails are written and kept here while the shop's mail service is not connected. Ones written before it is connected are not sent later.</p>` : ""}${emails.some(e => mailState(e, mail_on)[2] === "retry") ? `<p class="fineprint" data-mailretry>An email has not gone out yet. The shop tries it again after 10, 20 and 40 minutes, then every hour, for a day.</p>` : ""}${emails.some(e => mailState(e, mail_on)[2] === "gaveup") ? `<p class="fineprint" data-mailgaveup>An email could not be sent${state.me.owner ? ". Open it to see why, fix the cause, then send it again" : ". Open it to see why; the owner can send it again"}.</p>` : ""}<div data-mailview></div></section>
+      ${emails.some(e => mailState(e, mail_on)[2] === "off") ? `<p class="fineprint">Emails written while the shop's mail service was not connected are kept here and are not sent later.</p>` : ""}${emails.some(e => mailState(e, mail_on)[2] === "retry") ? `<p class="fineprint" data-mailretry>An email has not gone out yet. The shop tries it again after 10, 20 and 40 minutes, then every hour, for a day.</p>` : ""}${emails.some(e => mailState(e, mail_on)[2] === "gaveup") ? `<p class="fineprint" data-mailgaveup>An email could not be sent${state.me.owner ? ". Open it to see why and fix the cause. Before sending it again, check the mail service's own email list: if it shows as delivered there, do not send it twice" : ". Open it to see why; the owner can send it again"}.</p>` : ""}<div data-mailview></div></section>
     ${payActs(o)}
     <p class="err" role="alert" data-err></p>
     <div class="sheet__act">${next ? `<button class="btn" type="button" data-next="${next[0]}">${next[1]}</button>` : ""}<button class="btn btn--ghost" type="button" data-close>Close</button></div>
@@ -280,7 +280,7 @@ async function orderSheet(id) {
 
 // What an email row shows: [colour, label, group]. A failed email with a next try booked is still being tried; one with none has given up.
 const mailState = (e, on) => e.status === "sent" ? ["done", "Sent", "sent"] : e.status === "failed" ? (e.next_try_at ? ["low", "Trying again", "retry"] : ["out", "Not sent", "gaveup"])
-  : on && e.next_try_at ? ["low", "Sending", "retry"] : on ? ["out", "Not sent", "gaveup"] : ["low", "Written, not sent", "off"];
+  : on && e.next_try_at ? ["low", "Sending", "retry"] : ["low", "Written, not sent", "off"];   // held with no try booked: written before the mail service was connected
 const MAIL = { order_placed: "Order received", order_shipped: "Shipped", pickup_ready: "Ready for pickup", low_stock: "Low stock note to the shop", new_order: "New order note to the shop" };
 async function mailView(id) {
   const box = $("[data-mailview]", sheet); if (!box) return;

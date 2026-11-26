@@ -24,7 +24,7 @@ createServer(async (req, res) => {
   let m; try { m = JSON.parse(raw); } catch { return reply(res, { statusCode: 422, name: "validation_error", message: "Body is not JSON" }, 422); }
   if (!m.from || !Array.isArray(m.to) || !m.to.length || !m.subject || !(m.html || m.text)) return reply(res, { statusCode: 422, name: "validation_error", message: "from, to, subject and html or text are required" }, 422);
   // like Resend, an address it cannot parse is refused (and refused again on every retry)
-  const addr = s => typeof s === "string" && /^[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}$/.test(s) && !s.includes("..");
+  const addr = s => typeof s === "string" && s.length <= 254 && !s.includes("..") && /^[A-Za-z0-9!#$%&'*+\/=?^_`{|}~-]+(\.[A-Za-z0-9!#$%&'*+\/=?^_`{|}~-]+)*@([A-Za-z0-9-]+\.)+([A-Za-z]{2,}|xn--[A-Za-z0-9-]+)$/.test(s);
   if (!m.to.every(addr)) return reply(res, { statusCode: 422, name: "validation_error", message: "Invalid `to` field." }, 422);
   if (m.reply_to !== undefined && !(Array.isArray(m.reply_to) ? m.reply_to : [m.reply_to]).every(addr)) return reply(res, { statusCode: 422, name: "validation_error", message: "Invalid `reply_to` field." }, 422);
   if (key && idem.has(key)) {

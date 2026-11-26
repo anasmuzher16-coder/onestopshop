@@ -78,14 +78,17 @@ function resendBase(env) {
 }
 // A plain address the mail service will take: letters, digits and . _ % + - before the @, a dotted domain after it.
 // Checkout takes looser addresses, so anything sent on (to, reply_to) is checked again here.
-export const strictAddr = s => { const t = String(s ?? ""); return t.length <= 254 && !/\.\./.test(t) && /^[A-Za-z0-9._%+-]{1,64}@[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*\.[A-Za-z]{2,24}$/.test(t); };
+// RFC 5322 "dot-atom" on both sides (so o'brien@ and first&last@ pass), a real top-level domain (letters, or xn-- for an
+// international one), no spaces, quotes, commas or angle brackets: nothing that could be read as a second address.
+export const strictAddr = s => { const t = String(s ?? ""); return t.length <= 254 && !/\.\./.test(t) && /^[A-Za-z0-9!#$%&'*+\/=?^_`{|}~-]+(?:\.[A-Za-z0-9!#$%&'*+\/=?^_`{|}~-]+)*@(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+(?:[A-Za-z]{2,24}|xn--[A-Za-z0-9-]{1,59})$/.test(t) && t.indexOf("@") <= 64; };
 export const mailReady = env => !!(env.RESEND_API_KEY && env.EMAIL_FROM);
-// Order and stock emails are tried again; sign-in codes are not (a late code is no use) and are sent while the shopper waits.
-export const RETRY_KINDS = ["order_placed", "order_shipped", "pickup_ready", "low_stock", "new_order"];
+// Order, stock and account-alert emails are tried again; sign-in codes are not (a late code is no use): they are sent while
+// the shopper waits, with no lease, so a stopped send never leaves a row waiting for a retry that will not come.
+export const RETRY_KINDS = ["order_placed", "order_shipped", "pickup_ready", "low_stock", "new_order", "back_in_stock", "restock_reminder"];
 const RETRIED = new Set(RETRY_KINDS);
 // Tries: at once, then 10, 20 and 40 minutes later, then every hour, until a day after the email was written.
 // Times are worked out in this unit; tests make it shorter (EMAIL_RETRY_UNIT_MS, only honoured against a local stand-in).
-const unit = env => { const u = Number(env.EMAIL_RETRY_UNIT_MS); return u > 0 && env.RESEND_API_BASE && resendBase(env) !== "https://api.resend.com" ? u : 60000; };
+const unit = env => { const u = Number(env.EMAIL_RETRY_UNIT_MS); return u > 0 && /^http:\/\/(127\.0\.0\.1|localhost):\d{2,5}\/?$/.test(String(env.RESEND_API_BASE || "")) ? u : 60000; };
 const WAIT = [10, 20, 40, 60], WINDOW = 24 * 60, LEASE_MS = 3 * 60000;   // a send that never reports back (the Worker stopped) is picked up after the lease
 const iso = ms => new Date(ms).toISOString();
 const atMs = s => Date.parse(String(s).endsWith("Z") ? s : s + "Z");
@@ -132,9 +135,15 @@ export async function writeEmail(env, orderId, to, mail) {
   try {
     const live = mailReady(env), ok = live && strictAddr(to), key = [...crypto.getRandomValues(new Uint8Array(16))].map(b => b.toString(16).padStart(2, "0")).join("");
     const row = await env.DB.prepare(`INSERT INTO emails (order_id, kind, recipient, subject, html, body, send_key, sent_from, reply_to, tries, next_try_at, status, detail) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING id, at`)
-      .bind(orderId, mail.kind, to, mail.subject, mail.html, mail.body, key, live ? env.EMAIL_FROM : null, replyTo(env, mail.kind, to, mail.customer), ok ? 1 : 0, ok ? iso(Date.now() + LEASE_MS) : null,
-        live && !ok ? "failed" : "held", live && !ok ? "not sent: the address is not one the mail service takes" : null).first();
-    if (!ok) return;
+      .bind(orderId, mail.kind, to, mail.subject, mail.html, mail.body, key, live ? env.EMAIL_FROM : null, replyTo(env, mail.kind, to, mail.customer), ok ? 1 : 0, ok && RETRIED.has(mail.kind) ? iso(Date.now() + LEASE_MS) : null,
+        live && !ok ? "failed" : "held", live && !ok ? "not sent: the address is not one the mail service takes" : null).first()
+      .catch(async err => {   // a database without migration 0011 yet: keep the email (held, shown in the back office) rather than lose it
+        if (!/no such column|has no column/i.test(String(err && err.message))) throw err;
+        console.error(JSON.stringify({ at: "email", problem: "migration 0011_email_retry.sql is not applied: email kept, not sent" }));
+        await env.DB.prepare("INSERT INTO emails (order_id, kind, recipient, subject, html, body) VALUES (?,?,?,?,?,?)").bind(orderId, mail.kind, to, mail.subject, mail.html, mail.body).run();
+        return null;
+      });
+    if (!ok || !row) return;
     const e = { id: row.id, at: row.at, kind: mail.kind, recipient: to, subject: mail.subject, html: mail.html, body: mail.body, send_key: key, sent_from: env.EMAIL_FROM, reply_to: replyTo(env, mail.kind, to, mail.customer) };
     const go = attempt(env, e, 1).catch(err => console.error(JSON.stringify({ at: "email", message: String(err && err.message || err) })));
     if (RETRIED.has(mail.kind)) later(env, go); else await go;
@@ -153,7 +162,8 @@ export async function retryEmails(env) {
   for (const e of list) {
     const n = e.tries + 1;
     if (!strictAddr(e.recipient)) { await db.prepare("UPDATE emails SET status = 'failed', next_try_at = NULL, detail = 'not sent: the address is not one the mail service takes' WHERE id = ? AND tries = ?").bind(e.id, e.tries).run(); continue; }
-    if (atMs(e.at) + WINDOW * unit(env) < Date.now()) { await db.prepare("UPDATE emails SET status = 'failed', next_try_at = NULL, detail = 'gave up after ' || tries || ' tries in a day' WHERE id = ? AND tries = ?").bind(e.id, e.tries).run(); continue; }
+    // a try booked inside the day is still made even if this run is a little late; only a row stranded well past it is closed
+    if (atMs(e.at) + (WINDOW + 120) * unit(env) < Date.now()) { await db.prepare("UPDATE emails SET status = 'failed', next_try_at = NULL, detail = 'gave up after ' || tries || ' tries in a day' WHERE id = ? AND tries = ?").bind(e.id, e.tries).run(); continue; }
     e.send_key ||= [...crypto.getRandomValues(new Uint8Array(16))].map(b => b.toString(16).padStart(2, "0")).join("");
     if (!(await claim(db, e, n, env)).meta.changes) continue;
     e.sent_from ||= env.EMAIL_FROM;

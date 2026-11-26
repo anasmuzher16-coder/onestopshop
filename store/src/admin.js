@@ -29,6 +29,9 @@ export async function signedIn(request, env) {
 }
 const LOCKED = "Too many wrong tries. Wait 15 minutes and try again.";
 const cleanOp = v => typeof v === "string" && /^[A-Za-z0-9-]{16,64}$/.test(v) ? v : null;   // a tap's own key, so a repeat counts once
+// Whether migration 0011 (email retries) is applied, so the order sheet still opens on a database that is behind the code.
+let retryCols = null;
+const hasRetry = async db => retryCols ||= await db.prepare("SELECT next_try_at, tries FROM emails LIMIT 0").all().then(() => true, () => false);
 const log = (event, fields) => console.log(JSON.stringify({ at: "admin", event, ...fields }));   // never a PIN, passcode or token
 const CHARCOAL_ITEM = `(p.category_id = '${CHARCOAL}' OR p.details LIKE '%"charcoal":true%')`;   // Heat (foil, heat management) is not charcoal since 2026-11-24
 // A product added to the charcoal section, and any charcoal item saved later, is stored as charcoal, pickup or local delivery only, whatever the form sent.
@@ -269,7 +272,7 @@ export async function admin(request, env, url) {
   }
   if ((m = path.match(/^\/orders\/([A-Z0-9]{3,12})$/)) && method === "GET") {
     const [o, i, mail, trail] = await db.batch([db.prepare("SELECT * FROM orders WHERE id = ?").bind(m[1]), db.prepare("SELECT i.sku, i.name, i.qty, i.unit_cents, p.img, p.img_dark, p.photo_ver, p.box_id, p.category_id, p.details FROM order_items i LEFT JOIN products p ON p.sku = i.sku WHERE i.order_id = ?").bind(m[1]),
-      db.prepare("SELECT id, kind, recipient, subject, status, at, tries, next_try_at, detail LIKE 'gave up%' AS gave_up FROM emails WHERE order_id = ? ORDER BY id").bind(m[1]),
+      db.prepare(`SELECT id, kind, recipient, subject, status, at, ${await hasRetry(db) ? "tries, next_try_at," : "0 AS tries, NULL AS next_try_at,"} detail LIKE 'gave up%' AS gave_up FROM emails WHERE order_id = ? ORDER BY id`).bind(m[1]),
       db.prepare("SELECT action, actor, before, after, at FROM audit_log WHERE target = ? ORDER BY id").bind(m[1])]);
     if (!o.results.length) return json({ error: "No such order." }, 404);
     const { cancel_op, ...order } = o.results[0];
@@ -342,7 +345,7 @@ export async function admin(request, env, url) {
   if ((m = path.match(/^\/orders\/([A-Z0-9]{3,12})\/refunds$/)) && method === "GET") return json({ refunds: (await db.prepare("SELECT amount_cents, status, reason, actor, detail, at FROM refunds WHERE order_id = ? ORDER BY id").bind(m[1]).all()).results });
   if ((m = path.match(/^\/emails\/(\d{1,9})$/)) && method === "GET") {
     // only order and stock emails open here: a customer's sign-in code (and their account mail) is theirs, never the back office's
-    const e = await db.prepare("SELECT id, kind, recipient, subject, html, status, detail, at, tries, next_try_at FROM emails WHERE id = ? AND kind IN ('order_placed','order_shipped','pickup_ready','low_stock','new_order')").bind(+m[1]).first();
+    const e = await db.prepare(`SELECT id, kind, recipient, subject, html, status, detail, at, ${await hasRetry(db) ? "tries, next_try_at" : "0 AS tries, NULL AS next_try_at"} FROM emails WHERE id = ? AND kind IN ('order_placed','order_shipped','pickup_ready','low_stock','new_order')`).bind(+m[1]).first();
     return e ? json({ email: e }) : json({ error: "No such email." }, 404);
   }
   // Send again, by hand, an order email that gave up after a day of tries (owner only; src/email.js resendEmail). Logged.

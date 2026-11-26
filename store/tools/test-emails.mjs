@@ -76,6 +76,11 @@ const oe = await emailsOf(odd.data.order.id), on = oe.find(e => e.kind === "new_
 ok(om.length === 1 && om[0].to[0] === SHOP && om[0].reply_to === null && on?.status === "sent", "the shop's note is sent, with no reply-to: " + JSON.stringify(om.map(m => m.reply_to)));
 ok(oc?.status === "failed" && !oc.next_try_at && /address/.test((await admin("/emails/" + oc.id)).data.email.detail || ""), "the receipt to that address is marked not sent, and not tried again");
 
+// an unusual but valid address (an apostrophe) still gets its receipt, and is the reply-to on the shop's note
+const ob = await post({ ...who, email: "o'brien@example.ca", method: "pickup", pay: "at_pickup", lines: [{ sku: "OSS-8004", qty: 1 }] });
+const obm = await settle(ob.data.order.id, 2);
+ok(obm.some(m => m.to[0] === "o'brien@example.ca") && obm.some(m => m.to[0] === SHOP && m.reply_to === "o'brien@example.ca"), "o'brien@example.ca gets the receipt and is the note's reply-to: " + obm.map(m => m.to.join() + ">" + m.reply_to).join(" | "));
+
 // 5 the mail service fails: kept as Failed with the reason, shown in the back office, sent again by the 10-minute job, once
 await fetch(R + "/__fail?n=2&status=500", { method: "POST" });
 const b = await post({ ...who, email: "fail-once@example.com", method: "pickup", pay: "at_pickup", lines: [{ sku: "OSS-8003", qty: 1 }] });
