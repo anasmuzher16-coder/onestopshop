@@ -26,20 +26,20 @@ export const navInfo = () => info;
 export const waved = () => info.cause === "wave" && performance.now() - info.at < 1500;
 export const setNavGate = g => { gate = g; };
 // A section's effects (its band act, its smoke, mist or air) attach to a page the wave has just put in under its full cover in the
-// frame after the swap, not inside it: the swap frame then carries the new page alone, and each frame stays short (2x CPU trace,
-// 2026-11-26: band, smoke, mist and air setup were 20-45 ms of a 50-110 ms swap). The wave still covers the whole page in those
-// frames (its wake starts past the screen edge), so the effect is in place before any of the page shows, and nothing appears late. Outside a
-// wave (a first load, Back without a wave, a re-draw after add to cart) it runs at once, as before.
-// "The frame after" is the task that follows the next rendering update (a frame callback, then a message task): a page put in from a
-// frame callback (the wave's swap) and one put in from a plain task (a long section, app.js) both get the swap's frame to themselves.
-// The waiting jobs share one queue and one frame takes about 8 ms of them (always at least one), lowest rank first: the band act
-// (rank 0) is in the page in the first frame after the swap; the backgrounds (rank 1: smoke, mist, air, which fade in over 0.35 s)
-// and what sits below the first screen (rank 2) follow a frame or two later, still under the wave.
+// frames after the swap, not inside it: the swap frame then carries the new page alone, and each frame stays shorter (2x CPU trace,
+// 2026-11-26: band, smoke, mist and air setup were 20-45 ms of a 50-110 ms swap). The wave's wake starts past the screen edge, so
+// these land before any of the new page shows. Only a page the wave itself committed waits (navInfo cause "wave" while the wave is
+// still on); a first load, Back, a tap mid-reveal or a re-draw runs at once, as before.
+// "The frames after": the first job runs in the task after the next rendering update (a frame callback, then a message task), so a
+// page put in from the wave's swap (itself a frame callback) gets its effects two frames later, one put in from a plain task (a long
+// section, app.js) one frame later. Jobs of one rank always run together, so effects that must agree stay in step: rank 0 is the band
+// act, the hookah smoke whose front its gust is timed to, and the chip row; rank 1 the page backgrounds, whose classes (pour-page,
+// air-page) style the top bar and must swap in the same task; rank 2 what sits below the first screen. One rank per frame.
 const post = (() => { const ch = new MessageChannel(), fns = []; ch.port1.onmessage = () => fns.shift()?.(); return f => { fns.push(f); ch.port2.postMessage(0); }; })();
 const jobs = []; let armed = false;
 function pump() {
-  armed = false; const t0 = performance.now();
-  do { const j = jobs.shift(); if (!j) break; try { j.f(); } catch (e) { console.error(e); } } while (jobs.length && performance.now() - t0 < 8);
+  armed = false; const r = jobs[0]?.rank;
+  while (jobs.length && jobs[0].rank === r) { const j = jobs.shift(); try { j.f(); } catch (e) { console.error(e); } }
   if (jobs.length) arm();
 }
 function arm() { if (armed) return; armed = true; requestAnimationFrame(() => post(pump)); }
@@ -47,7 +47,7 @@ export function afterSwap(f, rank = 0) {
   const j = { f, rank };
   return () => {
     const at = jobs.indexOf(j);
-    if (!gate?.live()) { if (at >= 0) jobs.splice(at, 1); f(); return; }   // no wave: at once, and a run still waiting is now stale
+    if (!(gate?.live() && waved())) { if (at >= 0) jobs.splice(at, 1); f(); return; }   // not a wave's own swap: at once, and a run still waiting is now stale
     if (at >= 0) return;
     const i = jobs.findIndex(x => x.rank > rank); jobs.splice(i < 0 ? jobs.length : i, 0, j); arm();
   };

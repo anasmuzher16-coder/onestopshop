@@ -183,7 +183,7 @@ function place() {
   kick();
 }
 if (!setup()) still();
-new MutationObserver(afterSwap(place, 1)).observe(document.getElementById("main"), { childList: true }); place();   // a background: at a wave's swap, just after the band act (route.js)
+new MutationObserver(afterSwap(place)).observe(document.getElementById("main"), { childList: true }); place();   // with the band act, whose hose gust is timed to this smoke front (route.js)
 if (gl) window.__smoke = { canvas: cv, at: s => { t0 = performance.now() - (s - 40) * 1000; }, roll: v => { fixedRoll = v; } }; // for the frame-capture tool
 
 // Cart puff: it bursts outward in a fan where the piece lands, then lifts and thins. Transform and opacity only.

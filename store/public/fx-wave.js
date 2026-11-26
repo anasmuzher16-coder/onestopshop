@@ -316,8 +316,7 @@ function play(key, path, under = null) {
   if (!cv.isConnected) document.body.append(cv); cv.style.opacity = "1"; if (key === "search") holdKeyboard();
   try { dispatchEvent(new CustomEvent("wave:start", { detail: { key, path } })); } catch {}   // the page behind can start its own slow setup while the wave covers it
   underline(path); if (hold) { w.hold = true; w.swapT = setTimeout(() => { if (w?.hold) { try { release(1e12); } catch { abort(); } } }, 450); raf = requestAnimationFrame(tick); return true; }   // a hidden tab has no frames: the timer still starts it
-  // no draw in the tap itself: the first frame's tick draws before that frame is shown, so a draw here was a second full-screen pass
-  // in the same frame, painted over unseen (2x CPU trace, 2026-11-26: the GPU's Present blocked 51 ms on that frame)
+  try { paint(t); } catch (e) { console.error("fx-wave: " + e); broken = true; w.path = null; undo?.(); abort(); return false; }
   arm(); raf = requestAnimationFrame(tick);
   return true;
 }
