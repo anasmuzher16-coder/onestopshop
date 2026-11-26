@@ -17,7 +17,7 @@ const STORE = fileURLToPath(new URL("../", import.meta.url)), WORK = join(proces
   PORT = +(process.env.PORT || 4493);
 const GOLD = join(WORK, "gold"), STATE = join(WORK, "state"), OUT = process.env.CI_OUT || join(STORE, ".ci", "out"), WIN = process.platform === "win32";
 // suites that take the store's base URL with a trailing slash, and those that take an output folder argument (as suites.ps1)
-const SLASH = new Set(["e2e", "phone-audit", "whitebox", "fx-robust"]), NOARG = new Set(["smoke-http", "phone-audit", "test-ace", "test-account", "test-payments", "whitebox", "fx-robust"]);
+const SLASH = new Set(["e2e", "phone-audit", "whitebox", "fx-robust"]), NOARG = new Set(["smoke-http", "phone-audit", "test-ace", "test-account", "test-payments", "whitebox", "fx-robust", "ci-warm"]);
 const list = process.argv.slice(2); if (!list.length) { console.error("name the suites to run"); process.exit(2); }
 const npx = (args, opt = {}) => spawnSync(WIN ? "npx.cmd" : "npx", args, { cwd: STORE, encoding: "utf8", shell: WIN, ...opt });
 const sleep = ms => new Promise(r => setTimeout(r, ms));

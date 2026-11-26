@@ -12,9 +12,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { name: nav-cold-warm, os: ubuntu-24.04, env: "WEBKIT_SKIA_ENABLE_CPU_RENDERING=1", suites: "e2e-nav ci-probe-nav e2e-nav" }
-          - { name: gl-probe-2, os: ubuntu-24.04, env: "", suites: "ci-probe-gl" }
-          - { name: flow-twice, os: ubuntu-24.04, env: "WEBKIT_SKIA_ENABLE_CPU_RENDERING=1", suites: "e2e-flow e2e-flow" }
+          - { name: nav-warm-a, os: ubuntu-24.04, env: "WEBKIT_SKIA_ENABLE_CPU_RENDERING=1", suites: "ci-warm e2e-nav" }
+          - { name: nav-warm-b, os: ubuntu-24.04, env: "WEBKIT_SKIA_ENABLE_CPU_RENDERING=1", suites: "ci-warm e2e-nav" }
+          - { name: nav-cold-c, os: ubuntu-24.04, env: "WEBKIT_SKIA_ENABLE_CPU_RENDERING=1", suites: "e2e-nav" }
+          - { name: flow-noshots, os: ubuntu-24.04, env: "WEBKIT_SKIA_ENABLE_CPU_RENDERING=1 CI_PAGE_LOG=1", suites: "e2e-flow ci-flow-noshots ci-flow-noshots" }
     name: ${{ matrix.name }}
     steps:
       - uses: actions/checkout@v4
