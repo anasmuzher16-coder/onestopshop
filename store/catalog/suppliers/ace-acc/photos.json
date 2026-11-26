@@ -22,21 +22,13 @@
   {
    "page": 6,
    "family_id": "acc-p6",
-   "xref": 616,
-   "src_px": [
-    800,
-    800
-   ],
-   "crop": [
-    10,
-    61,
-    800,
-    672
-   ],
-   "scale": 0.797,
-   "status": "ready",
-   "out": "acc/acc-p6",
-   "note": "single cut-out"
+   "xref": null,
+   "src_px": null,
+   "crop": null,
+   "scale": null,
+   "status": "none",
+   "out": null,
+   "note": "held with the name: the photo shows another maker's mark; the shop's own photo or its confirmation frees it"
   },
   {
    "page": 9,
@@ -48,12 +40,12 @@
    ],
    "crop": [
     121,
-    174,
-    730,
+    193,
+    468,
     460
    ],
-   "scale": 1.034,
-   "status": "ready",
+   "scale": 1.614,
+   "status": "CHECK",
    "out": "acc/acc-p9",
    "note": "single cut-out"
   },
@@ -71,7 +63,7 @@
     762,
     646
    ],
-   "scale": 0.873,
+   "scale": 0.776,
    "status": "ready",
    "out": "acc/acc-p10",
    "note": "single cut-out"
@@ -90,7 +82,7 @@
     747,
     644
    ],
-   "scale": 0.912,
+   "scale": 0.81,
    "status": "ready",
    "out": "acc/acc-p11",
    "note": "single cut-out"
@@ -104,72 +96,48 @@
     546
    ],
    "crop": [
-    8,
-    10,
+    382,
+    24,
     794,
-    539
+    532
    ],
-   "scale": 0.802,
-   "status": "ready",
+   "scale": 1.339,
+   "status": "CHECK",
    "out": "acc/acc-p12",
    "note": "single cut-out"
   },
   {
    "page": 13,
    "family_id": "acc-p13",
-   "xref": 840,
-   "src_px": [
-    800,
-    800
-   ],
-   "crop": [
-    126,
-    195,
-    603,
-    687
-   ],
-   "scale": 1.321,
-   "status": "CHECK",
-   "out": "acc/acc-p13",
-   "note": "single cut-out"
+   "xref": null,
+   "src_px": null,
+   "crop": null,
+   "scale": null,
+   "status": "none",
+   "out": null,
+   "note": "held with the name: the photo shows another maker's mark; the shop's own photo or its confirmation frees it"
   },
   {
    "page": 16,
    "family_id": "acc-p16",
-   "xref": 917,
-   "src_px": [
-    560,
-    560
-   ],
-   "crop": [
-    109,
-    60,
-    451,
-    501
-   ],
-   "scale": 1.837,
-   "status": "CHECK",
-   "out": "acc/acc-p16",
-   "note": "single cut-out"
+   "xref": null,
+   "src_px": null,
+   "crop": null,
+   "scale": null,
+   "status": "none",
+   "out": null,
+   "note": "held with the name: the photo shows another maker's mark; the shop's own photo or its confirmation frees it"
   },
   {
    "page": 17,
    "family_id": "acc-p17",
-   "xref": 955,
-   "src_px": [
-    800,
-    800
-   ],
-   "crop": [
-    10,
-    179,
-    718,
-    660
-   ],
-   "scale": 0.89,
-   "status": "ready",
-   "out": "acc/acc-p17",
-   "note": "single cut-out"
+   "xref": null,
+   "src_px": null,
+   "crop": null,
+   "scale": null,
+   "status": "none",
+   "out": null,
+   "note": "held with the name: the photo shows another maker's mark; the shop's own photo or its confirmation frees it"
   },
   {
    "page": 21,
@@ -185,8 +153,8 @@
     473,
     412
    ],
-   "scale": 1.358,
-   "status": "CHECK",
+   "scale": 1.207,
+   "status": "ready",
    "out": "acc/acc-p21",
    "note": "single cut-out"
   },
@@ -204,7 +172,7 @@
     683,
     559
    ],
-   "scale": 1.094,
+   "scale": 0.972,
    "status": "ready",
    "out": "acc/acc-p22",
    "note": "single cut-out"
@@ -223,10 +191,10 @@
     155,
     188
    ],
-   "scale": 4.765,
+   "scale": 4.0,
    "status": "needs_original",
    "out": "acc/acc-p24",
-   "note": "single cut-out; enlarged 4.76x from a small source: needs Ace's original"
+   "note": "single cut-out; enlarged 4.00x from a small source: needs Ace's original"
   },
   {
    "page": 30,
@@ -242,7 +210,7 @@
     354,
     755
    ],
-   "scale": 1.122,
+   "scale": 0.942,
    "status": "ready",
    "out": "acc/acc-p30",
    "note": "single cut-out"
@@ -261,10 +229,10 @@
     457,
     357
    ],
-   "scale": 2.718,
+   "scale": 2.282,
    "status": "needs_original",
    "out": "acc/acc-p31",
-   "note": "single cut-out; enlarged 2.72x from a small source: needs Ace's original"
+   "note": "single cut-out; enlarged 2.28x from a small source: needs Ace's original"
   },
   {
    "page": 37,
@@ -280,7 +248,7 @@
     693,
     786
    ],
-   "scale": 1.053,
+   "scale": 0.884,
    "status": "ready",
    "out": "acc/acc-p37",
    "note": "single cut-out"
@@ -299,7 +267,7 @@
     767,
     754
    ],
-   "scale": 0.905,
+   "scale": 0.805,
    "status": "ready",
    "out": "acc/acc-p38",
    "note": "single cut-out"
@@ -318,7 +286,7 @@
     688,
     357
    ],
-   "scale": 1.082,
+   "scale": 0.962,
    "status": "ready",
    "out": "acc/acc-p45",
    "note": "single cut-out"
@@ -337,7 +305,7 @@
     751,
     507
    ],
-   "scale": 0.916,
+   "scale": 0.814,
    "status": "ready",
    "out": "acc/acc-p46",
    "note": "single cut-out"
@@ -356,7 +324,7 @@
     586,
     775
    ],
-   "scale": 1.088,
+   "scale": 0.95,
    "status": "ready",
    "out": "acc/acc-p50",
    "note": "single cut-out"
@@ -375,7 +343,7 @@
     762,
     581
    ],
-   "scale": 0.894,
+   "scale": 0.794,
    "status": "ready",
    "out": "acc/acc-p52",
    "note": "single cut-out"
@@ -394,7 +362,7 @@
     325,
     197
    ],
-   "scale": 1.944,
+   "scale": 1.728,
    "status": "CHECK",
    "out": "acc/acc-p58",
    "note": "single cut-out"
@@ -413,7 +381,7 @@
     768,
     723
    ],
-   "scale": 0.84,
+   "scale": 0.747,
    "status": "ready",
    "out": "acc/acc-p63",
    "note": "single cut-out"
@@ -432,7 +400,7 @@
     582,
     681
    ],
-   "scale": 1.191,
+   "scale": 1.009,
    "status": "ready",
    "out": "acc/acc-p65",
    "note": "single cut-out"
@@ -451,7 +419,7 @@
     566,
     726
    ],
-   "scale": 1.113,
+   "scale": 0.937,
    "status": "ready",
    "out": "acc/acc-p70",
    "note": "single cut-out"
@@ -459,21 +427,13 @@
   {
    "page": 72,
    "family_id": "acc-p72",
-   "xref": 2414,
-   "src_px": [
-    800,
-    800
-   ],
-   "crop": [
-    11,
-    193,
-    792,
-    584
-   ],
-   "scale": 0.807,
-   "status": "ready",
-   "out": "acc/acc-p72",
-   "note": "single cut-out"
+   "xref": null,
+   "src_px": null,
+   "crop": null,
+   "scale": null,
+   "status": "none",
+   "out": null,
+   "note": "held with the name: the photo shows another maker's mark; the shop's own photo or its confirmation frees it"
   },
   {
    "page": 75,
@@ -489,7 +449,7 @@
     769,
     580
    ],
-   "scale": 0.858,
+   "scale": 0.763,
    "status": "ready",
    "out": "acc/acc-p75",
    "note": "single cut-out"
@@ -508,10 +468,10 @@
     399,
     530
    ],
-   "scale": 2.368,
+   "scale": 2.105,
    "status": "needs_original",
    "out": "acc/acc-p76",
-   "note": "single cut-out; enlarged 2.37x from a small source: needs Ace's original"
+   "note": "single cut-out; enlarged 2.11x from a small source: needs Ace's original"
   },
   {
    "page": 77,
@@ -527,7 +487,7 @@
     800,
     783
    ],
-   "scale": 0.787,
+   "scale": 0.7,
    "status": "ready",
    "out": "acc/acc-p77",
    "note": "single cut-out"
@@ -546,8 +506,8 @@
     487,
     487
    ],
-   "scale": 1.37,
-   "status": "CHECK",
+   "scale": 1.217,
+   "status": "ready",
    "out": "acc/acc-p78",
    "note": "single cut-out"
   },
@@ -565,10 +525,10 @@
     343,
     377
    ],
-   "scale": 2.16,
-   "status": "needs_original",
+   "scale": 1.813,
+   "status": "CHECK",
    "out": "acc/acc-p79",
-   "note": "single cut-out; enlarged 2.16x from a small source: needs Ace's original"
+   "note": "single cut-out"
   },
   {
    "page": 80,
@@ -584,8 +544,8 @@
     591,
     661
    ],
-   "scale": 1.307,
-   "status": "CHECK",
+   "scale": 1.162,
+   "status": "ready",
    "out": "acc/acc-p80",
    "note": "single cut-out"
   },
@@ -603,8 +563,8 @@
     469,
     558
    ],
-   "scale": 1.452,
-   "status": "CHECK",
+   "scale": 1.219,
+   "status": "ready",
    "out": "acc/acc-p81",
    "note": "single cut-out, 5 loose speck(s) left out"
   },
@@ -622,10 +582,10 @@
     237,
     233
    ],
-   "scale": 3.6,
+   "scale": 3.2,
    "status": "needs_original",
    "out": "acc/acc-p82",
-   "note": "single cut-out; enlarged 3.60x from a small source: needs Ace's original"
+   "note": "single cut-out; enlarged 3.20x from a small source: needs Ace's original"
   },
   {
    "page": 83,
@@ -652,7 +612,7 @@
     777,
     708
    ],
-   "scale": 0.857,
+   "scale": 0.762,
    "status": "ready",
    "out": "acc/acc-p84",
    "note": "single cut-out"
@@ -671,7 +631,7 @@
     704,
     763
    ],
-   "scale": 1.033,
+   "scale": 0.918,
    "status": "ready",
    "out": "acc/acc-p95",
    "note": "single cut-out"
@@ -690,7 +650,7 @@
     470,
     643
    ],
-   "scale": 1.623,
+   "scale": 1.363,
    "status": "CHECK",
    "out": "acc/acc-p96",
    "note": "single cut-out"
@@ -709,8 +669,8 @@
     424,
     747
    ],
-   "scale": 1.337,
-   "status": "CHECK",
+   "scale": 1.122,
+   "status": "ready",
    "out": "acc/acc-p97",
    "note": "single cut-out"
   },
@@ -728,10 +688,10 @@
     327,
     379
    ],
-   "scale": 2.508,
+   "scale": 2.105,
    "status": "needs_original",
    "out": "acc/acc-p99",
-   "note": "single cut-out; enlarged 2.51x from a small source: needs Ace's original"
+   "note": "single cut-out; enlarged 2.11x from a small source: needs Ace's original"
   },
   {
    "page": 101,
@@ -747,7 +707,7 @@
     462,
     649
    ],
-   "scale": 1.482,
+   "scale": 1.318,
    "status": "CHECK",
    "out": "acc/acc-p101",
    "note": "single cut-out"

@@ -80,6 +80,16 @@ STAMP_QUESTIONS = {
 }
 # Pages whose cut-out also carries another shop's signature beside the product (p81, bottom right): only the product stays.
 KEEP_LARGEST = {81}
+# Hand crops: keep the mask pieces whose middle lies in this part of Ace's image (fractions x0, y0, x1, y1): the product, never its retail box (design review 2026-11-26).
+KEEP_PART = {12: (0.45, 0.0, 1.0, 1.0)}
+# The box on page 9 touches the tray's mask, so it is cut out by its own rectangle (fractions of Ace's image; the handle
+# passes below it and is kept whole, checked on a gridded render 2026-11-26).
+DROP_PART = {9: [(0.505, 0.25, 0.97, 0.6, "all"), (0.48, 0.6, 0.97, 0.7, "light")]}   # "light": only the white box, the black handle stays
+# Photos held back while the name is: these show the other maker's mark on the product or its box (QUASAR on the ring,
+# Huqqabaz on the grip, the T-Sar box), so showing them would undo the withheld name. The drawn stand-in shows until the shop
+# confirms the piece is genuine or sends its own photo (design review 2026-11-26).
+HOLD_PHOTO = {p: "held with the name: the photo shows another maker's mark; the shop's own photo or its confirmation frees it"
+              for p, v in ITEMS.items() if v[2]}
 NO_PHOTO = {83: "Ace's page has the tongs printed into its background, with no cut-out: needs a photo"}
 # The page's price when its text runs the label and the price together ("Price: $25", page 71).
 PRICE_FIX = {71: "$25"}

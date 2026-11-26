@@ -502,7 +502,7 @@ class TestAceAccessories(Base):
                 for suf in ("", "-m", "-s"):
                     self.assertTrue((C.STORE / "public" / "img" / "pc" / (v["photo"]["img"] + suf + ".webp")).exists(), v["photo"]["img"])
         none = [f["page"] for f, v in C.iter_variants(self.acc) if not v["photo"]["img"]]
-        self.assertEqual(none, [83])
+        self.assertEqual(none, [6, 13, 16, 17, 72, 83])   # 83 has no cut-out; the five withheld names hold their photos too (maker's mark)
 
     def test_workbook_names_every_accessory(self):
         import openpyxl

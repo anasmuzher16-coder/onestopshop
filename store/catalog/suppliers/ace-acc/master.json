@@ -92,9 +92,9 @@
      "sku": "OSS-110001",
      "key": "acc-p6",
      "photo": {
-      "img": "acc/acc-p6",
-      "status": "ready",
-      "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
+      "img": null,
+      "status": "none",
+      "src": null
      },
      "shop": {
       "price_cents": {
@@ -196,7 +196,7 @@
      "key": "acc-p9",
      "photo": {
       "img": "acc/acc-p9",
-      "status": "ready",
+      "status": "CHECK",
       "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
      },
      "shop": {
@@ -505,7 +505,7 @@
      "key": "acc-p12",
      "photo": {
       "img": "acc/acc-p12",
-      "status": "ready",
+      "status": "CHECK",
       "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
      },
      "shop": {
@@ -609,9 +609,9 @@
      "sku": "OSS-110006",
      "key": "acc-p13",
      "photo": {
-      "img": "acc/acc-p13",
-      "status": "CHECK",
-      "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
+      "img": null,
+      "status": "none",
+      "src": null
      },
      "shop": {
       "price_cents": {
@@ -714,9 +714,9 @@
      "sku": "OSS-110007",
      "key": "acc-p16",
      "photo": {
-      "img": "acc/acc-p16",
-      "status": "CHECK",
-      "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
+      "img": null,
+      "status": "none",
+      "src": null
      },
      "shop": {
       "price_cents": {
@@ -819,9 +819,9 @@
      "sku": "OSS-110008",
      "key": "acc-p17",
      "photo": {
-      "img": "acc/acc-p17",
-      "status": "ready",
-      "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
+      "img": null,
+      "status": "none",
+      "src": null
      },
      "shop": {
       "price_cents": {
@@ -923,7 +923,7 @@
      "key": "acc-p21",
      "photo": {
       "img": "acc/acc-p21",
-      "status": "CHECK",
+      "status": "ready",
       "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
      },
      "shop": {
@@ -2483,9 +2483,9 @@
      "sku": "OSS-110024",
      "key": "acc-p72",
      "photo": {
-      "img": "acc/acc-p72",
-      "status": "ready",
-      "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
+      "img": null,
+      "status": "none",
+      "src": null
      },
      "shop": {
       "price_cents": {
@@ -2903,7 +2903,7 @@
      "key": "acc-p78",
      "photo": {
       "img": "acc/acc-p78",
-      "status": "CHECK",
+      "status": "ready",
       "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
      },
      "shop": {
@@ -3008,7 +3008,7 @@
      "key": "acc-p79",
      "photo": {
       "img": "acc/acc-p79",
-      "status": "needs_original",
+      "status": "CHECK",
       "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
      },
      "shop": {
@@ -3113,7 +3113,7 @@
      "key": "acc-p80",
      "photo": {
       "img": "acc/acc-p80",
-      "status": "CHECK",
+      "status": "ready",
       "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
      },
      "shop": {
@@ -3216,7 +3216,7 @@
      "key": "acc-p81",
      "photo": {
       "img": "acc/acc-p81",
-      "status": "CHECK",
+      "status": "ready",
       "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
      },
      "shop": {
@@ -3836,7 +3836,7 @@
      "key": "acc-p97",
      "photo": {
       "img": "acc/acc-p97",
-      "status": "CHECK",
+      "status": "ready",
       "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
      },
      "shop": {

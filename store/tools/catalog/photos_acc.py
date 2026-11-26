@@ -27,6 +27,10 @@ import photos as P  # noqa: E402
 import src_ace_acc as S  # noqa: E402
 
 PUBLIC = C.STORE / "public" / "img" / "pc" / "acc"
+# Smaller than a hookah's 810 x 630: accessories are wide or squat, so a full-size one ran under the Price TBD sticker
+# (top right) and the "Photo to be upscaled" label (bottom) on a phone (design review, 2026-11-26). 680 x 560, centred,
+# leaves about 110 px clear above and below and 80 px each side.
+PROD_H, MAXW = 680, 560
 
 
 def clean(a, largest_only=False):
@@ -52,7 +56,7 @@ def frame(rgba: Image.Image):
     tile instead of on its floor with an empty top (owner, 2026-11-26: tight and centred)."""
     bb = rgba.getchannel("A").point(lambda v: 255 if v > 40 else 0).getbbox()
     cut = rgba.crop(bb)
-    s = min(P.PROD_H / cut.height, P.MAXW / cut.width)
+    s = min(PROD_H / cut.height, MAXW / cut.width)
     r = cut.resize((max(1, round(cut.width * s)), max(1, round(cut.height * s))), Image.LANCZOS)
     c = Image.new("RGBA", (P.W, P.H), (0, 0, 0, 0))
     c.alpha_composite(r, ((P.W - r.width) // 2, (P.H - r.height) // 2))
@@ -67,12 +71,30 @@ def run(pdf: Path, work: Path, publish: bool):
     for r in pages:
         fid = f"acc-p{r['page']}"
         ph = r["photo"]
-        if not ph:
+        if not ph or r["page"] in S.HOLD_PHOTO:
             images.append({"page": r["page"], "family_id": fid, "status": "none", "out": None,
-                           "note": S.NO_PHOTO.get(r["page"], "no cut-out on the page")})
+                           "note": S.HOLD_PHOTO.get(r["page"]) or S.NO_PHOTO.get(r["page"], "no cut-out on the page")})
             continue
         rgb, a = P.extract(doc, ph["xref"], ph["smask"])
+        a = np.where(a < 16, 0, a).astype(np.uint8)   # Ace's masks keep a near-invisible box around the product: flattened, so no tile ever shows it
         a, dropped = clean(a, r["page"] in S.KEEP_LARGEST)
+        if r["page"] in S.KEEP_PART:   # a hand crop: the pieces of the mask whose middle sits in this part (the product, not its box)
+            x0, y0, x1, y1 = S.KEEP_PART[r["page"]]
+            lab, k = nd.label(a > 40, structure=np.ones((3, 3)))
+            hh, ww = a.shape
+            cms = nd.center_of_mass(a > 40, lab, range(1, k + 1))
+            ids = [i + 1 for i, (cy, cx) in enumerate(cms) if x0 <= cx / ww <= x1 and y0 <= cy / hh <= y1]
+            a = np.where(nd.binary_dilation(np.isin(lab, ids), iterations=2), a, 0).astype(np.uint8)
+        if r["page"] in S.DROP_PART:   # a box touching the product: its own rectangle goes
+            hh, ww = a.shape
+            a = a.copy()
+            for x0, y0, x1, y1, what in S.DROP_PART[r["page"]]:
+                ys, xs = slice(int(y0 * hh), int(y1 * hh)), slice(int(x0 * ww), int(x1 * ww))
+                if what == "light":   # only the light pixels (the white box), never the dark product beside it
+                    a[ys, xs] = np.where(rgb[ys, xs].mean(-1) > 75, 0, a[ys, xs])
+                else:
+                    a[ys, xs] = 0
+            a, _ = clean(a, True)   # what is left of the box is loose now: only the product (its biggest piece) stays
         cv, s, bb = frame(Image.fromarray(np.dstack([rgb, a]), "RGBA"))
         status = "ready" if s <= P.CHECK_SCALE else ("CHECK" if s <= P.HOLD_SCALE else "needs_original")
         note = "single cut-out" + (f", {dropped} loose speck(s) left out" if dropped else "")
