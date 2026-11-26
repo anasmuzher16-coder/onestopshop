@@ -33,6 +33,10 @@ GROUP_NAMES = {"full_size": "Full size", "stem_set": "Stem set (no base)", "comp
 PHOTO_WORDS = {"ready": "Ready", "CHECK": "Ready, enlarged: check it", "hand_crop": "Needs a hand crop",
                "family_hero_only": "Uses the main photo only", "none": "No photo", "needs_store_photo": "Shop to photograph"}
 
+# Suppliers whose items come from a printed catalogue (a page, Ace's printed name, the shop's tick)
+CATALOGUES = ("ace", "ace-acc")
+SHEET_NAMES = {"ace": "Ace", "ace-acc": "Ace accessories", "charcoal-foil": "Charcoal & foil", "shisha": "Shisha"}
+
 GENERAL_QUESTIONS = [
     ("all", "Stem sets: sell them without a base, or bundle a base?"),
     ("ace", "Can Ace send its original photos, and confirm in writing that the shop may use its photos and names?"),
@@ -121,7 +125,7 @@ def write_workbook(path: Path, masters: dict):
         stats = [(len(m["families"]), "products"), (len(vs), "items to sell (one per colour or size)"),
                  (priced, "have the shop's own price"), (len(vs) - priced, "are waiting for the shop's price"),
                  (photos, "have a site-ready photo")]
-        if s == "ace":
+        if s in CATALOGUES:
             stats.insert(1, (sum(f["stamp"]["v"] != "none" for f in m["families"]), "ticked by the shop in the catalogue"))
         for n, label in stats:
             ws.cell(row=r, column=1, value=n).font = S["big"]
@@ -146,7 +150,7 @@ def write_workbook(path: Path, masters: dict):
 
     # Per-supplier catalogue sheets (read-only reference)
     for s, m in live.items():
-        ws = wb.create_sheet(f"Catalogue {('Ace' if s == 'ace' else 'Charcoal & foil' if s == 'charcoal-foil' else 'Shisha')}"[:31])
+        ws = wb.create_sheet(f"Catalogue {SHEET_NAMES.get(s, 'Shisha')}"[:31])
         ws.sheet_view.showGridLines = False
         rows = []
         for f, v in C.iter_variants(m):
@@ -155,6 +159,13 @@ def write_workbook(path: Path, masters: dict):
                              "Colour (from the photo)": v["colour"]["v"] or "", "Chip": v["swatch_hex"]["v"] or "",
                              "Ticked": {"stamped": "yes", "unclear": "unclear", "none": ""}[f["stamp"]["v"]],
                              "Group": GROUP_NAMES[f["group"]["v"]],
+                             "Ace price (theirs)": (f["supplier_price_cents"]["v"] or 0) / 100 if f["supplier_price_cents"]["v"] is not None else None,
+                             "Your price": (v["shop"]["price_cents"]["v"] / 100) if v["shop"]["price_cents"]["v"] else None,
+                             "Photo": PHOTO_WORDS.get(v["photo"]["status"], v["photo"]["status"]),
+                             "Notes": "; ".join(f["flags"])})
+            elif s == "ace-acc":
+                rows.append({"SKU": v["sku"], "Page": f["page"], "Ace name": f["supplier_ref"]["v"], "Section": f["category"].capitalize(),
+                             "Ticked": {"stamped": "yes", "unclear": "unclear", "none": ""}[f["stamp"]["v"]],
                              "Ace price (theirs)": (f["supplier_price_cents"]["v"] or 0) / 100 if f["supplier_price_cents"]["v"] is not None else None,
                              "Your price": (v["shop"]["price_cents"]["v"] / 100) if v["shop"]["price_cents"]["v"] else None,
                              "Photo": PHOTO_WORDS.get(v["photo"]["status"], v["photo"]["status"]),
@@ -176,6 +187,9 @@ def write_workbook(path: Path, masters: dict):
                 if hx and re.fullmatch(r"#[0-9a-f]{6}", hx):
                     ws.cell(row=i, column=5).fill = PatternFill("solid", fgColor=hx[1:].upper())
                     ws.cell(row=i, column=5).value = ""
+        elif s == "ace-acc":
+            hd = ["SKU", "Page", "Ace name", "Section", "Ticked", "Ace price (theirs)", "Your price", "Photo", "Notes"]
+            _table(ws, 1, hd, rows, [12, 6, 30, 10, 8, 11, 11, 22, 70], S, money={"Ace price (theirs)", "Your price"}, muted={"Ace price (theirs)", "Page"}, wrap={"Notes"})
         else:
             hd = ["SKU", "Kind", "Name", "Your price", "Stock", "How it goes", "Photo", "Notes"]
             wd = [12, 10, 52, 11, 7, 30, 20, 70]
@@ -195,7 +209,7 @@ def write_workbook(path: Path, masters: dict):
             for fl in f["flags"]:
                 if fl.startswith("NEEDS SHOP: "):
                     n += 1
-                    where = f"page {f['page']}, {f['supplier_ref']['v']}" if s == "ace" else f["variants"][0]["shop"]["display_name"]["v"]
+                    where = (f"page {f['page']}, {f['supplier_ref']['v']}" + (" (accessories)" if s == "ace-acc" else "")) if s in CATALOGUES else f["variants"][0]["shop"]["display_name"]["v"]
                     q.append({"#": n, "About": where, "Question": fl.removeprefix("NEEDS SHOP: "), "Your answer": None})
     _table(ws, 1, ["#", "About", "Question", "Your answer"], q, [5, 34, 80, 50], S, write={"Your answer"}, wrap={"Question", "About", "Your answer"})
 
@@ -223,14 +237,14 @@ def write_workbook(path: Path, masters: dict):
     for s, m in live.items():
         for f, v in C.iter_variants(m):
             sh = v["shop"]
-            ar.append({"SKU": v["sku"], "Section": "Hookahs (Ace)" if s == "ace" else f["category"].capitalize(),
-                       "Product": f["supplier_ref"]["v"] if s == "ace" else sh["display_name"]["v"],
+            ar.append({"SKU": v["sku"], "Section": "Hookahs (Ace)" if s == "ace" else f["category"].capitalize() + (" (Ace)" if s == "ace-acc" else ""),
+                       "Product": f["supplier_ref"]["v"] if s in CATALOGUES else sh["display_name"]["v"],
                        "Colour (our guess)": (v.get("colour") or {}).get("v") or (v.get("label") or {}).get("v") or "",
-                       "Ticked in the catalogue": ({"stamped": "yes", "unclear": "unclear", "none": ""}[f["stamp"]["v"]] if s == "ace" else ""),
+                       "Ticked in the catalogue": ({"stamped": "yes", "unclear": "unclear", "none": ""}[f["stamp"]["v"]] if s in CATALOGUES else ""),
                        "Your price ($, before tax)": sh["price_cents"]["v"] / 100 if sh["price_cents"]["v"] else None,
                        "Stock count": sh["stock"]["v"], "Colour name (correct it)": sh["colour_confirmed"]["v"],
                        "In stock here? (yes/no)": _yn(sh["in_stock_here"]["v"]), "Turn on in the shop? (yes/no)": _yn(sh["active"]["v"]) if sh["active"]["v"] else None,
-                       "Note": sh["note"]["v"] if s == "ace" else None})
+                       "Note": sh["note"]["v"] if s in CATALOGUES else None})
     last = _table(ws, 1, ANSWER_COLS, ar, [12, 14, 30, 16, 10, 14, 9, 18, 12, 12, 30], S, write=WRITE_COLS,
                   money={"Your price ($, before tax)"}, muted={"SKU", "Ticked in the catalogue"}, wrap={"Product"})
     dv = DataValidation(type="list", formula1='"yes,no"', allow_blank=True, showErrorMessage=True, errorTitle="yes or no", error="Type yes or no.")

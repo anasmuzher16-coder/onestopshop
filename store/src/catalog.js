@@ -85,8 +85,9 @@ export function toStorefront(cat) {
       kg: (p.weight_g <= 1 && facts.weight_g > 0 ? facts.weight_g : p.weight_g) / 1000, box: p.box_id, glass: !!p.glass,
       height: p.height_cm, note: p.note, ...(p.photo_ver ? { img: `/api/photo/${p.sku}?v=${p.photo_ver}`, photo: true, dark: false } : { img: p.img, dark: !!p.img_dark, lw: p.img_lw ?? undefined, ...(IMG_VERSIONS[p.img] ? { iv: IMG_VERSIONS[p.img] } : {}) }),
       // an unpriced hookah is not sold at all, so it carries no "pickup only" line; once priced without a weight, it is pickup or local only
-      ship: coal || (weightTbd && (sale || !grouped(p))) ? "pickup_only" : p.ship_class, stock: sale ? p.stock : 0, details,
-      ...(p.family && !grouped(p) ? { facts, ...(weightTbd ? { weightTbd: true } : {}) } : {}),
+      // an unpriced Ace accessory is the same: shown, not sold, so no pickup line until it is priced (then pickup or local until weighed)
+      ship: coal || (weightTbd && (sale || !(grouped(p) || p.family.startsWith("acc-")))) ? "pickup_only" : p.ship_class, stock: sale ? p.stock : 0, details,
+      ...(p.family && !grouped(p) ? { facts, ...(p.family.startsWith("acc-") ? { acc: true } : {}), ...(weightTbd ? { weightTbd: true } : {}) } : {}),   // acc: an item from Ace's accessories catalogue, one card each
       ...(grouped(p) ? { family: p.family, lead: lead[p.family].sku === p.sku, colour: details.colour || p.variant_label || "", named: !!details.colour || facts.colour_confirmed === true, chip: [facts.photo_hex, p.swatch_hex].find(h => /^#[0-9a-f]{6}$/i.test(h || "")) || null, facts,
         counted: p.availability === "counted", ...(weightTbd ? { weightTbd: true } : {}) } : {}) };
   });

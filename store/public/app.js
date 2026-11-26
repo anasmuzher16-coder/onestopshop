@@ -26,6 +26,7 @@ const familyOf = p => p && p.family ? FAMILIES.get(p.family) || [p] : p ? [p] : 
 const GROUPS = [["full_size", "Full size"], ["stem_set", "Stem sets"], ["compact_travel", "Compact and travel"], ["statement", "Statement pieces"]];
 const stemSet = p => !!(p && p.facts && p.facts.includes_base === false);
 // ---------- THE COLOUR SWITCHER: every catalogue colour, a radio group; a colour without its own photo says "Photo coming" ----------
+const catItem = p => !!(p && (p.family || p.acc));   // from an Ace catalogue: a hookah family, or an accessory (one card each)
 const ownPhoto = v => !!(v && v.img && (!v.family || v.facts.photo === "own"));
 const photoOf = v => !!(v && v.img);   // its own photo or the family's, labelled
 const colourName = (v, i) => v.colour ? (v.named ? v.colour : `${v.colour}, name TBD`) : `Colour ${i + 1}`;
@@ -452,7 +453,7 @@ function counterSpec(p) {
 function factsSpec(p, fam) {
   const f = p.facts || {}, named = fam.every(v => v.named), base = f.includes_base === true ? "Included" : f.includes_base === false ? "Not included: stem set, no base" : null;
   // the shop's unknowns are said once, together, as TBD: never guessed, never left out, never one TBD per row (council, 2026-11-25)
-  const open = [p.family && base === null && "base", p.family && !f.height_cm && "height", p.family && !named && (fam.length > 1 ? "colour names" : "colour name"), "stock count"].filter(Boolean);
+  const open = [p.family && base === null && "base", p.family && !f.height_cm && "height", p.family && !named && (fam.length > 1 ? "colour names" : "colour name"), ...(p.acc ? ["size", "weight", "colours"] : []), "stock count"].filter(Boolean);
   const list = open.length > 1 ? open.slice(0, -1).join(", ") + " and " + open.at(-1) : open[0];
   return `<section class="spec" aria-labelledby="spec-h">
         <h2 class="h3" id="spec-h">Details</h2>
@@ -463,10 +464,10 @@ function factsSpec(p, fam) {
           ${f.acrylic ? `<div><dt>Material</dt><dd>Acrylic</dd></div>` : ""}
           ${Array.isArray(f.includes) && f.includes.length ? `<div><dt>Comes with</dt><dd>${esc(f.includes.join(", "))}</dd></div>` : ""}
           <div><dt>Colours</dt><dd>${fam.length > 1 ? `<span class="num">${fam.length}</span> in the catalogue${named ? ": " + esc(fam.map(v => v.colour).join(", ")) : ""}` : named ? esc(fam.map(v => v.colour).join(", ")) : "One"}</dd></div>` : ""}
-          ${p.family && ticked(p) ? `<div><dt>Availability</dt><dd>In the shop</dd></div>` : ""}
+          ${catItem(p) && ticked(p) ? `<div><dt>Availability</dt><dd>In the shop</dd></div>` : ""}
           <div class="spec__open"><dt>Still to come</dt><dd>${list[0].toUpperCase() + list.slice(1)}. ${TBD("")}</dd></div>
           ${!p.img ? `<div><dt>Photo</dt><dd>Coming. The drawing stands in until the photo is ready.</dd></div>` : p.family && f.photo === "family" ? `<div><dt>Photo</dt><dd>Shows another colour of this hookah.</dd></div>` : ""}
-          ${p.family ? `<div><dt>From</dt><dd>Ace Hookah\u2019s catalogue</dd></div>` : ""}
+          ${catItem(p) ? `<div><dt>From</dt><dd>Ace Hookah\u2019s catalogue</dd></div>` : ""}
           <div><dt>Item</dt><dd class="num">${p.sku}</dd></div>
         </dl>
       </section>`;
@@ -497,7 +498,7 @@ function viewProduct(sku) {
       ${chips}
       ${p.details && p.details.notes ? `<p class="pdp__notes"><span>Notes</span> ${esc(p.details.notes)}</p>` : ""}
       ${localOnly(p) ? counterLine(p) : ""}
-      ${!sale ? `${p.state === "tbd" ? `<p class="pdp__avail">${TBD("Price")} ${p.family ? "In the shop now. " : ""}The shop sets the price and confirms stock.</p>` : `<p class="soldline">Coming soon.</p>`}<a class="btn btn--ghost btn--call btn--ask" href="tel:+15192552222">Ask the counter, 519-255-2222</a>`
+      ${!sale ? `${p.state === "tbd" ? `<p class="pdp__avail">${TBD("Price")} ${catItem(p) ? "In the shop now. " : ""}The shop sets the price and confirms stock.</p>` : `<p class="soldline">Coming soon.</p>`}<a class="btn btn--ghost btn--call btn--ask" href="tel:+15192552222">Ask the counter, 519-255-2222</a>`
         : sold ? `<p class="soldline">${p.dark ? "This one has sold. Each resin stem is poured once." : "Sold out for now."}</p><a class="btn btn--ghost btn--call" href="tel:+15192552222">Call the counter</a>`
         : `<p class="pdp__price num">${whole(p.price)}</p>${inCart ? `<a class="btn btn--wide" href="/cart">In your cart. View cart</a>` : `<button class="btn btn--wide" type="button" data-add="${p.sku}">Add to cart</button>`}`}
       ${sale ? deliveryLine(p, opts) : ""}

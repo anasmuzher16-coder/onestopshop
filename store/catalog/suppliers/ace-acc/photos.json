@@ -1,0 +1,716 @@
+{
+ "schema": "oss-photos/1",
+ "source": {
+  "id": "ace-acc-2026",
+  "file": "b9cd9c7f-ACE_ACCESSORIES_compressed.pdf",
+  "sha256": "200ff2f8e963786ad1e7048a6b4d6419e3d9b2bfb238f5bda88adb5316ee8c18"
+ },
+ "frame": {
+  "w": 720,
+  "h": 900,
+  "product_h": 810,
+  "foot": 45,
+  "max_w": 630,
+  "resample": "Lanczos",
+  "webp_method": 4,
+  "check_above_scale": 1.25,
+  "hold_above_scale": 2.0,
+  "ai_upscaling": false
+ },
+ "published_dir": "store/public/img/pc/acc",
+ "images": [
+  {
+   "page": 6,
+   "family_id": "acc-p6",
+   "xref": null,
+   "src_px": null,
+   "crop": null,
+   "scale": null,
+   "status": "none",
+   "out": null,
+   "note": "held with the name: the photo shows another maker's mark; the shop's own photo or its confirmation frees it"
+  },
+  {
+   "page": 9,
+   "family_id": "acc-p9",
+   "xref": 698,
+   "src_px": [
+    800,
+    600
+   ],
+   "crop": [
+    121,
+    193,
+    468,
+    460
+   ],
+   "scale": 1.614,
+   "status": "CHECK",
+   "out": "acc/acc-p9",
+   "note": "single cut-out"
+  },
+  {
+   "page": 10,
+   "family_id": "acc-p10",
+   "xref": 730,
+   "src_px": [
+    800,
+    800
+   ],
+   "crop": [
+    40,
+    155,
+    762,
+    646
+   ],
+   "scale": 0.776,
+   "status": "ready",
+   "out": "acc/acc-p10",
+   "note": "single cut-out"
+  },
+  {
+   "page": 11,
+   "family_id": "acc-p11",
+   "xref": 770,
+   "src_px": [
+    800,
+    800
+   ],
+   "crop": [
+    56,
+    146,
+    747,
+    644
+   ],
+   "scale": 0.81,
+   "status": "ready",
+   "out": "acc/acc-p11",
+   "note": "single cut-out"
+  },
+  {
+   "page": 12,
+   "family_id": "acc-p12",
+   "xref": 800,
+   "src_px": [
+    800,
+    546
+   ],
+   "crop": [
+    382,
+    24,
+    794,
+    532
+   ],
+   "scale": 1.142,
+   "status": "ready",
+   "out": "acc/acc-p12",
+   "note": "single cut-out"
+  },
+  {
+   "page": 13,
+   "family_id": "acc-p13",
+   "xref": null,
+   "src_px": null,
+   "crop": null,
+   "scale": null,
+   "status": "none",
+   "out": null,
+   "note": "held with the name: the photo shows another maker's mark; the shop's own photo or its confirmation frees it"
+  },
+  {
+   "page": 16,
+   "family_id": "acc-p16",
+   "xref": null,
+   "src_px": null,
+   "crop": null,
+   "scale": null,
+   "status": "none",
+   "out": null,
+   "note": "held with the name: the photo shows another maker's mark; the shop's own photo or its confirmation frees it"
+  },
+  {
+   "page": 17,
+   "family_id": "acc-p17",
+   "xref": null,
+   "src_px": null,
+   "crop": null,
+   "scale": null,
+   "status": "none",
+   "out": null,
+   "note": "held with the name: the photo shows another maker's mark; the shop's own photo or its confirmation frees it"
+  },
+  {
+   "page": 21,
+   "family_id": "acc-p21",
+   "xref": 1055,
+   "src_px": [
+    500,
+    500
+   ],
+   "crop": [
+    9,
+    62,
+    473,
+    412
+   ],
+   "scale": 1.207,
+   "status": "ready",
+   "out": "acc/acc-p21",
+   "note": "single cut-out"
+  },
+  {
+   "page": 22,
+   "family_id": "acc-p22",
+   "xref": 1089,
+   "src_px": [
+    800,
+    800
+   ],
+   "crop": [
+    107,
+    314,
+    683,
+    559
+   ],
+   "scale": 0.972,
+   "status": "ready",
+   "out": "acc/acc-p22",
+   "note": "single cut-out"
+  },
+  {
+   "page": 24,
+   "family_id": "acc-p24",
+   "xref": 1150,
+   "src_px": [
+    200,
+    200
+   ],
+   "crop": [
+    46,
+    18,
+    155,
+    188
+   ],
+   "scale": 3.412,
+   "status": "needs_original",
+   "out": "acc/acc-p24",
+   "note": "single cut-out; enlarged 3.41x from a small source: needs Ace's original"
+  },
+  {
+   "page": 30,
+   "family_id": "acc-p30",
+   "xref": 1290,
+   "src_px": [
+    427,
+    800
+   ],
+   "crop": [
+    64,
+    33,
+    354,
+    755
+   ],
+   "scale": 0.803,
+   "status": "ready",
+   "out": "acc/acc-p30",
+   "note": "single cut-out"
+  },
+  {
+   "page": 31,
+   "family_id": "acc-p31",
+   "xref": 1332,
+   "src_px": [
+    800,
+    418
+   ],
+   "crop": [
+    315,
+    59,
+    457,
+    357
+   ],
+   "scale": 1.946,
+   "status": "CHECK",
+   "out": "acc/acc-p31",
+   "note": "single cut-out"
+  },
+  {
+   "page": 37,
+   "family_id": "acc-p37",
+   "xref": 1471,
+   "src_px": [
+    800,
+    800
+   ],
+   "crop": [
+    133,
+    17,
+    693,
+    786
+   ],
+   "scale": 0.754,
+   "status": "ready",
+   "out": "acc/acc-p37",
+   "note": "single cut-out"
+  },
+  {
+   "page": 38,
+   "family_id": "acc-p38",
+   "xref": 1501,
+   "src_px": [
+    800,
+    767
+   ],
+   "crop": [
+    71,
+    2,
+    767,
+    754
+   ],
+   "scale": 0.771,
+   "status": "ready",
+   "out": "acc/acc-p38",
+   "note": "single cut-out"
+  },
+  {
+   "page": 45,
+   "family_id": "acc-p45",
+   "xref": 1662,
+   "src_px": [
+    800,
+    401
+   ],
+   "crop": [
+    106,
+    91,
+    688,
+    357
+   ],
+   "scale": 0.962,
+   "status": "ready",
+   "out": "acc/acc-p45",
+   "note": "single cut-out"
+  },
+  {
+   "page": 46,
+   "family_id": "acc-p46",
+   "xref": 1706,
+   "src_px": [
+    800,
+    800
+   ],
+   "crop": [
+    63,
+    267,
+    751,
+    507
+   ],
+   "scale": 0.814,
+   "status": "ready",
+   "out": "acc/acc-p46",
+   "note": "single cut-out"
+  },
+  {
+   "page": 50,
+   "family_id": "acc-p50",
+   "xref": 1808,
+   "src_px": [
+    593,
+    800
+   ],
+   "crop": [
+    7,
+    59,
+    586,
+    775
+   ],
+   "scale": 0.81,
+   "status": "ready",
+   "out": "acc/acc-p50",
+   "note": "single cut-out"
+  },
+  {
+   "page": 52,
+   "family_id": "acc-p52",
+   "xref": 1867,
+   "src_px": [
+    800,
+    633
+   ],
+   "crop": [
+    57,
+    48,
+    762,
+    581
+   ],
+   "scale": 0.794,
+   "status": "ready",
+   "out": "acc/acc-p52",
+   "note": "single cut-out"
+  },
+  {
+   "page": 58,
+   "family_id": "acc-p58",
+   "xref": 2012,
+   "src_px": [
+    326,
+    200
+   ],
+   "crop": [
+    1,
+    24,
+    325,
+    197
+   ],
+   "scale": 1.728,
+   "status": "CHECK",
+   "out": "acc/acc-p58",
+   "note": "single cut-out"
+  },
+  {
+   "page": 63,
+   "family_id": "acc-p63",
+   "xref": 2144,
+   "src_px": [
+    800,
+    800
+   ],
+   "crop": [
+    18,
+    160,
+    768,
+    723
+   ],
+   "scale": 0.747,
+   "status": "ready",
+   "out": "acc/acc-p63",
+   "note": "single cut-out"
+  },
+  {
+   "page": 65,
+   "family_id": "acc-p65",
+   "xref": 2200,
+   "src_px": [
+    720,
+    720
+   ],
+   "crop": [
+    53,
+    7,
+    582,
+    681
+   ],
+   "scale": 0.861,
+   "status": "ready",
+   "out": "acc/acc-p65",
+   "note": "single cut-out"
+  },
+  {
+   "page": 70,
+   "family_id": "acc-p70",
+   "xref": 2339,
+   "src_px": [
+    566,
+    800
+   ],
+   "crop": [
+    0,
+    0,
+    566,
+    726
+   ],
+   "scale": 0.799,
+   "status": "ready",
+   "out": "acc/acc-p70",
+   "note": "single cut-out"
+  },
+  {
+   "page": 72,
+   "family_id": "acc-p72",
+   "xref": null,
+   "src_px": null,
+   "crop": null,
+   "scale": null,
+   "status": "none",
+   "out": null,
+   "note": "held with the name: the photo shows another maker's mark; the shop's own photo or its confirmation frees it"
+  },
+  {
+   "page": 75,
+   "family_id": "acc-p75",
+   "xref": 2479,
+   "src_px": [
+    800,
+    716
+   ],
+   "crop": [
+    35,
+    136,
+    769,
+    580
+   ],
+   "scale": 0.763,
+   "status": "ready",
+   "out": "acc/acc-p75",
+   "note": "single cut-out"
+  },
+  {
+   "page": 76,
+   "family_id": "acc-p76",
+   "xref": 2523,
+   "src_px": [
+    533,
+    800
+   ],
+   "crop": [
+    133,
+    298,
+    399,
+    530
+   ],
+   "scale": 2.105,
+   "status": "needs_original",
+   "out": "acc/acc-p76",
+   "note": "single cut-out; enlarged 2.11x from a small source: needs Ace's original"
+  },
+  {
+   "page": 77,
+   "family_id": "acc-p77",
+   "xref": 2547,
+   "src_px": [
+    800,
+    800
+   ],
+   "crop": [
+    0,
+    65,
+    800,
+    783
+   ],
+   "scale": 0.7,
+   "status": "ready",
+   "out": "acc/acc-p77",
+   "note": "single cut-out"
+  },
+  {
+   "page": 78,
+   "family_id": "acc-p78",
+   "xref": 2585,
+   "src_px": [
+    500,
+    540
+   ],
+   "crop": [
+    27,
+    79,
+    487,
+    487
+   ],
+   "scale": 1.217,
+   "status": "ready",
+   "out": "acc/acc-p78",
+   "note": "single cut-out"
+  },
+  {
+   "page": 79,
+   "family_id": "acc-p79",
+   "xref": 2623,
+   "src_px": [
+    380,
+    380
+   ],
+   "crop": [
+    118,
+    2,
+    343,
+    377
+   ],
+   "scale": 1.547,
+   "status": "CHECK",
+   "out": "acc/acc-p79",
+   "note": "single cut-out"
+  },
+  {
+   "page": 80,
+   "family_id": "acc-p80",
+   "xref": 2653,
+   "src_px": [
+    800,
+    800
+   ],
+   "crop": [
+    109,
+    213,
+    591,
+    661
+   ],
+   "scale": 1.162,
+   "status": "ready",
+   "out": "acc/acc-p80",
+   "note": "single cut-out"
+  },
+  {
+   "page": 81,
+   "family_id": "acc-p81",
+   "xref": 2687,
+   "src_px": [
+    600,
+    600
+   ],
+   "crop": [
+    149,
+    0,
+    469,
+    558
+   ],
+   "scale": 1.039,
+   "status": "ready",
+   "out": "acc/acc-p81",
+   "note": "single cut-out, 5 loose speck(s) left out"
+  },
+  {
+   "page": 82,
+   "family_id": "acc-p82",
+   "xref": 2721,
+   "src_px": [
+    300,
+    300
+   ],
+   "crop": [
+    62,
+    49,
+    237,
+    233
+   ],
+   "scale": 3.152,
+   "status": "needs_original",
+   "out": "acc/acc-p82",
+   "note": "single cut-out; enlarged 3.15x from a small source: needs Ace's original"
+  },
+  {
+   "page": 83,
+   "family_id": "acc-p83",
+   "xref": null,
+   "src_px": null,
+   "crop": null,
+   "scale": null,
+   "status": "none",
+   "out": null,
+   "note": "Ace's page has the tongs printed into its background, with no cut-out: needs a photo"
+  },
+  {
+   "page": 84,
+   "family_id": "acc-p84",
+   "xref": 2786,
+   "src_px": [
+    800,
+    800
+   ],
+   "crop": [
+    42,
+    145,
+    777,
+    708
+   ],
+   "scale": 0.762,
+   "status": "ready",
+   "out": "acc/acc-p84",
+   "note": "single cut-out"
+  },
+  {
+   "page": 95,
+   "family_id": "acc-p95",
+   "xref": 3024,
+   "src_px": [
+    795,
+    800
+   ],
+   "crop": [
+    94,
+    30,
+    704,
+    763
+   ],
+   "scale": 0.791,
+   "status": "ready",
+   "out": "acc/acc-p95",
+   "note": "single cut-out"
+  },
+  {
+   "page": 96,
+   "family_id": "acc-p96",
+   "xref": 3066,
+   "src_px": [
+    600,
+    800
+   ],
+   "crop": [
+    122,
+    144,
+    470,
+    643
+   ],
+   "scale": 1.162,
+   "status": "ready",
+   "out": "acc/acc-p96",
+   "note": "single cut-out"
+  },
+  {
+   "page": 97,
+   "family_id": "acc-p97",
+   "xref": 3107,
+   "src_px": [
+    542,
+    800
+   ],
+   "crop": [
+    27,
+    141,
+    424,
+    747
+   ],
+   "scale": 0.957,
+   "status": "ready",
+   "out": "acc/acc-p97",
+   "note": "single cut-out"
+  },
+  {
+   "page": 99,
+   "family_id": "acc-p99",
+   "xref": 3178,
+   "src_px": [
+    410,
+    410
+   ],
+   "crop": [
+    87,
+    56,
+    327,
+    379
+   ],
+   "scale": 1.796,
+   "status": "CHECK",
+   "out": "acc/acc-p99",
+   "note": "single cut-out"
+  },
+  {
+   "page": 101,
+   "family_id": "acc-p101",
+   "xref": 3245,
+   "src_px": [
+    499,
+    800
+   ],
+   "crop": [
+    37,
+    146,
+    462,
+    649
+   ],
+   "scale": 1.153,
+   "status": "ready",
+   "out": "acc/acc-p101",
+   "note": "single cut-out"
+  }
+ ]
+}

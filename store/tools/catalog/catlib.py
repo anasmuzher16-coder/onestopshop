@@ -23,10 +23,11 @@ OUT = CATALOG / "out"                            # generated files (spreadsheet,
 SCHEMA_ID = "oss-catalog/1"
 
 ACE_PDF = Path(r"C:\Users\anasm\.claude\uploads\2e9104f4-ae4d-4888-ac56-0336af4e029a\8dbd1ba4-ACE_HOOKAH_October_2026.pdf")
+ACE_ACC_PDF = Path(r"C:\Users\anasm\.claude\uploads\2e9104f4-ae4d-4888-ac56-0336af4e029a\b9cd9c7f-ACE_ACCESSORIES_compressed.pdf")
 INTAKE = Path(r"C:\dev\onestopshop\inventory-2026-11-23")
 
 # SKU blocks: OSS-SSNNNN. SS is the supplier block, NNNN a number that is never changed or reused.
-BLOCKS = {"ace": "10", "charcoal-foil": "20", "shisha": "30"}
+BLOCKS = {"ace": "10", "ace-acc": "11", "charcoal-foil": "20", "shisha": "30"}   # 11: Ace accessories (2026-11-26)
 SKU_RE = re.compile(r"^OSS-(\d{2})(\d{4})$")
 LEGACY_RE = re.compile(r"^OSS-\d{4}$")          # the shop's earlier 4-digit numbers (charcoal intake), kept as they are
 
@@ -114,6 +115,10 @@ def load_registry(path: Path = REGISTRY):
                "rule": "OSS-SSNNNN: SS = supplier block, NNNN = sequence. A number is never changed, never reused, "
                        "and stays here after it is retired. Legacy 4-digit numbers are kept as they are.",
                "blocks": {v: k for k, v in BLOCKS.items()}, "next": {v: 1 for v in BLOCKS.values()}, "skus": {}}
+    for sup, blk in BLOCKS.items():   # a supplier added later gets its block once; existing blocks and counters never change
+        if blk not in reg["blocks"]:
+            reg["blocks"][blk] = sup
+            reg["next"][blk] = 1
     validate_registry(reg)
     return reg
 

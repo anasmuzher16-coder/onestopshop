@@ -67,9 +67,9 @@ ok(feed.products.filter(p => /^OSS-96/.test(p.sku)).every(p => p.ship_class === 
 const shishaSec = await (await fetch(B + "/shop/shisha")).text();
 ok(/name="description" content="[^"]*Pickup, paid in the shop/.test(shishaSec) && !/shipped across Canada/i.test(shishaSec.match(/name="description" content="[^"]*/)?.[0] || ""), "the Shisha section says pickup, paid in the shop");
 ok(/name="description" content="69 kinds of hookah charcoal[^"]*Pickup or local delivery only/.test(coalPage), "the Charcoal section says pickup or local delivery only");
-// Heat holds only the 15 foil packs since the sample heat pieces came off (2026-11-24); their weight is TBD, so the section is
+// Heat holds the 15 foil packs and 18 Ace accessories (2026-11-26); every weight is TBD, so the section is
 // pickup or local delivery, and says so. It says "shipped" again once anything in it can ship.
-ok(/name="description" content="15 foil and heat items at our Windsor counter\. Pickup or local delivery only/.test(heatPage), "Heat (foil only, weight TBD) says pickup or local delivery only");
+ok(/name="description" content="33 foil and heat items at our Windsor counter\. Pickup or local delivery only/.test(heatPage), "Heat (foil and accessories, weight TBD) says pickup or local delivery only");
 const shPage = await (await fetch(B + "/shop/shisha")).text(); ok(/content="47 shisha/.test(shPage), "the shisha section counts its 47 flavours");
 // 3 the sample hookahs are gone, their links land on the section
 const r1 = await fetch(B + "/p/OSS-1001", { redirect: "manual" });
@@ -86,7 +86,7 @@ const sh = await post({ ...who, method: "pickup", pay: "at_pickup", lines: [{ sk
 ok(sh.status === 201 && sh.data.order.subtotal_cents === Math.round(shisha.price * 100), `shisha sells at the shop's price, paid at the counter: ${sh.status} ${sh.data.error || ""}`);
 ok(P.filter(p => p.cat === "shisha").length === 47 && P.filter(p => p.cat === "shisha" && p.stock === 0).length === 3, "all 47 shisha flavours are up, 3 sold out");
 const sold = P.find(p => p.cat === "shisha" && p.stock === 0); ok((await post({ ...who, ...pk, method: "pickup", lines: [{ sku: sold.sku, qty: 1 }] })).status === 409, "a sold-out flavour cannot be ordered");
-const foil = P.filter(p => p.weightTbd && p.cat === "heat" && !(p.details && p.details.charcoal));   // charcoal now carries its catalogue facts too (weight unknown), and is pickup or local by its own rule
+const foil = P.filter(p => p.weightTbd && p.cat === "heat" && !p.acc && !(p.details && p.details.charcoal));   // Ace accessories (acc) are Price TBD, not on sale   // charcoal now carries its catalogue facts too (weight unknown), and is pickup or local by its own rule
 ok(foil.length === 15 && foil.every(p => p.state === "sale" && p.ship === "pickup_only"), "15 foil packs on sale, pickup or local delivery while the weight is TBD");
 { const r = await post({ ...who, ...to, method: "ship", service: "cp-exp", lines: [{ sku: foil[0].sku, qty: 1 }] }); ok(CARD ? r.data.local_only === true : noKeys(r), "foil cannot be sent by a carrier on a made-up weight: " + r.status); }
 ok((await post({ ...who, ...pk, method: "pickup", lines: [{ sku: foil[0].sku, qty: 1 }] })).status === 201, "foil can be picked up");

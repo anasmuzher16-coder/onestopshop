@@ -27,6 +27,10 @@ SUPPLIER_META = {
     "charcoal-foil": {"id": "charcoal-foil", "name": "Charcoal and foil (the shop's own list)", "sku_block": "OSS-20NNNN (earlier items keep their OSS-9NNN numbers)",
                       "credit": "No supplier credit needed."},
     "shisha": {"id": "shisha", "name": "Tobacco-free shisha", "sku_block": "OSS-30NNNN", "credit": ""},
+    # Ace's accessories catalogue is its own master (not inside the hookah one): a different PDF, one item per page with no
+    # colour variants, no hookah grouping or base rules, and its own photo set. Same supplier company, same credit rule.
+    "ace-acc": {"id": "ace-acc", "name": "Ace Hookah (accessories)", "sku_block": "OSS-11NNNN",
+                "credit": "Credit Ace as text only. No Ace logo, marble or 'ACE IT' artwork on the site."},
 }
 SHISHA_SECTION = "INSERT OR IGNORE INTO categories (id, name, tone, sort, active) VALUES ('shisha', 'Shisha', 'emerald', 8, 0)"
 # Charcoal, its own section after Heat (shop request, 2026-11-24): the sections from place 4 on move down one, once.
@@ -89,6 +93,27 @@ def build_ace(reg, pdf: Path, photos_manifest, day):
     return out, retired
 
 
+def build_acc(reg, pdf: Path, photos_manifest, day):
+    import src_ace_acc
+    _, pages = src_ace_acc.read_pdf(pdf)
+    fams = src_ace_acc.families(pages)
+    shots = {im["family_id"]: im for im in (photos_manifest or {}).get("images", [])}
+    live = set()
+    for f in fams:
+        f.pop("photo_src")
+        key = f["family_id"]
+        live.add(key)
+        ph = shots.get(key)
+        ok = ph and ph.get("status") in USABLE_PHOTO and ph.get("out")
+        f["variants"] = [{"sku": C.sku_for(reg, "ace-acc", key, day), "key": key,
+                          "photo": {"img": ph["out"] if ok else None, "status": ph["status"] if ph else "none",
+                                    "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json" if ok else None},
+                          "shop": C.blank_shop()}]
+    fams.sort(key=lambda f: (f["stamp"]["v"] == "none", f["page"]))   # ticked first, then catalogue order
+    retired = C.retire_missing(reg, "ace-acc", live, day, "not in the catalogue any more")
+    return fams, retired
+
+
 def build(args):
     day = today()
     reg = C.load_registry()
@@ -116,6 +141,26 @@ def build(args):
                           "stamped": sum(f["stamp"]["v"] != "none" for f in fams), "newly_retired": retired, "written": wrote}
     else:
         print(f"Ace PDF not found at {pdf}: Ace master left as it is.")
+    # Ace accessories (the pages the shop ticked)
+    apdf = Path(args.acc_pdf)
+    if apdf.exists():
+        old = C.load_master("ace-acc")
+        fams, retired = build_acc(reg, apdf, C.load_json(C.SUPPLIERS / "ace-acc" / "photos.json"), day)
+        import src_ace_acc
+        m = {"schema": C.SCHEMA_ID, "supplier": SUPPLIER_META["ace-acc"],
+             "sources": [{"id": src_ace_acc.SRC_ID, "kind": "pdf", "file": apdf.name, "sha256": C.sha256_file(apdf),
+                          "pages": src_ace_acc.PAGES, "products": len(fams), "edition": src_ace_acc.EDITION, "received": src_ace_acc.RECEIVED}],
+             "rulings": ["owner 2026-11-26: only the pages the shop ticked go on the site, each with Price TBD; unticked pages stay off",
+                         "Ace's prices are stored only as the supplier price; the shop sets its own",
+                         "pickup or local delivery only until each item's weight is known"],
+             "families": fams,
+             "retired": {s: reg["skus"][s] for s in sorted(reg["skus"]) if reg["skus"][s]["supplier"] == "ace-acc" and reg["skus"][s]["status"] == "retired"}}
+        C.carry_shop(old, m)
+        C.validate_master(m, reg)
+        wrote = C.write_json(C.master_path("ace-acc"), m)
+        summary["ace-acc"] = {"families": len(fams), "newly_retired": retired, "written": wrote}
+    else:
+        print(f"Ace accessories PDF not found at {apdf}: its master left as it is.")
     # Charcoal and foil
     intake = Path(args.intake)
     if (intake / "catalogue-verified.json").exists():
@@ -303,6 +348,29 @@ def desired_rows(supplier: str, m):
                         # Only what the shop ticked is on view: a tick means it is in the shop, in stock, and nothing is
                         # ordered in (owner, 2026-11-26). An unticked page stays in the master, off the site.
                         "listed": 1 if f["stamp"]["v"] != "none" else 0}
+        elif supplier == "ace-acc":
+            # one card per item (family acc-..., never grouped like hookahs); on view with "Price TBD" until the shop's price.
+            # Weight unknown: the 1 g placeholder plus facts.weight_g = null keep it pickup or local delivery once priced.
+            st = v["photo"]["status"]
+            facts.update({"page": f["page"], "stamp": f["stamp"]["v"],
+                          "photo": "own" if st in USABLE_PHOTO and v["photo"]["img"] else "none"})
+            if facts["photo"] == "own" and st in UPSCALE_PHOTO:
+                facts["photo_label"] = "upscale"
+            facts.pop("glass", None)
+            # another maker's brand on the page: the name waits until the shop confirms the piece is genuine (hookah rule)
+            name = f["withheld_name"]["v"] or f["name"]["v"]
+            ticked = f["stamp"]["v"] != "none"
+            glass = bool(f["facts"].get("glass", {}).get("v"))
+            sup = {"supplier_id": "ace-acc", "supplier_ref": f["supplier_ref"]["v"], "supplier_price_cents": f["supplier_price_cents"]["v"],
+                   "family": f["family_id"], "variant_label": "", "swatch_hex": None,
+                   "img": v["photo"]["img"] or "", "height_cm": None,
+                   "facts_known": json.dumps(facts, sort_keys=True, ensure_ascii=False)}
+            shopcols = {"name": shop["display_name"]["v"] or name, "category_id": f["category"],
+                        "price_cents": shop["price_cents"]["v"] or 0, "weight_g": 1, "box_id": "S" if glass else "XS",
+                        "glass": 1 if glass else 0, "ship_class": "standard", "note": "", "stock": shop["stock"]["v"] or 0,
+                        "low_stock_at": 1, "active": 1 if (shop["active"]["v"] and shop["price_cents"]["v"]) else 0,
+                        # only ticked pages are on view: a tick means in the shop, in stock; nothing is ordered in (owner, 2026-11-26)
+                        "sort": 4000 + i, "availability": "in_store_uncounted", "listed": 1 if ticked else 0}
         else:
             charcoal = f["category"] == "charcoal"
             sup = {"supplier_id": supplier, "supplier_ref": f["supplier_ref"]["v"], "supplier_price_cents": None,
@@ -634,6 +702,7 @@ def main(argv=None):
     sub = ap.add_subparsers(dest="cmd", required=True)
     b = sub.add_parser("build")
     b.add_argument("--ace-pdf", default=str(C.ACE_PDF))
+    b.add_argument("--acc-pdf", default=str(C.ACE_ACC_PDF))
     b.add_argument("--intake", default=str(C.INTAKE))
     x = sub.add_parser("xlsx")
     x.add_argument("--out")
