@@ -453,7 +453,7 @@ function counterSpec(p) {
 function factsSpec(p, fam) {
   const f = p.facts || {}, named = fam.every(v => v.named), base = f.includes_base === true ? "Included" : f.includes_base === false ? "Not included: stem set, no base" : null;
   // the shop's unknowns are said once, together, as TBD: never guessed, never left out, never one TBD per row (council, 2026-11-25)
-  const open = [p.family && base === null && "base", p.family && !f.height_cm && "height", p.family && !named && (fam.length > 1 ? "colour names" : "colour name"), ...(p.acc ? ["size", "weight", "colours"] : []), "stock count"].filter(Boolean);
+  const open = [p.family && base === null && "base", p.family && !f.height_cm && "height", p.family && !named && (fam.length > 1 ? "colour names" : "colour name"), p.family && fam.length > 1 && "which colours the shop has", ...(p.acc ? ["size", "weight", "colours"] : []), "stock count"].filter(Boolean);
   const list = open.length > 1 ? open.slice(0, -1).join(", ") + " and " + open.at(-1) : open[0];
   return `<section class="spec" aria-labelledby="spec-h">
         <h2 class="h3" id="spec-h">Details</h2>
@@ -463,7 +463,7 @@ function factsSpec(p, fam) {
           ${f.height_cm ? `<div><dt>Height</dt><dd><span class="num">${f.height_cm} cm</span></dd></div>` : ""}
           ${f.acrylic ? `<div><dt>Material</dt><dd>Acrylic</dd></div>` : ""}
           ${Array.isArray(f.includes) && f.includes.length ? `<div><dt>Comes with</dt><dd>${esc(f.includes.join(", "))}</dd></div>` : ""}
-          <div><dt>Colours</dt><dd>${fam.length > 1 ? `<span class="num">${fam.length}</span> shown${named ? ": " + esc(fam.map(v => v.colour).join(", ")) : ""}. Which the shop has: ${TBD("")}` : named ? esc(fam.map(v => v.colour).join(", ")) : "One"}</dd></div>` : ""}
+          <div><dt>Colours</dt><dd>${fam.length > 1 ? `<span class="num">${fam.length}</span> shown${named ? ": " + esc(fam.map(v => v.colour).join(", ")) : ""}` : named ? esc(fam.map(v => v.colour).join(", ")) : "One"}</dd></div>` : ""}
           ${catItem(p) && ticked(p) ? `<div><dt>Availability</dt><dd>In the shop</dd></div>` : ""}
           <div class="spec__open"><dt>Still to come</dt><dd>${list[0].toUpperCase() + list.slice(1)}. ${TBD("")}</dd></div>
           ${!p.img ? `<div><dt>Photo</dt><dd>Coming. The drawing stands in until the photo is ready.</dd></div>` : p.family && f.photo === "family" ? `<div><dt>Photo</dt><dd>Shows another colour of this hookah.</dd></div>` : ""}

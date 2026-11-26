@@ -28,7 +28,8 @@ for (const eng of [chromium, webkit]) {
   }
   await p.goto(B + "/shop/misc", { waitUntil: "load" }); await p.waitForTimeout(500);
   await tap(p, "/shop/hookahs"); await filled(p, "hookahs");
-  await p.evaluate(() => scrollTo(0, 6000)); await p.waitForTimeout(600);
+  // well down the section, wherever its length puts that (Hookahs is 26 ticked families since 2026-11-26, not 83)
+  await p.evaluate(() => scrollTo(0, Math.round((document.documentElement.scrollHeight - innerHeight) * 0.6))); await p.waitForTimeout(600);
   const pick = await p.evaluate(() => { const a = [...document.querySelectorAll("#main a[data-piece]")].find(x => { const r = x.getBoundingClientRect(); return r.top > 200 && r.bottom < innerHeight - 90; }); const top = Math.round(a.getBoundingClientRect().top); a.click(); return { sku: a.dataset.piece, top }; });
   await p.waitForURL("**/p/**"); await p.waitForTimeout(900); await p.goBack(); await p.waitForTimeout(1200);
   const back = await p.evaluate(s => Math.round(document.querySelector(`#main [data-piece="${s}"]`)?.getBoundingClientRect().top ?? -9999), pick.sku);
