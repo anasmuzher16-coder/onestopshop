@@ -340,7 +340,7 @@ export async function admin(request, env, url) {
   // the preview's open switch at "all" (src/preview.js): no sign-in, every visitor is the owner, every change logged as "preview (open) <tag>"
   // (a signed-in staff member gets the same owner rights as an unsigned visitor there, never fewer)
   const signed = await signedIn(request, env), all = openScope(env) === "all";
-  const session = signed ? (all && !signed.owner ? { ...signed, owner: true } : signed) : all ? { actor: await openActor(env, request), staff_id: null, owner: true } : null;
+  const session = signed ? (all && !signed.owner ? { ...signed, actor: `${await openActor(env, request)} (${signed.actor})`, owner: true } : signed) : all ? { actor: await openActor(env, request), staff_id: null, owner: true } : null;
   if (!session) return json({ error: "Sign in first." }, 401);
   if (method !== "GET") {
     if (!(request.headers.get("Content-Type") || "").startsWith("application/json") && !path.endsWith("/photo")) return json({ error: "Send JSON." }, 415);

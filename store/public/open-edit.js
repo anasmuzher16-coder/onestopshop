@@ -19,7 +19,7 @@ const store = { get(k) { try { return JSON.parse(sessionStorage.getItem("oss:oe-
 const cache = new Map(), known = new Map();
 function load(sku, fresh = false) {
   if (!fresh && cache.has(sku)) return cache.get(sku);
-  const p = fetch("/api/open-edit/" + sku, { credentials: "same-origin", headers: { Accept: "application/json" } }).then(r => r.ok ? r.json() : null).catch(() => null).then(d => { known.set(sku, d); return d; });
+  const p = fetch("/api/open-edit/" + sku, { credentials: "same-origin", headers: { Accept: "application/json" } }).then(r => r.ok ? r.json() : null).catch(() => null).then(d => { if (d) known.set(sku, d); else cache.delete(sku); return d; });   // a failed request is tried again on the next draw
   cache.set(sku, p); return p;
 }
 
@@ -49,7 +49,8 @@ async function ensureBar() {
   name.after(bar);
   const saved = store.get("saved"); if (saved && typeof saved.msg === "string") { $("[data-oe-said]", bar).textContent = saved.msg; store.set("saved", null); }
   const d = await load(sku); if (!bar.isConnected) return;
-  if (!d || !d.editable) { bar.remove(); return; }   // a made-up sample or anything else not editable here: no bar at all
+  if (!d) { $("[data-oe-need]", bar).textContent = "Could not load this item. Tap Edit this item to try again."; return; }   // the bar stays (no redraw), the button tries again
+  if (!d.editable) { bar.remove(); return; }   // a made-up sample or anything else not editable here: no bar at all
   $("[data-oe-need]", bar).textContent = d.needs.length ? `Needs ${words(d.needs.map(k => NEED[k]))}.` : "Everything is filled in.";
   const next = $("[data-oe-next]", bar);
   if (d.next) { next.href = "/p/" + d.next; next.hidden = false; next.textContent = `Next item that needs info (${d.left - (d.needs.length ? 1 : 0)} left)`; }

@@ -243,7 +243,7 @@ All numbers here are owner-vetoable defaults; they live in src/guard.js (and DEC
   its shelf count (`in_store_uncounted`, `special_order`).
 
 ## Preview open edit (2026-11-27, branch fleet/open-edit)
-**Remove PREVIEW_OPEN_EDIT (redeploy without the --var) before launch.** (Also in GO-LIVE.md's pre-launch checklist.)
+**Remove PREVIEW_OPEN_EDIT (redeploy without the --var) before launch.** (Also in inventory-2026-11-24-next/GO-LIVE.md section 0, the laptop's launch checklist, which is not in git.)
 - Owner: "Remove the admin key for right now, have it so the preview site itself allows it and before launch we will lock
   things up, also have it so they can fill in price on the actual item page." One Worker setting, `PREVIEW_OPEN_EDIT`,
   never in wrangler.jsonc. Set on the demo only at deploy time: `npx wrangler deploy --var PREVIEW_OPEN_EDIT:items`
@@ -259,13 +259,13 @@ All numbers here are owner-vetoable defaults; they live in src/guard.js (and DEC
 - `all`: every back office route treats a visitor with no sign-in as the owner (src/admin.js `admin`, and the points
   settings in src/worker.js). The same-site, JSON and marker checks on writes stay.
 - Every open change is logged with the actor `preview (open) <tag>`: 8 characters of a keyed hash of the visitor's
-  network (src/guard.js `keyedHash`, never the address). A signed-in person editing from an item page is logged by name.
+  network (src/guard.js `keyedHash`, never the address). Someone signed in who edits from an item page, or works in the back office at `all`, is logged as the tag with their name in brackets.
 - While it is on, every page (storefront, back office, questionnaire) starts with a slim banner in the flow, above the
   header: "Preview: anyone can edit items. This will be locked before launch." Off, the banner, the page's
   `oss-open-edit` meta, `open-edit.css` and `open-edit.js` are not in any page, and `/api/open-edit/*` answers 404.
 - After a save the item page reloads in place (same address, same scroll) so it shows the new price, colours and stock.
-- An open save sends no back-in-stock emails at once (a stranger would pick the name in their subject line); the nightly
-  alert run still goes, so check names before mail is connected. The open GET shows an item's real shelf count even when
+- An open save sends no back-in-stock emails at once (a stranger would pick the name in their subject line); the next back office save
+  or the nightly run still sends any that are due, so check names before mail is connected (account.js puts the name in the subject). The open GET shows an item's real shelf count even when
   it is not on sale (the editor needs it to count against); a page whose item is not editable gets `{ editable: false }`.
   `/open-edit.js` and `/open-edit.css` are static files, so they answer even when off; no page links them and the API is shut.
 - Nothing done while it is open is undone by switching it off: prices set, items a first price put on sale, and at `all`
