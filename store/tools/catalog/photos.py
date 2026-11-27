@@ -448,6 +448,13 @@ def run(pdf: Path, work: Path, publish: bool):
             apply_upscaled(it, kept)   # after roles are set, so an upscale never reshuffles which photo is the hero
             apply_web(it, web)         # same: a web photo takes the place of this cut, roles unchanged
             images.append(it)
+    # a kept web photo whose Ace cut moved (new PDF: other xref or crop) is not applied, and --publish would put the Ace cut back
+    applied = {im["out"] for im in images if im.get("web")}
+    for out, r in web.items():
+        if out not in applied:
+            print(f"WARNING: web photo {out} ({', '.join(r.get('skus', []))}) no longer matches its Ace cut (xref {r['xref']}, crop "
+                  f"{r['crop']}): the Ace photo is used again. Re-check the match, update web-photos.json, and put the old "
+                  f"photo_label back and clear photo_src in the database if it stays off.")
     # publish: only the images a product row will show (matched to a colour, or the family's hero)
     shipped = [im for im in images if im.get("status") in SHOWN and im.get("role") in ("hero", "colour")]
     if publish:
