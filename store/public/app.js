@@ -1234,8 +1234,12 @@ function go() {
   const stage = $("[data-stage]");
   if (stage) { stage.style.viewTransitionName = "piece"; const st = $(".sticker", stage); if (st) st.style.viewTransitionName = "tag"; }
   else if (from) { if (pending && pending.q.some(x => x.sku === from[1])) drawThrough(from[1]); const back = $(`[data-piece="${from[1]}"]`), n = back && ($(".tile", back) || back); if (n) { n.style.viewTransitionName = "piece"; const st = $(".sticker", back); if (st) st.style.viewTransitionName = "tag"; const box = n.getBoundingClientRect(); if (spot === undefined || box.bottom < 60 || box.top > innerHeight - 60) n.scrollIntoView({ block: "center" }); } }
-  const sq = $("#q"); if (sq) sq.focus({ preventScroll: true }); else $("#main").focus({ preventScroll: true });
+  const sq = $("#q"); if (sq) sq.focus({ preventScroll: true }); else focusMain();   // the search field at once: a phone's keyboard is handed over to it inside the swap
 }
+// Focus asks for the new page's style and layout there and then: under a wave that forced a 13-16 ms layout into the swap's task, and
+// on a long section the first screen's cards then changed it again (2x trace, 2026-11-27). Under a wave the page takes the focus in
+// the task after the next frame (route.js afterSwap), still under the full cover, once that frame has laid it out anyway.
+const focusMain = afterSwap(() => { $("#main")?.focus({ preventScroll: true }); });
 // 15 the dock's Back is the real Back; from a shared link there is nothing behind it, so it goes to the section
 document.addEventListener("click", e => {
   const b = e.target.closest?.("[data-back]"); if (!b || !canGoBack() || e.metaKey || e.ctrlKey || e.shiftKey) return;

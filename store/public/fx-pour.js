@@ -65,6 +65,11 @@ function launch() {
 }
 // still compiling: the smoke starts a frame or two later instead of holding the page (never more than a second of waiting)
 const compiling = () => !!pend?.par && performance.now() - (pend.w ??= performance.now()) < 1000 && !pend.g.isContextLost() && Object.values(pend.list).some(x => !pend.g.getProgramParameter(x.p, pend.par.COMPLETION_STATUS_KHR));
+// Collecting the programs and sizing the targets ask the graphics process for answers, and each ask waits for everything queued
+// before it. Under a wave that queue is the new page's raster and the compiles: on a first visit, before the warm-up had finished,
+// one ask (the renderer's name) waited 168 ms inside the reveal (2x trace, 2026-11-27). So a smoke page that is not set up yet
+// waits for the wave to finish, and for the next quiet moment after it (at most 4 s in all), before it asks anything.
+const underWave = () => !!pend && !!window.__wave?.active && performance.now() - (pend.w ??= performance.now()) < 4000;
 addEventListener("wave:start", e => { if (e.detail?.key === "hookahs" && !tried) setTimeout(() => { if (!gl && !tried) { launch(); if (pend) pend.w ??= pend.t; } }, 240); });   // the context is made once the wave's body covers the screen, never inside the tap or mid-motion
 function setup() {
   if (new URLSearchParams(location.search).has("still")) return false;
@@ -241,7 +246,9 @@ function begin() {
     beginAir(); return;
   }
   if (!RM.matches && !gl && !tried) {   // only the smoke and mist pages ever pay for this
-    launch(); if (compiling()) { document.documentElement.classList.add("pour-page"); requestAnimationFrame(() => { if (modeName && !M.air && !on) begin(); }); return; }
+    launch();
+    if (underWave()) { document.documentElement.classList.add("pour-page"); requestAnimationFrame(() => { if (!modeName || M.air || on) return; if (underWave()) begin(); else idle(() => { if (modeName && !M.air && !on) begin(); }, 250); }); return; }
+    if (compiling()) { document.documentElement.classList.add("pour-page"); requestAnimationFrame(() => { if (modeName && !M.air && !on) begin(); }); return; }
     tried = true; if (!setup()) gl = null; }
   if (gl && (lost || gl.isContextLost())) { document.documentElement.classList.add("pour-still", "pour-page"); return; }   // warmed at load and lost since: the still, never a bare ground
   if (RM.matches || !gl) { document.documentElement.classList.add("pour-still", "pour-page"); return; }
@@ -279,8 +286,18 @@ function spritzAll() {
   };
   spray = { c, raf: requestAnimationFrame(run) };
 }
-function off() { endSpray(); endAir(); on = false; pre = 0; settling = false; if (raf) cancelAnimationFrame(raf); raf = 0; cv.classList.remove("on"); release(); cv.width = cv.height = 0; cv.remove(); }
-function stop() { document.documentElement.classList.remove("pour-page", "pour-still", "pour-mist"); if (on || air || spray || cv.isConnected) off(); }
+// Leaving the smoke page under a wave, the canvas comes off at once and its targets and buffer are handed back once the wave has gone
+// and the page is idle: freeing them waits for the graphics process, 26-31 ms in the frames after the swap (2x profile, 2026-11-26).
+// The smoke page opened again before then simply reuses them (begin() runs before any free, and a free never runs while it is on).
+let freeT = 0, freeGen = 0;
+function free() { clearTimeout(freeT); freeT = 0; freeGen++; if (on) return; release(); cv.width = cv.height = 0; }
+function freeLater() {
+  clearTimeout(freeT); const g = ++freeGen;
+  const wait = () => { freeT = 0; if (g !== freeGen || on) return; if (window.__wave?.active) { freeT = setTimeout(wait, 250); return; } idle(() => { if (g === freeGen && !on) free(); }, 1000); };
+  freeT = setTimeout(wait, 250);
+}
+function off(later = false) { endSpray(); endAir(); on = false; pre = 0; settling = false; if (raf) cancelAnimationFrame(raf); raf = 0; cv.classList.remove("on"); cv.remove(); if (later && gl && !lost) freeLater(); else free(); }
+function stop() { document.documentElement.classList.remove("pour-page", "pour-still", "pour-mist"); if (on || air || spray || cv.isConnected) off(!!window.__wave?.active); }
 // the filter bar is see-through while it sits in the page, and solid once it sticks over the products
 function stick() { if (!head || !chips || !head.isConnected) return; chips.classList.toggle("is-stuck", head.getBoundingClientRect().bottom < chips.getBoundingClientRect().top - .5); }
 // where the spray leaves the bottle
@@ -291,7 +308,7 @@ function place() {
   head = hk || co || ((pdp || hkp) && (pdp || hkp).querySelector("[data-stage]")) || null; chips = hk || co ? head.parentNode.querySelector(":scope > .chips") : null;
   const settled = () => { if (document.querySelector("#main > :not(.ssr)")) arrivedBack = false; };   // only the page you came Back to skips its opening
   if (!next) { stop(); modeName = null; settled(); return; }
-  if (next !== modeName) { document.documentElement.classList.remove("pour-still", "pour-mist"); if (on || air || spray || cv.isConnected) off(); }
+  if (next !== modeName) { document.documentElement.classList.remove("pour-still", "pour-mist"); if (on || air || spray || cv.isConnected) off(!!window.__wave?.active); }
   modeName = next; M = MODES[next]; begin(); stick(); settled();
 }
 addEventListener("scroll", stick, { passive: true });
