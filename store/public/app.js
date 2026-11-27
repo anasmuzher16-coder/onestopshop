@@ -43,7 +43,8 @@ const GROUPS = [["full_size", "Full size"],   // the Kind filter (find-core.js H
  ["stem_set", "Stem only, no base"], ["compact_travel", "Compact and travel"], ["statement", "Statement pieces"]];
 const stemSet = p => !!(p && p.facts && p.facts.includes_base === false);
 // ---------- THE COLOUR SWITCHER: every catalogue colour, a radio group; a colour without its own photo says "Photo coming" ----------
-const catItem = p => !!(p && (p.family || p.acc));   // from an Ace catalogue: a hookah family, or an accessory (one card each)
+const catItem = p => !!(p && (p.family || p.acc));   // a catalogue item: an Ace hookah family, an Ace accessory (one card each), or one of the shop's own hoses (hose-...)
+const aceItem = p => !!(p && (p.acc || /^ace-/.test(p.family || "")));   // from an Ace catalogue only: the hoses are the shop's own, never "Supplier: Ace Hookah"
 const ownPhoto = v => !!(v && v.img && (!v.family || v.facts.photo === "own"));
 const photoOf = v => !!(v && v.img);   // its own photo or the family's, labelled
 const colourName = (v, i) => v.colour ? (v.named ? v.colour : `${v.colour}, name TBD`) : `Colour ${i + 1}`;
@@ -473,13 +474,14 @@ function factsSpec(p, fam) {
           ${p.state === "tbd" ? "" : `<div><dt>Price</dt><dd><span class="num">${whole(p.price)}</span>, coming soon</dd></div>`}
           ${p.family ? `${base ? `<div><dt>Base</dt><dd>${base}</dd></div>` : ""}
           ${f.height_cm ? `<div><dt>Height</dt><dd><span class="num">${f.height_cm}&nbsp;cm</span></dd></div>` : ""}
+          ${"length" in f ? `<div><dt>Length</dt><dd>${f.length ? escN(f.length) : `<span class="tbd">To confirm</span>`}</dd></div>` : ""}
           ${f.acrylic ? `<div><dt>Material</dt><dd>Acrylic</dd></div>` : ""}
           ${Array.isArray(f.includes) && f.includes.length ? `<div><dt>Comes with</dt><dd>${esc(f.includes.join(", "))}</dd></div>` : ""}
           <div><dt>Colours</dt><dd>${fam.length > 1 ? `<span class="num">${fam.length}</span> shown${named ? ": " + esc(fam.map(v => v.colour).join(", ")) : ""}` : named ? esc(fam.map(v => v.colour).join(", ")) : "One"}</dd></div>` : ""}
           ${catItem(p) && ticked(p) ? `<div><dt>Availability</dt><dd>In the shop</dd></div>` : ""}
           ${shopCols(p) ? `<div><dt>${p.family ? "In the shop" : "Colours"}</dt><dd>${esc(p.details.colours.join(", "))}</dd></div>` : ""}
-          ${!p.img ? `<div><dt>Photo</dt><dd>Coming. The drawing stands in until the photo is ready.</dd></div>` : p.family && f.photo === "family" ? `<div><dt>Photo</dt><dd>Shows another colour of this hookah.</dd></div>` : ""}
-          ${catItem(p) ? `<div><dt>Supplier</dt><dd>Ace Hookah</dd></div>` : ""}
+          ${!p.img ? `<div><dt>Photo</dt><dd>Coming. The drawing stands in until the photo is ready.</dd></div>` : p.family && f.photo === "family" ? `<div><dt>Photo</dt><dd>Shows another colour of this ${p.cat === "hookahs" ? "hookah" : "piece"}.</dd></div>` : ""}
+          ${aceItem(p) ? `<div><dt>Supplier</dt><dd>Ace Hookah</dd></div>` : ""}
           <div><dt>Item</dt><dd class="num">${p.sku}</dd></div>
         </dl>
       </section>`;

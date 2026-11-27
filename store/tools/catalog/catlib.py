@@ -27,7 +27,7 @@ ACE_ACC_PDF = Path(r"C:\Users\anasm\.claude\uploads\2e9104f4-ae4d-4888-ac56-0336
 INTAKE = Path(r"C:\dev\onestopshop\inventory-2026-11-23")
 
 # SKU blocks: OSS-SSNNNN. SS is the supplier block, NNNN a number that is never changed or reused.
-BLOCKS = {"ace": "10", "ace-acc": "11", "charcoal-foil": "20", "shisha": "30"}   # 11: Ace accessories (2026-11-26)
+BLOCKS = {"ace": "10", "ace-acc": "11", "shop-hoses": "12", "charcoal-foil": "20", "shisha": "30"}   # 11: Ace accessories (2026-11-26); 12: the shop's own hoses (2026-11-27)
 SKU_RE = re.compile(r"^OSS-(\d{2})(\d{4})$")
 LEGACY_RE = re.compile(r"^OSS-\d{4}$")          # the shop's earlier 4-digit numbers (charcoal intake), kept as they are
 

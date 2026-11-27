@@ -134,6 +134,14 @@ if (paid) {
   const soon = (await call("/products")).data.products.find(x => x.needs?.includes("price") && x.listed === 1 && x.active === 0 && x.sku !== t.sku && x.sku !== hk.sku);
   ok(soon && (await call(`/products/${soon.sku}`, { method: "PUT", body: { price_cents: 3000 } })).status === 200 && (await row(soon.sku)).active === 0, "an item priced in the full form and left off is off (coming soon)");
   const re = await info(soon.sku, { price_cents: 3200 }); ok(re.status === 200 && re.data.on_sale === false && (await row(soon.sku)).active === 0, "changing the price of a priced, switched-off item never switches it on");
+  // one of the shop's own hoses matched by best guess (2026-11-27): it needs a check of its name and length, with the reason,
+  // until the shop ticks "Checked with the shop" in the item editor; a sure one never asks for it
+  { const prods = (await call("/products")).data.products, hz = prods.find(x => /^hose-/.test(x.family || "") && x.needs?.includes("check") && x.sku !== soon.sku);
+    ok(hz && typeof hz.check_why === "string" && hz.check_why.length > 10 && !hz.catalogue, "an unsure hose needs a check, with its reason: " + (hz && hz.sku));
+    ok(prods.some(x => /^hose-/.test(x.family || "") && x.needs && !x.needs.includes("check") && !("check_why" in x)), "a hose matched for sure never asks for a check");
+    ok((await info(hz.sku, { checked: "yes" })).status === 400 && (await row(hz.sku)).needs.includes("check"), "the check takes true only");
+    const ck = await info(hz.sku, { checked: true }), hr = await row(hz.sku);
+    ok(ck.status === 200 && !hr.needs?.includes("check") && JSON.parse(hr.details || "{}").checked === true && !("check_why" in hr), "ticking it takes the hose off the check: " + JSON.stringify(hr.needs)); }
   const sample = (await call("/products")).data.products.find(x => x.sample && x.active === 0);
   ok(sample && (await info(sample.sku, { price_cents: 1234 })).status === 200 && (await row(sample.sku)).active === 0, "a made-up sample is never switched on by a price");
   // the full product form refuses it too (breaker, 2026-11-27: it used to switch a sample on), whatever else the save carries

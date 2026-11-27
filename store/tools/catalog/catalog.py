@@ -31,6 +31,8 @@ SUPPLIER_META = {
     # colour variants, no hookah grouping or base rules, and its own photo set. Same supplier company, same credit rule.
     "ace-acc": {"id": "ace-acc", "name": "Ace Hookah (accessories)", "sku_block": "OSS-11NNNN",
                 "credit": "Credit Ace as text only. No Ace logo, marble or 'ACE IT' artwork on the site."},
+    # The shop's own hanging hoses (2026-11-27): no supplier catalogue, its shelf photos and the captions of its recording.
+    "shop-hoses": {"id": "shop-hoses", "name": "The shop's own hoses", "sku_block": "OSS-12NNNN", "credit": "No supplier credit needed."},
 }
 SHISHA_SECTION = "INSERT OR IGNORE INTO categories (id, name, tone, sort, active) VALUES ('shisha', 'Shisha', 'emerald', 8, 0)"
 # Charcoal, its own section after Heat (shop request, 2026-11-24): the sections from place 4 on move down one, once.
@@ -114,10 +116,52 @@ def build_acc(reg, pdf: Path, photos_manifest, day):
     return fams, retired
 
 
+def build_hoses(reg, day):
+    """The shop's hoses: one family per hose, one variant per colour photographed. Every photo must be published already."""
+    import src_shop_hoses
+    fams = src_shop_hoses.families()
+    live = set()
+    for f in fams:
+        f["variants"] = []
+        for v in f.pop("variants_src"):
+            live.add(v["key"])
+            img = v.pop("img")
+            have = (C.STORE / "public" / "img" / "pc" / (img + ".webp")).exists()
+            f["variants"].append({"sku": C.sku_for(reg, "shop-hoses", v["key"], day), "key": v["key"], "swatch_hex": v["swatch_hex"],
+                                  "colour": v["colour"], "confirm": v["confirm"],
+                                  "photo": {"img": img if have else None, "status": "ready" if have else "none",
+                                            "src": f"photo:{v['photo_file']} (the shop's shelf photo, cut out, bag kept as film)" if have else None},
+                                  "shop": C.blank_shop()})
+    retired = C.retire_missing(reg, "shop-hoses", live, day, "not on the shop's hose list any more")
+    m = {"schema": C.SCHEMA_ID, "supplier": SUPPLIER_META["shop-hoses"],
+         "sources": [{"id": src_shop_hoses.SRC_ID, "kind": "shop photos and recording", "file": "IMG_0543..IMG_0579 (hanging rack) + recording captions",
+                      "sha256": C.sha256_text(json.dumps(src_shop_hoses.HOSES, ensure_ascii=False)), "products": len(live),
+                      "edition": src_shop_hoses.EDITION, "received": src_shop_hoses.RECEIVED}],
+         "rulings": ["owner 2026-11-27: every hanging hose goes on the site now; the unsure ones are cleaned up later with the shop",
+                     "names and lengths exactly as the recording's captions say them; no online names, no cm conversion",
+                     "in the shop, Price TBD, stock not counted; the shop fills price, colours and stock in the item editor",
+                     "pickup or local delivery once priced, until each hose's weight is known (same rule as the Ace accessories)"],
+         "families": fams,
+         "retired": {s: reg["skus"][s] for s in sorted(reg["skus"]) if reg["skus"][s]["supplier"] == "shop-hoses" and reg["skus"][s]["status"] == "retired"}}
+    return m, retired
+
+
 def build(args):
     day = today()
     reg = C.load_registry()
     summary = {}
+    # The shop's hoses (no outside source: always built)
+    old = C.load_master("shop-hoses")
+    m, retired = build_hoses(reg, day)
+    C.carry_shop(old, m)
+    C.validate_master(m, reg)
+    summary["shop-hoses"] = {"families": len(m["families"]), "variants": sum(len(f["variants"]) for f in m["families"]),
+                             "newly_retired": retired, "written": C.write_json(C.master_path("shop-hoses"), m)}
+    if getattr(args, "only", None) == "shop-hoses":
+        C.validate_registry(reg)
+        C.write_json(C.REGISTRY, reg)
+        print(json.dumps(summary, indent=1))
+        return summary
     # Ace
     pdf = Path(args.ace_pdf)
     if pdf.exists():
@@ -348,6 +392,24 @@ def desired_rows(supplier: str, m):
                         # Only what the shop ticked is on view: a tick means it is in the shop, in stock, and nothing is
                         # ordered in (owner, 2026-11-26). An unticked page stays in the master, off the site.
                         "listed": 1 if f["stamp"]["v"] != "none" else 0}
+        elif supplier == "shop-hoses":
+            # one family per hose, a colour per photo (grouped like the hookahs: one card, colour chips). In the shop (its own
+            # shelf photo), Price TBD, stock not counted. Weight unknown: the 1 g placeholder plus facts.weight_g = null keep it
+            # pickup or local delivery once priced, like the Ace accessories. needs_confirm and its reason are for the back office
+            # only (catalog.js never sends them to the storefront).
+            st = v["photo"]["status"]
+            facts.update({"stamp": "shelf", "photo": "own" if st in USABLE_PHOTO and v["photo"]["img"] else "none", "colour_confirmed": True})
+            if v["confirm"]["v"]:
+                facts.update({"needs_confirm": True, "confirm_why": v["confirm"]["v"]})
+            sup = {"supplier_id": "shop-hoses", "supplier_ref": f["supplier_ref"]["v"], "supplier_price_cents": None,
+                   "family": f["family_id"], "variant_label": v["colour"]["v"], "swatch_hex": v["swatch_hex"]["v"],
+                   "img": v["photo"]["img"] or "", "height_cm": None,
+                   "facts_known": json.dumps(facts, sort_keys=True, ensure_ascii=False)}
+            shopcols = {"name": shop["display_name"]["v"] or f["name"]["v"], "category_id": "hoses",
+                        "price_cents": shop["price_cents"]["v"] or 0, "weight_g": 1, "box_id": "XS", "glass": 0, "ship_class": "standard",
+                        "note": "", "stock": shop["stock"]["v"] or 0, "low_stock_at": 1,
+                        "active": 1 if (shop["active"]["v"] and shop["price_cents"]["v"]) else 0,
+                        "sort": 4500 + i, "availability": "in_store_uncounted", "listed": 1}
         elif supplier == "ace-acc":
             # one card per item (family acc-..., never grouped like hookahs); on view with "Price TBD" until the shop's price.
             # Weight unknown: the 1 g placeholder plus facts.weight_g = null keep it pickup or local delivery once priced.
@@ -704,6 +766,7 @@ def main(argv=None):
     b.add_argument("--ace-pdf", default=str(C.ACE_PDF))
     b.add_argument("--acc-pdf", default=str(C.ACE_ACC_PDF))
     b.add_argument("--intake", default=str(C.INTAKE))
+    b.add_argument("--only", choices=["shop-hoses"], help="build only this master (and the registry)")
     x = sub.add_parser("xlsx")
     x.add_argument("--out")
     a = sub.add_parser("answers")

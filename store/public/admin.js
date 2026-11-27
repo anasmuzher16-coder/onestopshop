@@ -228,7 +228,7 @@ document.addEventListener("change", async e => {
 // The shop fills in what it knows for each item on its own phone, instead of sending a sheet (owner, 2026-11-26). Only
 // what is typed or picked is sent; a field left alone stays as it is, and nothing is ever filled in for them.
 const needCount = () => state.products.filter(p => p.needs).length;
-const NEED = { price: "price", colours: "colours", stock: "shelf count" };
+const NEED = { price: "price", colours: "colours", stock: "shelf count", check: "a check of its name and length" };
 const needWords = n => { const w = n.map(k => NEED[k]); return w.length > 1 ? w.slice(0, -1).join(", ") + " and " + w.at(-1) : w[0]; };
 function needRow(p) {
   const c = catOf(p.category_id);
@@ -246,13 +246,16 @@ function infoSheet(p) {
   const d = pj(p.details), had = Array.isArray(d.colours) ? d.colours : [], hexes = d.colour_hex || {}, c = catOf(p.category_id), owner = state.me.owner;
   const known = new Set(PALETTE.map(x => x[0].toLowerCase())), custom = had.filter(n => !known.has(n.toLowerCase()));
   const queue = state.products.filter(x => x.needs), at = queue.findIndex(x => x.sku === p.sku), counted = p.availability === "counted";
-  const hookahRow = /^ace-/.test(p.family || "");
+  const hookahRow = /^(ace|hose)-/.test(p.family || "");   // one colour of a hookah, or of one of the shop's hoses
+  const check = (p.needs || []).includes("check");
   sheet.innerHTML = `<form class="sheet__in info" data-info-form="${p.sku}" data-orig="${esc(JSON.stringify(had))}" novalidate>
     <div class="sheet__top"><div><p class="meta">${p.sku}${at >= 0 ? ` &middot; ${at + 1} of ${queue.length} to fill in` : ""}</p><h2 class="h2" style="margin:0">${esc(p.name)}</h2></div><button class="sheet__x" type="button" data-close>Close</button></div>
     <div class="photo">${thumb(p, c.tone).replace('width="52" height="64"', 'width="96" height="120"')}<div><p data-stillneed>${p.needs ? `Still needed: ${needWords(p.needs)}.` : "Everything is filled in. Change anything that is not right."}</p><p class="fineprint">Fill in what you know and leave the rest. Only what you change is saved, with your name.</p></div></div>
     <label class="field"><span>Name</span><input class="input" name="name" value="${esc(p.name)}" maxlength="80" autocomplete="off" required></label>
+    ${check ? `<fieldset class="cols-pick"><legend class="field__l">Name and length</legend><p class="fineprint">Not sure yet: ${esc(p.check_why || "matched by best guess")}. Fix the name above if it is wrong, then tick this.</p>
+      <label class="field"><span><input type="checkbox" name="checked"> Checked with the shop</span></label></fieldset>` : ""}
     <fieldset class="cols-pick"><legend class="field__l">Colours <span class="num" data-colcount></span></legend>
-      <p class="fineprint">${hookahRow ? "This is one colour of this hookah. Pick its colour; for two tones, pick both." : "Tap every colour the shop has of this item."}</p>
+      <p class="fineprint">${hookahRow ? `This is one colour of this ${p.category_id === "hookahs" ? "hookah" : "item"}. Pick its colour; for two tones, pick both.` : "Tap every colour the shop has of this item."}</p>
       <div class="sw-grid" data-swgrid>${PALETTE.map(([n, h]) => swatch(n, h, had.some(x => x.toLowerCase() === n.toLowerCase()), false)).join("")}${custom.map(n => swatch(n, Object.hasOwn(hexes, n) && /^#[0-9a-f]{6}$/i.test(hexes[n]) ? hexes[n] : "", true, true)).join("")}</div>
       <button class="bar__link" type="button" data-addcol aria-expanded="false" aria-controls="newcol">Add another colour</button>
       <div class="newcol" id="newcol" data-newcol hidden><label class="field"><span>Colour name</span><input class="input" name="newcol" maxlength="24" autocomplete="off"></label>
@@ -282,6 +285,7 @@ document.addEventListener("submit", async e => {
   const body = {}, name = f.name.value.trim(), stock = f.stock.value.trim(), price = f.price.value.trim().replace(/^\$\s*/, "").replace(/,/g, "");
   if (!name) { err.textContent = "Give it a name."; return f.name.focus(); }
   if (name !== p.name) body.name = name;
+  if (f.checked && f.checked.checked) body.checked = true;
   const picked = pickedColours(f), orig = JSON.parse(f.dataset.orig);
   if (picked.map(c => c.name.toLowerCase()).sort().join("|") !== orig.map(n => n.toLowerCase()).sort().join("|")) body.colours = picked;
   if (stock !== "" && stock !== f.stock.dataset.was) { if (!/^\d{1,5}$/.test(stock)) { err.textContent = "Stock is a whole number, like 4. Type 0 if there are none."; f.stock.setAttribute("aria-invalid", "true"); return f.stock.focus(); } body.stock = { counted: +stock, seen: +f.stock.dataset.seen }; }

@@ -16,7 +16,7 @@ const skus = p => p.evaluate(() => [...document.querySelectorAll("#main .card [d
 const watchLeave = (p, sel) => p.evaluate(sel => { window.__atLeave = null; let seen = false; new MutationObserver((m, o) => { const on = document.documentElement.hasAttribute("data-swapping"); if (on) seen = true; else if (seen) { window.__atLeave = document.querySelectorAll(sel).length; o.disconnect(); } }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-swapping"] }); }, sel);
 for (const eng of [chromium, webkit]) {
   const b = await eng.launch(); const p = await b.newPage({ viewport: { width: 390, height: 844 } }); const errs = []; p.on("pageerror", e => errs.push(e.message));
-  for (const sec of ["hookahs", "charcoal", "shisha"]) {
+  for (const sec of ["hookahs", "charcoal", "shisha", "hoses"]) {   // hoses: 26 cards since the shop's own hoses (2026-11-27), past the 24 that draw at once
     await p.goto(B + "/shop/misc", { waitUntil: "load" }); await p.waitForTimeout(700);
     await watchLeave(p, "#main .card");
     await tap(p, "/shop/" + sec);
