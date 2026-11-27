@@ -1,6 +1,6 @@
 // One Stop Shop store Worker. Answers the page routes (each with its own title, description and a real 404),
 // serves the catalogue from the database, and passes every other request to the static files.
-import { shopCatalog, dropCatalog, catalogModule, counterRow, counterPayRow, setShishaCard, setCardOn, pickupOnly, shipsNow, sellable, weightUnknown, CHARCOAL, isCharcoalRow, PUBLIC_PHOTO } from "./catalog.js";
+import { shopCatalog, dropCatalog, catalogModule, counterRow, counterPayRow, setShishaCard, setCardOn, pickupOnly, shipsNow, sellable, weightUnknown, groupedFamily, CHARCOAL, isCharcoalRow, PUBLIC_PHOTO } from "./catalog.js";
 import { setPickupOnly } from "../public/band.js";
 import { seoFor, liveHere, robots, sitemap, view, SSR_STYLE, originProblem, setReady } from "./seo.js";
 import { heroPicks } from "../public/picks.js";
@@ -40,7 +40,7 @@ function describe(path, cat, site) {
   if (a === "shop") {
     if (!b) return { ...base, title: `Shop | ${site}` };
     const c = cat.categories.find(x => x.id === b); if (!c) return null;
-    const list = cat.products.filter(p => p.category_id === c.id), n = new Set(list.map(p => p.family && p.family.startsWith("ace-") ? p.family : p.sku)).size, counter = n && list.every(counterRow);
+    const list = cat.products.filter(p => p.category_id === c.id), n = new Set(list.map(p => groupedFamily(p.family) ? p.family : p.sku)).size, counter = n && list.every(counterRow);
     // nothing on the shelf yet (the samples came off, 2026-11-24): the page says the stock is on its way, and is kept out
     // of search results and the sitemap until it holds something (a page with no products is thin content)
     if (!n) return { title: `${c.name} | ${site}`, desc: `${c.name}: coming soon to our site. Call 519-255-2222 to ask what is on the shelf today.`, index: false };

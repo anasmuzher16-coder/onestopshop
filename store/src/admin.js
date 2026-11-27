@@ -130,13 +130,17 @@ export function cleanColours(list) {
 }
 export const joinColours = names => names.length < 2 ? names[0] || "" : names.slice(0, -1).join(", ") + " and " + names.at(-1);
 // What an item on view still needs from the shop before it reads complete: its price, its colours (Ace catalogue items),
-// its shelf count. Shown as the "Needs info" list in the back office, in the order the list is in.
+// its shelf count, and a check of its name and length when the catalogue marked it unsure (facts needs_confirm: the shop's
+// own hoses matched to the recording by best guess, 2026-11-27) until the shop ticks it checked in the item editor.
+// Shown as the "Needs info" list in the back office, in the order the list is in.
 export function needsInfo(p) {
   let f = {}, d = {}; try { f = JSON.parse(p.facts_known || "{}") || {}; } catch {} try { d = JSON.parse(p.details || "{}") || {}; } catch {}
   const ace = ["ace", "ace-acc"].includes(p.supplier_id);
   const onView = (p.active === 1 || p.listed === 1) && p.availability !== "dropped" && !(ace && f.stamp === "none") && !isSample(p.sku);
   if (!onView) return [];
-  return [!(p.price_cents > 0) && "price", ace && !(Array.isArray(d.colours) && d.colours.length) && !(String(p.family || "").startsWith("ace-") && d.colour) && "colours", ["in_store_uncounted", "special_order"].includes(p.availability) && "stock"].filter(Boolean);
+  return [!(p.price_cents > 0) && "price", ace && !(Array.isArray(d.colours) && d.colours.length) && !(String(p.family || "").startsWith("ace-") && d.colour) && "colours", ["in_store_uncounted", "special_order"].includes(p.availability) && "stock",
+    f.needs_confirm === true && d.checked !== true && "check",
+    "length" in f && !f.length && !(typeof d.length === "string" && d.length) && "length"].filter(Boolean);   // a hose whose length is not known yet
 }
 
 // The item editor's save (PUT /api/admin/products/<sku>/info), shared with the preview's open edit (/api/open-edit/<sku>,
@@ -161,6 +165,15 @@ async function itemInfo(db, sku, request, session, path) {
       count = { counted: whole(s.counted), seen: whole(s.seen) };
       if (count.counted === null) bad.push("stock (a whole number, 0 to 99999)"); else if (count.seen === null) return json({ error: "Reload the item and count again." }, 400);
     }
+    // "Name and length checked" on an item the catalogue marked unsure: only true is taken (the tick cannot be taken back here)
+    if ("checked" in body && body.checked !== true) bad.push("checked (true only)");
+    // a hose's length, as the shop says it ("60.5 inches"); only for items whose catalogue facts carry a length
+    let length = null;
+    if ("length" in body) {
+      let lf = false; try { lf = "length" in (JSON.parse(before.facts_known || "{}") || {}); } catch {}
+      length = text(body.length, 30);
+      if (!lf) bad.push("length (only for items that have one)"); else if (!length || !/^[\p{L}\p{N} .,'"/-]{1,30}$/u.test(length)) bad.push("length (up to 30 letters and numbers, like 60.5 inches)");
+    }
     if (bad.length) return json({ error: "Check: " + bad.join(", ") + "." }, 400);
     if (price !== null && price !== before.price_cents && !session.owner) { log("forbidden", { actor, path, field: "price" }); return json({ error: NOT_YOURS }, 403); }
     if (price !== null && price !== before.price_cents) out.price_cents = price;
@@ -171,13 +184,15 @@ async function itemInfo(db, sku, request, session, path) {
       if (colours.length) { d.colours = colours.map(c => c.name); if (Object.keys(hex).length) d.colour_hex = hex; }
       // A hookah family's row is one colour of that hookah: its colours become its chip name ("Black and Gold"), unless the
       // shop already typed a name for it in the full form (that name is kept; only a name this editor wrote is replaced).
-      if (String(before.family || "").startsWith("ace-")) {
+      if (/^(ace|hose)-/.test(String(before.family || ""))) {   // a hookah colour, or a colour of one of the shop's hoses
         const ours = !had.colour || (Array.isArray(had.colours) && had.colour === joinColours(had.colours));
         if (ours) { if (colours.length) d.colour = joinColours(d.colours); else delete d.colour; }
-        if (ours && colours.length && d.colour.length > 40) return json({ error: "Check: colours (a hookah colour's name is up to 40 letters; pick fewer)." }, 400);
+        if (ours && colours.length && d.colour.length > 40) return json({ error: "Check: colours (a colour's name is up to 40 letters; pick fewer)." }, 400);
       }
       if (JSON.stringify(d) !== JSON.stringify(had)) out.details = JSON.stringify(d);
     }
+    if (body.checked === true && had.checked !== true) { const d = out.details ? JSON.parse(out.details) : { ...had }; d.checked = true; out.details = JSON.stringify(d); }
+    if (length && length !== had.length) { const d = out.details ? JSON.parse(out.details) : { ...had }; d.length = length; out.details = JSON.stringify(d); }
     if (out.details && (had.charcoal || String(before.family || "").startsWith("charcoal-"))) charcoalRules(out, JSON.parse(out.details));   // charcoal stays pickup or local only
     // A first price on an item on view with "Price TBD" puts it on sale, so it can be bought as soon as the shop has priced it.
     // Only an item that had no price (an item priced and switched off stays off), already on view: never a made-up sample,
@@ -188,7 +203,7 @@ async function itemInfo(db, sku, request, session, path) {
     const was = {}; for (const k of cols) was[k] = before[k];
     const STALE = "An order changed this to %n while you were counting. Nothing was saved: check the shelf, then save again.";
     if (count && count.seen !== before.stock) return json({ error: STALE.replace("%n", before.stock), stock: before.stock, changed: true }, 409);
-    const logged = { ...out }; if (logged.details) { logged.colours = colours.map(c => c.name); delete logged.details; }
+    const logged = { ...out }; if (logged.details) { if (colours) logged.colours = colours.map(c => c.name); if (body.checked === true && !had.checked) logged.checked = true; if (length && length !== had.length) logged.length = length; delete logged.details; }
     if (count) logged.stock = count.counted;
     if (!cols.length && !count) return json({ ok: true, changed: false, stock: before.stock });
     // One transaction. With a count, every statement holds only while the stock is still the number the screen showed, so an
@@ -249,6 +264,8 @@ export async function openEdit(request, env, url, onShop) {
     colours: (Array.isArray(d.colours) ? d.colours : []).filter(n => typeof n === "string").map(n => Object.hasOwn(hex, n) && /^#[0-9a-f]{6}$/i.test(hex[n]) ? { name: n, hex: hex[n] } : { name: n }),
     hookah_row: String(p.family || "").startsWith("ace-"), needs: needsInfo(p), next: next ? next.sku : null, left, scope: openScope(env) });
 }
+// why an unsure item needs its name and length checked (back office only; the storefront never sees facts_known's notes)
+const checkWhy = s => { try { const w = (JSON.parse(s || "{}") || {}).confirm_why; return typeof w === "string" ? w.slice(0, 300) : ""; } catch { return ""; } };
 
 export async function admin(request, env, url) {
   const path = url.pathname.replace(/^\/api\/admin/, ""), method = request.method, db = env.DB;
@@ -388,7 +405,7 @@ export async function admin(request, env, url) {
     ]);
     // the demo's made-up samples are marked, so nobody switches one back on taking it for the shop's own stock (2026-11-24)
     // each row also says what it still needs from the shop (price, colours, shelf count), for the "Needs info" list and its count
-    return json({ products: p.results.map(r => { const { supplier_id, facts_known, ...row } = r, needs = needsInfo(r); return { ...row, ...(isSample(r.sku) ? { sample: true } : {}), ...(needs.length ? { needs } : {}), ...(["ace", "ace-acc"].includes(supplier_id) ? { catalogue: true } : {}) }; }), categories: c.results, boxes: b.results });
+    return json({ products: p.results.map(r => { const { supplier_id, facts_known, ...row } = r, needs = needsInfo(r); return { ...row, ...(isSample(r.sku) ? { sample: true } : {}), ...(needs.length ? { needs } : {}), ...(needs.includes("check") ? { check_why: checkWhy(facts_known) } : {}), ...(["ace", "ace-acc"].includes(supplier_id) ? { catalogue: true } : {}) }; }), categories: c.results, boxes: b.results });
   }
 
   // one product: fields to save, validated here so nothing odd reaches the storefront

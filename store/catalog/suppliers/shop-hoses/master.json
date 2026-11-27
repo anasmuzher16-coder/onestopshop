@@ -1,0 +1,2266 @@
+{
+ "schema": "oss-catalog/1",
+ "supplier": {
+  "id": "shop-hoses",
+  "name": "The shop's own hoses",
+  "sku_block": "OSS-12NNNN",
+  "credit": "No supplier credit needed."
+ },
+ "sources": [
+  {
+   "id": "shop-hoses-2026-11-25",
+   "kind": "shop photos and recording",
+   "file": "IMG_0543..IMG_0579 (hanging rack) + recording captions",
+   "sha256": "31b22725ea009a18885f3291f6d6381c2d371dd95e062f477fc6abb08ac2c82f",
+   "products": 31,
+   "edition": "Shop shelf photos and recording captions, 2026-11-25",
+   "received": "2026-11-25"
+  }
+ ],
+ "rulings": [
+  "owner 2026-11-27: every hanging hose goes on the site now; the unsure ones are cleaned up later with the shop",
+  "names and lengths exactly as the recording's captions say them; no online names, no cm conversion",
+  "in the shop, Price TBD, stock not counted; the shop fills price, colours and stock in the item editor",
+  "pickup or local delivery once priced, until each hose's weight is known (same rule as the Ace accessories)"
+ ],
+ "families": [
+  {
+   "family_id": "hose-aljomeyra-disposable-hose",
+   "order": 0,
+   "category": "hoses",
+   "name": {
+    "v": "Aljomeyra Disposable Hose",
+    "src": "shop:recording 2026-11-25 caption 'Aljomeyra dispoable hose 174cm'"
+   },
+   "supplier_ref": {
+    "v": "Aljomeyra dispoable hose 174cm",
+    "src": "shop:recording 2026-11-25 caption"
+   },
+   "facts": {
+    "length": {
+     "v": "174 cm",
+     "src": "shop:recording 2026-11-25 caption 'Aljomeyra dispoable hose 174cm'"
+    },
+    "brand": {
+     "v": "Aljomeyra",
+     "src": "shop:recording 2026-11-25 caption 'Aljomeyra dispoable hose 174cm'"
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [],
+   "variants": [
+    {
+     "sku": "OSS-120001",
+     "key": "hose-aljomeyra-disposable-hose#orange",
+     "swatch_hex": {
+      "v": "#e8742a",
+      "src": "rule: chip colour for 'Orange'"
+     },
+     "colour": {
+      "v": "Orange",
+      "src": "photo:IMG_0565 (the shop's shelf photo)"
+     },
+     "confirm": {
+      "v": null,
+      "src": null
+     },
+     "photo": {
+      "img": "hose/aljomeyra-disposable-hose-orange",
+      "status": "ready",
+      "src": "photo:IMG_0565 (the shop's shelf photo, cut out, bag kept as film)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hose-no-name-disposable-hose",
+   "order": 1,
+   "category": "hoses",
+   "name": {
+    "v": "No-name Disposable Hose",
+    "src": "shop:recording 2026-11-25 caption 'No name brand disposable hose 71 inches'"
+   },
+   "supplier_ref": {
+    "v": "No name brand disposable hose 71 inches",
+    "src": "shop:recording 2026-11-25 caption"
+   },
+   "facts": {
+    "length": {
+     "v": "71 inches",
+     "src": "shop:recording 2026-11-25 caption 'No name brand disposable hose 71 inches'"
+    },
+    "brand": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [],
+   "variants": [
+    {
+     "sku": "OSS-120002",
+     "key": "hose-no-name-disposable-hose#pink",
+     "swatch_hex": {
+      "v": "#e58bb4",
+      "src": "rule: chip colour for 'Pink'"
+     },
+     "colour": {
+      "v": "Pink",
+      "src": "photo:IMG_0564 (the shop's shelf photo)"
+     },
+     "confirm": {
+      "v": null,
+      "src": null
+     },
+     "photo": {
+      "img": "hose/no-name-disposable-hose-pink",
+      "status": "ready",
+      "src": "photo:IMG_0564 (the shop's shelf photo, cut out, bag kept as film)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hose-khalil-maamoon-disposable-hose",
+   "order": 2,
+   "category": "hoses",
+   "name": {
+    "v": "Khalil Maamoon Disposable Hose",
+    "src": "shop:recording 2026-11-25 caption 'Khalil maamoon disposable hose 61 inches'"
+   },
+   "supplier_ref": {
+    "v": "Khalil maamoon disposable hose 61 inches",
+    "src": "shop:recording 2026-11-25 caption"
+   },
+   "facts": {
+    "length": {
+     "v": "61 inches",
+     "src": "shop:recording 2026-11-25 caption 'Khalil maamoon disposable hose 61 inches'"
+    },
+    "brand": {
+     "v": "Khalil Maamoon",
+     "src": "shop:recording 2026-11-25 caption 'Khalil maamoon disposable hose 61 inches'"
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [],
+   "variants": [
+    {
+     "sku": "OSS-120003",
+     "key": "hose-khalil-maamoon-disposable-hose#red",
+     "swatch_hex": {
+      "v": "#c2262e",
+      "src": "rule: chip colour for 'Red'"
+     },
+     "colour": {
+      "v": "Red",
+      "src": "photo:IMG_0561 (the shop's shelf photo)"
+     },
+     "confirm": {
+      "v": null,
+      "src": null
+     },
+     "photo": {
+      "img": "hose/khalil-maamoon-disposable-hose-red",
+      "status": "ready",
+      "src": "photo:IMG_0561 (the shop's shelf photo, cut out, bag kept as film)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hose-alwan-disposable-hose",
+   "order": 3,
+   "category": "hoses",
+   "name": {
+    "v": "Alwan Disposable Hose",
+    "src": "shop:recording 2026-11-25 caption 'Alwan disposable hose 61 inches'"
+   },
+   "supplier_ref": {
+    "v": "Alwan disposable hose 61 inches",
+    "src": "shop:recording 2026-11-25 caption"
+   },
+   "facts": {
+    "length": {
+     "v": "61 inches",
+     "src": "shop:recording 2026-11-25 caption 'Alwan disposable hose 61 inches'"
+    },
+    "brand": {
+     "v": "Alwan",
+     "src": "shop:recording 2026-11-25 caption 'Alwan disposable hose 61 inches'"
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [],
+   "variants": [
+    {
+     "sku": "OSS-120004",
+     "key": "hose-alwan-disposable-hose#bronze",
+     "swatch_hex": {
+      "v": "#8a5a2b",
+      "src": "rule: chip colour for 'Bronze'"
+     },
+     "colour": {
+      "v": "Bronze",
+      "src": "photo:IMG_0572 (the shop's shelf photo)"
+     },
+     "confirm": {
+      "v": null,
+      "src": null
+     },
+     "photo": {
+      "img": "hose/alwan-disposable-hose-bronze",
+      "status": "ready",
+      "src": "photo:IMG_0572 (the shop's shelf photo, cut out, bag kept as film)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hose-no-name-hose-with-end-and-mouthpiece-attachments",
+   "order": 4,
+   "category": "hoses",
+   "name": {
+    "v": "No-name hose with end and mouthpiece attachments",
+    "src": "shop:recording 2026-11-25 caption 'No name brand hose plus end and mouth peice attachments total length 67 inches'"
+   },
+   "supplier_ref": {
+    "v": "No name brand hose plus end and mouth peice attachments total length 67 inches",
+    "src": "shop:recording 2026-11-25 caption"
+   },
+   "facts": {
+    "length": {
+     "v": "67 inches total",
+     "src": "shop:recording 2026-11-25 caption 'No name brand hose plus end and mouth peice attachments total length 67 inches'"
+    },
+    "brand": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [],
+   "variants": [
+    {
+     "sku": "OSS-120005",
+     "key": "hose-no-name-hose-with-end-and-mouthpiece-attachments#yellow",
+     "swatch_hex": {
+      "v": "#f2d21b",
+      "src": "rule: chip colour for 'Yellow'"
+     },
+     "colour": {
+      "v": "Yellow",
+      "src": "photo:IMG_0566 (the shop's shelf photo)"
+     },
+     "confirm": {
+      "v": null,
+      "src": null
+     },
+     "photo": {
+      "img": "hose/no-name-hose-with-end-and-mouthpiece-attachments-yellow",
+      "status": "ready",
+      "src": "photo:IMG_0566 (the shop's shelf photo, cut out, bag kept as film)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hose-super-al-ameer-disposable-hose",
+   "order": 5,
+   "category": "hoses",
+   "name": {
+    "v": "Super Al Ameer Disposable Hose",
+    "src": "shop:recording 2026-11-25 caption 'Super Al Ameer disposable hose 67 inches'"
+   },
+   "supplier_ref": {
+    "v": "Super Al Ameer disposable hose 67 inches",
+    "src": "shop:recording 2026-11-25 caption"
+   },
+   "facts": {
+    "length": {
+     "v": "67 inches",
+     "src": "shop:recording 2026-11-25 caption 'Super Al Ameer disposable hose 67 inches'"
+    },
+    "brand": {
+     "v": "Super Al Ameer",
+     "src": "shop:recording 2026-11-25 caption 'Super Al Ameer disposable hose 67 inches'"
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [],
+   "variants": [
+    {
+     "sku": "OSS-120006",
+     "key": "hose-super-al-ameer-disposable-hose#black",
+     "swatch_hex": {
+      "v": "#141414",
+      "src": "rule: chip colour for 'Black'"
+     },
+     "colour": {
+      "v": "Black",
+      "src": "photo:IMG_0547 (the shop's shelf photo)"
+     },
+     "confirm": {
+      "v": null,
+      "src": null
+     },
+     "photo": {
+      "img": "hose/super-al-ameer-disposable-hose-black",
+      "status": "ready",
+      "src": "photo:IMG_0547 (the shop's shelf photo, cut out, bag kept as film)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hose-starbuzz-fabric-disposable-hose",
+   "order": 6,
+   "category": "hoses",
+   "name": {
+    "v": "Starbuzz Fabric Disposable Hose",
+    "src": "shop:recording 2026-11-25 caption 'Starbuzz fabric disposable hose 66.5 inches'"
+   },
+   "supplier_ref": {
+    "v": "Starbuzz fabric disposable hose 66.5 inches",
+    "src": "shop:recording 2026-11-25 caption"
+   },
+   "facts": {
+    "length": {
+     "v": "66.5 inches",
+     "src": "shop:recording 2026-11-25 caption 'Starbuzz fabric disposable hose 66.5 inches'"
+    },
+    "brand": {
+     "v": "Starbuzz",
+     "src": "shop:recording 2026-11-25 caption 'Starbuzz fabric disposable hose 66.5 inches'"
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: the recording's photo shows a tan handle, partly hidden in the hanging shot: check it is this hose"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-120007",
+     "key": "hose-starbuzz-fabric-disposable-hose#black",
+     "swatch_hex": {
+      "v": "#141414",
+      "src": "rule: chip colour for 'Black'"
+     },
+     "colour": {
+      "v": "Black",
+      "src": "photo:IMG_0550 (the shop's shelf photo)"
+     },
+     "confirm": {
+      "v": "the recording's photo shows a tan handle, partly hidden in the hanging shot: check it is this hose",
+      "src": "rule 2026-11-27 (owner: match them up to the best of your ability)"
+     },
+     "photo": {
+      "img": "hose/starbuzz-fabric-disposable-hose-black",
+      "status": "ready",
+      "src": "photo:IMG_0550 (the shop's shelf photo, cut out, bag kept as film)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hose-simba-disposable-hose",
+   "order": 7,
+   "category": "hoses",
+   "name": {
+    "v": "Simba Disposable Hose",
+    "src": "shop:recording 2026-11-25 caption 'Simba disposable hose 60.5 inches'"
+   },
+   "supplier_ref": {
+    "v": "Simba disposable hose 60.5 inches",
+    "src": "shop:recording 2026-11-25 caption"
+   },
+   "facts": {
+    "length": {
+     "v": "60.5 inches",
+     "src": "shop:recording 2026-11-25 caption 'Simba disposable hose 60.5 inches'"
+    },
+    "brand": {
+     "v": "Simba",
+     "src": "shop:recording 2026-11-25 caption 'Simba disposable hose 60.5 inches'"
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: White: the white hose is in a differently printed Simba bag and is not in the recording's photo: check the caption covers it"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-120008",
+     "key": "hose-simba-disposable-hose#purple",
+     "swatch_hex": {
+      "v": "#6c3fa6",
+      "src": "rule: chip colour for 'Purple'"
+     },
+     "colour": {
+      "v": "Purple",
+      "src": "photo:IMG_0579 (the shop's shelf photo)"
+     },
+     "confirm": {
+      "v": null,
+      "src": null
+     },
+     "photo": {
+      "img": "hose/simba-disposable-hose-purple",
+      "status": "ready",
+      "src": "photo:IMG_0579 (the shop's shelf photo, cut out, bag kept as film)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-120009",
+     "key": "hose-simba-disposable-hose#white",
+     "swatch_hex": {
+      "v": "#f3f1ea",
+      "src": "rule: chip colour for 'White'"
+     },
+     "colour": {
+      "v": "White",
+      "src": "photo:IMG_0545 (the shop's shelf photo)"
+     },
+     "confirm": {
+      "v": "the white hose is in a differently printed Simba bag and is not in the recording's photo: check the caption covers it",
+      "src": "rule 2026-11-27 (owner: match them up to the best of your ability)"
+     },
+     "photo": {
+      "img": "hose/simba-disposable-hose-white",
+      "status": "ready",
+      "src": "photo:IMG_0545 (the shop's shelf photo, cut out, bag kept as film)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hose-crown-disposable-hose",
+   "order": 8,
+   "category": "hoses",
+   "name": {
+    "v": "Crown Disposable Hose",
+    "src": "shop:recording 2026-11-25 caption 'Crown disposable hose 60.5 inches'"
+   },
+   "supplier_ref": {
+    "v": "Crown disposable hose 60.5 inches",
+    "src": "shop:recording 2026-11-25 caption"
+   },
+   "facts": {
+    "length": {
+     "v": "60.5 inches",
+     "src": "shop:recording 2026-11-25 caption 'Crown disposable hose 60.5 inches'"
+    },
+    "brand": {
+     "v": "Crown",
+     "src": "shop:recording 2026-11-25 caption 'Crown disposable hose 60.5 inches'"
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [],
+   "variants": [
+    {
+     "sku": "OSS-120010",
+     "key": "hose-crown-disposable-hose#orange",
+     "swatch_hex": {
+      "v": "#e8742a",
+      "src": "rule: chip colour for 'Orange'"
+     },
+     "colour": {
+      "v": "Orange",
+      "src": "photo:IMG_0577 (the shop's shelf photo)"
+     },
+     "confirm": {
+      "v": null,
+      "src": null
+     },
+     "photo": {
+      "img": "hose/crown-disposable-hose-orange",
+      "status": "ready",
+      "src": "photo:IMG_0577 (the shop's shelf photo, cut out, bag kept as film)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hose-platinum-disposable-hose",
+   "order": 9,
+   "category": "hoses",
+   "name": {
+    "v": "Platinum Disposable Hose",
+    "src": "shop:recording 2026-11-25 caption 'Platinum disposable hose 60.5 inch'"
+   },
+   "supplier_ref": {
+    "v": "Platinum disposable hose 60.5 inch",
+    "src": "shop:recording 2026-11-25 caption"
+   },
+   "facts": {
+    "length": {
+     "v": "60.5 inch",
+     "src": "shop:recording 2026-11-25 caption 'Platinum disposable hose 60.5 inch'"
+    },
+    "brand": {
+     "v": "Platinum",
+     "src": "shop:recording 2026-11-25 caption 'Platinum disposable hose 60.5 inch'"
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [],
+   "variants": [
+    {
+     "sku": "OSS-120011",
+     "key": "hose-platinum-disposable-hose#yellow",
+     "swatch_hex": {
+      "v": "#f2d21b",
+      "src": "rule: chip colour for 'Yellow'"
+     },
+     "colour": {
+      "v": "Yellow",
+      "src": "photo:IMG_0575 (the shop's shelf photo)"
+     },
+     "confirm": {
+      "v": null,
+      "src": null
+     },
+     "photo": {
+      "img": "hose/platinum-disposable-hose-yellow",
+      "status": "ready",
+      "src": "photo:IMG_0575 (the shop's shelf photo, cut out, bag kept as film)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-120012",
+     "key": "hose-platinum-disposable-hose#black",
+     "swatch_hex": {
+      "v": "#141414",
+      "src": "rule: chip colour for 'Black'"
+     },
+     "colour": {
+      "v": "Black",
+      "src": "photo:IMG_0576 (the shop's shelf photo)"
+     },
+     "confirm": {
+      "v": null,
+      "src": null
+     },
+     "photo": {
+      "img": "hose/platinum-disposable-hose-black",
+      "status": "ready",
+      "src": "photo:IMG_0576 (the shop's shelf photo, cut out, bag kept as film)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-120013",
+     "key": "hose-platinum-disposable-hose#green",
+     "swatch_hex": {
+      "v": "#2e8b57",
+      "src": "rule: chip colour for 'Green'"
+     },
+     "colour": {
+      "v": "Green",
+      "src": "photo:IMG_0578 (the shop's shelf photo)"
+     },
+     "confirm": {
+      "v": null,
+      "src": null
+     },
+     "photo": {
+      "img": "hose/platinum-disposable-hose-green",
+      "status": "ready",
+      "src": "photo:IMG_0578 (the shop's shelf photo, cut out, bag kept as film)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hose-crystal-disposable-hose",
+   "order": 10,
+   "category": "hoses",
+   "name": {
+    "v": "Crystal Disposable Hose",
+    "src": "shop:recording 2026-11-25 caption 'Crystal disposable hose 69.5 inches'"
+   },
+   "supplier_ref": {
+    "v": "Crystal disposable hose 69.5 inches",
+    "src": "shop:recording 2026-11-25 caption"
+   },
+   "facts": {
+    "length": {
+     "v": "69.5 inches",
+     "src": "shop:recording 2026-11-25 caption 'Crystal disposable hose 69.5 inches'"
+    },
+    "brand": {
+     "v": "Crystal",
+     "src": "shop:recording 2026-11-25 caption 'Crystal disposable hose 69.5 inches'"
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [],
+   "variants": [
+    {
+     "sku": "OSS-120014",
+     "key": "hose-crystal-disposable-hose#orange",
+     "swatch_hex": {
+      "v": "#e8742a",
+      "src": "rule: chip colour for 'Orange'"
+     },
+     "colour": {
+      "v": "Orange",
+      "src": "photo:IMG_0563 (the shop's shelf photo)"
+     },
+     "confirm": {
+      "v": null,
+      "src": null
+     },
+     "photo": {
+      "img": "hose/crystal-disposable-hose-orange",
+      "status": "ready",
+      "src": "photo:IMG_0563 (the shop's shelf photo, cut out, bag kept as film)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hose-zanobia-premium-ice-hose",
+   "order": 11,
+   "category": "hoses",
+   "name": {
+    "v": "Zanobia Premium Ice Hose",
+    "src": "shop:recording 2026-11-25 caption 'Zanobia premium ice hose 72 inches'"
+   },
+   "supplier_ref": {
+    "v": "Zanobia premium ice hose 72 inches",
+    "src": "shop:recording 2026-11-25 caption"
+   },
+   "facts": {
+    "length": {
+     "v": "72 inches",
+     "src": "shop:recording 2026-11-25 caption 'Zanobia premium ice hose 72 inches'"
+    },
+    "brand": {
+     "v": "Zanobia",
+     "src": "shop:recording 2026-11-25 caption 'Zanobia premium ice hose 72 inches'"
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: matched to the caption by the order of the recording's messages, not by print on the bag"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-120015",
+     "key": "hose-zanobia-premium-ice-hose#red",
+     "swatch_hex": {
+      "v": "#c2262e",
+      "src": "rule: chip colour for 'Red'"
+     },
+     "colour": {
+      "v": "Red",
+      "src": "photo:IMG_0552 (the shop's shelf photo)"
+     },
+     "confirm": {
+      "v": "matched to the caption by the order of the recording's messages, not by print on the bag",
+      "src": "rule 2026-11-27 (owner: match them up to the best of your ability)"
+     },
+     "photo": {
+      "img": "hose/zanobia-premium-ice-hose-red",
+      "status": "ready",
+      "src": "photo:IMG_0552 (the shop's shelf photo, cut out, bag kept as film)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-120016",
+     "key": "hose-zanobia-premium-ice-hose#black",
+     "swatch_hex": {
+      "v": "#141414",
+      "src": "rule: chip colour for 'Black'"
+     },
+     "colour": {
+      "v": "Black",
+      "src": "photo:IMG_0553 (the shop's shelf photo)"
+     },
+     "confirm": {
+      "v": "matched to the caption by the order of the recording's messages, not by print on the bag",
+      "src": "rule 2026-11-27 (owner: match them up to the best of your ability)"
+     },
+     "photo": {
+      "img": "hose/zanobia-premium-ice-hose-black",
+      "status": "ready",
+      "src": "photo:IMG_0553 (the shop's shelf photo, cut out, bag kept as film)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hose-zanobia-disposable-ice-hose",
+   "order": 12,
+   "category": "hoses",
+   "name": {
+    "v": "Zanobia Disposable Ice Hose",
+    "src": "shop:recording 2026-11-25 caption 'Zanobia disposable ice hose 63 inch'"
+   },
+   "supplier_ref": {
+    "v": "Zanobia disposable ice hose 63 inch",
+    "src": "shop:recording 2026-11-25 caption"
+   },
+   "facts": {
+    "length": {
+     "v": "63 inch",
+     "src": "shop:recording 2026-11-25 caption 'Zanobia disposable ice hose 63 inch'"
+    },
+    "brand": {
+     "v": "Zanobia",
+     "src": "shop:recording 2026-11-25 caption 'Zanobia disposable ice hose 63 inch'"
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: matched to the caption by the order of the recording's messages, not by print on the bag; the bag says disposable, not ice"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-120017",
+     "key": "hose-zanobia-disposable-ice-hose#white",
+     "swatch_hex": {
+      "v": "#f3f1ea",
+      "src": "rule: chip colour for 'White'"
+     },
+     "colour": {
+      "v": "White",
+      "src": "photo:IMG_0557 (the shop's shelf photo)"
+     },
+     "confirm": {
+      "v": "matched to the caption by the order of the recording's messages, not by print on the bag; the bag says disposable, not ice",
+      "src": "rule 2026-11-27 (owner: match them up to the best of your ability)"
+     },
+     "photo": {
+      "img": "hose/zanobia-disposable-ice-hose-white",
+      "status": "ready",
+      "src": "photo:IMG_0557 (the shop's shelf photo, cut out, bag kept as film)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-120018",
+     "key": "hose-zanobia-disposable-ice-hose#green",
+     "swatch_hex": {
+      "v": "#2e8b57",
+      "src": "rule: chip colour for 'Green'"
+     },
+     "colour": {
+      "v": "Green",
+      "src": "photo:IMG_0548 (the shop's shelf photo)"
+     },
+     "confirm": {
+      "v": "matched to the caption by the order of the recording's messages, not by print on the bag; the bag says disposable, not ice",
+      "src": "rule 2026-11-27 (owner: match them up to the best of your ability)"
+     },
+     "photo": {
+      "img": "hose/zanobia-disposable-ice-hose-green",
+      "status": "ready",
+      "src": "photo:IMG_0548 (the shop's shelf photo, cut out, bag kept as film)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-120019",
+     "key": "hose-zanobia-disposable-ice-hose#yellow",
+     "swatch_hex": {
+      "v": "#f2d21b",
+      "src": "rule: chip colour for 'Yellow'"
+     },
+     "colour": {
+      "v": "Yellow",
+      "src": "photo:IMG_0556 (the shop's shelf photo)"
+     },
+     "confirm": {
+      "v": "matched to the caption by the order of the recording's messages, not by print on the bag; the bag says disposable, not ice",
+      "src": "rule 2026-11-27 (owner: match them up to the best of your ability)"
+     },
+     "photo": {
+      "img": "hose/zanobia-disposable-ice-hose-yellow",
+      "status": "ready",
+      "src": "photo:IMG_0556 (the shop's shelf photo, cut out, bag kept as film)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hose-babylon-disposable-ice-hose",
+   "order": 13,
+   "category": "hoses",
+   "name": {
+    "v": "Babylon Disposable Ice Hose",
+    "src": "shop:recording 2026-11-25 caption 'Babylon disposable ice hose 77inch'"
+   },
+   "supplier_ref": {
+    "v": "Babylon disposable ice hose 77inch",
+    "src": "shop:recording 2026-11-25 caption"
+   },
+   "facts": {
+    "length": {
+     "v": "77 inches",
+     "src": "shop:recording 2026-11-25 caption 'Babylon disposable ice hose 77inch'"
+    },
+    "brand": {
+     "v": "Babylon",
+     "src": "shop:recording 2026-11-25 caption 'Babylon disposable ice hose 77inch'"
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: one caption was left for two uncaptioned photos (this yellow one and the blue one); given to this one for its ice-hose handle with foam grips"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-120020",
+     "key": "hose-babylon-disposable-ice-hose#yellow",
+     "swatch_hex": {
+      "v": "#f2d21b",
+      "src": "rule: chip colour for 'Yellow'"
+     },
+     "colour": {
+      "v": "Yellow",
+      "src": "photo:IMG_0558 (the shop's shelf photo)"
+     },
+     "confirm": {
+      "v": "one caption was left for two uncaptioned photos (this yellow one and the blue one); given to this one for its ice-hose handle with foam grips",
+      "src": "rule 2026-11-27 (owner: match them up to the best of your ability)"
+     },
+     "photo": {
+      "img": "hose/babylon-disposable-ice-hose-yellow",
+      "status": "ready",
+      "src": "photo:IMG_0558 (the shop's shelf photo, cut out, bag kept as film)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hose-starbuzz-ribbed-hose",
+   "order": 14,
+   "category": "hoses",
+   "name": {
+    "v": "Starbuzz Ribbed Hose",
+    "src": "photo:IMG_0543 (bag print); rule 2026-11-27 (owner: match them up to the best of your ability)"
+   },
+   "supplier_ref": {
+    "v": "Starbuzz Ribbed Hose",
+    "src": "photo:IMG_0543 (bag print)"
+   },
+   "facts": {
+    "length": {
+     "v": null,
+     "src": null
+    },
+    "brand": {
+     "v": "Starbuzz",
+     "src": "photo:IMG_0543 (bag print); rule 2026-11-27 (owner: match them up to the best of your ability)"
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: not in the recording: name read from the bag, length not known (bag: Starbuzz Tobacco)"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-120021",
+     "key": "hose-starbuzz-ribbed-hose#red",
+     "swatch_hex": {
+      "v": "#c2262e",
+      "src": "rule: chip colour for 'Red'"
+     },
+     "colour": {
+      "v": "Red",
+      "src": "photo:IMG_0543 (the shop's shelf photo)"
+     },
+     "confirm": {
+      "v": "not in the recording: name read from the bag, length not known (bag: Starbuzz Tobacco)",
+      "src": "rule 2026-11-27 (owner: match them up to the best of your ability)"
+     },
+     "photo": {
+      "img": "hose/starbuzz-ribbed-hose-red",
+      "status": "ready",
+      "src": "photo:IMG_0543 (the shop's shelf photo, cut out, bag kept as film)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-120022",
+     "key": "hose-starbuzz-ribbed-hose#teal",
+     "swatch_hex": {
+      "v": "#3fbfa8",
+      "src": "rule: chip colour for 'Teal'"
+     },
+     "colour": {
+      "v": "Teal",
+      "src": "photo:IMG_0549 (the shop's shelf photo)"
+     },
+     "confirm": {
+      "v": "not in the recording: name read from the bag, length not known (bag: Starbuzz Tobacco)",
+      "src": "rule 2026-11-27 (owner: match them up to the best of your ability)"
+     },
+     "photo": {
+      "img": "hose/starbuzz-ribbed-hose-teal",
+      "status": "ready",
+      "src": "photo:IMG_0549 (the shop's shelf photo, cut out, bag kept as film)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-120023",
+     "key": "hose-starbuzz-ribbed-hose#pink",
+     "swatch_hex": {
+      "v": "#e58bb4",
+      "src": "rule: chip colour for 'Pink'"
+     },
+     "colour": {
+      "v": "Pink",
+      "src": "photo:IMG_0551 (the shop's shelf photo)"
+     },
+     "confirm": {
+      "v": "not in the recording: name read from the bag, length not known (bag: Starbuzz Tobacco)",
+      "src": "rule 2026-11-27 (owner: match them up to the best of your ability)"
+     },
+     "photo": {
+      "img": "hose/starbuzz-ribbed-hose-pink",
+      "status": "ready",
+      "src": "photo:IMG_0551 (the shop's shelf photo, cut out, bag kept as film)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-120024",
+     "key": "hose-starbuzz-ribbed-hose#grey",
+     "swatch_hex": {
+      "v": "#9a9a9a",
+      "src": "rule: chip colour for 'Grey'"
+     },
+     "colour": {
+      "v": "Grey",
+      "src": "photo:IMG_0555 (the shop's shelf photo)"
+     },
+     "confirm": {
+      "v": "not in the recording: name read from the bag, length not known (bag: Starbuzz Tobacco)",
+      "src": "rule 2026-11-27 (owner: match them up to the best of your ability)"
+     },
+     "photo": {
+      "img": "hose/starbuzz-ribbed-hose-grey",
+      "status": "ready",
+      "src": "photo:IMG_0555 (the shop's shelf photo, cut out, bag kept as film)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hose-al-ataa-disposable-hose",
+   "order": 15,
+   "category": "hoses",
+   "name": {
+    "v": "Al Ataa Disposable Hose",
+    "src": "photo:IMG_0544 (bag print); rule 2026-11-27 (owner: match them up to the best of your ability)"
+   },
+   "supplier_ref": {
+    "v": "Al Ataa Disposable Hose",
+    "src": "photo:IMG_0544 (bag print)"
+   },
+   "facts": {
+    "length": {
+     "v": null,
+     "src": null
+    },
+    "brand": {
+     "v": "Al Ataa",
+     "src": "photo:IMG_0544 (bag print); rule 2026-11-27 (owner: match them up to the best of your ability)"
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: not in the recording: name read from the bag, length not known (bag: Alataa, disposable)"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-120025",
+     "key": "hose-al-ataa-disposable-hose#black",
+     "swatch_hex": {
+      "v": "#141414",
+      "src": "rule: chip colour for 'Black'"
+     },
+     "colour": {
+      "v": "Black",
+      "src": "photo:IMG_0544 (the shop's shelf photo)"
+     },
+     "confirm": {
+      "v": "not in the recording: name read from the bag, length not known (bag: Alataa, disposable)",
+      "src": "rule 2026-11-27 (owner: match them up to the best of your ability)"
+     },
+     "photo": {
+      "img": "hose/al-ataa-disposable-hose-black",
+      "status": "ready",
+      "src": "photo:IMG_0544 (the shop's shelf photo, cut out, bag kept as film)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hose-zanobia-washable-hose",
+   "order": 16,
+   "category": "hoses",
+   "name": {
+    "v": "Zanobia Washable Hose",
+    "src": "photo:IMG_0559 (bag print); rule 2026-11-27 (owner: match them up to the best of your ability)"
+   },
+   "supplier_ref": {
+    "v": "Zanobia Washable Hose",
+    "src": "photo:IMG_0559 (bag print)"
+   },
+   "facts": {
+    "length": {
+     "v": null,
+     "src": null
+    },
+    "brand": {
+     "v": "Zanobia",
+     "src": "photo:IMG_0559 (bag print); rule 2026-11-27 (owner: match them up to the best of your ability)"
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: not in the recording: name read from the bag, length not known (bag: Zanobia, Washable)"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-120026",
+     "key": "hose-zanobia-washable-hose#yellow",
+     "swatch_hex": {
+      "v": "#f2d21b",
+      "src": "rule: chip colour for 'Yellow'"
+     },
+     "colour": {
+      "v": "Yellow",
+      "src": "photo:IMG_0559 (the shop's shelf photo)"
+     },
+     "confirm": {
+      "v": "not in the recording: name read from the bag, length not known (bag: Zanobia, Washable)",
+      "src": "rule 2026-11-27 (owner: match them up to the best of your ability)"
+     },
+     "photo": {
+      "img": "hose/zanobia-washable-hose-yellow",
+      "status": "ready",
+      "src": "photo:IMG_0559 (the shop's shelf photo, cut out, bag kept as film)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-120027",
+     "key": "hose-zanobia-washable-hose#green",
+     "swatch_hex": {
+      "v": "#2e8b57",
+      "src": "rule: chip colour for 'Green'"
+     },
+     "colour": {
+      "v": "Green",
+      "src": "photo:IMG_0560 (the shop's shelf photo)"
+     },
+     "confirm": {
+      "v": "not in the recording: name read from the bag, length not known (bag: Zanobia, Washable)",
+      "src": "rule 2026-11-27 (owner: match them up to the best of your ability)"
+     },
+     "photo": {
+      "img": "hose/zanobia-washable-hose-green",
+      "status": "ready",
+      "src": "photo:IMG_0560 (the shop's shelf photo, cut out, bag kept as film)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hose-sager-washable-hose",
+   "order": 17,
+   "category": "hoses",
+   "name": {
+    "v": "Sager Washable Hose",
+    "src": "photo:IMG_0568 (bag print); rule 2026-11-27 (owner: match them up to the best of your ability)"
+   },
+   "supplier_ref": {
+    "v": "Sager Washable Hose",
+    "src": "photo:IMG_0568 (bag print)"
+   },
+   "facts": {
+    "length": {
+     "v": null,
+     "src": null
+    },
+    "brand": {
+     "v": "Sager",
+     "src": "photo:IMG_0568 (bag print); rule 2026-11-27 (owner: match them up to the best of your ability)"
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: not in the recording: name read from the bag, length not known (bag: Sager Hookah, Washable)"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-120028",
+     "key": "hose-sager-washable-hose#pink",
+     "swatch_hex": {
+      "v": "#e58bb4",
+      "src": "rule: chip colour for 'Pink'"
+     },
+     "colour": {
+      "v": "Pink",
+      "src": "photo:IMG_0568 (the shop's shelf photo)"
+     },
+     "confirm": {
+      "v": "not in the recording: name read from the bag, length not known (bag: Sager Hookah, Washable)",
+      "src": "rule 2026-11-27 (owner: match them up to the best of your ability)"
+     },
+     "photo": {
+      "img": "hose/sager-washable-hose-pink",
+      "status": "ready",
+      "src": "photo:IMG_0568 (the shop's shelf photo, cut out, bag kept as film)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hose-zanobia-hose",
+   "order": 18,
+   "category": "hoses",
+   "name": {
+    "v": "Zanobia Hose",
+    "src": "photo:IMG_0569 (bag print); rule 2026-11-27 (owner: match them up to the best of your ability)"
+   },
+   "supplier_ref": {
+    "v": "Zanobia Hose",
+    "src": "photo:IMG_0569 (bag print)"
+   },
+   "facts": {
+    "length": {
+     "v": null,
+     "src": null
+    },
+    "brand": {
+     "v": "Zanobia",
+     "src": "photo:IMG_0569 (bag print); rule 2026-11-27 (owner: match them up to the best of your ability)"
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: not in the recording: name read from the bag, length not known (card: Zanobia, type not readable)"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-120029",
+     "key": "hose-zanobia-hose#black",
+     "swatch_hex": {
+      "v": "#141414",
+      "src": "rule: chip colour for 'Black'"
+     },
+     "colour": {
+      "v": "Black",
+      "src": "photo:IMG_0569 (the shop's shelf photo)"
+     },
+     "confirm": {
+      "v": "not in the recording: name read from the bag, length not known (card: Zanobia, type not readable)",
+      "src": "rule 2026-11-27 (owner: match them up to the best of your ability)"
+     },
+     "photo": {
+      "img": "hose/zanobia-hose-black",
+      "status": "ready",
+      "src": "photo:IMG_0569 (the shop's shelf photo, cut out, bag kept as film)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hose-royal-disposable-hose",
+   "order": 19,
+   "category": "hoses",
+   "name": {
+    "v": "Royal Disposable Hose",
+    "src": "photo:IMG_0571 (bag print); rule 2026-11-27 (owner: match them up to the best of your ability)"
+   },
+   "supplier_ref": {
+    "v": "Royal Disposable Hose",
+    "src": "photo:IMG_0571 (bag print)"
+   },
+   "facts": {
+    "length": {
+     "v": null,
+     "src": null
+    },
+    "brand": {
+     "v": "Royal",
+     "src": "photo:IMG_0571 (bag print); rule 2026-11-27 (owner: match them up to the best of your ability)"
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: not in the recording: name read from the bag, length not known (bag: Royal, Disposable Hookah Hose)"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-120030",
+     "key": "hose-royal-disposable-hose#black",
+     "swatch_hex": {
+      "v": "#141414",
+      "src": "rule: chip colour for 'Black'"
+     },
+     "colour": {
+      "v": "Black",
+      "src": "photo:IMG_0571 (the shop's shelf photo)"
+     },
+     "confirm": {
+      "v": "not in the recording: name read from the bag, length not known (bag: Royal, Disposable Hookah Hose)",
+      "src": "rule 2026-11-27 (owner: match them up to the best of your ability)"
+     },
+     "photo": {
+      "img": "hose/royal-disposable-hose-black",
+      "status": "ready",
+      "src": "photo:IMG_0571 (the shop's shelf photo, cut out, bag kept as film)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hose-hookah-hose-blue",
+   "order": 20,
+   "category": "hoses",
+   "name": {
+    "v": "Hookah Hose, Blue",
+    "src": "photo:IMG_0562 (bag print); rule 2026-11-27 (owner: match them up to the best of your ability)"
+   },
+   "supplier_ref": {
+    "v": "Hookah Hose, Blue",
+    "src": "photo:IMG_0562 (bag print)"
+   },
+   "facts": {
+    "length": {
+     "v": null,
+     "src": null
+    },
+    "brand": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: not in the recording: name read from the bag, length not known; no brand on the bag (the other photo left after the Babylon caption)"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-120031",
+     "key": "hose-hookah-hose-blue#blue",
+     "swatch_hex": {
+      "v": "#2b59c3",
+      "src": "rule: chip colour for 'Blue'"
+     },
+     "colour": {
+      "v": "Blue",
+      "src": "photo:IMG_0562 (the shop's shelf photo)"
+     },
+     "confirm": {
+      "v": "not in the recording: name read from the bag, length not known; no brand on the bag (the other photo left after the Babylon caption)",
+      "src": "rule 2026-11-27 (owner: match them up to the best of your ability)"
+     },
+     "photo": {
+      "img": "hose/hookah-hose-blue",
+      "status": "ready",
+      "src": "photo:IMG_0562 (the shop's shelf photo, cut out, bag kept as film)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  }
+ ],
+ "retired": {},
+ "shop_answers": [],
+ "retired_shop": {}
+}

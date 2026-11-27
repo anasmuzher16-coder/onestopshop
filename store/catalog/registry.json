@@ -5,13 +5,15 @@
   "10": "ace",
   "20": "charcoal-foil",
   "30": "shisha",
-  "11": "ace-acc"
+  "11": "ace-acc",
+  "12": "shop-hoses"
  },
  "next": {
   "10": 297,
   "20": 1,
   "30": 1,
-  "11": 40
+  "11": 40,
+  "12": 32
  },
  "skus": {
   "OSS-100001": {
@@ -2989,6 +2991,192 @@
    "key": "acc-p101",
    "status": "active",
    "assigned": "2026-11-26"
+  },
+  "OSS-120001": {
+   "supplier": "shop-hoses",
+   "key": "hose-aljomeyra-disposable-hose#orange",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-120002": {
+   "supplier": "shop-hoses",
+   "key": "hose-no-name-disposable-hose#pink",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-120003": {
+   "supplier": "shop-hoses",
+   "key": "hose-khalil-maamoon-disposable-hose#red",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-120004": {
+   "supplier": "shop-hoses",
+   "key": "hose-alwan-disposable-hose#bronze",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-120005": {
+   "supplier": "shop-hoses",
+   "key": "hose-no-name-hose-with-end-and-mouthpiece-attachments#yellow",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-120006": {
+   "supplier": "shop-hoses",
+   "key": "hose-super-al-ameer-disposable-hose#black",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-120007": {
+   "supplier": "shop-hoses",
+   "key": "hose-starbuzz-fabric-disposable-hose#black",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-120008": {
+   "supplier": "shop-hoses",
+   "key": "hose-simba-disposable-hose#purple",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-120009": {
+   "supplier": "shop-hoses",
+   "key": "hose-simba-disposable-hose#white",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-120010": {
+   "supplier": "shop-hoses",
+   "key": "hose-crown-disposable-hose#orange",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-120011": {
+   "supplier": "shop-hoses",
+   "key": "hose-platinum-disposable-hose#yellow",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-120012": {
+   "supplier": "shop-hoses",
+   "key": "hose-platinum-disposable-hose#black",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-120013": {
+   "supplier": "shop-hoses",
+   "key": "hose-platinum-disposable-hose#green",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-120014": {
+   "supplier": "shop-hoses",
+   "key": "hose-crystal-disposable-hose#orange",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-120015": {
+   "supplier": "shop-hoses",
+   "key": "hose-zanobia-premium-ice-hose#red",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-120016": {
+   "supplier": "shop-hoses",
+   "key": "hose-zanobia-premium-ice-hose#black",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-120017": {
+   "supplier": "shop-hoses",
+   "key": "hose-zanobia-disposable-ice-hose#white",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-120018": {
+   "supplier": "shop-hoses",
+   "key": "hose-zanobia-disposable-ice-hose#green",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-120019": {
+   "supplier": "shop-hoses",
+   "key": "hose-zanobia-disposable-ice-hose#yellow",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-120020": {
+   "supplier": "shop-hoses",
+   "key": "hose-babylon-disposable-ice-hose#yellow",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-120021": {
+   "supplier": "shop-hoses",
+   "key": "hose-starbuzz-ribbed-hose#red",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-120022": {
+   "supplier": "shop-hoses",
+   "key": "hose-starbuzz-ribbed-hose#teal",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-120023": {
+   "supplier": "shop-hoses",
+   "key": "hose-starbuzz-ribbed-hose#pink",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-120024": {
+   "supplier": "shop-hoses",
+   "key": "hose-starbuzz-ribbed-hose#grey",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-120025": {
+   "supplier": "shop-hoses",
+   "key": "hose-al-ataa-disposable-hose#black",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-120026": {
+   "supplier": "shop-hoses",
+   "key": "hose-zanobia-washable-hose#yellow",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-120027": {
+   "supplier": "shop-hoses",
+   "key": "hose-zanobia-washable-hose#green",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-120028": {
+   "supplier": "shop-hoses",
+   "key": "hose-sager-washable-hose#pink",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-120029": {
+   "supplier": "shop-hoses",
+   "key": "hose-zanobia-hose#black",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-120030": {
+   "supplier": "shop-hoses",
+   "key": "hose-royal-disposable-hose#black",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-120031": {
+   "supplier": "shop-hoses",
+   "key": "hose-hookah-hose-blue#blue",
+   "status": "active",
+   "assigned": "2026-11-27"
   }
  }
 }

@@ -8,6 +8,7 @@ generated from it. Nobody edits two copies. Plan: life/dijji/clients/one-stop-sh
 |---|---|
 | `suppliers/ace/master.json` | Ace Hookah, from the October 2026 PDF (sha256 in `sources`) |
 | `suppliers/charcoal-foil/master.json` | The shop's own charcoal and foil list, verified 2026-11-23, plus the owner's rulings |
+| `suppliers/shop-hoses/master.json` | The shop's own hanging hoses (2026-11-27), from its shelf photos and recording captions (`tools/catalog/src_shop_hoses.py`; `catalog.py build --only shop-hoses`); photos via `photos_hoses.py` |
 | `suppliers/shisha/master.json` | Tobacco-free shisha, from `inventory-2026-11-23/shisha/catalogue.json` (all off until the lab certificates) |
 | `suppliers/ace/photos.json` | Photo manifest: one entry per extracted image (page, xref, crop, sku, colour, scale, status) |
 | `suppliers/ace/photo-overrides.json` | Decisions a person made on the contact sheets (gallery only, hand crop) |
@@ -71,7 +72,7 @@ drawn crop); `needs_original` (enlarged past 2x). Owner ruling 2026-11-24: `CHEC
 
 ## SKUs: OSS-SSNNNN
 
-`SS` is the supplier block (10 Ace, 20 charcoal and foil, 30 shisha), `NNNN` a sequence. `registry.json` maps each
+`SS` is the supplier block (10 Ace, 11 Ace accessories, 12 the shop's own hoses, 20 charcoal and foil, 30 shisha), `NNNN` a sequence. `registry.json` maps each
 SKU to `(supplier, key)`: the key is what makes an item the same item next month (Ace: family id plus colour square,
 for example `ace-tsar-molotov#5271ff`). Rules, enforced by `validate_registry` and the tests:
 - an item keeps its number forever, including when it leaves and comes back;

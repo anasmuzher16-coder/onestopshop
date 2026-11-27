@@ -47,7 +47,14 @@ const { SAMPLE_SKUS } = await import("../src/samples.js");
 // ones left with nothing say "stock arriving soon".
 const coal = m.PRODUCTS.filter(p => p.cat === "charcoal"), heat = m.PRODUCTS.filter(p => p.cat === "heat"), foil = heat.filter(p => /foil/i.test(p.name));
 const acc = m.PRODUCTS.filter(p => p.acc), accBy = id => acc.filter(p => p.cat === id).length;
-ok(m.PRODUCTS.length === 69 + 15 + 47 + 91 + 39 && m.CATEGORIES.length === ref.CATEGORIES.length + 4, `catalogue size ${m.PRODUCTS.length}/${69 + 15 + 47 + 91 + 39}, sections ${m.CATEGORIES.length}`);
+ok(m.PRODUCTS.length === 69 + 15 + 47 + 91 + 39 + 31 && m.CATEGORIES.length === ref.CATEGORIES.length + 4, `catalogue size ${m.PRODUCTS.length}/${69 + 15 + 47 + 91 + 39 + 31}, sections ${m.CATEGORIES.length}`);
+// the shop's own hanging hoses (2026-11-27): 31 colours in 21 families (one card each, colours as chips), all in Hoses, Price TBD,
+// nothing to sell yet; the back office's unsure-match notes never reach the storefront
+{ const hose = m.PRODUCTS.filter(p => /^hose-/.test(p.family || ""));
+  ok(hose.length === 31 && new Set(hose.map(p => p.family)).size === 21 && hose.filter(p => p.lead).length === 21 && hose.every(p => p.cat === "hoses" && p.state === "tbd" && p.price === null && p.stock === 0 && p.named && p.colour && p.facts.stamp === "shelf" && "length" in p.facts && /^hose\//.test(p.img) && !("needs_confirm" in p.facts) && !("confirm_why" in p.facts)),
+    `31 hoses in 21 families, Price TBD, own photos, no internal notes: ${hose.length}`);
+  const pl = await get("/p/OSS-120011"); ok(pl.r.status === 200 && /<title>Platinum Disposable Hose \| One Stop Shop<\/title>/.test(pl.t) && /Price TBD/.test(pl.t) && !/"offers"/.test(pl.t) && !/Ace Hookah/.test(pl.t), "a hose page: its name, Price TBD, no offer, never Ace");
+  for (const p of hose) { const r = await fetch(B + `/img/pc/${p.img}-s.webp`); ok(r.status === 200, `photo ${p.img}-s.webp: ${r.status}`); } }
 ok(m.PRODUCTS.filter(p => p.family || p.acc).every(p => p.facts && p.facts.stamp && p.facts.stamp !== "none"), "no unticked Ace page is on view (hookahs and accessories)");
 ok(acc.length === 39 && accBy("heat") === 18 && accBy("bowls") === 8 && accBy("hoses") === 5 && accBy("bases") === 5 && accBy("parts") === 3 && accBy("charcoal") === 0,
   `39 Ace accessories in their sections, none in Charcoal: ${["heat", "bowls", "hoses", "bases", "parts", "charcoal"].map(id => id + " " + accBy(id)).join(", ")}`);

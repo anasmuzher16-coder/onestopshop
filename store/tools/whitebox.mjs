@@ -8,7 +8,7 @@ const b = await chromium.launch(); let bad = 0, n = 0;
 try {
   for (const [w, h] of [[390, 844], [1440, 900]]) {
     const p = await b.newPage({ viewport: { width: w, height: h } });
-    for (const r of ["", "shop/hookahs", "shop/bowls", "shop/bases", "shop/parts", "p/OSS-100024", "cart", "shop/cologne", "shop/misc", "shop/heat", "shop/hoses", "p/OSS-9601", "p/OSS-9308"]) {
+    for (const r of ["", "shop/hookahs", "shop/bowls", "shop/bases", "shop/parts", "p/OSS-100024", "cart", "shop/cologne", "shop/misc", "shop/heat", "shop/hoses", "p/OSS-120011", "p/OSS-120021", "p/OSS-9601", "p/OSS-9308"]) {
       await p.goto(base + r, { waitUntil: "networkidle" });
       await p.addStyleTag({ content: "*{animation:none!important;transition:none!important} .sticker,.truecolour{visibility:hidden!important}" });
       await p.evaluate(async () => { for (let y = 0; y < document.body.scrollHeight; y += 500) { scrollTo(0, y); await new Promise(r => setTimeout(r, 40)); } scrollTo(0, 0); });

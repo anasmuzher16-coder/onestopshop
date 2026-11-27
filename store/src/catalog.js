@@ -24,8 +24,11 @@ export const weightUnknown = p => { if (!p || !p.family) return false; const f =
 // Sellable means switched on with the shop's own price. Anything else on view is shown, never sold.
 export const sellable = p => !!p && p.active === 1 && p.price_cents > 0;
 const parse = s => { try { const v = JSON.parse(s || "{}"); return v && typeof v === "object" ? v : {}; } catch { return {}; } };
+// One card per family, colours as chips: an Ace hookah family (ace-...) and the shop's own hoses (hose-..., 2026-11-27: one
+// family per hose, a colour per photo). Shisha flavours, charcoal and the Ace accessories stay one card each.
+export const groupedFamily = f => /^(ace|hose)-/.test(String(f || ""));
 // What a shopper may see of a catalogue item's facts. Unknown stays null and is shown as "TBD", never guessed.
-const FACT_KEYS = ["includes_base", "height_cm", "acrylic", "includes", "group", "stamp", "photo", "photo_hex", "colour_confirmed", "photo_label", "shown_in", "photo_upscale", "count", "size", "brand", "shape", "material", "weight_g"];
+const FACT_KEYS = ["includes_base", "height_cm", "length", "acrylic", "includes", "group", "stamp", "photo", "photo_hex", "colour_confirmed", "photo_label", "shown_in", "photo_upscale", "count", "size", "brand", "shape", "material", "weight_g"];
 function shownFacts(p) {
   const f = parse(p.facts_known), out = {};
   for (const k of FACT_KEYS) if (k in f) out[k] = f[k];
@@ -69,7 +72,7 @@ export function toStorefront(cat) {
   const CATEGORIES = cat.categories.map(c => ({ id: c.id, name: c.name, tone: c.tone }));
   // the first colour of each family that has its own photo leads it (one card per family); else its first colour
   const lead = {};
-  const grouped = p => !!p.family && p.family.startsWith("ace-");   // hookahs: one card per family, colours as chips. Shisha flavours and charcoal stay one card each.
+  const grouped = p => groupedFamily(p.family);
   for (const p of cat.products) if (grouped(p)) { const own = parse(p.facts_known).photo === "own"; if (!lead[p.family] || (own && !lead[p.family].own)) lead[p.family] = { sku: p.sku, own }; }
   const PRODUCTS = cat.products.map(p => {
     const details = parse(p.details);
@@ -79,6 +82,9 @@ export function toStorefront(cat) {
     const coal = !!details.charcoal; delete details.photo_rights; delete details.photo_rejected; delete details.source_lines;   // shop-only notes stay in the back office
     if ("photo" in details && !PUBLIC_PHOTO.includes(details.photo)) delete details.photo;   // only the photo states a page shows; any other note on a photo stays in the back office
     const sale = sellable(p), facts = p.family ? shownFacts(p) : {};
+    // a length the shop typed in the item editor (details.length, a shop column) replaces the catalogue's; the check tick stays in the back office
+    if ("length" in facts && typeof details.length === "string" && details.length) facts.length = details.length;
+    delete details.length; delete details.checked;
     // a catalogue item whose pack weight is not known yet cannot be priced for a carrier: pickup or local delivery until it is
     const weightTbd = weightUnknown(p);
     return { sku: p.sku, name: p.name, cat: p.category_id,

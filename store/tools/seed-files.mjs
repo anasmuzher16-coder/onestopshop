@@ -9,6 +9,8 @@ export const SEED_FILES = [
   "seed/seed.sql",                              // sections, boxes, sample products, charcoal in Heat (store/tools/seed.mjs)
   "catalog/out/seed-ace.sql",                   // Ace, Price TBD (store/tools/catalog/catalog.py seed)
   "catalog/out/seed-ace-acc.sql",               // Ace accessories the shop ticked, Price TBD (catalog.py seed --supplier ace-acc)
+  "catalog/out/seed-shop-hoses.sql",            // the shop's own hoses, Price TBD (catalog.py seed --supplier shop-hoses, or plain seed)
+  "catalog/live/hoses-2026-11-27.sql",          // the same hoses as the live database gets them (run twice here: proves it is safe to)
   "catalog/out/seed-shisha.sql",                // shisha flavours
   "catalog/out/seed-charcoal-foil-foil.sql",    // foil only (catalog.py seed --supplier charcoal-foil --category foil)
   "catalog/out/seed-charcoal-foil-charcoal.sql", // charcoal's catalogue facts (shape, material, brand) onto the rows already in seed.sql;
