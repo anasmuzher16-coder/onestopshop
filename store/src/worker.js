@@ -91,7 +91,7 @@ function charcoalMoved(url) {
 // never ship (all pickup or local, or shisha while it is paid at the counter) never asks, the same rule as the page.
 const askCookie = request => ((request.headers.get("Cookie") || "").match(/(?:^|;\s*)oss-ask=([01])(?:;|$)/) || [])[1];
 function asksHow(request, env, url, cat) {
-  const [, a, sec = ""] = url.pathname.replace(/\/+$/, "").split("/");   // read the way the page reads it (route.js, app.js syncDelivery): /shop//x is section ""
+  const [, a, sec = ""] = url.pathname.replace(/\/+$/, "").split("/");   // read the way the page reads it (route.js, app.js syncDelivery); /shop//x never gets here, route() collapses it first
   if (a !== "shop" || askCookie(request) === "0") return false;
   const card = env.STRIPE_TOBACCO_OK === "1", forSec = [...view(cat).front.values()].filter(p => p.cat === sec && p.state === "sale");
   const local = p => p.ship === "pickup_only" || !!(p.details && p.details.charcoal);
@@ -202,7 +202,8 @@ async function intakeSave(request, env) {
   const rows = (Array.isArray(body.rows) ? body.rows : []).filter(r => r && typeof r === "object" && typeof r.key === "string" && /^[\w-]{1,60}$/.test(r.key)).slice(0, 600).map(r => ({ key: r.key, ...(typeof r.item === "string" ? { item: r.item.slice(0, 120) } : {}), value: plain(r.value) }));
   const text = JSON.stringify({ answers, rows, sentAt: typeof body.sentAt === "string" ? body.sentAt.slice(0, 40) : null, receivedAt: new Date().toISOString() });
   await env.BACKUPS.put(`intake/${new Date().toISOString().replace(/[:.]/g, "-")}-${crypto.randomUUID().slice(0, 8)}.json`, text, { httpMetadata: { contentType: "application/json" } });
-  await env.BACKUPS.put("intake/latest.json", text, { httpMetadata: { contentType: "application/json" } });   // the newest send, at a name that never changes
+  // no fixed "latest" file: anyone holding the link could overwrite it. Each send is its own new file, and the back office
+  // shows the newest of them (admin.js /intake), so an earlier send can never be replaced.
   return json({ ok: true });
 }
 async function route(request, env, ctx) {
@@ -247,6 +248,10 @@ async function route(request, env, ctx) {
         return new Response(page.body, { status: 200, headers });
       }
       if (path.startsWith("/api/")) return json({ error: "Not found" }, 404);
+      // an address with an empty part (/shop//shisha, //p/OSS-1001) goes to the same address with the slashes collapsed, so a
+      // page has one address and its canonical link is never written with a double slash (seo.js, describe() and route.js all
+      // read the collapsed path); only a page route gets here, the API answers above
+      if (path.includes("//")) return new Response(null, { status: 301, headers: { ...SECURITY, Location: url.origin + path.replace(/\/{2,}/g, "/") + url.search, "Cache-Control": "public, max-age=86400" } });
       if (path === "/admin" || path.startsWith("/admin/")) {
         if (path !== "/admin") return Response.redirect(url.origin + "/admin", 302);
         const shell = await env.ASSETS.fetch(new URL("/admin.html", url)), headers = new Headers(shell.headers);

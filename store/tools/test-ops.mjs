@@ -46,9 +46,22 @@ const shipped = (await call("/api/admin/orders/" + ship.data.order.id)).data.ema
 const view = shipped ? (await call("/api/admin/emails/" + shipped.id)).data.email : null;
 ok(view && view.html.includes(ship.data.order.id) && view.html.includes("Sunset shades") && !/<script/i.test(view.html), "the shipped email names the order and the item, and carries no script");
 }
+// Updated 2026-11-26 (fleet/order-guard): a name with code in it is now refused at the order (names are letters only, src/guard.js),
+// so it never reaches an email; the email's own escaping is still checked, with the one markup character a real name holds.
 const evil = await call("/api/orders", { method: "POST", body: { name: '<img src=x onerror=alert(1)>', email: "x@example.com", method: "pickup", pay: "at_pickup", lines: [{ sku: "OSS-8003", qty: 1 }] } });
-const evilMail = (await call("/api/admin/orders/" + evil.data.order.id)).data.emails.find(e => e.kind === "order_placed"), evilHtml = (await call("/api/admin/emails/" + evilMail.id)).data.email.html;
-ok(!evilHtml.includes("<img src=x") && evilHtml.includes("&lt;img"), "a name with code in it is shown as text in the email");
+ok(evil.status === 400 && evil.data.field === "name", "a name with code in it is refused before any order or email: " + evil.status);
+const quoted = await call("/api/orders", { method: "POST", body: { name: "O'Neil", email: "x@example.com", method: "pickup", pay: "at_pickup", lines: [{ sku: "OSS-8003", qty: 1 }] } });
+const evilMail = (await call("/api/admin/orders/" + quoted.data.order.id)).data.emails.find(e => e.kind === "order_placed"), evilHtml = (await call("/api/admin/emails/" + evilMail.id)).data.email.html;
+ok(!evilHtml.includes("O'Neil") && evilHtml.includes("O&#39;Neil"), "the name is escaped in the email");
+
+// the shop's questionnaire: its private link can add a send but never replace one; the back office shows the newest
+const INTAKE = B.replace(/\/$/, "") + "/api/intake/ij9A2jg3vBRk", mark = "m" + Math.random().toString(36).slice(2, 8);
+const sendIntake = v => fetch(INTAKE, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ answers: { probe: v }, rows: [{ key: "probe", value: v }] }) });
+ok((await sendIntake(mark + "-1")).status === 200 && (await sendIntake(mark + "-2")).status === 200, "two sends from the questionnaire are taken");
+const list = (await call("/api/admin/intake")).data.sends || [], newest = (await call("/api/admin/intake?key=intake/latest.json")).data;
+ok(list.filter(x => x.key === "intake/latest.json").length === 1 && list[0].key === "intake/latest.json" && /^intake\/\d{4}-/.test(list[0].newest || ""), "the list leads with the newest send by name, not a stored file");
+ok(newest.answers && newest.answers.probe === mark + "-2", "the back office's newest send is the last one sent: " + JSON.stringify(newest.answers));
+ok(list.some(x => x.key !== "intake/latest.json" && x.key !== list[0].newest), "the earlier send is still kept as its own file");
 
 const bk = await call("/api/admin/backup");
 ok(bk.status === 200 && /attachment; filename="one-stop-shop-backup-\d{4}-\d\d-\d\d\.json"/.test(bk.r.headers.get("content-disposition") || ""), "backup downloads as a dated file");

@@ -203,6 +203,20 @@ ok((await A(`/products/${SKU}/history`)).data.moves.some(m => m.actor === me.act
 
 ok((await fetch(B + "/api/admin/login", { method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify({ passcode: KEY }) })).status === 400, "sign-in without the request marker (a plain form post) is refused");
 ok((await fetch(B + "/api/admin/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ passcode: KEY }) })).status === 400, "JSON sign-in without the request marker is refused too");
+// ---- one address can never lock out everybody else (breaker review, 2026-11-26) ----
+const una = { name: "Una" + letters(), pin: "582914" };
+ok((await A("/staff", { method: "POST", body: una })).status === 201, "owner adds one more staff member for the lock checks");
+const nameRows = () => process.env.PERSIST ? JSON.parse((x => x.slice(x.indexOf("[")))(execFileSync(process.execPath, [process.env.WRANGLER_JS || join(execFileSync(process.platform === "win32" ? "npm.cmd" : "npm", ["root", "-g"], { encoding: "utf8", shell: process.platform === "win32" }).trim(), "wrangler", "bin", "wrangler.js"), "d1", "execute", "onestopshop", "--local", "--persist-to", process.env.PERSIST, "--json", "--command", "SELECT COUNT(*) AS n FROM login_attempts WHERE who LIKE 'n:%'"], { cwd: fileURLToPath(new URL("..", import.meta.url)), encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] })))[0].results[0].n : 0;
+const names0 = nameRows(), waves = Array.from({ length: 5 }, () => "Wave" + letters());
+// six tries at once on each of five names, all from one address (kept to 30 at once: the local dev server falls over past
+// about a hundred simultaneous requests on GitHub's machines, which is a test-rig limit, not the shop's): before 2026-11-26 every name got six rows and was locked
+const flood = await Promise.all(Array.from({ length: 30 }, (_, i) => A("/login", { method: "POST", as: "none", body: { name: waves[i % 5], pin: "00000" + (i % 10) }, headers: { "CF-Connecting-IP": "10.2.2.2" } })));
+if (process.env.PERSIST) ok(nameRows() - names0 <= 5, `one address's burst writes at most five name tries in all, so it cannot lock every name: ${nameRows() - names0}`);
+ok(flood.filter(r => r.status === 401).length <= 5, "thirty staff tries at once from one address get at most five checks: " + flood.filter(r => r.status === 401).length);
+const unaIn = await A("/login", { method: "POST", as: "none", body: una, headers: { "CF-Connecting-IP": "10.2.9.9" } });
+ok(unaIn.status === 200, "after one address floods staff sign-in, staff elsewhere still sign in: " + unaIn.status);
+// the flood's shop-wide staff count is cleared again (the address itself stays locked), so each lock check below tests its own rule
+if (process.env.PERSIST) execFileSync(process.execPath, [process.env.WRANGLER_JS || join(execFileSync(process.platform === "win32" ? "npm.cmd" : "npm", ["root", "-g"], { encoding: "utf8", shell: process.platform === "win32" }).trim(), "wrangler", "bin", "wrangler.js"), "d1", "execute", "onestopshop", "--local", "--persist-to", process.env.PERSIST, "--command", "DELETE FROM login_attempts WHERE who LIKE 's:%'"], { cwd: fileURLToPath(new URL("..", import.meta.url)), stdio: "ignore" });
 // ---- lockout (last: it locks local sign-in for 15 minutes) ----
 const wrongs = []; for (let i = 0; i < 5; i++) wrongs.push((await A("/login", { method: "POST", as: "staff", body: { name: add2.data.name, pin: "00000" + i }, headers: { "CF-Connecting-IP": "10.9.0." + i } })).status);
 const locked = await A("/login", { method: "POST", as: "staff", body: { name: add2.data.name, pin: "730519" }, headers: { "CF-Connecting-IP": "10.9.1.1" } });
@@ -215,4 +229,29 @@ for (let i = 0; i < 42; i++) await A("/login", { method: "POST", as: "staff", bo
 const ownerStill = await A("/login", { method: "POST", as: "none", body: { passcode: KEY }, headers: { "CF-Connecting-IP": "10.5.5.5" } });
 ok(ownerStill.status === 200, "forty-plus wrong staff PINs from all over do not lock the owner out: " + ownerStill.status);
 ok((await A("/logout", { method: "POST", body: {} })).status === 200, "owner signs out");
+// ---- one address can never lock or slow the owner (breaker review, 2026-11-26) ----
+const ownerFlood = await Promise.all(Array.from({ length: 30 }, () => A("/login", { method: "POST", as: "none", body: { passcode: "wrong-" + letters() }, headers: { "CF-Connecting-IP": "10.1.1.1" } })));
+ok(ownerFlood.filter(r => r.status === 401).length <= 5, "30 owner tries at once from one address get at most five checks: " + ownerFlood.filter(r => r.status === 401).length);
+const t0 = Date.now(), ownerIn = await A("/login", { method: "POST", as: "none", body: { passcode: KEY }, headers: { "CF-Connecting-IP": "10.1.9.9" } });
+ok(ownerIn.status === 200 && Date.now() - t0 < 3000, `one address cannot lock or slow the owner's sign-in: ${ownerIn.status} in ${Date.now() - t0} ms`);
+if (process.env.PERSIST) {
+  const { createHash } = await import("node:crypto");
+  const WRANGLER = process.env.WRANGLER_JS || join(execFileSync(process.platform === "win32" ? "npm.cmd" : "npm", ["root", "-g"], { encoding: "utf8", shell: process.platform === "win32" }).trim(), "wrangler", "bin", "wrangler.js");
+  const sql = cmd => { const out = execFileSync(process.execPath, [WRANGLER, "d1", "execute", "onestopshop", "--local", "--persist-to", process.env.PERSIST, "--json", "--command", cmd], { cwd: fileURLToPath(new URL("..", import.meta.url)), encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }); return JSON.parse(out.slice(out.indexOf("["))).flatMap(r => r.results); };
+  const rows = ip => sql(`SELECT COUNT(*) AS n FROM login_attempts WHERE who = '${createHash("sha256").update("who|" + ip).digest("hex")}'`)[0].n;
+  const n1 = rows("10.2.2.2");
+  const still = []; for (let i = 0; i < 5; i++) still.push((await A("/login", { method: "POST", as: "none", body: { name: "Wave" + letters(), pin: "000000" }, headers: { "CF-Connecting-IP": "10.2.2.2" } })).status);
+  ok(still.every(s => s === 429) && rows("10.2.2.2") === n1, `a locked address adds no more tries: ${still} (${n1} -> ${rows("10.2.2.2")} rows)`);
+  sql("INSERT INTO login_attempts (who, ok, at) VALUES ('old-try', 0, strftime('%Y-%m-%dT%H:%M:%SZ','now','-2 days'))");
+  await A("/login", { method: "POST", as: "none", body: { passcode: "wrong-" + letters() }, headers: { "CF-Connecting-IP": "10.0.0.77" } });
+  ok(sql("SELECT COUNT(*) AS n FROM login_attempts WHERE who = 'old-try'")[0].n === 0, "tries older than a day are cleared on the next try, not only after a good sign-in");
+} else ok(false, "set PERSIST for the sign-in row checks");
+// Many addresses at once: past 20 owner tries from 3 or more places each owner try is slowed; past 100 from 10 or more, the
+// owner's passcode is locked for everyone for 15 minutes (last: it locks the owner out of this throwaway store)
+await Promise.all(Array.from({ length: 6 }, (_, k) => (async () => { for (let i = 0; i < 5; i++) await A("/login", { method: "POST", as: "none", body: { passcode: "wrong-" + letters() }, headers: { "CF-Connecting-IP": `10.20.${k}.1` } }); })()));
+const t1 = Date.now(), slowed = await A("/login", { method: "POST", as: "none", body: { passcode: KEY }, headers: { "CF-Connecting-IP": "10.21.0.1" } });
+ok(slowed.status === 200 && Date.now() - t1 >= 400, `after 30 wrong owner tries from 6 places the owner still gets in, slowed: ${slowed.status} in ${Date.now() - t1} ms`);
+await Promise.all(Array.from({ length: 14 }, (_, k) => (async () => { for (let i = 0; i < 6; i++) await A("/login", { method: "POST", as: "none", body: { passcode: "wrong-" + letters() }, headers: { "CF-Connecting-IP": `10.22.${k}.1` } }); })()));
+const ceiling = await A("/login", { method: "POST", as: "none", body: { passcode: KEY }, headers: { "CF-Connecting-IP": "10.23.0.1" } });
+ok(ceiling.status === 429, "past 100 wrong owner tries from 20 places, the owner passcode is locked for everyone: " + ceiling.status);
 console.log(f ? `FAIL ${f} of ${n} checks` : `PASS ${n} checks`); process.exit(f ? 1 : 0);

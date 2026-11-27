@@ -260,4 +260,10 @@ if (BL) {
   for (const l of locs2.slice(0, 40)) { const g = await get(l, BL); if (g.r.status !== 200 || /name="robots"/.test(g.t)) ok(false, "live: sitemap address is a 200 indexable page: " + l); }
 }
 
+// an address with an empty part has one home: /shop//shisha goes (301) to /shop/shisha, never a page canonical to a double slash
+for (const [from, to] of [["/shop//shisha", "/shop/shisha"], ["//shop/charcoal", "/shop/charcoal"], ["/shop///heat?brand=x", "/shop/heat?brand=x"]]) {
+  const r = await get(from);
+  ok(r.r.status === 301 && new URL(r.r.headers.get("location") || "", B).pathname + new URL(r.r.headers.get("location") || "", B).search === to, `${from} goes to ${to}: ${r.r.status} ${r.r.headers.get("location")}`);
+}
+{ const r = await get("/shop/shisha"); ok(r.r.status === 200 && !/rel="canonical" href="[^"]*\/\/shop/.test(r.t) && !/rel="canonical" href="https?:\/\/[^"]*\/\//.test(r.t), "the clean address is the page, with a canonical that has no double slash"); }
 console.log(f ? `FAIL ${f} of ${n} checks` : `PASS ${n} checks`); process.exit(f ? 1 : 0);

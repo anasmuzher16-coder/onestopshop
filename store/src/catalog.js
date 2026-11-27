@@ -3,13 +3,17 @@
 // Each photo's own version (store/tools/photo-versions.mjs): a changed photo gets a new address, the rest stay cached.
 import IMG_VERSIONS from "./img-versions.json" with { type: "json" };
 export { IMG_VERSIONS };
+// The tick rule (owner, 2026-11-26: a tick in either Ace catalogue means in the shop): an unticked catalogue page (stamp 'none')
+// never shows, even priced and switched on. One fragment, over products as p, used by the storefront and by anything that
+// must agree with it (account.js: favourites and back-in-stock alerts), so a hidden row can never be reached another way.
+export const TICKED = "NOT (COALESCE(p.supplier_id, '') IN ('ace', 'ace-acc') AND COALESCE(json_extract(p.facts_known, '$.stamp'), '') = 'none')";
 export async function loadCatalog(db) {
   const [cats, boxes, prods] = await db.batch([
     db.prepare("SELECT id, name, tone FROM categories WHERE active = 1 ORDER BY sort, name"),
     db.prepare("SELECT id, label, l_cm, w_cm, h_cm, tare_g FROM boxes ORDER BY id"),
     // Sold items (active) and items on view before they can be sold (listed: "Price TBD", "Coming soon"). Columns are
     // named one by one: the supplier's price and name never leave the database this way.
-    db.prepare("SELECT p.sku, p.name, p.category_id, p.price_cents, p.weight_g, p.box_id, p.glass, p.ship_class, p.height_cm, p.note, p.img, p.img_dark, p.img_lw, p.photo_ver, p.details, p.stock, p.active, p.listed, p.family, p.variant_label, p.swatch_hex, p.availability, p.facts_known FROM products p JOIN categories c ON c.id = p.category_id WHERE (p.active = 1 OR (p.listed = 1 AND p.availability != 'dropped')) AND c.active = 1 AND NOT (COALESCE(p.supplier_id, '') IN ('ace', 'ace-acc') AND COALESCE(json_extract(p.facts_known, '$.stamp'), '') = 'none') ORDER BY p.sort, p.sku"),   // a colour Ace has dropped leaves the shop's view; an unticked catalogue page never shows, even priced and on (owner, 2026-11-26: a tick means in the shop)
+    db.prepare(`SELECT p.sku, p.name, p.category_id, p.price_cents, p.weight_g, p.box_id, p.glass, p.ship_class, p.height_cm, p.note, p.img, p.img_dark, p.img_lw, p.photo_ver, p.details, p.stock, p.active, p.listed, p.family, p.variant_label, p.swatch_hex, p.availability, p.facts_known FROM products p JOIN categories c ON c.id = p.category_id WHERE (p.active = 1 OR (p.listed = 1 AND p.availability != 'dropped')) AND c.active = 1 AND ${TICKED} ORDER BY p.sort, p.sku`),   // a colour Ace has dropped leaves the shop's view; an unticked catalogue page never shows, even priced and on (owner, 2026-11-26: a tick means in the shop)
   ]);
   return { categories: cats.results, boxes: boxes.results, products: prods.results };
 }

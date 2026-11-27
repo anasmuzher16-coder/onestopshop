@@ -16,7 +16,9 @@ await samplesOn(B, ["OSS-2001", "OSS-8001", "OSS-8003", "OSS-8004"]);
 const login = await fetch(B + "/api/admin/login", { method: "POST", headers: { "Content-Type": "application/json", "X-OSS-Admin": "1" }, body: JSON.stringify({ passcode: KEY }) });
 const cookie = (login.headers.get("set-cookie") || "").split(";")[0];
 const admin = async (path, body) => { const r = await fetch(B + "/api/admin" + path, { method: body === undefined ? "GET" : "POST", headers: { Cookie: cookie, ...(body === undefined ? {} : { "Content-Type": "application/json", "X-OSS-Admin": "1" }) }, body: body === undefined ? undefined : JSON.stringify(body) }); return { status: r.status, data: await r.json().catch(() => ({})) }; };
-const post = async body => { for (let i = 0; ; i++) { const r = await fetch(B + "/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }); if (r.status === 429 && i < 2) { await wait(61000); continue; } return { status: r.status, data: await r.json().catch(() => ({})) }; } };
+// each order comes from its own made-up address, as real shoppers do: the per-visitor order limits (src/guard.js) have their own checks in test-orders
+const shopper = () => `10.${(Math.random() * 250) | 0}.${(Math.random() * 250) | 0}.${(Math.random() * 250) | 0}`;
+const post = async body => { for (let i = 0; ; i++) { const r = await fetch(B + "/api/orders", { method: "POST", headers: { "Content-Type": "application/json", "CF-Connecting-IP": shopper() }, body: JSON.stringify(body) }); if (r.status === 429 && i < 2) { await wait(61000); continue; } return { status: r.status, data: await r.json().catch(() => ({})) }; } };
 const mail = async () => (await fetch(R + "/__log")).json();
 const forOrder = async id => (await mail()).sent.filter(m => m.subject.includes(id));
 // order emails go out in the background after the answer: wait (up to 5 s) until n have reached the stand-in
