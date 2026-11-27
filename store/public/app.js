@@ -1245,8 +1245,11 @@ window.addEventListener("routechange", () => {
   if (route() === last) return;
   // A long section landed by the wave is drawn in the task after the wave's own frame, so the wave's drawing and the page's building
   // are two tasks, not one. The wave holds its full cover while data-swapping is set (fx-wave.js), so nothing old is ever revealed.
-  const [ra, rb] = route().replace(/^#\/?/, "").split("/").filter(Boolean);
-  if (navInfo().cause === "wave" && ((ra === "shop" && (rb ? SHELF.filter(p => p.cat === rb).length : SHELF.length) > 24) || !ra)) {   // Home too: its tiles come in under the held cover
+  // Every page a wave lands goes this way since 2026-11-26 (before, only long sections and Home): a short section, Build a set,
+  // Shipping or the Cart built inside the wave's own frame made that one frame 35-50 ms at 2x CPU (wave-perf). Search is the one
+  // exception: it is put in at once, so its real field takes the focus from the stand-in holding a phone's keyboard (fx-wave.js).
+  const [ra] = route().replace(/^#\/?/, "").split("/").filter(Boolean);
+  if (navInfo().cause === "wave" && ra !== "search") {
     const root = document.documentElement; root.dataset.swapping = "";
     // data-swapping stays on until the first screen's cards are in (laterStart clears it); with no chunked draw after all it is
     // cleared here, and a timer makes sure the wave is never held longer than 400 ms whatever happens

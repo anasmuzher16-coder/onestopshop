@@ -35,13 +35,24 @@ function watch() { wraf = 0; if (!worker) return; wraf = requestAnimationFrame(w
 // measured from the canvas itself (CSS 100lvh), so it is never stretched; the drawing side ignores an address-bar-sized change
 function measure() { if (!cv) return; const d = Math.min(2, devicePixelRatio || 1), nw = cv.clientWidth || innerWidth, nh = cv.clientHeight || innerHeight; if (nw === mw && nh === mh) return; mw = nw; mh = nh; send({ type: "size", w: nw, h: nh, d }); }
 function loop(t) { raf = 0; if (!cv || !local) return; if (!document.hidden) raf = requestAnimationFrame(loop); local.frame(t, window.__wave?.active); }
+// A page with no air of its own (the smoke and mist pages) parks the worker instead of ending it: hidden, its canvas off the page,
+// for up to 20 s. The next air page takes it back and resets it to exactly a new worker's state, instead of starting a worker,
+// loading its module and handing over a canvas inside the wave (12-40 ms at the swap on 2x CPU, and terminating one mid-wave held
+// the page behind its graphics work; trace, 2026-11-26). Chromium only: WebKit is not trusted to present a re-attached handed-over canvas.
+let parked = null;
+const PARK = !!navigator.userAgentData;
+// Only a worker that has shown it runs (it has reported an air) is parked; one that fails while parked is dropped, so the next air
+// page starts a new one (or draws here). A parked worker is ended after 20 s, never while a wave is on.
+const WORKER = "./fx-air-worker.js?v=2";   // the version changes with the messages it must understand ("reset"), so a cached older worker is never paired with this page
+function bind(wk) { worker = wk; const me = wk; wk.onmessage = ({ data: m }) => { me.ok = true; if (me !== worker) return; if (m.type === "kind") shown(m.kind, m.burst); else if (m.type === "fail") swap(); }; wk.onerror = () => { if (me === worker) swap(); }; }
+function park() { if (wraf) cancelAnimationFrame(wraf); wraf = 0; dropParked(); const wk = worker; worker = null; wk.onmessage = null; wk.onerror = () => { if (parked?.wk === wk) dropParked(); }; try { wk.postMessage({ type: "hide" }); } catch {} cv.classList.remove("on"); cv.remove(); parked = { cv, wk, timer: setTimeout(dropParked, 20000) }; }
+function dropParked() { if (!parked) return; clearTimeout(parked.timer); if (window.__wave?.active) { parked.timer = setTimeout(dropParked, 1500); return; } try { parked.wk.terminate(); } catch {} parked = null; }
 function make() {
+  if (parked) { const p = parked; parked = null; clearTimeout(p.timer); cv = p.cv; document.body.prepend(cv); bind(p.wk); try { worker.postMessage({ type: "reset", hidden: document.hidden }); wkey = ""; wraf = requestAnimationFrame(watch); return true; } catch { stopWorker(); cv.remove(); cv = null; } }
   cv = document.createElement("canvas"); cv.className = "pour pour--air"; cv.setAttribute("aria-hidden", "true"); document.body.prepend(cv);
   if (!noWorker && cv.transferControlToOffscreen && typeof Worker === "function") {
     try {
-      const off = cv.transferControlToOffscreen(); worker = new Worker(new URL("./fx-air-worker.js", import.meta.url), { type: "module" });
-      const me = worker; worker.onmessage = ({ data: m }) => { if (me !== worker) return; if (m.type === "kind") shown(m.kind, m.burst); else if (m.type === "fail") swap(); };
-      worker.onerror = () => { if (me === worker) swap(); }; worker.postMessage({ type: "init", canvas: off, hidden: document.hidden }, [off]); wkey = ""; wraf = requestAnimationFrame(watch); return true;
+      const off = cv.transferControlToOffscreen(); bind(new Worker(new URL(WORKER, import.meta.url), { type: "module" })); worker.postMessage({ type: "init", canvas: off, hidden: document.hidden }, [off]); wkey = ""; wraf = requestAnimationFrame(watch); return true;
     } catch { noWorker = true; if (worker) { try { worker.terminate(); } catch {} } worker = null; cv.remove(); cv = null; return make(); }   // no handover here: draw on the main thread
   }
   local = makeAir(cv, n => { const s = document.createElement("canvas"); s.width = s.height = n; return s; });
@@ -60,7 +71,7 @@ function start(k) {
   if (local && !raf) raf = requestAnimationFrame(loop);
   if (fresh) requestAnimationFrame(() => { if (cv) cv.classList.add("on"); });
 }
-function end() { if (raf) cancelAnimationFrame(raf); raf = 0; stopWorker(); local = null; if (cv) { cv.remove(); cv = null; } mw = mh = -1; kind = want = null; }
+function end() { if (raf) cancelAnimationFrame(raf); raf = 0; if (PARK && worker?.ok && cv) park(); else stopWorker(); local = null; if (cv) { cv.remove(); cv = null; } mw = mh = -1; kind = want = null; }
 function still(k) { root.classList.add("air-page", "air-still"); root.dataset.air = k; }
 function clear() { end(); root.classList.remove("air-page", "air-still"); root.removeAttribute("data-air"); }
 function stick() { if (stuckHead?.isConnected && stuckBar) stuckBar.classList.toggle("is-stuck", stuckHead.getBoundingClientRect().bottom < stuckBar.getBoundingClientRect().top - .5); }
@@ -81,6 +92,6 @@ document.addEventListener("visibilitychange", () => {
   if (worker) worker.postMessage({ type: "show", gap }); else if (local) { if (gap) local.shift(gap); if (!raf) raf = requestAnimationFrame(loop); }
 });
 addEventListener("pageshow", () => { if (document.hidden) return; if (local && !raf) raf = requestAnimationFrame(loop); if (worker) { worker.postMessage({ type: "show", gap: 0 }); if (!wraf) wraf = requestAnimationFrame(watch); } });
-RM.addEventListener("change", () => { end(); place(); });
+RM.addEventListener("change", () => { end(); dropParked(); place(); });
 new MutationObserver(afterSwap(place, 1)).observe(document.getElementById("main"), { childList: true }); place();   // a background: at a wave's swap, just after the band act (route.js)
 window.__air = { get kind() { return kind; }, get canvas() { return cv; }, get worker() { return !!worker; } };
