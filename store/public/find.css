@@ -121,7 +121,7 @@ html.fsheet-open{overflow:hidden}
 .jumps small{display:block;font-weight:400;font-size:var(--t-12);color:var(--color-muted)}
 .jumps .num{color:var(--color-muted);font-size:var(--t-14);font-weight:400}
 .rgroup{margin-top:var(--s-8)}
-.rgroup__h{display:flex;justify-content:space-between;align-items:baseline;margin:0 0 var(--s-1)}
+.rgroup__h{display:flex;gap:var(--s-3);align-items:baseline;margin:0 0 var(--s-1)}   /* the count sits beside its section name, not a screen away */
 .rgroup__h h2{margin:0;font:400 var(--t-d1)/1 var(--font-display);color:var(--tile,var(--color-strong));padding-top:.08em}
 .rgroup__h .num,.srch__h .num{font-size:var(--t-14);color:var(--color-muted);font-weight:400}
 .rgroup__note{margin:0 0 var(--s-2);font-size:var(--t-12);color:var(--color-muted)}
@@ -157,6 +157,7 @@ html.fsheet-open{overflow:hidden}
   .srch .jumps,.srch .rows,.srch .rgroup__h{max-width:none}
   .srch .rows,.srch .jumps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:var(--s-12)}
   .srch .jumps li:last-child a{border-bottom:0}
+  .srch .jumps li:only-child{grid-column:1 / -1}   /* a lone "All of ..." row runs the full width, its count at the row's end like the grid below */
   .srch .jumps{border-bottom:1px solid var(--color-line)}
   /* the finder on a wide screen is a small dialog in the middle, not a sheet as wide as the window */
   .fsheet{max-width:560px;max-height:80svh;margin:auto;border-radius:12px}
