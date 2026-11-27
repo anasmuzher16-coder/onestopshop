@@ -152,9 +152,16 @@ html.fsheet-open{overflow:hidden}
   .fwrap .grid--shop{padding-inline:0}
   .fwrap .fempty{padding-inline:0}
   .shophead--ask{padding-block:var(--s-12) var(--s-8)}
+  /* results use the page's whole content width, like a section's grid (design review, 2026-11-27: they filled the left 808 px):
+     the rows run in columns, each as narrow as it was, so a name and its price never sit a screen apart */
+  .srch .jumps,.srch .rows,.srch .rgroup__h{max-width:none}
+  .srch .rows,.srch .jumps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:var(--s-12)}
+  .srch .jumps li:last-child a{border-bottom:0}
+  .srch .jumps{border-bottom:1px solid var(--color-line)}
   /* the finder on a wide screen is a small dialog in the middle, not a sheet as wide as the window */
   .fsheet{max-width:560px;max-height:80svh;margin:auto;border-radius:12px}
   .fsheet .fsheet__grip{display:none}
   .srch{padding-inline:var(--gutter)}
 }
+@media (min-width:1500px){.srch .rows,.srch .jumps{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media (prefers-reduced-motion:reduce){.fsheet[open]{animation:none}}

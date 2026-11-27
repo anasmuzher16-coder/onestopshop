@@ -153,6 +153,15 @@ body:not([data-route]) .foot{visibility:hidden}
 /* ---------- shelves + grid ---------- */
 .shelf{padding:var(--s-12) var(--gutter) 0}
 .pdp + .shelf{padding-bottom:var(--s-16)}
+.shelf:last-child{padding-bottom:var(--s-16)}   /* the last row of cards never runs into the footer (design review, 2026-11-27: 10 px on a product page) */
+/* "Goes with this" with fewer pieces than a row holds: on a desktop the heading takes the row's first column and the cards sit
+   beside it on the same column grid, so one or two cards never float alone in a row of four */
+@media (min-width:960px){
+  .shelf--few{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));column-gap:var(--s-5);align-items:start}
+  .shelf--few .shelf__head{grid-column:1;flex-direction:column;align-items:flex-start;gap:var(--s-3);margin:0}
+  .shelf--few .grid{display:contents}
+}
+@media (min-width:1500px){.shelf--few{grid-template-columns:repeat(5,minmax(0,1fr))}}
 .series{grid-column:1 / -1;display:flex;justify-content:space-between;align-items:baseline;gap:var(--s-4);margin:var(--s-8) 0 0;padding-top:var(--s-4);border-top:1px solid var(--color-line);font:400 var(--t-d2)/.95 var(--font-display);color:var(--tile,var(--color-strong))}
 .series:first-child{margin-top:0;padding-top:0;border-top:0}
 .series .num{font:500 var(--t-14)/1 var(--font-ui);color:var(--color-muted)}
@@ -245,6 +254,7 @@ body:not([data-route]) .foot{visibility:hidden}
 .qty button[disabled]{opacity:.4;cursor:not-allowed}
 .cartship{margin-top:var(--s-8);padding-top:var(--s-6);border-top:1px solid var(--color-field)}
 .cartship .opts{margin-top:var(--s-6)}
+.cartship .note{max-width:none;padding-right:max(0px,calc(100% - 60ch))}   /* its hairline runs the column's full width like the others; the words keep their 60ch measure */
 .boxes{margin:0 0 var(--s-5);padding-left:1.4em;font-size:var(--t-14)} .boxes li{padding:var(--s-1) 0}
 .opts{border:0;margin:0;padding:0}
 .opts legend{padding:0;margin-bottom:var(--s-2);font-weight:600;color:var(--color-strong);display:flex;gap:var(--s-3);align-items:baseline;width:100%}
@@ -716,6 +726,7 @@ html.pour-still.pour-mist body::before{background-image:url(img/mist-still.webp)
 @media (max-width:520px){
   .shophead[data-cat="parts"],.shophead[data-fx="set"],.shophead[data-fx="gifts"],.shophead[data-fx="docs"],.shophead[data-fx="missing"],.shophead[data-fx="all"],.shophead[data-fx="cart"]{padding-bottom:calc(var(--s-5) + 26px)}
   .shophead[data-fx] .shophead__n,.shophead[data-cat="parts"] .shophead__n,.shophead[data-cat="heat"] .shophead__n{max-width:calc(100% - 132px)}   /* Heat names charcoal and foil: the line stops short of the burner */
+  .shophead[data-fx="set"] .shophead__n{max-width:calc(100% - 180px)}   /* the open box's left flap reaches further in than the other objects (design review, 2026-11-27) */
   .shophead[data-fx]{min-height:124px}
   .shophead[data-fx="missing"]{padding-bottom:calc(var(--s-5) + 60px)}
 }
@@ -872,7 +883,10 @@ html.restoring .grid--shop .card{content-visibility:visible}
 .swatch[aria-checked="true"]::before{box-shadow:inset 0 0 0 1px var(--ring,oklch(1 0 0 / .16)),0 0 0 3px var(--color-bg),0 0 0 5px var(--color-strong)}
 @media (hover:hover){.swatch:hover::before{transform:scale(1.1)}}   /* a pointer only: a tap never leaves a chip swollen */
 .swatch:focus-visible{outline:2px solid var(--color-focus);outline-offset:-2px}
-.swatch__none{position:absolute;right:7px;bottom:7px;width:10px;height:10px;border-radius:50%;background:var(--color-bg);box-shadow:inset 0 0 0 2px var(--color-muted)}
+/* "photo coming" on a chip is the store's one mark for an unknown, a dashed hairline: a ring round the chip, never a dot on its
+   edge (design review, 2026-11-27: the corner dot read as a rendering fault). The chosen ring replaces it. */
+.swatch__none{position:absolute;left:4px;top:4px;width:36px;height:36px;border-radius:50%;border:1px dashed var(--color-muted);pointer-events:none}
+.swatch[aria-checked="true"] .swatch__none{display:none}
 /* On a card (polish, 2026-11-24): a row of 44 px places that never runs past the card. .swatchbox is the size container; the
    places stay inside the card (a card clips what hangs out, content-visibility, so a hanging target would lose taps). Places that fit:
    floor(box width / 44). When the colours do not all fit (app.js marks the row o2...o8), the last place that fits is
@@ -883,7 +897,7 @@ html.restoring .grid--shop .card{content-visibility:visible}
 .swatches--card{flex-wrap:nowrap;margin:0;gap:0;min-width:0}
 .swatches--card .swatch{flex:none;width:44px;height:44px} .swatches--card .swatch::before{width:22px;height:22px}
 .swatches--card .swatch[aria-checked="true"]::before{box-shadow:inset 0 0 0 1px var(--ring,oklch(1 0 0 / .16)),0 0 0 2px var(--color-bg),0 0 0 4px var(--color-strong)}
-.swatches--card .swatch__none{left:19px;right:auto;top:25px;bottom:auto;width:8px;height:8px;box-shadow:inset 0 0 0 1.5px var(--color-muted)}   /* on the chip's lower right, where the chip now sits in its place */
+.swatches--card .swatch__none{left:1px;top:8px;width:28px;height:28px}   /* round the 22 px chip, which sits 4 px into its place */
 /* "+N" is one of the family: a chip-sized pill with a hairline, bone figures, so it reads as a way on, not a disabled count */
 .swatches__more span{display:grid;place-items:center;min-width:22px;height:22px;padding:0 5px;border-radius:11px;box-shadow:inset 0 0 0 1px oklch(0.925 0.022 80 / .45);color:var(--color-text);transition:box-shadow var(--dur-micro) var(--ease-state)}
 .swatches__more:hover span,.swatches__more:focus-visible span{box-shadow:inset 0 0 0 1px var(--color-text)}
@@ -941,12 +955,26 @@ html.restoring .grid--shop .card{content-visibility:visible}
 :is(.tile,.piece,.pdp__tile,.resin__item) .sticker.sticker--tbd .sticker__v::first-letter{font-size:inherit;vertical-align:baseline;margin:0}
 .pdp__tile .sticker.sticker--tbd.sticker--tbd{padding:8px 12px} .pdp__tile .sticker.sticker--tbd.sticker--tbd .sticker__k,.pdp__tile .sticker.sticker--tbd.sticker--tbd .sticker__v{font-size:14px}
 .card__a:hover .sticker--tbd,.card__a:active .sticker--tbd,.piece:active .sticker--tbd{transform:none}
-@keyframes tbd-in{from{opacity:0}}
+/* one Price TBD everywhere (design review, 2026-11-27: cards, search and the product page each had their own): the same dashed
+   label in a search result row; the product page's line drops its own label, as the photo's label says it on the same screen */
+.row .sticker.sticker--tbd{display:inline-flex;gap:.4em;align-items:baseline;width:auto;height:auto;min-width:0;padding:5px 8px;border:1px dashed oklch(0.16 0.012 50 / .42);border-radius:var(--radius);
+  background:var(--tile,var(--bonelt));box-shadow:none;transform:none;color:var(--color-on-tile);font-size:12px;overflow:visible}
+.row .sticker.sticker--tbd::before,.row .sticker.sticker--tbd::after{content:none}
+.row .sticker.sticker--tbd .sticker__k,.row .sticker.sticker--tbd .sticker__v{display:inline;max-width:none;padding:0;font:600 12px/1.25 var(--font-ui);letter-spacing:.06em;text-transform:uppercase;color:inherit;opacity:.86}
+.row .sticker.sticker--tbd .sticker__v::first-letter{font-size:inherit;vertical-align:baseline;margin:0}@keyframes tbd-in{from{opacity:0}}
 .tile[data-stick=go] .sticker--tbd{animation:tbd-in var(--dur-state) var(--ease-state) var(--stick-d,0ms) backwards}
 
 /* design review (polish): the photo labels get the same tile fill as Price TBD, so glass behind them never runs through the words;
    a phone number never breaks across lines */
 .tile .shot__tag--tbd,.pdp__tile .shot__tag--tbd{padding:3px 6px;border-radius:var(--radius);background:var(--tile,var(--bonelt));opacity:1;color:oklch(0.16 0.012 50 / .82)}
+/* design review (2026-11-27): a label never sits on the product. Every photo is framed the same (the product fills 90% of the
+   height, 5% clear above and below), so a label in the top or bottom band ran into a hookah's bowl or base. A tile that carries
+   a label gives the photo that band back: the product scales down inside the rest and the whole of it shows, labels clear. */
+.card .tile:has(> .sticker--tbd) > .shot:not(.shot--photo){padding-top:36px}
+.card .tile:has(> .shot__tag) > .shot:not(.shot--photo){padding-bottom:30px}
+@media (max-width:639px){.card .tile:has(> .shot__tag--tbd) > .shot:not(.shot--photo){padding-bottom:46px}}   /* "Shown in <colour>" takes two lines on a phone card */
+.pdp__tile:has(> .sticker--tbd) > .shot:not(.shot--photo){padding-top:max(7%,52px)}
+.pdp__tile:has(> .shot__tag) > .shot:not(.shot--photo){padding-bottom:max(5%,44px)}
 a[href^="tel:"]{white-space:nowrap}
 
 /* ---------- CHARCOAL, the section's object (2026-11-24): six coconut cubes stacked 3-2-1; the top one is lit ----------
@@ -1030,6 +1058,7 @@ a[href^="tel:"]{white-space:nowrap}
    cart is named, not a bare count */
 .dock--buy{grid-template-columns:72px 1fr minmax(56px,auto)}
 .dock .dock__cart{min-width:56px;padding:0 var(--s-4) 0 var(--s-3);gap:var(--s-2)}
+@media (max-width:359px){.dock--buy .dock__w{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}}   /* on the narrowest phones the word gives its room to the button and stays for screen readers */
 .dock .dock__buy--call,.dock .dock__buy--call:active{background:transparent;color:var(--color-strong);box-shadow:inset 0 0 0 1px var(--color-field)}
 /* price labels: a label too small to print the shop's name has no band at all (an empty ember strip read as a mistake);
    the name prints where it can be read. Price TBD is one look everywhere: the dashed blank label on the colour behind it. */
@@ -1050,8 +1079,9 @@ a[href^="tel:"]{white-space:nowrap}
 }
 /* the cart on a wide screen: the lines on the left, the totals and the button in a column on the right that stays in view */
 @media (min-width:1200px){
-  .cart:has(> .cart__sum){display:grid;grid-template-columns:minmax(0,760px) minmax(320px,400px);column-gap:var(--s-12);max-width:none;align-items:start}
+  /* the totals column ends on the page's right margin, like every section's grid (design review, 2026-11-27: it stopped 136 px short) */
+  .cart:has(> .cart__sum){display:grid;grid-template-columns:minmax(0,760px) minmax(320px,400px);column-gap:var(--s-12);justify-content:space-between;max-width:none;align-items:start}
   .cart:has(> .cart__sum) > :not(.cart__sum){grid-column:1}
-  .cart > .cart__sum{grid-column:2;grid-row:1 / span 8;position:sticky;top:96px}
+  .cart > .cart__sum{grid-column:2;grid-row:1 / span 8;position:sticky;top:96px;margin-top:var(--s-6)}   /* its first line level with the cart's first line (.lines) */
   .cart__sum .totals{margin-top:0}
 }
