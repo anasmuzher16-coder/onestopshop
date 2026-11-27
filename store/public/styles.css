@@ -1030,10 +1030,10 @@ a[href^="tel:"]{white-space:nowrap}
 .dock .dock__buy--call,.dock .dock__buy--call:active{background:transparent;color:var(--color-strong);box-shadow:inset 0 0 0 1px var(--color-field)}
 /* price labels: a label too small to print the shop's name has no band at all (an empty ember strip read as a mistake);
    the name prints where it can be read. Price TBD is one look everywhere: the dashed blank label on the colour behind it. */
-.sticker:not(.sticker--big){padding-top:.14em}
-.sticker:not(.sticker--big)::before,.sticker:not(.sticker--big)::after{content:none}
-@media (min-width:640px){.grid .sticker:not(.sticker--big){padding-top:1.06em} .grid .sticker:not(.sticker--big)::before{content:"ONE STOP"} .grid .sticker:not(.sticker--big)::after{content:""}}
-@media (min-width:960px){.piece .sticker:not(.sticker--big){padding-top:1.06em} .piece .sticker:not(.sticker--big)::before{content:"ONE STOP"} .piece .sticker:not(.sticker--big)::after{content:""}}
+.sticker:not(.sticker--big):not(.sticker--tbd){padding-top:.14em}
+.sticker:not(.sticker--big):not(.sticker--tbd)::before,.sticker:not(.sticker--big):not(.sticker--tbd)::after{content:none}
+@media (min-width:640px){.grid .sticker:not(.sticker--big):not(.sticker--tbd){padding-top:1.06em} .grid .sticker:not(.sticker--big):not(.sticker--tbd)::before{content:"ONE STOP"} .grid .sticker:not(.sticker--big):not(.sticker--tbd)::after{content:""}}
+@media (min-width:960px){.piece .sticker:not(.sticker--big):not(.sticker--tbd){padding-top:1.06em} .piece .sticker:not(.sticker--big):not(.sticker--tbd)::before{content:"ONE STOP"} .piece .sticker:not(.sticker--big):not(.sticker--tbd)::after{content:""}}
 .piece .sticker.sticker--tbd{background:transparent}
 /* the delivery question on a phone: one compact row (it was two tall plates, about 160 px, pushing the band down). The question
    stays for screen readers; the two answers carry the words. Same markup as the Worker writes, CSS only, so nothing shifts. */
