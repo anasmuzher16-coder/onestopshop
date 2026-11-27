@@ -70,6 +70,7 @@ if (!CARD) {
     ok(noPhone.status === 400 && noPhone.data.field === "phone" && noPhone.data.phone_needed === true && /call or text/.test(noPhone.data.error || "") && !noPhone.data.order, "mail off: a pickup request with no phone is refused, asking for one: " + noPhone.status + " " + (noPhone.data.error || ""));
     const short = await post({ ...who, ...at, phone: "555-0144", method: "pickup", lines: [{ sku: "OSS-8004", qty: 1 }] });
     ok(short.status === 400 && short.data.field === "phone", "mail off: a phone with no area code is refused: " + short.status);
+    for (const fake of ["000-000-0000", "111-111-1111", "(519) 055-0144", "5195550144 1"]) { const r = await post({ ...who, ...at, phone: fake, method: "pickup", lines: [{ sku: "OSS-8004", qty: 1 }] }); ok(r.status === 400 && r.data.field === "phone", `mail off: "${fake}" is not a number the shop can call back: ${r.status}`); }
     const shipNote = await post({ ...who, ...at, method: "ship", service: "cp-exp", ...to, lines: [{ sku: "OSS-8004", qty: 1 }] });
     ok(shipNote.status === 400 && /Delivery opens once we take card payment online/.test(shipNote.data.error || "") && !/Pay by card/.test(shipNote.data.error || ""), "card off: paying at the counter for delivery says delivery opens with card payment: " + (shipNote.data.error || ""));
     const rq = await post({ ...who, email: `call-${Date.now()}@example.com`, name: "Callie Morgan", ...at, phone: "(519) 555-0177", method: "pickup", lines: [{ sku: "OSS-8004", qty: 2 }] }), o = rq.data.order || {};

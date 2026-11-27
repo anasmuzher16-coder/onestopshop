@@ -11,9 +11,10 @@ const COOKIE = "oss_c", SESSION_DAYS = 30, CODE_MINUTES = 10, MAX_TRIES = 5;
 // can use the form to flood an inbox. Wrong codes (2026-11-27, breaker: 15 wrong guesses from anywhere locked an inbox out of new
 // codes for a day, renewable, so a stranger could lock any customer out): counted per inbox AND network. 15 wrong in a day from one
 // network stops that network asking codes for that inbox; it never stops the customer on their own connection. Across every network
-// one inbox takes at most 100 typed guesses a day (NIST's ceiling, doc section 3); past that, typed codes for it are refused but the
-// one-tap link in the code email still signs in (a 256-bit link cannot be guessed), so the real customer always has a way in.
-const LIMIT = { perEmailWho15: 3, perEmailHour: 10, perWhoHour: 20, allHour: 1000, wrongPerWho15: 30, wrongPerEmailWhoDay: 15, wrongPerEmailDay: 100 };
+// one inbox takes at most 30 typed guesses a day (well under NIST's 100, doc section 3); past that, typed codes for it are refused but
+// the one-tap link in the code email still signs in (a 256-bit link cannot be guessed), so the real customer always has a way in.
+// Code requests: 3 an hour per inbox AND network, so one network alone cannot use up the inbox's 10 an hour.
+const LIMIT = { perEmailWhoHour: 3, perEmailHour: 10, perWhoHour: 20, allHour: 1000, wrongPerWho15: 30, wrongPerEmailWhoDay: 15, wrongPerEmailDay: 30 };
 const NOW = "strftime('%Y-%m-%dT%H:%M:%SZ','now')";
 const SOLD = "('paid','packed','shipped','ready','collected')";
 const SHOP_LINE = "One Stop Shop, 760 Wyandotte St E, Windsor, ON N9A 3J4. 519-255-2222.";
@@ -111,14 +112,16 @@ export async function accountRoute(request, env, url) {
   if (path === "/code" && method === "POST") {
     const email = cleanEmail(body.email); if (!email) return json({ error: "That email address does not look right.", field: "email" }, 400);
     const w = await who(request, env);
-    const n = await db.prepare(`SELECT COALESCE(SUM(email = ?1 AND who = ?2 AND created_at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-15 minutes')),0) AS here, COALESCE(SUM(email = ?1),0) AS mail, COALESCE(SUM(who = ?2),0) AS mine, COUNT(*) AS everyone FROM sign_in_codes WHERE created_at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 hour')`).bind(email, w).first();
-    if (n.here >= LIMIT.perEmailWho15 || n.mail >= LIMIT.perEmailHour || n.mine >= LIMIT.perWhoHour || n.everyone >= LIMIT.allHour) return json({ error: "That is a lot of codes in a short time. Wait 15 minutes, then ask again." }, 429);
+    const n = await db.prepare(`SELECT COALESCE(SUM(email = ?1 AND who = ?2),0) AS here, COALESCE(SUM(email = ?1),0) AS mail, COALESCE(SUM(who = ?2),0) AS mine, COUNT(*) AS everyone FROM sign_in_codes WHERE created_at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 hour')`).bind(email, w).first();
+    if (n.here >= LIMIT.perEmailWhoHour || n.mail >= LIMIT.perEmailHour || n.mine >= LIMIT.perWhoHour || n.everyone >= LIMIT.allHour) return json({ error: "That is a lot of codes in a short time. Wait a while, then ask again." }, 429);
     // wrong codes for this inbox from THIS network over a day: past the cap this network gets no new code for it until it clears.
     // A stranger's wrong guesses are counted on their own network, so they never stop the customer asking from theirs.
     if (await wrongSince(db, await mailNetKey(email, request, env)) >= LIMIT.wrongPerEmailWhoDay) return json({ error: "Too many wrong codes for this email from this connection today. Try again tomorrow, or call the counter at 519-255-2222." }, 429);
     const code = sixDigits(), link = random(32), salt = random(16);
     await db.batch([
-      db.prepare("UPDATE sign_in_codes SET used = 1 WHERE email = ? AND used = 0").bind(email),   // only the newest code works
+      // only the newest code asked from this network works; a code asked from another network is left alone, so a stranger asking
+      // codes for this email never kills the customer's own code or link (breaker, 2026-11-27)
+      db.prepare("UPDATE sign_in_codes SET used = 1 WHERE email = ? AND who = ? AND used = 0").bind(email, w),
       db.prepare(`INSERT INTO sign_in_codes (email, salt, code_hash, link_hash, who, expires_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ','now','+${CODE_MINUTES} minutes'))`).bind(email, salt, await codeHash(env, salt, code), await sha(link), w),
       db.prepare("DELETE FROM sign_in_codes WHERE created_at < strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 day')"),
       db.prepare("DELETE FROM account_attempts WHERE at < strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 day')"),
@@ -158,7 +161,8 @@ export async function accountRoute(request, env, url) {
       // code is not even checked (so it uses up no try); the one-tap link in the email still works.
       if (await wrongSince(db, await mailNetKey(email, request, env)) >= LIMIT.wrongPerEmailWhoDay || await wrongSince(db, await mailKey(email, env)) >= LIMIT.wrongPerEmailDay)
         return json({ error: "Too many wrong codes have been typed for this email today. Open the sign-in link in the code email instead: it still works.", use_link: true }, 429);
-      row = await db.prepare(`SELECT * FROM sign_in_codes WHERE email = ? AND used = 0 AND expires_at > ${NOW} ORDER BY id DESC LIMIT 1`).bind(email).first();
+      // the newest live code asked from this network, else the newest live one: one code is checked per try, never several
+      row = await db.prepare(`SELECT * FROM sign_in_codes WHERE email = ?1 AND used = 0 AND expires_at > ${NOW} ORDER BY (who = ?2) DESC, id DESC LIMIT 1`).bind(email, w).first();
       if (!row) return miss("That code is not right, or it has expired. Ask for a new one.");
       // count the try before checking it, in one guarded step, so parallel guesses cannot slip past the limit
       const counted = await db.prepare(`UPDATE sign_in_codes SET tries = tries + 1 WHERE id = ? AND used = 0 AND tries < ${MAX_TRIES}`).bind(row.id).run();

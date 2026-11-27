@@ -100,13 +100,13 @@ All numbers here are owner-vetoable defaults; they live in src/guard.js (and DEC
   usual block) and again by its /48. Only a hash keyed with a Worker secret is stored, in `order_attempts` (migration 0012),
   with the order it placed; rows are deleted after 30 days by the 10-minute sweep (`pruneGuards`).
 - **Per person is the main limit (2026-11-27, branch fleet/guard4; breaker: network slots were shared by strangers, and a stranger
-  typing your email used your slots).** One person = one email (normalised, below) AND the same phone when both orders carry one
-  (`phoneKey`: digits, extension and a leading 1 dropped), otherwise the same network (the IPv4 address or IPv6 /56 it was placed
+  typing your email used your slots).** One person = one email (normalised, below) AND either the same phone (both orders carry one)
+  (`phoneKey`: digits, extension, 00/011 and a leading 1 dropped) or the same network (the IPv4 address or IPv6 /56 it was placed
   from, `order_attempts`). A person holds 3 open pay-at-the-counter orders (a request waiting for the shop, or one the shop got
   ready and not yet paid) and places at most 5 in 10 minutes and 15 a day (`PERSON_LIMITS`). So a stranger typing your email
-  cannot use your slots unless they also have your phone or your connection.
-- Per network, anti-spam only (`NET_LIMITS`, `GROUP_LIMITS`): one IPv4 address or IPv6 /56 takes 20 open and 5 orders in 10 minutes,
-  15 a day; one IPv6 /48 40 open, 10 in 10 minutes, 30 a day. Open here counts only orders still waiting to be confirmed or
+  cannot use your slots unless they also have your phone or your connection, and changing the phone from one connection does not make a new person.
+- Per network, anti-spam only (`NET_LIMITS`, `GROUP_LIMITS`): one IPv4 address or IPv6 /56 takes 20 open and 10 orders in 10 minutes,
+  40 a day; one IPv6 /48 40 open, 20 in 10 minutes, 80 a day (above one person's 5 and 15, so one busy person never uses up a shared address). An order refused after it was written takes its network rows with it. Open here counts only orders still waiting to be confirmed or
   paid by card; a ready-but-unpaid order counts for its person only. Carrier NAT, mobile IPv6 pools, iCloud Private Relay and
   public Wi-Fi put strangers on one address; 20 open is far past what one shared address sees. Checked before the order is
   written and again after (with it counted), so a burst gets no further than the limit.
@@ -129,7 +129,7 @@ All numbers here are owner-vetoable defaults; they live in src/guard.js (and DEC
   a real flood: "The shop is busy. Try again in a minute."
 - The order name must be letters, spaces, apostrophes, hyphens and periods, with no period running into two letters,
   so it can never carry a link into "Thank you, {name}". Shoppers sharing one public IPv4 (carrier NAT, campus Wi-Fi) still share
-  the network's rate limits (5 in 10 minutes, 15 a day), but no longer its open slots. Customer text in emails (notes, addresses) has zero-width spaces put into anything
+  the network's rate limits (10 in 10 minutes, 40 a day), but no longer its open slots. Customer text in emails (notes, addresses) has zero-width spaces put into anything
   link-shaped, then is escaped.
 - Turnstile is not wired anywhere on the site yet (ACCOUNTS-LOYALTY.md lists it as a next step), so orders do not ask for it.
 - Migration 0012 stays the last one; nothing new for 2026-11-27.
@@ -139,7 +139,7 @@ All numbers here are owner-vetoable defaults; they live in src/guard.js (and DEC
   The Worker writes it into every page as `<meta name="oss-mail" content="on|off">` (and `oss-req-hours`, PICKUP_REQUEST_HOURS),
   and every order answer carries `notify: "email" | "call"`, so the page and the server say the same thing.
 - Off (live today): no receipt, ready email or new-order note can reach anyone (they are kept in the outbox, never sent late). A
-  pickup request needs a phone with its area code, checked by the server (`phone_needed`, 400) and the page; every customer line
+  pickup request needs a North American number the shop can call back (`callable`: 10 digits, area code and exchange starting 2-9), checked by the server (`phone_needed`, 400) and the page; every customer line
   (checkout, cart, confirmation, shipping, terms, privacy) says the shop calls or texts. The confirmation shows the order number,
   what was asked for, "We call or text you at <phone> when it is on the shelf. Or call 519-255-2222 with your order number". Staff
   learn of requests from Today: a list of the newest 25 requests to confirm (name, phone, time, items) above "Needs you", saying to
@@ -151,12 +151,12 @@ All numbers here are owner-vetoable defaults; they live in src/guard.js (and DEC
   shipped, collected, cancelled): no email, phone, address or money. The page sends no referrer and is never indexed.
 
 ## Customer sign-in codes and other keyed hashes (2026-11-27)
-- Lockouts (fleet/guard4; breaker: 3 requests or 15 wrong guesses typed with someone's email locked them out): code requests are 3 per
-  15 minutes per inbox AND network, 10 an hour per inbox from every network, 20 an hour per network, 1000 shop-wide. Wrong codes:
+- Lockouts (fleet/guard4; breaker: 3 requests or 15 wrong guesses typed with someone's email locked them out): code requests are 3 an
+  hour per inbox AND network, 10 an hour per inbox from every network, 20 an hour per network, 1000 shop-wide. Wrong codes:
   15 a day per inbox AND network stop that network asking or typing codes for that inbox (the customer's own network is not
-  affected); 100 a day per inbox from every network (NIST's ceiling) stop typed codes for it, while the one-tap link in the code
+  affected); 30 a day per inbox from every network (well under NIST's 100) stop typed codes for it, while the one-tap link in the code
   email (256 bits, cannot be guessed) still signs in, so the real customer always has a way in. 30 wrong in 15 minutes per network
-  stays. Known limit: someone asking 10 codes an hour for one inbox from many networks keeps it from getting new codes for that hour.
+  stays. A new code retires only earlier codes asked from the same network, and a typed code is checked against the newest one asked from that network, so a stranger asking codes elsewhere never kills the customer's code or link. Known limit: someone asking 10 codes an hour for one inbox from 4 or more networks keeps it from getting new codes for that hour.
 - The sign-in code limits count a visitor the way every other limit does (IPv6 by its /56) and store the visitor, the inbox and the
   code itself only as hashes keyed with the Worker secret (`keyedHash`: label, `PIN_PEPPER` or `ADMIN_KEY`, value). Before, they were
   plain SHA-256, which a list of IPv4 addresses or emails (or the 10^6 codes) undoes. The privacy page says "a coded form ... made with

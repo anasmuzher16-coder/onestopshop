@@ -13,6 +13,9 @@ const day = iso => new Date(iso).toLocaleDateString("en-CA", { month: "short", d
 const sess = { get(k) { try { return JSON.parse(sessionStorage.getItem("oss:" + k)); } catch { return null; } }, set(k, v) { try { v === null ? sessionStorage.removeItem("oss:" + k) : sessionStorage.setItem("oss:" + k, JSON.stringify(v)); } catch {} } };
 const WORD = { pending: "Going through", paid: "Received", packed: "Packed", shipped: "On its way", ready: "Ready for pickup", collected: "Picked up", cancelled: "Cancelled", refunded: "Refunded" };
 const DONE = new Set(["shipped", "collected"]);
+// The shop's mail connected or not (meta oss-mail, src/email.js mailReady; 2026-11-27). Off, no sign-in code or back-in-stock
+// email can arrive, so the page never offers either: sign-in says it opens once email is connected, and no "Email me" button shows.
+const MAIL_ON = document.querySelector('meta[name="oss-mail"]')?.content === "on";
 
 // ---------- talking to the shop ----------
 let me = null, meWait = null, orders = null;
@@ -74,6 +77,7 @@ function usualLabel(o) {
 export const accountView = band => `${band("docs", "gilt", "Your account", "")}<section class="acct" data-acct aria-busy="true"><p class="fine" role="status">Opening your account.</p></section>`;
 const next = () => { const n = new URLSearchParams(location.search).get("next"); return n && /^\/(?!\/)[\w\-/]*$/.test(n) ? n : null; };
 function signInForm(err = "") {
+  if (!MAIL_ON) return `<div class="acct__in"><h2 class="h3">Accounts open soon</h2><p class="acct__lead">Signing in works with a code we email you, and our email is not switched on yet. Guest checkout works today: order as a guest and we call or text you when your order is ready. Questions? Call the counter at <a class="link" href="tel:+15192552222">519-255-2222</a>.</p></div>`;
   const sent = sess.get("code-to"), wantEmail = sess.get("sign-in-email") || "";
   return `<div class="acct__in">
     <h2 class="h3">Sign in, or make an account</h2>
@@ -272,7 +276,7 @@ function productKeep(sku) {
   const p = bySku[sku], info = $(".pdp__info"); if (!p || !info || $(".keep", info)) return;
   const at = $(".pdp__info > .btn", info) || $(".pdp__info > .soldline", info); if (!at) return;
   const fav = signedIn() && me.favourites.includes(sku), al = signedIn() && me.alerts.includes(sku);
-  at.insertAdjacentHTML("afterend", `<div class="keep"><button class="keep__b" type="button" data-keep="fav" data-sku="${sku}" aria-pressed="${fav}"></button>${p.stock === 0 && p.state === "sale" ? `<button class="keep__b" type="button" data-keep="alert" data-sku="${sku}" aria-pressed="${al}"></button>` : ""}</div>`);
+  at.insertAdjacentHTML("afterend", `<div class="keep"><button class="keep__b" type="button" data-keep="fav" data-sku="${sku}" aria-pressed="${fav}"></button>${p.stock === 0 && p.state === "sale" && MAIL_ON ? `<button class="keep__b" type="button" data-keep="alert" data-sku="${sku}" aria-pressed="${al}"></button>` : ""}</div>`);
   $$(".keep [data-keep]", info).forEach(keepWords);
 }
 const earnNow = l => { let cart = []; try { cart = JSON.parse(localStorage.getItem("oss:cart")) || []; } catch {} const sub = cart.reduce((a, x) => a + (bySku[x.sku] ? Math.round(bySku[x.sku].price * 100) * x.qty : 0), 0); return Math.floor(Math.max(0, sub - rewardCents(sub)) / 100) * l.points_per_dollar; };
@@ -291,7 +295,8 @@ function checkoutBits() {
 function orderBits(id) {
   const box = $(".done"); if (!box || $("[data-acct-done]", box)) return;
   let o = null; try { o = JSON.parse(sessionStorage.getItem("oss:order:" + id)); } catch {}
-  if (!o) return;
+  if (!o || new URLSearchParams(location.search).get("k")) return;   // the status page (?k=) is not the confirmation
+  if (!o.account && !MAIL_ON) return;   // signing in needs an emailed code: nothing to offer while our email is off
   const l = L(), at = $(".done__lines", box); if (!at) return;
   const html = o.account ? (l && o.points ? `<div class="co__pts" data-acct-done>${punches(l)}<p><b class="num">${o.points}</b> points on the way. They count once the order is ${o.method === "pickup" ? "picked up" : "delivered"}.</p></div>` : `<p class="fine" data-acct-done>This order is in <a class="link" href="/account">your account</a>, ready to buy again.</p>`)
     : `<p class="fine" data-acct-done>Next time in one tap: <a class="link" href="/account" data-sign-in-as="${esc(o.email || "")}">sign in with this email</a> and this order will be in your account.</p>`;

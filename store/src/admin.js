@@ -69,7 +69,11 @@ const TO_CONFIRM = t => `${t}.status = 'pending' AND ${t}.pay_status = 'pay_at_p
 // a stranger typing a customer's email shows up this way, so staff can see it on the list and cancel it. Counted only for open
 // pickup orders, and only between orders whose network is on record (order_attempts, migration 0012; "o:" = IPv4 or IPv6 /56).
 const OPEN_PICKUP = t => `${t}.pay_status = 'pay_at_pickup' AND ${t}.status IN ('pending','ready') AND ${t}.release_op IS NULL`;
+// A phone as digits (separators and a leading North American 1 dropped), so the same customer on mobile data and then home Wi-Fi,
+// with the same phone, is not flagged (breaker, 2026-11-27).
+const PHONE_SQL = c => { const d = `replace(replace(replace(replace(replace(replace(COALESCE(${c},''),' ',''),'-',''),'(',''),')',''),'.',''),'+','')`; return `(CASE WHEN length(${d}) = 11 AND substr(${d},1,1) = '1' THEN substr(${d},2) ELSE ${d} END)`; };
 const OTHER_NETS = t => `CASE WHEN ${OPEN_PICKUP(t)} AND EXISTS (SELECT 1 FROM order_attempts a0 WHERE a0.order_id = ${t}.id AND a0.who LIKE 'o:%') THEN (SELECT COUNT(*) FROM orders o2 WHERE o2.id != ${t}.id AND ${OPEN_PICKUP("o2")}
+  AND NOT (COALESCE(o2.phone,'') != '' AND ${PHONE_SQL("o2.phone")} = ${PHONE_SQL(`${t}.phone`)})
   AND ${normEmailSql("o2.email")} = ${normEmailSql(`${t}.email`)} AND EXISTS (SELECT 1 FROM order_attempts a2 WHERE a2.order_id = o2.id AND a2.who LIKE 'o:%')
   AND NOT EXISTS (SELECT 1 FROM order_attempts a1 JOIN order_attempts a2 ON a2.who = a1.who WHERE a1.order_id = ${t}.id AND a2.order_id = o2.id AND a1.who LIKE 'o:%')) ELSE 0 END`;
 const noTable = err => /no such table/i.test(String(err && err.message));   // a database without migration 0012: the note is left out
@@ -225,7 +229,7 @@ export async function admin(request, env, url) {
     ]);
     // the pickup requests still to confirm, newest first, for Today's own list (2026-11-27): while the shop's mail is not connected no
     // new-order note reaches anyone, so Today is where staff see a new request: name, phone, when, and how many items
-    const confirm = (await db.prepare(`SELECT o.id, o.name, o.phone, o.created_at, o.pay_expires_at, o.total_cents, (SELECT SUM(qty) FROM order_items i WHERE i.order_id = o.id) AS units FROM orders o WHERE ${TO_CONFIRM("o")} ORDER BY o.created_at DESC LIMIT 25`).all()).results;
+    const confirm = (await db.prepare(`SELECT o.id, o.name, o.phone, o.created_at, o.pay_expires_at, o.total_cents, COALESCE((SELECT SUM(qty) FROM order_items i WHERE i.order_id = o.id), 0) AS units FROM orders o WHERE ${TO_CONFIRM("o")} ORDER BY o.created_at DESC LIMIT 25`).all()).results;
     return json({ totals: tot.results[0], daily: daily.results, top: top.results, slow: slow.results, low: low.results, provinces: prov.results, shipping: ship.results[0], value: value.results[0], todo: todo.results[0], confirm, mail_on: mailReady(env), actor, owner: session.owner });
   }
 

@@ -1125,6 +1125,7 @@ const STATUS = {
 };
 const STATUS_TAG = { requested: "Requested", payment: "Waiting for payment", preparing: "Being prepared", ready: "Ready for pickup", shipped: "On its way", collected: "Collected", cancelled: "Cancelled" };
 function statusHtml(id, s) {
+  if (s && s.unreachable) return `<section class="cart done" data-status-page><p class="done__tag"><span>Order</span> <b class="num">${esc(id)}</b></p><h1 class="h2 h2--xl">We could not reach the shop.</h1><p class="lead" role="status">Check your connection and reload this page, or call the counter at <a class="link" href="tel:+15192552222">519-255-2222</a> with your order number.</p></section>`;
   if (!s) return `${band("missing", "ruby", "We cannot find that order.")}<section class="empty" data-status-page><p class="lead">Check the link, or call the counter at <a class="link" href="tel:+15192552222">519-255-2222</a> with your order number.</p><p class="lead"><a class="link" href="/shop">See what is on the counter</a>.</p></section>`;
   const [head, lead] = (STATUS[s.status] || STATUS.requested)(s, s.notify === "call");
   return `<section class="cart done" data-status-page data-status="${esc(s.status)}">
@@ -1140,8 +1141,9 @@ function viewStatus(id, k) {
   const got = state.orderStatus;
   if (got && got.id === id && got.k === k && Date.now() - got.at < 60000) return statusHtml(id, got.s);   // a redraw right after the answer; never an old one
   (async () => {
-    let s = null; try { const r = await fetch(`/api/order-status?id=${encodeURIComponent(id)}&k=${encodeURIComponent(k)}`, { cache: "no-store" }); if (r.ok) s = (await r.json()).order || null; } catch {}
-    state.orderStatus = { id, k, s, at: Date.now() };
+    let s = null, lost = true; try { const r = await fetch(`/api/order-status?id=${encodeURIComponent(id)}&k=${encodeURIComponent(k)}`, { cache: "no-store" }); if (r.ok) { s = (await r.json()).order || null; lost = !s; } else lost = r.status !== 404; } catch {}
+    if (lost) s = { unreachable: true };   // a dropped connection or a busy shop is never "no such order", and is not kept
+    else state.orderStatus = { id, k, s, at: Date.now() };
     for (let i = 0; i < 60; i++) {   // the page may still be drawing (a page swap): wait for it, unless the shopper has moved on
       if (location.pathname.replace(/\/+$/, "") !== "/order/" + id) return;
       const box = document.querySelector("[data-status-page]");
@@ -1212,7 +1214,10 @@ document.addEventListener("submit", async e => {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v("email"))) return fail("That email address does not look right.", "email");
   if (!pickup && !local && !chosen && !state.ship && (sc.status === "far" || sc.status === "down")) return fail("Delivery is not available here. Choose shipping or pickup in your cart.");
   if (sc.counter && chosen) return fail("Charcoal goes by pickup or local delivery only. Choose one in your cart.");
-  if (phoneNeeded(sc) && v("phone").replace(/\s*(?:x|ext\.?)\s*\d{1,6}\s*$/i, "").replace(/\D/g, "").replace(/^1(?=\d{10}$)/, "").length < 10) return fail("Enter a phone number with its area code. We call or text you when your order is ready.", "phone");
+  if (phoneNeeded(sc)) {   // the server's own rule (src/guard.js callable): a North American number the shop can call back
+    const d = v("phone").replace(/\s*(?:x|ext\.?)\s*\d{1,6}\s*$/i, "").replace(/\D/g, "").replace(/^(?:011|00)/, "").replace(/^1(?=\d{10}$)/, "");
+    if (!/^[2-9]\d{2}[2-9]\d{6}$/.test(d) || /^(\d)\1{9}$/.test(d)) return fail("Enter a phone number with its area code, like 519-555-0144. We call or text you when your order is ready.", "phone");
+  }
   if (!pickup && !v("line1")) return fail("Enter the street address.", "line1");
   if (!pickup && !v("city")) return fail("Enter the city or town.", "city");
   if (local) {
@@ -1279,10 +1284,11 @@ const viewPrivacy = () => doc("Privacy", "What we collect, why, who else handles
     "Where it is handled: Stripe, Resend and Cloudflare are based in the United States, and Geoapify in Germany. So your details may be stored or handled outside Canada, and can be reached by the courts and authorities of those countries. We stay responsible for your details while they do this work for us.",
   ]],
   ["If you make an account", [
-    "An account is up to you. Guest checkout always works. You sign in with a 6-digit code we email you, which works once, for 10 minutes. We keep your email, the name, phone and address you choose to save, your saved items, your back-in-stock requests, your charcoal reminder choice and any points, so they are there next time. Orders you placed as a guest with the same email join your account when you sign in.",
+    `An account is up to you. Guest checkout always works.${MAIL_ON ? "" : " Accounts open once our email is switched on."} You sign in with a 6-digit code we email you, which works once, for 10 minutes. We keep your email, the name, phone and address you choose to save, your saved items, your back-in-stock requests, your charcoal reminder choice and any points, so they are there next time. Orders you placed as a guest with the same email join your account when you sign in.`,
     "You can delete the account yourself on the account page at any time. That removes your sign-ins, saved details, saved items, back-in-stock requests, reminder and points at once. Your past orders stay in our records as guest orders, because tax law requires us to keep sales records. The record of any yes you gave to reminders also stays, as proof of what you agreed to.",
   ]],
   ["Emails we send", [
+    ...(MAIL_ON ? [] : ["For now our email is not switched on, so we send no emails at all and accounts cannot be opened yet. We call or text the phone number on your order instead. What follows is what we will send once it is on."]),
     "Emails about your order: that it is in or paid, that it is ready, or that it is on its way. These are part of your order, not marketing. Sign-in codes when you ask for one.",
     "A back-in-stock email only when you ask for one: one email, then the request is gone. A charcoal reminder only when you tick the box to say yes, as often as you choose. We keep the words you agreed to and the date, because the law asks us to be able to show your consent.",
     "Every reminder and back-in-stock email names the shop with its address and phone and has an unsubscribe link. It works without signing in and takes effect at once (the law allows up to 10 business days). You can also turn reminders off in your account. We do not send newsletters.",

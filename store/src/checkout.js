@@ -13,7 +13,7 @@ import { cardReady, openCheckout, releaseHeld, receipt, HOLD_MIN, LATE_SESSION_M
 import { customerFrom } from "./account.js";
 import { orderLoyalty, orderLoyaltyStatements } from "./loyalty.js";
 import { cleanSource } from "./source.js";
-import { nameOk, phoneOk, phoneKey, ORDER_CAPS, PICKUP_CAPS, SHOP_BRAKE_PER_MIN, orderLimits, orderWho, orderAttempt, pickupRequestHours, statusToken, READY_HOLD_DAYS } from "./guard.js";
+import { nameOk, phoneOk, callable, ORDER_CAPS, PICKUP_CAPS, SHOP_BRAKE_PER_MIN, orderLimits, orderWho, orderAttempt, pickupRequestHours, statusToken, READY_HOLD_DAYS } from "./guard.js";
 import { mailReady } from "./email.js";
 
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" } });
@@ -130,7 +130,7 @@ export async function placeOrder(request, env, url) {
   if (pay === "at_pickup" && method !== "pickup") return json({ error: cardReady(env) ? "Paying at the counter is for pickup orders. Pay by card for delivery." : "Paying at the counter is for pickup orders. Delivery opens once we take card payment online.", field: "pay" }, 400);
   // While the shop's mail is not connected (email.js mailReady), no receipt or "ready" email can reach anyone, so a pickup request
   // needs a phone: the shop calls or texts it when the order is on the shelf (2026-11-27). With mail on, the phone stays optional.
-  if (method === "pickup" && pay === "at_pickup" && !mailReady(env) && (!phone || phoneKey(phone).length < 10)) return json({ error: "Enter a phone number with its area code. We call or text you when your order is ready.", field: "phone", phone_needed: true }, 400);
+  if (method === "pickup" && pay === "at_pickup" && !mailReady(env) && !callable(phone || "")) return json({ error: "Enter a phone number with its area code, like 519-555-0144. We call or text you when your order is ready.", field: "phone", phone_needed: true }, 400);
   if (!Array.isArray(body.lines) || !body.lines.length) return json({ error: "Your cart is empty." }, 400);
   // caps no real counter order reaches (src/guard.js ORDER_CAPS): a bigger order is a phone call. An unpaid pickup (paid at the
   // counter) holds no stock, but each one is staff time at the shelf, so it has the lower PICKUP_CAPS; a card order keeps ORDER_CAPS.
@@ -167,6 +167,9 @@ export async function placeOrder(request, env, url) {
   const customer = await customerFrom(request, env), own = !!customer && String(customer.email || "").toLowerCase() === email.toLowerCase();
   const who = await orderWho(env, request), group = await orderWho(env, request, 48), lim = { who, group, email, phone, own, mailOn: mailReady(env) }, limit = await orderLimits(env, lim);
   if (!limit.ok) return json({ error: limit.words, limited: limit.why }, 429);
+  // an order removed again (refused, or its reward gone) takes its network rows with it, so a refused burst never counts against
+  // everyone else on a shared address (breaker, 2026-11-27)
+  const unattempt = oid => limit.missing ? [] : [db.prepare("DELETE FROM order_attempts WHERE order_id = ?").bind(oid)];
   // the shop-wide brake, against a real flood only; a shopper signed in with this very email has shown the inbox is theirs and passes
   if (!own) {
     const recent = await db.prepare("SELECT COUNT(*) AS n FROM orders WHERE created_at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 minute')").first("n");
@@ -245,7 +248,7 @@ export async function placeOrder(request, env, url) {
   }
   // the reward's points were spent by another order a moment ago: nothing is placed, the shopper sees the full price
   if (acct.redeemAt >= 0 && !first[1 + lines.length + acct.redeemAt].meta.changes) {
-    await db.batch([db.prepare("DELETE FROM loyalty_ledger WHERE order_id = ?").bind(id), db.prepare("DELETE FROM order_items WHERE order_id = ?").bind(id), db.prepare("DELETE FROM orders WHERE id = ?").bind(id)]);
+    await db.batch([db.prepare("DELETE FROM loyalty_ledger WHERE order_id = ?").bind(id), db.prepare("DELETE FROM order_items WHERE order_id = ?").bind(id), db.prepare("DELETE FROM orders WHERE id = ?").bind(id), ...unattempt(id)]);
     const t = rates.orderTotals(subtotal, shipping, province);
     return json({ error: "Your points reward is not available on this order. Check the new total, then place your order.", reward_gone: true, repriced: { subtotal_cents: subtotal, shipping_cents: shipping, tax_cents: t.tax, total_cents: t.total } }, 409);
   }
@@ -253,7 +256,7 @@ export async function placeOrder(request, env, url) {
   // so a burst from one visitor or one email gets no further than its limit. Nothing is held yet, so this one is simply removed.
   const after = await orderLimits(env, { ...lim, placed: 1 });
   if (!after.ok) {
-    await db.batch([db.prepare("DELETE FROM loyalty_ledger WHERE order_id = ?").bind(id), db.prepare("DELETE FROM order_items WHERE order_id = ?").bind(id), db.prepare("DELETE FROM orders WHERE id = ? AND status = 'pending' AND release_op IS NULL").bind(id)]);
+    await db.batch([db.prepare("DELETE FROM loyalty_ledger WHERE order_id = ?").bind(id), db.prepare("DELETE FROM order_items WHERE order_id = ?").bind(id), db.prepare("DELETE FROM orders WHERE id = ? AND status = 'pending' AND release_op IS NULL").bind(id), ...unattempt(id)]);
     return json({ error: after.words, limited: after.why }, 429);
   }
   // A pay-at-the-counter pickup is a request: nothing is taken or held now. The shop takes the stock when it marks it ready.

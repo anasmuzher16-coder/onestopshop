@@ -136,7 +136,9 @@ if (process.env.PERSIST) {
     ok(await p.locator('.keep__b[data-keep="fav"]').count() === 1 && await p.locator('.keep__b[data-keep="alert"]').count() === 0, `a Price TBD item (${tbd.sku}) offers Save but no back-in-stock email`); }
   else ok(false, "a Price TBD item with no count to check");
   if (gone) { await p.goto(B + "/p/" + gone.sku, { waitUntil: "load" }); await p.waitForSelector(".keep__b", { timeout: 8000 }).catch(() => {});
-    ok(await p.locator('.keep__b[data-keep="alert"]').count() === 1, `a sold-out item for sale (${gone.sku}) still offers the back-in-stock email`); }
+    // rewritten 2026-11-27 (fleet/guard4): the back-in-stock email is offered only while the shop's mail is connected (meta oss-mail)
+    const mailOn = (await p.locator('meta[name="oss-mail"]').getAttribute("content")) === "on";
+    ok(await p.locator('.keep__b[data-keep="alert"]').count() === (mailOn ? 1 : 0) && await p.locator('.keep__b[data-keep="fav"]').count() === 1, `a sold-out item for sale (${gone.sku}) offers the back-in-stock email only with mail on (mail ${mailOn ? "on" : "off"}), and Save either way`); }
   await b.close();
 }
 console.log(f ? `FAIL ${f} of ${n} checks` : `PASS ${n} checks`); process.exit(f ? 1 : 0);

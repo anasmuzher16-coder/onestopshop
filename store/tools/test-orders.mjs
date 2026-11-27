@@ -110,8 +110,8 @@ else {
   // ---------- 2026-11-27 (fleet/guard4): one PERSON is the main open-order limit; networks only guard against spam ----------
   // Rewritten: these checks used to hold one address to 3 open orders whatever email it typed (carrier NAT, mobile IPv6 pools,
   // Private Relay and public Wi-Fi put strangers on one address, so real customers were turned away for days), and one email to 3
-  // from anywhere (so a stranger typing your email used up your slots). Now a person is an email plus the same phone (or, with no
-  // phone on either order, the same network): 3 open; a network takes 20 open (an IPv6 /48 40), with the old rate limits.
+  // from anywhere (so a stranger typing your email used up your slots). Now a person is an email plus the same phone or the same
+  // network: 3 open, 5 in 10 minutes, 15 a day. A network takes 20 open, 10 in 10 minutes, 40 a day (an IPv6 /48: 40, 20, 80).
   const em = `same-${run}@example.com`, heldE = [];
   for (let i = 0; i < 3; i++) heldE.push(await from(shopper(), counter(em)));
   const fourthE = await from(shopper(), counter(em.toUpperCase()));
@@ -119,43 +119,50 @@ else {
   const samePhone = await from(shopper(), counter(em, "OSS-8003", { phone: "+1 " + phoneFor(em).replace(/-/g, " ") }));
   ok(samePhone.status === 429 && samePhone.data.limited === "open", "the same phone written another way (+1, spaces) is the same person: " + samePhone.status);
   const stranger = await from(shopper(), counter(em, "OSS-8003", { phone: "226-555-0199" }));
-  ok(stranger.status === 201, "a stranger who types that email with their own phone is not blocked by it, so they cannot use its slots either: " + stranger.status + " " + (stranger.data.error || ""));
+  ok(stranger.status === 201, "a stranger who types that email with their own phone, from their own connection, is not blocked by it, so they cannot use its slots either: " + stranger.status + " " + (stranger.data.error || ""));
   sql(`UPDATE orders SET status = 'ready', ready_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id IN (${heldE.map(r => `'${r.data.order.id}'`).join(",")})`);
   const readyE = await from(shopper(), counter(em));
   ok(readyE.status === 429 && readyE.data.limited === "open", "orders the shop got ready but not yet paid still count for their person: " + readyE.status);
+  // changing the phone from one connection does not make a new person (breaker, 2026-11-27: one network could queue 20 that way)
+  const ipP = "10.248.5." + ((Math.random() * 200) | 0), spam = `spam-${run}@example.com`, spun = [];
+  for (const ph of ["519-555-0301", "519-555-0302", "519-555-0303", "519-555-0304"]) spun.push(await from(ipP, counter(spam, "OSS-8004", { phone: ph })));
+  ok(spun.slice(0, 3).every(r => r.status === 201) && spun[3].status === 429 && spun[3].data.limited === "open", "one email from one connection holds 3 open whatever phone it types: " + spun.map(r => r.status));
   // one carrier-shared address: a real customer with 3 open does not block the next real customer on the same address
   const ipA = "10.250.1." + ((Math.random() * 200) | 0), custA = `carrier-a-${run}@example.com`, heldA = [];
   for (let i = 0; i < 3; i++) heldA.push(await from(ipA, counter(custA, "OSS-8004")));
   const fourthA = await from(ipA, counter(custA, "OSS-8004")), custB = await from(ipA, counter(`carrier-b-${run}@example.com`, "OSS-8004"));
   ok(heldA.every(r => r.status === 201) && fourthA.status === 429 && fourthA.data.limited === "open" && custB.status === 201, "on one shared address, a customer with 3 open is stopped and the next customer still orders: " + heldA.map(r => r.status) + "," + fourthA.status + "," + custB.status + " " + (custB.data.error || ""));
-  // one address still takes at most 20 open requests from different people (anti-spam). The rate limits (5 in 10 minutes, 15 a day)
-  // would stop this first, so this suite moves its own rows' times back a day after each 5 to reach the open count.
+  // one address still takes at most 20 open requests from different people (anti-spam). The rate limits (10 in 10 minutes, 40 a
+  // day) would stop this first, so this suite moves its own rows' times back two days after each 10 to reach the open count.
   const net = "10.252.3." + ((Math.random() * 200) | 0), netHeld = [], back = list => sql(`UPDATE order_attempts SET at = strftime('%Y-%m-%dT%H:%M:%SZ','now','-2 days') WHERE order_id IN (${list.map(r => `'${r.data.order?.id}'`).join(",")})`);
-  for (let i = 0; i < 20; i++) { netHeld.push(await from(net, counter(`net${i}-${run}@example.com`, "OSS-8004"))); if (i % 5 === 4) back(netHeld.slice(-5)); }
+  for (let i = 0; i < 20; i++) { netHeld.push(await from(net, counter(`net${i}-${run}@example.com`, "OSS-8004"))); if (i % 10 === 9) back(netHeld.slice(-10)); }
   const net21 = await from(net, counter(`net20-${run}@example.com`, "OSS-8004"));
   ok(netHeld.every(r => r.status === 201) && net21.status === 429 && net21.data.limited === "network" && /internet connection/.test(net21.data.error || "") && /519-255-2222/.test(net21.data.error || ""), "one address takes 20 open requests from 20 people; the 21st is told the connection may be shared, with the shop's number: " + netHeld.map(r => r.status).join("") + "," + net21.status + " " + (net21.data.error || ""));
-  // an IPv6 visitor is one network across its /56: 5 orders in 10 minutes from different addresses in it, then the rate limit
-  const v6 = `2001:db8:${((Math.random() * 65000) | 0).toString(16)}:7`, heldV6 = [];
-  for (let i = 0; i < 5; i++) heldV6.push(await from(`${v6}::${i + 1}`, counter(`v${i}-${run}@example.com`)));
-  const sixthV6 = await from(`${v6}:ffff:1:2:3`, counter(`v5-${run}@example.com`));
-  ok(heldV6.every(r => r.status === 201) && sixthV6.status === 429 && sixthV6.data.limited === "rate", "IPv6 addresses in one /56 count as one network: " + heldV6.map(r => r.status) + "," + sixthV6.status);
-  // one /48 (a free tunnel holds 256 /56s) is held to 10 orders in 10 minutes in all, however many of its /56s it uses
+  // an IPv6 visitor is one network across its /56: 10 orders in 10 minutes from different /64s inside it, then the rate limit
+  const v6 = `2001:db8:${((Math.random() * 65000) | 0).toString(16)}:${(16 + ((Math.random() * 230) | 0)).toString(16)}`, heldV6 = [];   // the first 56 bits; each order adds the last byte of the 4th group (its own /64)
+  for (let i = 0; i < 10; i++) heldV6.push(await from(`${v6}${(i + 1).toString(16).padStart(2, "0")}::1`, counter(`v${i}-${run}@example.com`)));
+  const eleventhV6 = await from(`${v6}ff:abcd::9`, counter(`v10-${run}@example.com`));
+  ok(heldV6.every(r => r.status === 201) && eleventhV6.status === 429 && eleventhV6.data.limited === "rate", "IPv6 addresses in different /64s of one /56 count as one network: " + heldV6.map(r => r.status) + "," + eleventhV6.status);
+  // one /48 (a free tunnel holds 256 /56s) is held to 20 orders in 10 minutes in all, however many of its /56s it uses
   const g48 = `2001:db8:${((Math.random() * 65000) | 0).toString(16)}`, heldG = [];
-  for (let i = 0; i < 10; i++) heldG.push(await from(`${g48}:${((i + 1) * 256 + 1).toString(16)}::1`, counter(`g${i}-${run}@example.com`, "OSS-8004")));
-  const eleventhG = await from(`${g48}:9901::1`, counter(`g10-${run}@example.com`, "OSS-8004"));
-  ok(heldG.every(r => r.status === 201) && eleventhG.status === 429 && eleventhG.data.limited === "rate", "one IPv6 /48 cannot act as many networks: " + heldG.map(r => r.status) + "," + eleventhG.status);
-  // one address places at most 5 orders in 10 minutes
+  for (let i = 0; i < 20; i++) heldG.push(await from(`${g48}:${((i + 1) * 256 + 1).toString(16)}::1`, counter(`g${i}-${run}@example.com`, "OSS-8004")));
+  const g21 = await from(`${g48}:f901::1`, counter(`g20-${run}@example.com`, "OSS-8004"));
+  ok(heldG.every(r => r.status === 201) && g21.status === 429 && g21.data.limited === "rate", "one IPv6 /48 cannot act as many networks: " + heldG.map(r => r.status).join("") + "," + g21.status);
+  // one address places at most 10 orders in 10 minutes, and one person at most 5
   const ipR = "10.249.4." + ((Math.random() * 200) | 0), more = [];
-  for (let i = 0; i < 5; i++) more.push(await from(ipR, counter(`r5-${i}-${run}@example.com`, "OSS-7004")));
-  const sixth = await from(ipR, counter(`r5-x-${run}@example.com`, "OSS-7004"));
-  ok(more.every(r => r.status === 201) && sixth.status === 429 && sixth.data.limited === "rate", "a sixth order in 10 minutes from one address is refused: " + more.map(r => r.status) + "," + sixth.status);
+  for (let i = 0; i < 10; i++) more.push(await from(ipR, counter(`r10-${i}-${run}@example.com`, "OSS-7004")));
+  const extra = await from(ipR, counter(`r10-x-${run}@example.com`, "OSS-7004"));
+  ok(more.every(r => r.status === 201) && extra.status === 429 && extra.data.limited === "rate", "an 11th order in 10 minutes from one address is refused: " + more.map(r => r.status).join("") + "," + extra.status);
 
-  // the shop-wide brake cannot be reached by one visitor: a burst of 15 at once places at most 5, and the next shopper gets in
+  // the shop-wide brake cannot be reached by one visitor: a burst of 15 at once places at most 10, the refused ones leave no count
+  // behind (breaker, 2026-11-27: they used to stay counted, locking a shared address for a day), and the next shopper gets in
   await wait(61000);   // the last minute holds only this burst
   const ipB = "10.251.2." + ((Math.random() * 200) | 0);
   const burst = await Promise.all(Array.from({ length: 15 }, (_, i) => fetch(B + "/api/orders", { method: "POST", headers: { "Content-Type": "application/json", "CF-Connecting-IP": ipB }, body: JSON.stringify(withPhone(counter(`b${i}-${run}@example.com`, "OSS-7004"))) }).then(async r => ({ status: r.status, data: await r.json().catch(() => ({})) }))));
   const placed = burst.filter(r => r.status === 201).length;
-  ok(placed <= 5 && burst.every(r => r.status === 201 || r.data.limited), "15 orders at once from one address place at most 5, each refusal from its own limit: " + burst.map(r => r.status));
+  ok(placed <= 10 && burst.every(r => r.status === 201 || r.data.limited), "15 orders at once from one address place at most 10, each refusal from its own limit: " + burst.map(r => r.status));
+  const left = sql(`SELECT COUNT(*) AS n FROM order_attempts a WHERE a.who LIKE 'o:%' AND a.at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-2 minutes') AND NOT EXISTS (SELECT 1 FROM orders o WHERE o.id = a.order_id)`)[0].n;
+  ok(left === 0, "an order refused after it was written leaves no network count behind: " + left);
   const next = await fetch(B + "/api/orders", { method: "POST", headers: { "Content-Type": "application/json", "CF-Connecting-IP": shopper() }, body: JSON.stringify(withPhone(counter(`next-${run}@example.com`, "OSS-8004"))) });
   ok(next.status === 201, "a different shopper is not told the shop is busy after one visitor's burst: " + next.status);
 

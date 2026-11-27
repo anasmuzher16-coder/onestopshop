@@ -76,7 +76,12 @@ ok(ready.length === 1 && ready[0].to[0] === who.email && ready[0].reply_to === S
   const list = (await admin("/orders")).data.orders || [], rowElse = list.find(o => o.id === elsewhere.data.order?.id), rowHeld = list.find(o => o.id === held[0].data.order?.id);
   ok(rowElse?.other_networks === 3 && rowHeld?.other_networks === 1, "the back office list marks requests sharing an email from different networks: " + JSON.stringify([rowElse?.other_networks, rowHeld?.other_networks]));
   const sheet = (await admin("/orders/" + elsewhere.data.order?.id)).data.order;
-  ok(sheet?.other_networks === 3, "and the order sheet says the same: " + sheet?.other_networks); }
+  ok(sheet?.other_networks === 3, "and the order sheet says the same: " + sheet?.other_networks);
+  // with mail on, one inbox takes 30 guest orders a day from anywhere (an inbox flood); the 31st is asked to sign in or call
+  const flood = { ...np, email: `inbox-${Date.now()}@example.com` }, fl = [];
+  for (let i = 0; i < 30; i++) { const r = await fetch(B + "/api/orders", { method: "POST", headers: { "Content-Type": "application/json", "CF-Connecting-IP": shopper() }, body: JSON.stringify(flood) }); fl.push(r.status); }
+  const f31 = await fetch(B + "/api/orders", { method: "POST", headers: { "Content-Type": "application/json", "CF-Connecting-IP": shopper() }, body: JSON.stringify(flood) }), f31d = await f31.json().catch(() => ({}));
+  ok(fl.every(s => s === 201) && f31.status === 429 && f31d.limited === "email" && /sign in with it/.test(f31d.error || ""), "mail on: one inbox takes 30 guest orders a day, the 31st is asked to sign in or call: " + fl.join("") + "," + f31.status + " " + (f31d.error || "")); }
 
 // 3 a card order (card mode only): nothing to the shop until Stripe's signed webhook says paid, then one note, however often Stripe calls
 if (CARD) {

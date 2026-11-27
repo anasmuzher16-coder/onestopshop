@@ -64,7 +64,7 @@ for (const [engine, w, h, mobile] of [["chromium", 390, 844, true], ["webkit", 3
       if (link) {
         await p.goto(B + link, { waitUntil: "networkidle" }); await p.waitForSelector("[data-status-page][data-status]", { timeout: 8000 }).catch(() => {});
         const w = await p.locator("#main").innerText();
-        t(`${tag} the status page shows the request, the first name and the items, and that the shop calls`, (await p.locator("[data-status-page]").getAttribute("data-status")) === "requested" && /We have your request, Dee/.test(w) && /call or text you/.test(w) && /Requested/.test(w) && /\b5\s*[×x]/.test(w) && !/dee-|@example|519-555-0181/.test(w), w.slice(0, 300));
+        t(`${tag} the status page shows the request, the first name and the items, and that the shop calls`, (await p.locator("[data-status-page]").getAttribute("data-status")) === "requested" && /We have your request, Dee/.test(w) && /call or text you/.test(w) && /requested/i.test(w)   /* the tag is set in capitals */ && /\b5\s*[×x]/.test(w) && !/dee-|@example|519-555-0181/.test(w), w.slice(0, 300));
         await p.goto(B + link.replace(/k=./, m => m.endsWith("a") ? "k=b" : "k=a"), { waitUntil: "networkidle" }); await p.waitForTimeout(800);
         t(`${tag} a status link with a wrong key opens nothing`, /cannot find that order/i.test(await p.locator("#main").innerText()));
       }

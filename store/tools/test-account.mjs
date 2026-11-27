@@ -79,11 +79,11 @@ ok((await api("/code", { method: "POST", body: { email: known }, h: { "X-OSS-Acc
 ok((await api("/code", { method: "POST", body: { email: known }, h: { Origin: "https://evil.example" } })).status === 403, "a request from another website is refused");
 ok((await fetch(B + "/api/account/code", { method: "POST", headers: { "Content-Type": "text/plain", "X-OSS-Account": "1" }, body: "email=" + known })).status === 415, "a form post (cross-site style) is refused");
 ok((await api("/code", { method: "POST", body: { email: "not an email" } })).status === 400, "a bad email is refused");
-// rewritten 2026-11-27 (fleet/guard4): the 3-in-15-minutes cap is per inbox AND network, so a stranger asking codes for your email
+// rewritten 2026-11-27 (fleet/guard4): the old 3-in-15-minutes cap is now 3 an hour per inbox AND network, so a stranger asking codes for your email
 // from their connection never stops you asking from yours; every network together gets 10 codes an hour for one inbox
 const flood = `flood-${run}@example.com`, fip = ip(); const fl = [];
 for (let i = 0; i < 4; i++) fl.push((await api("/code", { method: "POST", body: { email: flood }, ip: fip })).status);
-ok(fl.join() === "200,200,200,429", "a fourth code for one inbox from one network within 15 minutes is refused: " + fl);
+ok(fl.join() === "200,200,200,429", "a fourth code for one inbox from one network within an hour is refused: " + fl);
 { const fh = `floodh-${run}@example.com`, st = [];
   for (let i = 0; i < 11; i++) st.push((await api("/code", { method: "POST", body: { email: fh }, ip: ip() })).status);
   ok(st.slice(0, 10).every(s => s === 200) && st[10] === 429, "from many networks one inbox gets 10 codes an hour, the 11th waits: " + st); }
@@ -133,15 +133,20 @@ ok(st[29] === 400 && st[30] === 429, "thirty wrong codes from one network lock i
   const home = ip(), mine = await api("/code", { method: "POST", body: { email: cap }, ip: home });
   const inHome = mine.status === 200 ? await api("/verify", { method: "POST", body: { email: cap, code: codeIn(lastMail(cap)) }, ip: home }) : mine;
   ok(mine.status === 200 && inHome.status === 200 && inHome.setCookie.includes("oss_c="), "a stranger's 15 wrong codes do not lock the customer out: from their own network a code comes and signs them in: " + mine.status + "," + inHome.status);
-  // every network together: 100 wrong codes a day for one inbox (NIST's ceiling). Past it a typed code is refused, even the right one,
+  // every network together: 30 wrong codes a day for one inbox (well under NIST's 100). Past it a typed code is refused, even the right one,
   // and the one-tap link in the code email still signs the customer in
   const ceil = `ceil-${run}@example.com`;
   sql(`WITH RECURSIVE c(x) AS (SELECT 1 UNION ALL SELECT x + 1 FROM c WHERE x < 100) INSERT INTO account_attempts (who) SELECT '${h(`mail|${KEY}|${ceil}`)}' FROM c`);
   const cip = ip(), cc = await api("/code", { method: "POST", body: { email: ceil }, ip: cip }), cm = lastMail(ceil);
   const typed = await api("/verify", { method: "POST", body: { email: ceil, code: codeIn(cm) }, ip: cip });
-  ok(cc.status === 200 && typed.status === 429 && typed.data.use_link === true && !typed.setCookie.includes("oss_c="), "past 100 wrong codes for an inbox in a day, a typed code is refused, even the right one: " + cc.status + "," + typed.status);
+  ok(cc.status === 200 && typed.status === 429 && typed.data.use_link === true && !typed.setCookie.includes("oss_c="), "past 30 wrong codes for an inbox in a day (100 put in here), a typed code is refused, even the right one: " + cc.status + "," + typed.status);
   const byLink = await api("/verify", { method: "POST", body: { link: linkIn(cm) }, ip: cip });
-  ok(byLink.status === 200 && byLink.setCookie.includes("oss_c="), "and the one-tap link in that email still signs the customer in: " + byLink.status); }
+  ok(byLink.status === 200 && byLink.setCookie.includes("oss_c="), "and the one-tap link in that email still signs the customer in: " + byLink.status);
+  // a stranger asking codes for the customer's email from elsewhere never kills the customer's own code (breaker, 2026-11-27)
+  const vic = `victim-${run}@example.com`, vip = ip(); await api("/code", { method: "POST", body: { email: vic }, ip: vip }); const vcode = codeIn(lastMail(vic));
+  for (let i = 0; i < 3; i++) await api("/code", { method: "POST", body: { email: vic }, ip: ip() });
+  const vin = await api("/verify", { method: "POST", body: { email: vic, code: vcode }, ip: vip });
+  ok(vin.status === 200 && vin.setCookie.includes("oss_c="), "codes a stranger asks for from other networks do not kill the customer's own code: " + vin.status); }
 
 // ---- 3. signing in, fixation, single use, the link
 const a = `alice-${run}@example.com`, aip = ip();

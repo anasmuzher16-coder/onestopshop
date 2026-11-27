@@ -55,8 +55,8 @@ export const PICKUP_CAPS = { lines: 15, perLine: 5, units: 15 };
 // Whether an order has really taken stock: its own 'sale' moves less its put-backs, per item. One fragment, used wherever
 // a put-back must give back exactly what was taken (cancel, expiry), never what the order merely asked for.
 export const TAKEN_SQL = (ref) => `(SELECT sku, -SUM(delta) AS qty FROM stock_moves WHERE ref = ${ref} AND reason IN ('sale','released') GROUP BY sku HAVING -SUM(delta) > 0)`;
-// The shop-wide brake: a real flood only. Per-network caps (below) bound one network to 5 orders in 10 minutes (10 for an IPv6
-// /48), so reaching 60 orders in one minute takes 12 or more separate networks at once. A shopper
+// The shop-wide brake: a real flood only. Per-network caps (below) bound one network to 10 orders in 10 minutes (20 for an IPv6
+// /48), so reaching 60 orders in one minute takes 6 or more separate networks at once. A shopper
 // signed in with the order's own email has proven the inbox is theirs and is never braked. (breaker, 2026-11-27: at 12 a minute,
 // one person with home IPv4, a tunnel /48 and a phone could make the shop "busy" for everyone.)
 export const SHOP_BRAKE_PER_MIN = 60;
@@ -80,11 +80,15 @@ export const READY_HOLD_DAYS = 14;
 // A phone number: digits with the usual separators, and an extension. Never letters, so never a link.
 export const phoneOk = s => typeof s === "string" && s.length <= 30 && /^\+?[\d\s().\-]{7,24}(?:\s*(?:x|ext\.?)\s*\d{1,6})?$/i.test(s) && s.replace(/\D/g, "").length >= 7 && !/^\d{1,3}(?:\.\d{1,3}){3}/.test(s.trim());
 // A phone as one person, for limits only: the digits without an extension, a leading North American 1 dropped.
-export const phoneKey = p => { const d = String(p || "").replace(/\s*(?:x|ext\.?)\s*\d{1,6}\s*$/i, "").replace(/\D/g, ""); return d.length === 11 && d[0] === "1" ? d.slice(1) : d; };
+export const phoneKey = p => { let d = String(p || "").replace(/\s*(?:x|ext\.?)\s*\d{1,6}\s*$/i, "").replace(/\D/g, "").replace(/^(?:011|00)/, ""); return d.length === 11 && d[0] === "1" ? d.slice(1) : d; };
+// A number the shop can call back (needed while mail is off): a North American number, 10 digits once a leading 1 is dropped, its
+// area code and exchange starting 2 to 9 (so 000-000-0000 or 111-111-1111 are refused). The shop is in Windsor; a number from
+// elsewhere is a phone call to the counter.
+export const callable = p => /^[2-9]\d{2}[2-9]\d{6}$/.test(phoneKey(p)) && !/^(\d)\1{9}$/.test(phoneKey(p));
 // The order limits (reworked 2026-11-27, branch fleet/guard4, owner-vetoable; BACKEND-NOTES.md says what a shopper sees):
-//  - PERSON: the main limit. One person is one email (normEmail) AND, when both orders carry a phone, the same phone; otherwise the
-//    same network (the IPv4 address or IPv6 /56 it was placed from). So a stranger who types your email cannot use your slots
-//    unless they also have your phone or your connection. Open = a pickup request waiting for the shop, or one the shop got ready
+//  - PERSON: the main limit. One person is one email (normEmail) AND either the same phone (both orders carry one) or the same
+//    network (the IPv4 address or IPv6 /56 it was placed from). So a stranger who types your email cannot use your slots unless
+//    they also have your phone or your connection, and changing the phone from one connection does not make a new person. Open = a pickup request waiting for the shop, or one the shop got ready
 //    and that is not paid yet (both count here, and only here).
 //  - NET (one IPv4 address or IPv6 /56) and GROUP (one IPv6 /48): anti-spam only. Carrier NAT, mobile IPv6 pools, iCloud Private
 //    Relay and public Wi-Fi put strangers on one address, so these are set well above what one shared address sees in a day.
@@ -92,7 +96,8 @@ export const phoneKey = p => { const d = String(p || "").replace(/\s*(?:x|ext\.?
 //  - EMAIL_DAY_CAP: with mail connected, one inbox's receipts a day from guests (an inbox flood); signing in with it skips it.
 //    With mail off nothing is sent, so there is nothing to protect and it does not apply (and sign-in codes cannot arrive).
 export const PERSON_LIMITS = { per10min: 5, perDay: 15, open: 3 };
-export const NET_LIMITS = { per10min: 5, perDay: 15, open: 20 };
+// Network rate limits sit above one person's (breaker, 2026-11-27: at 15 a day, one busy person used up a whole carrier address's day).
+export const NET_LIMITS = { per10min: 10, perDay: 40, open: 20 };
 export const EMAIL_DAY_CAP = 30;
 // How long a pickup request waits for the shop to confirm it (owner-vetoable, inventory-2026-11-23/DECISIONS.md beside the repo):
 // PICKUP_REQUEST_HOURS, 1 to 720, default 72 (3 days; an open request also fills one of its person's 3 open slots, so not longer). Past it, a request never confirmed cancels itself; it held nothing, so no
@@ -101,8 +106,8 @@ export const pickupRequestHours = env => { const n = Number(env.PICKUP_REQUEST_H
 // The visitor's key for the order_attempts table: a hash keyed with a Worker secret, so the table alone cannot be turned back into addresses.
 // bits 48: the wider IPv6 block (one tunnel or one site), for a second, looser count, so one /48 cannot act as 256 visitors.
 export const orderWho = async (env, request, bits = 56) => (bits === 56 ? "o:" : "g:") + await sha(`order|${env.PIN_PEPPER || env.ADMIN_KEY || ""}|${sourceOf(request, bits)}`);
-// A whole /48 at most 10 orders in 10 minutes, 30 a day and 40 waiting at once: below the shop-wide brake, and room for a campus or a carrier pool.
-export const GROUP_LIMITS = { per10min: 10, perDay: 30, open: 40 };
+// A whole /48 at most 20 orders in 10 minutes, 80 a day and 40 waiting at once: below the shop-wide brake, and room for a campus or a carrier pool.
+export const GROUP_LIMITS = { per10min: 20, perDay: 80, open: 40 };
 
 // Open for a person: a counter order not paid yet (a request waiting for the shop, or one the shop got ready). Card pages are left
 // out: they let their stock go by themselves within 35 minutes.
@@ -110,13 +115,13 @@ const OPEN_PERSON = "o.release_op IS NULL AND o.pay_status = 'pay_at_pickup' AND
 // Open for a network: only what is still waiting on the shop or on a card page. A ready-but-unpaid order counts for its person only.
 const OPEN_NET = "o.release_op IS NULL AND o.status = 'pending' AND o.pay_status IN ('pay_at_pickup','awaiting')";
 const RECENT = "strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 day')", M10 = "strftime('%Y-%m-%dT%H:%M:%SZ','now','-10 minutes')";
-// Is an earlier order (row) the same person as the one being placed? Same email (the query asks that), and the same phone when
-// both carry one; otherwise the same network (row.same_net: it was placed from this IPv4 address or IPv6 /56).
-const samePerson = (row, phone) => phone && row.phone ? phoneKey(row.phone) === phoneKey(phone) : !!row.same_net;
+// Is an earlier order (row) the same person as the one being placed? Same email (the query asks that), and the same phone (both
+// carry one) or the same network (row.same_net: it was placed from this IPv4 address or IPv6 /56).
+const samePerson = (row, phone) => !!row.same_net || (!!phone && !!row.phone && phoneKey(row.phone) === phoneKey(phone));
 // One read: what this person, this network and its /48 placed lately and still have open. Answers { ok: true } or { ok: false,
 // words, why } with the words to show. `missing` is true on a database without migration 0012: the network counts are skipped (and
 // logged), and every order with this email counts as this person. `own`: signed in with this very email (the inbox is theirs):
-// the email's day cap and the shop-wide brake do not apply to them. `mailOn`: the shop's mail is connected (email.js mailReady).
+// the person's rate counts, the email's day cap and the shop-wide brake do not apply to them (the 3 open and the network limits do). `mailOn`: the shop's mail is connected (email.js mailReady).
 export async function orderLimits(env, { who, group = who, email, phone = null, placed = 0, own = false, mailOn = false }) {   // placed: 1 when the order being checked is already written
   const db = env.DB, P = PERSON_LIMITS, N = NET_LIMITS, G = GROUP_LIMITS, k = placed;
   const rowsSql = net => `SELECT o.phone, o.created_at >= ${M10} AS m10, o.created_at >= ${RECENT} AS day, (${OPEN_PERSON}) AS open, ${net ? "EXISTS (SELECT 1 FROM order_attempts a WHERE a.order_id = o.id AND a.who = ?2)" : "1"} AS same_net
@@ -135,7 +140,7 @@ export async function orderLimits(env, { who, group = who, email, phone = null, 
   const p = { open: sum(mine, "open"), m10: sum(mine, "m10"), day: sum(mine, "day") }, emailDay = sum(rows, "day");
   if (p.open >= P.open + k) return { ok: false, missing, words: `You already have ${p.open - k} pickup ${p.open - k === 1 ? "request" : "requests"} waiting. Pick ${p.open - k === 1 ? "it" : "those"} up first, or call the counter at 519-255-2222 to add to ${p.open - k === 1 ? "it" : "them"}.`, why: "open" };
   if (w.open >= N.open + k || g.open >= G.open + k) return { ok: false, missing, words: "A lot of orders are already waiting from this internet connection (it may be shared, like a phone carrier or public Wi-Fi). Try again later, or call the counter at 519-255-2222 to order.", why: "network" };
-  if (w.m10 >= N.per10min + k || w.day >= N.perDay + k || g.m10 >= G.per10min + k || g.day >= G.perDay + k || p.m10 >= P.per10min + k || p.day >= P.perDay + k) return { ok: false, missing, words: "That is a lot of orders in a short time. Wait a few minutes and try again, or call the counter at 519-255-2222.", why: "rate" };
+  if (w.m10 >= N.per10min + k || w.day >= N.perDay + k || g.m10 >= G.per10min + k || g.day >= G.perDay + k || (!own && (p.m10 >= P.per10min + k || p.day >= P.perDay + k))) return { ok: false, missing, words: "That is a lot of orders in a short time. Wait a few minutes and try again, or call the counter at 519-255-2222.", why: "rate" };
   if (mailOn && !own && emailDay >= EMAIL_DAY_CAP + k) return { ok: false, missing, words: "This email has had a lot of orders today. If it is yours, sign in with it to order, or call the counter at 519-255-2222.", why: "email" };
   return { ok: true, missing };
 }
