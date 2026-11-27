@@ -1,7 +1,7 @@
 import { createRequire } from "module";
 const { chromium, webkit } = createRequire(process.env.PW_FROM || "C:/dev/puckempire-arena/package.json")("playwright");
 const B = process.env.BASE, GL = ["--use-angle=swiftshader", "--enable-webgl", "--ignore-gpu-blocklist", "--enable-unsafe-swiftshader"];
-const R = [["hookahs", "/shop/hookahs"], ["heat", "/shop/heat"], ["bases", "/shop/bases"], ["bowls", "/shop/bowls"], ["hoses", "/shop/hoses"], ["parts", "/shop/parts"], ["cologne", "/shop/cologne"], ["misc", "/shop/misc"], ["home", "/"], ["all", "/shop"], ["set", "/set"], ["shipping", "/shipping"], ["search", "/search"], ["cart", "/cart"]];
+const R = [["hookahs", "/shop/hookahs"], ["shisha", "/shop/shisha"], ["heat", "/shop/heat"], ["bases", "/shop/bases"], ["bowls", "/shop/bowls"], ["hoses", "/shop/hoses"], ["parts", "/shop/parts"], ["cologne", "/shop/cologne"], ["misc", "/shop/misc"], ["home", "/"], ["all", "/shop"], ["set", "/set"], ["shipping", "/shipping"], ["search", "/search"], ["cart", "/cart"]];
 let bad = 0;
 for (const [n, t, a] of [["webkit", webkit, []], ["chromium", chromium, GL]]) {
   const b = await t.launch({ args: a }), p = await b.newPage({ viewport: { width: 390, height: 844 } }), errs = []; let ok = 0;

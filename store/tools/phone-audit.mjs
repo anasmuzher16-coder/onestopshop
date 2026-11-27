@@ -5,7 +5,7 @@ import { createRequire } from "node:module";
 const { chromium } = createRequire(process.env.PW_FROM || "C:/dev/puckempire-arena/package.json")("playwright");
 const base = process.env.BASE || "http://127.0.0.1:4420/";
 const SIZES = [[360, 740], [375, 667], [390, 844], [412, 915], [844, 390]];
-const ROUTES = ["", "shop", "shop/hookahs", "shop/bowls", "p/OSS-100024", "p/OSS-9616", "p/OSS-9104", "cart", "shipping", "set", "search", "gifts/under-50", "gifts/under-150", "shop/cologne", "shop/misc", "p/OSS-9308", "p/OSS-9113", "checkout", "privacy", "terms"];
+const ROUTES = ["", "shop", "shop/hookahs", "shop/shisha", "shop/bowls", "p/OSS-100024", "p/OSS-9616", "p/OSS-9104", "cart", "shipping", "set", "search", "gifts/under-50", "gifts/under-150", "shop/cologne", "shop/misc", "p/OSS-9308", "p/OSS-9113", "checkout", "privacy", "terms"];
 const cart = [{ sku: "OSS-9601", qty: 1 }, { sku: "OSS-9308", qty: 1 }, { sku: "OSS-9104", qty: 2 }];
 let n = 0, f = 0; const seen = new Set();
 const fail = (where, msg) => { f++; const k = msg.replace(/\d+(\.\d+)?/g, "#"); if (!seen.has(where.split(" ")[0] + k)) { seen.add(where.split(" ")[0] + k); console.log("FAIL", where, msg); } };

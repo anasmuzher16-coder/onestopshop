@@ -20,6 +20,7 @@ export const SEED_FILES = [
   "catalog/live/unticked-off-2026-11-26.sql",   // only ticked catalogue pages on view: a tick means in the shop, nothing is ordered in
   "catalog/live/menu-order-2026-11-26.sql",     // the menu order: hookahs, shisha, charcoal, heat, then the parts
   "catalog/live/shisha-flag-2026-11-26.sql",    // every shisha row carries its pay-at-the-counter rule itself, whatever its section
+  "catalog/live/shisha-tone-2026-11-26.sql",    // Shisha's own jewel, chartreuse, in place of Hoses' emerald
 ];
 export const seedPath = f => fileURLToPath(new URL(f, STORE));
 

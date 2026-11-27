@@ -85,7 +85,7 @@ const probe = p => p.evaluate(() => {
     hidden: vis.filter(s => +getComputedStyle(s).opacity < 1).length, stickers: vis.length, loose: document.querySelectorAll(".puff,.fly").length,
     sameLayer: !!window.__l && !!host && host.querySelector(":scope > .fx") === window.__l,
     dash: coil ? coil.style.strokeDasharray : "",
-    gone: o ? [...o.querySelectorAll(".kit0,.kit1,.kit2,.kit3,.ice,.mtag,.hline,.hlid,.hc,.coal,.recoil,.pipe,.rock")].filter(n => getComputedStyle(n).opacity === "0").map(n => n.getAttribute("class")) : [],   // the parts of a drawing that are always on show at rest
+    gone: o ? [...o.querySelectorAll(".kit0,.kit1,.kit2,.kit3,.ice,.mtag,.hline,.hlid,.hc,.coal,.recoil,.pipe,.rock,.tub,.sfg,.sstrand,.sdrip")].filter(n => getComputedStyle(n).opacity === "0").map(n => n.getAttribute("class")) : [],   // the parts of a drawing that are always on show at rest
     orphans: (window.__cv || []).filter(c => c.width * c.height > 0 && !c.isConnected && !(c.width === 64 && c.height === 64)).length, // 64 x 64 is the kept sprite
   };
 });
@@ -112,11 +112,11 @@ const p = await open();
 await load(p, "");
 const shop = await p.evaluate(async () => { const m = await import("/api/catalog-module"); return { cats: m.CATEGORIES.map(c => c.id), prods: m.PRODUCTS.map(x => ({ sku: x.sku, cat: x.cat, photo: !!(x.dark || x.photo), img: !!x.img })) }; });
 const only = (process.env.ONLY || "").split(",").filter(Boolean);
-const SECS = ["hookahs", "bases", "bowls", "heat", "charcoal", "hoses", "parts", "cologne", "misc"].filter(c => shop.cats.includes(c) && (!only.length || only.includes(c)));
+const SECS = ["hookahs", "shisha", "bases", "bowls", "heat", "charcoal", "hoses", "parts", "cologne", "misc"].filter(c => shop.cats.includes(c) && (!only.length || only.includes(c)));
 const CANVAS = new Set([]), LONG = new Set(["hookahs", "hoses"]), SMOKY = new Set(["hookahs"]);
 // a piece with a drawn-on-tile photo (the act plays on it); since the samples came off (2026-11-24) some sections hold items with no photo yet
 const pick = c => shop.prods.find(x => x.cat === c && !x.photo && x.img) || shop.prods.find(x => x.cat === c && !x.photo) || shop.prods.find(x => x.cat === c);
-t("the shop has the nine sections (charcoal its own since 2026-11-24)", SECS.length === 9 || only.length > 0, SECS.join(","));
+t("the shop has the ten sections (charcoal its own since 2026-11-24, shisha its own act since 2026-11-26)", SECS.length === 10 || only.length > 0, SECS.join(","));
 
 // ---------- 2. every section: direct load, in-site arrival, three re-draws, six seconds on, five taps ----------
 for (const c of SECS) {
@@ -135,6 +135,8 @@ for (const c of SECS) {
   t(c + ": the act is playing", q.runningInFx > 0, J(q));
   if (c === "bowls") { const b = await p.evaluate(() => { const o = document.querySelector(".shophead .fx-obj"), g = o && o.querySelector(".tongs"); return g ? { opacity: +getComputedStyle(g).opacity, y: g.getBoundingClientRect().bottom - o.getBoundingClientRect().top, h: o.getBoundingClientRect().height } : null; });
     t("bowls: mid-act the tongs are in view and down at the bowl", !!b && b.opacity > .9 && b.y > b.h * .2 && b.y < b.h * .55, J(b)); }
+  if (c === "shisha") { const d = await p.evaluate(() => { const o = document.querySelector(".shophead .fx-obj"), n = o && o.querySelector(".sdrip"); return n ? { drip: n.getAnimations().filter(a => a.playState === "running").length, fork: o.querySelector(".sfg").getAnimations().length, ring: o.querySelector(".ssplash").getAnimations().length } : null; });
+    t("shisha: mid-act the drip, the fork and the splash ring are all in the act", !!d && d.drip > 0 && d.fork > 0 && d.ring > 0, J(d)); }
   await wait(p, 650); q = await probe(p);
   if (CANVAS.has(c)) t(c + ": its canvas is up mid-act", q.fxCanvas === 1, J(q));
   await mark(p);
@@ -153,6 +155,9 @@ for (const c of SECS) {
     return { tongs: cs(".tongs").opacity, coals: o.querySelectorAll(".coal").length, front: cs(".c1").transform + " " + cs(".c1").opacity, glow: cs(".e1").opacity, flash: cs(".c1 .fl").opacity, moving: o.getAnimations({ subtree: true }).filter(a => a.playState === "running" && a.effect.getTiming().duration < 1300).length }; });
     t("bowls: three coals at rest with their light, tongs gone, nothing still moving", !!b && b.tongs === "0" && b.coals === 3 && /matrix\(1, 0, 0, 1, 67, 37\.4\) 1$/.test(b.front) && b.glow === "0.9" && b.flash === "0" && b.moving === 0, J(b)); }
   if (c === "hoses") t("hoses: the drawn hose keeps no dash", q.dash === "none" || q.dash === "", q.dash);
+  if (c === "shisha") { const d = await p.evaluate(() => { const o = document.querySelector(".shophead .fx-obj"); if (!o) return null; const cs = n => getComputedStyle(o.querySelector(n));
+    return { drip: cs(".sdrip").transform + " " + cs(".sdrip").opacity, strand: cs(".sstrand").transform, fork: cs(".sfg").transform, ring: cs(".ssplash").opacity, moving: o.getAnimations({ subtree: true }).filter(a => a.playState === "running" && a.effect.getTiming().duration < 1300).length }; });
+    t("shisha: at rest the drip hangs where it is drawn, the strand and fork are home, no ring, nothing still moving", !!d && d.drip === "none 1" && d.strand === "none" && d.fork === "none" && d.ring === "0" && d.moving === 0, J(d)); }
 
   // five taps, far enough apart that each one cuts the last act off in mid-air
   await record(p);

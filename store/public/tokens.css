@@ -26,6 +26,9 @@
   --emerald: oklch(0.78 0.13 155);
   --gilt:    oklch(0.83 0.12 88);
   --amethyst: oklch(0.76 0.105 312);
+  /* Shisha's tile (2026-11-26, owner-approved still shisha-a6): chartreuse, the green-gold of fresh molasses tobacco. Its own
+     jewel, so Shisha no longer shares Hoses' emerald. Same chroma band as the jewels; near-black title text 12.2:1 on it. */
+  --chartreuse: oklch(0.84 0.13 118);
   /* Charcoal's tile (2026-11-24): cold ash, the colour a lit coal turns. The one near-neutral jewel, so the ember on the
      price label and the coals' own glow are the only heat in the section. Same lightness band as the jewels. */
   --ashlt:   oklch(0.80 0.012 60);
@@ -69,5 +72,5 @@
 }
 [data-tone="ruby"]{--tile:var(--ruby)} [data-tone="teal"]{--tile:var(--teal)} [data-tone="cobalt"]{--tile:var(--cobalt)}
 [data-tone="ember"]{--tile:var(--emberlt)} [data-tone="emerald"]{--tile:var(--emerald)} [data-tone="gilt"]{--tile:var(--gilt)}
-[data-tone="bone"]{--tile:var(--bonelt)} [data-tone="amethyst"]{--tile:var(--amethyst)} [data-tone="ash"]{--tile:var(--ashlt)}
+[data-tone="bone"]{--tile:var(--bonelt)} [data-tone="amethyst"]{--tile:var(--amethyst)} [data-tone="ash"]{--tile:var(--ashlt)} [data-tone="chartreuse"]{--tile:var(--chartreuse)}
 @media (prefers-reduced-motion:reduce){:root{--dur-micro:1ms;--dur-state:1ms;--dur-reveal:1ms}}

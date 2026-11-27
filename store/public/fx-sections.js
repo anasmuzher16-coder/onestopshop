@@ -5,6 +5,7 @@
 //   bases    the third ice cube is dropped in; it splashes         bowls    tongs set the third coal on the foil; it flares
 //   heat     the coals take; the lid is let down on them           hoses    tossed down coiled; the handle bounces
 //   charcoal the sixth cube is set on the stack; it catches from below
+//   shisha   the fork lifts the strand; the drip lets go into the molasses
 //   parts    the kit is set down on the counter, piece by piece      misc     the price gun labels a pair of sunglasses
 // Timing: T0 is when the page change has landed; each act says in its own notes when its contact is. A tap on the
 // band plays a short version with no page change to wait for (a tap while anything is still moving is left alone,
@@ -364,6 +365,30 @@ const FX = {
     play(q(".cash"), [{ opacity: 0, easing: STATE }, { opacity: .9 }], 720, C + 420);
     sparks(C + 640);
   },
+  shisha(layer, go, host, re) {
+    // An open tub of molasses (the owner-approved still, 2026-11-26): the lid peeled back, a fork standing in the heap, lifting
+    // a glossy strand that ends in a hanging drip. The drip is the one beat. On arrival the fork lifts a little, the strand
+    // stretches, the drip swells, lets go and drops into the molasses with a small glossy ring, the strand eases back and a new
+    // drip forms at its end. A tap does the same, quicker. At rest (and with motion off) it is the drawing, the drip hanging.
+    const o = obj(layer, OBJ.shisha), q = c => o.querySelector(c), fork = q(".sfg"), strand = q(".sstrand"), drip = q(".sdrip"), ring = q(".ssplash");
+    const dt = (y, sx = 1, sy = 1) => `translate(0px,${y}px) scale(${sx},${sy})`;
+    idle(layer, () => play(drip, [{ transform: dt(0), easing: SINE }, { transform: dt(.3, 1.07, 1.12), offset: .45, easing: SINE }, { transform: dt(0) }], 1500, 0, "none"));   // it fills a little and hangs back
+    if (!go) return;
+    const k = re ? .72 : 1, S = re ? T0 - 100 : Math.max(0, T0 - 250), D = Math.round(1180 * k), at = v => v * k / 1180;   // S: the fork starts to lift
+    const R = 560, LAND = 700, STRETCH = 1.76;   // R: the drip lets go. LAND: it is in the molasses. STRETCH: how far the strand's end comes down
+    // the fork lifts along its own line, holds while the drip goes, and is set back in the heap
+    play(fork, [{ transform: "translate(0px,0px)", easing: STATE }, { transform: "translate(.87px,-2.45px)", offset: at(340), easing: STATE }, { transform: "translate(.87px,-2.45px)", offset: at(760), easing: STATE }, { transform: "translate(0px,0px)" }], D, S, "none");
+    // the strand stretches under the drip's weight; when it lets go the strand springs up a touch and eases back
+    play(strand, [{ transform: "scale(1,1)", easing: STATE }, { transform: "scale(1,1)", offset: at(150), easing: STATE }, { transform: "scale(1,1.14)", offset: at(R), easing: ENTER },
+      { transform: "scale(1,.97)", offset: at(R + 110), easing: SINE }, { transform: "scale(1,1)", offset: at(1000) }, { transform: "scale(1,1)" }], D, S, "none");
+    // the drip swells and draws out, falls speeding up, squashes into the molasses and is gone; a new one forms at the strand's end
+    play(drip, [{ transform: dt(0), opacity: 1, easing: STATE }, { transform: dt(0), opacity: 1, offset: at(150), easing: STATE },
+      { transform: dt(STRETCH, 1.15, 1.2), opacity: 1, offset: at(R), easing: STRIKE }, { transform: dt(8.2, .94, 1.14), opacity: 1, offset: at(LAND), easing: STATE },
+      { transform: dt(8.6, 1.35, .45), opacity: 0, offset: at(LAND + 60) }, { transform: dt(0, .12, .12), opacity: 0, offset: at(LAND + 70), easing: ENTER },
+      { transform: dt(0, .5, .5), opacity: 1, offset: at(LAND + 170), easing: ENTER }, { transform: dt(0), opacity: 1 }], D, S, "none");
+    // where it went in: one glossy ring opens on the molasses and thins out
+    play(ring, [{ opacity: 0, transform: "scale(.3)", easing: ENTER }, { opacity: .95, transform: "scale(.8)", offset: .2, easing: STATE }, { opacity: 0, transform: "scale(1.7)" }], Math.round(480 * k), S + Math.round(LAND * k), "none");
+  },
   hoses(layer, go, host, re) {
     // A wrapped hose lying coiled on the counter: steel connector at one end, two loose turns, its wooden handle lying
     // out to the right. It is tossed down from above the band: it lands, the turns flatten and spring back, and the
@@ -424,7 +449,6 @@ const FX = {
     }
   },
 };
-FX.shisha = FX.bowls;   // shisha (2026-11-24): the clay bowl it is packed into is its object, band and product page alike
 // ---- the pages that are not a shop section: same rule, one object, one act (tools/council-fx-pages.js)
 const SINE = "cubic-bezier(.37,0,.63,1)";
 // the object on a page band, from its layer or by name
@@ -961,6 +985,25 @@ const ACT = {
     give(host, T0 + 230, .988);
     glint(layer, img, P, T0 + 330, 720);                          // tight and still: the light runs along it
   },
+  // a tub of shisha: picked up with a slight quarter-turn to show its label (it narrows as it turns), set down heavy with a slow
+  // settle and no bounce (it is full of syrup), then one slow gloss runs across it. No coals, no steam (owner-approved, 2026-11-26)
+  shisha({ layer, img, K, P, pin, move, host }) {
+    pin((K.l + K.r) / 2, K.b);
+    const at = Math.max(0, T0 - 300), D = 1600, C = at + Math.round(D * .56);   // C: it is down
+    const up = Math.max(6, Math.min(22, P.y + K.t * P.h - 8));   // only as high as the room above it
+    const tf = (y, r, sx = 1, sy = 1) => `translateY(${y}px) rotate(${r}deg) scale(${sx},${sy})`;
+    move([
+      { transform: tf(0, 0), easing: ENTER },
+      { transform: tf(-up, -2.4, .9, 1), offset: .22, easing: SINE },             // lifted and turned: the label comes round to face us
+      { transform: tf(-up * 1.04, -1.8, .9, 1), offset: .4, easing: STRIKE },     // held there a moment
+      { transform: tf(0, 0, 1.012, .984), offset: .56, easing: "cubic-bezier(.2,.6,.3,1)" },   // C: down heavy, it gives a little
+      { transform: tf(0, 0, 1.004, .995), offset: .76, easing: SINE },            // and settles slowly, no bounce
+      { transform: tf(0, 0) }], D, at);
+    shade(layer, P, K, [{ opacity: 0, transform: "scale(1,1)", easing: ENTER }, { opacity: .5, transform: "scale(.7,.84)", offset: .22, easing: SINE }, { opacity: .46, transform: "scale(.68,.82)", offset: .4, easing: STRIKE },
+      { opacity: 1, transform: "scale(1.08,1.06)", offset: .56, easing: STATE }, { opacity: .7, transform: "scale(1,1)", offset: .76, easing: STATE }, { opacity: 0, transform: "scale(1,1)" }], D, at);
+    give(host, C, .99);
+    glint(layer, img, P, C + 380, 1400);   // set down and still: one slow gloss crosses it
+  },
   // picked up off the counter, turned over once, put back
   misc({ layer, K, P, pin, move, hit }) {
     pin((K.l + K.r) / 2, K.b);
@@ -975,7 +1018,6 @@ const ACT = {
       { transform: turn(0, 0) + " scale(1)" }], 900, hit + 40);
   },
 };
-ACT.shisha = ACT.bowls;
 ACT.charcoal = ACT.heat;   // a charcoal product page (its own section since 2026-11-24): the coals catch, as they did when charcoal lived in Heat
 function piece(layer, go, host, cat) {
   if (!go) return;

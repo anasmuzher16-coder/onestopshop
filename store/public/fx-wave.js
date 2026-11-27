@@ -12,7 +12,7 @@ function ok(L, C, h) {
   const e = v => { v = Math.max(0, Math.min(1, v)); return v <= .0031308 ? 12.92 * v : 1.055 * v ** (1 / 2.4) - .055; };
   return [e(4.0767416621 * l - 3.3077115913 * m + .2309699292 * s), e(-1.2684380046 * l + 2.6097574011 * m - .3413193965 * s), e(-.0041960863 * l - .7034186147 * m + 1.707614701 * s)];
 }
-const C = { coal: ok(.155, .012, 50), coal1: ok(.205, .014, 50), coal2: ok(.275, .014, 52), ash: ok(.72, .018, 70), bone: ok(.925, .022, 80), ruby: ok(.72, .15, 18), teal: ok(.78, .105, 190), cobalt: ok(.72, .12, 265), emberlt: ok(.77, .14, 55), emerald: ok(.78, .13, 155), gilt: ok(.83, .12, 88), amethyst: ok(.76, .105, 312), bonelt: ok(.90, .03, 80), ember: ok(.58, .215, 29), ashlt: ok(.80, .012, 60) };
+const C = { coal: ok(.155, .012, 50), coal1: ok(.205, .014, 50), coal2: ok(.275, .014, 52), ash: ok(.72, .018, 70), bone: ok(.925, .022, 80), ruby: ok(.72, .15, 18), teal: ok(.78, .105, 190), cobalt: ok(.72, .12, 265), emberlt: ok(.77, .14, 55), emerald: ok(.78, .13, 155), gilt: ok(.83, .12, 88), amethyst: ok(.76, .105, 312), chartreuse: ok(.84, .13, 118), bonelt: ok(.90, .03, 80), ember: ok(.58, .215, 29), ashlt: ok(.80, .012, 60) };
 const mid = h => ok(.46, .09, h), deep = h => ok(.30, .055, h), S2 = Math.SQRT1_2;
 const tone = (c, h, accent = C.bone) => [c, mid(h), deep(h), accent];
 
@@ -24,6 +24,7 @@ const W = {
   charcoal: { m: "motes", d: [-.38, .925], e: 130, p: [C.ashlt, ok(.50, .17, 32), C.coal2, ok(.72, .17, 50)] },   // a coal burning down to ash: the ash tile arrives behind a glowing ember edge, throwing ember sparks
   bases: { m: "water", d: [0, 1], e: 80, p: tone(C.teal, 190) },
   bowls: { m: "fly", sprite: "bowls", d: [0, -1], e: 300, p: tone(C.cobalt, 265) },
+  shisha: { m: "fly", sprite: "bowls", d: [0, -1], e: 300, p: tone(C.chartreuse, 118) },   // the bowl it is packed into flies, on Shisha's own chartreuse (2026-11-26), so the wave lands on the band it uncovers
   hoses: { m: "rope", d: [1, 0], e: 2, p: tone(C.emerald, 155), c: 340, ms: 500 },
   parts: { m: "fly", sprite: "parts", d: [-1, 0], e: 300, p: tone(C.gilt, 88) },
   cologne: { m: "mist", d: [-S2, -S2], e: 380, p: [C.amethyst, ok(.62, .1, 312), deep(312), ok(.86, .06, 312)] },
@@ -208,12 +209,12 @@ function view() {
 function lower(to) { to = Math.max(.5, to); if (to >= res) return; res = to; try { sessionStorage.setItem("oss:wave-res", res); } catch {} }
 
 // which section a path belongs to
-const CATS = new Set(["hookahs", "bases", "bowls", "heat", "charcoal", "hoses", "parts", "cologne", "misc"]);
+const CATS = new Set(["hookahs", "shisha", "bases", "bowls", "heat", "charcoal", "hoses", "parts", "cologne", "misc"]);
 function sectionOf(path) {
   const [a = "", b] = path.split(/[?#]/)[0].replace(/^\/+|\/+$/g, "").split("/");
-  // shisha rides the bowls wave. (The gifts/set/shipping/search/cart line below once sat after this comment on one
-  // line, which commented it out: those pages lost their waves. Keep it on its own line.)
-  if (!a) return "home"; if (a === "shop") return !b ? "all" : CATS.has(b) ? b : b === "shisha" ? "bowls" : "missing";
+  // (The gifts/set/shipping/search/cart line below once sat after a comment on this line, which commented it out: those
+  // pages lost their waves. Keep it on its own line.) Shisha has its own wave since 2026-11-26.
+  if (!a) return "home"; if (a === "shop") return !b ? "all" : CATS.has(b) ? b : "missing";
   if (a === "gifts" || a === "set" || a === "shipping" || a === "search" || a === "cart") return a;
   if (a === "p") return "piece"; return a === "checkout" || a === "order" || a === "terms" || a === "privacy" ? "quiet" : "missing";
 }
