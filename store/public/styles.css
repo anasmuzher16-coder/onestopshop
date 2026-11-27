@@ -215,7 +215,7 @@ body:not([data-route]) .foot{visibility:hidden}
 .pdp{display:grid;grid-auto-columns:minmax(0,1fr)}
 .pdp > *,.grid > *,.shelf__head > .h2,.keep__b{min-width:0}
 .pdp__info,.card,.shelf__head .h2{overflow-wrap:break-word}
-.pdp__tile{border-radius:0;aspect-ratio:auto;height:min(105vw,52svh);background:var(--tile,var(--color-raised));transition:background-color var(--dur-state) var(--ease-state)}
+.pdp__tile{border-radius:0;aspect-ratio:auto;height:min(105vw,52svh);background:var(--tile,var(--color-raised));transition:background-color var(--dur-state) var(--ease-state);overflow-x:clip}   /* the product act moves the photo sideways: never let it widen the page (phone-audit, OSS-9616 at 375, 2026-11-27); vertical stays open for the act's lift */
 .pdp__tile .sticker{top:var(--s-4);right:var(--s-4);bottom:auto;width:92px;height:92px} .pdp__tile .sticker__v{font-size:2rem}
 .pdp__tile .shot:not(.shot--photo){padding:7% 6% 5%}   /* a cut-out never touches the tile edge on a phone, and has room above it to move */
 .pdp__tile.tile--photo{background:#000}
