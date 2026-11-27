@@ -69,6 +69,10 @@ Ace group (Full size, Stem set, Compact and travel, Statement piece) is a writte
 Photo status: `ready`; `CHECK` (enlarged past 1.25x: ask Ace for the original); `hand_crop` (products touch, needs a
 drawn crop); `needs_original` (enlarged past 2x). Owner ruling 2026-11-24: `CHECK`, `needs_original` and `hand_crop` photos all go up as the main photo with "Photo to be upscaled"; `family_hero_only` (no photo of this colour, the family's main photo stands in); `none`;
 `needs_store_photo` (charcoal and foil).
+A `CHECK` or `needs_original` photo re-made from a 4x upscale and passed by a design review is listed in
+`suppliers/<supplier>/upscaled.json` (method, source PDF sha256, sha256 of each published file, 1440 width): photos.py and
+photos_acc.py then keep its files and give it `ready`. If its files or the PDF change, the scripts warn and flag it again;
+its row's `img_lw` must then go back to NULL. First one: OSS-110026, 2026-11-27 (`catalog/live/upscaled-photos-2026-11-27.sql`).
 
 ## SKUs: OSS-SSNNNN
 

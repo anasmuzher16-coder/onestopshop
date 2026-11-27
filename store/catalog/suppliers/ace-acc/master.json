@@ -2694,7 +2694,7 @@
      "key": "acc-p76",
      "photo": {
       "img": "acc/acc-p76",
-      "status": "needs_original",
+      "status": "ready",
       "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
      },
      "shop": {

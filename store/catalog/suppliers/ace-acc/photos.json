@@ -469,9 +469,9 @@
     530
    ],
    "scale": 2.105,
-   "status": "needs_original",
+   "status": "ready",
    "out": "acc/acc-p76",
-   "note": "single cut-out; enlarged 2.11x from a small source: needs Ace's original"
+   "note": "single cut-out; enlarged 2.11x from a small source: needs Ace's original; upscaled 4x (realesrgan-x4plus) 2026-11-27, was needs_original 2.105x"
   },
   {
    "page": 77,
