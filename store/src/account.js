@@ -4,6 +4,7 @@
 import { writeEmail, frame, plain, esc } from "./email.js";
 import { loyaltyView } from "./loyalty.js";
 import { CHARCOAL, TICKED } from "./catalog.js";
+import { keyedHash, sourceOf } from "./guard.js";
 
 const COOKIE = "oss_c", SESSION_DAYS = 30, CODE_MINUTES = 10, MAX_TRIES = 5;
 // rate limits: per email (any network), per network (any email), and the whole shop, so nobody can use the form to flood an inbox
@@ -20,8 +21,11 @@ function sixDigits() {   // uniform: values past the last whole million are thro
   const top = 4294000000; let n; do { n = crypto.getRandomValues(new Uint32Array(1))[0]; } while (n >= top); return String(n % 1000000).padStart(6, "0");
 }
 const json = (body, status = 200, headers = {}) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", ...headers } });
-const who = request => sha("acct|" + (request.headers.get("CF-Connecting-IP") || "local"));
-const mailKey = email => sha("mail|" + email);
+// A visitor and an inbox, for the sign-in code limits: keyed hashes (src/guard.js keyedHash), never the address or the email, and
+// the address counted the way every other limit counts it, IPv6 by its /56 (a home connection holds a whole block) (2026-11-27).
+const who = (request, env) => keyedHash(env, "acct", sourceOf(request));
+const mailKey = (email, env) => keyedHash(env, "mail", email);
+const codeHash = (env, salt, code) => keyedHash(env, "code", salt + ":" + code);   // a 6-digit code is keyed too, so a copied table cannot be tried offline
 // The outbox copy of a sign-in email holds a live code: it is wiped once sent, used, or expired.
 const WIPED = why => `subject = 'Sign-in code (${why})', html = '<p>This sign-in code is no longer kept.</p>', body = 'This sign-in code is no longer kept.'`;
 const scrubStatement = db => db.prepare(`UPDATE emails SET ${WIPED("expired")} WHERE kind = 'sign_in' AND at < strftime('%Y-%m-%dT%H:%M:%SZ','now','-${CODE_MINUTES + 1} minutes') AND body != 'This sign-in code is no longer kept.'`);
@@ -100,16 +104,16 @@ export async function accountRoute(request, env, url) {
   // Ask for a code. The answer is the same whether or not an account exists, so the form tells nobody who shops here.
   if (path === "/code" && method === "POST") {
     const email = cleanEmail(body.email); if (!email) return json({ error: "That email address does not look right.", field: "email" }, 400);
-    const w = await who(request);
+    const w = await who(request, env);
     const n = await db.prepare(`SELECT COALESCE(SUM(email = ?1 AND created_at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-15 minutes')),0) AS mail, COALESCE(SUM(who = ?2),0) AS mine, COUNT(*) AS everyone FROM sign_in_codes WHERE created_at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 hour')`).bind(email, w).first();
     if (n.mail >= LIMIT.perEmail15 || n.mine >= LIMIT.perWhoHour || n.everyone >= LIMIT.allHour) return json({ error: "That is a lot of codes in a short time. Wait 15 minutes, then ask again." }, 429);
     // wrong codes for this one inbox, from any network, over a day: past the cap no new code is made until it clears
-    const wrongMail = await db.prepare("SELECT COUNT(*) AS n FROM account_attempts WHERE who = ? AND at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 day')").bind(await mailKey(email)).first("n");
+    const wrongMail = await db.prepare("SELECT COUNT(*) AS n FROM account_attempts WHERE who = ? AND at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 day')").bind(await mailKey(email, env)).first("n");
     if (wrongMail >= LIMIT.wrongPerEmailDay) return json({ error: "Too many wrong codes for this email today. Try again tomorrow, or call the counter at 519-255-2222." }, 429);
     const code = sixDigits(), link = random(32), salt = random(16);
     await db.batch([
       db.prepare("UPDATE sign_in_codes SET used = 1 WHERE email = ? AND used = 0").bind(email),   // only the newest code works
-      db.prepare(`INSERT INTO sign_in_codes (email, salt, code_hash, link_hash, who, expires_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ','now','+${CODE_MINUTES} minutes'))`).bind(email, salt, await sha(salt + ":" + code), await sha(link), w),
+      db.prepare(`INSERT INTO sign_in_codes (email, salt, code_hash, link_hash, who, expires_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ','now','+${CODE_MINUTES} minutes'))`).bind(email, salt, await codeHash(env, salt, code), await sha(link), w),
       db.prepare("DELETE FROM sign_in_codes WHERE created_at < strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 day')"),
       db.prepare("DELETE FROM account_attempts WHERE at < strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 day')"),
       scrubStatement(db),
@@ -124,11 +128,11 @@ export async function accountRoute(request, env, url) {
   // /peek only says which email a link is for, without using it, so the page can ask "sign in as ...?" first
   // (someone sending you a link to THEIR account cannot slip you into it unawares).
   if ((path === "/verify" || path === "/peek") && method === "POST") {
-    const w = await who(request);
+    const w = await who(request, env);
     const wrong = await db.prepare("SELECT COUNT(*) AS n FROM account_attempts WHERE who = ? AND at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-15 minutes')").bind(w).first("n");
     if (wrong >= LIMIT.wrongPerWho15) return json({ error: "Too many wrong codes. Wait 15 minutes and try again." }, 429);
     const miss = async (msg, status = 400, email = null) => {
-      await db.batch([db.prepare("INSERT INTO account_attempts (who) VALUES (?)").bind(w), ...(email ? [db.prepare("INSERT INTO account_attempts (who) VALUES (?)").bind(await mailKey(email))] : [])]);
+      await db.batch([db.prepare("INSERT INTO account_attempts (who) VALUES (?)").bind(w), ...(email ? [db.prepare("INSERT INTO account_attempts (who) VALUES (?)").bind(await mailKey(email, env))] : [])]);
       return json({ error: msg }, status);
     };
     let row = null;
@@ -149,7 +153,7 @@ export async function accountRoute(request, env, url) {
       // count the try before checking it, in one guarded step, so parallel guesses cannot slip past the limit
       const counted = await db.prepare(`UPDATE sign_in_codes SET tries = tries + 1 WHERE id = ? AND used = 0 AND tries < ${MAX_TRIES}`).bind(row.id).run();
       if (!counted.meta.changes) return miss("Too many wrong tries for this code. Ask for a new one.");
-      if (!same(await sha(row.salt + ":" + code), row.code_hash)) {
+      if (!same(await codeHash(env, row.salt, code), row.code_hash)) {
         if (row.tries + 1 >= MAX_TRIES) await db.prepare("UPDATE sign_in_codes SET used = 1 WHERE id = ?").bind(row.id).run();
         return miss("That code is not right, or it has expired. Ask for a new one.", 400, email);
       }
@@ -165,7 +169,7 @@ export async function accountRoute(request, env, url) {
       db.prepare(`DELETE FROM customer_sessions WHERE expires_at <= ${NOW}`),
       db.prepare("UPDATE sign_in_codes SET used = 1 WHERE email = ? AND used = 0").bind(row.email),
       db.prepare(`UPDATE emails SET ${WIPED("used")} WHERE kind = 'sign_in' AND recipient = ?`).bind(row.email),
-      db.prepare("DELETE FROM account_attempts WHERE who = ?").bind(await mailKey(row.email)),   // a right code clears this inbox's wrong-code count
+      db.prepare("DELETE FROM account_attempts WHERE who = ?").bind(await mailKey(row.email, env)),   // a right code clears this inbox's wrong-code count
       // orders placed as a guest with this email are theirs: they proved they own it
       db.prepare("UPDATE orders SET customer_id = ? WHERE customer_id IS NULL AND lower(email) = ?").bind(c.id, row.email),
     ]);

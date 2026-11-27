@@ -1,11 +1,11 @@
 import { orderShipped, pickupReady, writeEmail, resendEmail, mailReady } from "./email.js";
 import { snapshot } from "./backup.js";
 import { CHARCOAL } from "./catalog.js";
-import { adminPay } from "./pay.js";
+import { adminPay, lowNote } from "./pay.js";
 import { sameSecret, hashPin, checkPin, pinProblem, cleanName } from "./staff.js";
 import { report, reportCsv, monthOf } from "./report.js";
 import { isSample } from "./samples.js";
-import { sourceOf } from "./guard.js";
+import { sourceOf, TAKEN_SQL, keyedHash } from "./guard.js";
 // The shop's back office: sign-in, shop numbers, stock and orders. Every route here needs the admin cookie,
 // and every write also needs a same-site JSON request, so another website cannot trigger one.
 // Two kinds of sign-in: the owner's passcode (ADMIN_KEY), and named staff with a 6-digit PIN. Every change is
@@ -29,7 +29,19 @@ export async function signedIn(request, env) {
   return { actor: s.actor, staff_id: s.staff_id, owner: s.staff_id === null };
 }
 const LOCKED = "Too many wrong tries. Wait 15 minutes and try again.";
-const NAME_CAP = 30;   // wrong tries on one staff name in 15 minutes from addresses not seen signing in (docs/BACKEND-NOTES.md)
+const NAME_DAY_CAP = 20;   // wrong tries on one staff name in a day from unfamiliar devices and places (docs/BACKEND-NOTES.md)
+const NAME_LOCKED = "Too many wrong tries for this name today. Sign in from a phone or computer that has signed in here before, or ask the owner.";
+const DEVICE_WRONG_CAP = 10, PLACE_WRONG_CAP = 10;   // wrong tries in a day after which a familiar device is treated as unfamiliar
+// The known-device cookie (2026-11-27): a random id and an HMAC of it keyed with the Worker secret, set at every correct sign-in and
+// recorded then (login_attempts, who = "d:" + keyed hash, ok = 1, staff_id). It counts as familiar only while that record is under
+// 400 days old and the person who signed in there is still on the staff list (or it was the owner). It never signs anyone in.
+const DEV_COOKIE = "oss_dev", DEVICE_DAYS = 400;
+const deviceSig = async (env, id) => { const k = await crypto.subtle.importKey("raw", new TextEncoder().encode("dev|" + (env.PIN_PEPPER || env.ADMIN_KEY || "")), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]); return hex(await crypto.subtle.sign("HMAC", k, new TextEncoder().encode(id))); };
+async function deviceFrom(request, env) {
+  const m = (request.headers.get("Cookie") || "").match(/(?:^|;\s*)oss_dev=([a-f0-9]{32})\.([a-f0-9]{64})(?:;|$)/); if (!m) return null;
+  return await sameSecret(m[2], await deviceSig(env, m[1])) ? m[1] : null;
+}
+export const shopDevice = async (request, env) => !!(await deviceFrom(request, env)) && !!(await env.DB.prepare("SELECT 1 AS x FROM login_attempts a LEFT JOIN staff st ON st.id = a.staff_id WHERE a.who = ? AND a.ok = 1 AND a.at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-400 days') AND (a.staff_id IS NULL OR st.active = 1) LIMIT 1").bind("d:" + await keyedHash(env, "dev", await deviceFrom(request, env))).first("x"));
 // The test suites switch a few demo samples back on in their own throwaway local database (tools/fixtures/samples-on.mjs), so
 // they have items of kinds the shop does not sell yet. Only with SAMPLES_TEST_ONLY=1 (set by the test runners, never in
 // wrangler.jsonc), on a store reached at 127.0.0.1 or localhost, never with LIVE=1, and only when the fixture marks its own request
@@ -49,6 +61,10 @@ function charcoalRules(out, was) {
   out.details = JSON.stringify({ ...d, charcoal: true });
 }
 const SOLD = "('paid','packed','shipped','ready','collected')";
+// Pickup requests (2026-11-27): a pay-at-the-counter order takes no stock when placed. STOCKED: the order's own stock moves show it
+// holds stock now. TO_CONFIRM: still a request the shop has to check against the shelf and mark ready (nothing held yet).
+const STOCKED = t => `EXISTS (SELECT 1 FROM ${TAKEN_SQL(`${t}.id`)})`;
+const TO_CONFIRM = t => `${t}.status = 'pending' AND ${t}.pay_status = 'pay_at_pickup' AND ${t}.release_op IS NULL AND NOT EXISTS (SELECT 1 FROM stock_moves sm WHERE sm.ref = ${t}.id AND sm.reason = 'sale')`;
 const LOCAL = "'-5 hours'"; // the shop's clock (Windsor), close enough for day totals
 const clampInt = (v, lo, hi) => { const n = Math.round(Number(v)); return Number.isFinite(n) && n >= lo && n <= hi ? n : null; };
 const text = (v, max) => typeof v === "string" && v.trim().length <= max ? v.trim() : null;
@@ -91,40 +107,68 @@ export async function admin(request, env, url) {
     const body = await request.json().catch(() => ({}));
     const staffLogin = typeof body.name === "string" || typeof body.pin === "string";
     if (staffLogin && env.LIVE === "1" && !env.PIN_PEPPER) return json({ error: "Staff sign-in is not set up yet. Sign in with the owner passcode." }, 503);
-    const name = staffLogin ? cleanName(body.name) : null, nameKey = "n:" + await sha("name|" + (name || String(body.name || "")).toLowerCase());
-    // Sign-in limits (docs/BACKEND-NOTES.md; reworked 2026-11-27 so no set of addresses can lock the shop out). A request already
-    // over a limit is refused BEFORE anything is written, so it cannot keep adding tries; a try that gets through is written down,
-    // then counted again, so a burst of tries at once is still counted in full. Within fifteen minutes:
-    //  - one address (IPv4, or IPv6 by its /56): more than 5 wrong tries and that address waits. Its wider IPv6 /48: 5 in all.
-    //  - one staff name: past 5 wrong tries from addresses the shop has not seen sign in, each further try is slowed (doubling,
-    //    up to 8 s), and past 30 they are refused for that name (names that do not exist count the same, so nothing shows who
-    //    works here). An address that has signed in correctly in the last 30 days (the counter's own connection) is not held by
-    //    the name's count at all, so a stranger hammering a name never locks the real person out at the shop.
-    //  - the owner's passcode: no shop-wide lock. Past 20 wrong tries shop-wide, each try from an address not seen signing in is
-    //    slowed (doubling, up to 8 s). The passcode (ADMIN_KEY) must be long and random; at 5 tries per address per 15 minutes,
-    //    even a thousand addresses cannot guess a 16-character one.
-    // Signed-in sessions are never touched by any of this.
-    const who = await sha("who|" + sourceOf(request)), side = (staffLogin ? "s:" : "p:") + await sha("from|" + sourceOf(request, 48));   // the /48, its own count
-    const count = () => db.prepare(`SELECT COALESCE(SUM(ok = 0 AND who = ?1),0) AS mine, COALESCE(SUM(ok = 0 AND who = ?2),0) AS this_name, COALESCE(SUM(ok = 0 AND who = ?3),0) AS place,
-      COALESCE(SUM(ok = 0 AND who LIKE 'p:%'),0) AS owner_all FROM login_attempts WHERE at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-15 minutes')`).bind(who, nameKey, side).first();
-    const known = !!(await db.prepare("SELECT 1 AS x FROM login_attempts WHERE who = ? AND ok = 1 AND at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-30 days') LIMIT 1").bind(who).first("x"));
-    const locked = t => t.mine > 5 || t.place > 5 || (staffLogin && !known && t.this_name > NAME_CAP);
-    if (locked(await count())) { log("login_locked", { staff: staffLogin }); return json({ error: LOCKED }, 429); }
-    const mark = await db.batch([db.prepare("INSERT INTO login_attempts (who, ok) VALUES (?, 0)").bind(who), db.prepare("INSERT INTO login_attempts (who, ok) VALUES (?, 0)").bind(side),
-      db.prepare("DELETE FROM login_attempts WHERE ok = 0 AND at < strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 day')")]);
+    const name = staffLogin ? cleanName(body.name) : null;
+    // Sign-in limits (docs/BACKEND-NOTES.md; reworked 2026-11-27 twice so no set of addresses can lock the shop out and a 6-digit PIN
+    // cannot be guessed online). A request already over a limit is refused BEFORE anything is written, so it cannot keep adding tries;
+    // a try that gets through is written down, then counted again, so a burst of tries at once is still counted in full.
+    //  - one address (IPv4, or IPv6 by its /56), 15 minutes: more than 5 wrong tries and that address waits. Its wider IPv6 /48: 5 in all.
+    //  - one staff name, a day, from devices and places the shop has not seen sign in: past 3 wrong tries each try is slowed
+    //    (doubling from 500 ms, up to 8 s); at NAME_DAY_CAP (20) they are refused for that name for the rest of the day. 20 a day
+    //    puts the expected time to guess one PIN at about 68 years. Only names on the staff list count against a name: a name that
+    //    does not exist is counted under its own separate key with the same rules (so the answers never show who works here), and
+    //    a staff member added later starts clean, so a common first name cannot be locked in advance.
+    //  - familiar devices and places are not held by the name's count: a phone or computer where THIS person signed in correctly
+    //    before (a signed oss_dev cookie, recorded at that sign-in with their staff id, while they are still on the staff list; for
+    //    the owner, a device the owner signed in on), or an address where someone still on the staff list (or the owner) signed in
+    //    correctly in the last 30 days. Each has its own ceiling: 10 wrong tries in a day from that device, or from that address,
+    //    and it is treated as unfamiliar for the rest of the day. So a stranger hammering a name never locks the real person out at
+    //    their own phone or the counter, and neither a device nor a place is a way round the day's ceiling (breaker, 2026-11-27).
+    //    Not covered: anyone sharing the counter's public address can still use up that address's 5 tries in 15 minutes.
+    //  - the owner's passcode: no shop-wide lock. Past 20 wrong tries shop-wide, each try from an unfamiliar device and place is
+    //    slowed (doubling, up to 8 s). The passcode (ADMIN_KEY) must be long and random.
+    // Addresses, names and devices are stored only as keyed hashes (src/guard.js keyedHash). Signed-in sessions are never touched.
+    let staff = staffLogin && name ? await db.prepare("SELECT id, name, pin_hash FROM staff WHERE lower(name) = lower(?) AND active = 1").bind(name).first() : null;
+    const nameKey = (staff ? "n:" : "u:") + await keyedHash(env, "name", (name || String(body.name || "")).toLowerCase());
+    const who = await keyedHash(env, "who", sourceOf(request)), side = (staffLogin ? "s:" : "p:") + await keyedHash(env, "from", sourceOf(request, 48));   // the /48, its own count
+    const dev = await deviceFrom(request, env), devKey = dev ? "d:" + await keyedHash(env, "dev", dev) : null, devWrong = dev ? "e:" + await keyedHash(env, "dev", dev) : null;
+    const count = () => db.prepare(`SELECT COALESCE(SUM(ok = 0 AND who = ?1 AND at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-15 minutes')),0) AS mine, COALESCE(SUM(ok = 0 AND who = ?1),0) AS mine_day, COALESCE(SUM(ok = 0 AND who = ?2),0) AS name_day,
+      COALESCE(SUM(ok = 0 AND who = ?3 AND at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-15 minutes')),0) AS place, COALESCE(SUM(ok = 0 AND who = ?4),0) AS dev_wrong,
+      COALESCE(SUM(ok = 0 AND who LIKE 'p:%' AND at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-15 minutes')),0) AS owner_all FROM login_attempts WHERE at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 day') AND ok = 0`).bind(who, nameKey, side, devWrong || "-").first();
+    // a place: someone still on the staff list (or the owner) signed in there; a device: this very person (or, for the passcode, the owner)
+    const [placeKnown, devKnown] = await db.batch([db.prepare("SELECT 1 AS x FROM login_attempts a LEFT JOIN staff st ON st.id = a.staff_id WHERE a.who = ? AND a.ok = 1 AND a.at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-30 days') AND (a.staff_id IS NULL OR st.active = 1) LIMIT 1").bind(who),
+      db.prepare("SELECT 1 AS x FROM login_attempts a LEFT JOIN staff st ON st.id = a.staff_id WHERE a.who = ?1 AND a.ok = 1 AND a.at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-400 days') AND ((?2 = 0 AND a.staff_id IS NULL) OR (?2 = 1 AND a.staff_id = ?3 AND st.active = 1)) LIMIT 1").bind(devKey || "-", staffLogin ? 1 : 0, staff ? staff.id : -1)]);
     let tries = await count();
-    if (locked(tries)) { log("login_locked", { staff: staffLogin }); return json({ error: LOCKED }, 429); }
-    // the name's own row only once this address is through its own limit, so one address's burst cannot use up a name
-    if (staffLogin) { mark.push(await db.prepare("INSERT INTO login_attempts (who, ok) VALUES (?, 0)").bind(nameKey).run()); tries = await count(); if (locked(tries)) { log("login_locked", { staff: true }); return json({ error: LOCKED }, 429); } }
-    const slow = known ? 0 : staffLogin ? (tries.this_name > 5 ? Math.min(8000, 250 * 2 ** Math.floor((tries.this_name - 6) / 5)) : 0) : (tries.owner_all > 20 ? Math.min(8000, 250 * 2 ** Math.floor((tries.owner_all - 21) / 10)) : 0);
+    const familiar = t => (placeKnown.results.length > 0 && t.mine_day < PLACE_WRONG_CAP) || (devKnown.results.length > 0 && t.dev_wrong < DEVICE_WRONG_CAP);
+    const locked = t => t.mine > 5 || t.place > 5 || (staffLogin && !familiar(t) && t.name_day >= NAME_DAY_CAP);
+    const lockWords = t => t.mine > 5 || t.place > 5 ? LOCKED : NAME_LOCKED;
+    if (locked(tries)) { log("login_locked", { staff: staffLogin }); return json({ error: lockWords(tries) }, 429); }
+    // the device's own wrong-try row is written with the others, before the PIN is checked (and taken back on success), so tries
+    // at the same moment from many addresses are counted in full against the device's ceiling
+    const mark = await db.batch([db.prepare("INSERT INTO login_attempts (who, ok) VALUES (?, 0)").bind(who), db.prepare("INSERT INTO login_attempts (who, ok) VALUES (?, 0)").bind(side),
+      db.prepare("DELETE FROM login_attempts WHERE ok = 0 AND at < strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 day')"), db.prepare("INSERT INTO login_attempts (who, ok) VALUES (?, 0)").bind(devWrong || "e:none")]);
+    const own = t => ({ ...t, mine_day: t.mine_day - 1, dev_wrong: t.dev_wrong - (devWrong ? 1 : 0) });   // from here this try's own rows are in the count
+    tries = own(await count());
+    if (locked(tries)) { log("login_locked", { staff: staffLogin }); return json({ error: lockWords(tries) }, 429); }
+    // the name's own row only once this address is through its own limit, so one address's burst cannot use up a name; a familiar
+    // device or place writes none, so the real person signing in from their own phone never adds to a stranger's count
+    let nameRow = null;
+    if (staffLogin && !familiar(tries)) { nameRow = await db.prepare("INSERT INTO login_attempts (who, ok) VALUES (?, 0)").bind(nameKey).run(); tries = own(await count()); if (locked({ ...tries, name_day: tries.name_day - 1 })) { log("login_locked", { staff: true }); return json({ error: NAME_LOCKED }, 429); } }
+    const slow = familiar(tries) ? 0 : staffLogin ? (tries.name_day > 3 ? Math.min(8000, 500 * 2 ** (tries.name_day - 4)) : 0) : (tries.owner_all > 20 ? Math.min(8000, 250 * 2 ** Math.floor((tries.owner_all - 21) / 10)) : 0);
     if (slow) await new Promise(r => setTimeout(r, slow));
-    if (!staffLogin && env.LIVE === "1" && String(env.ADMIN_KEY).length < 16) console.error(JSON.stringify({ at: "admin", problem: "ADMIN_KEY is shorter than 16 characters: set a long random passcode (docs/BACKEND-NOTES.md)" }));    let right = false, staff = null;
-    if (staffLogin) {
-      staff = name ? await db.prepare("SELECT id, name, pin_hash FROM staff WHERE lower(name) = lower(?) AND active = 1").bind(name).first() : null;
-      right = await checkPin(env, typeof body.pin === "string" ? body.pin : "", staff && staff.pin_hash) && !!staff;   // the same work whether or not the name exists
-    } else right = typeof body.passcode === "string" && await sameSecret(body.passcode, env.ADMIN_KEY);
-    if (!right) { if (staff) await db.prepare("UPDATE login_attempts SET staff_id = ? WHERE id = ?").bind(staff.id, mark[0].meta.last_row_id).run(); log("login_failed", { staff: staffLogin }); return json({ error: staffLogin ? "That name and PIN do not match." : "That passcode is not right." }, 401); }
-    await db.batch([db.prepare("UPDATE login_attempts SET ok = 1, staff_id = ? WHERE id = ?").bind(staff ? staff.id : null, mark[0].meta.last_row_id), db.prepare("DELETE FROM login_attempts WHERE id = ?").bind(mark[1].meta.last_row_id), ...(staffLogin ? [db.prepare("DELETE FROM login_attempts WHERE id = ?").bind(mark[3].meta.last_row_id)] : [])]);
+    if (!staffLogin && env.LIVE === "1" && String(env.ADMIN_KEY).length < 16) console.error(JSON.stringify({ at: "admin", problem: "ADMIN_KEY is shorter than 16 characters: set a long random passcode (docs/BACKEND-NOTES.md)" }));
+    let right = false;
+    if (staffLogin) right = await checkPin(env, typeof body.pin === "string" ? body.pin : "", staff && staff.pin_hash) && !!staff;   // the same work whether or not the name exists
+    else right = typeof body.passcode === "string" && await sameSecret(body.passcode, env.ADMIN_KEY);
+    if (!right) {
+      // the same write whether or not the name exists, so the answer's timing does not show who works here
+      await db.prepare("UPDATE login_attempts SET staff_id = ? WHERE id = ?").bind(staff ? staff.id : null, mark[0].meta.last_row_id).run();
+      log("login_failed", { staff: staffLogin }); return json({ error: staffLogin ? "That name and PIN do not match." : "That passcode is not right." }, 401);
+    }
+    if (!staffLogin) staff = null;
+    const device = dev || hex(crypto.getRandomValues(new Uint8Array(16))), deviceKey = "d:" + await keyedHash(env, "dev", device);
+    await db.batch([db.prepare("UPDATE login_attempts SET ok = 1, staff_id = ? WHERE id = ?").bind(staff ? staff.id : null, mark[0].meta.last_row_id), db.prepare("DELETE FROM login_attempts WHERE id IN (?, ?)").bind(mark[1].meta.last_row_id, mark[3].meta.last_row_id), ...(nameRow ? [db.prepare("DELETE FROM login_attempts WHERE id = ?").bind(nameRow.meta.last_row_id)] : []),
+      // this device is now familiar for this person (deviceFrom); one row per device and person a day, so rows do not pile up
+      db.prepare("INSERT INTO login_attempts (who, ok, staff_id) SELECT ?1, 1, ?2 WHERE NOT EXISTS (SELECT 1 FROM login_attempts WHERE who = ?1 AND ok = 1 AND staff_id IS ?2 AND at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 day'))").bind(deviceKey, staff ? staff.id : null)]);
     const actor = staff ? `${staff.name} #${staff.id}` : "owner", t = hex(crypto.getRandomValues(new Uint8Array(32)));
     await db.batch([
       db.prepare(`INSERT INTO sessions (token_hash, expires_at, actor, staff_id, last_seen) VALUES (?, strftime('%Y-%m-%dT%H:%M:%SZ','now','+12 hours'), ?, ?, ${NOW})`).bind(await sha(t), actor, staff ? staff.id : null),
@@ -132,7 +176,10 @@ export async function admin(request, env, url) {
       db.prepare("INSERT INTO audit_log (actor, action) VALUES (?, 'session.login')").bind(actor),
     ]);
     const secure = url.protocol === "https:" ? " Secure;" : "";
-    return json({ ok: true, actor, owner: !staff }, 200, { "Set-Cookie": `${COOKIE}=${t}; Path=/; HttpOnly;${secure} SameSite=Strict; Max-Age=${60 * 60 * 12}` });
+    const h = new Headers({ "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" });
+    h.append("Set-Cookie", `${COOKIE}=${t}; Path=/; HttpOnly;${secure} SameSite=Strict; Max-Age=${60 * 60 * 12}`);
+    h.append("Set-Cookie", `${DEV_COOKIE}=${device}.${await deviceSig(env, device)}; Path=/; HttpOnly;${secure} SameSite=Strict; Max-Age=${DEVICE_DAYS * 86400}`);
+    return new Response(JSON.stringify({ ok: true, actor, owner: !staff }), { status: 200, headers: h });
   }
   if (path === "/logout" && method === "POST") { const t = cookieToken(request); if (t) await db.prepare("DELETE FROM sessions WHERE token_hash = ?").bind(await sha(t)).run(); }
   if (path === "/logout" && method === "POST") return json({ ok: true }, 200, { "Set-Cookie": `${COOKIE}=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0` });
@@ -166,7 +213,7 @@ export async function admin(request, env, url) {
       db.prepare(`SELECT tax_province AS province, COUNT(*) AS orders, SUM(total_cents) AS cents FROM orders WHERE status IN ${SOLD} AND created_at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-30 days') GROUP BY tax_province ORDER BY orders DESC`),
       db.prepare(`SELECT COALESCE(SUM(shipping_cents),0) AS collected, COALESCE(SUM(label_cents),0) AS paid, COUNT(*) AS parcels FROM orders WHERE method = 'ship' AND label_cents IS NOT NULL AND status IN ${SOLD} AND created_at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-30 days')`),
       db.prepare("SELECT COALESCE(SUM(stock * COALESCE(cost_cents, 0)),0) AS cost_cents, COALESCE(SUM(stock * price_cents),0) AS retail_cents, COALESCE(SUM(stock),0) AS units, COUNT(*) AS products FROM products WHERE active = 1"),
-      db.prepare("SELECT SUM(status = 'paid') AS to_pack, SUM(status = 'packed') AS to_ship, SUM(status = 'ready') AS waiting_pickup, SUM(status = 'ready' AND COALESCE(ready_at, updated_at) <= strftime('%Y-%m-%dT%H:%M:%SZ','now','-3 days')) AS pickup_overdue FROM orders WHERE status IN ('paid','packed','ready')"),
+      db.prepare(`SELECT SUM(status = 'paid') AS to_pack, SUM(status = 'packed') AS to_ship, SUM(status = 'ready') AS waiting_pickup, SUM(status = 'ready' AND COALESCE(ready_at, updated_at) <= strftime('%Y-%m-%dT%H:%M:%SZ','now','-3 days')) AS pickup_overdue, SUM(${TO_CONFIRM("orders")}) AS to_confirm FROM orders WHERE status IN ('paid','packed','ready','pending')`),
     ]);
     return json({ totals: tot.results[0], daily: daily.results, top: top.results, slow: slow.results, low: low.results, provinces: prov.results, shipping: ship.results[0], value: value.results[0], todo: todo.results[0], actor, owner: session.owner });
   }
@@ -394,7 +441,7 @@ export async function admin(request, env, url) {
   }
 
   if (path === "/orders" && method === "GET") {
-    const r = await db.prepare(`SELECT o.id, o.status, o.method, o.name, o.total_cents, o.pay_method, o.pay_status, o.tax_province, o.ship_service, o.tracking, o.created_at, CASE WHEN o.status = 'ready' THEN COALESCE(o.ready_at, o.updated_at) END AS ready_at, o.source, (SELECT SUM(qty) FROM order_items i WHERE i.order_id = o.id) AS units,
+    const r = await db.prepare(`SELECT o.id, o.status, o.method, o.name, o.total_cents, o.pay_method, o.pay_status, o.tax_province, o.ship_service, o.tracking, o.created_at, CASE WHEN o.status = 'ready' THEN COALESCE(o.ready_at, o.updated_at) END AS ready_at, o.source, (SELECT SUM(qty) FROM order_items i WHERE i.order_id = o.id) AS units, ${STOCKED("o")} AS stock_taken, (${TO_CONFIRM("o")}) AS to_confirm,
       EXISTS (SELECT 1 FROM order_items i JOIN products p ON p.sku = i.sku WHERE i.order_id = o.id AND ${CHARCOAL_ITEM}) AS charcoal FROM orders o ORDER BY o.created_at DESC LIMIT 200`).all();
     return json({ orders: r.results });
   }
@@ -404,6 +451,8 @@ export async function admin(request, env, url) {
       db.prepare("SELECT action, actor, before, after, at FROM audit_log WHERE target = ? ORDER BY id").bind(m[1])]);
     if (!o.results.length) return json({ error: "No such order." }, 404);
     const { cancel_op, ...order } = o.results[0];
+    const st = await db.prepare(`SELECT ${STOCKED("o")} AS stock_taken, (${TO_CONFIRM("o")}) AS to_confirm FROM orders o WHERE o.id = ?`).bind(m[1]).first();
+    order.stock_taken = st.stock_taken; order.to_confirm = st.to_confirm;
     return json({ order, items: i.results, emails: mail.results, trail: trail.results, mail_on: mailReady(env) });
   }
   // Cancel and put the stock back. Exactly one request can win the change to "cancelled" (the row records that
@@ -427,9 +476,13 @@ export async function admin(request, env, url) {
     // Every statement asks the same question of the order as it was before this transaction: still open, never
     // cancelled. The order is flipped last. A retry, or a second tap, sees the flipped order and changes nothing.
     const open = `EXISTS (SELECT 1 FROM orders WHERE id = ?1 AND (status IN ('paid','packed','ready') OR (status = 'pending' AND pay_status = 'pay_at_pickup' AND release_op IS NULL)) AND cancel_op IS NULL AND ${tillPart})`;
+    // A card order took its stock when it was placed, so it gets back what it ordered (unchanged). A pay-at-the-counter order takes
+    // stock only when the shop marks it ready (2026-11-27), so it gets back exactly what its own stock moves show it took, once:
+    // a request never confirmed gives back nothing, a ready order gives back what readying took.
+    const back = o.pay_method === "at_pickup" ? TAKEN_SQL("?1") : "(SELECT sku, qty FROM order_items WHERE order_id = ?1)";
     const res = await db.batch([
-      db.prepare(`UPDATE products SET stock = stock + (SELECT qty FROM order_items i WHERE i.order_id = ?1 AND i.sku = products.sku), updated_at = ${NOW} WHERE sku IN (SELECT sku FROM order_items WHERE order_id = ?1) AND ${open}`).bind(m[1]),
-      db.prepare(`INSERT INTO stock_moves (sku, delta, reason, ref, actor) SELECT sku, qty, 'released', ?1, ?2 FROM order_items WHERE order_id = ?1 AND ${open}`).bind(m[1], actor),
+      db.prepare(`UPDATE products SET stock = stock + (SELECT t.qty FROM ${back} t WHERE t.sku = products.sku), updated_at = ${NOW} WHERE sku IN (SELECT t.sku FROM ${back} t) AND ${open}`).bind(m[1]),
+      db.prepare(`INSERT INTO stock_moves (sku, delta, reason, ref, actor) SELECT t.sku, t.qty, 'released', ?1, ?2 FROM ${back} t WHERE ${open}`).bind(m[1], actor),
       db.prepare(`INSERT INTO audit_log (actor, action, target, before, after) SELECT ?2, 'order.cancel', ?1, ?3, ?4 WHERE ${open}`).bind(m[1], actor, JSON.stringify({ status: o.status }), JSON.stringify({ status: "cancelled", reason, ...(note ? { note } : {}) })),
       db.prepare(`UPDATE orders SET status = 'cancelled', cancelled_at = ${NOW}, cancelled_by = ?3, cancel_reason = ?4, cancel_note = ?5, cancel_op = ?2, updated_at = ${NOW} WHERE id = ?1 AND (status IN ('paid','packed','ready') OR (status = 'pending' AND pay_status = 'pay_at_pickup' AND release_op IS NULL)) AND cancel_op IS NULL AND ${tillPart}`).bind(m[1], op, actor, reason, note || null),
       db.prepare("SELECT status, cancel_op FROM orders WHERE id = ?1").bind(m[1]),
@@ -455,10 +508,18 @@ export async function admin(request, env, url) {
     const next = { paid: o.method === "pickup" ? ["ready"] : ["packed"], packed: ["shipped"], ready: ["collected"], pending: o.pay_status === "pay_at_pickup" ? ["ready"] : [] }[o.status] || [];
     if (body.status === "collected" && o.pay_status === "pay_at_pickup") return json({ error: "Take the payment first, then mark it paid." }, 409);
     if (!next.includes(body.status)) return json({ error: "That step is not available for this order." }, 409);
-    // only the request that actually moved the order writes the log line and the customer email (two taps, one email)
-    const moved = await db.batch([db.prepare(`UPDATE orders SET status = ?, updated_at = ${NOW}${body.status === "ready" ? `, ready_at = ${NOW}` : ""} WHERE id = ? AND status = ?`).bind(body.status, m[1], o.status),
-      db.prepare("INSERT INTO audit_log (actor, action, target, before, after) SELECT ?, 'order.status', ?, ?, ? WHERE changes() = 1").bind(actor, m[1], JSON.stringify({ status: o.status }), JSON.stringify({ status: body.status }))]);
-    if (!moved[0].meta.changes) return json({ error: "Someone else just changed this order. Reload it." }, 409);
+    // A pickup request (pay at the counter, nothing taken yet) is confirmed here: marking it ready takes its stock (takeForReady).
+    const confirming = o.status === "pending" && o.pay_status === "pay_at_pickup" && body.status === "ready";
+    if (confirming) {
+      const r = await takeForReady(db, m[1], actor);
+      if (r.error) return r.error;
+      if (r.took) { try { await lowNote(env, m[1], r.skus); } catch (e) { console.error(JSON.stringify({ at: "admin", problem: "low-stock note not written", message: String(e && e.message || e) })); } }
+    } else {
+      // only the request that actually moved the order writes the log line and the customer email (two taps, one email)
+      const moved = await db.batch([db.prepare(`UPDATE orders SET status = ?, updated_at = ${NOW}${body.status === "ready" ? `, ready_at = ${NOW}` : ""} WHERE id = ? AND status = ?`).bind(body.status, m[1], o.status),
+        db.prepare("INSERT INTO audit_log (actor, action, target, before, after) SELECT ?, 'order.status', ?, ?, ? WHERE changes() = 1").bind(actor, m[1], JSON.stringify({ status: o.status }), JSON.stringify({ status: body.status }))]);
+      if (!moved[0].meta.changes) return json({ error: "Someone else just changed this order. Reload it." }, 409);
+    }
     if (body.status === "shipped" || body.status === "ready") {
       const [full, items] = await db.batch([db.prepare("SELECT * FROM orders WHERE id = ?").bind(m[1]), db.prepare("SELECT name, qty, unit_cents FROM order_items WHERE order_id = ?").bind(m[1])]);
       const site = env.SITE_NAME || "One Stop Shop", ord = full.results[0];
@@ -543,7 +604,7 @@ export async function admin(request, env, url) {
     const sends = []; let cursor;
     // each send carries the short tag of the place it came from (a keyed hash, worker.js intakeSave) and its country, so a send from
     // somewhere new stands out; "from_n" counts the sends from that same place. Older sends (before 2026-11-27) have no tag.
-    do { const l = await env.BACKUPS.list({ prefix: "intake/", cursor, limit: 1000, include: ["customMetadata"] }); for (const o of l.objects) if (o.key !== "intake/latest.json") sends.push({ key: o.key, size: o.size, at: o.uploaded, from: /^[0-9a-f]{8}$/.test(o.customMetadata?.from || "") ? o.customMetadata.from : null, country: /^[A-Z]{2}$/.test(o.customMetadata?.country || "") ? o.customMetadata.country : null }); cursor = l.truncated ? l.cursor : undefined; } while (cursor && sends.length < 5000);
+    do { const l = await env.BACKUPS.list({ prefix: "intake/", cursor, limit: 1000, include: ["customMetadata"] }); for (const o of l.objects) if (o.key !== "intake/latest.json") sends.push({ key: o.key, size: o.size, at: o.uploaded, from: /^[0-9a-f]{8}$/.test(o.customMetadata?.from || "") ? o.customMetadata.from : null, country: /^[A-Z]{2}$/.test(o.customMetadata?.country || "") ? o.customMetadata.country : null, ...(o.customMetadata?.shop === "1" ? { shop: true } : {}) }); cursor = l.truncated ? l.cursor : undefined; } while (cursor && sends.length < 5000);
     sends.sort((a, b) => b.key.localeCompare(a.key));
     { const n = {}; for (const s of sends) if (s.from) n[s.from] = (n[s.from] || 0) + 1; for (const s of sends) s.from_n = s.from ? n[s.from] : null; }
     let key = url.searchParams.get("key");
@@ -556,11 +617,50 @@ export async function admin(request, env, url) {
     // the page reads the newest send by the name "intake/latest.json" (public/admin.js), so that name leads the list
     return json({ sends: sends.length ? [{ key: "intake/latest.json", size: sends[0].size, at: sends[0].at, newest: sends[0].key, from: sends[0].from, country: sends[0].country, from_n: sends[0].from_n }, ...sends] : [] });
   }
+  // The owner removes questionnaire sends (breaker, 2026-11-27: the link stops taking sends at 300 kept, and nothing could delete one).
+  // Only a dated send under intake/ (never a nightly backup, never the old fixed name), only the owner, and it is logged.
+  if (path === "/intake" && method === "DELETE") {
+    if (!session.owner) { log("forbidden", { actor, path }); return json({ error: "Only the owner can remove the shop's answers." }, 403); }
+    const body = await request.json().catch(() => ({})), key = typeof body.key === "string" ? body.key : "";
+    if (!/^intake\/[\w.-]+\.json$/.test(key) || key === "intake/latest.json" || key.includes("..")) return json({ error: "No such send." }, 400);
+    if (!(await env.BACKUPS.head(key))) return json({ error: "No such send." }, 404);
+    await env.BACKUPS.delete(key);
+    await audit("intake.delete", key, null, { key }).run();
+    return json({ ok: true });
+  }
   if (path === "/backup" && method === "GET") {
     const snap = await snapshot(db);
     return new Response(JSON.stringify(snap, null, 1), { headers: { "Content-Type": "application/json; charset=utf-8", "Content-Disposition": `attachment; filename="one-stop-shop-backup-${snap.taken_at.slice(0, 10)}.json"`, "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" } });
   }
   return json({ error: "Not found" }, 404);
+}
+
+// Confirming a pickup request (2026-11-27): staff checked the shelf and mark it ready. One D1 batch (one transaction):
+//  1 the order moves pending -> ready only if it is still an open pickup request AND every item it has not taken yet is covered
+//    by the stock count now (an item an order placed before 2026-11-27 already took needs nothing more);
+//  2 the log line, only if 1 moved it;
+//  3 per item, the stock comes down and a 'sale' move is written, only while the order is ready, the count still covers it, and
+//    this order has no sale of that item yet. Nothing else runs inside the transaction, so 1 covering every item means every 3
+//    goes through; a second tap finds the order ready and the sale written, and changes nothing.
+// If the count cannot cover it, nothing moves and staff are told which items are short, to call the customer.
+async function takeForReady(db, id, actor) {
+  const items = (await db.prepare("SELECT i.sku, i.name, i.qty, EXISTS (SELECT 1 FROM stock_moves m WHERE m.ref = i.order_id AND m.sku = i.sku AND m.reason = 'sale') AS had FROM order_items i WHERE i.order_id = ? ORDER BY i.sku").bind(id).all()).results;
+  const need = items.filter(i => !i.had);
+  const short = `EXISTS (SELECT 1 FROM order_items i LEFT JOIN products p ON p.sku = i.sku WHERE i.order_id = ?1 AND COALESCE(p.stock, 0) < i.qty AND NOT EXISTS (SELECT 1 FROM stock_moves m WHERE m.ref = ?1 AND m.sku = i.sku AND m.reason = 'sale'))`;
+  const res = await db.batch([
+    db.prepare(`UPDATE orders SET status = 'ready', ready_at = ${NOW}, updated_at = ${NOW} WHERE id = ?1 AND status = 'pending' AND pay_status = 'pay_at_pickup' AND release_op IS NULL AND cancel_op IS NULL AND NOT ${short}`).bind(id),
+    db.prepare("INSERT INTO audit_log (actor, action, target, before, after) SELECT ?, 'order.status', ?, ?, ? WHERE changes() = 1").bind(actor, id, JSON.stringify({ status: "pending" }), JSON.stringify({ status: "ready", stock_taken: need.map(i => ({ sku: i.sku, qty: i.qty })) })),
+    ...need.flatMap(i => [
+      db.prepare(`UPDATE products SET stock = stock - ?1, updated_at = ${NOW} WHERE sku = ?2 AND stock >= ?1 AND EXISTS (SELECT 1 FROM orders WHERE id = ?3 AND status = 'ready' AND release_op IS NULL AND cancel_op IS NULL) AND NOT EXISTS (SELECT 1 FROM stock_moves WHERE ref = ?3 AND sku = ?2 AND reason = 'sale')`).bind(i.qty, i.sku, id),
+      db.prepare("INSERT INTO stock_moves (sku, delta, reason, ref, actor) SELECT ?2, -?1, 'sale', ?3, ?4 WHERE changes() = 1").bind(i.qty, i.sku, id, actor),
+    ]),
+  ]);
+  if (res[0].meta.changes) return { took: need.length > 0, skus: need.map(i => i.sku) };
+  const now = await db.prepare("SELECT status, pay_status, release_op, cancel_op FROM orders WHERE id = ?").bind(id).first();
+  if (!now || now.status !== "pending" || now.pay_status !== "pay_at_pickup" || now.release_op || now.cancel_op) return { error: json({ error: "Someone else just changed this order. Reload it." }, 409) };
+  const shelf = (await db.prepare("SELECT i.sku, i.name, i.qty, COALESCE(p.stock, 0) AS stock FROM order_items i LEFT JOIN products p ON p.sku = i.sku WHERE i.order_id = ? ORDER BY i.sku").bind(id).all()).results;
+  const gap = shelf.filter(i => need.some(n => n.sku === i.sku) && i.stock < i.qty);
+  return { error: json({ error: `The stock count does not cover this order: ${gap.map(i => `${i.name} (needs ${i.qty}, ${i.stock} on the count)`).join("; ") || "an item changed meanwhile"}. Nothing was taken. Check the shelf: if it really is short, call the customer.`, shortfall: gap.map(i => ({ sku: i.sku, name: i.name, need: i.qty, stock: i.stock })) }, 409) };
 }
 
 // Uploaded product photo, public (it is shown on the storefront).

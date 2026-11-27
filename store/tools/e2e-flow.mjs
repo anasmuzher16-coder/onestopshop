@@ -72,7 +72,8 @@ try {
   let ways = await p.locator('input[name="ship"]').evaluateAll(els => els.map(e => e.value));
   if (!CARD) {   // no keys: the mixed cart is one pickup, paid at the counter; no leaving the charcoal out, no delivery
     const line = await p.locator(".line", { hasText: "Coco Cafe" }).innerText();
-    t("no keys: a charcoal cart is one pickup, with no other way offered", ways.length === 0 && await p.locator(".pickline").count() === 1 && /Pickup with this order/.test(line) && !/local delivery/i.test(await p.locator("#main").innerText()), ways.join() + " " + line);
+    // design review 2026-11-27: card off, the whole site is pickup only, so the cart line no longer repeats it (rewritten for that rule)
+    t("no keys: a charcoal cart is one pickup, with no other way offered", ways.length === 0 && await p.locator(".pickline").count() === 1 && !/Pickup with this order|Pickup only/.test(line) && !/local delivery/i.test(await p.locator("#main").innerText()), ways.join() + " " + line);
   } else {
   t("a mixed cart going to Toronto offers pickup or leaving the charcoal out, never Canada Post", ways.join() === "pickup,drop", ways.join());
   t("the cart line says pickup or local delivery only", /Pickup or local delivery only/.test(await p.locator(".line", { hasText: "Coco Cafe" }).innerText()));
@@ -111,8 +112,9 @@ try {
   if (CARD) {
   await p.locator("[data-next]").tap(); await p.waitForFunction(() => /Mark shipped/.test(document.querySelector("dialog[open] [data-next]")?.textContent || ""), null, { timeout: 8000 });
   t("order moves from To pack to Packed", /packed/i.test(await p.locator("dialog[open] .sheet__top .state").innerText()));
-  } else { const st0 = await p.locator("dialog[open] .sheet__top .state").innerText(); await p.locator("[data-next]").tap();
-    const moved = await p.waitForFunction(s => (document.querySelector("dialog[open] .sheet__top .state")?.textContent || s) !== s, st0, { timeout: 8000 }).then(() => true, () => false);
+  } else { const st0 = await p.locator("dialog[open] .sheet__top .state").textContent(); await p.locator("[data-next]").tap();   // textContent both sides (the label is upper-cased by CSS in innerText)
+    // no keys: the order is a pickup request; marking it ready (2026-11-27) checks the shelf and takes the stock
+    const moved = await p.waitForFunction(s => /ready/i.test(document.querySelector("dialog[open] .sheet__top .state")?.textContent || "") && (document.querySelector("dialog[open] .sheet__top .state")?.textContent || s) !== s, st0, { timeout: 8000 }).then(() => true, () => false);
     t("no keys: the pickup order moves along", moved && /ready/i.test(await p.locator("dialog[open] .sheet__top .state").innerText()), st0); await p.waitForTimeout(800); }   // the sheet redraws once the ready email is written
   await p.locator("dialog[open] .sheet__act [data-close]").tap();
   t("the order sheet closes", await p.waitForFunction(() => !document.querySelector("dialog[open]"), null, { timeout: 4000 }).then(() => true, () => false));

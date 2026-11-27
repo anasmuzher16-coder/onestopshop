@@ -32,12 +32,14 @@ ok((second.r.headers.get("set-cookie") || "").split(";")[0] !== cookie, "every s
 
 let d = (await call("/api/admin/orders/" + pick.data.order.id)).data;
 ok(d.emails.some(e => e.kind === "order_placed" && e.recipient === "pat@example.com" && e.status === "held"), "order email is written and marked as not sent (no mail service connected)");
-ok(d.emails.some(e => e.kind === "low_stock" && e.status === "held"), "selling the last one writes a low-stock note for the shop");
+// rewritten 2026-11-27: a counter pickup is a request and takes nothing when placed, so its low-stock note comes when the shop marks it ready
+ok(!d.emails.some(e => e.kind === "low_stock"), "a pickup request for the last one writes no low-stock note yet: nothing was taken");
 { const no = d.emails.filter(e => e.kind === "new_order"), body = no[0] ? (await call("/api/admin/emails/" + no[0].id)).data.email : null;
   ok(no.length === 1 && no[0].recipient !== "pat@example.com" && no[0].status === "held" && body && body.subject.includes(pick.data.order.id) && /back office/.test(body.html), "the shop gets one new-order note for it, held in the outbox until mail is set up: " + (no[0] && no[0].recipient)); }
 await call(`/api/admin/orders/${pick.data.order.id}/status`, { method: "POST", body: { status: "ready" } });
 d = (await call("/api/admin/orders/" + pick.data.order.id)).data;
 const ready = d.emails.find(e => e.kind === "pickup_ready"); ok(!!ready, "marking it ready writes the pickup email");
+ok(d.emails.some(e => e.kind === "low_stock" && e.status === "held"), "marking the last one ready (taking it off the shelf) writes a low-stock note for the shop");
 if (CARD) {
 await call(`/api/admin/orders/${ship.data.order.id}/status`, { method: "POST", body: { status: "packed" } });
 ok(((await call("/api/admin/orders/" + ship.data.order.id)).data.emails || []).filter(e => e.kind === "order_shipped").length === 0, "packing alone sends nothing");
@@ -76,6 +78,20 @@ ok(list.some(x => x.key !== "intake/latest.json" && x.key !== list[0].newest), "
   ok(earlier.answers && /^m/.test(earlier.answers.probe) && earlier.from === mine.from, "the owner can open any earlier send by its own name");
   const all = []; for (let i = 0; i < 26; i++) all.push((await from(mark + "-all" + i, `198.51.100.${i + 1}`)).status);
   ok(all.slice(0, 24).every(s => s === 200) && all.slice(24).every(s => s === 429), "thirty sends a day in all are taken, then the link waits for tomorrow: " + all.join(","));
+  // breaker 2026-11-27: strangers filling the day never block the shop's own send. A browser signed in to the back office (or a shop
+  // device that signed in before) sends past the limits and is not counted against them; a stranger is still refused.
+  const shopSend = await fetch(INTAKE, { method: "POST", headers: { "Content-Type": "application/json", "CF-Connecting-IP": "198.51.100.200", Cookie: cookie }, body: JSON.stringify({ answers: { probe: mark + "-shop" }, rows: [] }) });
+  ok(shopSend.status === 200, "the shop's own send goes through after strangers used up the day: " + shopSend.status);
+  ok((await from(mark + "-late", "198.51.100.201")).status === 429, "a stranger is still refused");
+  const l3 = (await call("/api/admin/intake")).data.sends || [], shopRow = l3.find(x => x.key === l3[0].newest);
+  ok(shopRow && shopRow.shop === true, "the shop's send is labelled as sent from a shop device");
+  // the owner removes sends (the link stops at 300 kept): only dated intake sends, never a backup, and it is logged
+  const victim = l3.find(x => x.key !== "intake/latest.json" && x.key !== l3[0].newest);
+  const del = await call("/api/admin/intake", { method: "DELETE", body: { key: victim.key } });
+  ok(del.status === 200 && !((await call("/api/admin/intake")).data.sends || []).some(x => x.key === victim.key), "the owner removes one send: " + del.status);
+  ok((await call("/api/admin/intake", { method: "DELETE", body: { key: victim.key } })).status === 404, "removing it again finds nothing");
+  for (const bad of ["backups/2026-11-27.json", "intake/../backups/x.json", "intake/latest.json", "intake/a/b.json", ""]) ok((await call("/api/admin/intake", { method: "DELETE", body: { key: bad } })).status === 400, "only a dated questionnaire send can be removed, not " + JSON.stringify(bad));
+  ok((await call("/api/admin/intake", { method: "DELETE" })).status === 415 || (await call("/api/admin/intake", { method: "DELETE" })).status === 400, "a delete without JSON is refused");
 }
 
 const bk = await call("/api/admin/backup");

@@ -126,10 +126,12 @@ await A(`/products/${SKU}`, { method: "PUT", body: { price_cents: 5400 } });
 // a shopper's order, paid on the Stripe stand-in (tools/fake-stripe.mjs): its signed webhook marks it paid, as for a real card
 // with no card keys (the live demo) a pickup is paid at the counter: the same order is placed that way
 const pk = /<meta name="oss-pay" content="card">/.test((await call("/", { as: "none" })).text) ? {} : { pay: "at_pickup" };
-const place = async (sku, qty, extra = {}) => {
+// no keys: a counter pickup is a request (2026-11-27), so to make it a sale as a card payment would be, the shop marks it ready
+// (which takes its stock) and then paid at the counter; `asRequest` leaves it a request, to confirm
+const place = async (sku, qty, extra = {}, asRequest = false) => {
   const r = await call("/api/orders", { method: "POST", as: "none", body: { name: "Rhea Mbeki", email: "rhea@example.com", method: "pickup", ...pk, lines: [{ sku, qty }], ...extra } });
   if (r.status === 201 && r.data.pay?.url) { await fetch(r.data.pay.url, { method: "POST", redirect: "manual" }); await new Promise(res => setTimeout(res, 300)); }
-  else if (r.status === 201 && pk.pay && extra.pay === undefined) await A(`/orders/${r.data.order.id}/paid`, { method: "POST", body: {} });   // no keys: paid at the counter, so it is a sale as a card payment would be
+  else if (r.status === 201 && pk.pay && extra.pay === undefined && !asRequest) { await A(`/orders/${r.data.order.id}/status`, { method: "POST", body: { status: "ready" } }); await A(`/orders/${r.data.order.id}/paid`, { method: "POST", body: {} }); }
   return r;
 };
 const before = (await prod(SKU)).stock;
@@ -157,11 +159,29 @@ ok((await A(`/products/${SKU}/history`)).data.moves.filter(m => m.ref === id1 &&
 ok((await A(`/orders/${id1}/status`, { method: "POST", body: { status: "ready" } })).status === 409, "a cancelled order cannot be moved on");
 const shipped = (await A("/orders")).data.orders.find(o => ["shipped", "collected"].includes(o.status));
 ok(shipped && (await A(`/orders/${shipped.id}/cancel`, { method: "POST", body: { reason: "customer", op: uuid() } })).status === 409, "a sent or collected order is not cancelled here");
-// two people tap Mark ready at once: one moves it, one email
-const o2 = await place("OSS-8003", 1), id2 = o2.data.order.id;
+// two people tap Mark ready at once: one moves it, one email (no keys: a request, so this is also the confirm step taking its stock once)
+const s8003 = (await prod("OSS-8003")).stock, o2 = await place("OSS-8003", 1, {}, true), id2 = o2.data.order.id;
 const st = await Promise.all([1, 2].map(() => A(`/orders/${id2}/status`, { method: "POST", as: "staff", body: { status: "ready" } })));
 const d3 = (await A("/orders/" + id2)).data;
 ok(st.filter(r => r.status === 200).length === 1 && d3.emails.filter(e => e.kind === "pickup_ready").length === 1 && d3.order.ready_at, "two taps on Mark ready: one change, one email: " + st.map(r => r.status));
+ok((await prod("OSS-8003")).stock === s8003 - 1, "the order's 1 came off the shelf once, whichever tap won");
+// ---- pickup requests in the back office (2026-11-27): to confirm, then ready takes the stock ----
+{ const s0 = (await prod("OSS-8003")).stock, rq = await call("/api/orders", { method: "POST", as: "none", headers: { "CF-Connecting-IP": "10.44.0.7" }, body: { name: "Rhea Mbeki", email: "rhea-req@example.com", method: "pickup", pay: "at_pickup", lines: [{ sku: "OSS-8003", qty: 2 }] } }), rid = rq.data.order?.id;
+  ok(rq.status === 201 && (await prod("OSS-8003")).stock === s0, "a counter pickup request takes nothing off the shelf: " + rq.status);
+  const row = (await A("/orders", { as: "staff" })).data.orders.find(o => o.id === rid);
+  ok(row && row.to_confirm === 1 && row.stock_taken === 0, "the order list shows it as to confirm, nothing taken: " + JSON.stringify(row && { to_confirm: row.to_confirm, stock_taken: row.stock_taken }));
+  const sm = (await A("/summary", { as: "staff" })).data;
+  ok(sm.todo.to_confirm >= 1, "Today counts pickup requests to confirm: " + sm.todo.to_confirm);
+  const sheet = (await A("/orders/" + rid, { as: "staff" })).data.order;
+  ok(sheet.to_confirm === 1 && sheet.stock_taken === 0, "the order sheet says the same");
+  ok((await A(`/orders/${rid}/paid`, { method: "POST", as: "staff", body: {} })).status === 409, "it cannot be marked paid before ready");
+  const rd = await A(`/orders/${rid}/status`, { method: "POST", as: "staff", body: { status: "ready" } });
+  const after = (await A("/orders/" + rid, { as: "staff" })).data;
+  ok(rd.status === 200 && (await prod("OSS-8003")).stock === s0 - 2 && after.order.to_confirm === 0 && after.order.stock_taken === 1 && after.order.status === "ready", "marking it ready takes its 2 off the shelf and it is no longer to confirm");
+  ok((await A(`/products/OSS-8003/history`)).data.moves.some(m => m.ref === rid && m.reason === "sale" && m.delta === -2 && m.actor === me.actor), "the stock history shows the 2 taken at ready, by the person who marked it");
+  ok(after.trail.some(t => t.action === "order.status" && t.actor === me.actor), "who marked it ready is on the order");
+  const cx = await A(`/orders/${rid}/cancel`, { method: "POST", as: "staff", body: { reason: "customer", op: uuid() } });
+  ok(cx.status === 200 && (await prod("OSS-8003")).stock === s0, "cancelling the ready order puts its 2 back"); }
 // ID tick on charcoal only, staff only
 const coal = (await A("/products")).data.products.find(p => p.active && p.stock > 0 && /"charcoal":true/.test(p.details || ""));
 const o3 = coal ? await place(coal.sku, 1, { order_key: "idtick-" + uuid() }) : null;
@@ -225,7 +245,7 @@ ok((await fetch(B + "/api/admin/login", { method: "POST", headers: { "Content-Ty
 // ---- one address can never lock out everybody else (breaker review, 2026-11-26) ----
 const una = { name: "Una" + letters(), pin: "582914" };
 ok((await A("/staff", { method: "POST", body: una })).status === 201, "owner adds one more staff member for the lock checks");
-const nameRows = () => process.env.PERSIST ? JSON.parse((x => x.slice(x.indexOf("[")))(execFileSync(process.execPath, [process.env.WRANGLER_JS || join(execFileSync(process.platform === "win32" ? "npm.cmd" : "npm", ["root", "-g"], { encoding: "utf8", shell: process.platform === "win32" }).trim(), "wrangler", "bin", "wrangler.js"), "d1", "execute", "onestopshop", "--local", "--persist-to", process.env.PERSIST, "--json", "--command", "SELECT COUNT(*) AS n FROM login_attempts WHERE who LIKE 'n:%'"], { cwd: fileURLToPath(new URL("..", import.meta.url)), encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] })))[0].results[0].n : 0;
+const nameRows = () => process.env.PERSIST ? JSON.parse((x => x.slice(x.indexOf("[")))(execFileSync(process.execPath, [process.env.WRANGLER_JS || join(execFileSync(process.platform === "win32" ? "npm.cmd" : "npm", ["root", "-g"], { encoding: "utf8", shell: process.platform === "win32" }).trim(), "wrangler", "bin", "wrangler.js"), "d1", "execute", "onestopshop", "--local", "--persist-to", process.env.PERSIST, "--json", "--command", "SELECT COUNT(*) AS n FROM login_attempts WHERE who LIKE 'n:%' OR who LIKE 'u:%'"], { cwd: fileURLToPath(new URL("..", import.meta.url)), encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] })))[0].results[0].n : 0;
 const names0 = nameRows(), waves = Array.from({ length: 5 }, () => "Wave" + letters());
 // six tries at once on each of five names, all from one address (kept to 30 at once: the local dev server falls over past
 // about a hundred simultaneous requests on GitHub's machines, which is a test-rig limit, not the shop's): before 2026-11-26 every name got six rows and was locked
@@ -234,11 +254,12 @@ if (process.env.PERSIST) ok(nameRows() - names0 <= 5, `one address's burst write
 ok(flood.filter(r => r.status === 401).length <= 5, "thirty staff tries at once from one address get at most five checks: " + flood.filter(r => r.status === 401).length);
 const unaIn = await A("/login", { method: "POST", as: "none", body: una, headers: { "CF-Connecting-IP": "10.2.9.9" } });
 ok(unaIn.status === 200, "after one address floods staff sign-in, staff elsewhere still sign in: " + unaIn.status);
-// ---- a name under attack (reworked 2026-11-27: no lock on a name, the shop's own connection always gets through) ----
+// ---- a name under attack (reworked 2026-11-27 twice: the shop's own devices and connection always get through) ----
 // Before, five wrong PINs on a name from anywhere locked it for everyone, so a stranger could lock any staff member out.
-// Now: past five wrong tries from places never seen signing in, each try on that name is slowed; past thirty such tries the
-// name refuses places never seen signing in; a place that has signed in correctly is held by neither.
-const timed = async (body, ip) => { await clearOfIdleEdge(1500); const t = Date.now(), r = await A("/login", { method: "POST", as: "none", body, headers: { "CF-Connecting-IP": ip } }); return { ...r, ms: Date.now() - t }; };
+// Now: past three wrong tries in a day from devices and places never seen signing in, each try on that name is slowed; at twenty
+// such tries in a day (was thirty in 15 minutes, which allowed about 2,880 guesses a day) the name refuses them for the day; a
+// device or place that has signed in correctly is held by neither. Rewritten for the new rule: thirty became twenty a day.
+const timed = async (body, ip, cookie) => { await clearOfIdleEdge(1500); const t = Date.now(), r = await A("/login", { method: "POST", as: "none", body, headers: { "CF-Connecting-IP": ip, ...(cookie ? { Cookie: cookie } : {}) } }); return { ...r, ms: Date.now() - t }; };
 const wrongs = []; for (let i = 0; i < 5; i++) wrongs.push((await A("/login", { method: "POST", as: "none", body: { name: add2.data.name, pin: "00000" + i }, headers: { "CF-Connecting-IP": "10.9.0." + i } })).status);
 const sixth = await timed({ name: add2.data.name, pin: "000005" }, "10.9.0.5");
 ok(wrongs.every(s => s === 401) && sixth.status === 401 && sixth.ms >= 200, `six wrong PINs on one name: the sixth is slowed, not locked: ${wrongs},${sixth.status} in ${sixth.ms} ms`);
@@ -249,9 +270,31 @@ const rightNew = await timed({ name: add2.data.name, pin: "730519" }, "10.9.1.1"
 ok(rightNew.status === 200, "the right PIN from a new place still gets in while the name is being guessed: " + rightNew.status + " in " + rightNew.ms + " ms");
 await Promise.all(Array.from({ length: 30 }, (_, i) => A("/login", { method: "POST", as: "none", body: { name: add2.data.name, pin: "1" + String(10000 + i) }, headers: { "CF-Connecting-IP": "10.9.2." + i } })));
 const stranger = await timed({ name: add2.data.name, pin: "730519" }, "10.9.3.3");
-ok(stranger.status === 429, "past thirty wrong tries on a name, a place never seen signing in is refused for that name: " + stranger.status);
+ok(stranger.status === 429 && /today/.test(stranger.data.error || ""), "past twenty wrong tries in a day on a name, a place never seen signing in is refused for that name for the day: " + stranger.status + " " + (stranger.data.error || ""));
 const atCounter = await timed({ name: add2.data.name, pin: "730519" }, "10.9.1.1");
-ok(atCounter.status === 200 && atCounter.ms < 3000, `the person signs straight in from a place they signed in from before, however hard the name is hammered: ${atCounter.status} in ${atCounter.ms} ms`);const burst = await Promise.all(Array.from({ length: 8 }, (_, i) => A("/login", { method: "POST", as: "staff", body: { name: "Burst" + letters(), pin: "00000" + i }, headers: { "CF-Connecting-IP": "10.7.7.7" } })));
+ok(atCounter.status === 200 && atCounter.ms < 3000, `the person signs straight in from a place they signed in from before, however hard the name is hammered: ${atCounter.status} in ${atCounter.ms} ms`);
+// a device that signed in before (its signed oss_dev cookie) gets straight in from a network never seen, however hard the name is hammered
+{ const dev = ((rightNew.r.headers.get("set-cookie") || "").match(/oss_dev=[a-f0-9]{32}\.[a-f0-9]{64}/) || [])[0];
+  ok(!!dev && /oss_dev=[^;]+;[^,]*HttpOnly[^,]*SameSite=Strict[^,]*Max-Age=34560000/.test(rightNew.r.headers.get("set-cookie") || ""), "a correct sign-in marks the device with a locked-down, long-lived cookie: " + (rightNew.r.headers.get("set-cookie") || "").slice(0, 300));
+  const phone = await timed({ name: add2.data.name, pin: "730519" }, "10.9.4.4", dev);
+  ok(phone.status === 200 && phone.ms < 3000, `the person signs straight in from their own phone on a new network while the name is refused elsewhere: ${phone.status} in ${phone.ms} ms`);
+  const forged = await timed({ name: add2.data.name, pin: "730519" }, "10.9.4.5", dev.replace(/.$/, c => c === "0" ? "1" : "0"));
+  ok(forged.status === 429, "a device cookie with a broken signature is not a pass: " + forged.status);
+  const minted = await timed({ name: add2.data.name, pin: "730519" }, "10.9.4.6", "oss_dev=" + "ab".repeat(16) + "." + "cd".repeat(32));
+  ok(minted.status === 429, "a made-up device cookie is not a pass: " + minted.status);
+  // a familiar device has its own ceiling: ten wrong tries in a day and it is treated as unfamiliar
+  const dw = []; for (let i = 0; i < 10; i++) dw.push((await A("/login", { method: "POST", as: "none", body: { name: add2.data.name, pin: "2" + String(10000 + i) }, headers: { "CF-Connecting-IP": "10.9.5." + i, Cookie: dev } })).status);
+  const afterTen = await timed({ name: add2.data.name, pin: "730519" }, "10.9.5.99", dev);
+  ok(dw.every(s => s === 401) && afterTen.status === 429, "ten wrong tries from a familiar device use up its pass for the day: " + dw + "," + afterTen.status); }
+// a name that does not exist cannot be locked in advance: hammered past the day's ceiling, it is refused like a real one (nothing
+// shows who works here), but a staff member added with that name later starts clean
+{ const later = "Later" + letters();
+  await Promise.all(Array.from({ length: 24 }, (_, i) => A("/login", { method: "POST", as: "none", body: { name: later, pin: "3" + String(10000 + i) }, headers: { "CF-Connecting-IP": "10.10.1." + i } })));
+  const ghostLocked = await timed({ name: later, pin: "123987" }, "10.10.2.1");
+  ok(ghostLocked.status === 429 && ghostLocked.data.error === stranger.data.error, "a name that does not exist, hammered past the ceiling, is answered exactly like a real one: " + ghostLocked.status);
+  ok((await A("/staff", { method: "POST", body: { name: later, pin: "604917" } })).status === 201, "the owner then adds a staff member with that name");
+  const fresh = await timed({ name: later, pin: "604917" }, "10.10.3.1");
+  ok(fresh.status === 200 && fresh.ms < 3000, `the new staff member signs in from a new place at once: tries on the name before it existed do not count: ${fresh.status} in ${fresh.ms} ms`); }const burst = await Promise.all(Array.from({ length: 8 }, (_, i) => A("/login", { method: "POST", as: "staff", body: { name: "Burst" + letters(), pin: "00000" + i }, headers: { "CF-Connecting-IP": "10.7.7.7" } })));
 ok(burst.filter(r => r.status === 401).length <= 5 && burst.filter(r => r.status === 429).length >= 3, "eight tries at once from one place get at most five checks: " + burst.map(r => r.status));
 for (let i = 0; i < 42; i++) await A("/login", { method: "POST", as: "staff", body: { name: "Flood" + letters(), pin: "000000" }, headers: { "CF-Connecting-IP": "10.6." + Math.floor(i / 5) + "." + i } });
 const ownerStill = await A("/login", { method: "POST", as: "none", body: { passcode: KEY }, headers: { "CF-Connecting-IP": "10.5.5.5" } });
@@ -266,7 +309,9 @@ if (process.env.PERSIST) {
   const { createHash } = await import("node:crypto");
   const WRANGLER = process.env.WRANGLER_JS || join(execFileSync(process.platform === "win32" ? "npm.cmd" : "npm", ["root", "-g"], { encoding: "utf8", shell: process.platform === "win32" }).trim(), "wrangler", "bin", "wrangler.js");
   const sql = cmd => { const out = execFileSync(process.execPath, [WRANGLER, "d1", "execute", "onestopshop", "--local", "--persist-to", process.env.PERSIST, "--json", "--command", cmd], { cwd: fileURLToPath(new URL("..", import.meta.url)), encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }); return JSON.parse(out.slice(out.indexOf("["))).flatMap(r => r.results); };
-  const rows = ip => sql(`SELECT COUNT(*) AS n FROM login_attempts WHERE who = '${createHash("sha256").update("who|" + ip).digest("hex")}'`)[0].n;
+  // addresses are kept only as a hash keyed with the Worker secret (PIN_PEPPER, or ADMIN_KEY when it is not set, as here)
+  const rows = ip => sql(`SELECT COUNT(*) AS n FROM login_attempts WHERE who = '${createHash("sha256").update(`who|${KEY}|${ip}`).digest("hex")}'`)[0].n;
+  ok(sql(`SELECT COUNT(*) AS n FROM login_attempts WHERE who = '${createHash("sha256").update("who|10.2.2.2").digest("hex")}'`)[0].n === 0 && rows("10.2.2.2") > 0, "a sign-in address is never kept as a plain hash");
   const n1 = rows("10.2.2.2");
   const still = []; for (let i = 0; i < 5; i++) still.push((await A("/login", { method: "POST", as: "none", body: { name: "Wave" + letters(), pin: "000000" }, headers: { "CF-Connecting-IP": "10.2.2.2" } })).status);
   ok(still.every(s => s === 429) && rows("10.2.2.2") === n1, `a locked address adds no more tries: ${still} (${n1} -> ${rows("10.2.2.2")} rows)`);

@@ -54,7 +54,8 @@ const order = async (body, cookie) => {
   }
   const out = { status: r.status, data: await r.json().catch(() => ({})) };
   if (out.status === 201 && out.data.pay?.url) { await fetch(out.data.pay.url, { method: "POST", redirect: "manual" }); await new Promise(res => setTimeout(res, 300)); }
-  if (out.status === 201 && counter) { const p = await adm(`/orders/${out.data.order.id}/paid`, "POST", {}); if (p.status !== 200) console.log("counter payment not recorded", out.data.order.id, p.status); }
+  // a counter pickup is a request until the shop marks it ready (2026-11-27), which takes its stock; then it is paid at the counter
+  if (out.status === 201 && counter) { const rd = await adm(`/orders/${out.data.order.id}/status`, "POST", { status: "ready" }), p = await adm(`/orders/${out.data.order.id}/paid`, "POST", {}); if (rd.status !== 200 || p.status !== 200) console.log("counter order not readied and paid", out.data.order.id, rd.status, p.status); }
   return out;
 };
 const refundTo = CARD ? "refund" : "counter-refund", refundWhy = CARD ? {} : { reason: "returned" };
@@ -105,6 +106,19 @@ ok(capSt.every(s => s === 400) && (await api("/code", { method: "POST", body: { 
 const bip = ip(); let st = [];
 for (let i = 0; i < 31; i++) st.push((await api("/verify", { method: "POST", body: { email: `spray${i}-${run}@example.com`, code: "123456" }, ip: bip })).status);
 ok(st[29] === 400 && st[30] === 429, "thirty wrong codes from one network lock it out for 15 minutes: " + st.slice(28));
+// breaker 2026-11-27: an IPv6 visitor is one network across its /56 (as every other limit counts it), and what is stored is a
+// hash keyed with the Worker secret, never a plain hash of the address or the email that a list of addresses could undo
+{ const { createHash } = await import("node:crypto"), { sourceBlock } = await import("../src/guard.js"), h = s => createHash("sha256").update(s).digest("hex");
+  const v6 = `2001:db8:${((Math.random() * 65000) | 0).toString(16)}:${(16 + ((Math.random() * 200) | 0)).toString(16)}`, st6 = [];
+  for (let i = 0; i < 30; i++) st6.push((await api("/verify", { method: "POST", body: { email: `v6spray${i}-${run}@example.com`, code: "123456" }, ip: `${v6}${i.toString(16).padStart(2, "0")}:${i + 1}::1` })).status);
+  const st6b = (await api("/verify", { method: "POST", body: { email: `v6spray-x-${run}@example.com`, code: "123456" }, ip: `${v6}ff:abcd::9` })).status;
+  ok(st6.every(s => s === 400) && st6b === 429, "IPv6 addresses in one /56 count as one network for wrong codes: " + st6.slice(-2) + "," + st6b);
+  const kept = sql(`SELECT who FROM account_attempts WHERE at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-15 minutes')`).map(r => r.who);
+  ok(!kept.includes(h("acct|" + bip)) && kept.includes(h(`acct|${KEY}|${bip}`)) && kept.includes(h(`acct|${KEY}|${sourceBlock(`${v6}ff:abcd::9`)}`)), "a network is stored only as a keyed hash, IPv6 by its /56");
+  const cr = sql(`SELECT salt, code_hash, email FROM sign_in_codes WHERE email = '${flood}' ORDER BY id DESC LIMIT 1`)[0];
+  ok(cr && cr.code_hash === h(`code|${KEY}|${cr.salt}:${codeIn(m0)}`) && cr.code_hash !== h(cr.salt + ":" + codeIn(m0)), "a sign-in code is kept as a keyed hash, so a copied table cannot be tried offline");
+  const mails = sql(`SELECT who FROM account_attempts`).map(r => r.who);
+  ok(!mails.includes(h("mail|" + cap)) && mails.includes(h(`mail|${KEY}|${cap}`)), "an inbox's wrong-code count is kept under a keyed hash too"); }
 
 // ---- 3. signing in, fixation, single use, the link
 const a = `alice-${run}@example.com`, aip = ip();
@@ -218,7 +232,8 @@ ok(lv.points === earned && lv.coming === 0 && lv.can_redeem, "picked up: the poi
 const sub = mid.price_cents, o2 = await order({ name: "Carol", email: carolEmail, method: "pickup", use_reward: true, lines: [{ sku: mid.sku, qty: 1 }] }, carol);
 ok(o2.status === 201 && o2.data.order.reward_cents === 500 && o2.data.order.tax_cents === Math.round((sub - 500) * 0.13) && o2.data.order.total_cents === sub - 500 + Math.round((sub - 500) * 0.13), "the $5 reward comes off the items before HST: " + JSON.stringify({ r: o2.data.order.reward_cents, t: o2.data.order.tax_cents, tot: o2.data.order.total_cents }));
 ok(o2.data.order.points === Math.floor((sub - 500) / 100), "points are earned on what was paid for, not on the reward");
-const rec = lastMail(carolEmail); ok(rec.kind === "order_placed" && /Points reward/.test(rec.body), "the receipt shows the reward");
+// the newest receipt, not the newest email: with no keys the order is now marked ready (2026-11-27), which writes the ready email after it
+const rec = sql(`SELECT kind, body FROM emails WHERE recipient = '${carolEmail}' AND kind = 'order_placed' ORDER BY id DESC LIMIT 1`)[0]; ok(rec && rec.kind === "order_placed" && /Points reward/.test(rec.body), "the receipt shows the reward");
 lv = (await api("/me", { cookie: carol })).data.loyalty; ok(lv.points === earned - 100, "the reward spent 100 points: " + lv.points);
 // farming: cancel the order that used the reward -> points come back; refund the order that earned them -> they go
 sql(`UPDATE orders SET status = 'cancelled' WHERE id = '${o2.data.order.id}'`);

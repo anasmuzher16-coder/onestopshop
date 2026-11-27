@@ -3,16 +3,17 @@
 // never go below zero. Then one of two things:
 //  - pay by card: the order waits ('pending', pay 'awaiting') with its stock held, and the shopper is sent to
 //    Stripe's own page for exactly the server's total. Only a signed Stripe webhook marks it paid (src/pay.js).
-//  - pay at the counter (pickup only): the order is placed with pay 'pay_at_pickup', stock held, and the shop
-//    marks it paid when the customer pays.
+//  - pay at the counter (pickup only): a REQUEST (2026-11-27). It is placed with pay 'pay_at_pickup' and takes no stock
+//    and holds nothing, so no number of requests can block another shopper. The shop checks the shelf and marks it ready,
+//    which takes the stock in one transaction (src/admin.js); the customer is told to wait for that email before coming in.
 import * as rates from "../public/rates-core.js";
 import { loadCatalog, toStorefront, isCharcoal } from "./catalog.js";
-import { deliveryQuote } from "./delivery.js";
+import { deliveryQuote, deliveryGate } from "./delivery.js";
 import { cardReady, openCheckout, releaseHeld, receipt, HOLD_MIN, LATE_SESSION_MS } from "./pay.js";
 import { customerFrom } from "./account.js";
 import { orderLoyalty, orderLoyaltyStatements } from "./loyalty.js";
 import { cleanSource } from "./source.js";
-import { nameOk, phoneOk, ORDER_CAPS, PICKUP_CAPS, SHOP_BRAKE_PER_MIN, holdMax, HELD_SQL, orderLimits, orderWho, orderAttempt, pickupHoldHours } from "./guard.js";
+import { nameOk, phoneOk, ORDER_CAPS, PICKUP_CAPS, SHOP_BRAKE_PER_MIN, orderLimits, orderWho, orderAttempt, pickupRequestHours } from "./guard.js";
 
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" } });
 const text = (v, max) => typeof v === "string" && v.trim().length > 0 && v.trim().length <= max ? v.trim() : null;
@@ -43,7 +44,8 @@ async function findKeyed(env, key, sameOrder) {
       if (row.pay_status === "awaiting" && row.status === "pending" && await closeUnpaid(env, row)) continue;
       return { changed: true, id };
     }
-    if (row.status === "pending" && (row.pay_status === "awaiting" || row.pay_status === "pay_at_pickup")) {
+    // a pickup request takes no stock at placement, so having none is its normal, finished state
+    if (row.status === "pending" && row.pay_status === "awaiting") {
       const sold = await db.prepare("SELECT COUNT(*) AS n FROM stock_moves WHERE ref = ? AND reason = 'sale'").bind(id).first("n");
       if (!sold) {   // written but no stock taken yet
         if (age(row) < OPEN_MS) return { open: true };
@@ -83,8 +85,6 @@ async function replay(env, origin, row) {
     tax_label: rates.taxLabel(row.tax_province), days: q.days ?? null, eta: q.eta ?? null, address: row.method === "ship" ? { line1: a.line1, city: a.city, province: a.province, postal: a.postal } : null, items } });
 }
 const payOut = row => ({ method: row.pay_method, status: row.pay_status, ...(row.pay_status === "awaiting" && row.pay_url ? { url: row.pay_url, session: row.pay_session } : {}), ...(row.pay_session ? { session: row.pay_session } : {}) });
-// What a shopper sees when unpaid pickups already hold as much of an item as the shop holds online (src/guard.js holdMax).
-const holdFull = (p, room) => json({ error: room ? `We can hold ${room} of ${p.name} for a pickup order right now. Lower the number, or call the counter at 519-255-2222 to hold more.` : `${p.name} is held for other pickup orders as far as we hold it online. Call the counter at 519-255-2222 to hold one.`, sku: p.sku, hold_cap: true, room }, 409);
 const stillOpen = () => json({ error: "Your order is still going through. Wait a moment, then try again.", in_progress: true }, 409);
 
 export async function placeOrder(request, env, url) {
@@ -105,8 +105,8 @@ export async function placeOrder(request, env, url) {
   if (!pay) return json({ error: "Choose how to pay." }, 400);
   if (pay === "at_pickup" && method !== "pickup") return json({ error: "Paying at the counter is for pickup orders. Pay by card for delivery.", field: "pay" }, 400);
   if (!Array.isArray(body.lines) || !body.lines.length) return json({ error: "Your cart is empty." }, 400);
-  // caps no real counter order reaches (src/guard.js ORDER_CAPS): a bigger order is a phone call, never a stock hold. An unpaid
-  // pickup (paid at the counter) holds stock nobody has paid for, so it has the lower PICKUP_CAPS; a card order keeps ORDER_CAPS.
+  // caps no real counter order reaches (src/guard.js ORDER_CAPS): a bigger order is a phone call. An unpaid pickup (paid at the
+  // counter) holds no stock, but each one is staff time at the shelf, so it has the lower PICKUP_CAPS; a card order keeps ORDER_CAPS.
   const CAPS = pay === "at_pickup" ? PICKUP_CAPS : ORDER_CAPS;
   const tooBig = json({ error: pay === "at_pickup" ? `Pickup orders paid at the counter take up to ${CAPS.units} items, ${CAPS.perLine} of any one item. For more, call the counter at 519-255-2222.` : `Online orders take up to ${CAPS.units} items, ${CAPS.perLine} of any one item. For a bigger order, call the counter at 519-255-2222.`, too_big: true, per_item: CAPS.perLine, units: CAPS.units }, 400);
   if (body.lines.length > ORDER_CAPS.lines * 3) return tooBig;
@@ -159,12 +159,6 @@ export async function placeOrder(request, env, url) {
     if (pay === "card" && tobacco(p) && env.STRIPE_TOBACCO_OK !== "1") return json({ error: `${p.name} is paid at the counter when you pick it up.`, sku, field: "pay", counter_only: true }, 409);
     lines.push({ product: p, qty });
   }
-  // Unpaid pickups together hold at most half of an item (src/guard.js holdMax). Checked here for a plain answer before anything
-  // is written; the statement that takes the stock checks it again, so orders at the same moment cannot pass it together.
-  if (pay === "at_pickup") {
-    const held = await db.batch(lines.map(l => db.prepare(`SELECT ${HELD_SQL("?1", "''")} AS n`).bind(l.product.sku)));
-    for (const [i, l] of lines.entries()) { const h = held[i].results[0].n, room = Math.max(0, holdMax(l.product.stock + h) - h); if (l.qty > room) return holdFull(l.product, room); }
-  }
   const subtotal = lines.reduce((a, l) => a + cents(l.product.price) * l.qty, 0);
   let shipping = 0, service = null, quote = {}, province = "ON", address = {}, eta = null;
   if (method === "ship") {
@@ -175,7 +169,7 @@ export async function placeOrder(request, env, url) {
     if (!city) return json({ error: "Enter the city or town.", field: "city" }, 400);
     if (body.service === "local") {   // the fee comes only from the road distance worked out here
       if (!phone || String(phone).replace(/\D/g, "").length < 10) return json({ error: "Enter a phone number so the driver can reach you.", field: "phone" }, 400);
-      const d = await deliveryQuote(env, { line1, city, postal: dest.full }, request.headers.get("CF-Connecting-IP") || "local");
+      const d = await deliveryQuote(env, { line1, city, postal: dest.full }, request.headers.get("CF-Connecting-IP") || "local", await deliveryGate(env, request));   // the same per-visitor lookup count as the delivery check
       const other = lines.some(l => l.product.ship === "pickup_only" || isCharcoal(l.product)) ? "You can still pick it up free." : "You can still ship it or pick it up free.";
       if (d.status !== "ok") return json({ error: d.status === "far" ? `${dest.full} is past our 25 km delivery area. ${other}` : d.status === "down" ? `Delivery cannot be checked right now. ${other}` : "We could not confirm that address. Check the street number and postal code.", field: "line1", delivery: d.status }, 409);
       const due = rates.localDue(d.fee_cents, subtotal);   // $200.00 of items before tax delivers free
@@ -206,12 +200,12 @@ export async function placeOrder(request, env, url) {
   if (pay === "card" && total < 50) return json({ error: "There is almost nothing left to pay. Choose pay at the counter, or add an item.", field: "pay" }, 409);
   if (key) quote = { ...quote, idem: keyed.idem, idem_req: sameOrder };
 
-  // 1 write the order as pending  2 take the stock, one guarded step per item  3 open the payment page, or put everything back
+  // 1 write the order as pending  2 card: take the stock, one guarded step per item (a pickup request takes none)  3 open the payment page, or put everything back
   const id = key ? keyed.id : code(), acct = orderLoyaltyStatements(db, id, customer, loy), src = cleanSource(body.source, url.hostname);   // where the order came from (short codes only)
   let first;
   try { first = await db.batch([
     db.prepare(`INSERT INTO orders (id, status, method, email, name, phone, address, subtotal_cents, shipping_cents, tax_cents, total_cents, tax_province, ship_service, ship_quote, pay_method, pay_status, pay_expires_at, source, source_detail)
-      VALUES (?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ','now','+${pay === "card" ? `${HOLD_MIN} minutes` : `${pickupHoldHours(env)} hours`}'), ?, ?)`)
+      VALUES (?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ','now','+${pay === "card" ? `${HOLD_MIN} minutes` : `${pickupRequestHours(env)} hours`}'), ?, ?)`)
       .bind(id, method, email, name, phone, JSON.stringify({ ...address, ...(note ? { note } : {}) }), subtotal, shipping, tax, total, province, service, JSON.stringify(quote), pay, pay === "card" ? "awaiting" : "pay_at_pickup", src.source, src.detail),
     ...lines.map(l => db.prepare("INSERT INTO order_items (order_id, sku, name, qty, unit_cents) VALUES (?,?,?,?,?)").bind(id, l.product.sku, l.product.name, l.qty, cents(l.product.price))),
     ...acct.statements,
@@ -235,12 +229,17 @@ export async function placeOrder(request, env, url) {
     await db.batch([db.prepare("DELETE FROM loyalty_ledger WHERE order_id = ?").bind(id), db.prepare("DELETE FROM order_items WHERE order_id = ?").bind(id), db.prepare("DELETE FROM orders WHERE id = ? AND status = 'pending' AND release_op IS NULL").bind(id)]);
     return json({ error: after.words, limited: after.why }, 429);
   }
+  // A pay-at-the-counter pickup is a request: nothing is taken or held now. The shop takes the stock when it marks it ready.
+  if (pay === "at_pickup") {
+    await receipt(env, id, "at_pickup");   // says plainly: wait for our "ready" email before coming in
+    return json({ ok: true, pay: { method: pay, status: "pay_at_pickup" }, order: { id, method, name, email, service, province, subtotal_cents: subtotal, reward_cents: loy.reward_cents, points: loy.earn, account: !!customer, shipping_cents: shipping, tax_cents: tax, total_cents: total,
+      tax_label: rates.taxLabel(province), days: quote.days ?? null, eta, address: method === "ship" ? address : null, request: true,
+      items: lines.map(l => ({ sku: l.product.sku, name: l.product.name, qty: l.qty, unit_cents: cents(l.product.price) })) } }, 201);
+  }
   const took = await db.batch(lines.flatMap(l => [
     // the guard repeats the sale rule in the same statement: switched off, unpriced, or repriced since this order was worked out, it does not sell;
     // and the order must still be open (a payment page that closed meanwhile has already put everything back)
-    // and an unpaid pickup (?5 = 1) only while unpaid pickups together hold no more than half of the item (src/guard.js holdMax, HOLD_DIV)
-    db.prepare(`UPDATE products SET stock = stock - ?1, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE sku = ?2 AND stock >= ?1 AND active = 1 AND price_cents > 0 AND price_cents = ?4 AND EXISTS (SELECT 1 FROM orders WHERE id = ?3 AND status = 'pending' AND release_op IS NULL)
-      AND (?5 = 0 OR ${HELD_SQL("?2", "?3")} + ?1 <= MAX(1, (stock + ${HELD_SQL("?2", "?3")}) / 2))`).bind(l.qty, l.product.sku, id, cents(l.product.price), pay === "at_pickup" ? 1 : 0),
+    db.prepare(`UPDATE products SET stock = stock - ?1, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE sku = ?2 AND stock >= ?1 AND active = 1 AND price_cents > 0 AND price_cents = ?4 AND EXISTS (SELECT 1 FROM orders WHERE id = ?3 AND status = 'pending' AND release_op IS NULL)`).bind(l.qty, l.product.sku, id, cents(l.product.price)),
     db.prepare("INSERT INTO stock_moves (sku, delta, reason, ref, actor) SELECT ?2, -?1, 'sale', ?3, 'store' WHERE changes() = 1").bind(l.qty, l.product.sku, id),
   ]));
   const failed = lines.filter((l, i) => !took[i * 2].meta.changes);
@@ -251,14 +250,13 @@ export async function placeOrder(request, env, url) {
       db.prepare("DELETE FROM loyalty_ledger WHERE order_id = ? AND EXISTS (SELECT 1 FROM orders WHERE id = ? AND status = 'pending' AND release_op IS NULL)").bind(id, id),
       db.prepare("DELETE FROM order_items WHERE order_id = ? AND EXISTS (SELECT 1 FROM orders WHERE id = ? AND status = 'pending' AND release_op IS NULL)").bind(id, id), db.prepare("DELETE FROM orders WHERE id = ? AND status = 'pending' AND release_op IS NULL").bind(id),
     ]);
-    const now = await db.prepare(`SELECT stock, price_cents, active, ${HELD_SQL("?1", "''")} AS held FROM products WHERE sku = ?1`).bind(failed[0].product.sku).first();
+    const now = await db.prepare("SELECT stock, price_cents, active FROM products WHERE sku = ?1").bind(failed[0].product.sku).first();
     if (now && now.stock >= failed[0].qty && (now.price_cents !== cents(failed[0].product.price) || now.active !== 1))   // not sold out: its price or its switch changed
       return json({ error: `${failed[0].product.name} changed while you were checking out. Refresh to see it now.`, sku: failed[0].product.sku, changed: true }, 409);
-    if (now && now.stock >= failed[0].qty && pay === "at_pickup") return holdFull(failed[0].product, Math.max(0, holdMax(now.stock + now.held) - now.held));   // other pickups took the half meanwhile
     return json({ error: `${failed[0].product.name} sold out while you were checking out.`, sku: failed[0].product.sku, stock: now?.stock ?? 0 }, 409);
   }
-  let payInfo = { method: pay, status: pay === "card" ? "awaiting" : "pay_at_pickup" };
-  if (pay === "card") {
+  let payInfo = { method: pay, status: "awaiting" };
+  {
     try {
       const row = await db.prepare("SELECT * FROM orders WHERE id = ?").bind(id).first();
       payInfo = { ...payInfo, ...(await openCheckout(env, url.origin, row)) };
@@ -267,7 +265,7 @@ export async function placeOrder(request, env, url) {
       await releaseHeld(db, id, "failed");
       return json({ error: "The payment page did not open. Nothing was charged. Try again in a minute.", pay_down: true }, 503);
     }
-  } else await receipt(env, id, "at_pickup");   // the receipt says pay at the counter; a card receipt waits for the webhook
+  }   // a card receipt waits for the webhook
   return json({ ok: true, pay: payInfo, order: { id, method, name, email, service, province, subtotal_cents: subtotal, reward_cents: loy.reward_cents, points: loy.earn, account: !!customer, shipping_cents: shipping, tax_cents: tax, total_cents: total,
     tax_label: rates.taxLabel(province), days: quote.days ?? null, eta, address: method === "ship" ? address : null,
     items: lines.map(l => ({ sku: l.product.sku, name: l.product.name, qty: l.qty, unit_cents: cents(l.product.price) })) } }, 201);

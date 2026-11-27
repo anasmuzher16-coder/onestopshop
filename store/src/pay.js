@@ -133,7 +133,13 @@ export async function receipt(env, id, how) {
   await writeEmail(env, id, o.email, orderPlaced(site, { ...o, eta: q.eta ?? null }, items, how));
   // the shop hears about it too: held in the outbox (back office) until the mail service and OWNER_EMAIL are set
   await writeEmail(env, id, env.OWNER_EMAIL || "the shop", newOrder(site, o, items, how));
-  const low = await db.prepare(`SELECT name, stock FROM products WHERE active = 1 AND stock <= low_stock_at AND sku IN (${items.map(() => "?").join(",") || "''"}) ORDER BY stock, name`).bind(...items.map(i => i.sku)).all();
+  // a pickup request takes no stock when it is placed, so its low-stock note waits until the shop marks it ready (src/admin.js)
+  if (how === "at_pickup") return;
+  await lowNote(env, id, items.map(i => i.sku));
+}
+export async function lowNote(env, id, skus) {
+  const db = env.DB, site = env.SITE_NAME || "One Stop Shop";
+  const low = await db.prepare(`SELECT name, stock FROM products WHERE active = 1 AND stock <= low_stock_at AND sku IN (${skus.map(() => "?").join(",") || "''"}) ORDER BY stock, name`).bind(...skus).all();
   if (low.results.length) await writeEmail(env, id, env.OWNER_EMAIL || "the shop", lowStock(site, low.results));
 }
 
@@ -196,10 +202,11 @@ export async function payStatus(request, env, url) {
 }
 
 // ---------- 6. the safety net ----------
-// A pay-at-the-counter order holds its stock for PICKUP_HOLD_HOURS (48 by default, src/guard.js). One still unpaid and not
-// got ready by then closes as cancelled, payment 'expired', and its stock goes back exactly once (releaseHeld). One the shop
-// marked ready is held as the ready email says, 14 days from ready, then let go the same way. Paid or cancelled ends it.
-// Orders placed before holds had an end (no pay_expires_at) never expire.
+// A pay-at-the-counter pickup is a request until the shop marks it ready (2026-11-27): one never confirmed within
+// PICKUP_REQUEST_HOURS (3 days by default, src/guard.js) closes as cancelled, payment 'expired'. It took no stock, so none moves
+// (releaseHeld gives back only what an order's own stock moves show it took; an order placed before 2026-11-27 that took
+// stock at placement gets exactly that back, once). One the shop marked ready took its stock then and is held as the ready
+// email says, 14 days from ready, then let go the same way. Paid or cancelled ends it. Orders with no pay_expires_at never expire.
 export async function expirePickups(env) {
   const db = env.DB, list = (await db.prepare(`SELECT id, 'pay_at_pickup' AS hold FROM orders WHERE status = 'pending' AND pay_status = 'pay_at_pickup' AND release_op IS NULL AND pay_expires_at IS NOT NULL AND pay_expires_at <= ${NOW}
     UNION ALL SELECT id, 'ready_unpaid' AS hold FROM orders WHERE status = 'ready' AND pay_status = 'pay_at_pickup' AND release_op IS NULL AND pay_expires_at IS NOT NULL AND COALESCE(ready_at, updated_at) <= strftime('%Y-%m-%dT%H:%M:%SZ','now','-${READY_HOLD_DAYS} days') LIMIT 50`).all()).results;
@@ -240,8 +247,12 @@ export async function adminPay(request, env, id, what, actor) {
   if (!o) return json({ error: "No such order." }, 404);
   if (what === "paid") {   // the customer paid at the counter
     if (o.pay_status !== "pay_at_pickup") return json({ error: "This order is not waiting for payment at the counter." }, 409);
+    // A request not yet confirmed has taken nothing off the shelf: marking it ready is what checks and takes the stock, so that
+    // comes first (an order placed before 2026-11-27 already took its stock and can be paid as it is).
+    const stocked = "(status = 'ready' OR EXISTS (SELECT 1 FROM stock_moves WHERE ref = orders.id AND reason = 'sale'))";
+    if (!(await db.prepare(`SELECT 1 AS y FROM orders WHERE id = ? AND ${stocked}`).bind(id).first("y"))) return json({ error: "Mark it ready first: that checks the shelf and takes the items off the stock count. Then take the payment.", to_confirm: true }, 409);
     const res = await db.batch([
-      db.prepare(`UPDATE orders SET pay_status = 'paid', paid_cents = total_cents, paid_at = ${NOW}, payment_ref = 'counter', status = CASE WHEN status = 'pending' THEN 'paid' ELSE status END, updated_at = ${NOW} WHERE id = ? AND pay_status = 'pay_at_pickup' AND status IN ('pending','ready')`).bind(id),
+      db.prepare(`UPDATE orders SET pay_status = 'paid', paid_cents = total_cents, paid_at = ${NOW}, payment_ref = 'counter', status = CASE WHEN status = 'pending' THEN 'paid' ELSE status END, updated_at = ${NOW} WHERE id = ? AND pay_status = 'pay_at_pickup' AND status IN ('pending','ready') AND ${stocked}`).bind(id),
       db.prepare("INSERT INTO audit_log (actor, action, target, before, after) SELECT ?, 'order.paid_at_counter', ?, ?, ? WHERE changes() = 1").bind(actor, id, JSON.stringify({ pay_status: o.pay_status, status: o.status }), JSON.stringify({ pay_status: "paid", paid_cents: o.total_cents })),
     ]);
     if (!res[0].meta.changes) return json({ error: "That order changed. Refresh and try again." }, 409);
