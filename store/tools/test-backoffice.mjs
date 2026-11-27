@@ -25,10 +25,10 @@ const jar = { owner: "", staff: "" };
 // pooled connection is 3.5-7 s idle: it waits until that connection is surely closed. A test-rig limit, not the shop's: the
 // requests, their order and everything checked stay the same, only a pause is added before some of them.
 const pool = [];
-const clearOfIdleEdge = async () => {
+const clearOfIdleEdge = async (from = 3500) => {   // a timed check clears from 1.5 s first, outside its clock, so its own request never waits
   for (;;) {
     const now = Date.now(); for (let i = pool.length - 1; i >= 0; i--) if (now - pool[i] >= 7000) pool.splice(i, 1);
-    const edge = pool.filter(t => now - t > 3500).map(t => t + 7000 - now); if (!edge.length) return;
+    const edge = pool.filter(t => now - t > from).map(t => t + 7000 - now); if (!edge.length) return;
     await new Promise(r => setTimeout(r, Math.max(...edge)));
   }
 };
@@ -251,7 +251,7 @@ ok((await A("/logout", { method: "POST", body: {} })).status === 200, "owner sig
 // ---- one address can never lock or slow the owner (breaker review, 2026-11-26) ----
 const ownerFlood = await Promise.all(Array.from({ length: 30 }, () => A("/login", { method: "POST", as: "none", body: { passcode: "wrong-" + letters() }, headers: { "CF-Connecting-IP": "10.1.1.1" } })));
 ok(ownerFlood.filter(r => r.status === 401).length <= 5, "30 owner tries at once from one address get at most five checks: " + ownerFlood.filter(r => r.status === 401).length);
-const t0 = Date.now(), ownerIn = await A("/login", { method: "POST", as: "none", body: { passcode: KEY }, headers: { "CF-Connecting-IP": "10.1.9.9" } });
+await clearOfIdleEdge(1500); const t0 = Date.now(), ownerIn = await A("/login", { method: "POST", as: "none", body: { passcode: KEY }, headers: { "CF-Connecting-IP": "10.1.9.9" } });
 ok(ownerIn.status === 200 && Date.now() - t0 < 3000, `one address cannot lock or slow the owner's sign-in: ${ownerIn.status} in ${Date.now() - t0} ms`);
 if (process.env.PERSIST) {
   const { createHash } = await import("node:crypto");
@@ -268,7 +268,7 @@ if (process.env.PERSIST) {
 // Many addresses at once: past 20 owner tries from 3 or more places each owner try is slowed; past 100 from 10 or more, the
 // owner's passcode is locked for everyone for 15 minutes (last: it locks the owner out of this throwaway store)
 await Promise.all(Array.from({ length: 6 }, (_, k) => (async () => { for (let i = 0; i < 5; i++) await A("/login", { method: "POST", as: "none", body: { passcode: "wrong-" + letters() }, headers: { "CF-Connecting-IP": `10.20.${k}.1` } }); })()));
-const t1 = Date.now(), slowed = await A("/login", { method: "POST", as: "none", body: { passcode: KEY }, headers: { "CF-Connecting-IP": "10.21.0.1" } });
+await clearOfIdleEdge(1500); const t1 = Date.now(), slowed = await A("/login", { method: "POST", as: "none", body: { passcode: KEY }, headers: { "CF-Connecting-IP": "10.21.0.1" } });
 ok(slowed.status === 200 && Date.now() - t1 >= 400, `after 30 wrong owner tries from 6 places the owner still gets in, slowed: ${slowed.status} in ${Date.now() - t1} ms`);
 await Promise.all(Array.from({ length: 14 }, (_, k) => (async () => { for (let i = 0; i < 6; i++) await A("/login", { method: "POST", as: "none", body: { passcode: "wrong-" + letters() }, headers: { "CF-Connecting-IP": `10.22.${k}.1` } }); })()));
 const ceiling = await A("/login", { method: "POST", as: "none", body: { passcode: KEY }, headers: { "CF-Connecting-IP": "10.23.0.1" } });

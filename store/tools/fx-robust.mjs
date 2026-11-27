@@ -266,12 +266,13 @@ if (SECS.includes("hookahs")) {
   t("print: no effect layer prints", shown === 0, "showing " + shown);
   await p.emulateMedia({ media: "screen" });
   if (await p.evaluate(() => !!(window.__smoke && window.__smoke.canvas.getContext("webgl").getExtension("WEBGL_lose_context")))) {
-    await p.evaluate(() => window.__smoke.canvas.getContext("webgl").getExtension("WEBGL_lose_context").loseContext());
+    const t1 = Date.now(); await p.evaluate(() => window.__smoke.canvas.getContext("webgl").getExtension("WEBGL_lose_context").loseContext());
     // The page gives the context 2 s to come back, then takes the canvas out, puts the stills in and fades them on two frames
     // later (fx-smoke.js toStills, place). Read at a fixed 2.7 s of wall time, GitHub's 2-core software-GL machines caught the
     // one state in between: {"stills":0,"live":0}, the canvas gone and the stills in but not yet on (runs 45951384375,
-    // 45954276171). So the check waits on the page's own steps: the canvas going (up to 6 s), then three frames, then reads.
-    const t1 = Date.now(), gone = await p.waitForFunction(() => !document.querySelector("canvas.smoke"), null, { timeout: 6000 }).then(() => Date.now() - t1, () => -1);
+    // 45954276171). So the check reads on the page's own steps: the canvas must be gone within the same 2.7 s of the loss as before,
+    // then three frames for the fade, then it reads.
+    const gone = await p.waitForFunction(() => !document.querySelector("canvas.smoke"), null, { timeout: Math.max(1, 2700 - (Date.now() - t1)) }).then(() => Date.now() - t1, () => -1);
     await p.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(r)))));
     const s = await p.evaluate(() => ({ stills: document.querySelectorAll(".shophead > .smoke--still.smoke--bank.on").length, live: document.querySelectorAll("canvas.smoke").length })); s.goneAfter = gone;
     t("a lost context that does not come back is replaced by the stills", s.stills === 1 && s.live === 0, J(s));
