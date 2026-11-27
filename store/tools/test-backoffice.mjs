@@ -182,6 +182,84 @@ ok((await prod("OSS-8003")).stock === s8003 - 1, "the order's 1 came off the she
   ok(after.trail.some(t => t.action === "order.status" && t.actor === me.actor), "who marked it ready is on the order");
   const cx = await A(`/orders/${rid}/cancel`, { method: "POST", as: "staff", body: { reason: "customer", op: uuid() } });
   ok(cx.status === 200 && (await prod("OSS-8003")).stock === s0, "cancelling the ready order puts its 2 back"); }
+// ---- a junk flood never pushes real orders out of staff reach (breaker, 2026-11-27: the list was the newest 200, Today the newest 25) ----
+if (process.env.PERSIST) {
+  const WR = process.env.WRANGLER_JS || join(execFileSync(process.platform === "win32" ? "npm.cmd" : "npm", ["root", "-g"], { encoding: "utf8", shell: process.platform === "win32" }).trim(), "wrangler", "bin", "wrangler.js");
+  const q = cmd => { const out = execFileSync(process.execPath, [WR, "d1", "execute", "onestopshop", "--local", "--persist-to", process.env.PERSIST, "--json", "--command", cmd], { cwd: fileURLToPath(new URL("..", import.meta.url)), encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }); return JSON.parse(out.slice(out.indexOf("["))).flatMap(r => r.results); };
+  const order = (ip, body) => call("/api/orders", { method: "POST", as: "none", headers: { "CF-Connecting-IP": ip }, body: { method: "pickup", pay: "at_pickup", lines: [{ sku: "OSS-8004", qty: 1 }], ...body } });
+  const FIN = ["shipped", "collected", "cancelled", "refunded"];
+  // a real request and a ready order, placed first, then made older than everything else
+  const real = await order("10.61.0.1", { name: "Ida Realson", email: "ida-real@example.com", phone: "519-555-0161" });
+  const rdy = await order("10.61.0.2", { name: "Ray Readyman", email: "ray-ready@example.com", phone: "519-555-0162" });
+  const rid = real.data.order?.id, yid = rdy.data.order?.id;
+  ok(real.status === 201 && rdy.status === 201 && (await A(`/orders/${yid}/status`, { method: "POST", body: { status: "ready" } })).status === 200, "a real request and a ready order are placed: " + real.status + "," + rdy.status);
+  q(`UPDATE orders SET created_at = strftime('%Y-%m-%dT%H:%M:%SZ','now','-5 days') WHERE id IN ('${rid}','${yid}')`);
+  // 250 junk orders, all newer: 150 finished (cancelled, lapsed) and 100 open requests, 60 of them from one network
+  q(`WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < 250) INSERT INTO orders (id, status, method, email, name, phone, subtotal_cents, total_cents, tax_province, pay_method, pay_status, pay_expires_at, created_at, updated_at)
+    SELECT 'J' || printf('%05d', i), CASE WHEN i <= 150 THEN 'cancelled' ELSE 'pending' END, 'pickup', 'junk' || i || '@example.com', 'Junk Bot', '519-555-' || printf('%04d', 2000 + i), 1000, 1130, 'ON', 'at_pickup', CASE WHEN i <= 150 THEN 'expired' ELSE 'pay_at_pickup' END,
+      strftime('%Y-%m-%dT%H:%M:%SZ','now','+3 days'), strftime('%Y-%m-%dT%H:%M:%SZ','now','-' || (i % 90) || ' minutes'), strftime('%Y-%m-%dT%H:%M:%SZ','now') FROM n`);
+  q(`INSERT INTO order_attempts (who, order_id) SELECT CASE WHEN CAST(substr(id, 2) AS INTEGER) <= 210 THEN 'o:junknet0000000000000000' ELSE 'o:solo' || id END, id FROM orders WHERE id LIKE 'J%' AND status = 'pending'`);
+  const L = (await A("/orders", { as: "staff" })).data, ids = new Set(L.orders.map(o => o.id));
+  const openJunk = L.orders.filter(o => /^J/.test(o.id) && o.to_confirm === 1);
+  ok(ids.has(rid) && ids.has(yid) && L.orders.find(o => o.id === yid)?.status === "ready" && L.orders.find(o => o.id === rid)?.to_confirm === 1, "with 250 newer junk orders the older real request and the older ready order are still on the list");
+  ok(openJunk.length === 100 && L.open_cut === false && L.orders.filter(o => !FIN.includes(o.status)).length === L.open_count && L.open_count === q(`SELECT COUNT(*) AS n FROM orders WHERE status NOT IN ('${FIN.join("','")}')`)[0].n, "every open order comes back, whatever the count: " + openJunk.length + " junk requests, open_count " + L.open_count);
+  const fin = L.orders.filter(o => FIN.includes(o.status));
+  ok(fin.length === 50 && typeof L.finished_more === "string", "finished orders come 50 at a time, with a link to the older ones: " + fin.length);
+  const P2 = (await A("/orders?before=" + encodeURIComponent(L.finished_more), { as: "staff" })).data;
+  ok(P2.orders.length > 0 && P2.orders.every(o => FIN.includes(o.status) && !ids.has(o.id)) && P2.orders[0].created_at <= fin.at(-1).created_at, "Show older gives the next finished orders, none repeated: " + P2.orders.length);
+  ok((await A("/orders?before=junk", { as: "staff" })).status === 400, "a page link that is not one is refused");
+  { let cur = L.finished_more, all = fin.length, pages = 0; while (cur && pages < 20) { const p = (await A("/orders?before=" + encodeURIComponent(cur), { as: "staff" })).data; all += p.orders.length; cur = p.finished_more; pages++; }
+    const total = q(`SELECT COUNT(*) AS n FROM orders WHERE status IN ('${FIN.join("','")}')`)[0].n;
+    ok(!cur && all === total, `paging through every finished order reaches all ${total}: ${all}`); }
+  ok((await A("/orders/" + rid, { as: "staff" })).status === 200 && (await A("/orders/" + yid, { as: "staff" })).data.order?.status === "ready", "both open from the list");
+  const sm = (await A("/summary", { as: "staff" })).data;
+  ok(sm.confirm.length === sm.todo.to_confirm && sm.confirm.some(o => o.id === rid) && sm.confirm.filter(o => /^J/.test(o.id)).length === 100 && sm.confirm_cut === false, `Today lists every request to confirm (${sm.confirm.length} of ${sm.todo.to_confirm}), the older real one too`);
+  // find, on the server
+  const F = async (s, as = "staff") => A("/orders/find?q=" + encodeURIComponent(s), { as });
+  ok((await F(rid.toLowerCase())).data.orders?.[0]?.id === rid, "find by order number (any case)");
+  ok((await F("(519) 555 0161 ext 9")).data.orders?.some(o => o.id === rid) && (await F("+1 519.555.0161")).data.orders?.some(o => o.id === rid) && (await F("5550161")).data.orders?.some(o => o.id === rid), "find by phone, written any way (extension, +1, dots, part)");
+  ok((await F("ida real")).data.orders?.some(o => o.id === rid) && (await F("IDA-REAL@Example.com")).data.orders?.some(o => o.id === rid), "find by name and by email");
+  const fj = (await F("junk bot")).data;
+  ok(fj.orders.length === 50 && fj.more === true, "a search matching many answers 50 and says there are more: " + fj.orders.length);
+  ok((await F("%%")).data.orders?.length === 0 && (await F("_")).status === 400 && (await F("x".repeat(81))).status === 400, "find treats % and _ as letters and needs 2 to 80 characters");
+  ok((await F(rid, "none")).status === 401 && (await call("/api/admin/orders/find?q=" + rid, { as: "none", headers: { Cookie: "oss_admin=" + "a".repeat(64) } })).status === 401, "find needs a signed-in session");
+  // clear junk: several requests cancelled in one go, only those, each logged with who
+  const pick = openJunk.slice(0, 5).map(o => o.id), op = uuid(), oneNet = openJunk.find(x => x.id === "J00160")?.net;
+  ok(oneNet && openJunk.filter(o => o.net === oneNet).length === 60 && openJunk.every(o => o.net && o.net.length === 8), "requests carry a short network tag, so every request from one network can be picked");
+  ok((await A("/orders/bulk-cancel", { method: "POST", as: "none", body: { ids: pick, confirm: 5 } })).status === 401, "bulk cancel needs a sign-in");
+  ok((await A("/orders/bulk-cancel", { method: "POST", as: "staff", body: { ids: pick, confirm: 5 }, headers: { "Sec-Fetch-Site": "cross-site" } })).status === 403, "bulk cancel from another site is refused");
+  { const r = await fetch(B + "/api/admin/orders/bulk-cancel", { method: "POST", headers: { Cookie: jar.staff, "Content-Type": "application/json" }, body: JSON.stringify({ ids: pick, confirm: 5 }) });
+    ok(r.status === 400, "bulk cancel without the request marker is refused: " + r.status); }
+  ok((await A("/orders/bulk-cancel", { method: "POST", as: "staff", body: { ids: pick, confirm: 4 } })).status === 400 && (await A("/orders/bulk-cancel", { method: "POST", as: "staff", body: { ids: pick } })).status === 400, "bulk cancel must repeat how many it means");
+  ok((await A("/orders/bulk-cancel", { method: "POST", as: "staff", body: { ids: Array.from({ length: 101 }, (_, i) => "J" + String(151 + i).padStart(5, "0")), confirm: 101 } })).status === 400 && (await A("/orders/bulk-cancel", { method: "POST", as: "staff", body: { ids: ["J00151'--"], confirm: 1 } })).status === 400, "at most 100 at a time, order numbers only");
+  ok(q("SELECT COUNT(*) AS n FROM orders WHERE id LIKE 'J%' AND status = 'pending'")[0].n === 100, "nothing was cancelled by the refused calls");
+  const bc = await A("/orders/bulk-cancel", { method: "POST", as: "staff", body: { ids: [...pick, yid, "NOSUCH1"], confirm: 7, op } });
+  ok(bc.status === 200 && bc.data.cancelled.length === 5 && pick.every(i => bc.data.cancelled.includes(i)) && bc.data.skipped.some(s => s.id === yid) && bc.data.skipped.some(s => s.id === "NOSUCH1"), "bulk cancel cancels exactly the 5 selected requests and leaves a ready order alone: " + JSON.stringify(bc.data).slice(0, 300));
+  const after = q(`SELECT id, status, cancelled_by, cancel_reason FROM orders WHERE id IN ('${pick.join("','")}','${yid}','${rid}')`);
+  ok(after.filter(r => pick.includes(r.id)).every(r => r.status === "cancelled" && r.cancelled_by === me.actor && r.cancel_reason === "other") && after.find(r => r.id === yid).status === "ready" && after.find(r => r.id === rid).status === "pending", "each is cancelled with the person's name; the ready order and the real request are untouched");
+  ok(q("SELECT COUNT(*) AS n FROM orders WHERE id LIKE 'J%' AND status = 'pending'")[0].n === 95, "the other 95 junk requests are untouched");
+  const logged = () => q(`SELECT COUNT(*) AS n FROM audit_log WHERE action = 'order.cancel' AND target IN ('${pick.join("','")}') AND actor = '${me.actor.replace(/'/g, "''")}'`)[0].n;
+  ok(logged() === 5 && (await A("/orders/" + pick[0], { as: "staff" })).data.trail.some(t => t.action === "order.cancel" && t.actor === me.actor), "each has its own log line with who did it");
+  const again = await A("/orders/bulk-cancel", { method: "POST", as: "staff", body: { ids: pick, confirm: 5, op } });
+  ok(again.status === 200 && again.data.cancelled.length === 5 && logged() === 5, "the same tap twice cancels nothing more and logs nothing more");
+  const L2 = (await A("/orders", { as: "staff" })).data, sm2 = (await A("/summary", { as: "staff" })).data;
+  ok(!L2.orders.some(o => pick.includes(o.id) && o.to_confirm) && L2.orders.filter(o => /^J/.test(o.id) && o.to_confirm === 1).length === 95 && !sm2.confirm.some(o => pick.includes(o.id)), "cancelled requests leave the open list and Today");
+  // the "different network" flag uses the limits' own phone rule (phoneKey): one customer on mobile and at home is not flagged
+  const em = "pat-flag@example.com", A1 = await order("10.62.0.1", { name: "Pat Flagg", email: em, phone: "519-555-0101 x2" }), B1 = await order("10.62.0.2", { name: "Pat Flagg", email: em, phone: "5195550101" });
+  let C1 = null;
+  const nets = async () => { const l = (await A("/orders", { as: "staff" })).data.orders; return [A1, B1, C1].map(r => r && l.find(o => o.id === r.data.order?.id)?.other_networks); };
+  const n0 = await nets();
+  ok(A1.status === 201 && B1.status === 201 && n0[0] === 0 && n0[1] === 0 && (await A("/orders/" + B1.data.order.id, { as: "staff" })).data.order.other_networks === 0, `"519-555-0101 x2" and "5195550101" from two networks are one person, not flagged: ${n0}`);
+  C1 = await order("10.62.0.3", { name: "Stranger Danger", email: em, phone: "226-555-0199" });
+  const nn = await nets();
+  ok(C1.status === 201 && nn[0] === 1 && nn[1] === 1 && nn[2] === 2 && (await A("/orders/" + C1.data.order.id, { as: "staff" })).data.order.other_networks === 2, "a third order with that email, another phone and network, is still flagged (and flags them): " + nn);
+  // find by a name with an accented capital, typed as stored or in lower case
+  const el = await order("10.64.0.1", { name: "Élodie Tremblay", email: "elodie-t@example.com", phone: "519-555-0178" });
+  ok(el.status === 201 && (await F("Élodie")).data.orders?.some(o => o.id === el.data.order.id) && (await F("élodie trem")).data.orders?.some(o => o.id === el.data.order.id), "find by a name with an accented capital: " + el.status);
+  // a note with HTML is kept as typed and shown as text (the browser check is in e2e-flow)
+  const xn = await order("10.63.0.1", { name: "Nina Notes", email: "nina-notes@example.com", phone: "519-555-0177", note: '<img src=x onerror="window.__xss=1">' });
+  ok(xn.status === 201 && JSON.parse((await A("/orders/" + xn.data.order.id, { as: "staff" })).data.order.address).note === '<img src=x onerror="window.__xss=1">', "a note with HTML is stored as typed (escaped where shown): " + xn.status);
+} else ok(false, "set PERSIST for the junk-flood checks");
 // ID tick on charcoal only, staff only
 const coal = (await A("/products")).data.products.find(p => p.active && p.stock > 0 && /"charcoal":true/.test(p.details || ""));
 const o3 = coal ? await place(coal.sku, 1, { order_key: "idtick-" + uuid() }) : null;

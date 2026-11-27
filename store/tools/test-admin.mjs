@@ -15,12 +15,17 @@ const call = async (path, { method = "GET", body, marker = true, type = "applica
   return { status: r.status, data: await r.json().catch(() => ({})), r };
 };
 // the wall
-for (const p of ["/summary", "/products", "/orders", "/orders/S1001"]) ok((await call(p)).status === 401, p + " must need sign-in");
+for (const p of ["/summary", "/products", "/orders", "/orders/S1001", "/orders/find?q=S1001", "/orders?before=2026-01-01T00:00:00Z%7CS1001"]) ok((await call(p)).status === 401, p + " must need sign-in");
+ok((await call("/orders/bulk-cancel", { method: "POST", body: { ids: ["S1001"], confirm: 1 } })).status === 401, "bulk cancel must need sign-in");
 ok((await call("/products/OSS-1001/stock", { method: "POST", body: { delta: 1 } })).status === 401, "stock change must need sign-in");
 ok((await call("/login", { method: "POST", body: { passcode: "wrong" } })).status === 401, "wrong passcode refused");
 const login = await call("/login", { method: "POST", body: { passcode: KEY } });
 ok(login.status === 200 && /HttpOnly/.test(login.r.headers.get("set-cookie") || "") && /SameSite=Strict/.test(login.r.headers.get("set-cookie") || ""), "sign-in sets a locked-down cookie");
 cookie = (login.r.headers.get("set-cookie") || "").split(";")[0];
+{ // the order list: every open order, then finished ones a page at a time; find by number (2026-11-27)
+  const l = (await call("/orders")).data, open = l.orders.filter(o => !["shipped", "collected", "cancelled", "refunded"].includes(o.status));
+  ok(typeof l.open_count === "number" && open.length === l.open_count && "finished_more" in l, "the order list says how many are open and how to get older finished ones: " + l.open_count);
+  const any = l.orders[0]; ok(!any || (await call("/orders/find?q=" + encodeURIComponent(any.id.toLowerCase()))).data.orders?.some(o => o.id === any.id), "find by order number"); }
 ok((await call("/products/OSS-1001/stock", { method: "POST", body: { delta: 1 }, marker: false })).status === 400, "write without the request marker refused");
 ok((await call("/products/OSS-1001/stock", { method: "POST", body: { delta: 1 }, origin: "https://evil.example" })).status === 403, "write from another site refused");
 
