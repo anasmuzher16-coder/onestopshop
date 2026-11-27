@@ -15,6 +15,9 @@ const B = (process.env.BASE || "http://127.0.0.1:4420").replace(/\/$/, "");
 await samplesOn(B, ["OSS-8003", "OSS-8004"]);
 const KEY = process.env.ADMIN_KEY || readFileSync(new URL("../.dev.vars", import.meta.url), "utf8").match(/ADMIN_KEY=(.+)/)[1].trim();
 let n = 0, f = 0; const ok = (c, msg) => { n++; if (!c) { f++; console.log("FAIL", msg); } };
+// the preview's open edit switch (src/preview.js) is off unless the runner turned it on: no banner, no editor, its address refused
+if (!process.env.EXPECT_OPEN) { const home = await (await globalThis.fetch(B + "/")).text(), adm = await (await globalThis.fetch(B + "/admin")).text();
+  ok(!/data-preview-banner|oss-open-edit|open-edit\.js/.test(home + adm) && (await globalThis.fetch(B + "/api/open-edit/OSS-1001")).status === 404 && (await globalThis.fetch(B + "/api/open-edit/OSS-1001", { method: "PUT", headers: { "Content-Type": "application/json", "X-OSS-Admin": "1" }, body: '{"price_cents":100}' })).status === 404, "open edit off: no banner or editor in the pages, and its address refused"); }
 const jar = { owner: "", staff: "" };
 // the local server drops idle kept-alive connections while a database command runs beside it: a reset before any answer is retried
 // The local dev server is two processes: wrangler's proxy keeps a pool of kept-alive connections to the store's own process,

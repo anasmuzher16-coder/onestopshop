@@ -1,0 +1,52 @@
+/* The preview's open edit (src/preview.js, public/open-edit.js): linked only while PREVIEW_OPEN_EDIT is on.
+   The banner sits in the flow above the header, so it never covers anything and scrolls away with the page. */
+.pvbar{margin:0;padding:6px var(--gutter,16px);background:var(--coal-1,#1d1612);border-bottom:1px solid var(--coal-2,#2f2722);color:var(--ash,#b3a99c);font:500 var(--t-12,.75rem)/1.4 var(--font-ui,system-ui,sans-serif);text-align:center;text-wrap:balance}
+.pvbar::before{content:"";display:inline-block;width:6px;height:6px;margin:0 8px 1px 0;border-radius:50%;background:var(--ember,#c8321f);vertical-align:middle}
+
+/* the bar under the item's name */
+.oe-bar{display:grid;gap:var(--s-2);margin:var(--s-3) 0 var(--s-5);padding:var(--s-4);border:1px dashed var(--coal-3);border-radius:var(--radius);background:var(--coal-1)}
+.oe-bar p{margin:0}
+.oe-bar__k{font:600 var(--t-12)/1 var(--font-ui);letter-spacing:.08em;text-transform:uppercase;color:var(--ash)}
+.oe-bar__need{font-size:var(--t-14);color:var(--color-text)}
+.oe-bar__row{display:grid;gap:var(--s-2)}
+.oe-bar__edit{width:100%}
+.oe-bar__next{display:flex;align-items:center;justify-content:center;min-height:48px;color:var(--color-strong);font-weight:500;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.22em}
+.oe-bar__said{font-size:var(--t-14);color:var(--color-strong)}
+.oe-bar__said:empty{display:none}
+@media (min-width:600px){.oe-bar__row{grid-template-columns:auto auto;justify-content:start;align-items:center;column-gap:var(--s-5)}.oe-bar__edit{width:auto}}
+
+/* the editor sheet: the storefront's own sheet, taller, scrolling inside */
+.sheet.oe{max-height:92svh;overflow-y:auto;overscroll-behavior:contain}
+@media (min-width:760px){.sheet.oe{max-width:560px}}
+.oe__form{display:grid;gap:var(--s-2)}
+.oe__form .sheet__p{margin-bottom:var(--s-3)}
+.oe__top{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--s-4)}
+.oe__meta{margin:0 0 var(--s-1);font-size:var(--t-12);color:var(--ash)}
+.oe__x{min-height:44px;padding:0 var(--s-3);background:none;border:1px solid var(--coal-3);border-radius:var(--radius);color:var(--color-strong);font:500 var(--t-14)/1 var(--font-ui);cursor:pointer}
+.oe__form .field__label{margin:var(--s-3) 0 var(--s-2)}
+.oe__help{margin:var(--s-2) 0 0;font-size:var(--t-12);color:var(--ash)}
+.oe__n{font-weight:400;color:var(--ash)}
+.oe__cols{border:0;margin:0;padding:0;min-width:0;display:grid;gap:var(--s-2)}
+.oe__cols>.oe__help{margin:0 0 var(--s-1)}
+.oe__add{justify-self:start;margin:0;padding:12px 0}
+.oe__new{display:grid;grid-template-columns:minmax(0,1fr) 5.5rem;gap:var(--s-3);align-items:end}
+.oe__new .btn{grid-column:1 / -1}
+.oe__new .field__label{margin-top:0}
+.oe__hex{width:100%;min-height:56px;padding:4px;background:var(--coal-0);border:1px solid var(--coal-3);border-radius:var(--radius);cursor:pointer}
+.oe__nums{display:grid;gap:var(--s-2)}
+@media (min-width:420px){.oe__nums{grid-template-columns:1fr 1fr;column-gap:var(--s-4)}}
+.oe__act{position:sticky;bottom:calc(-1 * (var(--s-6) + env(safe-area-inset-bottom)));z-index:1;margin:var(--s-3) calc(-1 * var(--gutter)) 0;padding:var(--s-3) var(--gutter) calc(var(--s-6) + env(safe-area-inset-bottom));background:var(--coal-1);border-top:1px solid var(--coal-2)}
+.oe__act .btn{flex:1 1 12rem}
+.oe .field__err[hidden]{display:none}
+
+/* the colour swatches: the back office's own (public/admin.css .sw), on the storefront's tokens */
+.oe .sw-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,7.25rem),1fr));gap:var(--s-2)}
+.oe .sw{display:flex;align-items:center;gap:var(--s-2);min-height:48px;padding:0 var(--s-3) 0 var(--s-2);background:none;border:1px solid var(--coal-3);border-radius:var(--radius);font:400 var(--t-14)/1.2 var(--font-ui);color:var(--color-text);text-align:left;min-width:0;cursor:pointer}
+.oe .sw span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media (hover:hover){.oe .sw:hover{border-color:var(--white)}}
+.oe .sw[aria-pressed="true"]{background:var(--bone);border-color:var(--bone);color:var(--ink);font-weight:600}
+.oe .sw__dot{flex:none;width:24px;height:24px;border-radius:50%;background:var(--coal-3);box-shadow:inset 0 0 0 1px oklch(1 0 0 / .22)}
+.oe .sw[aria-pressed="true"] .sw__dot{box-shadow:inset 0 0 0 1px oklch(0 0 0 / .28),0 0 0 2px var(--bone),0 0 0 3px var(--ink)}
+.oe .sw__dot--clear{background:repeating-conic-gradient(#d9d6cf 0 25%,#8f8c86 0 50%) 50% / 10px 10px}
+.oe .sw__dot--rainbow{background:conic-gradient(#e0403a,#f0a43a,#e8d84a,#4caf62,#3a8fe0,#7a4fd0,#e0403a)}
+.oe .sw:focus-visible,.oe__x:focus-visible,.oe__hex:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px}

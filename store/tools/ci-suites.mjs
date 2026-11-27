@@ -31,6 +31,9 @@ if (GH) NOARG.add("e2e-flow");
 const CARD = process.env.CARD === "1", MAIL = new Set(["test-emails"]);
 const CARD_VARS = ["STRIPE_SECRET_KEY:sk_test_local", "STRIPE_WEBHOOK_SECRET:whsec_local_test", "STRIPE_API_BASE:http://127.0.0.1:4498"];
 const MAIL_VARS = ["RESEND_API_KEY:re_test_local", "EMAIL_FROM:One Stop Shop <orders@shop.test>", "OWNER_EMAIL:counter@shop.test", "RESEND_API_BASE:http://127.0.0.1:4497", "EMAIL_RETRY_UNIT_MS:10"];   // retry minutes become 10 ms (honoured only against a local stand-in)
+// "+openitems" or "+openall" (test-open-edit+openitems): the store gets the preview's open edit switch, PREVIEW_OPEN_EDIT=items or all
+// (src/preview.js), and the suite EXPECT_OPEN=items or all. Without either the switch is off, as on every deployed store by default.
+const OPEN = flags => flags.includes("openall") ? "all" : flags.includes("openitems") ? "items" : null;
 const list = process.argv.slice(2); if (!list.length) { console.error("name the suites to run"); process.exit(2); }
 const npx = (args, opt = {}) => spawnSync(WIN ? "npx.cmd" : "npx", args, { cwd: STORE, encoding: "utf8", shell: WIN, ...opt });
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -78,7 +81,7 @@ async function runOnce(t) {
   rmSync(STATE, { recursive: true, force: true }); cpSync(GOLD, STATE, { recursive: true });
   if (await listening(PORT)) console.log(`   !! port ${PORT} is taken before ${t} starts: ${workerds()}`);
   // SAMPLES_TEST_ONLY: the fixtures may switch demo samples on in this throwaway local database (src/admin.js samplesForTests)
-  const vars = ["ADMIN_KEY:int-local-only", "GEOAPIFY_KEY:test", "GEOAPIFY_BASE:http://127.0.0.1:4499", "SAMPLES_TEST_ONLY:1", ...(CARD ? CARD_VARS : []), ...(MAIL.has(name) ? MAIL_VARS : []), ...(flags.includes("tobacco") ? ["STRIPE_TOBACCO_OK:1"] : [])];
+  const vars = ["ADMIN_KEY:int-local-only", "GEOAPIFY_KEY:test", "GEOAPIFY_BASE:http://127.0.0.1:4499", "SAMPLES_TEST_ONLY:1", ...(CARD ? CARD_VARS : []), ...(MAIL.has(name) ? MAIL_VARS : []), ...(flags.includes("tobacco") ? ["STRIPE_TOBACCO_OK:1"] : []), ...(OPEN(flags) ? ["PREVIEW_OPEN_EDIT:" + OPEN(flags)] : [])];
   // the stand-ins keep their state in memory, so each suite gets fresh ones (webhooks go to this suite's store)
   const fake = (file, env) => spawn(process.execPath, [join(STORE, "tools", file)], { stdio: "ignore", detached: !WIN, env: { ...process.env, ...env } });
   const fs = CARD ? fake("fake-stripe.mjs", { PORT: "4498", STORE: `http://127.0.0.1:${PORT}` }) : null, fr = MAIL.has(name) ? fake("fake-resend.mjs", {}) : null;
@@ -94,7 +97,7 @@ async function runOnce(t) {
   if (args && up && !died) {
     if (!NOARG.has(name)) { mkdirSync(join(OUT, t), { recursive: true }); args.push(join(OUT, t)); }
     // async, so the store's exit is seen the moment it happens rather than after the suite
-    const run = spawn(process.execPath, args, { cwd: join(STORE, ".."), env: { ...process.env, EXPECT_TOBACCO: flags.includes("tobacco") ? "1" : "0", EMAIL_RETRY_UNIT_MS: "10", BASE: `http://127.0.0.1:${PORT}${SLASH.has(name) ? "/" : ""}`, PERSIST: STATE, ADMIN_KEY: "int-local-only", STRIPE: "http://127.0.0.1:4498", RESEND: "http://127.0.0.1:4497" } });
+    const run = spawn(process.execPath, args, { cwd: join(STORE, ".."), env: { ...process.env, EXPECT_TOBACCO: flags.includes("tobacco") ? "1" : "0", EXPECT_OPEN: OPEN(flags) || "", EMAIL_RETRY_UNIT_MS: "10", BASE: `http://127.0.0.1:${PORT}${SLASH.has(name) ? "/" : ""}`, PERSIST: STATE, ADMIN_KEY: "int-local-only", STRIPE: "http://127.0.0.1:4498", RESEND: "http://127.0.0.1:4497" } });
     const chunks = []; run.stdout.on("data", c => chunks.push(c)); run.stderr.on("data", c => chunks.push(c));
     const limit = setTimeout(() => { timedOut = true; chunks.push(Buffer.from(NL + "[ci] the suite ran past 40 minutes and was stopped" + NL)); run.kill("SIGKILL"); }, 40 * 60 * 1000);
     let c; [c, sig] = await new Promise(res => run.once("close", (c, s) => res([c, s]))); clearTimeout(limit);

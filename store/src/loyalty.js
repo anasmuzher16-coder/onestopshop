@@ -80,7 +80,7 @@ export function orderLoyaltyStatements(db, orderId, customer, loy) {
 // Back office: read and change the program. Needs the admin sign-in (passed in, so this file does not reach into admin.js).
 export async function loyaltyAdmin(request, env, url, signedIn) {
   const json = (b, s = 200) => new Response(JSON.stringify(b), { status: s, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" } });
-  if (!(await signedIn(request, env))) return json({ error: "Sign in first." }, 401);
+  const who = await signedIn(request, env); if (!who) return json({ error: "Sign in first." }, 401);
   const db = env.DB;
   if (request.method === "GET") { const s = await loyaltySettings(db); return json({ loyalty: s, cost: costNote(s) }); }
   if (request.method !== "PUT") return json({ error: "Method not allowed" }, 405);
@@ -96,7 +96,7 @@ export async function loyaltyAdmin(request, env, url, signedIn) {
   if (next.reward_cents * next.points_per_dollar / next.reward_points > MAX_BACK_CENTS) return json({ error: `That gives back more than ${MAX_BACK_CENTS} cents on every dollar. ${costNote(next)}` }, 400);
   await db.batch([
     db.prepare("INSERT INTO account_settings (key, value) VALUES ('loyalty', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now')").bind(JSON.stringify(next)),
-    db.prepare("INSERT INTO audit_log (actor, action, target, before, after) VALUES ('owner', 'loyalty.settings', 'loyalty', ?, ?)").bind(JSON.stringify(before), JSON.stringify(next)),
+    db.prepare("INSERT INTO audit_log (actor, action, target, before, after) VALUES (?, 'loyalty.settings', 'loyalty', ?, ?)").bind(typeof who === "object" && typeof who.actor === "string" ? who.actor : "owner", JSON.stringify(before), JSON.stringify(next)),
   ]);
   return json({ ok: true, loyalty: next, cost: costNote(next) });
 }
