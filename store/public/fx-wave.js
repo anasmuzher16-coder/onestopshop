@@ -24,7 +24,7 @@ const W = {
   charcoal: { m: "motes", d: [-.38, .925], e: 130, p: [C.ashlt, ok(.50, .17, 32), C.coal2, ok(.72, .17, 50)] },   // a coal burning down to ash: the ash tile arrives behind a glowing ember edge, throwing ember sparks
   bases: { m: "water", d: [0, 1], e: 80, p: tone(C.teal, 190) },
   bowls: { m: "fly", sprite: "bowls", d: [0, -1], e: 300, p: tone(C.cobalt, 265) },
-  shisha: { m: "fly", sprite: "bowls", d: [0, -1], e: 300, p: tone(C.chartreuse, 118) },   // the bowl it is packed into flies, on Shisha's own chartreuse (2026-11-26), so the wave lands on the band it uncovers
+  shisha: { m: "fly", sprite: "bowls", d: [0, -1], e: 300, p: tone(C.chartreuse, 118) },   // the clay bowl shisha is packed into flies (there is no tub sheet), on Shisha's own chartreuse (2026-11-26), so the wave's body is the band it uncovers
   hoses: { m: "rope", d: [1, 0], e: 2, p: tone(C.emerald, 155), c: 340, ms: 500 },
   parts: { m: "fly", sprite: "parts", d: [-1, 0], e: 300, p: tone(C.gilt, 88) },
   cologne: { m: "mist", d: [-S2, -S2], e: 380, p: [C.amethyst, ok(.62, .1, 312), deep(312), ok(.86, .06, 312)] },

@@ -89,6 +89,14 @@ const probe = p => p.evaluate(() => {
     orphans: (window.__cv || []).filter(c => c.width * c.height > 0 && !c.isConnected && !(c.width === 64 && c.height === 64)).length, // 64 x 64 is the kept sprite
   };
 });
+// shisha: the ring must open where the drip goes in, on the same clock (an arrival and a tap alike): the drip's first
+// keyframe at opacity 0 (it has flattened into the molasses) against the ring's start, both in ms from the act's start
+const shishaClock = p => p.evaluate(() => {
+  const o = document.querySelector(".shophead .fx-obj"), d = o && o.querySelector(".sdrip").getAnimations()[0], r = o && o.querySelector(".ssplash").getAnimations()[0];
+  if (!d || !r) return null; const dt = d.effect.getTiming(), k = d.effect.getKeyframes(), z = k.find(f => +f.opacity === 0);
+  return { gone: Math.round(dt.delay + z.computedOffset * dt.duration), ring: Math.round(r.effect.getTiming().delay), dur: dt.duration };
+});
+const inStep = c => !!c && c.ring <= c.gone && c.gone - c.ring <= 80;
 // lowest opacity an element shows over a stretch of frames (catches a label that blinks off and on)
 const lowest = (p, sel, ms) => p.evaluate(([sel, ms]) => new Promise(done => {
   let m = 1, seen = false; const t0 = performance.now();
@@ -136,7 +144,8 @@ for (const c of SECS) {
   if (c === "bowls") { const b = await p.evaluate(() => { const o = document.querySelector(".shophead .fx-obj"), g = o && o.querySelector(".tongs"); return g ? { opacity: +getComputedStyle(g).opacity, y: g.getBoundingClientRect().bottom - o.getBoundingClientRect().top, h: o.getBoundingClientRect().height } : null; });
     t("bowls: mid-act the tongs are in view and down at the bowl", !!b && b.opacity > .9 && b.y > b.h * .2 && b.y < b.h * .55, J(b)); }
   if (c === "shisha") { const d = await p.evaluate(() => { const o = document.querySelector(".shophead .fx-obj"), n = o && o.querySelector(".sdrip"); return n ? { drip: n.getAnimations().filter(a => a.playState === "running").length, fork: o.querySelector(".sfg").getAnimations().length, ring: o.querySelector(".ssplash").getAnimations().length } : null; });
-    t("shisha: mid-act the drip, the fork and the splash ring are all in the act", !!d && d.drip > 0 && d.fork > 0 && d.ring > 0, J(d)); }
+    t("shisha: mid-act the drip, the fork and the splash ring are all in the act", !!d && d.drip > 0 && d.fork > 0 && d.ring > 0, J(d));
+    const ck = await shishaClock(p); t("shisha: the ring opens as the drip goes into the molasses (arrival)", inStep(ck), J(ck)); }
   await wait(p, 650); q = await probe(p);
   if (CANVAS.has(c)) t(c + ": its canvas is up mid-act", q.fxCanvas === 1, J(q));
   await mark(p);
@@ -169,6 +178,7 @@ for (const c of SECS) {
   }
   await wait(p, 500); q = await probe(p);
   t(c + ": a tap plays the act again", q.runningInFx > 0 || q.fxCanvas === 1, J(q));
+  if (c === "shisha") { const ck = await shishaClock(p); t("shisha: the ring opens as the drip goes into the molasses (a tap, the quick version)", inStep(ck) && ck.dur < 1000, J(ck)); }
   t(c + ": one layer and at most one canvas after five taps", q.layers === 1 && q.allLayers === 1 && q.fxCanvas <= 1 && q.stray === 0, J(q));
   await wait(p, 6000); q = await probe(p);
   t(c + ": one layer, no canvas, every price showing 6 s after the taps", q.layers === 1 && q.fxCanvas === 0 && q.stray === 0 && q.hidden === 0, J(q));

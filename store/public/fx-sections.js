@@ -374,18 +374,18 @@ const FX = {
     const dt = (y, sx = 1, sy = 1) => `translate(0px,${y}px) scale(${sx},${sy})`;
     idle(layer, () => play(drip, [{ transform: dt(0), easing: SINE }, { transform: dt(.3, 1.07, 1.12), offset: .45, easing: SINE }, { transform: dt(0) }], 1500, 0, "none"));   // it fills a little and hangs back
     if (!go) return;
-    const k = re ? .72 : 1, S = re ? T0 - 100 : Math.max(0, T0 - 250), D = Math.round(1180 * k), at = v => v * k / 1180;   // S: the fork starts to lift
+    const k = re ? .72 : 1, S = re ? T0 - 100 : Math.max(0, T0 - 250), D = Math.round(1180 * k), at = v => v / 1180;   // S: the fork starts to lift. Times below are for an arrival; a tap runs the same act k times as long (D)
     const R = 560, LAND = 700, STRETCH = 1.76;   // R: the drip lets go. LAND: it is in the molasses. STRETCH: how far the strand's end comes down
     // the fork lifts along its own line, holds while the drip goes, and is set back in the heap
     play(fork, [{ transform: "translate(0px,0px)", easing: STATE }, { transform: "translate(.87px,-2.45px)", offset: at(340), easing: STATE }, { transform: "translate(.87px,-2.45px)", offset: at(760), easing: STATE }, { transform: "translate(0px,0px)" }], D, S, "none");
     // the strand stretches under the drip's weight; when it lets go the strand springs up a touch and eases back
     play(strand, [{ transform: "scale(1,1)", easing: STATE }, { transform: "scale(1,1)", offset: at(150), easing: STATE }, { transform: "scale(1,1.14)", offset: at(R), easing: ENTER },
       { transform: "scale(1,.97)", offset: at(R + 110), easing: SINE }, { transform: "scale(1,1)", offset: at(1000) }, { transform: "scale(1,1)" }], D, S, "none");
-    // the drip swells and draws out, falls speeding up, squashes into the molasses and is gone; a new one forms at the strand's end
+    // the drip swells and draws out, falls speeding up, squashes into the molasses and is gone; a new one forms at the strand's end (it flattens about the point where it touched: its top is the pivot, so it moves down as it squashes)
     play(drip, [{ transform: dt(0), opacity: 1, easing: STATE }, { transform: dt(0), opacity: 1, offset: at(150), easing: STATE },
       { transform: dt(STRETCH, 1.15, 1.2), opacity: 1, offset: at(R), easing: STRIKE }, { transform: dt(8.2, .94, 1.14), opacity: 1, offset: at(LAND), easing: STATE },
-      { transform: dt(8.6, 1.35, .45), opacity: 0, offset: at(LAND + 60) }, { transform: dt(0, .12, .12), opacity: 0, offset: at(LAND + 70), easing: ENTER },
-      { transform: dt(0, .5, .5), opacity: 1, offset: at(LAND + 170), easing: ENTER }, { transform: dt(0), opacity: 1 }], D, S, "none");
+      { transform: dt(14.1, 1.35, .45), opacity: 0, offset: at(LAND + 60) }, { transform: dt(0, .12, .12), opacity: 0, offset: at(LAND + 70), easing: STATE },
+      { transform: dt(0, .55, .55), opacity: .85, offset: at(LAND + 240), easing: STATE }, { transform: dt(0), opacity: 1 }], D, S, "none");
     // where it went in: one glossy ring opens on the molasses and thins out
     play(ring, [{ opacity: 0, transform: "scale(.3)", easing: ENTER }, { opacity: .95, transform: "scale(.8)", offset: .2, easing: STATE }, { opacity: 0, transform: "scale(1.7)" }], Math.round(480 * k), S + Math.round(LAND * k), "none");
   },
