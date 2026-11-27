@@ -68,7 +68,7 @@ function viewHome(s) {
       ${need(todo.to_ship, todo.to_ship === 1 ? "packed order to send" : "packed orders to send", "Open orders", "orders:todo")}
       ${need(todo.waiting_pickup, "waiting for pickup", todo.pickup_overdue ? `${todo.pickup_overdue} waiting 3 days or more` : "Open orders", "orders:todo")}
       ${need(low, low === 1 ? "product low or out" : "products low or out", "Open stock", "stock:low")}
-      ${need(needCount(), needCount() === 1 ? "item needs its info" : "items need their info", "Price, colours, stock", "stock:needs")}</div></section>
+      ${need(needCount(), needCount() === 1 ? "item needs info" : "items need info", "Price, colours, stock", "stock:needs")}</div></section>
     <section><h2 class="h2">Sales, last 30 days</h2>
       <div class="chart" role="img" aria-label="Daily sales for the last 30 days. Best day ${money(max, true)}.">${days.map((d, i) => `<i style="--h:${Math.round(d.cents / max * 100)};--i:${i}" class="${i === 29 ? "now" : i >= 23 ? "wk" : ""}" title="${fmt(d.day)}: ${money(d.cents, true)}"></i>`).join("")}</div>
       <div class="chart__ax"><span>${fmt(days[0].day)}</span><span>Best day ${money(max, true)}</span><span>Today</span></div></section>
@@ -217,7 +217,7 @@ const needWords = n => { const w = n.map(k => NEED[k]); return w.length > 1 ? w.
 function needRow(p) {
   const c = catOf(p.category_id);
   return `<div class="row row--need ${p.active ? "" : "off"}" data-sku="${p.sku}">${thumb(p, c.tone)}
-    <button class="row__main" type="button" data-info="${p.sku}"><span class="row__name">${esc(p.name)}</span><span class="row__meta">${p.sku} &middot; ${esc(c.name)}</span><span class="state low">Needs ${needWords(p.needs)}</span></button>
+    <button class="row__main" type="button" data-info="${p.sku}"><span class="row__name">${esc(p.name)}</span><span class="row__meta">${p.sku} &middot; ${esc(c.name)}</span><span class="state lack">Needs ${needWords(p.needs)}</span></button>
     <button class="bar__link" type="button" data-info="${p.sku}" aria-label="Fill in ${esc(p.name)}">Fill in</button></div>`;
 }
 // Common hookah colours. Clear and Rainbow are drawn by CSS (a check pattern, a colour wheel).
@@ -239,15 +239,15 @@ function infoSheet(p) {
       <p class="fineprint">${hookahRow ? "This is one colour of this hookah. Pick its colour; for two tones, pick both." : "Tap every colour the shop has of this item."}</p>
       <div class="sw-grid" data-swgrid>${PALETTE.map(([n, h]) => swatch(n, h, had.some(x => x.toLowerCase() === n.toLowerCase()), false)).join("")}${custom.map(n => swatch(n, Object.hasOwn(hexes, n) && /^#[0-9a-f]{6}$/i.test(hexes[n]) ? hexes[n] : "", true, true)).join("")}</div>
       <button class="bar__link" type="button" data-addcol aria-expanded="false" aria-controls="newcol">Add another colour</button>
-      <div class="newcol" id="newcol" data-newcol hidden><label class="field"><span>Colour name</span><input class="input" name="newcol" maxlength="24" autocomplete="off" placeholder="Teal"></label>
+      <div class="newcol" id="newcol" data-newcol hidden><label class="field"><span>Colour name</span><input class="input" name="newcol" maxlength="24" autocomplete="off"></label>
         <label class="field newcol__pick"><span>Swatch</span><input class="newcol__hex" name="newhex" type="color" value="#808080"></label><button class="btn btn--ghost" type="button" data-addcol-go>Add</button></div></fieldset>
-    <div class="grid2">
-      <label class="field"><span>Stock, on the shelf</span><input class="input num" name="stock" inputmode="numeric" pattern="[0-9]*" maxlength="5" autocomplete="off" data-seen="${p.stock}" aria-describedby="stock-was"></label>
-      <label class="field"><span>Price, $ CAD</span><input class="input num" name="price" inputmode="decimal" autocomplete="off" value="${p.price_cents > 0 ? (p.price_cents / 100).toFixed(2) : ""}" ${owner ? 'placeholder="49.99"' : 'readonly aria-describedby="price-who"'}></label></div>
-    <p class="fineprint" id="stock-was">${counted ? `On record: <b class="num">${p.stock}</b> on the shelf. Type a new count to change it.` : "Not counted yet. Count the shelf and type the number, 0 if there are none."}</p>
-    ${owner ? (p.price_cents > 0 ? "" : `<p class="fineprint">A price puts this item on sale in the store${p.listed && !p.active ? ", in place of Price TBD" : ""}.</p>`) : `<p class="fineprint" id="price-who">Prices are set by the owner.</p>`}
-    <p class="err" role="alert" data-err></p><p class="tally__say" data-saved aria-live="polite"></p>
-    <div class="sheet__act"><button class="btn" type="submit" data-then="stay">Save</button>${at >= 0 && queue.length > 1 ? `<button class="btn btn--ghost" type="submit" data-then="next">Save and next</button>` : ""}</div></form>`;
+    <div class="grid2 info__nums">
+      <div class="field"><label class="field" for="info-stock"><span>Stock, on the shelf</span></label><input class="input num" id="info-stock" name="stock" inputmode="numeric" pattern="[0-9]*" maxlength="5" autocomplete="off" value="${counted ? p.stock : ""}" data-seen="${p.stock}" data-was="${counted ? p.stock : ""}" aria-describedby="stock-was">
+        <p class="fineprint" id="stock-was">${counted ? "Counted. Type a new count to change it." : "Not counted yet. Type what is on the shelf, 0 if none."}</p></div>
+      <div class="field"><label class="field" for="info-price"><span>Price, $ CAD</span></label><input class="input num" id="info-price" name="price" inputmode="decimal" autocomplete="off" value="${p.price_cents > 0 ? (p.price_cents / 100).toFixed(2) : ""}" ${owner ? 'aria-describedby="price-say"' : 'readonly aria-describedby="price-say"'}>
+        <p class="fineprint" id="price-say">${!owner ? "Prices are set by the owner." : p.price_cents > 0 ? "In dollars, like 24.99." : `In dollars, like 24.99. A price puts it on sale${p.listed && !p.active ? ", in place of Price TBD" : ""}.`}</p></div></div>
+    <p class="err" role="alert" data-err></p><p class="remind" data-saved aria-live="polite"></p>
+    <div class="sheet__act"><button class="btn" type="submit" data-then="stay">Save</button>${queue.some(x => x.sku !== p.sku) ? `<button class="btn btn--ghost" type="submit" data-then="next">Save and next</button>` : ""}</div></form>`;
   colourCount($("[data-info-form]", sheet));
   if (!sheet.open) sheet.showModal();
 }
@@ -256,21 +256,21 @@ function addColour() {
   if (!/^\p{L}[\p{L} &/'-]{0,23}$/u.test(name)) { err.textContent = "Give the colour a name, letters only, up to 24."; f.newcol.focus(); return; }
   const same = $$("[data-sw]", f).find(b => b.dataset.name.toLowerCase() === name.toLowerCase());
   if (same) same.setAttribute("aria-pressed", "true"); else $("[data-swgrid]", f).insertAdjacentHTML("beforeend", swatch(name, f.newhex.value, true, true));
-  err.textContent = ""; f.newcol.value = ""; colourCount(f); f.newcol.focus();
+  err.textContent = ""; f.newcol.value = ""; f.newhex.value = "#808080"; colourCount(f); f.newcol.focus();
 }
 document.addEventListener("keydown", e => { if (e.key === "Enter" && e.target.name === "newcol") { e.preventDefault(); addColour(); } });
 document.addEventListener("submit", async e => {
   const f = e.target.closest("[data-info-form]"); if (!f) return; e.preventDefault();
   const sku = f.dataset.infoForm, p = state.products.find(x => x.sku === sku), err = $("[data-err]", f), said = $("[data-saved]", f), then = e.submitter?.dataset.then || "stay";
-  err.textContent = ""; said.textContent = ""; said.className = "tally__say";
+  err.textContent = ""; said.textContent = ""; $$("[aria-invalid]", f).forEach(i => i.removeAttribute("aria-invalid"));
   const body = {}, name = f.name.value.trim(), stock = f.stock.value.trim(), price = f.price.value.trim().replace(/^\$\s*/, "").replace(/,/g, "");
   if (!name) { err.textContent = "Give it a name."; return f.name.focus(); }
   if (name !== p.name) body.name = name;
   const picked = pickedColours(f), orig = JSON.parse(f.dataset.orig);
   if (picked.map(c => c.name.toLowerCase()).sort().join("|") !== orig.map(n => n.toLowerCase()).sort().join("|")) body.colours = picked;
-  if (stock !== "") { if (!/^\d{1,5}$/.test(stock)) { err.textContent = "Stock is a whole number, like 4. Type 0 if there are none."; return f.stock.focus(); } body.stock = { counted: +stock, seen: +f.stock.dataset.seen }; }
+  if (stock !== "" && stock !== f.stock.dataset.was) { if (!/^\d{1,5}$/.test(stock)) { err.textContent = "Stock is a whole number, like 4. Type 0 if there are none."; f.stock.setAttribute("aria-invalid", "true"); return f.stock.focus(); } body.stock = { counted: +stock, seen: +f.stock.dataset.seen }; }
   if (state.me.owner && price !== "") {
-    if (!/^\d{1,5}(\.\d{1,2})?$/.test(price) || !(+price > 0) || +price > 50000) { err.textContent = "Enter the price in dollars, like 49.99."; return f.price.focus(); }
+    if (!/^\d{1,5}(\.\d{1,2})?$/.test(price) || !(+price > 0) || +price > 50000) { err.textContent = "Enter the price in dollars, like 24.99."; f.price.setAttribute("aria-invalid", "true"); return f.price.focus(); }
     const c = Math.round(+price * 100); if (c !== p.price_cents) body.price_cents = c;
   }
   if (!Object.keys(body).length) { if (then === "next") return nextInfo(sku); said.textContent = "Nothing changed yet."; return; }
@@ -281,10 +281,10 @@ document.addEventListener("submit", async e => {
     const q = state.products.find(x => x.sku === sku);
     if (then === "next") { toast(`Saved ${q.name}.`); return nextInfo(sku); }
     infoSheet(q);
-    const s2 = $("[data-saved]", sheet); s2.className = "tally__say ok"; s2.textContent = `Saved${r.on_sale && body.price_cents ? ", now on sale" : ""}. The store is updated.`;
+    const s2 = $("[data-saved]", sheet); s2.innerHTML = `<b>Saved${r.on_sale && body.price_cents ? ", now on sale" : ""}.</b> The store is updated.`;
   } catch (er) {
     // an order changed the stock while counting: nothing was saved. The typed fields stay; only the number counted against is new
-    if (er.data && er.data.changed) { await loadProducts(); render(); const q = state.products.find(x => x.sku === sku); f.stock.dataset.seen = q.stock; f.stock.value = ""; $("#stock-was", f).innerHTML = `On record now: <b class="num">${q.stock}</b> on the shelf.`; err.textContent = er.message; said.textContent = ""; btns.forEach(b => b.disabled = false); f.stock.focus(); return; }
+    if (er.data && er.data.changed) { await loadProducts(); render(); const q = state.products.find(x => x.sku === sku); f.stock.dataset.seen = q.stock; f.stock.dataset.was = ""; f.stock.value = ""; f.stock.setAttribute("aria-invalid", "true"); $("#stock-was", f).innerHTML = `On record now: <b class="num">${q.stock}</b>. Count again.`; err.textContent = er.message; said.textContent = ""; btns.forEach(b => b.disabled = false); f.stock.focus(); return; }
     err.textContent = er.message; said.textContent = ""; btns.forEach(b => b.disabled = false);
   }
 });
