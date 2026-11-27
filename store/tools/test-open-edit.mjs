@@ -37,8 +37,11 @@ const t = rows.find(x => x.catalogue && !x.family?.startsWith("ace-") && x.needs
 const t2 = rows.find(x => x.catalogue && !x.family?.startsWith("ace-") && x.needs?.includes("price") && x.listed === 1 && x.active === 0 && onShop.has(x.sku) && x.sku !== t?.sku);
 const t3 = rows.find(x => x.needs?.includes("price") && x.listed === 1 && x.active === 0 && onShop.has(x.sku) && ![t?.sku, t2?.sku].includes(x.sku));
 const sample = rows.find(x => x.sample);
+const hoseC = rows.find(x => x.family?.startsWith("hose-") && x.needs?.includes("check") && !x.needs.includes("length") && onShop.has(x.sku));
+const hoseL = rows.find(x => x.family?.startsWith("hose-") && x.needs?.includes("length") && onShop.has(x.sku) && x.sku !== hoseC?.sku);
 const unticked = rows.find(x => x.catalogue && !onShop.has(x.sku) && !x.sample && x.availability !== "dropped");
 const coal = rows.find(x => x.category_id === "charcoal" && /"charcoal":true/.test(x.details || "") && onShop.has(x.sku));
+ok(hoseC && hoseL, "hose test items found", JSON.stringify({ hoseC: hoseC?.sku, hoseL: hoseL?.sku }));
 ok(t && t2 && t3 && sample && unticked && coal, "test items found", JSON.stringify({ t: t?.sku, t2: t2?.sku, sample: sample?.sku, unticked: unticked?.sku, coal: coal?.sku }));
 const history = async sku => (await req(`/api/admin/products/${sku}/history`, { cookie: OWNER })).data;
 const row = async sku => (await req("/api/admin/products", { cookie: OWNER })).data.products.find(x => x.sku === sku);
@@ -74,6 +77,32 @@ if (MODE) {
     [{ colours: ["<b>Red</b>"] }, "a colour with code in it"], [{ colours: ['Red" onclick="x'] }, "a colour with quotes"], [{ colours: [{ name: "Teal", hex: "red;background:url(x)" }] }, "a swatch that is not a colour"], [{ name: " " }, "an empty name"], [{ name: "x".repeat(81) }, "a name over 80"], [{ name: "Fine", price_cents: -1 }, "a good field beside a bad one"]])
     ok((await req(`/api/open-edit/${t.sku}`, { method: "PUT", body })).status === 400, `${MODE}: refuses ${what}`);
   ok(JSON.stringify(await row(t.sku)) === JSON.stringify(rows.find(x => x.sku === t.sku)), `${MODE}: nothing was written by a refused save`);
+  // hoses: length and the name check, through the open route, clearing those needs; the panel reads them back
+  { const hg = (await req(`/api/open-edit/${hoseC.sku}`)).data, lg = (await req(`/api/open-edit/${hoseL.sku}`)).data;
+    ok(hg.has_length === true && typeof hg.length === "string" && hg.length && hg.check === true && hg.needs.includes("check") && !("confirm_why" in hg) && !JSON.stringify(hg).includes("recording"), `${MODE}: a hose reads its length and that it needs a check, no internal notes`, JSON.stringify(hg));
+    ok(lg.has_length === true && lg.length === "" && lg.needs.includes("length") && !("check" in lg && lg.check === false), `${MODE}: a hose with no length reads it empty`, JSON.stringify(lg));
+    ok(hg.family_row === true && Array.isArray(hg.colours) && hg.colours.length >= 1, `${MODE}: a hose's panel starts on its own colour`, JSON.stringify(hg.colours));
+    ok(t && (await req(`/api/open-edit/${t.sku}`)).data.has_length === undefined, `${MODE}: an item without a length gets no length field`);
+    ok((await req(`/api/open-edit/${t.sku}`, { method: "PUT", body: { length: "5 feet" } })).status === 400, `${MODE}: a length on an item that has none is refused`);
+    for (const bad of ["x".repeat(31), "<b>5</b>", "", 5]) ok((await req(`/api/open-edit/${hoseL.sku}`, { method: "PUT", body: { length: bad } })).status === 400, `${MODE}: bad length refused: ${String(bad).slice(0, 12)}`);
+    ok((await req(`/api/open-edit/${hoseC.sku}`, { method: "PUT", body: { checked: false } })).status === 400, `${MODE}: the check cannot be unticked`);
+    const s1 = await req(`/api/open-edit/${hoseL.sku}`, { method: "PUT", body: { length: "  60.5   inches " } }), s2 = await req(`/api/open-edit/${hoseC.sku}`, { method: "PUT", body: { checked: true } });
+    const ha = (await req(`/api/open-edit/${hoseC.sku}`)).data, la = (await req(`/api/open-edit/${hoseL.sku}`)).data;
+    ok(s1.status === 200 && s2.status === 200 && !la.needs.includes("length") && la.length === "60.5 inches" && !ha.needs.includes("check") && !("check" in ha), `${MODE}: length and checked save and clear those needs`, JSON.stringify({ la: la.needs, ha: ha.needs, l: la.length }));
+    ok((await req(`/api/open-edit/${hoseC.sku}`, { method: "PUT", body: { checked: true } })).status === 200, `${MODE}: ticking an already-checked item is harmless`);
+  }
+  // a body over ~16 KB is refused before it is parsed
+  ok((await req(`/api/open-edit/${t.sku}`, { method: "PUT", body: JSON.stringify({ name: "ok", pad: "x".repeat(17000) }) })).status === 413, `${MODE}: a body over 16 KB is refused with 413`);
+  ok((await req(`/api/open-edit/${t.sku}`, { method: "PUT", body: "{not json" })).status === 400, `${MODE}: a body that is not JSON is refused with 400`);
+  // a name is cleaned: bidi overrides and control characters dropped, newlines and tabs become one space, accents and punctuation stay
+  { const nm = await req(`/api/open-edit/${t3.sku}`, { method: "PUT", body: { name: "\u202eCr\u00e8me\n\tBr\u00fbl\u00e9e\u2066 Tray\u0007 (No. 5) & co.\u200f" } });
+    const after = (await req(`/api/open-edit/${t3.sku}`)).data.name;
+    ok(nm.status === 200 && after === "Cr\u00e8me Br\u00fbl\u00e9e Tray (No. 5) & co.", `${MODE}: a name is cleaned of direction overrides, controls and newlines`, JSON.stringify(after));
+    ok((await req(`/api/open-edit/${t3.sku}`, { method: "PUT", body: { name: "\u202e\u202c\n" } })).status === 400, `${MODE}: a name that is only invisible characters is refused`);
+    ok((await req(`/api/open-edit/${t3.sku}`, { method: "PUT", body: { name: "​⁠ㅤ­" } })).status === 400 && (await req(`/api/open-edit/${t3.sku}`, { method: "PUT", body: { name: "Zero​width" } })).status === 200 && (await req(`/api/open-edit/${t3.sku}`)).data.name === "Zerowidth", `${MODE}: zero-width characters are dropped from a name`); }
+  // a hose's colour: picking another changes what the page shows, not just the panel
+  { const r = await req(`/api/open-edit/${hoseC.sku}`, { method: "PUT", body: { colours: ["Teal"] } }), g2 = (await req(`/api/open-edit/${hoseC.sku}`)).data, after = (await catalog()).find(x => x.sku === hoseC.sku);
+    ok(r.status === 200 && JSON.stringify(g2.colours.map(c => c.name)) === '["Teal"]' && /Teal/.test(JSON.stringify(after)), `${MODE}: a hose's changed colour shows in the catalogue the page reads`, JSON.stringify(after)?.slice(0, 300)); }
   // never a sample, never an unticked catalogue page: not even readable, and a price never switches one on
   for (const x of [sample, unticked]) {
     ok((await req(`/api/open-edit/${x.sku}`)).status === 404 && (await req(`/api/open-edit/${x.sku}`, { method: "PUT", body: { price_cents: 1234 } })).status === 404, `${MODE}: ${x.sample ? "a made-up sample" : "an unticked catalogue page"} cannot be edited openly (${x.sku})`);
@@ -190,6 +219,22 @@ try {
     { // a page whose item is not editable here (a sample a suite switched on): no bar, one quiet request, no redraw loop
       const { c, p } = await page(390, 844); let asks = 0; p.on("request", r => { if (r.url().includes("/api/open-edit/")) asks++; }); await go(p, "/p/OSS-7001"); await p.waitForTimeout(1500);
       ok(await p.locator(".pdp__name").count() === 1 && await p.locator("[data-oe-bar]").count() === 0 && asks === 1 && !p.errs.length, `${MODE}: no editor on a page whose item is not editable, and one request`, "requests " + asks); await c.close(); }
+    { // a hose page: the panel says nothing undefined, offers length and the check, preselects its colour, and saves through the page
+      const hq = rows.find(x => x.family?.startsWith("hose-") && x.needs?.includes("check") && onShop.has(x.sku) && ![hoseC.sku, hoseL.sku].includes(x.sku)) || rows.find(x => x.family?.startsWith("hose-") && onShop.has(x.sku) && !x.needs?.includes("length"));
+      const { c, p } = await page(390, 844); await go(p, `/p/${hq.sku}`);
+      await p.waitForFunction(() => /Needs|Everything/.test(document.querySelector("[data-oe-need]")?.textContent || ""), null, { timeout: 8000 });
+      const need = await p.locator("[data-oe-need]").innerText(); ok(!/undefined|null/.test(need), `${MODE}: a hose's need line has no "undefined"`, need);
+      await p.locator("[data-oe-open]").click(); const sh = p.locator("dialog[data-oe-sheet][open]"); await sh.waitFor({ timeout: 5000 });
+      const all = await sh.innerText(); ok(!/undefined|null/.test(all) && await p.locator("#oe-length").count() === 1 && !/none picked/.test(all), `${MODE}: the hose panel has a Length field, no "undefined", its colour picked`, all.slice(0, 300));
+      ok(await p.getAttribute("#oe-price", "placeholder") === null, `${MODE}: the price box has no bright placeholder`);
+      if (await p.locator("#oe-checked").count()) {
+        await p.locator("#oe-checked").check(); await p.fill("#oe-length", "61 inches");
+        if (SHOTS) await p.screenshot({ path: join(SHOTS, "hose-editor-390.png") });
+        await Promise.all([p.waitForNavigation({ waitUntil: "domcontentloaded" }), sh.locator('button[data-then="stay"]').click()]);
+        await p.waitForTimeout(800); const d2 = (await req(`/api/open-edit/${hq.sku}`)).data;
+        ok(!d2.needs.includes("check") && d2.length === "61 inches", `${MODE}: the page's Checked box and Length save`, JSON.stringify(d2.needs));
+      } else if (SHOTS) await p.screenshot({ path: join(SHOTS, "hose-editor-390.png") });
+      ok(!p.errs.length, `${MODE}: no page errors on a hose`, p.errs.join(" | ")); await c.close(); }
     // the back office: "items" still asks for the passcode; "all" opens without one
     const { c, p } = await page(1440, 900); await p.goto(B + "/admin", { waitUntil: "domcontentloaded" }); await p.waitForTimeout(1200);
     ok(await p.locator(".pvbar").count() === 1, `${MODE}: the back office shows the banner`);
