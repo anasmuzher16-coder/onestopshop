@@ -775,8 +775,8 @@ const turn = (v, y = 0) => `translateY(${y}px) rotate(${v}deg)`;
 
 // ---- a landing: whatever is set down with weight throws dust out along the counter from under it. A fast low skirt
 // that hugs the counter, and slower puffs that lift, swell and curl away. Called once behind the piece and once in front.
-function kick(layer, cx, half, y, n = 22, top = false, power = 1) {
-  const img = soft("255,250,240"), w = layer.clientWidth, big = Math.max(1, Math.min(1.7, w / 420)), ps = [];
+function kick(layer, cx, half, y, n = 22, top = false, power = 1, tint = "255,250,240") {   // tint: the puff's colour (charcoal throws dark dust)
+  const img = soft(tint), w = layer.clientWidth, big = Math.max(1, Math.min(1.7, w / 420)), ps = [];
   for (let i = 0; i < n; i++) { const left = i % 2 === 0, low = i % 5 < 3, v = (low ? rnd(150, 520) : rnd(40, 170)) * big * power;
     ps.push({ x: cx + (left ? -1 : 1) * half * rnd(.5, 1), y: y - rnd(2, low ? 8 : 16) * big, vx: left ? -v : v, vy: -(low ? rnd(4, 26) : rnd(46, 130)) * big * power,
       r: (low ? rnd(9, 15) : rnd(15, 28)) * big * (.7 + .3 * power), life: low ? rnd(.5, .95) : rnd(1.1, 1.9), age: -rnd(0, low ? .04 : .12), low, drag: low ? 4.2 : 2.3, ph: rnd(0, 6.28) }); }
@@ -976,7 +976,21 @@ const ACT = {
   },
 };
 ACT.shisha = ACT.bowls;
-ACT.charcoal = ACT.heat;   // a charcoal product page (its own section since 2026-11-24): the coals catch, as they did when charcoal lived in Heat
+// a charcoal product page has its own act (council, 2026-11-26: it borrowed Heat's lit coals). The box is tapped down on the
+// counter twice and the cubes settle; each tap throws a low puff of cold, grey-black coal dust from its foot. No fire, no steam:
+// charcoal is sold cold, by pickup or local delivery.
+ACT.charcoal = function ({ layer, K, P, pin, move }) {
+  pin((K.l + K.r) / 2, K.b);
+  const C = T0, iw = (K.r - K.l) * P.w, cx = P.x + (K.l + K.r) / 2 * P.w, foot = P.y + K.b * P.h;
+  const tap = a => [
+    { transform: "translateY(0px) scale(1,1)", easing: ENTER },
+    { transform: `translateY(${-a}px) scale(1,1.008)`, offset: .38, easing: STRIKE },
+    { transform: `translateY(0px) scale(${1 + a * .0016},${1 - a * .0024})`, offset: .62, easing: ENTER },   // down on the counter, with its weight
+    { transform: "translateY(0px) scale(1,1)" }];
+  move(tap(10), 320, C); move(tap(6), 280, C + 460);
+  when(layer, C + 200, () => kick(layer, cx, iw * .32, foot, 18, false, .7, "44,40,38"));
+  when(layer, C + 635, () => kick(layer, cx, iw * .26, foot, 10, false, .5, "44,40,38"));
+};
 function piece(layer, go, host, cat) {
   if (!go) return;
   let hit = T0; const born = performance.now();
