@@ -168,10 +168,14 @@ for (const c of SECS) {
     return { drip: cs(".sdrip").transform + " " + cs(".sdrip").opacity, strand: cs(".sstrand").transform, fork: cs(".sfg").transform, ring: cs(".ssplash").opacity, moving: o.getAnimations({ subtree: true }).filter(a => a.playState === "running" && a.effect.getTiming().duration < 1300).length }; });
     t("shisha: at rest the drip hangs where it is drawn, the strand and fork are home, no ring, nothing still moving", !!d && d.drip === "none 1" && d.strand === "none" && d.fork === "none" && d.ring === "0" && d.moving === 0, J(d)); }
 
-  // five taps, far enough apart that each one cuts the last act off in mid-air
+  // five taps. A tap while the band's act is still moving is left alone by design (fx-sections.js), so whether the fifth tap lands
+  // inside the fourth tap's act used to depend on how long each click took (about a second each on the laptop against a 1.7 s
+  // hookah act): it often did, was rightly left alone, and the act had ended by the check below. The fifth tap now waits until the
+  // band is still (at most 4 s), so the check always asks what it means to: does a tap play the act again.
   await record(p);
   const band = p.locator(".shophead[data-cat]");
   for (let i = 0; i < 5; i++) {
+    if (i === 4) await p.waitForFunction(() => { const l = document.querySelector(".shophead[data-cat] > .fx"); return !l || !l.querySelector("canvas") && l.getAnimations({ subtree: true }).every(a => a.playState !== "running" && !a.pending); }, null, { timeout: 4000 }).catch(() => {});
     await band.click({ position: { x: 8, y: 8 } });
     if (i === 2 && c === "misc") { await wait(p, 200); t("misc: a tap never hides a price already on screen", (await probe(p)).hidden === 0); await wait(p, 700); }
     else if (i < 4) await wait(p, 900);
