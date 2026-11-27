@@ -242,6 +242,41 @@ All numbers here are owner-vetoable defaults; they live in src/guard.js (and DEC
 - "Needs info" (`needs` on each row of `GET /products`): an item on view missing its price, its colours (Ace items) or
   its shelf count (`in_store_uncounted`, `special_order`).
 
+## Preview open edit (2026-11-27, branch fleet/open-edit)
+**Remove PREVIEW_OPEN_EDIT (redeploy without the --var) before launch.** (Also in inventory-2026-11-24-next/GO-LIVE.md section 0, the laptop's launch checklist, which is not in git.)
+- Owner: "Remove the admin key for right now, have it so the preview site itself allows it and before launch we will lock
+  things up, also have it so they can fill in price on the actual item page." One Worker setting, `PREVIEW_OPEN_EDIT`,
+  never in wrangler.jsonc. Set on the demo only at deploy time: `npx wrangler deploy --var PREVIEW_OPEN_EDIT:items`
+  (or `:all`). A later plain `npx wrangler deploy` drops it. Ignored whenever `LIVE` is `"1"` (src/preview.js `openScope`).
+- `items`: anyone can fill in an item's name, colours, shelf count and price from its own page (`/p/<sku>`, an
+  "Edit this item" bar under the name, a sheet with the item editor's fields, and "Next item that needs info").
+  `GET/PUT /api/open-edit/<sku>` (src/admin.js `openEdit`) reads the fields and saves through the very same code as the
+  item editor (`itemInfo`), as the owner: same validation, a first price puts a Price TBD item on sale, samples, unticked
+  catalogue pages and dropped colours are not editable at all (404), charcoal stays pickup or local. Writes need the same
+  guards as every back office write: same site (Sec-Fetch-Site and Origin), JSON, the `X-OSS-Admin` marker. The back
+  office itself (orders, customers, staff, settings, stock moves, intake, backup, refunds, its own item editor) still
+  needs the passcode or a staff PIN.
+- `all`: every back office route treats a visitor with no sign-in as the owner (src/admin.js `admin`, and the points
+  settings in src/worker.js). The same-site, JSON and marker checks on writes stay.
+- Every open change is logged with the actor `preview (open) <tag>`: 8 characters of a keyed hash of the visitor's
+  network (src/guard.js `keyedHash`, never the address). Someone signed in who edits from an item page, or works in the back office at `all`, is logged as the tag with their name in brackets.
+- While it is on, every page (storefront, back office, questionnaire) starts with a slim banner in the flow, above the
+  header: "Preview: anyone can edit items. This will be locked before launch." Off, the banner, the page's
+  `oss-open-edit` meta, `open-edit.css` and `open-edit.js` are not in any page, and `/api/open-edit/*` answers 404.
+- After a save the item page reloads in place (same address, same scroll) so it shows the new price, colours and stock.
+- An open save sends no back-in-stock emails at once (a stranger would pick the name in their subject line); the next back office save
+  or the nightly run still sends any that are due, so check names before mail is connected (account.js puts the name in the subject). The open GET shows an item's real shelf count even when
+  it is not on sale (the editor needs it to count against); a page whose item is not editable gets `{ editable: false }`.
+  `/open-edit.js` and `/open-edit.css` are static files, so they answer even when off; no page links them and the API is shut.
+- Nothing done while it is open is undone by switching it off: prices set, items a first price put on sale, and at `all`
+  staff added, settings and points changed. Before launch, read the back office History for actor `preview (open) ...`
+  and check Office > Staff for anyone who should not be there.
+- Not covered: no rate limit on open saves. Anyone with the demo's address can change names and prices while the switch
+  is on; the log says which network did it. That is the point of the switch, and why it must come off before launch.
+- Tests: `tools/test-open-edit.mjs`, run by tools/ci-suites.mjs three ways: `test-open-edit` (off),
+  `test-open-edit+openitems`, `test-open-edit+openall` ("+openitems"/"+openall" set the var for that suite's store).
+  test-admin and test-backoffice check the off state too; `test-admin+openitems` proves the wall still stands at items.
+
 ## The audit trail (OWASP Logging)
 - Who, what, when: `audit_log` (product edits, order steps, cancels, ID ticks, staff and settings changes, sign-ins)
   and `stock_moves` (every count, receipt, sale and put-back) carry the signed-in person's name and number.

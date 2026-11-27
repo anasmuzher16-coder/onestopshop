@@ -6,6 +6,7 @@ import { sameSecret, hashPin, checkPin, pinProblem, cleanName } from "./staff.js
 import { report, reportCsv, monthOf } from "./report.js";
 import { isSample } from "./samples.js";
 import { sourceOf, TAKEN_SQL, keyedHash, normEmailSql, normEmail, phoneKey } from "./guard.js";
+import { openScope, openActor } from "./preview.js";
 // The shop's back office: sign-in, shop numbers, stock and orders. Every route here needs the admin cookie,
 // and every write also needs a same-site JSON request, so another website cannot trigger one.
 // Two kinds of sign-in: the owner's passcode (ADMIN_KEY), and named staff with a 6-digit PIN. Every change is
@@ -60,6 +61,7 @@ function charcoalRules(out, was) {
   const d = "details" in out ? JSON.parse(out.details) : was;
   out.details = JSON.stringify({ ...d, charcoal: true });
 }
+const NOT_YOURS = "Only the owner can change prices. Ask the owner, or sign in with the owner passcode.";
 const SOLD = "('paid','packed','shipped','ready','collected')";
 // Pickup requests (2026-11-27): a pay-at-the-counter order takes no stock when placed. STOCKED: the order's own stock moves show it
 // holds stock now. TO_CONFIRM: still a request the shop has to check against the shelf and mark ready (nothing held yet).
@@ -135,6 +137,117 @@ export function needsInfo(p) {
   const onView = (p.active === 1 || p.listed === 1) && p.availability !== "dropped" && !(ace && f.stamp === "none") && !isSample(p.sku);
   if (!onView) return [];
   return [!(p.price_cents > 0) && "price", ace && !(Array.isArray(d.colours) && d.colours.length) && !(String(p.family || "").startsWith("ace-") && d.colour) && "colours", ["in_store_uncounted", "special_order"].includes(p.availability) && "stock"].filter(Boolean);
+}
+
+// The item editor's save (PUT /api/admin/products/<sku>/info), shared with the preview's open edit (/api/open-edit/<sku>,
+// src/preview.js). The same rules whoever calls it: the session decides the name in the log and whether a price may change.
+async function itemInfo(db, sku, request, session, path) {
+  const m = [null, sku], actor = session.actor;
+    const before = await db.prepare("SELECT * FROM products WHERE sku = ?").bind(m[1]).first(); if (!before) return json({ error: "No such product." }, 404);
+    const body = await request.json().catch(() => null);
+    if (!body || typeof body !== "object" || Array.isArray(body)) return json({ error: "Send the fields as JSON." }, 400);
+    const out = {}, bad = [];
+    if ("name" in body) { const v = text(body.name, 80); if (!v) bad.push("name (1 to 80 letters)"); else if (v !== before.name) out.name = v; }
+    let colours = null;
+    if ("colours" in body) { colours = cleanColours(body.colours); if (!colours) bad.push("colours (up to 16, each a name of up to 24 letters)"); }
+    let price = null;
+    if ("price_cents" in body) {
+      price = Number.isInteger(body.price_cents) ? clampInt(body.price_cents, 1, 5000000) : null;
+      if (price === null) bad.push("price (more than $0, up to $50,000, in cents)");
+    }
+    let count = null;
+    if ("stock" in body) {
+      const s = body.stock || {}, whole = v => Number.isInteger(v) ? clampInt(v, 0, 99999) : null;
+      count = { counted: whole(s.counted), seen: whole(s.seen) };
+      if (count.counted === null) bad.push("stock (a whole number, 0 to 99999)"); else if (count.seen === null) return json({ error: "Reload the item and count again." }, 400);
+    }
+    if (bad.length) return json({ error: "Check: " + bad.join(", ") + "." }, 400);
+    if (price !== null && price !== before.price_cents && !session.owner) { log("forbidden", { actor, path, field: "price" }); return json({ error: NOT_YOURS }, 403); }
+    if (price !== null && price !== before.price_cents) out.price_cents = price;
+    let had = {}; try { had = JSON.parse(before.details || "{}") || {}; } catch {}
+    if (colours) {
+      const d = { ...had }; delete d.colours; delete d.colour_hex;
+      const hex = Object.fromEntries(colours.filter(c => c.hex).map(c => [c.name, c.hex]));
+      if (colours.length) { d.colours = colours.map(c => c.name); if (Object.keys(hex).length) d.colour_hex = hex; }
+      // A hookah family's row is one colour of that hookah: its colours become its chip name ("Black and Gold"), unless the
+      // shop already typed a name for it in the full form (that name is kept; only a name this editor wrote is replaced).
+      if (String(before.family || "").startsWith("ace-")) {
+        const ours = !had.colour || (Array.isArray(had.colours) && had.colour === joinColours(had.colours));
+        if (ours) { if (colours.length) d.colour = joinColours(d.colours); else delete d.colour; }
+        if (ours && colours.length && d.colour.length > 40) return json({ error: "Check: colours (a hookah colour's name is up to 40 letters; pick fewer)." }, 400);
+      }
+      if (JSON.stringify(d) !== JSON.stringify(had)) out.details = JSON.stringify(d);
+    }
+    if (out.details && (had.charcoal || String(before.family || "").startsWith("charcoal-"))) charcoalRules(out, JSON.parse(out.details));   // charcoal stays pickup or local only
+    // A first price on an item on view with "Price TBD" puts it on sale, so it can be bought as soon as the shop has priced it.
+    // Only an item that had no price (an item priced and switched off stays off), already on view: never a made-up sample,
+    // an unticked catalogue page or a colour the supplier dropped.
+    const ticked = !["ace", "ace-acc"].includes(before.supplier_id) || (() => { try { return (JSON.parse(before.facts_known || "{}") || {}).stamp !== "none"; } catch { return false; } })();
+    if ("price_cents" in out && !(before.price_cents > 0) && before.active === 0 && before.listed === 1 && before.availability !== "dropped" && ticked && !isSample(before.sku)) out.active = 1;
+    const cols = Object.keys(out);
+    const was = {}; for (const k of cols) was[k] = before[k];
+    const STALE = "An order changed this to %n while you were counting. Nothing was saved: check the shelf, then save again.";
+    if (count && count.seen !== before.stock) return json({ error: STALE.replace("%n", before.stock), stock: before.stock, changed: true }, 409);
+    const logged = { ...out }; if (logged.details) { logged.colours = colours.map(c => c.name); delete logged.details; }
+    if (count) logged.stock = count.counted;
+    if (!cols.length && !count) return json({ ok: true, changed: false, stock: before.stock });
+    // One transaction. With a count, every statement holds only while the stock is still the number the screen showed, so an
+    // order landing mid-save leaves the whole save unwritten (never half of it, never a log line for a count that did not happen).
+    const seen = count ? count.seen : null, still = "(?9 IS NULL OR stock = ?9)";
+    const stmts = [];
+    if (cols.length) stmts.push(db.prepare(`UPDATE products SET ${cols.map((k, i) => `${k} = ?${i + 1}`).join(", ")}, updated_at = ${NOW} WHERE sku = ?8 AND ${still}`).bind(...cols.map(k => out[k]), ...Array(7 - cols.length).fill(null), m[1], seen));
+    stmts.push(db.prepare(`INSERT INTO audit_log (actor, action, target, before, after) SELECT ?1, 'product.info', ?2, ?3, ?4 WHERE EXISTS (SELECT 1 FROM products WHERE sku = ?2 AND (?5 IS NULL OR stock = ?5))`)
+      .bind(actor, m[1], JSON.stringify(count ? { ...was, stock: before.stock } : was), JSON.stringify(logged), seen));
+    let countAt = -1;
+    if (count) {   // the shelf count, written as a count move like Count mode, and the item marked as counted
+      countAt = stmts.length;
+      stmts.push(db.prepare(`INSERT INTO stock_moves (sku, delta, reason, ref, actor) SELECT sku, ?2 - stock, 'count', ?4, ?3 FROM products WHERE sku = ?1 AND stock = ?5`).bind(m[1], count.counted, actor, "counted " + count.counted, count.seen));
+      stmts.push(db.prepare(`UPDATE products SET stock = ?2, availability = CASE WHEN availability = 'dropped' THEN availability ELSE 'counted' END, updated_at = ${NOW} WHERE sku = ?1 AND changes() = 1`).bind(m[1], count.counted));
+    }
+    stmts.push(db.prepare("SELECT stock, price_cents, active, availability FROM products WHERE sku = ?").bind(m[1]));
+    let res;
+    try { res = await db.batch(stmts); }
+    catch (e) { if (/Set the shop price/.test(String(e && e.message))) return json({ error: "Set the shop price before turning this item on." }, 409); throw e; }
+    const now = res.at(-1).results[0];
+    if (count && !res[countAt].meta.changes) return json({ error: STALE.replace("%n", now.stock), stock: now.stock, changed: true }, 409);
+    return json({ ok: true, changed: true, stock: now.stock, price_cents: now.price_cents, on_sale: now.active === 1 && now.price_cents > 0, counted: now.availability === "counted" });
+}
+
+// The preview's open edit (src/preview.js), from an item's own page: GET the item editor's fields for one item, PUT them back
+// through the very same save (itemInfo), as the owner, logged "preview (open) <tag>" (or the signed-in person's name, if any).
+// Answers 404 as an unknown address unless the switch is on. Only an item a shopper can open (onShop: the storefront's own
+// catalogue) and that the needs-info rules count as on view: never a made-up sample, an unticked catalogue page or a dropped colour.
+// Writes need what every back office write needs: same site (Fetch Metadata and Origin), JSON, and the X-OSS-Admin marker.
+const OPEN_COLS = "sku, name, price_cents, stock, active, listed, availability, family, details, supplier_id, facts_known";
+export async function openEdit(request, env, url, onShop) {
+  if (!openScope(env)) return json({ error: "Not found" }, 404);
+  const m = url.pathname.match(/^\/api\/open-edit\/(OSS-\d{4,6})$/), method = request.method, db = env.DB;
+  if (!m) return json({ error: "Not found" }, 404);
+  if (method !== "GET" && method !== "PUT") return json({ error: "Method not allowed" }, 405);
+  if (method === "PUT") {
+    const site = request.headers.get("Sec-Fetch-Site"); if (site && site !== "same-origin") return json({ error: "Wrong origin." }, 403);
+    if (!(request.headers.get("Content-Type") || "").startsWith("application/json")) return json({ error: "Send JSON." }, 415);
+    if (request.headers.get("X-OSS-Admin") !== "1") return json({ error: "Missing request marker." }, 400);
+    const origin = request.headers.get("Origin"); if (origin && origin !== url.origin) return json({ error: "Wrong origin." }, 403);
+  }
+  const p = onShop.has(m[1]) ? await db.prepare(`SELECT ${OPEN_COLS} FROM products WHERE sku = ?`).bind(m[1]).first() : null;
+  const onView = p && (p.active === 1 || p.listed === 1) && p.availability !== "dropped" && !isSample(p.sku) && (!["ace", "ace-acc"].includes(p.supplier_id) || (() => { try { return (JSON.parse(p.facts_known || "{}") || {}).stamp !== "none"; } catch { return false; } })());
+  // an item a shopper can open but nobody may edit here: the page is told so (a 200, so the page logs no failed request); a save is refused
+  if (!onView) return method === "GET" && p ? json({ sku: p.sku, editable: false }) : json({ error: "No such item." }, 404);
+  if (method === "PUT") {
+    // always logged as the open visitor; someone signed in on this browser is named beside it (they act with the open rights, not their own)
+    const s = await signedIn(request, env), tag = await openActor(env, request), session = { actor: s ? `${tag} (${s.actor})` : tag, staff_id: null, owner: true };
+    return await itemInfo(db, p.sku, request, session, "/open-edit/" + p.sku);
+  }
+  // the next item still needing info, in the back office's own list order after this one (going round), among items a shopper can open
+  const rows = (await db.prepare(`SELECT ${OPEN_COLS} FROM products ORDER BY active DESC, sort, sku`).all()).results;
+  const i = rows.findIndex(r => r.sku === p.sku), next = [...rows.slice(i + 1), ...rows.slice(0, i)].find(r => onShop.has(r.sku) && needsInfo(r).length);
+  const left = rows.filter(r => onShop.has(r.sku) && needsInfo(r).length).length;
+  let d = {}; try { d = JSON.parse(p.details || "{}") || {}; } catch {}
+  const hex = d.colour_hex && typeof d.colour_hex === "object" ? d.colour_hex : {};
+  return json({ sku: p.sku, editable: true, name: p.name, price_cents: p.price_cents > 0 ? p.price_cents : null, stock: p.stock, counted: p.availability === "counted", on_sale: p.active === 1 && p.price_cents > 0,
+    colours: (Array.isArray(d.colours) ? d.colours : []).filter(n => typeof n === "string").map(n => Object.hasOwn(hex, n) && /^#[0-9a-f]{6}$/i.test(hex[n]) ? { name: n, hex: hex[n] } : { name: n }),
+    hookah_row: String(p.family || "").startsWith("ace-"), needs: needsInfo(p), next: next ? next.sku : null, left, scope: openScope(env) });
 }
 
 export async function admin(request, env, url) {
@@ -224,7 +337,10 @@ export async function admin(request, env, url) {
   }
   if (path === "/logout" && method === "POST") { const t = cookieToken(request); if (t) await db.prepare("DELETE FROM sessions WHERE token_hash = ?").bind(await sha(t)).run(); }
   if (path === "/logout" && method === "POST") return json({ ok: true }, 200, { "Set-Cookie": `${COOKIE}=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0` });
-  const session = await signedIn(request, env);
+  // the preview's open switch at "all" (src/preview.js): no sign-in, every visitor is the owner, every change logged as "preview (open) <tag>"
+  // (a signed-in staff member gets the same owner rights as an unsigned visitor there, never fewer)
+  const signed = await signedIn(request, env), all = openScope(env) === "all";
+  const session = signed ? (all && !signed.owner ? { ...signed, actor: `${await openActor(env, request)} (${signed.actor})`, owner: true } : signed) : all ? { actor: await openActor(env, request), staff_id: null, owner: true } : null;
   if (!session) return json({ error: "Sign in first." }, 401);
   if (method !== "GET") {
     if (!(request.headers.get("Content-Type") || "").startsWith("application/json") && !path.endsWith("/photo")) return json({ error: "Send JSON." }, 415);
@@ -302,7 +418,6 @@ export async function admin(request, env, url) {
   // names, photos, the on/off switch. A new product always carries a price, so adding one is the owner's too.
   // Checked here, on the server, for every request (OWASP Authorization Cheat Sheet: deny by default, enforce server side).
   const PRICE_FIELDS = ["price_cents", "cost_cents"];
-  const NOT_YOURS = "Only the owner can change prices. Ask the owner, or sign in with the owner passcode.";
   if (path === "/products" && method === "POST" && !session.owner) { log("forbidden", { actor, path }); return json({ error: "Only the owner can add products, because a new product needs the shop's price." }, 403); }
   if (path === "/products" && method === "POST") {
     const body = await request.json().catch(() => ({}));
@@ -352,76 +467,7 @@ export async function admin(request, env, url) {
   // The item editor (owner, 2026-11-26: "put fields for the client to fill out on each item"): name, the colours the shop
   // has, the shelf count and the price, filled in by the shop itself item by item. Nothing is ever filled in for them:
   // a field left out of the request is left as it is. Prices stay the owner's (same rule as the full form above).
-  if ((m = path.match(/^\/products\/(OSS-\d{4,6})\/info$/)) && method === "PUT") {
-    const before = await db.prepare("SELECT * FROM products WHERE sku = ?").bind(m[1]).first(); if (!before) return json({ error: "No such product." }, 404);
-    const body = await request.json().catch(() => null);
-    if (!body || typeof body !== "object" || Array.isArray(body)) return json({ error: "Send the fields as JSON." }, 400);
-    const out = {}, bad = [];
-    if ("name" in body) { const v = text(body.name, 80); if (!v) bad.push("name (1 to 80 letters)"); else if (v !== before.name) out.name = v; }
-    let colours = null;
-    if ("colours" in body) { colours = cleanColours(body.colours); if (!colours) bad.push("colours (up to 16, each a name of up to 24 letters)"); }
-    let price = null;
-    if ("price_cents" in body) {
-      price = Number.isInteger(body.price_cents) ? clampInt(body.price_cents, 1, 5000000) : null;
-      if (price === null) bad.push("price (more than $0, up to $50,000, in cents)");
-    }
-    let count = null;
-    if ("stock" in body) {
-      const s = body.stock || {}, whole = v => Number.isInteger(v) ? clampInt(v, 0, 99999) : null;
-      count = { counted: whole(s.counted), seen: whole(s.seen) };
-      if (count.counted === null) bad.push("stock (a whole number, 0 to 99999)"); else if (count.seen === null) return json({ error: "Reload the item and count again." }, 400);
-    }
-    if (bad.length) return json({ error: "Check: " + bad.join(", ") + "." }, 400);
-    if (price !== null && price !== before.price_cents && !session.owner) { log("forbidden", { actor, path, field: "price" }); return json({ error: NOT_YOURS }, 403); }
-    if (price !== null && price !== before.price_cents) out.price_cents = price;
-    let had = {}; try { had = JSON.parse(before.details || "{}") || {}; } catch {}
-    if (colours) {
-      const d = { ...had }; delete d.colours; delete d.colour_hex;
-      const hex = Object.fromEntries(colours.filter(c => c.hex).map(c => [c.name, c.hex]));
-      if (colours.length) { d.colours = colours.map(c => c.name); if (Object.keys(hex).length) d.colour_hex = hex; }
-      // A hookah family's row is one colour of that hookah: its colours become its chip name ("Black and Gold"), unless the
-      // shop already typed a name for it in the full form (that name is kept; only a name this editor wrote is replaced).
-      if (String(before.family || "").startsWith("ace-")) {
-        const ours = !had.colour || (Array.isArray(had.colours) && had.colour === joinColours(had.colours));
-        if (ours) { if (colours.length) d.colour = joinColours(d.colours); else delete d.colour; }
-        if (ours && colours.length && d.colour.length > 40) return json({ error: "Check: colours (a hookah colour's name is up to 40 letters; pick fewer)." }, 400);
-      }
-      if (JSON.stringify(d) !== JSON.stringify(had)) out.details = JSON.stringify(d);
-    }
-    if (out.details && (had.charcoal || String(before.family || "").startsWith("charcoal-"))) charcoalRules(out, JSON.parse(out.details));   // charcoal stays pickup or local only
-    // A first price on an item on view with "Price TBD" puts it on sale, so it can be bought as soon as the shop has priced it.
-    // Only an item that had no price (an item priced and switched off stays off), already on view: never a made-up sample,
-    // an unticked catalogue page or a colour the supplier dropped.
-    const ticked = !["ace", "ace-acc"].includes(before.supplier_id) || (() => { try { return (JSON.parse(before.facts_known || "{}") || {}).stamp !== "none"; } catch { return false; } })();
-    if ("price_cents" in out && !(before.price_cents > 0) && before.active === 0 && before.listed === 1 && before.availability !== "dropped" && ticked && !isSample(before.sku)) out.active = 1;
-    const cols = Object.keys(out);
-    const was = {}; for (const k of cols) was[k] = before[k];
-    const STALE = "An order changed this to %n while you were counting. Nothing was saved: check the shelf, then save again.";
-    if (count && count.seen !== before.stock) return json({ error: STALE.replace("%n", before.stock), stock: before.stock, changed: true }, 409);
-    const logged = { ...out }; if (logged.details) { logged.colours = colours.map(c => c.name); delete logged.details; }
-    if (count) logged.stock = count.counted;
-    if (!cols.length && !count) return json({ ok: true, changed: false, stock: before.stock });
-    // One transaction. With a count, every statement holds only while the stock is still the number the screen showed, so an
-    // order landing mid-save leaves the whole save unwritten (never half of it, never a log line for a count that did not happen).
-    const seen = count ? count.seen : null, still = "(?9 IS NULL OR stock = ?9)";
-    const stmts = [];
-    if (cols.length) stmts.push(db.prepare(`UPDATE products SET ${cols.map((k, i) => `${k} = ?${i + 1}`).join(", ")}, updated_at = ${NOW} WHERE sku = ?8 AND ${still}`).bind(...cols.map(k => out[k]), ...Array(7 - cols.length).fill(null), m[1], seen));
-    stmts.push(db.prepare(`INSERT INTO audit_log (actor, action, target, before, after) SELECT ?1, 'product.info', ?2, ?3, ?4 WHERE EXISTS (SELECT 1 FROM products WHERE sku = ?2 AND (?5 IS NULL OR stock = ?5))`)
-      .bind(actor, m[1], JSON.stringify(count ? { ...was, stock: before.stock } : was), JSON.stringify(logged), seen));
-    let countAt = -1;
-    if (count) {   // the shelf count, written as a count move like Count mode, and the item marked as counted
-      countAt = stmts.length;
-      stmts.push(db.prepare(`INSERT INTO stock_moves (sku, delta, reason, ref, actor) SELECT sku, ?2 - stock, 'count', ?4, ?3 FROM products WHERE sku = ?1 AND stock = ?5`).bind(m[1], count.counted, actor, "counted " + count.counted, count.seen));
-      stmts.push(db.prepare(`UPDATE products SET stock = ?2, availability = CASE WHEN availability = 'dropped' THEN availability ELSE 'counted' END, updated_at = ${NOW} WHERE sku = ?1 AND changes() = 1`).bind(m[1], count.counted));
-    }
-    stmts.push(db.prepare("SELECT stock, price_cents, active, availability FROM products WHERE sku = ?").bind(m[1]));
-    let res;
-    try { res = await db.batch(stmts); }
-    catch (e) { if (/Set the shop price/.test(String(e && e.message))) return json({ error: "Set the shop price before turning this item on." }, 409); throw e; }
-    const now = res.at(-1).results[0];
-    if (count && !res[countAt].meta.changes) return json({ error: STALE.replace("%n", now.stock), stock: now.stock, changed: true }, 409);
-    return json({ ok: true, changed: true, stock: now.stock, price_cents: now.price_cents, on_sale: now.active === 1 && now.price_cents > 0, counted: now.availability === "counted" });
-  }
+  if ((m = path.match(/^\/products\/(OSS-\d{4,6})\/info$/)) && method === "PUT") return await itemInfo(db, m[1], request, session, path);
   // Stock changes. Each is one database transaction (a D1 batch): the move is written only if the count changed, the
   // count can never go below zero, and a tap's key (op) lets a repeated request count once and answer the same.
   const replayed = async op => { const r = await db.prepare("SELECT m.sku, p.stock FROM stock_moves m JOIN products p ON p.sku = m.sku WHERE m.op = ?").bind(op).first(); return r; };

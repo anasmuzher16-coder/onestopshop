@@ -21,12 +21,12 @@ jobs:
       matrix:
         include:
           - shard: server
-            suites: smoke-http test-admin test-backoffice test-ops test-orders test-quality test-checkout test-delivery test-payments test-account test-ace test-find test-seo test-emails test-golive
+            suites: smoke-http test-admin test-backoffice test-ops test-orders test-quality test-checkout test-delivery test-payments test-account test-ace test-find test-seo test-emails test-golive test-open-edit test-open-edit+openitems test-open-edit+openall test-admin+openitems smoke-http+openitems   # +openitems/+openall: the preview open edit switch on (src/preview.js)
           - shard: card
             card: "1"
             suites: test-payments test-pay-card test-pay-card+tobacco test-emails test-checkout test-ace test-delivery test-orders e2e-buying e2e e2e-delivery e2e-flow   # the delivery and shipping walks: with card off (the buying shard) every order is a pickup, so they run here (2026-11-27)
           - shard: buying
-            suites: ci-warm e2e e2e-buying e2e-delivery e2e-flow
+            suites: ci-warm e2e e2e-buying e2e-delivery e2e-flow e2e-buying+openitems e2e-flow+openitems
           - shard: pages
             suites: ci-warm e2e-nav webkit-check phone-audit whitebox test-chunk test-stick
           - shard: motion

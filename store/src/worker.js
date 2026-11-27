@@ -4,7 +4,8 @@ import { shopCatalog, dropCatalog, catalogModule, counterRow, counterPayRow, set
 import { setPickupOnly } from "../public/band.js";
 import { seoFor, liveHere, robots, sitemap, view, SSR_STYLE, originProblem, setReady } from "./seo.js";
 import { heroPicks } from "../public/picks.js";
-import { admin, photo, signedIn, shopDevice } from "./admin.js";
+import { admin, photo, signedIn, shopDevice, openEdit } from "./admin.js";
+import { openScope, openActor, previewHead, PREVIEW_SCRIPT, PREVIEW_BANNER, withPreview } from "./preview.js";
 import { accountRoute, stockAlerts, restockReminders, scrubCodes } from "./account.js";
 import { loyaltyAdmin } from "./loyalty.js";
 import { placeOrder, orderStatus } from "./checkout.js";
@@ -127,6 +128,7 @@ async function page(request, env, url, ctx) {
     ...(img.w ? [`<meta property="og:image:width" content="${img.w}">`, `<meta property="og:image:height" content="${img.h}">`] : []), `<meta property="og:image:alt" content="${esc(img.alt)}">`,
     `<meta name="twitter:card" content="summary_large_image">`, ...seo.head, SSR_STYLE];
   if (url.pathname === "/") { const hero = heroFirst(cat); if (hero) extra.push(heroPreload(hero)); }   // the picture the first screen is waiting for
+  const open = openScope(env); if (open) extra.push(previewHead(open), PREVIEW_SCRIPT);   // the preview's open edit (src/preview.js): off, nothing of it is in the page
   const ask = !!d && asksHow(request, env, url, cat), reach = reachLine(cat);
   const out = new HTMLRewriter()
     .on("[data-delivery-strip]", { element(e) { if (ask) { e.removeAttribute("hidden"); e.setAttribute("data-mode", ask); } } })
@@ -139,6 +141,7 @@ async function page(request, env, url, ctx) {
     .on('meta[name="description"]', { element(e) { e.setAttribute("content", meta.desc); } })
     .on('meta[name="robots"]', { element(e) { if (live && meta.index) e.remove(); else e.setAttribute("content", "noindex, nofollow"); } })
     .on("head", { element(e) { e.append(extra.join("\n") + "\n", { html: true }); } })
+    .on("body", { element(e) { if (open) e.prepend(PREVIEW_BANNER, { html: true }); } })
     .on("main#main", { element(e) { if (seo.body) e.setInnerContent(seo.body, { html: true }); } })   // the content in the HTML; the page replaces it when it draws
     .transform(shell);
   const headers = new Headers(out.headers);
@@ -274,8 +277,11 @@ async function intakeSave(request, env) {
         if (matches(request, v.feed.tag)) return new Response(null, { status: 304, headers: head });
         return new Response(request.method === "HEAD" ? null : v.feed.body, { headers: head });
       }
-      if (path === "/api/admin/loyalty") return await loyaltyAdmin(request, env, url, async (r, e) => !!(await signedIn(r, e))?.owner);   // the points program is the owner's setting, never staff
+      if (path === "/api/admin/loyalty") return await loyaltyAdmin(request, env, url, async (r, e) => { const s = await signedIn(r, e); return s?.owner ? s : openScope(e) === "all" ? { actor: s ? `${await openActor(e, r)} (${s.actor})` : await openActor(e, r) } : null; });   // the points program is the owner's setting, never staff
       if (path.startsWith("/api/admin/")) { const r = await admin(request, env, url); if (request.method !== "GET" && r.ok) { dropCatalog(ctx); ctx.waitUntil(stockAlerts(env, url.origin)); } return r; } // a change in the back office shows in the shop at once; anything back in stock emails whoever asked
+      // the preview's open edit from an item's page (src/preview.js): a 404 unless PREVIEW_OPEN_EDIT is set; a save shows in the shop at once, as a back office one does.
+      // No back-in-stock emails are sent from an open save (breaker, 2026-11-27: a stranger would choose the name in their subject line).
+      if (path.startsWith("/api/open-edit/") && openScope(env)) { const r = await openEdit(request, env, url, new Set((await shopCatalog(env, ctx)).products.map(p => p.sku))); if (request.method !== "GET" && r.ok) dropCatalog(ctx); return r; }
       if (path.startsWith("/api/account/")) return await accountRoute(request, env, url);
       if (path === "/api/orders") { if (request.method !== "POST") return json({ error: "Method not allowed" }, 405); const r = await placeOrder(request, env, url); if (r.ok) dropCatalog(ctx); return r; }
       if (path === "/api/order-status") return await orderStatus(request, env, url);   // the customer's own status link (checkout.js)
@@ -290,7 +296,7 @@ async function intakeSave(request, env) {
         const headers = new Headers(page.headers);
         for (const [k, v] of Object.entries(SECURITY)) headers.set(k, v);
         headers.set("X-Robots-Tag", "noindex, nofollow"); headers.set("Cache-Control", "no-cache"); headers.set("Referrer-Policy", "no-referrer");
-        return new Response(page.body, { status: 200, headers });
+        return withPreview(env, new Response(page.body, { status: 200, headers }));
       }
       if (path.startsWith("/api/")) return json({ error: "Not found" }, 404);
       // an address with an empty part (/shop//shisha, //p/OSS-1001) goes to the same address with the slashes collapsed, so a
@@ -303,7 +309,7 @@ async function intakeSave(request, env) {
         for (const [k, v] of Object.entries(SECURITY)) headers.set(k, v);
         headers.set("Content-Security-Policy", SECURITY["Content-Security-Policy"].replace("img-src 'self' data:", "img-src 'self' data: blob:"));
         headers.set("X-Robots-Tag", "noindex, nofollow"); headers.set("Cache-Control", "no-cache");
-        return new Response(shell.body, { status: 200, headers });
+        return withPreview(env, new Response(shell.body, { status: 200, headers }));
       }
       if (path === "/sitemap.xml") {
         // only once the shop is live, and only on its own address (SITE_ORIGIN): the demo copy stays out of search engines

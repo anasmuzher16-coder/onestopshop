@@ -19,6 +19,9 @@ for (const p of ["/summary", "/products", "/orders", "/orders/S1001", "/orders/f
 ok((await call("/orders/bulk-cancel", { method: "POST", body: { ids: ["S1001"], confirm: 1 } })).status === 401, "bulk cancel must need sign-in");
 ok((await call("/products/OSS-1001/stock", { method: "POST", body: { delta: 1 } })).status === 401, "stock change must need sign-in");
 ok((await call("/login", { method: "POST", body: { passcode: "wrong" } })).status === 401, "wrong passcode refused");
+// the preview's open edit (src/preview.js): off, its address is refused; at "items" the wall above still stands (this suite runs as test-admin+openitems too)
+if (!process.env.EXPECT_OPEN) ok((await fetch(B + "/api/open-edit/OSS-1001")).status === 404 && (await fetch(B + "/api/open-edit/OSS-1001", { method: "PUT", headers: { "Content-Type": "application/json", "X-OSS-Admin": "1" }, body: '{"price_cents":100}' })).status === 404, "open edit off: its address is refused");
+else ok((await call("/products/OSS-1001/info", { method: "PUT", body: { price_cents: 100 } })).status === 401 && (await call("/me")).status === 401, "open edit at items: the back office itself still needs sign-in");
 const login = await call("/login", { method: "POST", body: { passcode: KEY } });
 ok(login.status === 200 && /HttpOnly/.test(login.r.headers.get("set-cookie") || "") && /SameSite=Strict/.test(login.r.headers.get("set-cookie") || ""), "sign-in sets a locked-down cookie");
 cookie = (login.r.headers.get("set-cookie") || "").split(";")[0];
