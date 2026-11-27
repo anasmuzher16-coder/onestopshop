@@ -13,7 +13,8 @@ import { cardReady, openCheckout, releaseHeld, receipt, HOLD_MIN, LATE_SESSION_M
 import { customerFrom } from "./account.js";
 import { orderLoyalty, orderLoyaltyStatements } from "./loyalty.js";
 import { cleanSource } from "./source.js";
-import { nameOk, phoneOk, ORDER_CAPS, PICKUP_CAPS, SHOP_BRAKE_PER_MIN, orderLimits, orderWho, orderAttempt, pickupRequestHours } from "./guard.js";
+import { nameOk, phoneOk, callable, ORDER_CAPS, PICKUP_CAPS, SHOP_BRAKE_PER_MIN, orderLimits, orderWho, orderAttempt, pickupRequestHours, statusToken, READY_HOLD_DAYS } from "./guard.js";
+import { mailReady } from "./email.js";
 
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" } });
 const text = (v, max) => typeof v === "string" && v.trim().length > 0 && v.trim().length <= max ? v.trim() : null;
@@ -81,11 +82,34 @@ async function replay(env, origin, row) {
     try { pay = { ...pay, ...(await openCheckout(env, origin, row)) }; } catch (e) { console.error(JSON.stringify({ at: "checkout", order: row.id, message: String(e && e.message || e) })); return stillOpen(); }
   }
   const items = (await db.prepare("SELECT sku, name, qty, unit_cents FROM order_items WHERE order_id = ? ORDER BY sku").bind(row.id).all()).results, q = parsed(row.ship_quote), a = parsed(row.address);
-  return json({ ok: true, replayed: true, pay, order: { id: row.id, method: row.method, name: row.name, email: row.email, service: row.ship_service, province: row.tax_province, subtotal_cents: row.subtotal_cents, reward_cents: row.reward_cents || 0, shipping_cents: row.shipping_cents, tax_cents: row.tax_cents, total_cents: row.total_cents,
+  return json({ ok: true, replayed: true, pay, order: { id: row.id, method: row.method, name: row.name, email: row.email, ...(await follow(env, row.id, row.phone)), ...(row.pay_status === "pay_at_pickup" ? { request: true } : {}), service: row.ship_service, province: row.tax_province, subtotal_cents: row.subtotal_cents, reward_cents: row.reward_cents || 0, shipping_cents: row.shipping_cents, tax_cents: row.tax_cents, total_cents: row.total_cents,
     tax_label: rates.taxLabel(row.tax_province), days: q.days ?? null, eta: q.eta ?? null, address: row.method === "ship" ? { line1: a.line1, city: a.city, province: a.province, postal: a.postal } : null, items } });
 }
 const payOut = row => ({ method: row.pay_method, status: row.pay_status, ...(row.pay_status === "awaiting" && row.pay_url ? { url: row.pay_url, session: row.pay_session } : {}), ...(row.pay_session ? { session: row.pay_session } : {}) });
+// How the shop tells this customer the order is ready, by the one mail switch (email.js mailReady): "email" when the mail service is
+// connected, "call" while it is not (nothing is emailed, so the shop calls or texts the phone). The status link lets the customer
+// look the order up again without signing in (orderStatus below).
+const follow = async (env, id, phone) => ({ notify: mailReady(env) ? "email" : "call", phone: phone || null, status_url: `/order/${id}?k=${await statusToken(env, id)}` });
 const stillOpen = () => json({ error: "Your order is still going through. Wait a moment, then try again.", in_progress: true }, 409);
+
+// GET /api/order-status?id=W...&k=...: the customer's own status link, shown on the order confirmation (2026-11-27). The key is a
+// keyed hash of the order id (guard.js statusToken), checked in constant time, so only someone shown the link can read it. The
+// answer carries the first name, what was asked for and where the order stands; never the email, phone, address or money.
+const sameText = (a, b) => { if (a.length !== b.length) return false; let d = 0; for (let i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i); return d === 0; };
+export async function orderStatus(request, env, url) {
+  if (request.method !== "GET" && request.method !== "HEAD") return json({ error: "Method not allowed" }, 405);
+  const id = url.searchParams.get("id") || "", k = url.searchParams.get("k") || "";
+  const nope = () => json({ error: "We cannot find that order. Check the link, or call the counter at 519-255-2222 with your order number." }, 404);
+  if (!/^W[A-Z0-9]{6}$/.test(id) || !/^[a-f0-9]{32}$/.test(k) || !sameText(await statusToken(env, id), k)) return nope();
+  const db = env.DB, o = await db.prepare("SELECT id, name, status, method, pay_method, pay_status, ship_service, ready_at, updated_at FROM orders WHERE id = ?").bind(id).first();
+  if (!o) return nope();
+  const items = (await db.prepare("SELECT name, qty FROM order_items WHERE order_id = ? ORDER BY sku").bind(id).all()).results;
+  const closed = ["cancelled", "refunded"].includes(o.status) || ["expired", "failed"].includes(o.pay_status);
+  const status = closed ? "cancelled" : o.status === "pending" ? (o.pay_status === "pay_at_pickup" ? "requested" : "payment") : o.status === "paid" || o.status === "packed" ? "preparing" : o.status;   // ready, shipped, collected
+  const readyAt = o.status === "ready" ? Date.parse(String(o.ready_at || o.updated_at).replace(/Z?$/, "Z")) : NaN;
+  return json({ ok: true, order: { id: o.id, first: String(o.name || "").split(" ")[0], status, method: o.method, local: o.ship_service === "Local delivery", pay_at_counter: o.pay_method === "at_pickup", notify: mailReady(env) ? "email" : "call",
+    ...(Number.isFinite(readyAt) ? { held_until: new Date(readyAt + READY_HOLD_DAYS * 864e5).toISOString() } : {}), items } });
+}
 
 export async function placeOrder(request, env, url) {
   if (!(request.headers.get("Content-Type") || "").startsWith("application/json")) return json({ error: "Send JSON." }, 415);
@@ -103,7 +127,10 @@ export async function placeOrder(request, env, url) {
   if (!method) return json({ error: "Choose shipping or pickup." }, 400);
   const pay = body.pay === undefined || body.pay === "card" ? "card" : body.pay === "at_pickup" ? "at_pickup" : null;
   if (!pay) return json({ error: "Choose how to pay." }, 400);
-  if (pay === "at_pickup" && method !== "pickup") return json({ error: "Paying at the counter is for pickup orders. Pay by card for delivery.", field: "pay" }, 400);
+  if (pay === "at_pickup" && method !== "pickup") return json({ error: cardReady(env) ? "Paying at the counter is for pickup orders. Pay by card for delivery." : "Paying at the counter is for pickup orders. Delivery opens once we take card payment online.", field: "pay" }, 400);
+  // While the shop's mail is not connected (email.js mailReady), no receipt or "ready" email can reach anyone, so a pickup request
+  // needs a phone: the shop calls or texts it when the order is on the shelf (2026-11-27). With mail on, the phone stays optional.
+  if (method === "pickup" && pay === "at_pickup" && !mailReady(env) && !callable(phone || "")) return json({ error: "Enter a phone number with its area code, like 519-555-0144. We call or text you when your order is ready.", field: "phone", phone_needed: true }, 400);
   if (!Array.isArray(body.lines) || !body.lines.length) return json({ error: "Your cart is empty." }, 400);
   // caps no real counter order reaches (src/guard.js ORDER_CAPS): a bigger order is a phone call. An unpaid pickup (paid at the
   // counter) holds no stock, but each one is staff time at the shelf, so it has the lower PICKUP_CAPS; a card order keeps ORDER_CAPS.
@@ -138,8 +165,11 @@ export async function placeOrder(request, env, url) {
   // Per visitor and per email first (src/guard.js): one network reaches its own limit (3 unpaid orders held, 5 orders in 10
   // minutes) long before the shop-wide brake below, which takes 20 or more networks at once to reach.
   const customer = await customerFrom(request, env), own = !!customer && String(customer.email || "").toLowerCase() === email.toLowerCase();
-  const who = await orderWho(env, request), group = await orderWho(env, request, 48), limit = await orderLimits(env, who, email, 0, own, group);
+  const who = await orderWho(env, request), group = await orderWho(env, request, 48), lim = { who, group, email, phone, own, mailOn: mailReady(env) }, limit = await orderLimits(env, lim);
   if (!limit.ok) return json({ error: limit.words, limited: limit.why }, 429);
+  // an order removed again (refused, or its reward gone) takes its network rows with it, so a refused burst never counts against
+  // everyone else on a shared address (breaker, 2026-11-27)
+  const unattempt = oid => limit.missing ? [] : [db.prepare("DELETE FROM order_attempts WHERE order_id = ?").bind(oid)];
   // the shop-wide brake, against a real flood only; a shopper signed in with this very email has shown the inbox is theirs and passes
   if (!own) {
     const recent = await db.prepare("SELECT COUNT(*) AS n FROM orders WHERE created_at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 minute')").first("n");
@@ -218,21 +248,21 @@ export async function placeOrder(request, env, url) {
   }
   // the reward's points were spent by another order a moment ago: nothing is placed, the shopper sees the full price
   if (acct.redeemAt >= 0 && !first[1 + lines.length + acct.redeemAt].meta.changes) {
-    await db.batch([db.prepare("DELETE FROM loyalty_ledger WHERE order_id = ?").bind(id), db.prepare("DELETE FROM order_items WHERE order_id = ?").bind(id), db.prepare("DELETE FROM orders WHERE id = ?").bind(id)]);
+    await db.batch([db.prepare("DELETE FROM loyalty_ledger WHERE order_id = ?").bind(id), db.prepare("DELETE FROM order_items WHERE order_id = ?").bind(id), db.prepare("DELETE FROM orders WHERE id = ?").bind(id), ...unattempt(id)]);
     const t = rates.orderTotals(subtotal, shipping, province);
     return json({ error: "Your points reward is not available on this order. Check the new total, then place your order.", reward_gone: true, repriced: { subtotal_cents: subtotal, shipping_cents: shipping, tax_cents: t.tax, total_cents: t.total } }, 409);
   }
   // Many tries at the same moment all pass the check above before any is written: counted again now, with this order in,
   // so a burst from one visitor or one email gets no further than its limit. Nothing is held yet, so this one is simply removed.
-  const after = await orderLimits(env, who, email, 1, own, group);
+  const after = await orderLimits(env, { ...lim, placed: 1 });
   if (!after.ok) {
-    await db.batch([db.prepare("DELETE FROM loyalty_ledger WHERE order_id = ?").bind(id), db.prepare("DELETE FROM order_items WHERE order_id = ?").bind(id), db.prepare("DELETE FROM orders WHERE id = ? AND status = 'pending' AND release_op IS NULL").bind(id)]);
+    await db.batch([db.prepare("DELETE FROM loyalty_ledger WHERE order_id = ?").bind(id), db.prepare("DELETE FROM order_items WHERE order_id = ?").bind(id), db.prepare("DELETE FROM orders WHERE id = ? AND status = 'pending' AND release_op IS NULL").bind(id), ...unattempt(id)]);
     return json({ error: after.words, limited: after.why }, 429);
   }
   // A pay-at-the-counter pickup is a request: nothing is taken or held now. The shop takes the stock when it marks it ready.
   if (pay === "at_pickup") {
-    await receipt(env, id, "at_pickup");   // says plainly: wait for our "ready" email before coming in
-    return json({ ok: true, pay: { method: pay, status: "pay_at_pickup" }, order: { id, method, name, email, service, province, subtotal_cents: subtotal, reward_cents: loy.reward_cents, points: loy.earn, account: !!customer, shipping_cents: shipping, tax_cents: tax, total_cents: total,
+    await receipt(env, id, "at_pickup");   // says plainly: wait for our "ready" email before coming in (kept, not sent, while mail is off)
+    return json({ ok: true, pay: { method: pay, status: "pay_at_pickup" }, order: { id, method, name, email, ...(await follow(env, id, phone)), service, province, subtotal_cents: subtotal, reward_cents: loy.reward_cents, points: loy.earn, account: !!customer, shipping_cents: shipping, tax_cents: tax, total_cents: total,
       tax_label: rates.taxLabel(province), days: quote.days ?? null, eta, address: method === "ship" ? address : null, request: true,
       items: lines.map(l => ({ sku: l.product.sku, name: l.product.name, qty: l.qty, unit_cents: cents(l.product.price) })) } }, 201);
   }
@@ -266,7 +296,7 @@ export async function placeOrder(request, env, url) {
       return json({ error: "The payment page did not open. Nothing was charged. Try again in a minute.", pay_down: true }, 503);
     }
   }   // a card receipt waits for the webhook
-  return json({ ok: true, pay: payInfo, order: { id, method, name, email, service, province, subtotal_cents: subtotal, reward_cents: loy.reward_cents, points: loy.earn, account: !!customer, shipping_cents: shipping, tax_cents: tax, total_cents: total,
+  return json({ ok: true, pay: payInfo, order: { id, method, name, email, ...(await follow(env, id, phone)), service, province, subtotal_cents: subtotal, reward_cents: loy.reward_cents, points: loy.earn, account: !!customer, shipping_cents: shipping, tax_cents: tax, total_cents: total,
     tax_label: rates.taxLabel(province), days: quote.days ?? null, eta, address: method === "ship" ? address : null,
     items: lines.map(l => ({ sku: l.product.sku, name: l.product.name, qty: l.qty, unit_cents: cents(l.product.price) })) } }, 201);
 }

@@ -43,22 +43,41 @@ for (const [engine, w, h, mobile] of [["chromium", 390, 844, true], ["webkit", 3
       await p.evaluate(() => localStorage.setItem("oss:cart", JSON.stringify([{ sku: "OSS-8004", qty: 9 }]))); await p.goto(B + "/cart", { waitUntil: "networkidle" });
       { const w = await p.locator("#main").innerText();
         t(`${tag} card off: the cart is a pickup, with no delivery or shipping choice`, await p.locator('input[name="ship"]').count() === 0 && await p.locator(".pickline").isVisible() && /picked up and paid at our Windsor counter/.test(w) && !/local delivery|Canada Post|postal code/i.test(w), w.slice(0, 300));
-        t(`${tag} card off: the cart holds 5 of one item and says why`, /hold up to 5 of one item online/.test(w) && (await p.locator(".qty .num").first().innerText()).trim() === "5", w.slice(0, 200)); }
+        t(`${tag} card off: the cart holds 5 of one item and says why, as a plain limit (nothing is set aside)`, /A pickup request takes up to 5 of one item/.test(w) && !/hold more|to hold/i.test(w) && (await p.locator(".qty .num").first().innerText()).trim() === "5", w.slice(0, 200)); }
       await p.goto(B + "/checkout", { waitUntil: "networkidle" }); await p.waitForSelector("[data-checkout]");
       const go = p.locator('[data-checkout] button[type="submit"]');
       t(`${tag} card off: checkout is paid at the counter`, /At the counter when you pick it up/.test(await p.locator(".co__pay").innerText()) && await go.isEnabled() && await p.locator("#co-line1").count() === 0);
+      // 2026-11-27 (fleet/guard4): the shop's mail is not connected here, so the page says it calls or texts, and asks for a phone
+      { const w = await p.locator("[data-checkout]").innerText();
+        t(`${tag} mail off: checkout says the shop calls or texts when it is ready, never an email`, /call or text you when it is ready/.test(w) && /wait for our call/.test(w) && !/email you|ready-for-pickup note|wait for that email/i.test(w), w.slice(0, 300)); }
       await p.fill("#co-name", "Dee Livery"); await p.fill("#co-email", `dee-${run}@example.com`);
+      await press(go); await p.waitForTimeout(400);
+      t(`${tag} mail off: a pickup request with no phone is stopped, asking for one`, await p.locator("[data-co-err]").isVisible() && /phone number/.test(await p.locator("[data-co-err]").innerText()) && new URL(p.url()).pathname === "/checkout");
+      await p.fill("#co-phone", "519-555-0181");
       await press(go); await p.waitForURL(/\/order\/W[A-Z0-9]{6}$/, { timeout: 15000 }); await p.waitForTimeout(600);
-      t(`${tag} card off: the pickup order is placed, to pay at the counter`, /counter/i.test(await p.locator("#main").innerText()));
+      const oid = new URL(p.url()).pathname.split("/").pop();
+      { const w = await p.locator("#main").innerText();
+        t(`${tag} card off: the pickup order is placed, to pay at the counter`, /counter/i.test(w));
+        t(`${tag} mail off: the confirmation shows the order number, what was asked for, the phone the shop will call, and the counter's number`, w.includes(oid) && /\b5\s*[×x]/.test(w) && /call or text you at 519-555-0181 when it is on the shelf/.test(w) && /519-255-2222 with your order number/.test(w) && !/email/i.test(w.split("Keep looking")[0]), w.slice(0, 400)); }
+      const link = await p.locator("[data-status-link] a").getAttribute("href").catch(() => null);
+      t(`${tag} the confirmation links to the order's own status page`, /^\/order\/W[A-Z0-9]{6}\?k=[a-f0-9]{32}$/.test(link || ""), String(link));
+      if (link) {
+        await p.goto(B + link, { waitUntil: "networkidle" }); await p.waitForSelector("[data-status-page][data-status]", { timeout: 8000 }).catch(() => {});
+        const w = await p.locator("#main").innerText();
+        t(`${tag} the status page shows the request, the first name and the items, and that the shop calls`, (await p.locator("[data-status-page]").getAttribute("data-status")) === "requested" && /We have your request, Dee/.test(w) && /call or text you/.test(w) && /requested/i.test(w)   /* the tag is set in capitals */ && /\b5\s*[×x]/.test(w) && !/dee-|@example|519-555-0181/.test(w), w.slice(0, 300));
+        await p.goto(B + link.replace(/k=./, m => m.endsWith("a") ? "k=b" : "k=a"), { waitUntil: "load" }); await p.waitForSelector("[data-status-page][data-status]", { timeout: 8000 }).catch(() => {});
+        t(`${tag} a status link with a wrong key opens nothing`, /cannot find that order/i.test(await p.locator("#main").innerText()));
+      }
       await p.goto(B + "/shipping", { waitUntil: "networkidle" });
       { const w = await p.locator("#main").innerText(); t(`${tag} card off: the shipping page says pickup for now, delivery and shipping once card payment is on, and keeps its rules`, /For now, online orders are picked up and paid at our Windsor counter/.test(w) && /once we take card payment online/.test(w) && /talk to the store manager/.test(w) && /All sales are final/.test(w) && await p.locator("#main [data-open-postal]").count() === 0); }
       // design review 2026-11-27: pickup (wait for the ready email) and returns come first; delivery and shipping sit under "When card
       // payment opens" in the future tense; no postal-code sentence with no field; the shop is the Windsor counter everywhere
       { const w = await p.locator("#main").innerText(), at = s => w.indexOf(s);
-        t(`${tag} card off: shipping page leads with pickup and returns, delivery and shipping only as what opens with card payment`, at("Pick up") > -1 && at("Returns") > at("Pick up") && at("When card payment opens") > at("Returns") && /wait for that email before you come in/i.test(w)
+        t(`${tag} card off: shipping page leads with pickup and returns, delivery and shipping only as what opens with card payment`, at("Pick up") > -1 && at("Returns") > at("Pick up") && at("When card payment opens") > at("Returns") && /call or text you when it is ready/i.test(w) && /wait for our call before you come in/i.test(w) && /A request we have not confirmed is cancelled after 3 days/.test(w) && !/wait for that email/i.test(w)
           && !/Walkerville|Enter your postal code|We pack every order|it arrives in about|You see the cost on the product page/i.test(w) && /Local delivery will come from our Windsor counter/.test(w), w.slice(0, 300)); }
       await p.goto(B + "/terms", { waitUntil: "networkidle" });
       { const w = await p.locator("#main").innerText(); t(`${tag} card off: terms say pickup for now and keep final sale and Quebec`, /Online orders are picked up/.test(w) && /All sales are final, except faulty, wrong, damaged or undelivered items/.test(w) && /except (to )?Quebec/.test(w) && /Charcoal is sold for pickup only/.test(w)); }
+      { const w = await p.locator("#main").innerText(); t(`${tag} mail off: terms say the shop calls or texts, and that an unconfirmed request is cancelled after 3 days`, /we check the shelf and call or text you when it is ready/.test(w) && /A request we have not confirmed is cancelled after 3 days/.test(w) && !/We email you a copy/.test(w), w.slice(0, 200)); }
       await p.goto(B + "/privacy", { waitUntil: "networkidle" });
       { const w = await p.locator("#main").innerText();
         t(`${tag} card off: privacy is dated, names the coded address kept for orders (30 days) and sign-in codes (a day), no stray ",."`, /Updated November 27, 2026/.test(w) && /when you place an order we keep a coded form of your internet address/.test(w) && /When you ask for a sign-in code we keep a coded form of your internet address and of your email, made the same way with a secret key/.test(w) && !/scrambled form of your/.test(w) && /oss_dev/.test(w) && /For orders it is deleted after 30 days/.test(w) && !/,\./.test(w) && /For now we sell for pickup in Windsor/.test(w)

@@ -23,6 +23,12 @@ const isSold = p => forSale(p) && p.stock === 0;   // stock is the one truth: th
 // an unpaid pickup holds at most 5 of one item and 15 in all (src/guard.js PICKUP_CAPS), so the cart stops there too.
 const CARD_ON = document.querySelector('meta[name="oss-pay"]')?.content === "card";
 const PICKUP_ONLY = !CARD_ON;
+// The shop's mail connected or not: the Worker writes it into every page (meta oss-mail, from the same switch the server uses,
+// src/email.js mailReady). While it is off no email reaches a customer, so every line says the shop calls or texts instead, and a
+// pickup request needs a phone (checked by the server too). REQ_SPAN: how long an unconfirmed request waits (PICKUP_REQUEST_HOURS).
+const MAIL_ON = document.querySelector('meta[name="oss-mail"]')?.content === "on";
+const REQ_SPAN = (h => h >= 48 && h % 24 === 0 ? `${h / 24} days` : `${h} hours`)((n => Number.isInteger(n) && n >= 1 && n <= 720 ? n : 72)(Number(document.querySelector('meta[name="oss-req-hours"]')?.content)));
+const TELL = MAIL_ON ? "email you" : "call or text you", TOLD = MAIL_ON ? "that email" : "our call";   // "we check the shelf and TELL when it is ready; please wait for TOLD"
 const LINE_MAX = PICKUP_ONLY ? 5 : MAX_QTY, PICKUP_UNITS = 15;
 const stockFor = p => !forSale(p) || isSold(p) ? 0 : Number.isInteger(p.stock) ? Math.min(LINE_MAX, Math.max(0, p.stock)) : LINE_MAX;   // the most of this piece one cart can hold
 const stockShort = (p, qty) => Number.isInteger(p.stock) && p.stock < LINE_MAX && qty >= p.stock;   // the shelf, not the cart's rule, is what stops it
@@ -89,7 +95,7 @@ function fitCart(cart) {
     const p = bySku[l.sku], max = stockFor(p);
     if (!forSale(p)) { news.push(p.state === "tbd" ? `${p.name} has no shop price yet, so we took it out of your cart.` : `${p.name} is not on sale yet, so we took it out of your cart.`); continue; }
     if (!max) { news.push(`${p.name} has sold out, so we took it out of your cart.`); continue; }
-    if (l.qty > max) news.push(stockShort(p, max) || max < LINE_MAX || !PICKUP_ONLY ? `We only have ${max} of ${p.name}, so your cart now has ${max}.` : `Pickup orders hold up to ${max} of one item online, so your cart now has ${max} of ${p.name}. Call 519-255-2222 to hold more.`);
+    if (l.qty > max) news.push(stockShort(p, max) || max < LINE_MAX || !PICKUP_ONLY ? `We only have ${max} of ${p.name}, so your cart now has ${max}.` : `A pickup request takes up to ${max} of one item, so your cart now has ${max} of ${p.name}. Call 519-255-2222 for more.`);
     kept.push({ sku: l.sku, qty: Math.min(max, l.qty) });
   }
   return { kept, news };
@@ -737,7 +743,7 @@ function viewCart() {
       ${counter || atCounter ? "" : `<ol class="boxes">${parcels.map(p => `<li><span class="num">${p.l} \u00d7 ${p.w} \u00d7 ${p.h} cm, ${p.kg} kg</span> ${esc(p.label.toLowerCase())}, ${p.items.length} ${p.items.length === 1 ? "item" : "items"}</li>`).join("")}</ol>`}
       ${!state.dest && WIDE.matches && !atCounter ? `<button class="btn btn--wide" type="button" data-open-postal>Check delivery to my postal code</button>` : ""}
       ${shishaIn ? `<p class="note">Shisha is pickup only and paid in the shop, so this order is a pickup.</p>` : atCounter ? `<p class="note">Online orders are picked up and paid at our Windsor counter for now.</p>` : localNote}
-      ${overUnits ? `<p class="note" id="checkout-units">Pickup orders hold up to ${PICKUP_UNITS} items online. Take some out, or call the counter at <a class="link tel" href="tel:+15192552222">519-255-2222</a> to hold more.</p>` : ""}
+      ${overUnits ? `<p class="note" id="checkout-units">A pickup request takes up to ${PICKUP_UNITS} items, ${LINE_MAX} of any one item. Take some out, or call the counter at <a class="link tel" href="tel:+15192552222">519-255-2222</a> for more.</p>` : ""}
       ${counter && !atCounter ? `<p class="note">${canLocal ? "Choose local delivery or free pickup for the whole order" : "Choose free pickup for the whole order"}${mixed ? ", or leave the charcoal out to ship the rest" : ""}. Charcoal goes by pickup or local delivery only, never by Canada Post.${state.dest?.complete && !canLocal && !checking && !localArea(state.dest) ? ` Local delivery does not reach ${esc(state.dest.full)}.` : ""}</p>` : ""}
       ${toQuebec() && carried(lines) && !atCounter ? `<p class="note">${QC_NOTE}</p>` : ""}
       ${tooHeavy && !atCounter ? `<p class="note">One of these boxes is over the 30 kg carrier limit. Call the counter at 519-255-2222 and we will quote it by hand.</p>` : ""}
@@ -763,14 +769,14 @@ function viewCart() {
     </dl>
     ${!ready && !checking && !tooHeavy && !overUnits ? `<p class="fine" id="checkout-why">${counter ? (canLocal ? "Choose local delivery or pickup to check out." : mixed ? "Choose pickup, or leave the charcoal out to ship the rest, to check out." : "Choose pickup to check out.") : "Add a postal code or choose pickup to check out."}</p>` : ""}
     ${ready ? `<a class="btn btn--wide" href="/checkout">${inShop ? "Request pickup" : "Check out"}</a>` : `<button class="btn btn--wide" type="button" disabled ${overUnits ? 'aria-describedby="checkout-units"' : !checking && !tooHeavy ? 'aria-describedby="checkout-why"' : ""}>Check out</button>`}
-    <p class="fine">${inShop ? "Tax is added on the next step. We check the shelf and email you when it is ready; you pay at the counter when you pick it up." : "Tax is added at checkout."}</p>
+    <p class="fine">${inShop ? `Tax is added on the next step. We check the shelf and ${TELL} when it is ready; you pay at the counter when you pick it up.` : "Tax is added at checkout."}</p>
     </div>
   </section>`;
 }
 
 function viewShipping() {
   const pickup = `<h2 class="h3">Pick up</h2>
-    <p>Order online and pick up for free at ${SHOP_ADDRESS}. ${PICKUP_ONLY ? "Your order is a request: we check the shelf and email you when it is ready, usually the same or the next day. Please wait for that email before you come in, because nothing is set aside until then. You pay at the counter, and we hold it for 14 days from the email." : "We email you when it is ready and hold it for 14 days."} ${directions()} or call <a class="link" href="tel:+15192552222">519-255-2222</a>.</p>`;
+    <p>Order online and pick up for free at ${SHOP_ADDRESS}. ${PICKUP_ONLY ? `Your order is a request: we check the shelf and ${TELL} when it is ready, usually the same or the next day. Please wait for ${TOLD} before you come in, because nothing is set aside until then. You pay at the counter, and we hold it for 14 days from ${MAIL_ON ? "the email" : "our call"}. A request we have not confirmed is cancelled after ${REQ_SPAN}.` : `We ${TELL} when it is ready and hold it for 14 days.`} ${directions()} or call <a class="link" href="tel:+15192552222">519-255-2222</a>.</p>`;
   const returns = `<h2 class="h3">Returns</h2>
     <p>All sales are final, except faulty, wrong, damaged or undelivered items. If something ${PICKUP_ONLY ? "is faulty" : "arrives broken"} or is not what you ordered, call 519-255-2222 or bring it into the store and talk to the store manager: we repair, replace or refund it. <a class="link" href="/terms">Terms of sale</a>.</p>`;
   // While card payment is off, every order is a pickup (breaker and design review, 2026-11-27): pickup and returns come first, and
@@ -1062,10 +1068,10 @@ function viewCheckout() {
       ${unpaid}
       <fieldset class="co__set"><legend class="h3">Who it is for</legend>
         ${field("name", "Full name", 'autocomplete="name" maxlength="80" required')}
-        ${field("email", "Email", 'type="email" autocomplete="email" inputmode="email" maxlength="120" required', local ? "for the receipt" : pickup ? "for the receipt and the ready-for-pickup note" : "for the receipt and tracking")}
-        ${field("phone", "Phone", `type="tel" autocomplete="tel" inputmode="tel" maxlength="30"${local ? " required" : ""}`, local ? "so the driver can reach you" : "optional")}
+        ${field("email", "Email", 'type="email" autocomplete="email" inputmode="email" maxlength="120" required', !MAIL_ON ? "kept with your order" : local ? "for the receipt" : pickup ? "for the receipt and the ready-for-pickup note" : "for the receipt and tracking")}
+        ${field("phone", "Phone", `type="tel" autocomplete="tel" inputmode="tel" maxlength="30"${local || phoneNeeded(sc) ? " required" : ""}`, local ? "so the driver can reach you" : phoneNeeded(sc) ? "we call or text you when it is ready" : "optional")}
       </fieldset>
-      ${pickup ? `<fieldset class="co__set"><legend class="h3">Pickup</legend><p class="co__p">At ${SHOP_ADDRESS}. ${payWay(sc) === "at_pickup" ? "We check the shelf and email you when it is ready" : "We email you when it is ready"}, usually ${pickupDay() === "Today" ? "the same day" : "tomorrow"}.${payWay(sc) === "at_pickup" ? " Please wait for that email before you come in: nothing is set aside until then." : ""} Bring the order number. ${directions()}</p></fieldset>`
+      ${pickup ? `<fieldset class="co__set"><legend class="h3">Pickup</legend><p class="co__p">At ${SHOP_ADDRESS}. ${payWay(sc) === "at_pickup" ? `We check the shelf and ${TELL} when it is ready` : `We ${TELL} when it is ready`}, usually ${pickupDay() === "Today" ? "the same day" : "tomorrow"}.${payWay(sc) === "at_pickup" ? ` Please wait for ${TOLD} before you come in: nothing is set aside until then.` : ""} Bring the order number. ${directions()}</p></fieldset>`
         : `<fieldset class="co__set"><legend class="h3">Where it is going</legend>
         ${field("line1", "Street address", 'autocomplete="address-line1" maxlength="120" required')}
         ${field("city", "City or town", 'autocomplete="address-level2" maxlength="60" required')}
@@ -1082,20 +1088,75 @@ function viewCheckout() {
     </form>
   </section>`;
 }
+// While the shop's mail is off, a pickup needs a phone so the shop can call or text when it is ready (the server insists for a
+// pickup request; the page asks for any pickup, since no email can reach them either way).
+const phoneNeeded = sc => !!sc.pickup && !MAIL_ON;
+// The order's own words for how it hears back: the server says, per order, "email" or "call" (checkout.js follow), so a page kept
+// from before mail was connected still says what really happens. Older saved orders without it follow the page's switch.
+const byCall = o => (o.notify || (MAIL_ON ? "email" : "call")) === "call";
+const callLine = o => o.phone ? `We call or text you at <b class="num">${esc(o.phone)}</b> when it is on the shelf.` : "";
+const askLine = o => `${o.phone ? "Or call" : "Call"} <a class="link" href="tel:+15192552222">519-255-2222</a> with your order number, <b class="num">${esc(o.id)}</b>${o.phone ? "" : ", to ask when it is ready"}.`;
 // the heading and one line say where the money stands; nothing says paid until the shop has Stripe's signed word
 function payWords(o) {
   const p = o.pay || {}, first = esc(o.name.split(" ")[0]), closed = p.status === "expired" || p.status === "failed";
   return {
     head: closed ? "This payment did not go through." : p.method === "card" && p.status !== "paid" ? `One moment, ${first}.` : `Thank you, ${first}.`,
     lead: closed ? `Nothing was charged. <a class="link" href="/cart">Your cart</a> is still here.`
+      : p.method === "at_pickup" && byCall(o) ? `This is an order request. We check the shelf first. ${callLine(o)} ${askLine(o)} Please wait for our call before you come in: nothing is set aside until then. You pay at the counter.`
       : p.method === "at_pickup" ? `This is an order request. We check the shelf and email ${esc(o.email)} when it is ready. Please wait for that email before you come in: nothing is set aside until then. You pay at the counter.`
+      : p.status === "paid" && byCall(o) ? `Paid. ${o.method === "pickup" ? `${callLine(o)} ${askLine(o)}` : o.service === "Local delivery" ? "Our driver calls before coming." : `For tracking, call <a class="link" href="tel:+15192552222">519-255-2222</a> with your order number, <b class="num">${esc(o.id)}</b>.`}`
       : p.status === "paid" ? `Paid. Your receipt is on its way to ${esc(o.email)}. ${o.method === "pickup" ? "We email you again when it is ready." : o.service === "Local delivery" ? "Our driver calls before coming." : "The tracking number follows when it ships."}`
-      : p.slow ? `Your payment is still being confirmed. The receipt comes to ${esc(o.email)} as soon as it is.`
+      : p.slow ? (byCall(o) ? `Your payment is still being confirmed. This page shows it as soon as it is. ${askLine(o)}` : `Your payment is still being confirmed. The receipt comes to ${esc(o.email)} as soon as it is.`)
       : "Confirming your payment. This page updates by itself.",
     door: p.status === "paid" ? "Paid" : p.method === "at_pickup" ? "To pay at pickup" : "Total",
   };
 }
+// ---------- the customer's own order status page: /order/<id>?k=<key> (2026-11-27) ----------
+// The link is shown on the confirmation page. The key is checked by the shop (src/checkout.js orderStatus), which answers only the
+// first name, what was asked for and where it stands. The page draws a holding line, then fills in once the answer is back.
+const STATUS = {
+  requested: (s, call) => [`We have your request, ${esc(s.first)}.`, `We check the shelf and ${call ? "call or text you" : "email you"} when it is ready. Please wait for ${call ? "our call" : "that email"} before you come in: nothing is set aside until then.${s.pay_at_counter ? " You pay at the counter." : ""}`],
+  payment: s => ["Waiting for the card payment.", "Nothing is ready yet. If you closed the payment page, nothing was charged."],
+  preparing: s => [`We are getting it ready, ${esc(s.first)}.`, s.method === "pickup" ? "It is paid. We tell you when it is on the counter." : "It is paid. We tell you when it leaves the shop."],
+  ready: s => ["It is ready for pickup.", `It is waiting at ${SHOP_ADDRESS}${s.held_until ? `, held until ${esc(new Date(s.held_until).toLocaleDateString("en-CA", { weekday: "long", month: "long", day: "numeric" }))}` : ""}. Bring your order number.${s.pay_at_counter ? " You pay at the counter." : ""} ${directions()}`],
+  shipped: s => [s.local ? "It is out for delivery." : "It is on its way.", s.local ? "Our driver calls before coming." : "It left our Windsor shop."],
+  collected: s => [`Picked up. Thank you, ${esc(s.first)}.`, "We hope you enjoy it."],
+  cancelled: s => ["This order is cancelled.", "Nothing is held for it. To order again, visit the shop or call the counter."],
+};
+const STATUS_TAG = { requested: "Requested", payment: "Waiting for payment", preparing: "Being prepared", ready: "Ready for pickup", shipped: "On its way", collected: "Collected", cancelled: "Cancelled" };
+function statusHtml(id, s) {
+  if (s && s.unreachable) return `<section class="cart done" data-status-page><p class="done__tag"><span>Order</span> <b class="num">${esc(id)}</b></p><h1 class="h2 h2--xl">We could not reach the shop.</h1><p class="lead" role="status">Check your connection and reload this page, or call the counter at <a class="link" href="tel:+15192552222">519-255-2222</a> with your order number.</p></section>`;
+  // drawn in place of the holding line, inside the same page: no new band, so nothing else on the page starts again
+  if (!s) return `<section class="cart done" data-status-page data-status="missing"><p class="done__tag"><span>Order</span> <b class="num">${esc(id)}</b></p><h1 class="h2 h2--xl">We cannot find that order.</h1><p class="lead">Check the link, or call the counter at <a class="link" href="tel:+15192552222">519-255-2222</a> with your order number.</p><p class="lead"><a class="link" href="/shop">See what is on the counter</a>.</p></section>`;
+  const [head, lead] = (STATUS[s.status] || STATUS.requested)(s, s.notify === "call");
+  return `<section class="cart done" data-status-page data-status="${esc(s.status)}">
+    <p class="done__tag"><span>Order</span> <b class="num">${esc(id)}</b> <span data-status-tag>${esc(STATUS_TAG[s.status] || "")}</span></p>
+    <h1 class="h2 h2--xl">${head}</h1>
+    <p class="lead" role="status" aria-live="polite">${lead}</p>
+    <ul class="done__lines">${s.items.map(i => `<li><span><b class="num">${i.qty}</b> &times; ${esc(i.name)}</span></li>`).join("")}</ul>
+    <p class="fine">Questions? Call the counter at <a class="link" href="tel:+15192552222">519-255-2222</a> with your order number.</p>
+    <a class="btn btn--wide" href="/shop">Keep looking</a>
+  </section>`;
+}
+function viewStatus(id, k) {
+  const got = state.orderStatus;
+  if (got && got.id === id && got.k === k && Date.now() - got.at < 60000) return statusHtml(id, got.s);   // a redraw right after the answer; never an old one
+  (async () => {
+    let s = null, lost = true; try { const r = await fetch(`/api/order-status?id=${encodeURIComponent(id)}&k=${encodeURIComponent(k)}`, { cache: "no-store" }); if (r.ok) { s = (await r.json()).order || null; lost = !s; } else lost = r.status !== 404; } catch {}
+    if (lost) s = { unreachable: true };   // a dropped connection or a busy shop is never "no such order", and is not kept
+    else state.orderStatus = { id, k, s, at: Date.now() };
+    for (let i = 0; i < 60; i++) {   // the page may still be drawing (a page swap): wait for it, unless the shopper has moved on
+      if (location.pathname.replace(/\/+$/, "") !== "/order/" + id) return;
+      const box = document.querySelector("[data-status-page]");
+      if (box) { box.outerHTML = statusHtml(id, s); return; }
+      await new Promise(r => requestAnimationFrame(r));
+    }
+  })();
+  return `<section class="cart done" data-status-page><p class="done__tag"><span>Order</span> <b class="num">${esc(id)}</b></p><h1 class="h2 h2--xl">Looking up your order.</h1><p class="lead" role="status" aria-live="polite">One moment.</p></section>`;
+}
 function viewOrder(id) {
+  const k = new URLSearchParams(location.search).get("k");
+  if (k && /^[a-f0-9]{32}$/.test(k)) return viewStatus(id, k);
   let o = null; try { o = JSON.parse(sessionStorage.getItem("oss:order:" + id)); } catch { o = null; }
   if (!o) return `${band("missing", "ruby", "We cannot show that order.")}<section class="empty"><p class="lead">Order details only open on the phone or computer that placed the order. To ask about one, call the counter at <a class="link" href="tel:+15192552222">519-255-2222</a>.</p><p class="lead"><a class="link" href="/shop">See what is on the counter</a>.</p></section>`;
   const c = n => money(n / 100), p = o.pay || {}, first = esc(o.name.split(" ")[0]);
@@ -1106,6 +1167,7 @@ function viewOrder(id) {
     <p class="done__tag"><span>Order</span> <b class="num">${esc(o.id)}</b></p>
     <h1 class="h2 h2--xl" data-pay-head>${head}</h1>
     <p class="lead" role="status" aria-live="polite" data-pay-state="${esc(p.status || "")}">${lead}</p>
+    ${o.status_url && /^\/order\/W[A-Z0-9]{6}\?k=[a-f0-9]{32}$/.test(o.status_url) ? `<p class="fine" data-status-link>See where it stands any time on <a class="link" href="${esc(o.status_url)}">your order's own page</a>. Keep the link: it is the only way to open it.</p>` : ""}
     <p class="fine">${o.method === "pickup" ? `Pickup at ${SHOP_ADDRESS}. ${directions()}` : o.service === "Local delivery" ? `Local delivery.${o.eta ? " " + esc(o.eta) + "." : ""}` : `${esc(o.service)}.`}</p>
     <ul class="done__lines">${o.items.map(i => `<li><span><b class="num">${i.qty}</b> &times; ${esc(i.name)}</span><span class="num">${c(i.unit_cents * i.qty)}</span></li>`).join("")}</ul>
     <dl class="totals">
@@ -1153,6 +1215,10 @@ document.addEventListener("submit", async e => {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v("email"))) return fail("That email address does not look right.", "email");
   if (!pickup && !local && !chosen && !state.ship && (sc.status === "far" || sc.status === "down")) return fail("Delivery is not available here. Choose shipping or pickup in your cart.");
   if (sc.counter && chosen) return fail("Charcoal goes by pickup or local delivery only. Choose one in your cart.");
+  if (phoneNeeded(sc)) {   // the server's own rule (src/guard.js callable): a North American number the shop can call back
+    const d = v("phone").replace(/\s*(?:x|ext\.?)\s*\d{1,6}\s*$/i, "").replace(/\D/g, "").replace(/^(?:011|00)/, "").replace(/^1(?=\d{10}$)/, "");
+    if (!/^[2-9]\d{2}[2-9]\d{6}$/.test(d) || /^(\d)\1{9}$/.test(d)) return fail("Enter a phone number with its area code, like 519-555-0144. We call or text you when your order is ready.", "phone");
+  }
   if (!pickup && !v("line1")) return fail("Enter the street address.", "line1");
   if (!pickup && !v("city")) return fail("Enter the city or town.", "city");
   if (local) {
@@ -1193,7 +1259,7 @@ const doc = (title, lead, parts, tag = DRAFT) => `${band("docs", "bone", title, 
 const viewPrivacy = () => doc("Privacy", "What we collect, why, who else handles it, and how to ask about it. Updated November 27, 2026.", [
   ["Who we are", [`One Stop Shop, 760 Wyandotte St E, Windsor, ON N9A 3J4. This page covers our online shop: this website, the emails it sends and the orders placed on it. ${PICKUP_ONLY ? "For now we sell for pickup in Windsor, paid at the counter. Local delivery and shipping within Canada, except Quebec, open once we take card payment online." : "We sell for pickup in Windsor, local delivery and shipping within Canada, except Quebec for now."} We follow Canada's privacy law for businesses (PIPEDA) and Canada's anti-spam law (CASL).`]],
   ["What we collect and why", [
-    "When you order: your name, your email, your phone number (needed for local delivery so the driver can reach you, otherwise up to you), the delivery address if we deliver or ship it, and any note you add. We also keep what you bought, what you paid and how you chose to get it. We use these to fill your order, email you about it and answer your questions.",
+    `When you order: your name, your email, your phone number (${MAIL_ON ? "needed for local delivery so the driver can reach you, otherwise up to you" : "needed for local delivery so the driver can reach you, and for now for pickup requests, so we can call or text you when your order is ready"}), the delivery address if we deliver or ship it, and any note you add. We also keep what you bought, what you paid and how you chose to get it. We use these to fill your order, ${MAIL_ON ? "email" : "call or text"} you about it and answer your questions.`,
     "When you pay by card: you type your card details on Stripe's payment page, not ours. We never see or store your card number. Stripe tells us only whether the payment went through.",
     "When you check delivery: the postal code you enter, and for local delivery your street address, are used to work out whether we deliver to you and what it costs.",
     "To stop abuse, when you place an order we keep a coded form of your internet address, scrambled with a secret key so it cannot be turned back into the address, only to limit how many orders and open pickup requests can come from one place. For orders it is deleted after 30 days. When you ask for a sign-in code we keep a coded form of your internet address and of your email, made the same way with a secret key so it cannot be turned back, only to count codes asked for and wrong codes typed, and delete them after a day.",
@@ -1219,10 +1285,11 @@ const viewPrivacy = () => doc("Privacy", "What we collect, why, who else handles
     "Where it is handled: Stripe, Resend and Cloudflare are based in the United States, and Geoapify in Germany. So your details may be stored or handled outside Canada, and can be reached by the courts and authorities of those countries. We stay responsible for your details while they do this work for us.",
   ]],
   ["If you make an account", [
-    "An account is up to you. Guest checkout always works. You sign in with a 6-digit code we email you, which works once, for 10 minutes. We keep your email, the name, phone and address you choose to save, your saved items, your back-in-stock requests, your charcoal reminder choice and any points, so they are there next time. Orders you placed as a guest with the same email join your account when you sign in.",
+    `An account is up to you. Guest checkout always works.${MAIL_ON ? "" : " Accounts open once our email is switched on."} You sign in with a 6-digit code we email you, which works once, for 10 minutes. We keep your email, the name, phone and address you choose to save, your saved items, your back-in-stock requests, your charcoal reminder choice and any points, so they are there next time. Orders you placed as a guest with the same email join your account when you sign in.`,
     "You can delete the account yourself on the account page at any time. That removes your sign-ins, saved details, saved items, back-in-stock requests, reminder and points at once. Your past orders stay in our records as guest orders, because tax law requires us to keep sales records. The record of any yes you gave to reminders also stays, as proof of what you agreed to.",
   ]],
   ["Emails we send", [
+    ...(MAIL_ON ? [] : ["For now our email is not switched on, so we send no emails at all and accounts cannot be opened yet. We call or text the phone number on your order instead. What follows is what we will send once it is on."]),
     "Emails about your order: that it is in or paid, that it is ready, or that it is on its way. These are part of your order, not marketing. Sign-in codes when you ask for one.",
     "A back-in-stock email only when you ask for one: one email, then the request is gone. A charcoal reminder only when you tick the box to say yes, as often as you choose. We keep the words you agreed to and the date, because the law asks us to be able to show your consent.",
     "Every reminder and back-in-stock email names the shop with its address and phone and has an unsubscribe link. It works without signing in and takes effect at once (the law allows up to 10 business days). You can also turn reminders off in your account. We do not send newsletters.",
@@ -1247,11 +1314,11 @@ const viewPrivacy = () => doc("Privacy", "What we collect, why, who else handles
 ], "");
 const viewTerms = () => doc("Terms of sale", "The plain rules for buying from us online.", [
   ["Who you are buying from", [`One Stop Shop, 760 Wyandotte St E, Windsor, ON N9A 3J4. Call 519-255-2222. Legal business name ${TBD("")}.`]],
-  ["Prices and tax", ["Prices are in Canadian dollars. Tax is added at checkout, based on the province the order ships to. Before you pay, checkout shows each item's price, delivery or shipping, tax and the total, and you can go back and change anything. We email you a copy of your order."]],
+  ["Prices and tax", [`Prices are in Canadian dollars. Tax is added at checkout, based on the province the order ships to. Before you pay, checkout shows each item's price, delivery or shipping, tax and the total, and you can go back and change anything. ${MAIL_ON ? "We email you a copy of your order." : "The confirmation page shows your order number and what you asked for."}`]],
   ...(PICKUP_ONLY ? [["For now", ["Online orders are picked up at 760 Wyandotte St E and paid at the counter. Local delivery and shipping open once we take card payment online; the rules for them are below."]]] : []),
   ["Shipping", ["We ship within Canada, except to Quebec for now: the site is in English only, and we will ship there once it is also in French. Anyone can pick up in Windsor. The price at checkout is the price you pay for shipping. Delivery times are the carrier's estimates. Cologne ships by ground only."]],
   ["Local delivery", ["We deliver within 25 km by road of our Windsor shop: $10 up to 10 km and $15 from there to 25 km, per order, plus tax. Orders with $200 or more in items before tax deliver free. Arrival times are estimates. Local delivery is paid online when you order."]],
-  ["Pickup", ["Pickup at 760 Wyandotte St E, Windsor, ON N9A 3J4 is free. An order you pay for at the counter is a request: we check the shelf and email you when it is ready, and nothing is set aside before that email, so please wait for it before you come in. From then we hold it for 14 days."]],
+  ["Pickup", [`Pickup at 760 Wyandotte St E, Windsor, ON N9A 3J4 is free. An order you pay for at the counter is a request: we check the shelf and ${TELL} when it is ready, and nothing is set aside before ${TOLD}, so please wait for it before you come in. From then we hold it for 14 days. A request we have not confirmed is cancelled after ${REQ_SPAN}.`]],
   ["Charcoal", [`Charcoal is sold for pickup${PICKUP_ONLY ? "" : " or local delivery"} only. It is not shipped by Canada Post or any other carrier.`]],
   ["Returns", ["All sales are final, except faulty, wrong, damaged or undelivered items. We do not take back an item because you changed your mind."]],
   ["Faulty, wrong or damaged", ["If an item is faulty, is not what you ordered, or arrives broken, call 519-255-2222 or bring it to 760 Wyandotte St E and talk to the store manager. We will repair it, replace it or refund it. Nothing here takes away your rights under Ontario's Consumer Protection Act."]],

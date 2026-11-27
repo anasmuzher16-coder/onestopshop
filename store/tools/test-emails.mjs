@@ -59,6 +59,30 @@ ok((await admin(`/orders/${A.id}/status`, { status: "ready" })).status === 200, 
 const ready = (await settle(A.id, 3)).filter(m => /ready for pickup/.test(m.subject));
 ok(ready.length === 1 && ready[0].to[0] === who.email && ready[0].reply_to === SHOP, "the ready-for-pickup email goes to the customer once, replies to the shop");
 
+// 2b (2026-11-27, fleet/guard4) mail ON: the email wording stays, the phone stays optional, and with no phone on either order one
+// person is one email from one network (a stranger who types the email from elsewhere does not use the customer's slots)
+{ const home = await (await fetch(B + "/")).text();
+  ok(/<meta name="oss-mail" content="on">/.test(home), "mail on: every page says so (meta oss-mail on)");
+  ok(A.notify === "email" && A.phone === who.phone && /^\/order\/W[A-Z0-9]{6}\?k=[a-f0-9]{32}$/.test(A.status_url || ""), "mail on: the request answers notify email, with its status link: " + JSON.stringify({ notify: A.notify, url: A.status_url }));
+  const st = await (await fetch(`${B}/api/order-status?id=${A.id}&k=${(A.status_url || "").split("k=")[1]}`)).json();
+  ok(st.order?.status === "ready" && st.order.notify === "email", "the status link follows the order (ready) and says the shop emails: " + JSON.stringify(st.order));
+  const nip = shopper(), np = { name: "Nora Phoneless", email: `nophone-${Date.now()}@example.com`, method: "pickup", pay: "at_pickup", lines: [{ sku: "OSS-8004", qty: 1 }] };
+  const from = async ip => { const r = await fetch(B + "/api/orders", { method: "POST", headers: { "Content-Type": "application/json", "CF-Connecting-IP": ip }, body: JSON.stringify(np) }); return { status: r.status, data: await r.json().catch(() => ({})) }; };
+  const held = []; for (let i = 0; i < 3; i++) held.push(await from(nip));
+  ok(held.every(r => r.status === 201 && r.data.order?.notify === "email"), "mail on: a pickup request needs no phone: " + held.map(r => r.status + " " + (r.data.error || "")));
+  const fourth = await from(nip), elsewhere = await from(shopper());
+  ok(fourth.status === 429 && fourth.data.limited === "open", "with no phone, a fourth open request for one email from one network is refused: " + fourth.status);
+  ok(elsewhere.status === 201, "the same email with no phone from another network is not blocked by those 3: " + elsewhere.status + " " + (elsewhere.data.error || ""));
+  const list = (await admin("/orders")).data.orders || [], rowElse = list.find(o => o.id === elsewhere.data.order?.id), rowHeld = list.find(o => o.id === held[0].data.order?.id);
+  ok(rowElse?.other_networks === 3 && rowHeld?.other_networks === 1, "the back office list marks requests sharing an email from different networks: " + JSON.stringify([rowElse?.other_networks, rowHeld?.other_networks]));
+  const sheet = (await admin("/orders/" + elsewhere.data.order?.id)).data.order;
+  ok(sheet?.other_networks === 3, "and the order sheet says the same: " + sheet?.other_networks);
+  // with mail on, one inbox takes 30 guest orders a day from anywhere (an inbox flood); the 31st is asked to sign in or call
+  const flood = { ...np, email: `inbox-${Date.now()}@example.com` }, fl = [];
+  for (let i = 0; i < 30; i++) { const r = await fetch(B + "/api/orders", { method: "POST", headers: { "Content-Type": "application/json", "CF-Connecting-IP": shopper() }, body: JSON.stringify(flood) }); fl.push(r.status); }
+  const f31 = await fetch(B + "/api/orders", { method: "POST", headers: { "Content-Type": "application/json", "CF-Connecting-IP": shopper() }, body: JSON.stringify(flood) }), f31d = await f31.json().catch(() => ({}));
+  ok(fl.every(s => s === 201) && f31.status === 429 && f31d.limited === "email" && /sign in with it/.test(f31d.error || ""), "mail on: one inbox takes 30 guest orders a day, the 31st is asked to sign in or call: " + fl.join("") + "," + f31.status + " " + (f31d.error || "")); }
+
 // 3 a card order (card mode only): nothing to the shop until Stripe's signed webhook says paid, then one note, however often Stripe calls
 if (CARD) {
   const c = await post({ ...who, email: "card-mail@example.com", ...to, method: "ship", service: "cp-exp", lines: [{ sku: "OSS-2001", qty: 1 }] });

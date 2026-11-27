@@ -1,13 +1,14 @@
 // The real stock on view (2026-11-24): Ace hookahs with "Price TBD" can be seen and never bought, the supplier's price is
 // never shown anywhere a shopper can reach, shisha and foil sell, the sample hookahs are gone with their links redirected.
 // node store/tools/test-ace.mjs   (against the running local store; changes stock: reseed afterwards)
+import { withPhone } from "./fixtures/phone.mjs";   // a counter pickup carries a phone while the shop's mail is off (2026-11-27)
 import { readFileSync } from "node:fs";
 const B = process.env.BASE || "http://127.0.0.1:4486";
 const KEY = readFileSync(new URL("../.dev.vars", import.meta.url), "utf8").match(/ADMIN_KEY=(.+)/)[1].trim();
 let n = 0, f = 0; const ok = (c, msg) => { n++; if (!c) { f++; console.log("FAIL", msg); } };
 // each order comes from its own made-up address, as real shoppers do: the per-visitor order limits (src/guard.js) have their own checks in test-orders
 const shopper = () => `10.${(Math.random() * 250) | 0}.${(Math.random() * 250) | 0}.${(Math.random() * 250) | 0}`;
-const post = async body => { const r = await fetch(B + "/api/orders", { method: "POST", headers: { "Content-Type": "application/json", "CF-Connecting-IP": shopper() }, body: JSON.stringify(body) }); return { status: r.status, data: await r.json().catch(() => ({})) }; };
+const post = async body => { const r = await fetch(B + "/api/orders", { method: "POST", headers: { "Content-Type": "application/json", "CF-Connecting-IP": shopper() }, body: JSON.stringify(withPhone(body)) }); return { status: r.status, data: await r.json().catch(() => ({})) }; };
 const who = { name: "Test Shopper", email: "test@example.com" }, to = { postal: "M5V 2T6", address: { line1: "1 Test Street", city: "Toronto" } };
 // With no card keys (the live demo) a pickup is paid at the counter, and delivery or shipping is refused with the shop's number.
 const CARD = /<meta name="oss-pay" content="card">/.test(await (await fetch(B + "/")).text()), pk = CARD ? {} : { pay: "at_pickup" };
