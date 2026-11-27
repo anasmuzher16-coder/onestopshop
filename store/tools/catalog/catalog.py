@@ -178,6 +178,7 @@ def build(args):
              "families": fams,
              "retired": {s: reg["skus"][s] for s in sorted(reg["skus"]) if reg["skus"][s]["supplier"] == "ace" and reg["skus"][s]["status"] == "retired"}}
         C.carry_shop(old, m)
+        C.carry_web_facts(old, m)
         m["photo_labels"] = photo_labels(m)
         C.validate_master(m, reg)
         wrote = C.write_json(C.master_path("ace"), m)
@@ -200,6 +201,7 @@ def build(args):
              "families": fams,
              "retired": {s: reg["skus"][s] for s in sorted(reg["skus"]) if reg["skus"][s]["supplier"] == "ace-acc" and reg["skus"][s]["status"] == "retired"}}
         C.carry_shop(old, m)
+        C.carry_web_facts(old, m)
         C.validate_master(m, reg)
         wrote = C.write_json(C.master_path("ace-acc"), m)
         summary["ace-acc"] = {"families": len(fams), "newly_retired": retired, "written": wrote}
@@ -381,7 +383,9 @@ def desired_rows(supplier: str, m):
                 facts["photo_hex"] = hexes[v["photo"]["img"]]
             sup = {"supplier_id": "ace", "supplier_ref": f["supplier_ref"]["v"], "supplier_price_cents": f["supplier_price_cents"]["v"],
                    "family": f["family_id"], "variant_label": label, "swatch_hex": v["swatch_hex"]["v"],
-                   "img": v["photo"]["img"] or "", "height_cm": f["facts"]["height_cm"]["v"],
+                   # a height read off a web page is shown as a fact on the product page only; it is not drawn in the
+                   # home page's height line-up, because makers measure differently (the Molotov's 35 cm is without the bowl)
+                   "img": v["photo"]["img"] or "", "height_cm": None if (f["facts"]["height_cm"]["src"] or "").startswith("web:") else f["facts"]["height_cm"]["v"],
                    "facts_known": json.dumps(facts, sort_keys=True, ensure_ascii=False)}
             # the colour lives in variant_label, never baked into the shop-owned name (a guess would freeze there)
             shopcols = {"name": shop["display_name"]["v"] or public_name(f),

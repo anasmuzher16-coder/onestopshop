@@ -28,7 +28,7 @@ const parse = s => { try { const v = JSON.parse(s || "{}"); return v && typeof v
 // family per hose, a colour per photo). Shisha flavours, charcoal and the Ace accessories stay one card each.
 export const groupedFamily = f => /^(ace|hose)-/.test(String(f || ""));
 // What a shopper may see of a catalogue item's facts. Unknown stays null and is shown as "TBD", never guessed.
-const FACT_KEYS = ["includes_base", "height_cm", "length", "acrylic", "includes", "group", "stamp", "photo", "photo_hex", "colour_confirmed", "photo_label", "shown_in", "photo_upscale", "count", "size", "brand", "shape", "material", "weight_g"];
+const FACT_KEYS = ["includes_base", "height_cm", "length", "acrylic", "includes", "group", "stamp", "photo", "photo_hex", "colour_confirmed", "photo_label", "shown_in", "photo_upscale", "count", "size", "brand", "shape", "material", "weight_g", "item_weight_g", "features"];   // item_weight_g: the piece's own weight from a maker's page, shown only; never the pack weight shipping uses (weight_g)
 function shownFacts(p) {
   const f = parse(p.facts_known), out = {};
   for (const k of FACT_KEYS) if (k in f) out[k] = f[k];
