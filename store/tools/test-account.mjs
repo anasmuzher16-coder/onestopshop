@@ -43,14 +43,14 @@ const order = async (body, cookie) => {
   const counter = !CARD && body.method === "pickup" && body.pay === undefined; if (counter) body = { ...body, pay: "at_pickup" };
   const send = () => fetch(B + "/api/orders", { method: "POST", headers: { "Content-Type": "application/json", "CF-Connecting-IP": ip(), ...(cookie ? { Cookie: cookie } : {}) }, body: JSON.stringify(body) });
   let r = await send();
-  // the shop-wide brake (12 orders a minute, checkout.js) is a real feature: a fast machine running this suite's orders in a burst
+  // the shop-wide brake (60 orders a minute since 2026-11-27, src/guard.js SHOP_BRAKE_PER_MIN; it was 12) is a real feature: a fast machine running this suite's orders in a burst
   // trips it, so wait it out once, as a shopper would, rather than fail an account check on it
   if (r.status === 429) {
-    // only wait when the brake was right to fire (12 or more orders in the last minute, checkout.js); a brake that fires earlier
+    // only wait when the brake was right to fire (60 or more orders in the last minute, checkout.js); a brake that fires earlier
     // is a regression and fails here (breaker, 2026-11-26)
     const recent = sql("SELECT COUNT(*) AS n FROM orders WHERE created_at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 minute')")[0].n;
-    ok(recent >= 12, `the order brake fired only after 12 orders in a minute (it fired at ${recent})`);
-    if (recent >= 12) { console.log("order brake hit at", recent, "orders in the last minute; waiting it out"); await new Promise(res => setTimeout(res, 61000)); r = await send(); }
+    ok(recent >= 60, `the order brake fired only after 60 orders in a minute (it fired at ${recent})`);
+    if (recent >= 60) { console.log("order brake hit at", recent, "orders in the last minute; waiting it out"); await new Promise(res => setTimeout(res, 61000)); r = await send(); }
   }
   const out = { status: r.status, data: await r.json().catch(() => ({})) };
   if (out.status === 201 && out.data.pay?.url) { await fetch(out.data.pay.url, { method: "POST", redirect: "manual" }); await new Promise(res => setTimeout(res, 300)); }

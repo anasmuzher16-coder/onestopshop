@@ -1,7 +1,8 @@
 -- Per-visitor order limits (src/guard.js, src/checkout.js), 2026-11-26.
--- One row per order placed: `who` is a keyed hash of the visitor's address (IPv6 by its /64), never the address itself,
--- and `order_id` the order it placed, so the shop can count how many of that visitor's orders still hold stock unpaid.
--- Rows are deleted after 15 days by the scheduled sweep (pruneGuards), and the backup never copies this table.
+-- One row per order placed: `who` is a keyed hash of the visitor's address (IPv4 as it is, IPv6 by its /56, and a second
+-- row by its /48), never the address itself, and `order_id` the order it placed, so the shop can count how many of that
+-- visitor's orders still hold stock unpaid. Rows are deleted after 30 days by the 10-minute sweep (src/guard.js pruneGuards;
+-- comment corrected 2026-11-27, the code always said 30), and the backup never copies this table.
 CREATE TABLE order_attempts (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   who TEXT NOT NULL,

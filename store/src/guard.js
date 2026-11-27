@@ -4,8 +4,9 @@
 //    counts as one visitor per /56, and a shop-wide lock counts how many different places tried by /48.
 //    Only a keyed hash of that is ever stored, never the address.
 //  - Placing an order: per visitor and per email, a cap on orders in 10 minutes and in a day, and on orders still holding
-//    stock unpaid; per order, caps on lines and units that a real counter order never reaches. The shop-wide brake in
-//    checkout.js stays as a last resort, and the per-visitor caps sit below it, so one visitor alone can never trip it.
+//    stock unpaid; per order, caps on lines and units that a real counter order never reaches (lower for an unpaid pickup);
+//    per item, a ceiling on how much of it unpaid pickups may hold together. The shop-wide brake in checkout.js is set for a
+//    real flood (SHOP_BRAKE_PER_MIN), far above what one person's few networks can place, and never stops a signed-in shopper.
 const sha = async s => [...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)))].map(b => b.toString(16).padStart(2, "0")).join("");
 
 // The address as one visitor: IPv4 as it is, IPv6 by its first `bits` bits (56 by default; 48 when counting different
@@ -35,6 +36,39 @@ export const nameOk = s => typeof s === "string" && s.length <= 80 && /^[\p{L}\p
 // Owner-vetoable numbers, in one place. A counter order of 40 units over 20 different items is far past anything the shop
 // has seen; a bigger order is a phone call.
 export const ORDER_CAPS = { lines: 20, perLine: 20, units: 40 };   // perLine matches the cart's own most (MAX_QTY, public/rates-core.js)
+// An unpaid pay-at-the-counter order holds stock nobody has paid for, so it is held to what a real counter order needs (breaker,
+// 2026-11-27): the shop sells charcoal by the box, foil by the pack, shisha by the tub and hookahs one at a time, and 5 of one
+// item or 15 in all is past any counter order seen. A paid (card) order keeps ORDER_CAPS. The cart stops at 5 of an item while
+// card payment is off (public/app.js), so a shopper meets this number in the cart, not at the last step.
+export const PICKUP_CAPS = { lines: 15, perLine: 5, units: 15 };
+// All unpaid pickup orders together hold at most this share of an item's units (on the shelf plus already held), and always at
+// least 1, so a handful of addresses can never empty an item: the rest stays buyable. More is a phone call.
+// HOLD_DIV 2: half. checkout.js repeats it inside the stock statement as "/ 2" (SQLite integer division), so change both together.
+export const HOLD_DIV = 2;
+export const holdMax = units => Math.max(1, Math.floor(units / HOLD_DIV));
+// How many of each item unpaid pickup orders hold now (excluding one order, when given). One fragment, used for the check before
+// an order is written and, the same, inside the statement that takes the stock, so simultaneous orders cannot pass it together.
+export const HELD_SQL = (sku, notOrder) => `(SELECT COALESCE(SUM(hi.qty),0) FROM order_items hi JOIN orders ho ON ho.id = hi.order_id WHERE hi.sku = ${sku} AND ho.id != ${notOrder} AND ho.pay_status = 'pay_at_pickup' AND ho.status IN ('pending','ready') AND ho.release_op IS NULL)`;
+// The shop-wide brake: a real flood only. Per-visitor caps (below) bound one network to 3 unpaid orders at once (6 for an IPv6
+// /48) and 5 orders in 10 minutes, so reaching 60 orders in one minute takes 20 or more separate networks at once. A shopper
+// signed in with the order's own email has proven the inbox is theirs and is never braked. (breaker, 2026-11-27: at 12 a minute,
+// one person with home IPv4, a tunnel /48 and a phone could make the shop "busy" for everyone.)
+export const SHOP_BRAKE_PER_MIN = 60;
+// The email as one person, for limits only (the order keeps the address exactly as typed): lowercase (ASCII, as SQLite's lower()),
+// any +tag dropped, and for Gmail the dots too, with googlemail.com read as gmail.com. normEmailSql is the same rule over a
+// column, so the database compares like with like. The address was already checked to hold exactly one "@".
+export function normEmail(e) {
+  const s = String(e || "").trim().replace(/[A-Z]/g, c => c.toLowerCase()), at = s.indexOf("@"); if (at < 1) return s;
+  let local = s.slice(0, at), dom = s.slice(at + 1); const plus = local.indexOf("+"); if (plus >= 0) local = local.slice(0, plus);
+  if (dom === "googlemail.com") dom = "gmail.com"; if (dom === "gmail.com") local = local.replace(/\./g, "");
+  return local + "@" + dom;
+}
+export function normEmailSql(col) {
+  const le = `lower(trim(${col}))`, local = `substr(${le},1,instr(${le},'@')-1)`, dom0 = `substr(${le},instr(${le},'@')+1)`;
+  const dom = `(CASE WHEN ${dom0} = 'googlemail.com' THEN 'gmail.com' ELSE ${dom0} END)`;
+  const tagless = `(CASE WHEN instr(${local},'+') > 0 THEN substr(${local},1,instr(${local},'+')-1) ELSE ${local} END)`;
+  return `((CASE WHEN ${dom} = 'gmail.com' THEN replace(${tagless},'.','') ELSE ${tagless} END) || '@' || ${dom})`;
+}
 // A counter order the shop has marked ready is held as long as the ready email promises (14 days, email.js pickupReady).
 export const READY_HOLD_DAYS = 14;
 // A phone number: digits with the usual separators, and an extension. Never letters, so never a link.
@@ -62,7 +96,7 @@ export async function orderLimits(env, who, email, placed = 0, own = false, grou
   const db = env.DB, L = ORDER_LIMITS, k = placed;
   const byEmail = db.prepare(`SELECT COALESCE(SUM(created_at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-10 minutes')),0) AS m10, COALESCE(SUM(created_at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 day')),0) AS day,
     COALESCE(SUM(${OPEN}),0) AS open
-    FROM orders o WHERE lower(email) = lower(?1) AND (created_at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 day') OR status IN ('pending','ready'))`).bind(email);
+    FROM orders o WHERE (created_at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 day') OR status IN ('pending','ready')) AND ${normEmailSql("o.email")} = ?1`).bind(normEmail(email));
   const byWho = db.prepare(`SELECT COALESCE(SUM(a.at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-10 minutes')),0) AS m10, COALESCE(SUM(a.at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 day')),0) AS day,
     COALESCE(SUM(EXISTS (SELECT 1 FROM orders o WHERE o.id = a.order_id AND ${OPEN_VISITOR})),0) AS open FROM order_attempts a WHERE a.who = ?1`);
   let e, w = { m10: 0, day: 0, open: 0 }, g = { m10: 0, day: 0, open: 0 }, missing = false;

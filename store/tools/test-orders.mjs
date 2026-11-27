@@ -7,7 +7,13 @@ import { orderPlaced, newOrder } from "../src/email.js";
 // after a lost answer can never make a second order. node store/tools/test-orders.mjs   (changes local sample data: reseed afterwards)
 const B = (process.env.BASE || "http://127.0.0.1:4420").replace(/\/$/, "");
 // the made-up sample rows this suite buys, switched back on in its own throwaway database (tools/fixtures/samples-on.mjs)
-await samplesOn(B, ["OSS-7006", "OSS-8004", "OSS-8003", "OSS-7004", "OSS-8001"]);
+await samplesOn(B, ["OSS-7006", "OSS-8004", "OSS-8003", "OSS-7004", "OSS-8001", "OSS-8002", "OSS-8006"]);
+// All unpaid pickups together hold at most half of an item (src/guard.js holdMax, 2026-11-27). This suite places many unpaid
+// pickups of the same few samples to test the per-visitor limits, so those get a deep shelf first (the back office's own
+// receive), and the half-of-the-item rule has its own checks below on samples left at their seeded stock (OSS-8002, OSS-8006).
+const KEY = process.env.ADMIN_KEY || (await import("node:fs")).readFileSync(new URL("../.dev.vars", import.meta.url), "utf8").match(/ADMIN_KEY=(.+)/)[1].trim();
+const adminCookie = ((await fetch(B + "/api/admin/login", { method: "POST", headers: { "Content-Type": "application/json", "X-OSS-Admin": "1" }, body: JSON.stringify({ passcode: KEY }) })).headers.get("set-cookie") || "").split(";")[0];
+for (const sku of ["OSS-8004", "OSS-8003", "OSS-7004", "OSS-8001"]) { const r = await fetch(`${B}/api/admin/products/${sku}/receive`, { method: "POST", headers: { "Content-Type": "application/json", "X-OSS-Admin": "1", Cookie: adminCookie }, body: JSON.stringify({ qty: 200, ref: "test shelf" }) }); if (!r.ok) { console.log("FAIL could not stock", sku, r.status); process.exit(1); } }
 let n = 0, f = 0; const ok = (c, msg) => { n++; if (!c) { f++; console.log("FAIL", msg); } };
 // each order comes from its own made-up address, as real shoppers do: the per-visitor order limits (src/guard.js) have their own checks in test-orders
 const shopper = () => `10.${(Math.random() * 250) | 0}.${(Math.random() * 250) | 0}.${(Math.random() * 250) | 0}`;
@@ -68,8 +74,8 @@ const PERSIST = process.env.PERSIST;
 const WRANGLER = process.env.WRANGLER_JS || join(execFileSync(process.platform === "win32" ? "npm.cmd" : "npm", ["root", "-g"], { encoding: "utf8", shell: process.platform === "win32" }).trim(), "wrangler", "bin", "wrangler.js");
 const sql = cmd => { const out = execFileSync(process.execPath, [WRANGLER, "d1", "execute", "onestopshop", "--local", "--persist-to", PERSIST, "--json", "--command", cmd], { cwd: fileURLToPath(new URL("..", import.meta.url)), encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }); return JSON.parse(out.slice(out.indexOf("["))).flatMap(r => r.results); };
 const wait = ms => new Promise(r => setTimeout(r, ms));
-// one shopper at a given address; the shop-wide brake (12 a minute) is waited out like a shopper would, never a visitor limit
-const from = async (ip, body) => { for (let i = 0; ; i++) { const r = await fetch(B + "/api/orders", { method: "POST", headers: { "Content-Type": "application/json", "CF-Connecting-IP": ip }, body: JSON.stringify(body) }); const out = { status: r.status, data: await r.json().catch(() => ({})) }; if (out.status === 429 && !out.data.limited && i < 2) { await wait(61000); continue; } return out; } };
+// one shopper at a given address; the shop-wide brake (60 a minute) would be waited out like a shopper would, never a visitor limit
+const from = async (ip, body) => { for (let i = 0; ; i++) { const r = await fetch(B + "/api/orders", { method: "POST", headers: { "Content-Type": "application/json", "CF-Connecting-IP": ip }, body: JSON.stringify(body) }); const out = { status: r.status, data: await r.json().catch(() => ({})) }; if (out.status === 429 && (!out.data.limited || out.data.limited === "busy") && i < 2) { await wait(61000); continue; } return out; } };
 const run = Math.random().toString(36).slice(2, 8), counter = (email, sku = "OSS-8003", extra = {}) => ({ name: "Guard Tester", email, method: "pickup", pay: "at_pickup", lines: [{ sku, qty: 1 }], ...extra });
 // mail from the shop never carries a link someone typed: a name saved before names were checked, a note, an address
 { const o = { id: "WTEST23", name: "https://evil.example/claim x", method: "pickup", pay_status: "pay_at_pickup", created_at: "2026-11-26T20:00:00Z", pay_expires_at: "2026-11-28T20:00:00Z", subtotal_cents: 100, tax_cents: 13, total_cents: 113, tax_province: "ON", email: "a@b.co", address: JSON.stringify({ note: "go to www.evil.example now" }) };
@@ -133,6 +139,41 @@ else {
   ok(placed <= 3 && burst.every(r => r.status === 201 || r.data.limited), "15 orders at once from one address place at most 3, each refusal from its own limit: " + burst.map(r => r.status));
   const next = await fetch(B + "/api/orders", { method: "POST", headers: { "Content-Type": "application/json", "CF-Connecting-IP": shopper() }, body: JSON.stringify(counter(`next-${run}@example.com`, "OSS-8004")) });
   ok(next.status === 201, "a different shopper is not told the shop is busy after one visitor's burst: " + next.status);
+
+  // ---------- 2026-11-27: the brake, unpaid pickup caps, the half-of-an-item ceiling, emails as one person ----------
+  // the shop-wide brake is for a real flood: 14 different shoppers in a minute (past the old 12) all get through
+  const crowd = []; for (let i = 0; i < 14; i++) crowd.push(await from(shopper(), counter(`crowd${i}-${run}@example.com`, "OSS-8004")));
+  ok(crowd.every(r => r.status === 201), "14 shoppers in one minute are all served (the brake is 60 a minute, not 12): " + crowd.map(r => r.status));
+  // an unpaid pickup holds what a counter order needs: 5 of one item, 15 in all
+  const six = await from(shopper(), { ...counter(`six-${run}@example.com`), lines: [{ sku: "OSS-8004", qty: 6 }] });
+  ok(six.status === 400 && six.data.too_big && /5 of any one item/.test(six.data.error || "") && /519-255-2222/.test(six.data.error || ""), "6 of one item paid at the counter is refused with the shop's number: " + six.status + " " + (six.data.error || ""));
+  const fifteen = await from(shopper(), { ...counter(`f15-${run}@example.com`), lines: ["OSS-8004", "OSS-8003", "OSS-8001"].map(sku => ({ sku, qty: 5 })) });
+  ok(fifteen.status === 201, "5 each of three items (15 in all) paid at the counter goes through: " + fifteen.status + " " + (fifteen.data.error || ""));
+  const sixteen = await from(shopper(), { ...counter(`f16-${run}@example.com`), lines: [...["OSS-8004", "OSS-8003", "OSS-8001"].map(sku => ({ sku, qty: 5 })), { sku: "OSS-7004", qty: 1 }] });
+  ok(sixteen.status === 400 && sixteen.data.too_big, "16 in all paid at the counter is refused: " + sixteen.status);
+  if (!pk.pay) {   // card keys on: a card order is not an unpaid hold, so it keeps the higher caps
+    const card6 = await from(shopper(), { ...counter(`card6-${run}@example.com`), pay: "card", lines: [{ sku: "OSS-8004", qty: 6 }] });
+    ok(card6.status === 201, "6 of one item paid by card is still taken: " + card6.status + " " + (card6.data.error || ""));
+  }
+  // unpaid pickups together hold at most half of an item (OSS-8002: 5 on the shelf, so 2), always at least 1; the rest stays buyable
+  const s8002 = await stockOf("OSS-8002"), h1 = await from(shopper(), counter(`h1-${run}@example.com`, "OSS-8002")), h2 = await from(shopper(), counter(`h2-${run}@example.com`, "OSS-8002"));
+  const h3 = await from(shopper(), counter(`h3-${run}@example.com`, "OSS-8002"));
+  ok(s8002 === 5 && h1.status === 201 && h2.status === 201 && h3.status === 409 && h3.data.hold_cap === true && h3.data.room === 0 && /519-255-2222/.test(h3.data.error || ""), `a third unpaid pickup of an item with 5 is refused, the shop's number given: ${s8002} ${h1.status},${h2.status},${h3.status} ${h3.data.error || ""}`);
+  ok((await stockOf("OSS-8002")) === 3, "the refusal took no stock, and 3 of 5 are still on the shelf");
+  // the same ceiling holds for orders at the same moment (OSS-8006: 4 on the shelf, so 2 held at most)
+  const rush = await Promise.all(Array.from({ length: 4 }, (_, i) => from(shopper(), counter(`rush${i}-${run}@example.com`, "OSS-8006"))));
+  ok(rush.filter(r => r.status === 201).length === 2 && rush.filter(r => r.status === 409 && r.data.hold_cap).length === 2 && (await stockOf("OSS-8006")) === 2, "4 unpaid pickups at once of an item with 4: exactly 2 held, 2 told to call: " + rush.map(r => r.status));
+  // an email is one person for the limits: case, +tags and Gmail dots or googlemail do not make a new one
+  const nb = `normtester${run}`, variants = [`Norm.Tester${run.toUpperCase()}+a@gmail.com`, `${nb}+b@googlemail.com`, `n.o.r.m.tester${run}@GMAIL.com`];
+  const heldN = []; for (const e of variants) heldN.push(await from(shopper(), counter(e, "OSS-8004")));
+  const fourthN = await from(shopper(), counter(`${nb}+zzz@gmail.com`, "OSS-8004"));
+  ok(heldN.every(r => r.status === 201) && fourthN.status === 429 && fourthN.data.limited === "open", "three spellings of one Gmail inbox hold 3, the fourth is asked to sign in or call: " + heldN.map(r => r.status) + "," + fourthN.status);
+  const kept = sql(`SELECT email FROM orders WHERE id = '${heldN[0].data.order?.id}'`)[0];
+  ok(kept && kept.email === variants[0], "the order keeps the email exactly as typed: " + JSON.stringify(kept));
+  const plusA = [], dom = `p${run}@example.com`;
+  for (const tag of ["a", "b", "c"]) plusA.push(await from(shopper(), counter(dom.replace("@", "+" + tag + "@"), "OSS-8004")));
+  const plusD = await from(shopper(), counter(dom, "OSS-8004"));
+  ok(plusA.every(r => r.status === 201) && plusD.status === 429, "+tags on any mail service count as one inbox: " + plusA.map(r => r.status) + "," + plusD.status);
 
   // a pay-at-the-counter order holds its stock 48 hours, then lets it go
   const stock = async sku => (await (await fetch(B + "/api/catalog")).json()).products.find(p => p.sku === sku)?.stock;

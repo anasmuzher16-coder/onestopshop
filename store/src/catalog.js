@@ -109,6 +109,14 @@ export const isCharcoal = p => !!(p && p.details && p.details.charcoal);
 let shishaCard = false;
 export const setShishaCard = v => { shishaCard = v === "1"; };
 export const counterPayRow = p => !!p && !shishaCard && (p.category_id === "shisha" || !!parse(p.details).tobacco);
+// Card payment on or off (src/pay.js cardReady), set per request by the worker like shishaCard. Off, every order is a pickup paid at
+// the counter (checkout.js refuses delivery and shipping without card), so pages, descriptions and the delivery bar promise
+// pickup only (breaker, 2026-11-27). One switch: the same value goes to the page as meta oss-pay.
+let cardOn = false;
+export const setCardOn = v => { cardOn = !!v; };
+export const pickupOnly = () => !cardOn;
+// Shipping by carrier is promised only when it can be ordered: card on and something that ships is on sale and in stock.
+export const shipsNow = cat => cardOn && cat.products.some(p => sellable(p) && p.stock > 0 && !counterRow(p) && !counterPayRow(p));
 export const counterRow = p => { if (!p) return false; if (p.ship_class === "pickup_only" || isCharcoalRow(p) || weightUnknown(p)) return true; try { return !!JSON.parse(p.details || "{}").charcoal; } catch { return false; } };
 // A database row is charcoal by its section (anything in Charcoal but foil), or by coming from the charcoal list (family
 // charcoal-...), so moving an item out of Charcoal in the back office never makes it shippable (breaker, 2026-11-24).

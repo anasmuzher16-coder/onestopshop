@@ -8,6 +8,8 @@ const B = (process.env.BASE || "http://127.0.0.1:4420").replace(/\/$/, "");
 await samplesOn(B, ["OSS-5001", "OSS-7006", "OSS-7008", "OSS-8003", "OSS-8004"]);
 // Card orders go to Stripe's page (the local stand-in, tools/fake-stripe.mjs): pay there, come back, wait for the signed webhook.
 const payThrough = async (p, timeout = 15000) => { await p.waitForURL(u => /\/pay\/cs_/.test(String(u)) || /\/order\/W[A-Z0-9]{6}$/.test(String(u)), { timeout }); if (/\/pay\/cs_/.test(p.url())) { await p.locator("[data-fake-pay]").click(); await p.waitForURL(/\/order\/W[A-Z0-9]{6}$/, { timeout }); await p.waitForSelector('[data-pay-state="paid"]', { timeout }); } };
+// card payment on or off (2026-11-27): off, every order is a pickup paid at the counter and nothing offers delivery or shipping
+const CARD = /<meta name="oss-pay" content="card">/.test(await (await fetch(B + "/")).text());
 let n = 0, f = 0; const t = (name, c, extra = "") => { n++; if (!c) { f++; console.log("FAIL", name, extra); } };
 const b = await chromium.launch();
 const open = async (seed = {}, clock) => {
@@ -38,12 +40,12 @@ try {
     // a section that never ships does not ask how to send it (design review, 2026-11-26)
     const { c: c4, p: p4 } = await open({});
     for (const sec of ["charcoal", "shisha", "heat"]) { await go(p4, "/shop/" + sec); t(`C4 ${sec}: no delivery chooser`, await p4.locator("[data-delivery-strip]").isHidden()); }
-    await go(p4, "/shop"); t("C4 the shop front still asks how to send it", await p4.locator("[data-delivery-strip]").isVisible());
+    await go(p4, "/shop"); t(CARD ? "C4 the shop front still asks how to send it" : "C4 card off: the shop front has no delivery bar (every order is a pickup)", CARD ? await p4.locator("[data-delivery-strip]").isVisible() : await p4.locator("[data-delivery-strip]").isHidden());
     await c4.close();
     t("C no page errors", !p.errs.length, p.errs.join(" | "));
     await c.close();
   }
-  { // 1 a shopper who chose nationwide, then gives a Windsor code, sees local delivery first
+  if (CARD) { // 1 a shopper who chose nationwide, then gives a Windsor code, sees local delivery first (card on: delivery can be ordered)
     const { c, p } = await open({ cart: [{ sku: "OSS-8004", qty: 1 }], postal: "M5V 2T6", reach: "nationwide", ship: "cp-exp" });
     await go(p, "/cart"); await p.locator("legend [data-open-postal]").click(); await p.fill("#postal", "N9A 1A1"); await p.locator('[data-postal-form] button[type="submit"]').click();
     await p.waitForSelector('input[name="ship"][value="local"]'); await p.waitForTimeout(300);
@@ -82,12 +84,14 @@ try {
   { // 9 a set near Windsor is not quoted Canada Post
     const { c, p } = await open({ postal: "N9A 1A1" }); await go(p, "/set"); await p.waitForTimeout(500);
     const sum = await p.locator("[data-set-summary] .totals").innerText();
-    t("9 set shows local delivery for a Windsor code", /Delivery to N9A 1A1/.test(sum) && !/^Shipping/m.test(sum), sum); await c.close();
+    if (CARD) t("9 set shows local delivery for a Windsor code", /Delivery to N9A 1A1/.test(sum) && !/^Shipping/m.test(sum), sum);
+    else t("9 card off: the set says pickup at the counter, never delivery or shipping", /Pickup at the counter, paid in the shop/.test(sum) && !/Delivery|Shipping|Ships as/.test(sum), sum);
+    await c.close();
   }
   { // 10 after closing, pickup is not today (Sunday 8 pm in Windsor, closed at 7)
     const { c, p } = await open({ cart: [{ sku: "OSS-8004", qty: 1 }], postal: "M5V 2T6" }, "2026-11-23T01:00:00Z");
-    await go(p, "/cart"); t("10 cart says ready tomorrow", /Ready tomorrow/.test(await p.locator(".opts").innerText()));
-    await go(p, "/p/OSS-8004"); t("10 product says tomorrow", /Pick up at[\s\S]*Tomorrow/.test(await p.locator(".ledger").innerText())); await c.close();
+    await go(p, "/cart"); t("10 cart says ready tomorrow", /Ready tomorrow/.test(await p.locator(".cartship").innerText()));
+    await go(p, "/p/OSS-8004"); t("10 product says tomorrow", CARD ? /Pick up at[\s\S]*Tomorrow/.test(await p.locator(".ledger").innerText()) : /ready tomorrow/i.test(await p.locator(".dline").first().innerText())); await c.close();
   }
   { // 11 sold pieces are not promoted
     const { c, p } = await open(); await go(p, "/");
@@ -106,7 +110,7 @@ try {
   { // 5 the answer is lost after the shop placed the order: the retry returns that order, once
     const { c, p } = await open({ cart: [{ sku: "OSS-8003", qty: 1 }] }); let sends = 0, keys = new Set();
     await c.route("**/api/orders", async r => { sends++; keys.add(r.request().postDataJSON().order_key); if (sends === 1) { await r.fetch(); return r.abort("connectionreset"); } return r.continue(); });
-    await go(p, "/cart"); await p.locator('input[name="ship"][value="pickup"]').check(); await p.waitForTimeout(150); await go(p, "/checkout");
+    await go(p, "/cart"); if (await p.locator('input[name="ship"][value="pickup"]').count()) { await p.locator('input[name="ship"][value="pickup"]').check(); await p.waitForTimeout(150); }   /* card off: the cart is a pickup already, with no choice */ await go(p, "/checkout");
     await p.fill("#co-name", "Lost Answer"); await p.fill("#co-email", "lost@example.com");
     await p.locator('[data-checkout] button[type="submit"]').click(); await p.waitForSelector("[data-co-err]:not([hidden])");
     await p.locator('[data-checkout] button[type="submit"]').click(); await payThrough(p, 10000);
@@ -115,7 +119,7 @@ try {
   { // 4 the server's new total replaces the one on screen before anything is placed
     const { c, p } = await open({ cart: [{ sku: "OSS-8003", qty: 1 }] }); let hit = 0;
     await c.route("**/api/orders", r => { hit++; if (hit > 1) return r.continue(); return r.fulfill({ status: 409, contentType: "application/json", body: JSON.stringify({ error: "The total is now $99.99. Check it, then place your order.", repriced: { subtotal_cents: 8000, shipping_cents: 0, tax_cents: 1999, total_cents: 9999 } }) }); });
-    await go(p, "/cart"); await p.locator('input[name="ship"][value="pickup"]').check(); await p.waitForTimeout(150); await go(p, "/checkout");
+    await go(p, "/cart"); if (await p.locator('input[name="ship"][value="pickup"]').count()) { await p.locator('input[name="ship"][value="pickup"]').check(); await p.waitForTimeout(150); }   /* card off: the cart is a pickup already, with no choice */ await go(p, "/checkout");
     await p.fill("#co-name", "New Total"); await p.fill("#co-email", "total@example.com"); await p.locator('[data-checkout] button[type="submit"]').click(); await p.waitForSelector("[data-co-err]:not([hidden])");
     t("4 the new total is on screen", /\$99\.99/.test(await p.locator(".totals__door").innerText()) && /\$99\.99/.test(await p.locator("[data-co-err]").innerText())); await c.close();
   }

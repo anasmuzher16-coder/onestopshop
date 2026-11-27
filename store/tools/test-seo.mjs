@@ -133,7 +133,9 @@ ok(shareWrong.length === 0, "share image: absolute, the item's uploaded photo, e
 // ---------- 4 section pages ----------
 // Every shop page opens with its band in the HTML, shown from the first paint, exactly the markup the page draws (public/band.js),
 // so the page keeps it in place: its tone, its name as the page's only h1, and its counted line. The hidden copy carries no h1.
-{ const { shopBand, openLine } = await import(new URL("../public/band.js", import.meta.url));
+{ const { shopBand, openLine, setPickupOnly } = await import(new URL("../public/band.js", import.meta.url));
+  // the band's pickup line follows the card switch (2026-11-27), as the page reads it from meta oss-pay
+  const payOn = /<meta name="oss-pay" content="card">/.test((await get("/shop")).t); setPickupOnly(!payOn);
   const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   const wrong = [];
   for (const c of [...C, null]) {
@@ -152,10 +154,22 @@ ok(shareWrong.length === 0, "share image: absolute, the item's uploaded photo, e
   const never = c => { const l = P.filter(p => p.cat === c.id && p.state === "sale"); return l.length > 0 && l.every(p => p.ship === "pickup_only" || p.details?.charcoal || ((p.cat === "shisha" || p.details?.tobacco) && !card)); };   // app.js syncDelivery's rule
   const renew = (await get("/shop/" + C[0].id, B, { headers: { Cookie: "oss-ask=0" } })).r.headers.get("set-cookie") || "";
   ok(/^oss-ask=0; Path=\/; Max-Age=31536000; SameSite=Lax/.test(renew) && !(await get("/shop/" + C[0].id)).r.headers.get("set-cookie"), "the Worker renews the page's oss-ask as it came (Safari drops script cookies after 7 days), and sets none of its own: " + renew);
-  const ships = C.find(c => !never(c));
+  // the bar follows what can be ordered (2026-11-27): card payment off, no bar on any shop page; card on with nothing on sale
+  // that ships, the one slim local-delivery bar (no Nationwide); card on and something ships, the question
+  const shipsAny = payOn && P.some(p => p.state === "sale" && p.stock > 0 && p.ship !== "pickup_only" && !p.details?.charcoal && !((p.cat === "shisha" || p.details?.tobacco) && !card));
+  const ships = C.find(c => !never(c)) || C[0], drawn = t => (t.match(/<div class="dstrip"[^>]*>/) || [""])[0];
   const first = strip((await get("/shop/" + ships.id)).t), back = strip((await get("/shop/" + ships.id, B, { headers: { Cookie: "a=1; oss-ask=0" } })).t), coal = strip((await get("/shop/charcoal")).t), home = strip((await get("/")).t);
-  ok(first.open && first.btnHidden && first.chooseOpen, `/shop/${ships.id}, first visit: the delivery question is drawn open, as the page draws it: ${JSON.stringify(first)}`);
-  ok(!back.open && !back.chooseOpen && !coal.open && !home.open, `drawn closed once answered (oss-ask=0), in a section that never ships, and off the shop pages: ${JSON.stringify({ back, coal, home })}`);
+  if (!payOn) {
+    const all = await Promise.all(["/shop", ...C.map(c => "/shop/" + c.id)].map(async p => [p, drawn((await get(p)).t)]));
+    ok(all.every(([, s]) => /\shidden/.test(s) && !/data-mode=/.test(s)), "card payment off: no shop page draws a delivery bar (every order is a pickup): " + JSON.stringify(all.filter(([, s]) => !/\shidden/.test(s))));
+  } else if (!shipsAny) {
+    const s = drawn((await get("/shop/" + ships.id)).t), t0 = (await get("/shop/" + ships.id)).t;
+    ok(!/\shidden/.test(s) && /data-mode="slim"/.test(s) && /<div class="dchoose" hidden/.test(t0) && /Local delivery from \$10 near Windsor/.test(t0), "card on, nothing ships yet: the slim local-delivery bar is drawn, never the Nationwide question: " + s);
+  } else {
+    ok(first.open && first.btnHidden && first.chooseOpen, `/shop/${ships.id}, first visit: the delivery question is drawn open, as the page draws it: ${JSON.stringify(first)}`);
+    ok(!back.open && !back.chooseOpen && !coal.open && !home.open, `drawn closed once answered (oss-ask=0), in a section that never ships, and off the shop pages: ${JSON.stringify({ back, coal, home })}`);
+  }
+  ok(!back.open && !back.chooseOpen && !home.open, `never drawn open once answered (oss-ask=0), nor off the shop pages: ${JSON.stringify({ back, home })}`);
 }
 for (const c of C) {
   const g = await get("/shop/" + c.id), m = mainOf(g.t);

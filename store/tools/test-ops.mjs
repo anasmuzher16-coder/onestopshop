@@ -62,6 +62,21 @@ const list = (await call("/api/admin/intake")).data.sends || [], newest = (await
 ok(list.filter(x => x.key === "intake/latest.json").length === 1 && list[0].key === "intake/latest.json" && /^intake\/\d{4}-/.test(list[0].newest || ""), "the list leads with the newest send by name, not a stored file");
 ok(newest.answers && newest.answers.probe === mark + "-2", "the back office's newest send is the last one sent: " + JSON.stringify(newest.answers));
 ok(list.some(x => x.key !== "intake/latest.json" && x.key !== list[0].newest), "the earlier send is still kept as its own file");
+// 2026-11-27: the link is rate-limited (5 a day from one place, 30 a day in all) and every send is labelled with its time and a
+// short tag for the place it came from, so a stranger's newer send can never pass for the shop's
+{ const from = (v, ip) => fetch(INTAKE, { method: "POST", headers: { "Content-Type": "application/json", ...(ip ? { "CF-Connecting-IP": ip } : {}) }, body: JSON.stringify({ answers: { probe: v }, rows: [] }) });
+  const more = []; for (let i = 3; i <= 5; i++) more.push((await from(mark + "-" + i)).status);
+  const sixth = await from(mark + "-6"), sixthBody = await sixth.json().catch(() => ({}));
+  ok(more.every(s => s === 200) && sixth.status === 429 && /519-255-2222/.test(sixthBody.error || ""), "five sends a day from one place are taken, the sixth is refused with the shop's number: " + more + "," + sixth.status);
+  const stranger = await from(mark + "-stranger", "203.0.113.9");
+  ok(stranger.status === 200, "another place can still send: " + stranger.status);
+  const l2 = (await call("/api/admin/intake")).data.sends || [], top = l2[0], mine = l2.find(x => x.key !== "intake/latest.json" && x.key !== top.newest);
+  ok(top && /^[0-9a-f]{8}$/.test(top.from || "") && top.from_n === 1 && mine && /^[0-9a-f]{8}$/.test(mine.from || "") && mine.from !== top.from && mine.from_n === 5, "each send carries its place tag and how many sends came from that place: the stranger's newest stands apart: " + JSON.stringify([top, mine]));
+  const earlier = (await call("/api/admin/intake?key=" + encodeURIComponent(mine.key))).data;
+  ok(earlier.answers && /^m/.test(earlier.answers.probe) && earlier.from === mine.from, "the owner can open any earlier send by its own name");
+  const all = []; for (let i = 0; i < 26; i++) all.push((await from(mark + "-all" + i, `198.51.100.${i + 1}`)).status);
+  ok(all.slice(0, 24).every(s => s === 200) && all.slice(24).every(s => s === 429), "thirty sends a day in all are taken, then the link waits for tomorrow: " + all.join(","));
+}
 
 const bk = await call("/api/admin/backup");
 ok(bk.status === 200 && /attachment; filename="one-stop-shop-backup-\d{4}-\d\d-\d\d\.json"/.test(bk.r.headers.get("content-disposition") || ""), "backup downloads as a dated file");

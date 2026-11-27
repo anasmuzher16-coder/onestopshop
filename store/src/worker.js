@@ -1,6 +1,7 @@
 // One Stop Shop store Worker. Answers the page routes (each with its own title, description and a real 404),
 // serves the catalogue from the database, and passes every other request to the static files.
-import { shopCatalog, dropCatalog, catalogModule, counterRow, counterPayRow, setShishaCard, sellable, weightUnknown, CHARCOAL, isCharcoalRow, PUBLIC_PHOTO } from "./catalog.js";
+import { shopCatalog, dropCatalog, catalogModule, counterRow, counterPayRow, setShishaCard, setCardOn, pickupOnly, shipsNow, sellable, weightUnknown, CHARCOAL, isCharcoalRow, PUBLIC_PHOTO } from "./catalog.js";
+import { setPickupOnly } from "../public/band.js";
 import { seoFor, liveHere, robots, sitemap, view, SSR_STYLE, originProblem, setReady } from "./seo.js";
 import { heroPicks } from "../public/picks.js";
 import { admin, photo, signedIn } from "./admin.js";
@@ -12,6 +13,7 @@ import { deliveryRoute } from "./delivery.js";
 import { retryEmails } from "./email.js";
 import { nightly } from "./backup.js";
 import { isSample } from "./samples.js";
+import { sourceOf } from "./guard.js";
 
 const SECURITY = {
   "Content-Security-Policy": "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'",
@@ -27,8 +29,10 @@ const money = cents => "$" + (cents / 100).toLocaleString("en-CA", { minimumFrac
 function describe(path, cat, site) {
   const [a, b, extra] = path.split("/").filter(Boolean);
   // the home line follows the hero (owner, 2026-11-26): shipping is promised only once something that can ship is on sale
-  const ships = cat.products.some(p => sellable(p) && p.stock > 0 && !counterRow(p) && !counterPayRow(p));
+  // and every promise follows the card switch (breaker, 2026-11-27): card payment off, every order is a pickup paid at the counter
+  const ships = shipsNow(cat), counterOnly = pickupOnly();
   const base = ships ? { title: `${site} | Hookahs and accessories, Windsor, shipped across Canada`, desc: "Hookahs, charcoal, shisha and foil from our Windsor counter. Pickup, local delivery, and shipping across Canada except Quebec, for now.", index: true }
+    : counterOnly ? { title: `${site} | Hookahs and accessories, Windsor`, desc: "Hookahs, charcoal, shisha and foil from our Windsor counter. Free pickup in Windsor: order online, pay when you pick it up.", index: true }   // public/app.js SAY.pickup
     : { title: `${site} | Hookahs and accessories, Windsor`, desc: "Hookahs, charcoal, shisha and foil from our Windsor counter. Free pickup in Windsor, or local delivery near Windsor from $10.", index: true };   // the home page's own line (public/app.js SAY.local)
   if (!a) return base;
   if (extra) return null;
@@ -42,12 +46,13 @@ function describe(path, cat, site) {
     // nothing in this section can be bought yet: say what stage it is at, never "in stock"
     if (n && !list.some(sellable)) return { title: `${c.name} | ${site}`, desc: list.some(p => p.price_cents > 0) ? `${n} ${c.name.toLowerCase()} coming soon to our Windsor counter.` : `${n} ${c.name.toLowerCase()} in the shop at our Windsor counter. Shop prices are on the way.`, index: true };
     if (n && list.every(counterPayRow)) return { title: `${c.name} | ${site}`, desc: `${n} ${c.name.toLowerCase()} at our Windsor counter. Pickup, paid in the shop.`, index: true };   // shisha while card payment for it waits on approval
-    return { title: `${c.name} | ${site}`, desc: counter ? `${n} ${c.id === CHARCOAL ? "kinds of hookah charcoal" : c.id === "heat" ? "foil and heat items" : c.name.toLowerCase()} at our Windsor counter. Pickup or local delivery only.` : `${n} ${c.id === "heat" ? "foil and heat items" : c.name.toLowerCase()} at our Windsor counter, shipped across Canada except Quebec, for now.`, index: true };   // never "in stock": the count includes sold-out items
+    if (counterOnly) return { title: `${c.name} | ${site}`, desc: `${n} ${c.id === CHARCOAL ? "kinds of hookah charcoal" : c.id === "heat" ? "foil and heat items" : c.name.toLowerCase()} at our Windsor counter. Pickup in Windsor, paid in the shop.`, index: true };
+    return { title: `${c.name} | ${site}`, desc: counter ?`${n} ${c.id === CHARCOAL ? "kinds of hookah charcoal" : c.id === "heat" ? "foil and heat items" : c.name.toLowerCase()} at our Windsor counter. Pickup or local delivery only.` : `${n} ${c.id === "heat" ? "foil and heat items" : c.name.toLowerCase()} at our Windsor counter, shipped across Canada except Quebec, for now.`, index: true };   // never "in stock": the count includes sold-out items
   }
   if (a === "p") {
     const p = cat.products.find(x => x.sku === b); if (!p) return null;
     const said = sellable(p) ? money(p.price_cents) : p.price_cents > 0 ? `${money(p.price_cents)}, coming soon` : "Price TBD";   // no shop price yet: nothing else stands in for it
-    return { title: `${p.name} | ${site}`, desc: `${(() => { try { const d = JSON.parse(p.details || "{}").description; return d ? d + " " : p.note ? p.note + ". " : ""; } catch { return p.note ? p.note + ". " : ""; } })()}${said}.${!sellable(p) ? "" : counterPayRow(p) ? " Pickup in Windsor, paid in the shop." : counterRow(p) ? " Pickup in Windsor or local delivery near Windsor. Not shipped." : " Shipped across Canada except Quebec, or free pickup in Windsor."}`, index: true, product: p };
+    return { title: `${p.name} | ${site}`, desc: `${(() => { try { const d = JSON.parse(p.details || "{}").description; return d ? d + " " : p.note ? p.note + ". " : ""; } catch { return p.note ? p.note + ". " : ""; } })()}${said}.${!sellable(p) ? "" : counterPayRow(p) || counterOnly ? " Pickup in Windsor, paid in the shop." : counterRow(p) ? " Pickup in Windsor or local delivery near Windsor. Not shipped." : " Shipped across Canada except Quebec, or free pickup in Windsor."}`, index: true, product: p };
   }
   if (a === "order") return b && /^W[A-Z0-9]{6}$/.test(b) ? { ...base, title: `Order ${b} | ${site}`, index: false } : null;
   if (b) return null;
@@ -90,13 +95,20 @@ function charcoalMoved(url) {
 // the visitor has answered or closed it); without it this is a first visit, which is asked. A section whose items for sale
 // never ship (all pickup or local, or shisha while it is paid at the counter) never asks, the same rule as the page.
 const askCookie = request => ((request.headers.get("Cookie") || "").match(/(?:^|;\s*)oss-ask=([01])(?:;|$)/) || [])[1];
+// One bar, following what can be ordered (breaker and design review, 2026-11-27), the same rule as the page: card payment off, no
+// bar at all (every order is a pickup); card on with nothing on sale that ships by carrier, the slim local-delivery bar ("slim");
+// card on and something ships, the local-or-nationwide question ("choose"). Answers false, "slim" or "choose".
+const SLIM_MSG = "Local delivery from $10 near Windsor", SLIM_ACT = "Check your postal code";   // public/app.js deliveryNow() with no postal code
 function asksHow(request, env, url, cat) {
   const [, a, sec = ""] = url.pathname.replace(/\/+$/, "").split("/");   // read the way the page reads it (route.js, app.js syncDelivery); /shop//x never gets here, route() collapses it first
-  if (a !== "shop" || askCookie(request) === "0") return false;
-  const card = env.STRIPE_TOBACCO_OK === "1", forSec = [...view(cat).front.values()].filter(p => p.cat === sec && p.state === "sale");
-  const local = p => p.ship === "pickup_only" || !!(p.details && p.details.charcoal);
-  return !(forSec.length > 0 && forSec.every(p => local(p) || ((p.cat === "shisha" || (p.details && p.details.tobacco)) && !card)));
+  if (a !== "shop" || askCookie(request) === "0" || pickupOnly()) return false;
+  const card = env.STRIPE_TOBACCO_OK === "1", forSec = [...view(cat).front.values()].filter(p => p.cat === sec && p.state === "sale"), ships = shipsNow(cat);
+  const local = p => p.ship === "pickup_only" || !!(p.details && p.details.charcoal), counterOnly = p => (p.cat === "shisha" || (p.details && p.details.tobacco)) && !card;
+  if (forSec.length > 0 && forSec.every(p => ships ? local(p) || counterOnly(p) : counterOnly(p))) return false;
+  return ships ? "choose" : "slim";
 }
+// The footer's one line about how orders reach people, by the same truth (index.html holds the plain fallback).
+const reachLine = cat => pickupOnly() ? "Pickup at our Windsor counter, paid in the shop." : shipsNow(cat) ? "From Windsor across Canada, except Quebec for&nbsp;now." : "Pickup and local delivery in Windsor.";
 async function page(request, env, url, ctx) {
   const cat = await shopCatalog(env, ctx);
   const site = env.SITE_NAME || "One Stop Shop";
@@ -115,11 +127,14 @@ async function page(request, env, url, ctx) {
     ...(img.w ? [`<meta property="og:image:width" content="${img.w}">`, `<meta property="og:image:height" content="${img.h}">`] : []), `<meta property="og:image:alt" content="${esc(img.alt)}">`,
     `<meta name="twitter:card" content="summary_large_image">`, ...seo.head, SSR_STYLE];
   if (url.pathname === "/") { const hero = heroFirst(cat); if (hero) extra.push(heroPreload(hero)); }   // the picture the first screen is waiting for
-  const ask = !!d && asksHow(request, env, url, cat);
+  const ask = !!d && asksHow(request, env, url, cat), reach = reachLine(cat);
   const out = new HTMLRewriter()
-    .on("[data-delivery-strip]", { element(e) { if (ask) { e.removeAttribute("hidden"); e.setAttribute("data-mode", "choose"); } } })
-    .on("[data-delivery-strip] .dstrip__btn", { element(e) { if (ask) e.setAttribute("hidden", ""); } })
-    .on("[data-delivery-strip] .dchoose", { element(e) { if (ask) e.removeAttribute("hidden"); } })
+    .on("[data-delivery-strip]", { element(e) { if (ask) { e.removeAttribute("hidden"); e.setAttribute("data-mode", ask); } } })
+    .on("[data-delivery-strip] .dstrip__btn", { element(e) { if (ask === "choose") e.setAttribute("hidden", ""); } })
+    .on("[data-delivery-strip] .dstrip__msg", { element(e) { if (ask === "slim") e.setInnerContent(SLIM_MSG); } })
+    .on("[data-delivery-strip] .dstrip__act", { element(e) { if (ask === "slim") e.setInnerContent(SLIM_ACT); } })
+    .on("[data-delivery-strip] .dchoose", { element(e) { if (ask === "choose") e.removeAttribute("hidden"); } })
+    .on(".foot__en", { element(e) { e.setInnerContent(reach, { html: true }); } })
     .on("title", { element(e) { e.setInnerContent(meta.title); } })
     .on('meta[name="description"]', { element(e) { e.setAttribute("content", meta.desc); } })
     .on('meta[name="robots"]', { element(e) { if (live && meta.index) e.remove(); else e.setAttribute("content", "noindex, nofollow"); } })
@@ -173,7 +188,7 @@ export default {
     }
     ctx.waitUntil(scrubCodes(env).then(() => nightly(env))); ctx.waitUntil(stockAlerts(env).then(() => restockReminders(env)));   // nightly: backup, and the customers' alerts and charcoal reminders
   },
-  async fetch(request, env, ctx) { setShishaCard(env.STRIPE_TOBACCO_OK); env = withCtx(env, ctx); return demoNoindex(await route(request, env, ctx), env, request); },
+  async fetch(request, env, ctx) { setShishaCard(env.STRIPE_TOBACCO_OK); setCardOn(cardReady(env)); setPickupOnly(!cardReady(env)); env = withCtx(env, ctx); return demoNoindex(await route(request, env, ctx), env, request); },
 };
 // The request's env with one extra: env.waitUntil, so code deep in the order flow (src/email.js) can finish a send after
 // the answer has gone, without every function passing ctx along. Bindings and settings are read through to the real env.
@@ -185,28 +200,48 @@ function demoNoindex(r, env, request) {
   const out = new Response(r.body, r); out.headers.set("X-Robots-Tag", "noindex, nofollow"); return out;
 }
 const INTAKE = "ij9A2jg3vBRk";   // the questionnaire's private link: /intake/ij9A2jg3vBRk
+// The questionnaire is the shop's own form, filled in by the owner or the counter a few times at most. Its link is private but
+// cannot be secret forever, so (breaker, 2026-11-27): each address may send 5 times a day and all addresses together 30 a day
+// (counted in login_attempts under "k:" plus a keyed hash of the address, deleted after a day by the same sweep), and once 300
+// sends are kept no more are taken until the owner clears some. Each send is labelled with when it came and a short tag for the
+// place it came from (a keyed hash, never the address) and its country, so the back office can tell a stranger's send from the
+// shop's own; the owner picks which send to read.
+const INTAKE_LIMITS = { perPlace: 5, perDay: 30, kept: 300 };
+const keyedTag = async (env, s) => [...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`intake|${env.PIN_PEPPER || env.ADMIN_KEY || ""}|${s}`)))].map(b => b.toString(16).padStart(2, "0")).join("");
 async function intakeSave(request, env) {
   if (request.method !== "POST") return json({ error: "Method not allowed" }, 405);
   const site = request.headers.get("Sec-Fetch-Site"), origin = request.headers.get("Origin");
   if ((site && site !== "same-origin") || (origin && origin !== new URL(request.url).origin)) return json({ error: "Wrong origin." }, 403);
   if (!(request.headers.get("Content-Type") || "").startsWith("application/json")) return json({ error: "Send it from the questionnaire page." }, 415);
   if (+(request.headers.get("content-length") || 0) > 200000) return json({ error: "That is too long to send" }, 413);
+  const tag = await keyedTag(env, sourceOf(request)), who = "k:" + tag, db = env.DB;
+  const counted = () => db.prepare("SELECT COALESCE(SUM(who = ?1),0) AS mine, COUNT(*) AS day FROM login_attempts WHERE who LIKE 'k:%' AND at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 day')").bind(who).first();
+  const over = c => c.mine > INTAKE_LIMITS.perPlace || c.day > INTAKE_LIMITS.perDay;
+  const busy = () => json({ error: "That is a lot of sends today. Your earlier sends are kept. Try again tomorrow, or call the counter at 519-255-2222." }, 429);
+  { const c = await counted(); if (c.mine >= INTAKE_LIMITS.perPlace || c.day >= INTAKE_LIMITS.perDay) return busy(); }
   // read at most 200 KB whatever the headers say (a body sent in chunks has no length to check)
   const reader = request.body?.getReader(), parts = []; let size = 0;
   if (!reader) return json({ error: "Nothing to save" }, 400);
   for (;;) { const { done, value } = await reader.read(); if (done) break; size += value.byteLength; if (size > 200000) { try { await reader.cancel(); } catch {} return json({ error: "That is too long to send" }, 413); } parts.push(value); }
   let body; try { body = JSON.parse(new TextDecoder().decode(await new Blob(parts).arrayBuffer())); } catch { return json({ error: "That did not arrive whole" }, 400); }
   if (!body || typeof body.answers !== "object" || body.answers === null || Array.isArray(body.answers)) return json({ error: "Nothing to save" }, 400);
+  // how many are kept: one listing, at most 1000 names, only past the daily limits above
+  { let n = 0, cursor; do { const l = await env.BACKUPS.list({ prefix: "intake/", cursor, limit: 1000 }); n += l.objects.length; cursor = l.truncated && n < INTAKE_LIMITS.kept ? l.cursor : undefined; } while (cursor);
+    if (n >= INTAKE_LIMITS.kept) return json({ error: "The shop's answers are full for now. Call the counter at 519-255-2222." }, 507); }
+  // counted now, then counted again with this send in, so sends at the same moment get no further than the limit
+  const row = await db.prepare("INSERT INTO login_attempts (who, ok) VALUES (?, 0)").bind(who).run(), mine = row.meta.last_row_id;
+  if (over(await counted())) { await db.prepare("DELETE FROM login_attempts WHERE id = ?").bind(mine).run(); return busy(); }
   const plain = v => typeof v === "string" ? v.slice(0, 20000) : v === true ? true : Array.isArray(v) ? v.slice(0, 50).map(x => String(x).slice(0, 120)) : String(v ?? "").slice(0, 2000);
   const answers = Object.fromEntries(Object.entries(body.answers).slice(0, 600).filter(([k]) => /^[\w-]{1,60}$/.test(k)).map(([k, v]) => [k, plain(v)]));
   const rows = (Array.isArray(body.rows) ? body.rows : []).filter(r => r && typeof r === "object" && typeof r.key === "string" && /^[\w-]{1,60}$/.test(r.key)).slice(0, 600).map(r => ({ key: r.key, ...(typeof r.item === "string" ? { item: r.item.slice(0, 120) } : {}), value: plain(r.value) }));
-  const text = JSON.stringify({ answers, rows, sentAt: typeof body.sentAt === "string" ? body.sentAt.slice(0, 40) : null, receivedAt: new Date().toISOString() });
-  await env.BACKUPS.put(`intake/${new Date().toISOString().replace(/[:.]/g, "-")}-${crypto.randomUUID().slice(0, 8)}.json`, text, { httpMetadata: { contentType: "application/json" } });
+  const at = new Date().toISOString(), country = String(request.cf?.country || request.headers.get("CF-IPCountry") || "").replace(/[^A-Z]/g, "").slice(0, 2);
+  const text = JSON.stringify({ answers, rows, sentAt: typeof body.sentAt === "string" ? body.sentAt.slice(0, 40) : null, receivedAt: at, from: tag.slice(0, 8), country });
+  try { await env.BACKUPS.put(`intake/${at.replace(/[:.]/g, "-")}-${crypto.randomUUID().slice(0, 8)}.json`, text, { httpMetadata: { contentType: "application/json" }, customMetadata: { from: tag.slice(0, 8), country } }); }
+  catch (e) { await db.prepare("DELETE FROM login_attempts WHERE id = ?").bind(mine).run(); throw e; }
   // no fixed "latest" file: anyone holding the link could overwrite it. Each send is its own new file, and the back office
-  // shows the newest of them (admin.js /intake), so an earlier send can never be replaced.
+  // lists them all with their time and place tag (admin.js /intake), so an earlier send can never be replaced or hidden.
   return json({ ok: true });
-}
-async function route(request, env, ctx) {
+}async function route(request, env, ctx) {
     const url = new URL(request.url);
     const path = url.pathname;
     try {

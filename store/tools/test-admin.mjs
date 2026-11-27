@@ -131,6 +131,13 @@ if (paid) {
   const re = await info(soon.sku, { price_cents: 3200 }); ok(re.status === 200 && re.data.on_sale === false && (await row(soon.sku)).active === 0, "changing the price of a priced, switched-off item never switches it on");
   const sample = (await call("/products")).data.products.find(x => x.sample && x.active === 0);
   ok(sample && (await info(sample.sku, { price_cents: 1234 })).status === 200 && (await row(sample.sku)).active === 0, "a made-up sample is never switched on by a price");
+  // the full product form refuses it too (breaker, 2026-11-27: it used to switch a sample on), whatever else the save carries
+  const formOn = await call(`/products/${sample.sku}`, { method: "PUT", body: { active: true } });
+  const formAll = await call(`/products/${sample.sku}`, { method: "PUT", body: { name: sample.name, price_cents: 1234, note: "x", active: 1 } });
+  ok(formOn.status === 409 && formAll.status === 409 && /sample/i.test(formOn.data.error || "") && (await row(sample.sku)).active === 0, "the full product form never switches a made-up sample on: " + formOn.status + "," + formAll.status);
+  ok((await call(`/products/${sample.sku}`, { method: "PUT", body: { active: false, note: "Kept off" } })).status === 200, "a sample can still be saved while it stays off");
+  // the back office offers no "Show in the store" switch on a sample (public/admin.js productForm)
+  { const src = (await import("node:fs")).readFileSync(new URL("../public/admin.js", import.meta.url), "utf8"); ok(/p\.sample \? `<p class="fineprint">[^`]*stays hidden[^`]*` : `<label class="check"><input type="checkbox" name="active"/.test(src), "the product form draws the store switch only for items that are not samples"); }
   const nothing = await info(t.sku, { name: t.name + " (shop)", price_cents: 2499 }); ok(nothing.status === 200 && nothing.data.changed === false, "a save with nothing new writes nothing");
   // charcoal stays pickup or local only whatever the editor saves
   const coal = all.find(x => x.category_id === "charcoal" && /"charcoal":true/.test(x.details || ""));

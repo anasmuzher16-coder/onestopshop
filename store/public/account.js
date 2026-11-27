@@ -136,7 +136,7 @@ function detailsForm(c) {
   const a = c.address || {}, f = (id, label, val, attrs, hint = "") => `<label class="field__label" for="acct-${id}">${label}${hint ? ` <span class="fine">${hint}</span>` : ""}</label><input class="field field--text" id="acct-${id}" name="${id}" value="${esc(val || "")}" ${attrs}>`;
   return `<form class="acct__form" data-details-form novalidate>
     ${f("name", "Full name", c.name, 'autocomplete="name" maxlength="80"')}
-    ${f("phone", "Phone", c.phone, 'type="tel" autocomplete="tel" inputmode="tel" maxlength="30"', "for local delivery")}
+    ${f("phone", "Phone", c.phone, 'type="tel" autocomplete="tel" inputmode="tel" maxlength="30"', document.querySelector('meta[name="oss-pay"]')?.content === "card" ? "for local delivery" : "optional")}
     ${f("line1", "Street address", a.line1, 'autocomplete="address-line1" maxlength="120"')}
     ${f("city", "City or town", a.city, 'autocomplete="address-level2" maxlength="60"')}
     ${f("postal", "Postal code", a.postal, 'autocomplete="postal-code" maxlength="7" spellcheck="false"')}

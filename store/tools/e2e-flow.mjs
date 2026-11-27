@@ -23,19 +23,22 @@ try {
   await p.goto(B + "/p/OSS-7001", { waitUntil: "networkidle" }); await p.locator("[data-add]:visible").first().tap(); await p.waitForTimeout(900);
   await p.goto(B + "/p/OSS-8003", { waitUntil: "networkidle" }); await p.locator("[data-add]:visible").first().tap(); await p.waitForTimeout(900);
   await p.goto(B + "/cart", { waitUntil: "networkidle" });
-  t("cart offers pickup before a postal code", await p.locator('input[name="ship"][value="pickup"]').count() === 1);
-  await p.locator("[data-open-postal]").first().tap(); await p.fill("#postal", "M5V 2T6"); await p.locator('[data-postal-form] button[type="submit"]').tap(); await p.waitForTimeout(500);
-  const services = await p.locator('input[name="ship"]').evaluateAll(els => els.map(e => e.value));
-  t("cologne in the cart hides Xpresspost", !services.includes("cp-xp") && services.includes("cp-exp") && services.includes("pickup"), services.join(","));
-  await p.locator('input[name="ship"][value="cp-exp"]').check(); await p.waitForTimeout(300); await snap("flow-cart");
+  if (CARD) {
+    t("cart offers pickup before a postal code", await p.locator('input[name="ship"][value="pickup"]').count() === 1);
+    await p.locator("[data-open-postal]").first().tap(); await p.fill("#postal", "M5V 2T6"); await p.locator('[data-postal-form] button[type="submit"]').tap(); await p.waitForTimeout(500);
+    const services = await p.locator('input[name="ship"]').evaluateAll(els => els.map(e => e.value));
+    t("cologne in the cart hides Xpresspost", !services.includes("cp-xp") && services.includes("cp-exp") && services.includes("pickup"), services.join(","));
+    await p.locator('input[name="ship"][value="cp-exp"]').check(); await p.waitForTimeout(300);
+  } else {
+    // no card keys (the live demo; breaker, 2026-11-27): every order is a pickup paid at the counter, so the cart offers no
+    // shipping or delivery at all, only the pickup, and asks for no postal code
+    const cs = await p.locator(".cartship").innerText();
+    t("no keys: the cart is a pickup, with no shipping, delivery or postal code", await p.locator('input[name="ship"]').count() === 0 && await p.locator(".pickline").count() === 1 && await p.locator("[data-open-postal]:visible").count() === 0 && !/Canada Post|local delivery/i.test(cs), cs.slice(0, 200));
+  }
+  await snap("flow-cart");
   await p.locator('a[href="/checkout"]:visible').first().tap(); await p.waitForURL(/\/checkout$/);
   await snap("flow-checkout");
-  if (!CARD) {
-    t("no keys: shipping cannot be paid yet, and checkout gives the shop's number", await p.locator('[data-checkout] button[type="submit"]').isDisabled() && /519-255-2222/.test(await p.locator(".co__pay").innerText()));
-    await p.goto(B + "/cart", { waitUntil: "networkidle" }); await p.locator('input[name="ship"][value="pickup"]').check(); await p.waitForTimeout(300);
-    await p.locator('a[href="/checkout"]:visible').first().tap(); await p.waitForURL(/\/checkout$/);
-    t("no keys: the same cart picked up is paid at the counter", /At the counter/.test(await p.locator(".co__pay").innerText()));
-  }
+  if (!CARD) t("no keys: the cart picked up is paid at the counter", /At the counter/.test(await p.locator(".co__pay").innerText()));
   await p.locator('[data-checkout] button[type="submit"]').tap(); await p.waitForTimeout(300);
   t("empty form is stopped with a message", await p.locator("[data-co-err]").isVisible());
   await p.fill("#co-name", "Sam Sample"); await p.fill("#co-email", "sam@example.com"); if (CARD) { await p.fill("#co-line1", "1 Test Street"); await p.fill("#co-city", "Toronto"); }
@@ -48,7 +51,7 @@ try {
   await p.waitForTimeout(1200); await snap("flow-done");
   // 2 pickup order
   await p.goto(B + "/p/OSS-8004", { waitUntil: "networkidle" }); await p.locator("[data-add]:visible").first().tap(); await p.waitForTimeout(900);
-  await p.goto(B + "/cart", { waitUntil: "networkidle" }); await p.locator('input[name="ship"][value="pickup"]').check(); await p.waitForTimeout(300);
+  await p.goto(B + "/cart", { waitUntil: "networkidle" }); if (CARD) { await p.locator('input[name="ship"][value="pickup"]').check(); await p.waitForTimeout(300); }
   await p.locator('a[href="/checkout"]:visible').first().tap(); await p.waitForURL(/\/checkout$/);
   t("pickup checkout asks for no address", await p.locator("#co-line1").count() === 0);
   await p.fill("#co-name", "Pat Pickup"); await p.fill("#co-email", "pat@example.com");
@@ -61,12 +64,16 @@ try {
   await p.evaluate(() => { localStorage.setItem("oss:postal", JSON.stringify("M5V 2T6")); localStorage.removeItem("oss:ship"); });
   await p.goto(B + "/p/OSS-9101", { waitUntil: "networkidle" });
   const pdp = await p.locator(".pdp__info").innerText();
-  t("charcoal product page says pickup or local delivery only, offers no Canada Post, and says nothing about age or ID", /Pickup or local delivery only/.test(pdp) && !/Canada Post (Regular|Expedited|Xpresspost|Priority)/.test(pdp) && !/photo id|\bage\b|adult/i.test(pdp), pdp.slice(0, 200));
+  t(CARD ? "charcoal product page says pickup or local delivery only, offers no Canada Post, and says nothing about age or ID" : "no keys: charcoal product page says pickup only, offers no Canada Post or delivery, and says nothing about age or ID", (CARD ? /Pickup or local delivery only/.test(pdp) : /Pickup only/.test(pdp) && !/local delivery/i.test(pdp)) &&!/Canada Post (Regular|Expedited|Xpresspost|Priority)/.test(pdp) && !/photo id|\bage\b|adult/i.test(pdp), pdp.slice(0, 200));
   t("a charcoal item with no photo shows the drawn stand-in, never a broken image", await p.locator(".pdp__tile img.shot--drawn").count() === 1 && await p.evaluate(() => [...document.images].every(i => !i.getAttribute("src") || !i.complete || i.naturalWidth > 0)));
   await p.locator("[data-add]:visible").first().tap(); await p.waitForTimeout(700);
   await p.goto(B + "/p/OSS-8004", { waitUntil: "networkidle" }); await p.locator("[data-add]:visible").first().tap(); await p.waitForTimeout(700);
   await p.goto(B + "/cart", { waitUntil: "networkidle" }); await p.waitForTimeout(600);
   let ways = await p.locator('input[name="ship"]').evaluateAll(els => els.map(e => e.value));
+  if (!CARD) {   // no keys: the mixed cart is one pickup, paid at the counter; no leaving the charcoal out, no delivery
+    const line = await p.locator(".line", { hasText: "Coco Cafe" }).innerText();
+    t("no keys: a charcoal cart is one pickup, with no other way offered", ways.length === 0 && await p.locator(".pickline").count() === 1 && /Pickup with this order/.test(line) && !/local delivery/i.test(await p.locator("#main").innerText()), ways.join() + " " + line);
+  } else {
   t("a mixed cart going to Toronto offers pickup or leaving the charcoal out, never Canada Post", ways.join() === "pickup,drop", ways.join());
   t("the cart line says pickup or local delivery only", /Pickup or local delivery only/.test(await p.locator(".line", { hasText: "Coco Cafe" }).innerText()));
   await p.locator('input[name="ship"][value="drop"]').tap()   /* the radio acts at once and leaves the page, so it is tapped, not "checked" */; await p.waitForTimeout(500);
@@ -82,6 +89,7 @@ try {
   t("a mixed cart near Windsor offers local delivery, pickup, or leaving the charcoal out", ways.join() === "local,pickup,drop", ways.join());
   await snap("flow-charcoal-mixed");
   await p.locator('input[name="ship"][value="pickup"]').check(); await p.waitForTimeout(300);
+  }
   await p.locator('a[href="/checkout"]:visible').first().tap(); await p.waitForURL(/\/checkout$/);
   t("checkout asks nothing about age", await p.locator('input[type="checkbox"]').count() === 0 && !/photo id|\bage\b|adult/i.test(await p.locator("#main").innerText()));
   await snap("flow-charcoal-checkout");

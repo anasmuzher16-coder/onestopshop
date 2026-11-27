@@ -25,12 +25,17 @@ export const soonBand = (say = "Ask the counter what is on the shelf") => `${say
 
 // Pickup or local delivery only (charcoal): the same rule as app.js localOnly
 const localOnly = p => !!p && (p.ship === "pickup_only" || !!(p.details && p.details.charcoal));
+// Card payment off: every order is a pickup, so the line never offers local delivery (breaker, 2026-11-27). The page reads it from
+// the meta tag the Worker writes; the Worker sets it per request (src/worker.js setPickupOnly) from the same switch, so the two
+// draw the same markup.
+let pickupOnly = typeof document !== "undefined" && document.querySelector('meta[name="oss-pay"]')?.content !== "card";
+export const setPickupOnly = v => { pickupOnly = !!v; };
 // The band's line under a section name, from the section's own items, counted: Heat says how many are charcoal and how
 // many foil; Hookahs counts hookahs, Shisha flavours; the pickup line only when every item in the section is pickup or local.
 const plural = (n, one, many) => `<span class="num">${n}</span> ${n === 1 ? one : many}`;
 export function bandNote(c, list) {
   if (!c) return plural(list.length, "piece", "pieces");
-  const local = list.length && list.every(localOnly) ? ".<br>Pickup or local delivery only." : "";
+  const local = list.length && list.every(localOnly) ? (pickupOnly ? ".<br>Pickup only." : ".<br>Pickup or local delivery only.") : "";
   if (c.id === "charcoal") {   // its own section since 2026-11-24: boxes and the single rolls cut from them
     const rolls = list.filter(p => p.details?.box_sku).length, boxes = list.length - rolls;
     return [boxes ? plural(boxes, "box of charcoal", "boxes of charcoal") : "", rolls ? plural(rolls, "single roll", "single rolls") : ""].filter(Boolean).join(" and ") + local;

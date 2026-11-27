@@ -18,7 +18,14 @@ const store = {
 // On view is not the same as for sale: an item waiting for the shop's own price shows "Price TBD" and never reaches the cart.
 const forSale = p => !!p && p.state === "sale";
 const isSold = p => forSale(p) && p.stock === 0;   // stock is the one truth: the server's catalogue decides what has gone
-const stockFor = p => !forSale(p) || isSold(p) ? 0 : Number.isInteger(p.stock) ? Math.min(MAX_QTY, Math.max(0, p.stock)) : MAX_QTY;   // the most of this piece one cart can hold
+// Card payment on or off: the Worker writes it into every page (meta oss-pay, from the same switch checkout.js uses). While it is
+// off, every order is a pickup paid at the counter, so nothing on the site offers delivery or shipping (breaker, 2026-11-27), and
+// an unpaid pickup holds at most 5 of one item and 15 in all (src/guard.js PICKUP_CAPS), so the cart stops there too.
+const CARD_ON = document.querySelector('meta[name="oss-pay"]')?.content === "card";
+const PICKUP_ONLY = !CARD_ON;
+const LINE_MAX = PICKUP_ONLY ? 5 : MAX_QTY, PICKUP_UNITS = 15;
+const stockFor = p => !forSale(p) || isSold(p) ? 0 : Number.isInteger(p.stock) ? Math.min(LINE_MAX, Math.max(0, p.stock)) : LINE_MAX;   // the most of this piece one cart can hold
+const stockShort = (p, qty) => Number.isInteger(p.stock) && p.stock < LINE_MAX && qty >= p.stock;   // the shelf, not the cart's rule, is what stops it
 // Anything not known yet is said plainly, in one quiet style, never guessed and never left blank.
 const TBD = what => `<span class="tbd">${what ? what + " " : ""}TBD</span>`;   // TBD("") when the label beside it already names the fact
 // one card per hookah family; every other item is its own card. Items with their own photo come first, in shelf order, so a
@@ -78,7 +85,7 @@ function fitCart(cart) {
     const p = bySku[l.sku], max = stockFor(p);
     if (!forSale(p)) { news.push(p.state === "tbd" ? `${p.name} has no shop price yet, so we took it out of your cart.` : `${p.name} is not on sale yet, so we took it out of your cart.`); continue; }
     if (!max) { news.push(`${p.name} has sold out, so we took it out of your cart.`); continue; }
-    if (l.qty > max) news.push(`We only have ${max} of ${p.name}, so your cart now has ${max}.`);
+    if (l.qty > max) news.push(stockShort(p, max) || max < LINE_MAX ? `We only have ${max} of ${p.name}, so your cart now has ${max}.` : `Pickup orders hold up to ${max} of one item online, so your cart now has ${max} of ${p.name}. Call 519-255-2222 to hold more.`);
     kept.push({ sku: l.sku, qty: Math.min(max, l.qty) });
   }
   return { kept, news };
@@ -117,7 +124,12 @@ const SAY = {
   shipsOne: "Ships across Canada, except Quebec for now.",
   groundOne: "Ships by ground across Canada, except Quebec for now.",
   shisha: "Paid in the shop, pickup only.",
+  pickup: "Free pickup at our Windsor counter: order online, pay when you pick it up.",   // card payment off: no delivery, no shipping
 };
+// Shipping by carrier is promised only when it can really be ordered: card payment on AND something that ships is on sale and in
+// stock (the Worker's footer and page descriptions follow the same rule, src/worker.js). Read at draw time.
+const shipsNow = () => CARD_ON && PRODUCTS.some(p => forSale(p) && !isSold(p) && !localOnly(p) && !counterPay(p));
+const homeLine = () => PICKUP_ONLY ? SAY.pickup : shipsNow() ? SAY.ships : SAY.local;
 const realName = p => !/^Hookah No\.?\s*\d+$/i.test(p.name || "");
 const SHOP_STREET = "760 Wyandotte St E", SHOP_ADDRESS = "760 Wyandotte St E, Windsor, ON N9A 3J4", SHOP_MAP = "https://www.google.com/maps/search/?api=1&query=One%20Stop%20Shop%2C%20760%20Wyandotte%20St%20E%2C%20Windsor%2C%20ON%20N9A%203J4";
 const directions = (label = "Get directions") => `<a class="link" href="${SHOP_MAP}" target="_blank" rel="noopener">${label}</a>`;
@@ -269,7 +281,7 @@ function cardHTML(p, i = 9) {
       <div class="tile ${p.dark || p.photo ? "tile--photo" : ""}">${colourShot(p, { small: true, eager: i < 2 })}${sticker(p)}</div>
       <h3 class="card__name">${sh ? `${esc(sh.flavour)}<span class="sr">, ${escN(sh.line)}</span>` : escN(p.name)}</h3>${sh ? `<p class="card__maker" aria-hidden="true">${escN(sh.line)}</p>` : ""}
     </a>
-    ${cardMeta(p)}${localOnly(p) ? `<p class="card__pick">Pickup or local delivery only</p>` : ""}
+    ${cardMeta(p)}${localOnly(p) ? `<p class="card__pick">${PICKUP_ONLY ? "Pickup only" : "Pickup or local delivery only"}</p>` : ""}
   </article>`;
 }
 
@@ -334,7 +346,7 @@ function viewHome() {
     <div class="hero__in">
       <h1 class="hero__h"><span class="hero__lead">Hookahs,</span> <span class="hero__rest">and everything that goes with them.</span></h1>
       <div class="hero__side">
-        <p class="hero__p">${PRODUCTS.some(p => forSale(p) && !isSold(p) && !localOnly(p) && !counterPay(p)) ? SAY.ships : SAY.local}</p>
+        <p class="hero__p">${homeLine()}</p>
         <div class="hero__cta"><a class="btn" href="/shop/hookahs">Shop hookahs</a><a class="btn btn--ghost" href="/shop">All ${SHELF.length} pieces</a></div>
       </div>
     </div>
@@ -364,7 +376,7 @@ function viewHome() {
     </div>
     <div class="resin__row">${resin.map(p => `<a class="resin__item" href="/p/${p.sku}" data-piece="${p.sku}">${shot(p, { use: "resin" })}<span class="resin__name">${esc(p.name)}</span>${sticker(p)}</a>`).join("")}</div>
   </section>` : ""}
-  <section class="pack">
+  ${shipsNow() ? `<section class="pack">
     <div class="pack__copy">
       <h2 class="h2 h2--xl">How we ship glass.</h2>
       <ul class="pack__list">
@@ -374,7 +386,7 @@ function viewHome() {
       </ul>
       <a class="link" href="/shipping">How shipping works</a>
     </div>
-  </section>
+  </section>` : ""}
   <section class="visit" aria-labelledby="visit-h">
     <div class="visit__main">
       <h2 class="h2 h2--xl" id="visit-h">Visit the counter.</h2>
@@ -413,7 +425,9 @@ function viewShop(cat) {
 
 // The product page for charcoal: one plain answer about how it is bought, in place of the delivery and shipping rows.
 // The rule sits above the button, so nobody adds it to the cart before reading how it is bought.
-const counterLine = p => p.weightTbd && !isCharcoal(p)
+const counterLine = p => PICKUP_ONLY
+  ? `<div class="dline dline--fixed dline--above" role="note"><span class="dline__msg">Pickup only</span><span class="dline__sub">${isCharcoal(p) ? "Never shipped by Canada Post. " : ""}Free pickup at ${SHOP_STREET}, paid in the shop.</span></div>`
+  : p.weightTbd && !isCharcoal(p)
   ? `<div class="dline dline--fixed dline--above" role="note"><span class="dline__msg">Pickup or local delivery for now</span><span class="dline__sub">Shipping TBD: the pack weight is being confirmed. Free pickup at ${SHOP_STREET}, or local delivery from $10 near Windsor.</span></div>`
   : `<div class="dline dline--fixed dline--above" role="note"><span class="dline__msg">Pickup or local delivery only</span><span class="dline__sub">Never shipped by Canada Post. Free pickup at ${SHOP_STREET}, or local delivery from $10 near Windsor.</span></div>`;
 // a charcoal box's size and count, read from the shop's own line; a size the list leaves blank says so
@@ -430,7 +444,7 @@ function counterSpec(p) {
           ${isCharcoal(p) || p.weightTbd ? `<div><dt>Size</dt><dd>${sizeOf(p) ? escN(sizeOf(p)) : TBD("")}</dd></div>` : ""}
           ${p.facts && "count" in p.facts ? `<div><dt>${isCharcoal(p) ? "Pieces" : "Sheets"}</dt><dd>${p.facts.count ? `<span class="num">${p.facts.count}</span>` : TBD("")}</dd></div>` : ""}
           ${p.weightTbd ? `<div><dt>Weight</dt><dd>${TBD("")}</dd></div>` : ""}
-          <div><dt>Getting it</dt><dd>${p.weightTbd && !isCharcoal(p) ? `Pickup or local delivery. ${TBD("Shipping")}` : "Pickup or local delivery only"}</dd></div>
+          <div><dt>Getting it</dt><dd>${PICKUP_ONLY ? "Pickup at the counter, paid in the shop" : p.weightTbd && !isCharcoal(p) ? `Pickup or local delivery. ${TBD("Shipping")}` : "Pickup or local delivery only"}</dd></div>
           ${!p.img && !p.photo ? `<div><dt>Photo</dt><dd>${box && box.img ? "Shows the box this roll comes from." : "Coming. The drawing stands in until the shop's photo is up."}</dd></div>` : ""}
         </dl>
       </section>`;
@@ -489,7 +503,7 @@ function viewProduct(sku) {
         : sold ? `<p class="soldline">${p.dark ? "This one has sold. Each resin stem is poured once." : "Sold out for now."}</p><a class="btn btn--ghost btn--call" href="tel:+15192552222">Call the counter</a>`
         : `<p class="pdp__price num">${whole(p.price)}</p>${inCart ? `<a class="btn btn--wide" href="/cart">In your cart. View cart</a>` : `<button class="btn btn--wide" type="button" data-add="${p.sku}">Add to cart</button>`}`}
       ${sale ? deliveryLine(p, opts) : ""}
-      ${!sale ? factsSpec(p, fam) : counterPay(p) ? "" : `<section class="ways" aria-labelledby="ways-h">
+      ${!sale ? factsSpec(p, fam) : counterPay(p) || PICKUP_ONLY ? "" : `<section class="ways" aria-labelledby="ways-h">
         <h2 class="h3" id="ways-h">Delivery, shipping and pickup</h2>
         ${opts.length || (state.dest && localOnly(p)) ? `<p class="ways__to">To ${esc(state.dest.full)}${state.dest.city ? ", " + esc(state.dest.city) : ""}. <button class="link" type="button" data-open-postal>Change</button></p>
         <table class="ledger"><thead><tr><th scope="col">Service</th><th scope="col">Arrives</th><th scope="col" class="r">Cost</th></tr></thead>
@@ -497,7 +511,7 @@ function viewProduct(sku) {
         <tr><td>Pick up at ${SHOP_STREET}</td><td>${pickupDay()}</td><td class="r num">Free</td></tr></tbody></table>`
         : `<p class="ways__to">Local delivery from $10 near Windsor. Free pickup. ${localOnly(p) ? "" : p.ship === "ground_only" ? SAY.groundOne : SAY.shipsOne}</p>`}
       </section>`}
-      ${!sale ? "" : counterPay(p) ? `<section class="spec" aria-labelledby="spec-h"><h2 class="h3" id="spec-h">Details</h2><dl class="spec__list"><div><dt>Item</dt><dd class="num">${p.sku}</dd></div>${p.facts?.size || p.note ? `<div><dt>Size</dt><dd>${escN(p.facts?.size || p.note)}</dd></div>` : ""}<div><dt>Getting it</dt><dd>Pickup at the counter, paid in the shop</dd></div></dl></section>` : localOnly(p) ? counterSpec(p) : `<section class="spec" aria-labelledby="spec-h">
+      ${!sale ? "" : counterPay(p) || (PICKUP_ONLY && !localOnly(p)) ? `<section class="spec" aria-labelledby="spec-h"><h2 class="h3" id="spec-h">Details</h2><dl class="spec__list"><div><dt>Item</dt><dd class="num">${p.sku}</dd></div>${p.facts?.size || p.note ? `<div><dt>Size</dt><dd>${escN(p.facts?.size || p.note)}</dd></div>` : ""}<div><dt>Getting it</dt><dd>Pickup at the counter, paid in the shop</dd></div></dl></section>` : localOnly(p) ? counterSpec(p) : `<section class="spec" aria-labelledby="spec-h">
         <h2 class="h3" id="spec-h">Packed size</h2>
         <dl class="spec__list">
           <div><dt>Item</dt><dd class="num">${p.sku}</dd></div>
@@ -530,10 +544,11 @@ function setSummary() {
   return `
     <h2 class="h3">Your set</h2>
     <ul class="setlines">${picks.map(p => `<li><span>${esc(p.name)}</span><span class="num">${money(p.price)}</span></li>`).join("")}</ul>
-    <dl class="totals">${!carried(lines) ? `
+    <dl class="totals">${PICKUP_ONLY ? `
+      <div><dt>Getting it</dt><dd>Pickup at the counter, paid in the shop</dd></div>` : `${!carried(lines) ? `
       <div><dt>Charcoal</dt><dd>Pickup or local delivery only</dd></div>` : `
       <div><dt>Ships as</dt><dd>${parcels.length} ${parcels.length === 1 ? "box" : "boxes"}, <span class="num">${parcels.reduce((a, b) => a + b.kg, 0).toFixed(1)} kg</span></dd></div>`}
-      <div><dt>${localVal !== null ? "Delivery to " + esc(d.full) : "Shipping" + (q ? " to " + esc(state.dest.full) : "")}</dt><dd>${localVal !== null ? localVal : q ? `<span class="num">${money(q.total)}</span>` : state.dest && !carried(lines) ? "Local delivery or pickup" : !carried(lines) ? "Pickup free, or local delivery" : `<button class="link" type="button" data-open-postal>Add postal code</button>`}</dd></div>
+      <div><dt>${localVal !== null ? "Delivery to " + esc(d.full) : "Shipping" + (q ? " to " + esc(state.dest.full) : "")}</dt><dd>${localVal !== null ? localVal : q ? `<span class="num">${money(q.total)}</span>` : state.dest && !carried(lines) ? "Local delivery or pickup" : !carried(lines) ? "Pickup free, or local delivery" : `<button class="link" type="button" data-open-postal>Add postal code</button>`}</dd></div>`}
       <div class="totals__door"><dt>Set price</dt><dd class="num">${money(sum)}</dd></div>
     </dl>
     ${picks.length ? `<button class="btn btn--wide" type="button" data-add-set>Add the set to cart</button>` : `<a class="btn btn--wide" href="/shop">See what is in stock</a>`}`;
@@ -623,6 +638,8 @@ function deliveryLine(p, opts) {
   if (isSold(p) || !forSale(p)) return "";
   // shisha is paid at the counter until the card company approves it, so it is a pickup: never promise shipping the cart will not offer
   if (counterPay(p)) return `<p class="dline dline--fixed"><span class="dline__msg">Pickup at the Windsor counter</span><span class="dline__sub">Free, ready ${esc(pickupDay().toLowerCase())}. ${SAY.shisha}</span></p>`;
+  // card payment off: every order is a pickup paid at the counter (charcoal says it in its own line above the button)
+  if (PICKUP_ONLY) return localOnly(p) ? "" : `<p class="dline dline--fixed"><span class="dline__msg">Pickup at the Windsor counter</span><span class="dline__sub">Free, ready ${esc(pickupDay().toLowerCase())}. Paid in the shop.</span></p>`;
   // another item, with shisha already in the cart: the whole order is a pickup, so say that before anyone counts on shipping
   if (counterPayIn(cartLines()).length) return `<p class="dline dline--fixed"><span class="dline__msg">Your order is a pickup while it has shisha</span><span class="dline__sub">Shisha is pickup only and paid in the shop, so the whole order is picked up in Windsor</span></p>`;
   let s = deliveryNow(cartCents() + (state.cart.some(l => l.sku === p.sku) ? 0 : toCents(p.price)));
@@ -635,12 +652,19 @@ function syncDelivery() {
   const box = $("[data-delivery-strip]"), btn = $(".dstrip__btn", box), on = route().replace(/^#\/?/, "").split("/")[0], answered = !!state.reach || (!!state.dest && (state.dest.complete || !localArea(state.dest))),
     // a section that never ships (charcoal: pickup or local; shisha: paid at the counter, so pickup) never asks how to send it (design review, 2026-11-26)
     sec = route().replace(/^#\/?/, "").split("/")[1] || "", card = document.querySelector('meta[name="oss-shisha-card"]')?.content === "1", forSec = PRODUCTS.filter(p => p.cat === sec && p.state === "sale"),
-    neverShips = on === "shop" && forSec.length > 0 && forSec.every(p => localOnly(p) || ((p.cat === "shisha" || p.details?.tobacco) && !card)),
-    choosing = on === "shop" && !neverShips && !answered && !store.get("choose-off"), show = !neverShips &&choosing || (!["cart", "checkout", "order", "shop", "p"].includes(on) && !answered && !store.get("strip-off"));   // gone once we have their answer, or once they close it. The product page and cart can still take one
+    counterOnly = p => (p.cat === "shisha" || p.details?.tobacco) && !card,
+    // One bar, following what can really be ordered (breaker and design review, 2026-11-27; the Worker's asksHow is the same rule):
+    //  - card payment off: every order is a pickup paid at the counter, so there is nothing to choose and no bar at all;
+    //  - card on, nothing on sale ships by carrier: no Nationwide choice; the one slim local-delivery bar, on the shop pages too;
+    //  - card on and something ships: the shop pages ask local or nationwide, other pages carry the slim bar.
+    ships = shipsNow(), neverShips = on === "shop" && forSec.length > 0 && forSec.every(p => ships ? localOnly(p) || counterOnly(p) : counterOnly(p)),
+    off = ships ? store.get("choose-off") : store.get("strip-off"),
+    choosing = !PICKUP_ONLY && ships && on === "shop" && !neverShips && !answered && !off,
+    show = !PICKUP_ONLY && !neverShips && (choosing || (!["cart", "checkout", "order", "p", ...(ships ? ["shop"] : [])].includes(on) && !answered && !store.get("strip-off")));   // gone once we have their answer, or once they close it. The product page and cart can still take one
   box.hidden = !show; box.dataset.mode = choosing ? "choose" : "slim"; btn.hidden = choosing; $(".dchoose", box).hidden = !choosing;
-  // the Worker draws the shop pages' question already open from this, so a cold load's band is where it stays (worker.js asksHow).
-  // Whether to ask, nothing more: no answer, postal code or address goes in it.
-  const ask = !answered && !store.get("choose-off") ? "1" : "0";
+  // the Worker draws the shop pages' bar already open from this, so a cold load's band is where it stays (worker.js asksHow).
+  // Whether to show it, nothing more: no answer, postal code or address goes in it.
+  const ask = !PICKUP_ONLY && !answered && !off ? "1" : "0";
   if (!document.cookie.split("; ").includes("oss-ask=" + ask)) document.cookie = `oss-ask=${ask}; Path=/; Max-Age=31536000; SameSite=Lax${location.protocol === "https:" ? "; Secure" : ""}`;   // the Worker renews it on every page load
   btn.toggleAttribute("data-open-postal", show && !choosing);   // a hidden strip must never be the control that opens the sheet
   if (!show || choosing) return;
@@ -660,6 +684,8 @@ function shipChoice(lines) {
   // Charcoal in the cart: the whole order goes by pickup or local delivery (cpQuote offers no Canada Post for it).
   // With other pieces too, the shopper can also leave the charcoal out and have the rest shipped.
   const counter = lines.some(l => localOnly(l.product)), mixed = counter && lines.some(l => !localOnly(l.product));
+  // card payment off: the only way is pickup, paid at the counter (checkout.js refuses delivery and shipping without card)
+  if (PICKUP_ONLY) return { parcels: [], opts: [], canLocal: false, checking: false, localFee: null, status: null, pickup: true, local: false, counter, mixed: false, chosen: null };
   const parcels = pack(lines), opts = cpQuote(lines), q = localQ();
   const near = localArea(state.dest) && !!state.dest.complete && state.localOff !== state.dest.full;
   const checking = near && (!q || q.status === "checking"), canLocal = near && !!q && (q.status === "ok" || q.status === "address" || q.status === "unsure");
@@ -680,7 +706,7 @@ function viewCart() {
   if (!lines.length) return `${band("cart", "gilt", "Your cart", "Nothing in it yet.")}<section class="empty">${news}<p class="lead">${(() => { const on = CATEGORIES.filter(c => liveCat(c.id).length).slice(0, 3).map(c => `<a class="link" href="/shop/${c.id}">${esc(c.name.toLowerCase())}</a>`); return on.length ? `Start with the ${on.length > 1 ? on.slice(0, -1).join(", ") + " or the " + on.at(-1) : on[0]}.` : `See <a class="link" href="/shop">everything on the shelf</a>.`; })()}</p></section>`;
   const was = shipChoice(lines); if (state.ship === "local" && !was.canLocal && !was.checking) { state.ship = null; store.set("ship", null); }   // the cart is where a new way of sending it is shown and chosen
   const { parcels, opts, canLocal, checking, localFee, status, pickup, local, chosen, counter, mixed } = shipChoice(lines), sub = lines.reduce((a, l) => a + l.product.price * l.qty, 0);
-  const atCounter = counterPayIn(lines).length > 0, ready = pickup || local || !!chosen, inShop = pickup && (!CARD_ON || atCounter), otherWay = carried(lines) ? "You can still ship it or pick it up free." : "You can still pick it up free.";
+  const shishaIn = counterPayIn(lines).length > 0, atCounter = shishaIn || PICKUP_ONLY, overUnits = PICKUP_ONLY && cartCount() > PICKUP_UNITS, ready = !overUnits && (pickup || local || !!chosen), inShop = pickup && (!CARD_ON || atCounter), otherWay = carried(lines) ? "You can still ship it or pick it up free." : "You can still pick it up free.";
   const localNote = !state.dest ? "" : !state.dest.complete && localArea(state.dest) ? `<p class="note">Add your full postal code to see your delivery price. <button class="link" type="button" data-open-postal>Add it</button></p>`
     : checking ? `<p class="note" role="status">Checking delivery to ${esc(state.dest.full)}.</p>`
     : status === "far" || (state.dest.complete && !localArea(state.dest) && state.dest.prov === "ON" && /^N[089]/.test(state.dest.fsa)) ? `<p class="note">${esc(state.dest.full)} is past our 25 km delivery area. ${otherWay}</p>`
@@ -693,7 +719,7 @@ function viewCart() {
     <ul class="lines">${lines.map(({ product: p, qty }) => `
       <li class="line" data-tone="${toneOf(p)}">
         <a class="line__tile tile ${p.dark || p.photo ? "tile--photo" : ""}" href="/p/${p.sku}" aria-label="${esc(p.name)}">${shot(p, { small: true, use: "thumb" })}</a>
-        <div class="line__body"><a class="line__name" href="/p/${p.sku}">${esc(p.name)}</a><p class="line__meta num">${p.sku} &middot; ${counterPay(p) ? `<b class="line__pick">Pickup only, paid in the shop</b>` : localOnly(p) ? `<b class="line__pick">${atCounter ? "Pickup with this order" : "Pickup or local delivery only"}</b>` : `${p.kg} kg`}${qty >= stockFor(p) && stockFor(p) < MAX_QTY ? ` &middot; only ${stockFor(p)} in stock` : ""}</p>
+        <div class="line__body"><a class="line__name" href="/p/${p.sku}">${esc(p.name)}</a><p class="line__meta num">${p.sku} &middot; ${counterPay(p) ? `<b class="line__pick">Pickup only, paid in the shop</b>` : localOnly(p) ? `<b class="line__pick">${atCounter ? "Pickup with this order" : "Pickup or local delivery only"}</b>` : `${p.kg} kg`}${stockShort(p, qty) ? ` &middot; only ${stockFor(p)} in stock` : qty >= LINE_MAX && PICKUP_ONLY ? ` &middot; ${LINE_MAX} is the most we hold online` : ""}</p>
           <div class="qty"><button type="button" aria-label="One less ${esc(p.name)}" data-qty="${p.sku}" data-n="${qty - 1}">&minus;</button><span class="num" aria-live="polite">${qty}</span><button type="button" aria-label="One more ${esc(p.name)}" data-qty="${p.sku}" data-n="${qty + 1}" ${qty >= stockFor(p) ? "disabled" : ""}>+</button></div></div>
         <p class="line__price num">${money(p.price * qty)}</p>
       </li>`).join("")}</ul>
@@ -701,7 +727,8 @@ function viewCart() {
       <h2 class="h3">${counter || atCounter ? "How you get it" : "How we pack it"}</h2>
       ${counter || atCounter ? "" : `<ol class="boxes">${parcels.map(p => `<li><span class="num">${p.l} \u00d7 ${p.w} \u00d7 ${p.h} cm, ${p.kg} kg</span> ${esc(p.label.toLowerCase())}, ${p.items.length} ${p.items.length === 1 ? "item" : "items"}</li>`).join("")}</ol>`}
       ${!state.dest && WIDE.matches && !atCounter ? `<button class="btn btn--wide" type="button" data-open-postal>Check delivery to my postal code</button>` : ""}
-      ${atCounter ? `<p class="note">Shisha is pickup only and paid in the shop, so this order is a pickup.</p>` : localNote}
+      ${shishaIn ? `<p class="note">Shisha is pickup only and paid in the shop, so this order is a pickup.</p>` : atCounter ? `<p class="note">Online orders are picked up and paid at our Windsor counter for now.</p>` : localNote}
+      ${overUnits ? `<p class="note" id="checkout-units">Pickup orders hold up to ${PICKUP_UNITS} items online. Take some out, or call the counter at <a class="link tel" href="tel:+15192552222">519-255-2222</a> to hold more.</p>` : ""}
       ${counter && !atCounter ? `<p class="note">${canLocal ? "Choose local delivery or free pickup for the whole order" : "Choose free pickup for the whole order"}${mixed ? ", or leave the charcoal out to ship the rest" : ""}. Charcoal goes by pickup or local delivery only, never by Canada Post.${state.dest?.complete && !canLocal && !checking && !localArea(state.dest) ? ` Local delivery does not reach ${esc(state.dest.full)}.` : ""}</p>` : ""}
       ${toQuebec() && carried(lines) && !atCounter ? `<p class="note">${QC_NOTE}</p>` : ""}
       ${tooHeavy && !atCounter ? `<p class="note">One of these boxes is over the 30 kg carrier limit. Call the counter at 519-255-2222 and we will quote it by hand.</p>` : ""}
@@ -725,8 +752,8 @@ function viewCart() {
       <div><dt>${pickup ? "Pickup" : local ? "Delivery" : counter ? "Pickup or delivery" : "Shipping"}</dt><dd class="num">${pickup ? "Free" : local ? (localFee !== null ? feeText(localFee) : "At checkout") : chosen ? money(chosen.total) : checking ? "Checking" : counter ? "Choose above" : "add postal code"}</dd></div>
       <div class="totals__door"><dt>${local && localFee === null ? "Total before delivery and tax" : "Total before tax"}</dt><dd class="num">${local ? money(sub + (localFee || 0)) : chosen ? money(sub + chosen.total) : money(sub)}</dd></div>
     </dl>
-    ${!ready && !checking && !tooHeavy ? `<p class="fine" id="checkout-why">${counter ? (canLocal ? "Choose local delivery or pickup to check out." : mixed ? "Choose pickup, or leave the charcoal out to ship the rest, to check out." : "Choose pickup to check out.") : "Add a postal code or choose pickup to check out."}</p>` : ""}
-    ${ready ? `<a class="btn btn--wide" href="/checkout">${inShop ? "Reserve for pickup" : "Check out"}</a>` : `<button class="btn btn--wide" type="button" disabled ${!checking && !tooHeavy ? 'aria-describedby="checkout-why"' : ""}>Check out</button>`}
+    ${!ready && !checking && !tooHeavy && !overUnits ? `<p class="fine" id="checkout-why">${counter ? (canLocal ? "Choose local delivery or pickup to check out." : mixed ? "Choose pickup, or leave the charcoal out to ship the rest, to check out." : "Choose pickup to check out.") : "Add a postal code or choose pickup to check out."}</p>` : ""}
+    ${ready ? `<a class="btn btn--wide" href="/checkout">${inShop ? "Reserve for pickup" : "Check out"}</a>` : `<button class="btn btn--wide" type="button" disabled ${overUnits ? 'aria-describedby="checkout-units"' : !checking && !tooHeavy ? 'aria-describedby="checkout-why"' : ""}>Check out</button>`}
     <p class="fine">${inShop ? "Tax is added on the next step. You pay at the counter when you pick it up." : "Tax is added at checkout."}</p>
     </div>
   </section>`;
@@ -734,15 +761,16 @@ function viewCart() {
 
 function viewShipping() {
   return `
-  ${band("shipping", "cobalt", "Shipping", "From Windsor across Canada, except Quebec for now.")}
+  ${band("shipping", "cobalt", "Shipping", PICKUP_ONLY ? "Pickup at our Windsor counter, for now." : !shipsNow() ? "Pickup and local delivery in Windsor, for now." :"From Windsor across Canada, except Quebec for now.")}
   <section class="reading">
-    <p class="lead">We pack every order at the counter in Windsor and ship to every province and territory except Quebec, for now: the site is in English only, and we will ship there once it is also in French. Pickup in Windsor is open to everyone.</p>
+    ${PICKUP_ONLY ? `<p class="lead"><b>For now, online orders are picked up and paid at our Windsor counter.</b> Local delivery and shipping open once we take card payment online. This page says how they will work.</p>` : ""}
+    <p class="${PICKUP_ONLY ? "" : "lead"}">We pack every order at the counter in Windsor and ship to every province and territory except Quebec, for now: the site is in English only, and we will ship there once it is also in French. Pickup in Windsor is open to everyone.</p>
     <h2 class="h3">Local delivery</h2>
     <p>We deliver from our Walkerville shop, priced by road distance: $10 up to 10 km and $15 up to 25 km, per order, plus tax. Orders with $200 or more in items before tax deliver free. Anything in the shop can come by local delivery. Enter your postal code and we show your exact price, or tell you if you are past our delivery area.</p>
     <p>While the shop is open, it arrives in about 25 minutes to 1 hour. After closing, it arrives the next morning. These are estimates, not set times. Local delivery is paid online when you order.</p>
     <h2 class="h3">What it costs</h2>
     <p>Shipping is worked out from the packed weight and box size of your order and the carrier\u2019s rate to your postal code. You see the cost on the product page and in the cart before you pay.</p>
-    <p><button class="btn btn--ghost" type="button" data-open-postal>${state.dest ? "Estimating to " + esc(state.dest.full) + ". Change" : "Enter my postal code"}</button></p>
+    ${PICKUP_ONLY ? "" : `<p><button class="btn btn--ghost" type="button" data-open-postal>${state.dest ? "Estimating to " + esc(state.dest.full) + ". Change" : "Enter my postal code"}</button></p>`}
     <h2 class="h3">How glass is packed</h2>
     <p>Hookahs ship taken apart. The glass base is double boxed. If anything arrives broken, bring it into the store and talk to the store manager.</p>
     <h2 class="h3">What we ship</h2>
@@ -955,8 +983,7 @@ function orderKey(sig) {
 function orderKeyDone() { state.orderKey = null; try { sessionStorage.removeItem("oss:order-key"); } catch {} }
 // ---------- paying ----------
 // Card goes to Stripe's own page (the card number never touches this site). Pickup can also pay at the counter.
-// The server says whether card payment is switched on, in a meta tag it writes on every page.
-const CARD_ON = document.querySelector('meta[name="oss-pay"]')?.content === "card";
+// The server says whether card payment is switched on, in a meta tag it writes on every page (CARD_ON, at the top).
 // Shisha is paid at the counter until the card company approves it in writing (src/checkout.js, docs/PAYMENTS.md):
 // a cart holding it is picked up and paid at the counter, and the page says so before the shopper taps anything.
 const SHISHA_CARD = document.querySelector('meta[name="oss-shisha-card"]')?.content === "1";
@@ -1022,7 +1049,7 @@ function viewCheckout() {
           : `<p class="co__p">We need the full postal code for the label. <button class="link" type="button" data-open-postal>Enter it</button></p>`}
         ${local ? `<p class="co__p">Local delivery from our Windsor shop. ${localEta()}. <a class="link" href="/cart">Change</a></p><p class="co__p">${freeNote(cartCents(lines))}</p><div class="co__p" role="status" data-deliv-msg>${quoted ? `Good news, we deliver to ${esc(state.dest.full)}.` : ""}</div><p class="fine">Address check by <a class="link" href="https://www.geoapify.com/" rel="noopener">Geoapify</a>. Map data from OpenStreetMap contributors.</p>`
           : `<p class="co__p">${chosen.carrier} ${chosen.service}, ${days(chosen.days)}. <a class="link" href="/cart">Change</a></p>`}</fieldset>`}
-      ${sc.counter ? `<p class="co__p co__coal"><b class="line__pick">Pickup or local delivery only</b> ${lines.filter(l => localOnly(l.product)).map(l => esc(l.product.name)).join(", ")}</p>` : ""}
+      ${sc.counter ? `<p class="co__p co__coal"><b class="line__pick">${PICKUP_ONLY ? "Pickup only" : "Pickup or local delivery only"}</b> ${lines.filter(l => localOnly(l.product)).map(l => esc(l.product.name)).join(", ")}</p>` : ""}
       ${payBlock(sc, shownTotals(lines, sc).total)}
       ${coTotals(lines, sc)}
       <p class="field__err" role="alert" data-co-err hidden></p>
@@ -1139,13 +1166,13 @@ const DRAFT = `<p class="done__tag"><span>Draft</span> <b>for the shop to review
 const doc = (title, lead, parts, tag = DRAFT) => `${band("docs", "bone", title, lead)}<section class="cart doc">${tag}${parts.map(([h, body]) => `<h2 class="h3">${h}</h2>${body.map(t => `<p>${t}</p>`).join("")}`).join("")}</section>`;
 // Privacy: checked line by line against the code on 2026-11-26 (research and sources: inventory-2026-11-24-next/PRIVACY-RESEARCH-2026-11-26.md).
 // Change this page whenever what the shop collects, keeps or shares changes. No draft tag: the owner asked for it to go.
-const viewPrivacy = () => doc("Privacy", "What we collect, why, who else handles it, and how to ask about it. Updated November 26, 2026.", [
-  ["Who we are", ["One Stop Shop, 760 Wyandotte St E, Windsor, ON N9A 3J4. This page covers our online shop: this website, the emails it sends and the orders placed on it. We sell for pickup in Windsor, local delivery and shipping within Canada, except Quebec for now. We follow Canada's privacy law for businesses (PIPEDA) and Canada's anti-spam law (CASL)."]],
+const viewPrivacy = () => doc("Privacy", "What we collect, why, who else handles it, and how to ask about it. Updated November 27, 2026.", [
+  ["Who we are", [`One Stop Shop, 760 Wyandotte St E, Windsor, ON N9A 3J4. This page covers our online shop: this website, the emails it sends and the orders placed on it. ${PICKUP_ONLY ? "For now we sell for pickup in Windsor, paid at the counter. Local delivery and shipping within Canada, except Quebec, open once we take card payment online." : "We sell for pickup in Windsor, local delivery and shipping within Canada, except Quebec for now."} We follow Canada's privacy law for businesses (PIPEDA) and Canada's anti-spam law (CASL).`]],
   ["What we collect and why", [
     "When you order: your name, your email, your phone number (needed for local delivery so the driver can reach you, otherwise up to you), the delivery address if we deliver or ship it, and any note you add. We also keep what you bought, what you paid and how you chose to get it. We use these to fill your order, email you about it and answer your questions.",
     "When you pay by card: you type your card details on Stripe's payment page, not ours. We never see or store your card number. Stripe tells us only whether the payment went through.",
     "When you check delivery: the postal code you enter, and for local delivery your street address, are used to work out whether we deliver to you and what it costs.",
-    "When you ask for a sign-in code: we keep a coded form of your internet address, only to limit how many codes can be asked for or guessed.",
+    "To stop abuse, when you place an order or ask for a sign-in code, we keep a coded form of your internet address, scrambled with a secret key so it cannot be turned back into the address. We use it only to limit how many orders, unpaid pickups held at once, codes or tries can come from one place. For orders it is deleted after 30 days, and for sign-in codes after a day.",
     "We collect only what we need for these jobs. We do not use your details for anything else unless you agree first.",
   ]],
   ["How you found us", ["When you place an order, we save with it where your first visit in the last 30 days came from: a short code from our business card or a link we posted, the name of the site that sent you (like Google or Instagram), and the first page you opened. It stays on your device until you order. We use it only to count which of our cards, posts and listings bring orders. It is not used to follow you around the web, and we never share it."]],
@@ -1164,7 +1191,7 @@ const viewPrivacy = () => doc("Privacy", "What we collect, why, who else handles
     "Geoapify, our map service, gets the postal code you enter near Windsor and, for local delivery, your street address, to work out the road distance from our shop. It does not get your name.",
     "Cloudflare hosts the site and stores the shop's records and backups for us. The company that builds and looks after this site for us can reach these records only to keep the shop running.",
     "We share only what each one needs for its job. We do not sell, rent or trade your details. We would give them to police or a court only when the law requires it.",
-    "Where it is handled: Stripe, Resend and Cloudflare are based in the United States, and Geoapify in Germany. So your details may be stored or handled outside Canada, and can be reached by the courts and authorities of those countries. We stay responsible for your details while they do this work for us,.",
+    "Where it is handled: Stripe, Resend and Cloudflare are based in the United States, and Geoapify in Germany. So your details may be stored or handled outside Canada, and can be reached by the courts and authorities of those countries. We stay responsible for your details while they do this work for us.",
   ]],
   ["If you make an account", [
     "An account is up to you. Guest checkout always works. You sign in with a 6-digit code we email you, which works once, for 10 minutes. We keep your email, the name, phone and address you choose to save, your saved items, your back-in-stock requests, your charcoal reminder choice and any points, so they are there next time. Orders you placed as a guest with the same email join your account when you sign in.",
@@ -1191,15 +1218,16 @@ const viewPrivacy = () => doc("Privacy", "What we collect, why, who else handles
     "We may ask you to confirm it is you first, for example by writing from the email on your order.",
   ]],
   ["Who to ask", ["The store manager is responsible for privacy at One Stop Shop. Call 519-255-2222, reply to any email we sent you, or write to or visit the store manager at One Stop Shop, 760 Wyandotte St E, Windsor, ON N9A 3J4. If you are not happy with our answer, you can complain to the Office of the Privacy Commissioner of Canada at <a class=\"link\" href=\"https://www.priv.gc.ca/en/\">priv.gc.ca</a> or 1-800-282-1376."]],
-  ["Changes to this page", ["If we change how we handle your details, we update this page and its date. If we want to use details we already hold for a new purpose, we ask you first. Updated November 26, 2026."]],
+  ["Changes to this page", ["If we change how we handle your details, we update this page and its date. If we want to use details we already hold for a new purpose, we ask you first. Updated November 27, 2026."]],
 ], "");
 const viewTerms = () => doc("Terms of sale", "The plain rules for buying from us online.", [
   ["Who you are buying from", [`One Stop Shop, 760 Wyandotte St E, Windsor, ON N9A 3J4. Call 519-255-2222. Legal business name ${TBD("")}.`]],
   ["Prices and tax", ["Prices are in Canadian dollars. Tax is added at checkout, based on the province the order ships to. Before you pay, checkout shows each item's price, delivery or shipping, tax and the total, and you can go back and change anything. We email you a copy of your order."]],
+  ...(PICKUP_ONLY ? [["For now", ["Online orders are picked up at 760 Wyandotte St E and paid at the counter. Local delivery and shipping open once we take card payment online; the rules for them are below."]]] : []),
   ["Shipping", ["We ship within Canada, except to Quebec for now: the site is in English only, and we will ship there once it is also in French. Anyone can pick up in Windsor. The price at checkout is the price you pay for shipping. Delivery times are the carrier's estimates. Cologne ships by ground only."]],
   ["Local delivery", ["We deliver within 25 km by road of our Windsor shop: $10 up to 10 km and $15 from there to 25 km, per order, plus tax. Orders with $200 or more in items before tax deliver free. Arrival times are estimates. Local delivery is paid online when you order."]],
   ["Pickup", ["Pickup at 760 Wyandotte St E, Windsor, ON N9A 3J4 is free. We email you when the order is ready and hold it for 14 days."]],
-  ["Charcoal", ["Charcoal is sold for pickup or local delivery only. It is not shipped by Canada Post or any other carrier."]],
+  ["Charcoal", [`Charcoal is sold for pickup${PICKUP_ONLY ? "" : " or local delivery"} only. It is not shipped by Canada Post or any other carrier.`]],
   ["Returns", ["All sales are final, except faulty, wrong, damaged or undelivered items. We do not take back an item because you changed your mind."]],
   ["Faulty, wrong or damaged", ["If an item is faulty, is not what you ordered, or arrives broken, call 519-255-2222 or bring it to 760 Wyandotte St E and talk to the store manager. We will repair it, replace it or refund it. Nothing here takes away your rights under Ontario's Consumer Protection Act."]],
   ["If it does not arrive", ["If we do not deliver within 30 days of the delivery date we gave you (or of your order, if we gave none), you can cancel for a full refund. We refund within 15 days of your cancelling, to the way you paid."]],

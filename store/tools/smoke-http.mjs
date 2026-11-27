@@ -73,7 +73,17 @@ ok(coal.every(p => p.ship === "pickup_only" && p.details.charcoal === true && p.
 ok(coal.filter(p => p.img).length === 28 && coal.every(p => p.img ? p.details.photo === "approved" : p.details.photo === "coming"), "28 charcoal photos, the rest carry photo status coming");
 for (const p of coal.filter(x => x.img)) { const r = await fetch(B + `/img/pc/${p.img}-s.webp`); ok(r.status === 200, `photo ${p.img}-s.webp: ${r.status}`); }
 ok((await fetch(B + "/img/pc/coming-charcoal.svg")).status === 200, "the drawn stand-in is served");
-const coalPage = await get("/p/OSS-9101"); ok(/Pickup in Windsor or local delivery near Windsor\. Not shipped/.test(coalPage.t) && /og:image" content="[^"]+\/img\/share\.jpg"/.test(coalPage.t), "a charcoal page without a photo says pickup or local delivery only and shares the shop image");
+// every promise follows the card switch (2026-11-27): with card payment off (this suite's mode, the live demo's) every order is a
+// pickup paid at the counter, so the charcoal page says pickup only; with card on it says pickup or local delivery
+const coalPage = await get("/p/OSS-9101"), cardOn = /<meta name="oss-pay" content="card">/.test(coalPage.t);
+ok((cardOn ? /Pickup in Windsor or local delivery near Windsor\. Not shipped/.test(coalPage.t) : /Pickup in Windsor, paid in the shop\./.test(coalPage.t) && !/local delivery|shipped across/i.test(((coalPage.t.match(/<main[^>]*>([\s\S]*?)<\/main>/) || [])[1] || "") + ((coalPage.t.match(/<meta name="description" content="([^"]*)"/) || [])[1] || "")))
+  && /og:image" content="[^"]+\/img\/share\.jpg"/.test(coalPage.t), `a charcoal page without a photo says how it is bought (${cardOn ? "pickup or local delivery" : "pickup only, card off"}) and shares the shop image`);
+if (!cardOn) {   // card off: no page the shop draws promises local delivery or shipping, in its description, its text or its footer
+  for (const path of ["/", "/shop", "/shop/charcoal", "/shop/heat", "/shop/hookahs", "/p/OSS-9101"]) {
+    const pg = await get(path), desc = (pg.t.match(/<meta name="description" content="([^"]*)"/) || [])[1] || "", foot = (pg.t.match(/<p class="foot__en">([^<]*)</) || [])[1] || "";
+    ok(!/local delivery|shipp|across Canada/i.test(desc + " " + foot) && /pickup|Pickup/.test(foot) && /hidden/.test((pg.t.match(/<div class="dstrip"[^>]*>/) || [""])[0]), `card off, ${path}: description and footer offer pickup only, no delivery bar: "${desc}" / "${foot}"`);
+  }
+}
 // (the field-by-field match of the samples against the mockup file went with the samples: none is in the catalogue now)
 for (const [id, a] of Object.entries(ref.BOXES)) { const b = m.BOXES[id]; ok(b && a.l === b.l && a.w === b.w && a.h === b.h && Math.abs(a.tare - b.tare) < 1e-9, "box " + id); }
 // an item on sale whose weight is not known yet (foil; an Ace hookah once priced) is pickup or local delivery until it is (2026-11-24)

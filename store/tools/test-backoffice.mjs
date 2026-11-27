@@ -1,7 +1,7 @@
 // Back office round two, against the running local store: staff sign-in with PINs (hashed, locked out after wrong
 // tries, ended on removal), who-did-what on every change, Count and Receive (a repeated tap counts once), cancel with
 // restock (never twice), the staff-only ID tick, where orders came from, and the monthly report with its 5% share.
-// PERSIST=<the store's --persist-to folder> node store/tools/test-backoffice.mjs   (changes local data and locks local sign-in for 15 minutes at the end: reseed afterwards)
+// PERSIST=<the store's --persist-to folder> node store/tools/test-backoffice.mjs   (changes local data and locks some test addresses out of sign-in for 15 minutes: reseed afterwards)
 import { samplesOn } from "./fixtures/samples-on.mjs";
 import { readFileSync } from "node:fs";
 import { cleanSource } from "../src/source.js";
@@ -234,15 +234,24 @@ if (process.env.PERSIST) ok(nameRows() - names0 <= 5, `one address's burst write
 ok(flood.filter(r => r.status === 401).length <= 5, "thirty staff tries at once from one address get at most five checks: " + flood.filter(r => r.status === 401).length);
 const unaIn = await A("/login", { method: "POST", as: "none", body: una, headers: { "CF-Connecting-IP": "10.2.9.9" } });
 ok(unaIn.status === 200, "after one address floods staff sign-in, staff elsewhere still sign in: " + unaIn.status);
-// the flood's shop-wide staff count is cleared again (the address itself stays locked), so each lock check below tests its own rule
-if (process.env.PERSIST) execFileSync(process.execPath, [process.env.WRANGLER_JS || join(execFileSync(process.platform === "win32" ? "npm.cmd" : "npm", ["root", "-g"], { encoding: "utf8", shell: process.platform === "win32" }).trim(), "wrangler", "bin", "wrangler.js"), "d1", "execute", "onestopshop", "--local", "--persist-to", process.env.PERSIST, "--command", "DELETE FROM login_attempts WHERE who LIKE 's:%'"], { cwd: fileURLToPath(new URL("..", import.meta.url)), stdio: "ignore" });
-// ---- lockout (last: it locks local sign-in for 15 minutes) ----
-const wrongs = []; for (let i = 0; i < 5; i++) wrongs.push((await A("/login", { method: "POST", as: "staff", body: { name: add2.data.name, pin: "00000" + i }, headers: { "CF-Connecting-IP": "10.9.0." + i } })).status);
-const locked = await A("/login", { method: "POST", as: "staff", body: { name: add2.data.name, pin: "730519" }, headers: { "CF-Connecting-IP": "10.9.1.1" } });
-ok(wrongs.every(s => s === 401) && locked.status === 429, "five wrong PINs on one name lock that name, even with the right PIN: " + wrongs + "," + locked.status);
-const ghost = "Ghost" + letters(), gw = []; for (let i = 0; i < 6; i++) gw.push((await A("/login", { method: "POST", as: "staff", body: { name: ghost, pin: "00000" + i }, headers: { "CF-Connecting-IP": "10.8.0." + i } })).status);
-ok(gw[5] === 429, "a name that does not exist locks the same way, so the lock gives nobody away: " + gw);
-const burst = await Promise.all(Array.from({ length: 8 }, (_, i) => A("/login", { method: "POST", as: "staff", body: { name: "Burst" + letters(), pin: "00000" + i }, headers: { "CF-Connecting-IP": "10.7.7.7" } })));
+// ---- a name under attack (reworked 2026-11-27: no lock on a name, the shop's own connection always gets through) ----
+// Before, five wrong PINs on a name from anywhere locked it for everyone, so a stranger could lock any staff member out.
+// Now: past five wrong tries from places never seen signing in, each try on that name is slowed; past thirty such tries the
+// name refuses places never seen signing in; a place that has signed in correctly is held by neither.
+const timed = async (body, ip) => { await clearOfIdleEdge(1500); const t = Date.now(), r = await A("/login", { method: "POST", as: "none", body, headers: { "CF-Connecting-IP": ip } }); return { ...r, ms: Date.now() - t }; };
+const wrongs = []; for (let i = 0; i < 5; i++) wrongs.push((await A("/login", { method: "POST", as: "none", body: { name: add2.data.name, pin: "00000" + i }, headers: { "CF-Connecting-IP": "10.9.0." + i } })).status);
+const sixth = await timed({ name: add2.data.name, pin: "000005" }, "10.9.0.5");
+ok(wrongs.every(s => s === 401) && sixth.status === 401 && sixth.ms >= 200, `six wrong PINs on one name: the sixth is slowed, not locked: ${wrongs},${sixth.status} in ${sixth.ms} ms`);
+const ghost = "Ghost" + letters(), gw = []; for (let i = 0; i < 5; i++) gw.push((await A("/login", { method: "POST", as: "none", body: { name: ghost, pin: "00000" + i }, headers: { "CF-Connecting-IP": "10.8.0." + i } })).status);
+const ghost6 = await timed({ name: ghost, pin: "000005" }, "10.8.0.5");
+ok(gw.every(s => s === 401) && ghost6.status === 401 && ghost6.ms >= 200 && ghost6.data.error === sixth.data.error, "a name that does not exist is answered and slowed the same way, so nothing gives away who works here: " + gw + "," + ghost6.status);
+const rightNew = await timed({ name: add2.data.name, pin: "730519" }, "10.9.1.1");
+ok(rightNew.status === 200, "the right PIN from a new place still gets in while the name is being guessed: " + rightNew.status + " in " + rightNew.ms + " ms");
+await Promise.all(Array.from({ length: 30 }, (_, i) => A("/login", { method: "POST", as: "none", body: { name: add2.data.name, pin: "1" + String(10000 + i) }, headers: { "CF-Connecting-IP": "10.9.2." + i } })));
+const stranger = await timed({ name: add2.data.name, pin: "730519" }, "10.9.3.3");
+ok(stranger.status === 429, "past thirty wrong tries on a name, a place never seen signing in is refused for that name: " + stranger.status);
+const atCounter = await timed({ name: add2.data.name, pin: "730519" }, "10.9.1.1");
+ok(atCounter.status === 200 && atCounter.ms < 3000, `the person signs straight in from a place they signed in from before, however hard the name is hammered: ${atCounter.status} in ${atCounter.ms} ms`);const burst = await Promise.all(Array.from({ length: 8 }, (_, i) => A("/login", { method: "POST", as: "staff", body: { name: "Burst" + letters(), pin: "00000" + i }, headers: { "CF-Connecting-IP": "10.7.7.7" } })));
 ok(burst.filter(r => r.status === 401).length <= 5 && burst.filter(r => r.status === 429).length >= 3, "eight tries at once from one place get at most five checks: " + burst.map(r => r.status));
 for (let i = 0; i < 42; i++) await A("/login", { method: "POST", as: "staff", body: { name: "Flood" + letters(), pin: "000000" }, headers: { "CF-Connecting-IP": "10.6." + Math.floor(i / 5) + "." + i } });
 const ownerStill = await A("/login", { method: "POST", as: "none", body: { passcode: KEY }, headers: { "CF-Connecting-IP": "10.5.5.5" } });
@@ -265,12 +274,17 @@ if (process.env.PERSIST) {
   await A("/login", { method: "POST", as: "none", body: { passcode: "wrong-" + letters() }, headers: { "CF-Connecting-IP": "10.0.0.77" } });
   ok(sql("SELECT COUNT(*) AS n FROM login_attempts WHERE who = 'old-try'")[0].n === 0, "tries older than a day are cleared on the next try, not only after a good sign-in");
 } else ok(false, "set PERSIST for the sign-in row checks");
-// Many addresses at once: past 20 owner tries from 3 or more places each owner try is slowed; past 100 from 10 or more, the
-// owner's passcode is locked for everyone for 15 minutes (last: it locks the owner out of this throwaway store)
+// Many addresses at once (reworked 2026-11-27): past 20 wrong owner tries shop-wide, each try from a place never seen signing in
+// is slowed; nothing locks the owner out any more (before, 100 tries from 10 places locked the passcode for everyone).
 await Promise.all(Array.from({ length: 6 }, (_, k) => (async () => { for (let i = 0; i < 5; i++) await A("/login", { method: "POST", as: "none", body: { passcode: "wrong-" + letters() }, headers: { "CF-Connecting-IP": `10.20.${k}.1` } }); })()));
 await clearOfIdleEdge(1500); const t1 = Date.now(), slowed = await A("/login", { method: "POST", as: "none", body: { passcode: KEY }, headers: { "CF-Connecting-IP": "10.21.0.1" } });
 ok(slowed.status === 200 && Date.now() - t1 >= 400, `after 30 wrong owner tries from 6 places the owner still gets in, slowed: ${slowed.status} in ${Date.now() - t1} ms`);
 await Promise.all(Array.from({ length: 14 }, (_, k) => (async () => { for (let i = 0; i < 6; i++) await A("/login", { method: "POST", as: "none", body: { passcode: "wrong-" + letters() }, headers: { "CF-Connecting-IP": `10.22.${k}.1` } }); })()));
-const ceiling = await A("/login", { method: "POST", as: "none", body: { passcode: KEY }, headers: { "CF-Connecting-IP": "10.23.0.1" } });
-ok(ceiling.status === 429, "past 100 wrong owner tries from 20 places, the owner passcode is locked for everyone: " + ceiling.status);
-console.log(f ? `FAIL ${f} of ${n} checks` : `PASS ${n} checks`); process.exit(f ? 1 : 0);
+await clearOfIdleEdge(1500); const t2 = Date.now(), fresh = await A("/login", { method: "POST", as: "none", body: { passcode: KEY }, headers: { "CF-Connecting-IP": "10.23.0.1" } });
+ok(fresh.status === 200 && Date.now() - t2 <= 9500, `past 100 wrong owner tries from 20 places, the owner still signs in from a new place (slowed, at most 8 s): ${fresh.status} in ${Date.now() - t2} ms`);
+await clearOfIdleEdge(1500); const t3 = Date.now(), known = await A("/login", { method: "POST", as: "none", body: { passcode: KEY }, headers: { "CF-Connecting-IP": "10.21.0.1" } });
+ok(known.status === 200 && Date.now() - t3 < 3000, `and from a place the owner signed in from before, without the wait: ${known.status} in ${Date.now() - t3} ms`);
+{   // a signed-in session keeps working through all of it
+  const me = await call("/api/admin/me", { as: "none", headers: { Cookie: (known.r.headers.get("set-cookie") || "").split(";")[0] } });
+  ok(me.status === 200 && me.data.owner === true, "a signed-in session works whatever the sign-in page is facing: " + me.status);
+}console.log(f ? `FAIL ${f} of ${n} checks` : `PASS ${n} checks`); process.exit(f ? 1 : 0);
