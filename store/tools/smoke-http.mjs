@@ -55,7 +55,13 @@ ok(m.PRODUCTS.length === 69 + 15 + 47 + 91 + 39 + 31 + 28 && m.CATEGORIES.length
     `28 bowls in 10 families, Price TBD, own photos, no internal notes: ${bowl.length}`);
   for (const p of bowl) for (const suf of ["-s", "-l"]) { const r = await fetch(B + `/img/pc/${p.img}${suf}.webp`); ok(r.status === 200, `photo ${p.img}${suf}.webp: ${r.status}`); }
   const rose = m.PRODUCTS.find(p => p.sku === "OSS-100150");
-  ok(rose && rose.img === "shop/ace-rose-red" && rose.facts.photo === "own" && !rose.facts.photo_label, `the Rose hookah shows the shop's own photo, no upscale label: ${rose && rose.img}`); }
+  ok(rose && rose.img === "shop/ace-rose-red" && rose.facts.photo === "own" && !rose.facts.photo_label, `the Rose hookah shows the shop's own photo, no upscale label: ${rose && rose.img}`);
+  const tsar = Object.fromEntries(m.PRODUCTS.filter(p => p.family === "ace-tsar-molotov").map(p => [p.sku, p]));
+  ok(tsar["OSS-100084"]?.img === "shop/ace-tsar-molotov-green" && tsar["OSS-100084"].facts.photo === "own" && !tsar["OSS-100084"].facts.photo_label
+     && tsar["OSS-100081"]?.img === "shop/ace-tsar-molotov-blue" && !tsar["OSS-100081"].facts.photo_label
+     && ["OSS-100080", "OSS-100083"].every(s => tsar[s]?.img === "shop/ace-tsar-molotov-blue" && tsar[s].facts.shown_in === "blue"),
+    `the Tsar Molotov shows the shop's own green and blue photos: ${Object.values(tsar).map(p => p.sku + "=" + p.img).join(" ")}`);
+  for (const n of ["green", "blue"]) for (const suf of ["", "-s", "-m"]) { const r = await fetch(B + `/img/pc/shop/ace-tsar-molotov-${n}${suf}.webp`); ok(r.status === 200, `photo shop/ace-tsar-molotov-${n}${suf}.webp: ${r.status}`); } }
 // the shop's own hanging hoses (2026-11-27): 31 colours in 21 families (one card each, colours as chips), all in Hoses, Price TBD,
 // nothing to sell yet; the back office's unsure-match notes never reach the storefront
 { const hose = m.PRODUCTS.filter(p => /^hose-/.test(p.family || ""));

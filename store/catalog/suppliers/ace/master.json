@@ -1464,7 +1464,7 @@
       "src": null
      },
      "photo": {
-      "img": "ace/ace-tsar-molotov-blue",
+      "img": "shop/ace-tsar-molotov-blue",
       "status": "family_hero_only",
       "src": "photo manifest store/catalog/suppliers/ace/photos.json"
      },
@@ -1508,12 +1508,12 @@
      },
      "colour": {
       "v": "blue",
-      "src": "photo:ace/ace-tsar-molotov-blue (p26 xref 2781), dominant colour; human-confirm"
+      "src": "photo:IMG_0685 (the shop's own photo); human-confirm"
      },
      "photo": {
-      "img": "ace/ace-tsar-molotov-blue",
-      "status": "CHECK",
-      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
+      "img": "shop/ace-tsar-molotov-blue",
+      "status": "shop",
+      "src": "photo:IMG_0685 (the shop's own photo, cut out); Tsar Molotov (catalogue p26): TSAR on the stem and on the X swing tag; the blue chip, whose catalogue photo was enlarged"
      },
      "shop": {
       "price_cents": {
@@ -1605,7 +1605,7 @@
       "src": null
      },
      "photo": {
-      "img": "ace/ace-tsar-molotov-blue",
+      "img": "shop/ace-tsar-molotov-blue",
       "status": "family_hero_only",
       "src": "photo manifest store/catalog/suppliers/ace/photos.json"
      },
@@ -1648,13 +1648,13 @@
       "src": "pdf:ace-2026-10#p26:colour square 6 fill (chip colour only; never a colour name)"
      },
      "colour": {
-      "v": null,
-      "src": null
+      "v": "green",
+      "src": "photo:IMG_0684 (the shop's own photo); human-confirm"
      },
      "photo": {
-      "img": "ace/ace-tsar-molotov-blue",
-      "status": "family_hero_only",
-      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
+      "img": "shop/ace-tsar-molotov-green",
+      "status": "shop",
+      "src": "photo:IMG_0684 (the shop's own photo, cut out); Tsar Molotov (catalogue p26): TSAR on the stem and on the X swing tag, the cone base under a flared collar; the catalogue's green chip, which showed the blue photo"
      },
      "shop": {
       "price_cents": {
@@ -18681,14 +18681,8 @@
    "sku": "OSS-100080",
    "family": "ace-tsar-molotov",
    "photo_status": "shown_in",
-   "img": "ace/ace-tsar-molotov-blue",
+   "img": "shop/ace-tsar-molotov-blue",
    "shown_in": "blue"
-  },
-  {
-   "sku": "OSS-100081",
-   "family": "ace-tsar-molotov",
-   "photo_status": "upscale",
-   "img": "ace/ace-tsar-molotov-blue"
   },
   {
    "sku": "OSS-100082",
@@ -18700,14 +18694,7 @@
    "sku": "OSS-100083",
    "family": "ace-tsar-molotov",
    "photo_status": "shown_in",
-   "img": "ace/ace-tsar-molotov-blue",
-   "shown_in": "blue"
-  },
-  {
-   "sku": "OSS-100084",
-   "family": "ace-tsar-molotov",
-   "photo_status": "shown_in",
-   "img": "ace/ace-tsar-molotov-blue",
+   "img": "shop/ace-tsar-molotov-blue",
    "shown_in": "blue"
   },
   {

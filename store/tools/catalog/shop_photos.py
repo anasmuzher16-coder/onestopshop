@@ -15,6 +15,15 @@ SHOP_PHOTOS = {
     #   frame_cutouts.py CUTOUTS OUT --kind hookah --trim-base-below 3560 IMG_0713   (then -l is not kept: Ace rows set no img_lw)
     "ace-rose##000000": ("shop/ace-rose-red", "red", "IMG_0713",
                          "Ace Rose hookah: the metal rose on the stem, ACE on the tongs, the swirled glass base (catalogue p48)"),
-    # Not used: the Tsar Molotov photos (IMG_0684 green, IMG_0685 blue). Their clear base shows the shop's patterned mat through the
-    # glass, and the base is etched MOZE where the catalogue says Tsar: left for the shop to check and reshoot.
+    # IMG_0684, IMG_0685: the clear cone base stood on the shop's patterned mat, which showed through the glass. The mirrored MOZE
+    # logo in it is printed in the mat's middle (it shows the same under the Panda), not on the base. clear_glass.py clears what
+    # is seen through the glass and keeps the outline, highlights, swing tag and downstem; framed without speck cleaning:
+    #   clear_glass.py SRC CUTOUTS GLASS IMG_0684 IMG_0685; frame_cutouts.py GLASS OUT --kind hookah --glass IMG_0684 IMG_0685
+    #   (-l not kept, as for the Rose)
+    "ace-tsar-molotov##a6e147": ("shop/ace-tsar-molotov-green", "green", "IMG_0684",
+                                 "Tsar Molotov (catalogue p26): TSAR on the stem and on the X swing tag, the cone base under a "
+                                 "flared collar; the catalogue's green chip, which showed the blue photo"),
+    "ace-tsar-molotov##5271ff": ("shop/ace-tsar-molotov-blue", "blue", "IMG_0685",
+                                 "Tsar Molotov (catalogue p26): TSAR on the stem and on the X swing tag; the blue chip, whose "
+                                 "catalogue photo was enlarged"),
 }
