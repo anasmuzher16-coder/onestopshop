@@ -108,7 +108,12 @@ const shishaClock = p => p.evaluate(() => {
   const co = F[c].o, land = Math.round(at.delay + co * at.duration), up = F.slice(0, c).map(f => f.y), mUp = M.filter(f => f.o < co).map(f => f.y);
   const turn = M.findIndex(f => f.r !== 0), mintAt = turn > 0 ? Math.round(mt.delay + M[turn - 1].o * mt.duration) : null;
   return { land, mint: mintAt, leaf: Math.round(l.effect.getTiming().delay), dur: at.duration, squash: sq > c, bounce: bo > sq && sq > 0,
-    rest: last.y === 0 && last.sx === 1 && last.sy === 1, few: Math.min(...up) >= -10 && F.every(f => f.y >= -10 && f.sx <= 1.12 && f.sy >= .86), once: F.filter((f, i) => i > c && f.y < 0).length === 1, fade: k.some(f => f.opacity !== undefined) || mk.some(f => f.opacity !== undefined),
+    rest: last.y === 0 && last.sx === 1 && last.sy === 1,
+    // bounded both ways: never more than 10 units above the lid nor into it, squash and stretch within 12-14%, the mint turning at
+    // most 6 degrees, the leaf at most 8, and the leaf done when the apples are
+    few: F.every(f => f.y >= -10 && f.y <= 0 && f.sx <= 1.12 && f.sx >= .88 && f.sy >= .86 && f.sy <= 1.14) && M.every(f => f.y >= -10 && f.y <= 0 && Math.abs(f.r) <= 6)
+      && (() => { const L = l.effect.getKeyframes().map(f => +((/^rotate\((-?[\d.]+)deg\)$/.exec(f.transform || "") || [])[1])), lt = l.effect.getTiming();
+        return L.every(r => Number.isFinite(r) && Math.abs(r) <= 8) && lt.delay + lt.duration <= at.delay + at.duration + 1; })(), once: F.filter((f, i) => i > c && f.y < 0).length === 1, fade: k.some(f => f.opacity !== undefined) || mk.some(f => f.opacity !== undefined),
     ride: mt.delay === at.delay && mt.duration === at.duration && mUp.length > 0 && mUp[0] === up[0] && Math.min(...mUp) === Math.min(...up)
       && M.filter(f => f.o >= co).every(f => f.y === 0) && M.filter(f => f.o < co).every(f => f.r === 0) && M[M.length - 1].r === 0 };
 });
