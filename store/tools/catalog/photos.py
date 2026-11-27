@@ -181,6 +181,34 @@ def apply_upscaled(it: dict, kept: dict):
         it["upscaled"] = sorted(r["files"])
 
 
+def web_kept(supplier: str, public: Path) -> dict:
+    """Photos replaced by a higher-resolution photo of the same product found online (owner 2026-11-27: "if there's any high
+    quality photos online let's just go ahead and use them"), listed in store/catalog/suppliers/<supplier>/web-photos.json
+    with the image and page they came from. One is kept, files untouched, only while every recorded file on disk still
+    matches its hash; a changed or missing one is printed loudly and rebuilt from the PDF (its old status comes back)."""
+    rec = C.load_json(C.SUPPLIERS / supplier / "web-photos.json", {}) or {}
+    kept = {}
+    for out, r in rec.get("images", {}).items():
+        files = r.get("files") or {}
+        if files and all((public / n).exists() and C.sha256_file(public / n) == h for n, h in files.items()):
+            kept[out] = r
+        else:
+            print(f"WARNING: web photo {out} ({', '.join(r.get('skus', []))}) no longer matches web-photos.json (files changed): "
+                  f"it is rebuilt from the PDF. Remove it from web-photos.json and put its old photo_label back in the database.")
+    return kept
+
+
+def apply_web(it: dict, kept: dict):
+    """Marks an image as its kept web photo when it stands for the same cut of the same Ace image (xref and crop unchanged).
+    Its status is the web photo's own (ready, or CHECK when even the web original had to be enlarged past 1.25x)."""
+    r = kept.get(it.get("out"))
+    if r and r["xref"] == it.get("xref") and list(r["crop"]) == list(it.get("crop") or []) and it["status"] in SHOWN:
+        it["note"] = f"{it['note']}; replaced {r['date']} by a web photo ({r['site']}, {r['scale_720']}x), was {it['status']} {it['scale']}x"
+        it["status"] = r["status"]
+        it["web"] = sorted(r["files"])
+        it["photo_src"] = r["page_url"]
+
+
 def save_set(canvas: Image.Image, base: Path):
     base.parent.mkdir(parents=True, exist_ok=True)
     for suf, size, qual in SIZES:
