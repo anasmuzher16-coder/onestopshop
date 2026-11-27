@@ -96,6 +96,9 @@ if (paid) {
     [{ name: "  " }, "an empty name"], [{ name: "x".repeat(81) }, "a name over 80"], [{ name: "Fine", price_cents: -1 }, "a good field beside a bad one"]]) ok((await info(t.sku, body)).status === 400, "item editor refuses " + what);
   const same = await row(t.sku); ok(same.price_cents === t.price_cents && same.stock === t.stock && same.details === t.details && same.name === t.name, "nothing was written by a refused save");
   ok((await info(t.sku, { name: "X" }, { marker: false })).status === 400 && (await info(t.sku, { name: "X" }, { origin: "https://evil.example" })).status === 403 && (await info("OSS-999999", { name: "X" })).status === 404, "item editor: request marker, same site and a real item");
+  { const dirty = "\u202eBay\n\tLeaf\u2069 Tray\u0001 (No. 5)", r = await info(t.sku, { name: dirty });
+    ok(r.status === 200 && (await row(t.sku)).name === "Bay Leaf Tray (No. 5)", "item editor cleans a name of direction overrides, controls, newlines and tabs", (await row(t.sku)).name);
+    ok((await info(t.sku, { name: "\u202e\n" })).status === 400, "item editor refuses a name with nothing visible in it"); await info(t.sku, { name: t.name }); }
   // staff fill in name, colours and the shelf count; the price is the owner's
   const sname = "Rami" + Array.from({ length: 4 }, () => "abcdefghjkmnpqrstuvwxyz"[Math.floor(Math.random() * 23)]).join("");
   ok((await call("/staff", { method: "POST", body: { name: sname, pin: "593024" } })).status === 201, "owner adds a staff member for the editor");
