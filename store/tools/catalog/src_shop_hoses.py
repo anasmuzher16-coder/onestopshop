@@ -55,8 +55,10 @@ HOSES = [
     ("Babylon Disposable Ice Hose", "Babylon disposable ice hose 77inch", "77 inches", "Babylon", [("IMG_0558", "Yellow", None)],
      "one caption was left for two uncaptioned photos (this yellow one and the blue one); given to this one for its ice-hose handle with foam grips"),
     # not in the recording: named from the bag
+    # length from the shop's later photo of these bags, captioned "Star buzz are 76.5 inches" (LENGTH_FROM_PHOTO below)
     ("Starbuzz Ribbed Hose", None, None, "Starbuzz",
-     [("IMG_0543", "Red", None), ("IMG_0549", "Teal", None), ("IMG_0551", "Pink", None), ("IMG_0555", "Grey", None)], UNCAPTIONED + " (bag: Starbuzz Tobacco)"),
+     [("IMG_0543", "Red", None), ("IMG_0549", "Teal", None), ("IMG_0551", "Pink", None), ("IMG_0555", "Grey", None)],
+     "not in the recording: name read from the bag (Starbuzz Tobacco); length from the shop's photo caption"),
     ("Al Ataa Disposable Hose", None, None, "Al Ataa", [("IMG_0544", "Black", None)], UNCAPTIONED + " (bag: Alataa, disposable)"),
     ("Zanobia Washable Hose", None, None, "Zanobia", [("IMG_0559", "Yellow", None), ("IMG_0560", "Green", None)], UNCAPTIONED + " (bag: Zanobia, Washable)"),
     ("Sager Washable Hose", None, None, "Sager", [("IMG_0568", "Pink", None)], UNCAPTIONED + " (bag: Sager Hookah, Washable)"),
@@ -64,6 +66,13 @@ HOSES = [
     ("Royal Disposable Hose", None, None, "Royal", [("IMG_0571", "Black", None)], UNCAPTIONED + " (bag: Royal, Disposable Hookah Hose)"),
     ("Hookah Hose, Blue", None, None, None, [("IMG_0562", "Blue", None)], UNCAPTIONED + "; no brand on the bag (the other photo left after the Babylon caption)"),
 ]
+
+
+# Lengths the shop gave later as the file name of a photo (Google Drive, 2026-11-27), written exactly as the file name says.
+# "Star buzz are 76.5 inches" shows the Starbuzz Tobacco ribbed hoses in grey, red, teal, pink and light blue (the light blue
+# one is not on the site). "All disposable are 60.5 inches" shows only Platinum, Simba and Crown hoses, which already carry
+# 60.5 from the recording, so it sets no new length.
+LENGTH_FROM_PHOTO = {"Starbuzz Ribbed Hose": ("76.5 inches", "shop:photo file name 'Star buzz are 76.5 inches' (Drive, 2026-11-27)")}
 
 
 def photo_name(name: str, colour: str) -> str:
@@ -88,7 +97,7 @@ def families():
             "family_id": fid, "order": i, "category": "hoses",
             "name": cell(name, src_name),
             "supplier_ref": cell(caption or name, f"{REC}" if caption else f"photo:{shots[0][0]} (bag print)"),
-            "facts": {"length": cell(length, f"{REC} '{caption}'" if length else None),
+            "facts": {"length": cell(*LENGTH_FROM_PHOTO[name]) if name in LENGTH_FROM_PHOTO else cell(length, f"{REC} '{caption}'" if length else None),
                       "brand": cell(brand, src_name if brand else None),
                       "weight_g": cell(None, None)},
             "flags": ([f"NEEDS SHOP: {why}"] if why else []) + [f"NEEDS SHOP: {v['colour']['v']}: {v['confirm']['v']}" for v in variants if v["confirm"]["v"] and v["confirm"]["v"] != why],

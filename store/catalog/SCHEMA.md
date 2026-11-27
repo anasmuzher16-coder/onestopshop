@@ -8,7 +8,8 @@ generated from it. Nobody edits two copies. Plan: life/dijji/clients/one-stop-sh
 |---|---|
 | `suppliers/ace/master.json` | Ace Hookah, from the October 2026 PDF (sha256 in `sources`) |
 | `suppliers/charcoal-foil/master.json` | The shop's own charcoal and foil list, verified 2026-11-23, plus the owner's rulings |
-| `suppliers/shop-hoses/master.json` | The shop's own hanging hoses (2026-11-27), from its shelf photos and recording captions (`tools/catalog/src_shop_hoses.py`; `catalog.py build --only shop-hoses`); photos via `photos_hoses.py` |
+| `suppliers/shop-hoses/master.json` | The shop's own hanging hoses (2026-11-27), from its shelf photos and recording captions (`tools/catalog/src_shop_hoses.py`; `catalog.py build --only shop-hoses`); photos via `photos_hoses.py`. Starbuzz length from the photo file name "Star buzz are 76.5 inches" (`LENGTH_FROM_PHOTO`) |
+| `suppliers/shop-bowls/master.json` | The shop's own bowls (2026-11-27), from its photos of each bowl on a white sweep; only bowls with a brand printed on them, every name flagged to confirm (`tools/catalog/src_shop_bowls.py`; `catalog.py build --only shop`). Photos via `photos_shop_bowls.py` from cut-outs made outside the repo: background plate from the sweep, GrabCut seeded by colour distance with cast shadows kept out, a second GrabCut in a band round the bowl's mirror-symmetric outline, edge colour un-mixed from the plate; accessory framing (580x560 in 720x900), `-l` 1440 only where the source carries it (`img_lw`) |
 | `suppliers/shisha/master.json` | Tobacco-free shisha, from `inventory-2026-11-23/shisha/catalogue.json` (all off until the lab certificates) |
 | `suppliers/ace/photos.json` | Photo manifest: one entry per extracted image (page, xref, crop, sku, colour, scale, status) |
 | `suppliers/ace/photo-overrides.json` | Decisions a person made on the contact sheets (gallery only, hand crop) |

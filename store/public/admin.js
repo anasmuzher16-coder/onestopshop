@@ -246,7 +246,7 @@ function infoSheet(p) {
   const d = pj(p.details), had = Array.isArray(d.colours) ? d.colours : [], hexes = d.colour_hex || {}, c = catOf(p.category_id), owner = state.me.owner;
   const known = new Set(PALETTE.map(x => x[0].toLowerCase())), custom = had.filter(n => !known.has(n.toLowerCase()));
   const queue = state.products.filter(x => x.needs), at = queue.findIndex(x => x.sku === p.sku), counted = p.availability === "counted";
-  const hookahRow = /^(ace|hose)-/.test(p.family || "");   // one colour of a hookah, or of one of the shop's hoses
+  const hookahRow = /^(ace|hose|bowl)-/.test(p.family || "");   // one colour of a hookah, or of one of the shop's hoses or bowls
   const check = (p.needs || []).includes("check"), d0 = pj(p.details), lenRow = (p.needs || []).includes("length") || typeof d0.length === "string";
   sheet.innerHTML = `<form class="sheet__in info" data-info-form="${p.sku}" data-orig="${esc(JSON.stringify(had))}" novalidate>
     <div class="sheet__top"><div><p class="meta">${p.sku}${at >= 0 ? ` &middot; ${at + 1} of ${queue.length} to fill in` : ""}</p><h2 class="h2" style="margin:0">${esc(p.name)}</h2></div><button class="sheet__x" type="button" data-close>Close</button></div>

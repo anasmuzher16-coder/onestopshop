@@ -184,7 +184,7 @@ async function itemInfo(db, sku, request, session, path) {
       if (colours.length) { d.colours = colours.map(c => c.name); if (Object.keys(hex).length) d.colour_hex = hex; }
       // A hookah family's row is one colour of that hookah: its colours become its chip name ("Black and Gold"), unless the
       // shop already typed a name for it in the full form (that name is kept; only a name this editor wrote is replaced).
-      if (/^(ace|hose)-/.test(String(before.family || ""))) {   // a hookah colour, or a colour of one of the shop's hoses
+      if (/^(ace|hose|bowl)-/.test(String(before.family || ""))) {   // a hookah colour, or a colour of one of the shop's hoses or bowls
         const ours = !had.colour || (Array.isArray(had.colours) && had.colour === joinColours(had.colours));
         if (ours) { if (colours.length) d.colour = joinColours(d.colours); else delete d.colour; }
         if (ours && colours.length && d.colour.length > 40) return json({ error: "Check: colours (a colour's name is up to 40 letters; pick fewer)." }, 400);

@@ -11,7 +11,7 @@
    "id": "shop-hoses-2026-11-25",
    "kind": "shop photos and recording",
    "file": "IMG_0543..IMG_0579 (hanging rack) + recording captions",
-   "sha256": "31b22725ea009a18885f3291f6d6381c2d371dd95e062f477fc6abb08ac2c82f",
+   "sha256": "1378bbfbf9fffb2e61d152eca2b18663c292f86e8cd93727b89a8a67c5d9f286",
    "products": 31,
    "edition": "Shop shelf photos and recording captions, 2026-11-25",
    "received": "2026-11-25"
@@ -1488,8 +1488,8 @@
    },
    "facts": {
     "length": {
-     "v": null,
-     "src": null
+     "v": "76.5 inches",
+     "src": "shop:photo file name 'Star buzz are 76.5 inches' (Drive, 2026-11-27)"
     },
     "brand": {
      "v": "Starbuzz",
@@ -1501,7 +1501,7 @@
     }
    },
    "flags": [
-    "NEEDS SHOP: not in the recording: name read from the bag, length not known (bag: Starbuzz Tobacco)"
+    "NEEDS SHOP: not in the recording: name read from the bag (Starbuzz Tobacco); length from the shop's photo caption"
    ],
    "variants": [
     {
@@ -1516,7 +1516,7 @@
       "src": "photo:IMG_0543 (the shop's shelf photo)"
      },
      "confirm": {
-      "v": "not in the recording: name read from the bag, length not known (bag: Starbuzz Tobacco)",
+      "v": "not in the recording: name read from the bag (Starbuzz Tobacco); length from the shop's photo caption",
       "src": "rule 2026-11-27 (owner: match them up to the best of your ability)"
      },
      "photo": {
@@ -1567,7 +1567,7 @@
       "src": "photo:IMG_0549 (the shop's shelf photo)"
      },
      "confirm": {
-      "v": "not in the recording: name read from the bag, length not known (bag: Starbuzz Tobacco)",
+      "v": "not in the recording: name read from the bag (Starbuzz Tobacco); length from the shop's photo caption",
       "src": "rule 2026-11-27 (owner: match them up to the best of your ability)"
      },
      "photo": {
@@ -1618,7 +1618,7 @@
       "src": "photo:IMG_0551 (the shop's shelf photo)"
      },
      "confirm": {
-      "v": "not in the recording: name read from the bag, length not known (bag: Starbuzz Tobacco)",
+      "v": "not in the recording: name read from the bag (Starbuzz Tobacco); length from the shop's photo caption",
       "src": "rule 2026-11-27 (owner: match them up to the best of your ability)"
      },
      "photo": {
@@ -1669,7 +1669,7 @@
       "src": "photo:IMG_0555 (the shop's shelf photo)"
      },
      "confirm": {
-      "v": "not in the recording: name read from the bag, length not known (bag: Starbuzz Tobacco)",
+      "v": "not in the recording: name read from the bag (Starbuzz Tobacco); length from the shop's photo caption",
       "src": "rule 2026-11-27 (owner: match them up to the best of your ability)"
      },
      "photo": {
