@@ -54,6 +54,8 @@ def build_ace(reg, pdf: Path, photos_manifest, day):
     _, pages = src_ace.read_pdf(pdf)
     fams = src_ace.families(pages)
     assign = {}   # variant key -> photo record
+    # a photo replaced by a web photo of the same product keeps its source page (web-photos.json), so it can be swapped later
+    web_src = {im["out"]: im["photo_src"] for im in (photos_manifest or {}).get("images", []) if im.get("photo_src")}
     hero = {}     # family -> img name of its hero shot
     if photos_manifest:
         for im in photos_manifest.get("images", []):
@@ -84,7 +86,8 @@ def build_ace(reg, pdf: Path, photos_manifest, day):
                 "swatch_hex": C.cell(hx, f"{p}:colour square {i + 1} fill (chip colour only; never a colour name)" if hx else None),
                 "colour": colour,
                 "photo": {"img": img, "status": (ph["status"] if ph else ("family_hero_only" if img else "none")),
-                          "src": f"photo manifest store/catalog/suppliers/ace/photos.json" if img else None},
+                          "src": f"photo manifest store/catalog/suppliers/ace/photos.json" if img else None,
+                          **({"web_src": web_src[img]} if img in web_src else {})},
                 "shop": C.blank_shop(),
             })
         f["variants"] = variants
@@ -376,6 +379,8 @@ def desired_rows(supplier: str, m):
                 facts["shown_in"] = shown or None
                 if hst in UPSCALE_PHOTO:
                     facts["photo_upscale"] = True
+            if v["photo"].get("web_src"):   # the page the photo came from (owner 2026-11-27: high quality web photos are fair game)
+                facts["photo_src"] = v["photo"]["web_src"]
             facts["colour_confirmed"] = bool(shop["colour_confirmed"]["v"])   # a photo's guess is shown as "Colours TBD", never as fact
             if facts["photo"] == "own" and v["photo"]["img"] in hexes:
                 facts["photo_hex"] = hexes[v["photo"]["img"]]

@@ -1,0 +1,484 @@
+{
+ "schema": "oss-web-photos/1",
+ "why": "owner 2026-11-27: \"if there's any high quality photos online let's just go ahead and use them, it's fair game\", then option 2 (the brand's own high-res product photos). photos.py keeps these files and the status recorded here when it rebuilds, while every file still matches its hash and the Ace cut it stands for (xref, crop) is unchanged.",
+ "rules": "brand or distributor product shots only (no shop-shot, watermarked, lifestyle or AI images); same product and colour checked side by side; cut out from the image's own transparency; framed like photos.py; used only after a design review judged it clearly better",
+ "images": {
+  "ace/ace-tsar-molotov-white": {
+   "skus": [
+    "OSS-100079"
+   ],
+   "colour": "John Snow (white)",
+   "image_url": "https://tsar-hookah.com/wp-content/themes/tsar-light/assets/images/uploads/2022/02/John-Snow.png",
+   "page_url": "https://tsar-hookah.com/tsar-molotov-x-plus/",
+   "site": "tsar-hookah.com",
+   "owner": "brand",
+   "src_px": [
+    1000,
+    1000
+   ],
+   "product_px": [
+    599,
+    779
+   ],
+   "scale_720": 1.04,
+   "lw": null,
+   "status": "ready",
+   "date": "2026-11-27",
+   "was": "CHECK",
+   "was_scale": 1.3,
+   "xref": 2783,
+   "crop": [
+    241,
+    109,
+    720,
+    732
+   ],
+   "files": {
+    "ace-tsar-molotov-white.webp": "78705ab5603d3d491fa83d605fa3bbe9a2bfc112bff3b08cea9d7680700452a9",
+    "ace-tsar-molotov-white-m.webp": "24f0d3b59edefbc9e1b4d0275c2b2abcb4f53472635bd90a26eb7ba5fde1a2c6",
+    "ace-tsar-molotov-white-s.webp": "f188c6d63f878e41e04ee1c5826c26b0b7e14f70955ec413054ec11bd7ac7060"
+   }
+  },
+  "ace/ace-tsar-molotov-blue": {
+   "skus": [
+    "OSS-100080",
+    "OSS-100081",
+    "OSS-100083",
+    "OSS-100084"
+   ],
+   "colour": "Arctic blue",
+   "image_url": "https://tsar-hookah.com/wp-content/themes/tsar-light/assets/images/uploads/2022/02/Arctic-blue.png",
+   "page_url": "https://tsar-hookah.com/tsar-molotov-x-plus/",
+   "site": "tsar-hookah.com",
+   "owner": "brand",
+   "src_px": [
+    1000,
+    1000
+   ],
+   "product_px": [
+    646,
+    786
+   ],
+   "scale_720": 0.975,
+   "lw": null,
+   "status": "ready",
+   "date": "2026-11-27",
+   "was": "CHECK",
+   "was_scale": 1.219,
+   "xref": 2781,
+   "crop": [
+    238,
+    103,
+    755,
+    732
+   ],
+   "files": {
+    "ace-tsar-molotov-blue.webp": "456aa70e4d794da5855019ad323580a897bb00cf06d83afe0c3c8976fc595bd9",
+    "ace-tsar-molotov-blue-m.webp": "15f69c1a3403c4a90807e8cead8ca06d78b41e7220196a76a694c3ce3a477a50",
+    "ace-tsar-molotov-blue-s.webp": "927459e1c7306f6e66b14d33fe2618c68634e9d50fe3b487e8f16b0e574534e1"
+   }
+  },
+  "ace/ace-tsar-molotov-black": {
+   "skus": [
+    "OSS-100082"
+   ],
+   "colour": "Sparkling anthra (anthracite)",
+   "image_url": "https://tsar-hookah.com/wp-content/themes/tsar-light/assets/images/uploads/2022/02/Sparkling-anthra.png",
+   "page_url": "https://tsar-hookah.com/tsar-molotov-x-plus/",
+   "site": "tsar-hookah.com",
+   "owner": "brand",
+   "src_px": [
+    1000,
+    1000
+   ],
+   "product_px": [
+    646,
+    791
+   ],
+   "scale_720": 0.975,
+   "lw": null,
+   "status": "ready",
+   "date": "2026-11-27",
+   "was": "CHECK",
+   "was_scale": 1.221,
+   "xref": 2785,
+   "crop": [
+    239,
+    99,
+    755,
+    731
+   ],
+   "files": {
+    "ace-tsar-molotov-black.webp": "39dbc0225f38509c0be6054c1ed245e6d7f98c2405af05a06745af23c8dffcca",
+    "ace-tsar-molotov-black-m.webp": "7afcddde51447146742eb0424e9283b23d725e9c458edc0f3fa3f26148a63eee",
+    "ace-tsar-molotov-black-s.webp": "bd8ab46437fbcb0322420566f9d8f67ec15c5620f1f3e5d023343b38f6d92f98"
+   }
+  },
+  "ace/ace-tsar-h-one-black": {
+   "skus": [
+    "OSS-100088",
+    "OSS-100089",
+    "OSS-100090",
+    "OSS-100092"
+   ],
+   "colour": "black, blue ring",
+   "image_url": "https://tsar-hookah.com/wp-content/themes/tsar-light/assets/images/uploads/2022/04/tsar_H-One_hookah_2.png",
+   "page_url": "https://tsar-hookah.com/tsar-h-one/",
+   "site": "tsar-hookah.com",
+   "owner": "brand",
+   "src_px": [
+    1000,
+    1000
+   ],
+   "product_px": [
+    459,
+    962
+   ],
+   "scale_720": 0.842,
+   "lw": null,
+   "status": "ready",
+   "date": "2026-11-27",
+   "was": "ready",
+   "was_scale": 1.056,
+   "xref": 2902,
+   "crop": [
+    217,
+    19,
+    584,
+    786
+   ],
+   "files": {
+    "ace-tsar-h-one-black.webp": "37b8b54a01019e2a5949014df038eeed7f8030acf63a77bbb95c601022860eb6",
+    "ace-tsar-h-one-black-m.webp": "b758cd9095ef96966c413fa94dfdb2b240638053e5fb4cd1f41442a593ee8944",
+    "ace-tsar-h-one-black-s.webp": "be52b322905d93145f126baa3d29d46cd4b30bddd5a012ff84fc488342ad7514"
+   }
+  },
+  "ace/ace-tsar-h-one-black-2": {
+   "skus": [
+    "OSS-100091"
+   ],
+   "colour": "black, orange ring (Tsar orange; its orange mouthpiece left out, as in the Ace photo)",
+   "image_url": "https://tsar-hookah.com/wp-content/themes/tsar-light/assets/images/uploads/2022/04/Chicha_tsar_h_one_orange.png",
+   "page_url": "https://tsar-hookah.com/tsar-h-one/",
+   "site": "tsar-hookah.com",
+   "owner": "brand",
+   "src_px": [
+    1000,
+    1000
+   ],
+   "product_px": [
+    581,
+    923
+   ],
+   "scale_720": 0.878,
+   "lw": null,
+   "status": "ready",
+   "date": "2026-11-27",
+   "was": "ready",
+   "was_scale": 1.098,
+   "xref": 2904,
+   "crop": [
+    100,
+    34,
+    565,
+    772
+   ],
+   "files": {
+    "ace-tsar-h-one-black-2.webp": "2510a8138c0e9b17906dd5741e38a484352cf104ffaefd12906bf54e23db40f6",
+    "ace-tsar-h-one-black-2-m.webp": "45e1565dbbc7cf9e37eca4e8bdfde9c1ad8048b352926c20568ff7803c77d299",
+    "ace-tsar-h-one-black-2-s.webp": "fd6f17d1d2fb8d37da3221956bb96f850339ad6d79cd00b3e8b0865b760eb260"
+   }
+  },
+  "ace/ace-226-wood-bronze": {
+   "skus": [
+    "OSS-100231"
+   ],
+   "colour": "bronze wood",
+   "image_url": "https://shishazone.ca/wp-content/uploads/2023/01/ACE-hookah-54.png",
+   "page_url": "https://shishazone.ca/product/wood-226/",
+   "site": "shishazone.ca",
+   "owner": "distributor (Ace Hookah's own 3-colour product shot, the same picture as in Ace's catalogue, hosted by a retailer)",
+   "src_px": [
+    1280,
+    1280
+   ],
+   "product_px": [
+    276,
+    792
+   ],
+   "scale_720": 1.023,
+   "lw": null,
+   "status": "ready",
+   "date": "2026-11-27",
+   "was": "CHECK",
+   "was_scale": 1.636,
+   "xref": 4395,
+   "crop": [
+    99,
+    167,
+    271,
+    662
+   ],
+   "files": {
+    "ace-226-wood-bronze.webp": "683335e78eba1a370550360df51c635e070572723e2b7d65e438451e87aa867d",
+    "ace-226-wood-bronze-m.webp": "4e5804349adf9212581b497b1ebc654d6f5f3da64a81a6025334784465a4a08c",
+    "ace-226-wood-bronze-s.webp": "33edaeb1b1824314cbdae039349206754d8b3675847fb3d0bb7f5ea2bdcf9140"
+   }
+  },
+  "ace/ace-226-wood-blue": {
+   "skus": [
+    "OSS-100232",
+    "OSS-100234",
+    "OSS-100235"
+   ],
+   "colour": "blue wood",
+   "image_url": "https://shishazone.ca/wp-content/uploads/2023/01/ACE-hookah-54.png",
+   "page_url": "https://shishazone.ca/product/wood-226/",
+   "site": "shishazone.ca",
+   "owner": "distributor (Ace Hookah's own 3-colour product shot, the same picture as in Ace's catalogue, hosted by a retailer)",
+   "src_px": [
+    1280,
+    1280
+   ],
+   "product_px": [
+    277,
+    792
+   ],
+   "scale_720": 1.023,
+   "lw": null,
+   "status": "ready",
+   "date": "2026-11-27",
+   "was": "CHECK",
+   "was_scale": 1.633,
+   "xref": 4395,
+   "crop": [
+    317,
+    167,
+    490,
+    663
+   ],
+   "files": {
+    "ace-226-wood-blue.webp": "727e530b542f1a64cbb39c3078af10364a84dcdb242adbb7368d849c7a921847",
+    "ace-226-wood-blue-m.webp": "2f83989e2bc1f4f55b087548ab0f452fc92eb3cfb13df60f5c024cee08524738",
+    "ace-226-wood-blue-s.webp": "283b49643553df062e8862694ce9a5be1d55e308efc8b02ba8391b4632032ef9"
+   }
+  },
+  "ace/ace-226-wood-black": {
+   "skus": [
+    "OSS-100233"
+   ],
+   "colour": "black-and-white wood",
+   "image_url": "https://shishazone.ca/wp-content/uploads/2023/01/ACE-hookah-54.png",
+   "page_url": "https://shishazone.ca/product/wood-226/",
+   "site": "shishazone.ca",
+   "owner": "distributor (Ace Hookah's own 3-colour product shot, the same picture as in Ace's catalogue, hosted by a retailer)",
+   "src_px": [
+    1280,
+    1280
+   ],
+   "product_px": [
+    277,
+    794
+   ],
+   "scale_720": 1.02,
+   "lw": null,
+   "status": "ready",
+   "date": "2026-11-27",
+   "was": "CHECK",
+   "was_scale": 1.633,
+   "xref": 4395,
+   "crop": [
+    519,
+    166,
+    692,
+    662
+   ],
+   "files": {
+    "ace-226-wood-black.webp": "7483a0b7e183a9c500349d4a9c7d1d2ed5ecd0962e804c1c6d612632703fe90b",
+    "ace-226-wood-black-m.webp": "3040be2524b6a79066d3171eaa5652fed23faf20f1786b89efe953245aab0296",
+    "ace-226-wood-black-s.webp": "a22b02d7b3454dec644f2d1d22abf5c39e06aa371d5851eb33fba8bcebfcc2b3"
+   }
+  },
+  "ace/ace-techno-red": {
+   "skus": [
+    "OSS-100108"
+   ],
+   "colour": "red",
+   "image_url": "https://shishazone.ca/wp-content/uploads/2023/01/ACE-hookah-55.png",
+   "page_url": "https://shishazone.ca/product/techno-hookah/",
+   "site": "shishazone.ca",
+   "owner": "distributor (Ace Hookah's own 5-colour product shot, the same picture as in Ace's catalogue, hosted by a retailer)",
+   "src_px": [
+    1280,
+    1280
+   ],
+   "product_px": [
+    238,
+    592
+   ],
+   "scale_720": 1.368,
+   "lw": null,
+   "status": "CHECK",
+   "date": "2026-11-27",
+   "was": "needs_original",
+   "was_scale": 2.201,
+   "xref": 3113,
+   "crop": [
+    6,
+    11,
+    155,
+    379
+   ],
+   "files": {
+    "ace-techno-red.webp": "8611e56e5df4b475824a96b31a65232711e52d9cf9a4edb14ed6e0cc5debee1b",
+    "ace-techno-red-m.webp": "4b5a2c5dcc9aee554d71b038329dfe18d62afd81991d69d929b236c5c91fedc2",
+    "ace-techno-red-s.webp": "125645eafb4da74daa91ce63a1cd6b6fa4dc131e49d0de07c3aa5604e3b5e173"
+   }
+  },
+  "ace/ace-techno-black": {
+   "skus": [
+    "OSS-100110"
+   ],
+   "colour": "black",
+   "image_url": "https://shishazone.ca/wp-content/uploads/2023/01/ACE-hookah-55.png",
+   "page_url": "https://shishazone.ca/product/techno-hookah/",
+   "site": "shishazone.ca",
+   "owner": "distributor (Ace Hookah's own 5-colour product shot, the same picture as in Ace's catalogue, hosted by a retailer)",
+   "src_px": [
+    1280,
+    1280
+   ],
+   "product_px": [
+    233,
+    589
+   ],
+   "scale_720": 1.375,
+   "lw": null,
+   "status": "CHECK",
+   "date": "2026-11-27",
+   "was": "needs_original",
+   "was_scale": 2.207,
+   "xref": 3113,
+   "crop": [
+    174,
+    13,
+    320,
+    380
+   ],
+   "files": {
+    "ace-techno-black.webp": "34d288b2964b3fb298e2a13c390fcf0d8d9eb4c5350fcb6061ff29def7bf2df1",
+    "ace-techno-black-m.webp": "a410f714b61e9db07120f63c78ce57c67919fecb818f7278d5714ecc7e867be7",
+    "ace-techno-black-s.webp": "a7ca352c5cfedd05aa8445dead011ca2bbd1156dff799c648d1991936b1cc787"
+   }
+  },
+  "ace/ace-techno-grey": {
+   "skus": [
+    "OSS-100111",
+    "OSS-100112"
+   ],
+   "colour": "white stem, clear base",
+   "image_url": "https://shishazone.ca/wp-content/uploads/2023/01/ACE-hookah-55.png",
+   "page_url": "https://shishazone.ca/product/techno-hookah/",
+   "site": "shishazone.ca",
+   "owner": "distributor (Ace Hookah's own 5-colour product shot, the same picture as in Ace's catalogue, hosted by a retailer)",
+   "src_px": [
+    1280,
+    1280
+   ],
+   "product_px": [
+    239,
+    593
+   ],
+   "scale_720": 1.366,
+   "lw": null,
+   "status": "CHECK",
+   "date": "2026-11-27",
+   "was": "needs_original",
+   "was_scale": 2.189,
+   "xref": 3113,
+   "crop": [
+    333,
+    12,
+    482,
+    382
+   ],
+   "files": {
+    "ace-techno-grey.webp": "7e2d50da3aa02bbfc6b7a13f156e80886a4b8694788ca112c8356b1409e38da5",
+    "ace-techno-grey-m.webp": "7df98bfff58b7e33371b99e4895f71f99085684c5944a8be2b9015fefebd701e",
+    "ace-techno-grey-s.webp": "bf498652059526ee01594d691a8d09ce2ca572f5ecfbae735a720a30f4bb71c1"
+   }
+  },
+  "ace/ace-techno-yellow": {
+   "skus": [
+    "OSS-100107"
+   ],
+   "colour": "yellow stem, smoke base",
+   "image_url": "https://shishazone.ca/wp-content/uploads/2023/01/ACE-hookah-55.png",
+   "page_url": "https://shishazone.ca/product/techno-hookah/",
+   "site": "shishazone.ca",
+   "owner": "distributor (Ace Hookah's own 5-colour product shot, the same picture as in Ace's catalogue, hosted by a retailer)",
+   "src_px": [
+    1280,
+    1280
+   ],
+   "product_px": [
+    240,
+    588
+   ],
+   "scale_720": 1.378,
+   "lw": null,
+   "status": "CHECK",
+   "date": "2026-11-27",
+   "was": "needs_original",
+   "was_scale": 2.207,
+   "xref": 3113,
+   "crop": [
+    487,
+    13,
+    637,
+    380
+   ],
+   "files": {
+    "ace-techno-yellow.webp": "830379526cf9aaea11a2b2edf71f587a9636170078452dee87ee61a1046bdabd",
+    "ace-techno-yellow-m.webp": "b62091e5231e7bb66a1c0158f15707caa212bf1245157fb697df6c31c496f419",
+    "ace-techno-yellow-s.webp": "1d4d6081403c015d823dacc846282b6f66512e59be7ae73ea6f01a141623ef79"
+   }
+  },
+  "ace/ace-techno-blue": {
+   "skus": [
+    "OSS-100109"
+   ],
+   "colour": "blue",
+   "image_url": "https://shishazone.ca/wp-content/uploads/2023/01/ACE-hookah-55.png",
+   "page_url": "https://shishazone.ca/product/techno-hookah/",
+   "site": "shishazone.ca",
+   "owner": "distributor (Ace Hookah's own 5-colour product shot, the same picture as in Ace's catalogue, hosted by a retailer)",
+   "src_px": [
+    1280,
+    1280
+   ],
+   "product_px": [
+    239,
+    586
+   ],
+   "scale_720": 1.382,
+   "lw": null,
+   "status": "CHECK",
+   "date": "2026-11-27",
+   "was": "needs_original",
+   "was_scale": 2.213,
+   "xref": 3113,
+   "crop": [
+    642,
+    14,
+    791,
+    380
+   ],
+   "files": {
+    "ace-techno-blue.webp": "aa7ba6717ac4ea4ff84cd14da47adbc0c22787c3204d1dbaad187836ea81414e",
+    "ace-techno-blue-m.webp": "0e99a53b59f7387c3c0d7475c3464fdd036f4c53816c257b235972e2e4e43d52",
+    "ace-techno-blue-s.webp": "c1ada24586cd0729d9c45bb25c46afd90b4f174ecd232bdb1cff630ed58c96bf"
+   }
+  }
+ }
+}

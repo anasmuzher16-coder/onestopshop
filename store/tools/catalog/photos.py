@@ -4,7 +4,8 @@
 
 Ace's photos are already cut out: nearly every embedded image carries its own soft mask. This script
 extracts image + mask (no background removal, no AI upscaling here; a photo upscaled by hand and recorded in
-suppliers/<supplier>/upscaled.json is kept as it is, status ready, while its files and source match), sorts each image into hero / colour / group /
+suppliers/<supplier>/upscaled.json is kept as it is, status ready, while its files and source match; so is a photo
+replaced by a sharper web photo of the same product, recorded with its source in suppliers/<supplier>/web-photos.json), sorts each image into hero / colour / group /
 kit / lifestyle, splits rows of colours at the gaps in the mask, frames each product at 720x900 (product
 810 px tall, 45 px foot, centred; -m 540x675, -s 360x450; Lanczos only; WebP method 4) and flags anything
 enlarged past 1.25x as CHECK. It writes a manifest (store/catalog/suppliers/ace/photos.json) and contact
@@ -368,6 +369,7 @@ def run(pdf: Path, work: Path, publish: bool):
             smask_of[im[0]] = im[1]
     overrides = C.load_json(C.SUPPLIERS / "ace" / "photo-overrides.json", {}).get("images", {})
     kept = upscaled_kept("ace", PUBLIC, pdf)
+    web = web_kept("ace", PUBLIC)
     images = []
     for r in order:
         f = fams[r["page"]]
@@ -444,6 +446,7 @@ def run(pdf: Path, work: Path, publish: bool):
             it["out"] = f"ace/{out}"
             it["file"] = it["tmp"] + "-s.webp"
             apply_upscaled(it, kept)   # after roles are set, so an upscale never reshuffles which photo is the hero
+            apply_web(it, web)         # same: a web photo takes the place of this cut, roles unchanged
             images.append(it)
     # publish: only the images a product row will show (matched to a colour, or the family's hero)
     shipped = [im for im in images if im.get("status") in SHOWN and im.get("role") in ("hero", "colour")]
@@ -451,8 +454,8 @@ def run(pdf: Path, work: Path, publish: bool):
         PUBLIC.mkdir(parents=True, exist_ok=True)
         want = set()
         for im in shipped:
-            if im.get("upscaled"):   # its upscaled files (with the 1440 -l) stay exactly as they are
-                want.update(im["upscaled"])
+            if im.get("upscaled") or im.get("web"):   # upscaled or web-photo files (with any 1440 -l) stay exactly as they are
+                want.update(im.get("web") or im["upscaled"])
                 continue
             for suf, _, _ in SIZES:
                 src = Path(im["tmp"] + suf + ".webp")
@@ -469,7 +472,8 @@ def run(pdf: Path, work: Path, publish: bool):
                 "published_dir": "store/public/img/pc/ace", "images": []}
     for im in images:
         manifest["images"].append({k: im.get(k) for k in ("page", "xref", "family_id", "class", "role", "crop", "src_px", "scale",
-                                                          "colour", "rgb", "variant_key", "sku", "status", "out", "note")})
+                                                          "colour", "rgb", "variant_key", "sku", "status", "out", "note")}
+                                  | ({"photo_src": im["photo_src"]} if im.get("photo_src") else {}))
     C.write_json(C.SUPPLIERS / "ace" / "photos.json", manifest)
     # contact sheets
     pal_bg, pal = tokens()
