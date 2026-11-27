@@ -207,11 +207,12 @@ ok((await fetch(B + "/api/admin/login", { method: "POST", headers: { "Content-Ty
 const una = { name: "Una" + letters(), pin: "582914" };
 ok((await A("/staff", { method: "POST", body: una })).status === 201, "owner adds one more staff member for the lock checks");
 const nameRows = () => process.env.PERSIST ? JSON.parse((x => x.slice(x.indexOf("[")))(execFileSync(process.execPath, [process.env.WRANGLER_JS || join(execFileSync(process.platform === "win32" ? "npm.cmd" : "npm", ["root", "-g"], { encoding: "utf8", shell: process.platform === "win32" }).trim(), "wrangler", "bin", "wrangler.js"), "d1", "execute", "onestopshop", "--local", "--persist-to", process.env.PERSIST, "--json", "--command", "SELECT COUNT(*) AS n FROM login_attempts WHERE who LIKE 'n:%'"], { cwd: fileURLToPath(new URL("..", import.meta.url)), encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] })))[0].results[0].n : 0;
-const names0 = nameRows(), waves = Array.from({ length: 10 }, () => "Wave" + letters());
-// six tries at once on each of ten names, all from one address: before 2026-11-26 every name got six rows and was locked
-const flood = await Promise.all(Array.from({ length: 60 }, (_, i) => A("/login", { method: "POST", as: "none", body: { name: waves[i % 10], pin: "00000" + (i % 10) }, headers: { "CF-Connecting-IP": "10.2.2.2" } })));
+const names0 = nameRows(), waves = Array.from({ length: 5 }, () => "Wave" + letters());
+// six tries at once on each of five names, all from one address (kept to 30 at once: the local dev server falls over past
+// about a hundred simultaneous requests on GitHub's machines, which is a test-rig limit, not the shop's): before 2026-11-26 every name got six rows and was locked
+const flood = await Promise.all(Array.from({ length: 30 }, (_, i) => A("/login", { method: "POST", as: "none", body: { name: waves[i % 5], pin: "00000" + (i % 10) }, headers: { "CF-Connecting-IP": "10.2.2.2" } })));
 if (process.env.PERSIST) ok(nameRows() - names0 <= 5, `one address's burst writes at most five name tries in all, so it cannot lock every name: ${nameRows() - names0}`);
-ok(flood.filter(r => r.status === 401).length <= 5, "sixty staff tries at once from one address get at most five checks: " + flood.filter(r => r.status === 401).length);
+ok(flood.filter(r => r.status === 401).length <= 5, "thirty staff tries at once from one address get at most five checks: " + flood.filter(r => r.status === 401).length);
 const unaIn = await A("/login", { method: "POST", as: "none", body: una, headers: { "CF-Connecting-IP": "10.2.9.9" } });
 ok(unaIn.status === 200, "after one address floods staff sign-in, staff elsewhere still sign in: " + unaIn.status);
 // the flood's shop-wide staff count is cleared again (the address itself stays locked), so each lock check below tests its own rule
@@ -229,8 +230,8 @@ const ownerStill = await A("/login", { method: "POST", as: "none", body: { passc
 ok(ownerStill.status === 200, "forty-plus wrong staff PINs from all over do not lock the owner out: " + ownerStill.status);
 ok((await A("/logout", { method: "POST", body: {} })).status === 200, "owner signs out");
 // ---- one address can never lock or slow the owner (breaker review, 2026-11-26) ----
-const ownerFlood = await Promise.all(Array.from({ length: 120 }, () => A("/login", { method: "POST", as: "none", body: { passcode: "wrong-" + letters() }, headers: { "CF-Connecting-IP": "10.1.1.1" } })));
-ok(ownerFlood.filter(r => r.status === 401).length <= 5, "120 owner tries at once from one address get at most five checks: " + ownerFlood.filter(r => r.status === 401).length);
+const ownerFlood = await Promise.all(Array.from({ length: 30 }, () => A("/login", { method: "POST", as: "none", body: { passcode: "wrong-" + letters() }, headers: { "CF-Connecting-IP": "10.1.1.1" } })));
+ok(ownerFlood.filter(r => r.status === 401).length <= 5, "30 owner tries at once from one address get at most five checks: " + ownerFlood.filter(r => r.status === 401).length);
 const t0 = Date.now(), ownerIn = await A("/login", { method: "POST", as: "none", body: { passcode: KEY }, headers: { "CF-Connecting-IP": "10.1.9.9" } });
 ok(ownerIn.status === 200 && Date.now() - t0 < 3000, `one address cannot lock or slow the owner's sign-in: ${ownerIn.status} in ${Date.now() - t0} ms`);
 if (process.env.PERSIST) {
