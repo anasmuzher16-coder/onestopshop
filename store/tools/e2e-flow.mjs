@@ -41,6 +41,14 @@ try {
   if (!CARD) t("no keys: the cart picked up is paid at the counter", /At the counter/.test(await p.locator(".co__pay").innerText()));
   await p.locator('[data-checkout] button[type="submit"]').tap(); await p.waitForTimeout(300);
   t("empty form is stopped with a message under the first field", await p.locator("#co-name-err").isVisible() && await p.locator("#co-name").getAttribute("aria-invalid") === "true");   // 2026-11-27: under the field, no longer above the button
+  { const all = await p.locator("#co-name-err, #co-email-err").evaluateAll(es => es.map(e => !e.hidden)), who = await p.evaluate(() => document.activeElement && document.activeElement.id);
+    t("an empty form shows every field's error at once, each field marked and described, the focus on the first", all.every(Boolean) && await p.locator("#co-email").getAttribute("aria-invalid") === "true" && await p.locator("#co-email").getAttribute("aria-describedby") === "co-email-err" && who === "co-name", `${all} ${who}`);
+    await p.fill("#co-name", "Sam Sample"); await p.fill("#co-email", "not-an-email"); await p.fill("#co-phone", "123"); await p.locator('[data-checkout] button[type="submit"]').tap(); await p.waitForTimeout(300);
+    const ph = await p.locator("#co-phone-err").isVisible(), em = await p.locator("#co-email-err").isVisible(), phNeeded = await p.locator("#co-phone").evaluate(e => e.required);
+    t("a bad email and a bad phone both show, each under its own field, the focus on the email", em && (ph || !phNeeded) && await p.locator("#co-email").getAttribute("aria-invalid") === "true" && (!phNeeded || await p.locator("#co-phone").getAttribute("aria-describedby") === "co-phone-err") && await p.evaluate(() => document.activeElement.id) === "co-email", `email ${em} phone ${ph} needed ${phNeeded}`);
+    const mark = await p.locator("#co-email-err").evaluate(e => { const r = e.getBoundingClientRect(); return r.left >= 0 && getComputedStyle(e, "::before").textIndent === "0px"; });
+    if (phNeeded) { await p.fill("#co-email", "sam@example.com"); await p.fill("#co-phone", "222-222-2222"); await p.locator('[data-checkout] button[type="submit"]').tap(); await p.waitForTimeout(300); t("a phone of one repeated digit is stopped under the phone field", await p.locator("#co-phone-err").isVisible() && await p.locator("#co-phone").getAttribute("aria-invalid") === "true"); }
+    t("the error mark sits inside the field column, not hanging off the left edge", mark); }
   await p.fill("#co-name", "Sam Sample"); await p.fill("#co-email", "sam@example.com"); await p.fill("#co-phone", "519-555-0171"); /* a pickup gives a phone while the shop's mail is off (2026-11-27) */ if (CARD) { await p.fill("#co-line1", "1 Test Street"); await p.fill("#co-city", "Toronto"); }
   const shown = await p.locator(".totals__door dd").innerText();
   await p.locator('[data-checkout] button[type="submit"]').tap(); await payThrough(p, 15000);

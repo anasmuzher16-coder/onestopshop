@@ -96,6 +96,9 @@ if (paid) {
     [{ name: "  " }, "an empty name"], [{ name: "x".repeat(81) }, "a name over 80"], [{ name: "Fine", price_cents: -1 }, "a good field beside a bad one"]]) ok((await info(t.sku, body)).status === 400, "item editor refuses " + what);
   const same = await row(t.sku); ok(same.price_cents === t.price_cents && same.stock === t.stock && same.details === t.details && same.name === t.name, "nothing was written by a refused save");
   ok((await info(t.sku, { name: "X" }, { marker: false })).status === 400 && (await info(t.sku, { name: "X" }, { origin: "https://evil.example" })).status === 403 && (await info("OSS-999999", { name: "X" })).status === 404, "item editor: request marker, same site and a real item");
+  { const dirty = "\u202eBay\n\tLeaf\u2069 Tray\u0001 (No. 5)", r = await info(t.sku, { name: dirty });
+    ok(r.status === 200 && (await row(t.sku)).name === "Bay Leaf Tray (No. 5)", "item editor cleans a name of direction overrides, controls, newlines and tabs", (await row(t.sku)).name);
+    ok((await info(t.sku, { name: "\u202e\n" })).status === 400, "item editor refuses a name with nothing visible in it"); await info(t.sku, { name: t.name }); }
   // staff fill in name, colours and the shelf count; the price is the owner's
   const sname = "Rami" + Array.from({ length: 4 }, () => "abcdefghjkmnpqrstuvwxyz"[Math.floor(Math.random() * 23)]).join("");
   ok((await call("/staff", { method: "POST", body: { name: sname, pin: "593024" } })).status === 201, "owner adds a staff member for the editor");
@@ -152,6 +155,33 @@ if (paid) {
     const m3 = await import("data:text/javascript;base64," + Buffer.from(await (await fetch(B + "/api/catalog-module")).text()).toString("base64"));
     const h3 = m3.PRODUCTS.find(x => x.sku === hl.sku), c3 = m3.PRODUCTS.find(x => x.sku === hz.sku);
     ok(h3 && h3.facts.length === "66.5 inches" && !("length" in h3.details) && c3 && !("checked" in c3.details), "the storefront shows the typed length; the check tick never leaves the back office"); }
+  // weight (2026-11-27): typed as the shop thinks it ("250 g", "1.2 kg"), stored as whole grams in products.weight_g, the weight
+  // rates and checkout read. It asks for a weight only where a missing one blocks shipping (foil), never for charcoal; staff may set it.
+  { const prods = (await call("/products")).data.products, needW = prods.filter(x => x.needs?.includes("weight"));
+    ok(needW.length >= 15 && needW.every(x => /^foil-/.test(x.family || "")), "only items that ship but have no weight yet (the foil) ask for one: " + needW.length);
+    ok(!prods.some(x => x.needs?.includes("weight") && (x.category_id === "charcoal" || /^charcoal-/.test(x.family || ""))) && !prods.find(x => x.sku === t.sku).needs?.includes("weight") && !prods.find(x => x.sku === hk.sku).needs?.includes("weight"), "charcoal, a priced accessory and a hookah are not on the list for a weight");
+    const wf = needW[0], wn = prods.filter(x => x.needs).length;
+    ok(!("weight_known_g" in wf) && prods.find(x => x.sku === "OSS-1001")?.weight_known_g > 0, "the list says the known weight, never an import's placeholder");
+    for (const bad of ["0 g", "30.5 kg", "30001 g", "12.5 g", "2.0005 kg", "-3 kg", "250", "1,5 kg", "lots", 250, true, null])
+      ok((await info(wf.sku, { weight: bad })).status === 400, "item editor refuses a weight of " + JSON.stringify(bad));
+    ok((await row(wf.sku)).weight_g === wf.weight_g && (await row(wf.sku)).details === wf.details, "nothing was written by a refused weight");
+    cookie = ""; const sl2 = await call("/login", { method: "POST", body: { name: sname, pin: "593024" } }); cookie = (sl2.r.headers.get("set-cookie") || "").split(";")[0];
+    const sw = await info(wf.sku, { weight: "0.5 kg" }), wr = await row(wf.sku);
+    ok(sw.status === 200 && wr.weight_g === 500 && wr.weight_known_g === 500 && JSON.parse(wr.details).weighed === true && !wr.needs, "staff set a weight in kilograms: stored as 500 g, off the needs list: " + JSON.stringify({ g: wr.weight_g, needs: wr.needs }));
+    ok((await call("/products")).data.products.filter(x => x.needs).length === wn - 1, "the needs-info count drops by one");
+    const wh = (await call(`/products/${wf.sku}/history`)).data.changes.find(a => a.action === "product.info");
+    ok(wh && wh.actor.startsWith(sname) && JSON.parse(wh.after).weight_g === 500 && JSON.parse(wh.before).weight_g === wf.weight_g, "the weight change is logged with the staff member's name: " + (wh && wh.after));
+    await call("/logout", { method: "POST", body: {} }); cookie = ownerCookie;
+    ok((await info(wf.sku, { weight: "750 g" })).status === 200 && (await row(wf.sku)).weight_g === 750, "the owner changes it in grams");
+    // a hookah weighed at exactly the import's 2,500 g placeholder: typed, so known; shown on its page in place of the maker's figure
+    ok((await info(hk.sku, { weight: "2.5 kg" })).status === 200 && (await row(hk.sku)).weight_known_g === 2500, "a typed weight equal to the placeholder is known");
+    const coalR = prods.find(x => x.category_id === "charcoal" && /"charcoal":true/.test(x.details || ""));
+    ok((await info(coalR.sku, { weight: "1 kg" })).status === 200 && (await row(coalR.sku)).ship_class === "pickup_only" && (await row(coalR.sku)).weight_g === 1000, "charcoal takes a weight and stays pickup only");
+    const m4 = await import("data:text/javascript;base64," + Buffer.from(await (await fetch(B + "/api/catalog-module")).text()).toString("base64"));
+    const f4 = m4.PRODUCTS.find(x => x.sku === wf.sku), h4 = m4.PRODUCTS.find(x => x.sku === hk.sku), c4 = m4.PRODUCTS.find(x => x.sku === coalR.sku);
+    ok(f4 && !f4.weightTbd && f4.ship === "standard" && f4.kg === 0.75 && !("weighed" in f4.details), "foil with a weight is no longer weight TBD: it ships on its own weight: " + JSON.stringify(f4 && { tbd: f4.weightTbd, ship: f4.ship, kg: f4.kg }));
+    ok(h4 && !h4.weightTbd && h4.kg === 2.5 && h4.facts.item_weight_g === 2500, "the hookah's typed weight is its shipping weight and the weight its page shows");
+    ok(c4 && c4.ship === "pickup_only" && c4.details.charcoal === true, "charcoal with a weight is still never shippable"); }
   const sample = (await call("/products")).data.products.find(x => x.sample && x.active === 0);
   ok(sample && (await info(sample.sku, { price_cents: 1234 })).status === 200 && (await row(sample.sku)).active === 0, "a made-up sample is never switched on by a price");
   // the full product form refuses it too (breaker, 2026-11-27: it used to switch a sample on), whatever else the save carries

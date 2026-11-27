@@ -590,6 +590,72 @@ class TestShopHoses(Base):
         self.assertEqual((len(p2["added"]), len(p2["changed"]), len(p2["retired"])), (0, 0, 0))
 
 
+class TestReverseSearch(Base):
+    """Exact reverse-search rows (2026-11-27): makers' names for four stand-ins, web facts with their source, nothing about
+    what comes in the box (owner: the hookahs are standalone), and a live file that never renames a row the shop renamed."""
+    LIVE = C.CATALOG / "live" / "reverse-search-facts-2026-11-27.sql"
+    NAMES = {"ace-tsar-molotov": "Tsar Molotov X/X+", "ace-tsar-ultimate-gold": "Tsar Ultimate",
+             "ace-tsar-h-one": "Tsar H-One", "ace-flash-bang-amotion": "Amotion Flash Bang"}
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.acc = C.load_master("ace-acc")
+
+    def test_names_and_facts(self):
+        fam = {f["family_id"]: f for f in self.ace["families"]}
+        for fid, name in self.NAMES.items():
+            for v in fam[fid]["variants"]:
+                self.assertEqual(v["shop"]["display_name"]["v"], name)
+                self.assertTrue(v["shop"]["display_name"]["src"].startswith("shop:owner yes 2026-11-27"))
+        self.assertEqual(fam["ace-baseball-bat"]["facts"]["height_cm"]["v"], 68.5)
+        self.assertEqual(fam["ace-tsar-ultimate-gold"]["facts"]["item_weight_g"]["v"], 4200)
+        frank = next(f for f in self.acc["families"] if f["variants"][0]["sku"] == "OSS-110005")
+        self.assertEqual((frank["facts"]["size"]["v"], frank["facts"]["item_weight_g"]["v"]), ("5 × 5 × 5 in", 330))
+        for m in (self.ace, self.acc):
+            for f in m["families"]:
+                for k, c in f["facts"].items():
+                    if (c["src"] or "").startswith("web:"):
+                        self.assertNotIn(k, ("includes", "includes_base", "weight_g"))   # never what is in the box, never the pack weight
+                        self.assertNotRegex(str(c["v"]).lower(), r"hose\b|bowl|mouthpiece|includ|comes with|\bhmd\b")
+
+    def test_web_facts_survive_a_rebuild_and_stay_out_of_the_lineup(self):
+        new = copy.deepcopy(self.ace)
+        for f in new["families"]:   # what a rebuild from the PDF gives: no web facts
+            for k in [k for k, c in f["facts"].items() if (c["src"] or "").startswith("web:")]:
+                f["facts"][k] = C.cell(None, None) if k in ("height_cm", "weight_g") else None
+            f["facts"] = {k: c for k, c in f["facts"].items() if c is not None}
+        C.carry_web_facts(self.ace, new)
+        self.assertEqual(C.dumps(new), C.dumps(self.ace))
+        rows = {r["sku"]: r for r in K.desired_rows("ace", self.ace)}
+        self.assertIsNone(rows["OSS-100116"]["sup"]["height_cm"])   # web height: a fact on the page, not drawn in the home line-up
+        self.assertEqual(json.loads(rows["OSS-100116"]["sup"]["facts_known"])["height_cm"], 68.5)
+        self.assertEqual(rows["OSS-100079"]["shop"]["name"], "Tsar Molotov X/X+")
+
+    def test_live_file_renames_only_stand_ins_and_runs_twice(self):
+        K.apply_supplier(self.con, "ace", self.ace)
+        K.apply_supplier(self.con, "ace-acc", self.acc)
+        self.con.execute("UPDATE products SET name = 'Hookah No. 26', facts_known = json_remove(facts_known, '$.material') WHERE family = 'ace-tsar-molotov'")
+        self.con.execute("UPDATE products SET name = 'Shop''s own name' WHERE sku = 'OSS-100080'")   # renamed in the item editor
+        self.con.execute("UPDATE products SET name = 'Hookah No. 30' WHERE family = 'ace-flash-bang-amotion'")
+        sql = self.LIVE.read_text(encoding="utf-8")
+        self.con.executescript(sql)
+        name = lambda s: self.con.execute("SELECT name FROM products WHERE sku = ?", (s,)).fetchone()[0]
+        self.assertEqual((name("OSS-100079"), name("OSS-100080"), name("OSS-100093")), ("Tsar Molotov X/X+", "Shop's own name", "Amotion Flash Bang"))
+        self.assertEqual(self.con.execute("SELECT json_extract(facts_known, '$.material') FROM products WHERE sku = 'OSS-100079'").fetchone()[0], "Aluminium")
+        audit = self.con.execute("SELECT COUNT(*) FROM audit_log WHERE action = 'reverse-search-2026-11-27'").fetchone()[0]
+        self.assertEqual(audit, 5 + 4)   # 5 Molotov colours still on the stand-in, 4 Flash Bang
+        before = self.con.total_changes
+        self.con.executescript(sql)
+        self.assertEqual(self.con.total_changes, before)   # a second run changes nothing
+        for sup, m in (("ace", self.ace), ("ace-acc", self.acc)):   # the file agrees with the masters
+            for r in K.desired_rows(sup, m):
+                if r["sku"] == "OSS-100080":
+                    continue
+                got = self.con.execute("SELECT facts_known, name FROM products WHERE sku = ?", (r["sku"],)).fetchone()
+                self.assertEqual(json.loads(got[0]), json.loads(r["sup"]["facts_known"]), r["sku"])
+                self.assertEqual(got[1], r["shop"]["name"], r["sku"])
+
 LIVE_SHOP = "shop-photos-2026-11-27.sql"
 
 
@@ -616,7 +682,8 @@ class TestShopPhotosForAce(Base):
         mine = [l for l in live if l.startswith("UPDATE products SET supplier_id = 'ace'")]
         seed = [l for l in K.seed_sql("ace", C.load_master("ace")).splitlines()
                 if l.startswith("UPDATE products SET supplier_id = 'ace'") and "WHERE sku = 'OSS-100150'" in l]
-        self.assertEqual(mine, seed)
+        # the Rose's measured chip colour came later, in hookah-glass-2026-11-27.sql (test_live_hookah_glass_targets_photo_keys)
+        self.assertEqual(mine, [re.sub(r'"photo_hex": "#[0-9a-f]{6}", ', "", l) for l in seed])
 
     def test_tsar_uses_the_shop_photos(self):
         """Green and blue get their own shop photo, no label; red and yellow still say "Shown in blue", now on the shop's photo."""
@@ -634,13 +701,28 @@ class TestShopPhotosForAce(Base):
                 if x["photo"]["status"] == "family_hero_only":
                     self.assertNotEqual(x["photo"]["img"], "ace/ace-tsar-molotov-blue")
 
-    def test_live_tsar_lines_are_the_ace_seed_lines(self):
-        live = (C.CATALOG / "live" / "hookah-glass-2026-11-27.sql").read_text(encoding="utf-8").splitlines()
-        mine = [l for l in live if l.startswith("UPDATE products SET supplier_id = 'ace'")]
-        skus = ("OSS-100080", "OSS-100081", "OSS-100083", "OSS-100084")
-        seed = [l for l in K.seed_sql("ace", C.load_master("ace")).splitlines()
-                if l.startswith("UPDATE products SET supplier_id = 'ace'") and any(f"WHERE sku = '{s}'" in l for s in skus)]
-        self.assertEqual(mine, seed)
+    def test_live_hookah_glass_targets_photo_keys(self):
+        """Run on rows holding other facts and old photo values, the live file gives exactly catalog.py's img, label and photo
+        keys, leaves every other fact and column alone, and a second run changes nothing."""
+        import sqlite3
+        skus = ("OSS-100080", "OSS-100081", "OSS-100083", "OSS-100084", "OSS-100150")
+        rows = {r["sku"]: r["sup"] for r in K.desired_rows("ace", C.load_master("ace")) if r["sku"] in skus}
+        db = sqlite3.connect(":memory:")
+        db.execute("CREATE TABLE products (sku TEXT, name TEXT, supplier_id TEXT, img TEXT, variant_label TEXT, facts_known TEXT, updated_at TEXT)")
+        for s in skus:
+            old = {"height_cm": 61, "material": "web fact", "photo": "family", "photo_label": "shown_in", "shown_in": "blue", "photo_hex": "#000000"}
+            db.execute("INSERT INTO products VALUES (?, 'Live name', 'ace', 'ace/old', '', ?, NULL)", (s, json.dumps(old)))
+        sql = (C.CATALOG / "live" / "hookah-glass-2026-11-27.sql").read_text(encoding="utf-8")
+        db.executescript(sql)
+        photo_keys = {"photo", "photo_hex", "photo_label", "shown_in", "photo_upscale"}
+        for s in skus:
+            name, img, label, fk = db.execute("SELECT name, img, variant_label, facts_known FROM products WHERE sku = ?", (s,)).fetchone()
+            want = {k: v for k, v in json.loads(rows[s]["facts_known"]).items() if k in photo_keys}
+            self.assertEqual((name, img, label), ("Live name", rows[s]["img"], rows[s]["variant_label"]), s)
+            self.assertEqual(json.loads(fk), {"height_cm": 61, "material": "web fact", **want}, s)
+        n = db.total_changes
+        db.executescript(sql)
+        self.assertEqual(db.total_changes, n)
 
 
 def live_sections(name):

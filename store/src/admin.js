@@ -1,6 +1,6 @@
 import { orderShipped, pickupReady, writeEmail, resendEmail, mailReady } from "./email.js";
 import { snapshot } from "./backup.js";
-import { CHARCOAL } from "./catalog.js";
+import { CHARCOAL, weightUnknown, knownWeightG, weightGrams, isCharcoalRow } from "./catalog.js";
 import { adminPay, lowNote } from "./pay.js";
 import { sameSecret, hashPin, checkPin, pinProblem, cleanName } from "./staff.js";
 import { report, reportCsv, monthOf } from "./report.js";
@@ -110,6 +110,9 @@ const withNets = (list, notes) => list.map(o => { const x = notes.get(o.id); ret
 const cursorOf = o => `${o.created_at}|${o.id}`;
 const LOCAL = "'-5 hours'"; // the shop's clock (Windsor), close enough for day totals
 const clampInt = (v, lo, hi) => { const n = Math.round(Number(v)); return Number.isFinite(n) && n >= lo && n <= hi ? n : null; };
+// A product name as the shop types it: newlines and tabs become spaces; other control characters and the invisible direction
+// overrides (U+202A-202E, U+2066-2069, plus the marks U+200E/200F/061C) are dropped; normal punctuation and accents stay.
+export const cleanItemName = v => typeof v !== "string" ? v : v.replace(/[\t\r\n\u2028\u2029\u000b\u000c\u0085]+/g, " ").replace(/[\u0000-\u001f\u007f-\u009f\u202a-\u202e\u2066-\u2069\u200e\u200f\u061c]/g, "").replace(/[­ᅟᅠ᠎​-‍⁠-⁯ㅤ﻿￹-￻\u{e0000}-\u{e007f}]/gu, "").replace(/ {2,}/g, " ").trim();
 const text = (v, max) => typeof v === "string" && v.trim().length <= max ? v.trim() : null;
 // The colours the shop has for one item, from the item editor: [{ name, hex? }]. A name is letters (and spaces, & / ' -),
 // up to 24; a hex only for a colour the shop added itself. The same name twice counts once. [] means "not known".
@@ -132,6 +135,9 @@ export const joinColours = names => names.length < 2 ? names[0] || "" : names.sl
 // What an item on view still needs from the shop before it reads complete: its price, its colours (Ace catalogue items),
 // its shelf count, and a check of its name and length when the catalogue marked it unsure (facts needs_confirm: the shop's
 // own hoses matched to the recording by best guess, 2026-11-27) until the shop ticks it checked in the item editor.
+// Its weight only where a missing weight blocks something: an item the catalogue says ships (facts fulfilment "ships": foil)
+// whose weight is still unknown cannot be sent by a carrier until it is weighed. Charcoal never ships, so never asks; nor does an
+// item with no shipping promise yet (an unpriced Ace piece asks for its price first), so the list does not fill with weights.
 // Shown as the "Needs info" list in the back office, in the order the list is in.
 export function needsInfo(p) {
   let f = {}, d = {}; try { f = JSON.parse(p.facts_known || "{}") || {}; } catch {} try { d = JSON.parse(p.details || "{}") || {}; } catch {}
@@ -140,18 +146,19 @@ export function needsInfo(p) {
   if (!onView) return [];
   return [!(p.price_cents > 0) && "price", ace && !(Array.isArray(d.colours) && d.colours.length) && !(String(p.family || "").startsWith("ace-") && d.colour) && "colours", ["in_store_uncounted", "special_order"].includes(p.availability) && "stock",
     f.needs_confirm === true && d.checked !== true && "check",
-    "length" in f && !f.length && !(typeof d.length === "string" && d.length) && "length"].filter(Boolean);   // a hose whose length is not known yet
+    "length" in f && !f.length && !(typeof d.length === "string" && d.length) && "length",   // a hose whose length is not known yet
+    f.fulfilment === "ships" && weightUnknown(p) && !isCharcoalRow(p) && d.charcoal !== true && "weight"].filter(Boolean);
 }
 
 // The item editor's save (PUT /api/admin/products/<sku>/info), shared with the preview's open edit (/api/open-edit/<sku>,
 // src/preview.js). The same rules whoever calls it: the session decides the name in the log and whether a price may change.
-async function itemInfo(db, sku, request, session, path) {
+async function itemInfo(db, sku, request, session, path, parsed) {
   const m = [null, sku], actor = session.actor;
     const before = await db.prepare("SELECT * FROM products WHERE sku = ?").bind(m[1]).first(); if (!before) return json({ error: "No such product." }, 404);
-    const body = await request.json().catch(() => null);
+    const body = parsed !== undefined ? parsed : await request.json().catch(() => null);
     if (!body || typeof body !== "object" || Array.isArray(body)) return json({ error: "Send the fields as JSON." }, 400);
     const out = {}, bad = [];
-    if ("name" in body) { const v = text(body.name, 80); if (!v) bad.push("name (1 to 80 letters)"); else if (v !== before.name) out.name = v; }
+    if ("name" in body) { const v = text(cleanItemName(body.name), 80); if (!v) bad.push("name (1 to 80 letters)"); else if (v !== before.name) out.name = v; }
     let colours = null;
     if ("colours" in body) { colours = cleanColours(body.colours); if (!colours) bad.push("colours (up to 16, each a name of up to 24 letters)"); }
     let price = null;
@@ -171,9 +178,13 @@ async function itemInfo(db, sku, request, session, path) {
     let length = null;
     if ("length" in body) {
       let lf = false; try { lf = "length" in (JSON.parse(before.facts_known || "{}") || {}); } catch {}
-      length = text(body.length, 30);
+      length = text(typeof body.length === "string" ? body.length.replace(/\s+/g, " ") : body.length, 30);
       if (!lf) bad.push("length (only for items that have one)"); else if (!length || !/^[\p{L}\p{N} .,'"/-]{1,30}$/u.test(length)) bad.push("length (up to 30 letters and numbers, like 60.5 inches)");
     }
+    // its weight, as the shop types it ("250 g", "1.2 kg"), for every item: whole grams in products.weight_g, the weight rates and
+    // checkout read, so typing it is what makes the weight known for shipping (src/catalog.js weightUnknown). Staff may set it.
+    let grams = null;
+    if ("weight" in body) { grams = weightGrams(body.weight); if (grams === null) bad.push("weight (like 250 g or 1.2 kg, from 1 g up to 30 kg)"); }
     if (bad.length) return json({ error: "Check: " + bad.join(", ") + "." }, 400);
     if (price !== null && price !== before.price_cents && !session.owner) { log("forbidden", { actor, path, field: "price" }); return json({ error: NOT_YOURS }, 403); }
     if (price !== null && price !== before.price_cents) out.price_cents = price;
@@ -193,6 +204,8 @@ async function itemInfo(db, sku, request, session, path) {
     }
     if (body.checked === true && had.checked !== true) { const d = out.details ? JSON.parse(out.details) : { ...had }; d.checked = true; out.details = JSON.stringify(d); }
     if (length && length !== had.length) { const d = out.details ? JSON.parse(out.details) : { ...had }; d.length = length; out.details = JSON.stringify(d); }
+    const weighNow = grams !== null && (grams !== before.weight_g || had.weighed !== true);
+    if (weighNow) { if (grams !== before.weight_g) out.weight_g = grams; const d = out.details ? JSON.parse(out.details) : { ...had }; d.weighed = true; out.details = JSON.stringify(d); }
     if (out.details && (had.charcoal || String(before.family || "").startsWith("charcoal-"))) charcoalRules(out, JSON.parse(out.details));   // charcoal stays pickup or local only
     // A first price on an item on view with "Price TBD" puts it on sale, so it can be bought as soon as the shop has priced it.
     // Only an item that had no price (an item priced and switched off stays off), already on view: never a made-up sample,
@@ -201,9 +214,11 @@ async function itemInfo(db, sku, request, session, path) {
     if ("price_cents" in out && !(before.price_cents > 0) && before.active === 0 && before.listed === 1 && before.availability !== "dropped" && ticked && !isSample(before.sku)) out.active = 1;
     const cols = Object.keys(out);
     const was = {}; for (const k of cols) was[k] = before[k];
+    if (weighNow) was.weight_g = before.weight_g;
     const STALE = "An order changed this to %n while you were counting. Nothing was saved: check the shelf, then save again.";
     if (count && count.seen !== before.stock) return json({ error: STALE.replace("%n", before.stock), stock: before.stock, changed: true }, 409);
     const logged = { ...out }; if (logged.details) { if (colours) logged.colours = colours.map(c => c.name); if (body.checked === true && !had.checked) logged.checked = true; if (length && length !== had.length) logged.length = length; delete logged.details; }
+    if (weighNow) logged.weight_g = grams;   // the audit log names a weight change, even one that only marks a placeholder as weighed
     if (count) logged.stock = count.counted;
     if (!cols.length && !count) return json({ ok: true, changed: false, stock: before.stock });
     // One transaction. With a count, every statement holds only while the stock is still the number the screen showed, so an
@@ -233,7 +248,16 @@ async function itemInfo(db, sku, request, session, path) {
 // Answers 404 as an unknown address unless the switch is on. Only an item a shopper can open (onShop: the storefront's own
 // catalogue) and that the needs-info rules count as on view: never a made-up sample, an unticked catalogue page or a dropped colour.
 // Writes need what every back office write needs: same site (Fetch Metadata and Origin), JSON, and the X-OSS-Admin marker.
-const OPEN_COLS = "sku, name, price_cents, stock, active, listed, availability, family, details, supplier_id, facts_known";
+const OPEN_BODY_MAX = 16 * 1024;
+const OPEN_COLS = "sku, name, category_id, price_cents, weight_g, stock, active, listed, availability, family, variant_label, details, supplier_id, facts_known";
+// The colours the panel starts on: the ones saved on the item, else (a member of a colour family) the item's own colour, which is
+// what its page shows (details.colour, or the family chip name), so the panel matches the page.
+function ownColours(d, p) {
+  const saved = (Array.isArray(d.colours) ? d.colours : []).filter(n => typeof n === "string");
+  if (saved.length || !/^(ace|hose)-/.test(String(p.family || ""))) return saved;
+  const own = String(d.colour || p.variant_label || "").split(/,| and /).map(s => s.replace(/\s+/g, " ").trim()).filter(s => /^[\p{L}][\p{L} &/'-]{0,23}$/u.test(s));
+  return [...new Set(own)].slice(0, 4);
+}
 export async function openEdit(request, env, url, onShop) {
   if (!openScope(env)) return json({ error: "Not found" }, 404);
   const m = url.pathname.match(/^\/api\/open-edit\/(OSS-\d{4,6})$/), method = request.method, db = env.DB;
@@ -245,6 +269,17 @@ export async function openEdit(request, env, url, onShop) {
     if (request.headers.get("X-OSS-Admin") !== "1") return json({ error: "Missing request marker." }, 400);
     const origin = request.headers.get("Origin"); if (origin && origin !== url.origin) return json({ error: "Wrong origin." }, 403);
   }
+  // the body is read here, capped (~16 KB) before it is parsed; the save gets it already parsed
+  let parsed;
+  if (method === "PUT") {
+    // read in pieces and stop at the cap, so an oversized body is never held whole in memory
+    const chunks = []; let got = 0, over = false;
+    if (request.body) { const rd = request.body.getReader(); for (;;) { const { done, value } = await rd.read(); if (done) break; got += value.byteLength; if (got > OPEN_BODY_MAX) { over = true; rd.cancel().catch(() => {}); break; } chunks.push(value); } }
+    if (over) return json({ error: "That is too big." }, 413);
+    const buf = new Uint8Array(got); let at = 0; for (const c of chunks) { buf.set(c, at); at += c.byteLength; }
+    const raw = new TextDecoder().decode(buf);
+    try { parsed = JSON.parse(raw); } catch { parsed = null; }
+  }
   const p = onShop.has(m[1]) ? await db.prepare(`SELECT ${OPEN_COLS} FROM products WHERE sku = ?`).bind(m[1]).first() : null;
   const onView = p && (p.active === 1 || p.listed === 1) && p.availability !== "dropped" && !isSample(p.sku) && (!["ace", "ace-acc"].includes(p.supplier_id) || (() => { try { return (JSON.parse(p.facts_known || "{}") || {}).stamp !== "none"; } catch { return false; } })());
   // an item a shopper can open but nobody may edit here: the page is told so (a 200, so the page logs no failed request); a save is refused
@@ -252,17 +287,18 @@ export async function openEdit(request, env, url, onShop) {
   if (method === "PUT") {
     // always logged as the open visitor; someone signed in on this browser is named beside it (they act with the open rights, not their own)
     const s = await signedIn(request, env), tag = await openActor(env, request), session = { actor: s ? `${tag} (${s.actor})` : tag, staff_id: null, owner: true };
-    return await itemInfo(db, p.sku, request, session, "/open-edit/" + p.sku);
+    return await itemInfo(db, p.sku, request, session, "/open-edit/" + p.sku, parsed);
   }
   // the next item still needing info, in the back office's own list order after this one (going round), among items a shopper can open
   const rows = (await db.prepare(`SELECT ${OPEN_COLS} FROM products ORDER BY active DESC, sort, sku`).all()).results;
   const i = rows.findIndex(r => r.sku === p.sku), next = [...rows.slice(i + 1), ...rows.slice(0, i)].find(r => onShop.has(r.sku) && needsInfo(r).length);
   const left = rows.filter(r => onShop.has(r.sku) && needsInfo(r).length).length;
-  let d = {}; try { d = JSON.parse(p.details || "{}") || {}; } catch {}
+  let d = {}, fk = {}; try { d = JSON.parse(p.details || "{}") || {}; } catch {} try { fk = JSON.parse(p.facts_known || "{}") || {}; } catch {}
+  const needs = needsInfo(p), hasLen = "length" in fk, curLen = [d.length, fk.length].find(v => typeof v === "string" && v.trim());
   const hex = d.colour_hex && typeof d.colour_hex === "object" ? d.colour_hex : {};
   return json({ sku: p.sku, editable: true, name: p.name, price_cents: p.price_cents > 0 ? p.price_cents : null, stock: p.stock, counted: p.availability === "counted", on_sale: p.active === 1 && p.price_cents > 0,
-    colours: (Array.isArray(d.colours) ? d.colours : []).filter(n => typeof n === "string").map(n => Object.hasOwn(hex, n) && /^#[0-9a-f]{6}$/i.test(hex[n]) ? { name: n, hex: hex[n] } : { name: n }),
-    hookah_row: String(p.family || "").startsWith("ace-"), needs: needsInfo(p), next: next ? next.sku : null, left, scope: openScope(env) });
+    colours: ownColours(d, p).map(n => Object.hasOwn(hex, n) && /^#[0-9a-f]{6}$/i.test(hex[n]) ? { name: n, hex: hex[n] } : { name: n }),
+    hookah_row: String(p.family || "").startsWith("ace-"), family_row: /^(ace|hose)-/.test(String(p.family || "")), needs, weight_g: knownWeightG(p), ...(isCharcoalRow(p) || d.charcoal === true ? { charcoal: true } : {}), ...(hasLen ? { length: curLen || "", has_length: true } : {}), ...(needs.includes("check") ? { check: true } : {}), next: next ? next.sku : null, left, scope: openScope(env) });
 }
 // why an unsure item needs its name and length checked (back office only; the storefront never sees facts_known's notes)
 const checkWhy = s => { try { const w = (JSON.parse(s || "{}") || {}).confirm_why; return typeof w === "string" ? w.slice(0, 300) : ""; } catch { return ""; } };
@@ -405,14 +441,14 @@ export async function admin(request, env, url) {
     ]);
     // the demo's made-up samples are marked, so nobody switches one back on taking it for the shop's own stock (2026-11-24)
     // each row also says what it still needs from the shop (price, colours, shelf count), for the "Needs info" list and its count
-    return json({ products: p.results.map(r => { const { supplier_id, facts_known, ...row } = r, needs = needsInfo(r); return { ...row, ...(isSample(r.sku) ? { sample: true } : {}), ...(needs.length ? { needs } : {}), ...(needs.includes("check") ? { check_why: checkWhy(facts_known) } : {}), ...(["ace", "ace-acc"].includes(supplier_id) ? { catalogue: true } : {}) }; }), categories: c.results, boxes: b.results });
+    return json({ products: p.results.map(r => { const { supplier_id, facts_known, ...row } = r, needs = needsInfo(r); const kw = knownWeightG(r); return { ...row, ...(isSample(r.sku) ? { sample: true } : {}), ...(needs.length ? { needs } : {}), ...(kw ? { weight_known_g: kw } : {}), ...(needs.includes("check") ? { check_why: checkWhy(facts_known) } : {}), ...(["ace", "ace-acc"].includes(supplier_id) ? { catalogue: true } : {}) }; }), categories: c.results, boxes: b.results });
   }
 
   // one product: fields to save, validated here so nothing odd reaches the storefront
   const fields = async body => {
     const out = {}, bad = [];
     const set = (k, v, label) => { if (v === null) bad.push(label); else out[k] = v; };
-    if ("name" in body) set("name", text(body.name, 80) || null, "name");
+    if ("name" in body) set("name", text(cleanItemName(body.name), 80) || null, "name");
     if ("category_id" in body) set("category_id", (await db.prepare("SELECT id FROM categories WHERE id = ?").bind(String(body.category_id)).first("id")) ?? null, "section");
     if ("price_cents" in body) set("price_cents", clampInt(body.price_cents, 0, 5000000), "price");
     if ("cost_cents" in body) out.cost_cents = body.cost_cents === null || body.cost_cents === "" ? null : clampInt(body.cost_cents, 0, 5000000);

@@ -24,6 +24,6 @@ SHOP_PHOTOS = {
                                  "Tsar Molotov (catalogue p26): TSAR on the stem and on the X swing tag, the cone base under a "
                                  "flared collar; the catalogue's green chip, which showed the blue photo"),
     "ace-tsar-molotov##5271ff": ("shop/ace-tsar-molotov-blue", "blue", "IMG_0685",
-                                 "Tsar Molotov (catalogue p26): TSAR on the stem and on the X swing tag; the blue chip, whose "
-                                 "catalogue photo was enlarged"),
+                                 "Tsar Molotov (catalogue p26): TSAR on the stem and on the X swing tag; the blue chip, in "
+                                 "place of the maker's web photo (the shop's own piece)"),
 }

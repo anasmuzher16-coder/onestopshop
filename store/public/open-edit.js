@@ -8,7 +8,12 @@ const SCOPE = document.querySelector('meta[name="oss-open-edit"]')?.content;
 const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const HEX = /^#[0-9a-f]{6}$/i, SKU = /^OSS-\d{4,6}$/;
-const NEED = { price: "price", colours: "colours", stock: "shelf count" };
+const NEED = { price: "price", colours: "colours", stock: "shelf count", length: "length", check: "a name check", weight: "weight" };
+// A weight as the shop types it: a number in the unit picked (g or kg), or with its unit typed ("1.2 kg"). Sent as "<n> <unit>";
+// the server turns it into whole grams and refuses anything outside 1 g to 30 kg (src/catalog.js weightGrams).
+const readWeight = (raw, unit) => { const m = String(raw).trim().toLowerCase().replace(",", ".").match(/^(\d{1,5})(?:\.(\d{1,3}))?\s*(g|kg)?$/); if (!m) return null; const u = m[3] || unit; if (u === "g" && m[2] !== undefined) return null; return { n: m[1] + (m[2] !== undefined ? "." + m[2] : ""), unit: u, typed: !!m[3], g: u === "kg" ? +m[1] * 1000 + +(m[2] || "").padEnd(3, "0") : +m[1] }; };   // whole grams, or kg to 3 places, as the server takes it
+const showWeight = g => g >= 1000 ? { v: String(+(g / 1000).toFixed(3)), unit: "kg" } : { v: g ? String(g) : "", unit: "g" };
+const needs = d => (d.needs || []).filter(k => Object.hasOwn(NEED, k));   // a need the panel has no words for is not printed
 const words = l => l.length > 1 ? l.slice(0, -1).join(", ") + " and " + l.at(-1) : l[0] || "";
 // the back office's palette (public/admin.js PALETTE): Clear and Rainbow are drawn by CSS
 const PALETTE = [["Black", "#141414"], ["Silver", "#c3c5c9"], ["Gold", "#c9a24a"], ["Rose gold", "#c48b7f"], ["Red", "#c2262e"], ["Blue", "#2b59c3"], ["Green", "#2e8b57"], ["Purple", "#6c3fa6"], ["Pink", "#e58bb4"], ["White", "#f3f1ea"], ["Clear", ""], ["Rainbow", ""], ["Gunmetal", "#4b5057"], ["Bronze", "#8a5a2b"]];
@@ -51,7 +56,7 @@ async function ensureBar() {
   const d = await load(sku); if (!bar.isConnected) return;
   if (!d) { $("[data-oe-need]", bar).textContent = "Could not load this item. Tap Edit this item to try again."; return; }   // the bar stays (no redraw), the button tries again
   if (!d.editable) { bar.remove(); return; }   // a made-up sample or anything else not editable here: no bar at all
-  $("[data-oe-need]", bar).textContent = d.needs.length ? `Needs ${words(d.needs.map(k => NEED[k]))}.` : "Everything is filled in.";
+  $("[data-oe-need]", bar).textContent = needs(d).length ? `Needs ${words(needs(d).map(k => NEED[k]))}.` : "Everything is filled in.";
   const next = $("[data-oe-next]", bar);
   if (d.next) { next.href = "/p/" + d.next; next.hidden = false; next.textContent = `Next item that needs info (${d.left - (d.needs.length ? 1 : 0)} left)`; }
   if (store.get("open") === sku) { store.set("open", null); openSheet(sku); }
@@ -64,28 +69,42 @@ async function openSheet(sku) {
   const had = d.colours.map(c => c.name), known = new Set(PALETTE.map(x => x[0].toLowerCase()));
   const custom = d.colours.filter(c => !known.has(c.name.toLowerCase()));
   sheet.innerHTML = `<form class="sheet__form oe__form" data-oe-form="${esc(d.sku)}" novalidate>
-    <div class="oe__top"><div><p class="oe__meta">${esc(d.sku)}${d.needs.length ? ` &middot; needs ${esc(words(d.needs.map(k => NEED[k])))}` : ""}</p><h2 class="sheet__h" id="oe-h">Edit this item</h2></div><button class="oe__x" type="button" data-oe-close>Close</button></div>
+    <div class="oe__top"><div><p class="oe__meta">${esc(d.sku)}${needs(d).length ? ` &middot; needs ${esc(words(needs(d).map(k => NEED[k])))}` : ""}</p><h2 class="sheet__h" id="oe-h">Edit this item</h2></div><button class="oe__x" type="button" data-oe-close>Close</button></div>
     <p class="sheet__p">Fill in what you know and leave the rest. Only what you change is saved.</p>
     <label class="field__label" for="oe-name">Name</label>
     <input class="field field--text" id="oe-name" name="name" value="${esc(d.name)}" maxlength="80" autocomplete="off" required>
+    ${d.has_length ? `<label class="field__label" for="oe-length">Length</label>
+    <input class="field field--text" id="oe-length" name="length" value="${esc(d.length)}" maxlength="30" autocomplete="off" placeholder="60.5 inches" aria-describedby="oe-length-say">
+    <p class="oe__help" id="oe-length-say">Up to 30 letters and numbers, like 60.5 inches.</p>` : ""}
+    ${d.check ? `<label class="oe__check"><input type="checkbox" id="oe-checked" name="checked" value="1"> <span>Checked with the shop</span></label>
+    <p class="oe__help">Tick it once the name and length are right. It cannot be unticked here.</p>` : ""}
     <fieldset class="oe__cols"><legend class="field__label">Colours <span class="oe__n" data-oe-count></span></legend>
-      <p class="oe__help">${d.hookah_row ? "This is one colour of this hookah. Pick its colour; for two tones, pick both." : "Tap every colour the shop has of this item."}</p>
+      <p class="oe__help">${d.family_row || d.hookah_row ? "This is one colour version of this item, so these colours are for this one only. Pick its colour; for two tones, pick both." : "Tap every colour the shop has of this item."}</p>
       <div class="sw-grid" data-swgrid>${PALETTE.map(([n, h]) => swatch(n, h, had.some(x => x.toLowerCase() === n.toLowerCase()), false)).join("")}${custom.map(c => swatch(c.name, c.hex || "", true, true)).join("")}</div>
       <button class="link oe__add" type="button" data-oe-addcol aria-expanded="false" aria-controls="oe-newcol">Add another colour</button>
       <div class="oe__new" id="oe-newcol" data-oe-newcol hidden>
         <div><label class="field__label" for="oe-newname">Colour name</label><input class="field field--text" id="oe-newname" name="newcol" maxlength="24" autocomplete="off"></div>
         <div><label class="field__label" for="oe-newhex">Swatch</label><input class="oe__hex" id="oe-newhex" name="newhex" type="color" value="#808080"></div>
         <button class="btn btn--ghost" type="button" data-oe-addgo>Add</button></div></fieldset>
+    ${weightField(d)}
     <div class="oe__nums">
       <div><label class="field__label" for="oe-stock">Stock, on the shelf</label><input class="field num" id="oe-stock" name="stock" inputmode="numeric" pattern="[0-9]*" maxlength="5" autocomplete="off" enterkeyhint="next" value="${d.counted ? esc(d.stock) : ""}" data-seen="${esc(d.stock)}" data-was="${d.counted ? esc(d.stock) : ""}" aria-describedby="oe-stock-say">
         <p class="oe__help" id="oe-stock-say">${d.counted ? "Counted. Type a new count to change it." : "Not counted yet. Type what is on the shelf, 0 if none."}</p></div>
-      <div><label class="field__label" for="oe-price">Price, $ CAD</label><input class="field num" id="oe-price" name="price" inputmode="decimal" autocomplete="off" enterkeyhint="done" placeholder="24.99" value="${d.price_cents ? (d.price_cents / 100).toFixed(2) : ""}" aria-describedby="oe-price-say">
+      <div><label class="field__label" for="oe-price">Price, $ CAD</label><input class="field num" id="oe-price" name="price" inputmode="decimal" autocomplete="off" enterkeyhint="done" value="${d.price_cents ? (d.price_cents / 100).toFixed(2) : ""}" aria-describedby="oe-price-say">
         <p class="oe__help" id="oe-price-say">${d.price_cents ? "In dollars, like 24.99." : "In dollars, like 24.99. A price puts it on sale in place of Price TBD."}</p></div></div>
     <p class="field__err" role="alert" data-oe-err hidden></p>
     <div class="sheet__row oe__act"><button class="btn" type="submit" data-then="stay">Save</button>${d.next ? `<button class="btn btn--ghost" type="submit" data-then="next">Save and next item</button>` : ""}</div></form>`;
-  const f = $("[data-oe-form]", sheet); f.dataset.orig = JSON.stringify(had); f.dataset.next = d.next || ""; f.dataset.priceWas = d.price_cents || ""; f.dataset.nameWas = d.name;
+  const f = $("[data-oe-form]", sheet); f.dataset.orig = JSON.stringify(had); f.dataset.next = d.next || ""; f.dataset.priceWas = d.price_cents || ""; f.dataset.nameWas = d.name; f.dataset.lengthWas = d.length || "";
   count(f);
   if (!sheet.open) sheet.showModal();
+}
+function weightField(d) {
+  const w = d.weight_g ? showWeight(d.weight_g) : { v: "", unit: d.hookah_row ? "kg" : "g" }, need = (d.needs || []).includes("weight");
+  const say = d.charcoal ? "Charcoal is never shipped, whatever it weighs. This is for the record." : need ? "Needed before it can ship. Weigh the item on its own; the box is added for you." : d.weight_g ? "Weighed. Type a new weight to change it." : "Weigh the item on its own; the box is added for you. Up to 30 kg.";
+  return `<label class="field__label" for="oe-weight">Weight</label>
+    <div class="oe__w"><input class="field num" id="oe-weight" name="weight" inputmode="decimal" autocomplete="off" enterkeyhint="next" value="${esc(w.v)}" placeholder="${w.unit === "kg" ? "1.2" : "250"}" data-was="${esc(d.weight_g || "")}" aria-describedby="oe-weight-say">
+      <div class="oe__unit" role="radiogroup" aria-label="Weight unit">${["g", "kg"].map(u => `<label><input type="radio" name="wunit" value="${u}"${u === w.unit ? " checked" : ""}><span>${u}</span></label>`).join("")}</div></div>
+    <p class="oe__help" id="oe-weight-say">${say}</p>`;
 }
 const picked = f => $$("[data-sw][aria-pressed=true]", f).map(b => b.dataset.hex ? { name: b.dataset.name, hex: b.dataset.hex } : { name: b.dataset.name });
 function count(f) { const n = picked(f).length, o = $("[data-oe-count]", f); if (o) o.textContent = n ? `${n} picked` : "none picked"; }
@@ -116,6 +135,16 @@ document.addEventListener("submit", async e => {
   const body = {}, name = f.name.value.trim(), stock = f.stock.value.trim(), price = f.price.value.trim().replace(/^\$\s*/, "").replace(/,/g, "");
   if (!name) return fail(f, "Give it a name.", f.name);
   if (name !== f.dataset.nameWas) body.name = name;
+  const lenIn = $("#oe-length", f), tick = $("#oe-checked", f);
+  if (lenIn) { const len = lenIn.value.replace(/\s+/g, " ").trim(); if (len !== f.dataset.lengthWas) { if (!/^[\p{L}\p{N} .,'"\/-]{1,30}$/u.test(len)) return fail(f, "Length is up to 30 letters and numbers, like 60.5 inches.", lenIn); body.length = len; } }
+  if (tick?.checked) body.checked = true;
+  const wIn = $("#oe-weight", f);
+  if (wIn && wIn.value.trim() !== "") {
+    const w = readWeight(wIn.value, $("input[name=wunit]:checked", f)?.value || "g");
+    if (!w || !(w.g >= 1) || w.g > 30000) return fail(f, "Weight is a number in grams or kilograms, like 250 g or 1.2 kg, up to 30 kg.", wIn);
+    if (w.unit === "g" && w.g < 10 && !w.typed) return fail(f, `${w.g} g is very light. If you meant kilograms, tap kg. If it really is ${w.g} g, type it as ${w.g} g.`, wIn);
+    if (String(w.g) !== wIn.dataset.was) body.weight = `${w.n} ${w.unit}`;
+  }
   const cols = picked(f), orig = JSON.parse(f.dataset.orig);
   if (cols.map(c => c.name.toLowerCase()).sort().join("|") !== orig.map(n => n.toLowerCase()).sort().join("|")) body.colours = cols;
   if (stock !== "" && stock !== f.stock.dataset.was) { if (!/^\d{1,5}$/.test(stock)) return fail(f, "Stock is a whole number, like 4. Type 0 if there are none.", f.stock); body.stock = { counted: +stock, seen: +f.stock.dataset.seen }; }

@@ -482,10 +482,14 @@ function factsSpec(p, fam) {
           ${p.state === "tbd" ? "" : `<div><dt>Price</dt><dd><span class="num">${whole(p.price)}</span>, coming soon</dd></div>`}
           ${p.family ? `${base ? `<div><dt>Base</dt><dd>${base}</dd></div>` : ""}
           ${f.height_cm ? `<div><dt>Height</dt><dd><span class="num">${f.height_cm}&nbsp;cm</span></dd></div>` : ""}
+          ${aceItem(p) && f.item_weight_g > 0 ? `<div><dt>Weight</dt><dd><span class="num">${f.item_weight_g < 1000 ? `${Math.round(f.item_weight_g)}&nbsp;g` : `${+(f.item_weight_g / 1000).toFixed(2)}&nbsp;kg`}</span></dd></div>` : ""}
           ${"length" in f ? lengthRow(p) : ""}
-          ${f.acrylic ? `<div><dt>Material</dt><dd>Acrylic</dd></div>` : ""}
+          ${aceItem(p) && f.material ? `<div><dt>Material</dt><dd>${esc(f.material)}</dd></div>` : f.acrylic ? `<div><dt>Material</dt><dd>Acrylic</dd></div>` : ""}
+          ${aceItem(p) && f.size ? `<div><dt>Size</dt><dd>${escN(f.size)}</dd></div>` : ""}
+          ${aceItem(p) && f.features ? `<div><dt>Features</dt><dd>${esc(f.features)}</dd></div>` : ""}
           ${Array.isArray(f.includes) && f.includes.length ? `<div><dt>Comes with</dt><dd>${esc(f.includes.join(", "))}</dd></div>` : ""}
           <div><dt>Colours</dt><dd>${fam.length > 1 ? `<span class="num">${fam.length}</span> shown${named ? ": " + esc(fam.map(v => v.colour).join(", ")) : ""}` : named ? esc(fam.map(v => v.colour).join(", ")) : "One"}</dd></div>` : ""}
+          ${p.acc ? `${f.item_weight_g > 0 ? `<div><dt>Weight</dt><dd><span class="num">${f.item_weight_g < 1000 ? `${Math.round(f.item_weight_g)}&nbsp;g` : `${+(f.item_weight_g / 1000).toFixed(2)}&nbsp;kg`}</span></dd></div>` : ""}${f.material ? `<div><dt>Material</dt><dd>${esc(f.material)}</dd></div>` : ""}${f.features ? `<div><dt>Features</dt><dd>${esc(f.features)}</dd></div>` : ""}` : ""}
           ${catItem(p) && ticked(p) ? `<div><dt>Availability</dt><dd>In the shop</dd></div>` : ""}
           ${shopCols(p) ? `<div><dt>${p.family ? "In the shop" : "Colours"}</dt><dd>${esc(p.details.colours.join(", "))}</dd></div>` : ""}
           ${!p.img ? `<div><dt>Photo</dt><dd>Photo coming soon</dd></div>` : p.family && f.photo === "family" ? `<div><dt>Photo</dt><dd>Shows another colour of this ${p.cat === "hookahs" ? "hookah" : "piece"}.</dd></div>` : ""}
@@ -1266,18 +1270,29 @@ document.addEventListener("submit", async e => {
     el.focus({ preventScroll: true }); el.scrollIntoView({ block: "center", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
   };
   const v = n => (f.elements[n] ? f.elements[n].value.trim() : "");
-  if (!v("name")) return fail("Tell us the name for the order.", "name");
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v("email"))) return fail("That email address does not look right.", "email");
   if (!pickup && !local && !chosen && !state.ship && (sc.status === "far" || sc.status === "down")) return fail("Delivery is not available here. Choose shipping or pickup in your cart.");
   if (sc.counter && chosen) return fail("Charcoal goes by pickup or local delivery only. Choose one in your cart.");
+  // every field is checked and every error shows under its own field (aria-invalid + aria-describedby); the focus goes to the first
+  const bad = [];
+  if (!v("name")) bad.push(["name", "Tell us the name for the order."]);
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v("email"))) bad.push(["email", "That email address does not look right."]);
   if (phoneNeeded(sc)) {   // the server's own rule (src/guard.js callable): a North American number the shop can call back
     const d = v("phone").replace(/\s*(?:x|ext\.?)\s*\d{1,6}\s*$/i, "").replace(/\D/g, "").replace(/^(?:011|00)/, "").replace(/^1(?=\d{10}$)/, "");
-    if (!/^[2-9]\d{2}[2-9]\d{6}$/.test(d) || /^(\d)\1{9}$/.test(d)) return fail("Enter a phone number with its area code, like 519-555-0144. We call or text you when your order is ready.", "phone");
+    if (!/^[2-9]\d{2}[2-9]\d{6}$/.test(d) || /^(\d)\1{9}$/.test(d)) bad.push(["phone", "Enter a phone number with its area code, like 519-555-0144. We call or text you when your order is ready."]);
+  } else if (local && v("phone").replace(/\D/g, "").length < 10) bad.push(["phone", "Enter a phone number so the driver can reach you."]);
+  if (!pickup && !v("line1")) bad.push(["line1", "Enter the street address."]);
+  if (!pickup && !v("city")) bad.push(["city", "Enter the city or town."]);
+  if (bad.length) {
+    clearFieldErrs(f); err.hidden = true; let first = null;
+    for (const [field, msg] of bad) {
+      const el = f.querySelector(`input[name="${field}"]`), own = f.querySelector(`#co-${field}-err`); if (!el || !own) continue;
+      own.textContent = msg; own.hidden = false; el.setAttribute("aria-invalid", "true"); el.setAttribute("aria-describedby", own.id); first = first || el;
+    }
+    if (first) { first.focus({ preventScroll: true }); first.scrollIntoView({ block: "center", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); }
+    else return fail(bad[0][1]);
+    return;
   }
-  if (!pickup && !v("line1")) return fail("Enter the street address.", "line1");
-  if (!pickup && !v("city")) return fail("Enter the city or town.", "city");
   if (local) {
-    if (v("phone").replace(/\D/g, "").length < 10) return fail("Enter a phone number so the driver can reach you.", "phone");
     state.form = { ...(state.form || {}), line1: v("line1"), city: v("city") }; err.hidden = true;
     if (deliveryFeeNow() === null) return checkDelivery(f, btn);   // show the price first: the next tap places the order
   }

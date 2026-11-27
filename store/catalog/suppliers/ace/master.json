@@ -1388,8 +1388,8 @@
      "src": null
     },
     "height_cm": {
-     "v": null,
-     "src": null
+     "v": 35,
+     "src": "web:https://www.mistersmoke.com/en/produits/chichas/chicha-tsar-molotov-x-plus/ 2026-11-27 (35 cm without the bowl; the Molotov X page https://www.mistersmoke.com/en/produits/chichas/chichas-classiques/chicha-tsar-molotov-x/ gives the same height)"
     },
     "acrylic": {
      "v": null,
@@ -1398,6 +1398,10 @@
     "weight_g": {
      "v": null,
      "src": null
+    },
+    "material": {
+     "v": "Aluminium",
+     "src": "web:https://www.mistersmoke.com/en/produits/chichas/chicha-tsar-molotov-x-plus/ 2026-11-27 (aluminium; the Molotov X page says the same)"
     }
    },
    "flags": [
@@ -1418,8 +1422,9 @@
      },
      "photo": {
       "img": "ace/ace-tsar-molotov-white",
-      "status": "CHECK",
-      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
+      "status": "ready",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json",
+      "web_src": "https://tsar-hookah.com/tsar-molotov-x-plus/"
      },
      "shop": {
       "price_cents": {
@@ -1427,8 +1432,8 @@
        "src": null
       },
       "display_name": {
-       "v": null,
-       "src": null
+       "v": "Tsar Molotov X/X+",
+       "src": "shop:owner yes 2026-11-27 to the reverse-search names (exact matches only); web:https://tsar-hookah.com/tsar-molotov-x-plus/ 2026-11-27"
       },
       "stock": {
        "v": null,
@@ -1466,7 +1471,8 @@
      "photo": {
       "img": "shop/ace-tsar-molotov-blue",
       "status": "family_hero_only",
-      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json",
+      "web_src": "https://tsar-hookah.com/tsar-molotov-x-plus/"
      },
      "shop": {
       "price_cents": {
@@ -1474,8 +1480,8 @@
        "src": null
       },
       "display_name": {
-       "v": null,
-       "src": null
+       "v": "Tsar Molotov X/X+",
+       "src": "shop:owner yes 2026-11-27 to the reverse-search names (exact matches only); web:https://tsar-hookah.com/tsar-molotov-x-plus/ 2026-11-27"
       },
       "stock": {
        "v": null,
@@ -1513,7 +1519,7 @@
      "photo": {
       "img": "shop/ace-tsar-molotov-blue",
       "status": "shop",
-      "src": "photo:IMG_0685 (the shop's own photo, cut out); Tsar Molotov (catalogue p26): TSAR on the stem and on the X swing tag; the blue chip, whose catalogue photo was enlarged"
+      "src": "photo:IMG_0685 (the shop's own photo, cut out); Tsar Molotov (catalogue p26): TSAR on the stem and on the X swing tag; the blue chip, in place of the maker's web photo (the shop's own piece)"
      },
      "shop": {
       "price_cents": {
@@ -1521,8 +1527,8 @@
        "src": null
       },
       "display_name": {
-       "v": null,
-       "src": null
+       "v": "Tsar Molotov X/X+",
+       "src": "shop:owner yes 2026-11-27 to the reverse-search names (exact matches only); web:https://tsar-hookah.com/tsar-molotov-x-plus/ 2026-11-27"
       },
       "stock": {
        "v": null,
@@ -1559,8 +1565,9 @@
      },
      "photo": {
       "img": "ace/ace-tsar-molotov-black",
-      "status": "CHECK",
-      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
+      "status": "ready",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json",
+      "web_src": "https://tsar-hookah.com/tsar-molotov-x-plus/"
      },
      "shop": {
       "price_cents": {
@@ -1568,8 +1575,8 @@
        "src": null
       },
       "display_name": {
-       "v": null,
-       "src": null
+       "v": "Tsar Molotov X/X+",
+       "src": "shop:owner yes 2026-11-27 to the reverse-search names (exact matches only); web:https://tsar-hookah.com/tsar-molotov-x-plus/ 2026-11-27"
       },
       "stock": {
        "v": null,
@@ -1607,7 +1614,8 @@
      "photo": {
       "img": "shop/ace-tsar-molotov-blue",
       "status": "family_hero_only",
-      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json",
+      "web_src": "https://tsar-hookah.com/tsar-molotov-x-plus/"
      },
      "shop": {
       "price_cents": {
@@ -1615,8 +1623,8 @@
        "src": null
       },
       "display_name": {
-       "v": null,
-       "src": null
+       "v": "Tsar Molotov X/X+",
+       "src": "shop:owner yes 2026-11-27 to the reverse-search names (exact matches only); web:https://tsar-hookah.com/tsar-molotov-x-plus/ 2026-11-27"
       },
       "stock": {
        "v": null,
@@ -1662,8 +1670,8 @@
        "src": null
       },
       "display_name": {
-       "v": null,
-       "src": null
+       "v": "Tsar Molotov X/X+",
+       "src": "shop:owner yes 2026-11-27 to the reverse-search names (exact matches only); web:https://tsar-hookah.com/tsar-molotov-x-plus/ 2026-11-27"
       },
       "stock": {
        "v": null,
@@ -1736,8 +1744,8 @@
      "src": null
     },
     "height_cm": {
-     "v": null,
-     "src": null
+     "v": 50,
+     "src": "web:https://www.animashop.cz/en/tsar-ultimate-stainless-hookah-silver/ 2026-11-27 (50 cm)"
     },
     "acrylic": {
      "v": null,
@@ -1746,6 +1754,18 @@
     "weight_g": {
      "v": null,
      "src": null
+    },
+    "item_weight_g": {
+     "v": 4200,
+     "src": "web:https://www.animashop.cz/en/tsar-ultimate-stainless-hookah-silver/ 2026-11-27 (4.2 kg)"
+    },
+    "material": {
+     "v": "Stainless steel and borosilicate glass",
+     "src": "web:https://www.tsar-hookah.com/tsar-ultimate/ 2026-11-27 (stainless steel body and plate, glass base; borosilicate per https://www.animashop.cz/en/tsar-ultimate-stainless-hookah-silver/)"
+    },
+    "features": {
+     "v": "Adjustable diffuser with 3 positions, removable dive tube",
+     "src": "web:https://www.tsar-hookah.com/tsar-ultimate/ 2026-11-27"
     }
    },
    "flags": [
@@ -1774,8 +1794,8 @@
        "src": null
       },
       "display_name": {
-       "v": null,
-       "src": null
+       "v": "Tsar Ultimate",
+       "src": "shop:owner yes 2026-11-27 to the reverse-search names (exact matches only); web:https://www.tsar-hookah.com/tsar-ultimate/ 2026-11-27"
       },
       "stock": {
        "v": null,
@@ -1821,8 +1841,8 @@
        "src": null
       },
       "display_name": {
-       "v": null,
-       "src": null
+       "v": "Tsar Ultimate",
+       "src": "shop:owner yes 2026-11-27 to the reverse-search names (exact matches only); web:https://www.tsar-hookah.com/tsar-ultimate/ 2026-11-27"
       },
       "stock": {
        "v": null,
@@ -1895,8 +1915,8 @@
      "src": null
     },
     "height_cm": {
-     "v": null,
-     "src": null
+     "v": 45,
+     "src": "web:https://www.mistersmoke.com/en/produits/chichas/chicha-tsar-h-one/ 2026-11-27 (about 45 cm)"
     },
     "acrylic": {
      "v": null,
@@ -1905,6 +1925,10 @@
     "weight_g": {
      "v": null,
      "src": null
+    },
+    "material": {
+     "v": "Aluminium and glass",
+     "src": "web:https://www.mistersmoke.com/en/produits/chichas/chicha-tsar-h-one/ 2026-11-27"
     }
    },
    "flags": [
@@ -1925,7 +1949,8 @@
      "photo": {
       "img": "ace/ace-tsar-h-one-black",
       "status": "family_hero_only",
-      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json",
+      "web_src": "https://tsar-hookah.com/tsar-h-one/"
      },
      "shop": {
       "price_cents": {
@@ -1933,8 +1958,8 @@
        "src": null
       },
       "display_name": {
-       "v": null,
-       "src": null
+       "v": "Tsar H-One",
+       "src": "shop:owner yes 2026-11-27 to the reverse-search names (exact matches only); web:https://tsar-hookah.com/tsar-h-one/ 2026-11-27"
       },
       "stock": {
        "v": null,
@@ -1972,7 +1997,8 @@
      "photo": {
       "img": "ace/ace-tsar-h-one-black",
       "status": "family_hero_only",
-      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json",
+      "web_src": "https://tsar-hookah.com/tsar-h-one/"
      },
      "shop": {
       "price_cents": {
@@ -1980,8 +2006,8 @@
        "src": null
       },
       "display_name": {
-       "v": null,
-       "src": null
+       "v": "Tsar H-One",
+       "src": "shop:owner yes 2026-11-27 to the reverse-search names (exact matches only); web:https://tsar-hookah.com/tsar-h-one/ 2026-11-27"
       },
       "stock": {
        "v": null,
@@ -2019,7 +2045,8 @@
      "photo": {
       "img": "ace/ace-tsar-h-one-black",
       "status": "family_hero_only",
-      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json",
+      "web_src": "https://tsar-hookah.com/tsar-h-one/"
      },
      "shop": {
       "price_cents": {
@@ -2027,8 +2054,8 @@
        "src": null
       },
       "display_name": {
-       "v": null,
-       "src": null
+       "v": "Tsar H-One",
+       "src": "shop:owner yes 2026-11-27 to the reverse-search names (exact matches only); web:https://tsar-hookah.com/tsar-h-one/ 2026-11-27"
       },
       "stock": {
        "v": null,
@@ -2066,7 +2093,8 @@
      "photo": {
       "img": "ace/ace-tsar-h-one-black-2",
       "status": "ready",
-      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json",
+      "web_src": "https://tsar-hookah.com/tsar-h-one/"
      },
      "shop": {
       "price_cents": {
@@ -2074,8 +2102,8 @@
        "src": null
       },
       "display_name": {
-       "v": null,
-       "src": null
+       "v": "Tsar H-One",
+       "src": "shop:owner yes 2026-11-27 to the reverse-search names (exact matches only); web:https://tsar-hookah.com/tsar-h-one/ 2026-11-27"
       },
       "stock": {
        "v": null,
@@ -2113,7 +2141,8 @@
      "photo": {
       "img": "ace/ace-tsar-h-one-black",
       "status": "ready",
-      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json",
+      "web_src": "https://tsar-hookah.com/tsar-h-one/"
      },
      "shop": {
       "price_cents": {
@@ -2121,8 +2150,8 @@
        "src": null
       },
       "display_name": {
-       "v": null,
-       "src": null
+       "v": "Tsar H-One",
+       "src": "shop:owner yes 2026-11-27 to the reverse-search names (exact matches only); web:https://tsar-hookah.com/tsar-h-one/ 2026-11-27"
       },
       "stock": {
        "v": null,
@@ -2195,8 +2224,8 @@
      "src": null
     },
     "height_cm": {
-     "v": null,
-     "src": null
+     "v": 40,
+     "src": "web:https://www.el-badia.com/en/classic-shisha-hookah/2575-chicha-amotion-flash-bang.html 2026-11-27 (40 cm)"
     },
     "acrylic": {
      "v": null,
@@ -2205,6 +2234,14 @@
     "weight_g": {
      "v": null,
      "src": null
+    },
+    "item_weight_g": {
+     "v": 3000,
+     "src": "web:https://www.el-badia.com/en/classic-shisha-hookah/2575-chicha-amotion-flash-bang.html 2026-11-27 (3 kg)"
+    },
+    "material": {
+     "v": "Stainless steel and aluminium",
+     "src": "web:https://www.el-badia.com/en/classic-shisha-hookah/2575-chicha-amotion-flash-bang.html 2026-11-27"
     }
    },
    "flags": [
@@ -2233,8 +2270,8 @@
        "src": null
       },
       "display_name": {
-       "v": null,
-       "src": null
+       "v": "Amotion Flash Bang",
+       "src": "shop:owner yes 2026-11-27 to the reverse-search names (exact matches only); web:https://www.el-badia.com/en/classic-shisha-hookah/2575-chicha-amotion-flash-bang.html 2026-11-27"
       },
       "stock": {
        "v": null,
@@ -2280,8 +2317,8 @@
        "src": null
       },
       "display_name": {
-       "v": null,
-       "src": null
+       "v": "Amotion Flash Bang",
+       "src": "shop:owner yes 2026-11-27 to the reverse-search names (exact matches only); web:https://www.el-badia.com/en/classic-shisha-hookah/2575-chicha-amotion-flash-bang.html 2026-11-27"
       },
       "stock": {
        "v": null,
@@ -2327,8 +2364,8 @@
        "src": null
       },
       "display_name": {
-       "v": null,
-       "src": null
+       "v": "Amotion Flash Bang",
+       "src": "shop:owner yes 2026-11-27 to the reverse-search names (exact matches only); web:https://www.el-badia.com/en/classic-shisha-hookah/2575-chicha-amotion-flash-bang.html 2026-11-27"
       },
       "stock": {
        "v": null,
@@ -2374,8 +2411,8 @@
        "src": null
       },
       "display_name": {
-       "v": null,
-       "src": null
+       "v": "Amotion Flash Bang",
+       "src": "shop:owner yes 2026-11-27 to the reverse-search names (exact matches only); web:https://www.el-badia.com/en/classic-shisha-hookah/2575-chicha-amotion-flash-bang.html 2026-11-27"
       },
       "stock": {
        "v": null,
@@ -2727,6 +2764,14 @@
     "weight_g": {
      "v": null,
      "src": null
+    },
+    "material": {
+     "v": "Stainless steel tray, powder-coated stainless steel shaft",
+     "src": "web:https://shishazone.ca/product/techno-hookah/ 2026-11-27"
+    },
+    "features": {
+     "v": "Removable diffuser, vertical blowdown",
+     "src": "web:https://shishazone.ca/product/techno-hookah/ 2026-11-27"
     }
    },
    "flags": [],
@@ -2744,8 +2789,9 @@
      },
      "photo": {
       "img": "ace/ace-techno-yellow",
-      "status": "needs_original",
-      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
+      "status": "CHECK",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json",
+      "web_src": "https://shishazone.ca/product/techno-hookah/"
      },
      "shop": {
       "price_cents": {
@@ -2791,8 +2837,9 @@
      },
      "photo": {
       "img": "ace/ace-techno-red",
-      "status": "needs_original",
-      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
+      "status": "CHECK",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json",
+      "web_src": "https://shishazone.ca/product/techno-hookah/"
      },
      "shop": {
       "price_cents": {
@@ -2838,8 +2885,9 @@
      },
      "photo": {
       "img": "ace/ace-techno-blue",
-      "status": "needs_original",
-      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
+      "status": "CHECK",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json",
+      "web_src": "https://shishazone.ca/product/techno-hookah/"
      },
      "shop": {
       "price_cents": {
@@ -2885,8 +2933,9 @@
      },
      "photo": {
       "img": "ace/ace-techno-black",
-      "status": "needs_original",
-      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
+      "status": "CHECK",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json",
+      "web_src": "https://shishazone.ca/product/techno-hookah/"
      },
      "shop": {
       "price_cents": {
@@ -2933,7 +2982,8 @@
      "photo": {
       "img": "ace/ace-techno-grey",
       "status": "family_hero_only",
-      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json",
+      "web_src": "https://shishazone.ca/product/techno-hookah/"
      },
      "shop": {
       "price_cents": {
@@ -2979,8 +3029,9 @@
      },
      "photo": {
       "img": "ace/ace-techno-grey",
-      "status": "needs_original",
-      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
+      "status": "CHECK",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json",
+      "web_src": "https://shishazone.ca/product/techno-hookah/"
      },
      "shop": {
       "price_cents": {
@@ -3268,8 +3319,8 @@
      "src": null
     },
     "height_cm": {
-     "v": null,
-     "src": null
+     "v": 68.5,
+     "src": "web:https://shishazone.ca/product/baseball-bat-hookah-ace-hookah/ 2026-11-27 (68.5 cm)"
     },
     "acrylic": {
      "v": null,
@@ -3278,6 +3329,10 @@
     "weight_g": {
      "v": null,
      "src": null
+    },
+    "item_weight_g": {
+     "v": 2800,
+     "src": "web:https://shishazone.ca/product/baseball-bat-hookah-ace-hookah/ 2026-11-27 (2.8 kg)"
     }
    },
    "flags": [],
@@ -4866,8 +4921,9 @@
      },
      "photo": {
       "img": "ace/ace-226-wood-bronze",
-      "status": "CHECK",
-      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
+      "status": "ready",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json",
+      "web_src": "https://shishazone.ca/product/wood-226/"
      },
      "shop": {
       "price_cents": {
@@ -4913,8 +4969,9 @@
      },
      "photo": {
       "img": "ace/ace-226-wood-blue",
-      "status": "CHECK",
-      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
+      "status": "ready",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json",
+      "web_src": "https://shishazone.ca/product/wood-226/"
      },
      "shop": {
       "price_cents": {
@@ -4960,8 +5017,9 @@
      },
      "photo": {
       "img": "ace/ace-226-wood-black",
-      "status": "CHECK",
-      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
+      "status": "ready",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json",
+      "web_src": "https://shishazone.ca/product/wood-226/"
      },
      "shop": {
       "price_cents": {
@@ -5008,7 +5066,8 @@
      "photo": {
       "img": "ace/ace-226-wood-blue",
       "status": "family_hero_only",
-      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json",
+      "web_src": "https://shishazone.ca/product/wood-226/"
      },
      "shop": {
       "price_cents": {
@@ -5055,7 +5114,8 @@
      "photo": {
       "img": "ace/ace-226-wood-blue",
       "status": "family_hero_only",
-      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json",
+      "web_src": "https://shishazone.ca/product/wood-226/"
      },
      "shop": {
       "price_cents": {
@@ -18672,23 +18732,11 @@
    "shown_in": "gold"
   },
   {
-   "sku": "OSS-100079",
-   "family": "ace-tsar-molotov",
-   "photo_status": "upscale",
-   "img": "ace/ace-tsar-molotov-white"
-  },
-  {
    "sku": "OSS-100080",
    "family": "ace-tsar-molotov",
    "photo_status": "shown_in",
    "img": "shop/ace-tsar-molotov-blue",
    "shown_in": "blue"
-  },
-  {
-   "sku": "OSS-100082",
-   "family": "ace-tsar-molotov",
-   "photo_status": "upscale",
-   "img": "ace/ace-tsar-molotov-black"
   },
   {
    "sku": "OSS-100083",
@@ -18855,24 +18903,6 @@
    "photo_status": "shown_in",
    "img": "ace/ace-247-cutie-red",
    "shown_in": "red"
-  },
-  {
-   "sku": "OSS-100231",
-   "family": "ace-226-wood",
-   "photo_status": "upscale",
-   "img": "ace/ace-226-wood-bronze"
-  },
-  {
-   "sku": "OSS-100232",
-   "family": "ace-226-wood",
-   "photo_status": "upscale",
-   "img": "ace/ace-226-wood-blue"
-  },
-  {
-   "sku": "OSS-100233",
-   "family": "ace-226-wood",
-   "photo_status": "upscale",
-   "img": "ace/ace-226-wood-black"
   },
   {
    "sku": "OSS-100234",

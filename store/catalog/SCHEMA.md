@@ -71,6 +71,16 @@ Ace group (Full size, Stem set, Compact and travel, Statement piece) is a writte
 Photo status: `ready`; `CHECK` (enlarged past 1.25x: ask Ace for the original); `hand_crop` (products touch, needs a
 drawn crop); `needs_original` (enlarged past 2x). Owner ruling 2026-11-24: `CHECK`, `needs_original` and `hand_crop` photos all go up as the main photo with "Photo to be upscaled"; `family_hero_only` (no photo of this colour, the family's main photo stands in); `none`;
 `needs_store_photo` (charcoal and foil).
+A `CHECK` or `needs_original` photo re-made from a 4x upscale and passed by a design review is listed in
+`suppliers/<supplier>/upscaled.json` (method, source PDF sha256, sha256 of each published file, 1440 width): photos.py and
+photos_acc.py then keep its files and give it `ready`. If its files or the PDF change, the scripts warn and flag it again;
+its row's `img_lw` must then go back to NULL. First one: OSS-110026, 2026-11-27 (`catalog/live/upscaled-photos-2026-11-27.sql`).
+A photo replaced by a sharper photo of the same product and colour found online (owner 2026-11-27: high quality web photos
+are fair game; the brand's own product shots first) is listed in `suppliers/<supplier>/web-photos.json` (image and page URL,
+site, who owns the image, source and product size, the Ace cut it stands for, sha256 of each published file): photos.py
+keeps its files and gives it the status recorded there (`ready`, or `CHECK` when even the web original is enlarged past
+1.25x). The page URL goes to `photo.web_src` in the master and `facts_known.photo_src` in the row, so any photo can be swapped
+later. First batch: 13 Ace photos, 2026-11-27 (`catalog/live/web-photos-2026-11-27.sql`).
 
 ## SKUs: OSS-SSNNNN
 
@@ -94,6 +104,8 @@ Supplier columns (`supplier_id, supplier_ref, supplier_price_cents, family, vari
 facts_known`) are refreshed by every import. Shop columns (`name, price_cents, stock, active, note, weight_g, box_id,
 ship_class, category_id, sort, availability`) are written once, when the row is created, and never again. The only
 exception: an item gone from the catalogue gets `availability = 'dropped'` (never deleted, never switched off).
+A weight typed in the item editor (2026-11-27) is written to `weight_g` (whole grams) and marked `details.weighed = true`;
+that makes it the item's known shipping weight (src/catalog.js `weightUnknown`), even when it equals an import placeholder.
 
 ## Commands (from the repo root)
 
