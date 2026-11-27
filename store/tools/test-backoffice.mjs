@@ -17,7 +17,26 @@ const KEY = process.env.ADMIN_KEY || readFileSync(new URL("../.dev.vars", import
 let n = 0, f = 0; const ok = (c, msg) => { n++; if (!c) { f++; console.log("FAIL", msg); } };
 const jar = { owner: "", staff: "" };
 // the local server drops idle kept-alive connections while a database command runs beside it: a reset before any answer is retried
-const fetch = async (u, o) => { for (let i = 0; ; i++) try { return await globalThis.fetch(u, o); } catch (e) { if (i >= 2 || e?.cause?.code !== "ECONNRESET") throw e; } };
+// The local dev server is two processes: wrangler's proxy keeps a pool of kept-alive connections to the store's own process,
+// and both ends close a connection that has sat idle for 5 s. A request handed a pooled connection just as it closes fails with
+// "Network connection lost", and wrangler dev exits on that (GitHub runs 45945616272 and 45954276171, both tries: each crash
+// came 4.7-4.9 s after a 30-request burst's connections went idle, with a database command in between). So the pool is
+// modelled here (one entry per connection, last use; a sequential request reuses the newest) and no request starts while any
+// pooled connection is 3.5-7 s idle: it waits until that connection is surely closed. A test-rig limit, not the shop's: the
+// requests, their order and everything checked stay the same, only a pause is added before some of them.
+const pool = [];
+const clearOfIdleEdge = async () => {
+  for (;;) {
+    const now = Date.now(); for (let i = pool.length - 1; i >= 0; i--) if (now - pool[i] >= 7000) pool.splice(i, 1);
+    const edge = pool.filter(t => now - t > 3500).map(t => t + 7000 - now); if (!edge.length) return;
+    await new Promise(r => setTimeout(r, Math.max(...edge)));
+  }
+};
+const fetch = async (u, o) => {
+  await clearOfIdleEdge(); if (pool.length) pool.splice(pool.indexOf(Math.max(...pool)), 1);
+  try { for (let i = 0; ; i++) try { return await globalThis.fetch(u, o); } catch (e) { if (i >= 2 || e?.cause?.code !== "ECONNRESET") throw e; } }
+  finally { pool.push(Date.now()); }
+};
 const call = async (path, { method = "GET", body, as = "owner", headers = {} } = {}) => {
   const h = { ...headers }; if (jar[as]) h.Cookie = jar[as]; if (body !== undefined) { h["Content-Type"] = "application/json"; h["X-OSS-Admin"] = "1"; }
   const r = await fetch(B + path, { method, headers: h, body: body === undefined ? undefined : JSON.stringify(body) });

@@ -141,7 +141,17 @@ for (const c of SECS) {
   q = await probe(p);
   t(c + ": one layer on an in-site arrival", q.layers === 1 && q.allLayers === 1, J(q));
   t(c + ": the act is playing", q.runningInFx > 0, J(q));
-  if (c === "bowls") { const b = await p.evaluate(() => { const o = document.querySelector(".shophead .fx-obj"), g = o && o.querySelector(".tongs"); return g ? { opacity: +getComputedStyle(g).opacity, y: g.getBoundingClientRect().bottom - o.getBoundingClientRect().top, h: o.getBoundingClientRect().height } : null; });
+  // Sampled on the act's own clock, not 500 ms of wall time after the arrival: the act is made when the page lands (after the
+  // fetch and the wave), and on GitHub's 2-core software-GL machines that, and the frames, ran late. The failures there read
+  // opacity 0 at y -51 (the tongs' track had not begun 500 ms after the arrival) or y 4-20 (still coming down). The tongs are
+  // down from 400 ms into their track until 610 ms; the first frame at 350 ms or later is read (a frame of up to 260 ms
+  // still lands inside the hold), in that frame, so what is read is what the act draws at that moment.
+  if (c === "bowls") { const b = await p.evaluate(() => new Promise(done => { const t0 = performance.now(); const step = () => {
+      const o = document.querySelector(".shophead .fx-obj"), g = o && o.querySelector(".tongs"), a = g && g.getAnimations()[0];
+      const at = a && a.currentTime != null ? a.currentTime - a.effect.getTiming().delay : null;
+      if ((at == null || at < 350) && performance.now() - t0 < 6000) return requestAnimationFrame(step);
+      done(g ? { opacity: +getComputedStyle(g).opacity, y: g.getBoundingClientRect().bottom - o.getBoundingClientRect().top, h: o.getBoundingClientRect().height, at: at == null ? null : Math.round(at) } : null); };
+    step(); }));
     t("bowls: mid-act the tongs are in view and down at the bowl", !!b && b.opacity > .9 && b.y > b.h * .2 && b.y < b.h * .55, J(b)); }
   if (c === "shisha") { const d = await p.evaluate(() => { const o = document.querySelector(".shophead .fx-obj"), n = o && o.querySelector(".sdrip"); return n ? { drip: n.getAnimations().filter(a => a.playState === "running").length, fork: o.querySelector(".sfg").getAnimations().length, ring: o.querySelector(".ssplash").getAnimations().length } : null; });
     t("shisha: mid-act the drip, the fork and the splash ring are all in the act", !!d && d.drip > 0 && d.fork > 0 && d.ring > 0, J(d));
@@ -257,8 +267,13 @@ if (SECS.includes("hookahs")) {
   await p.emulateMedia({ media: "screen" });
   if (await p.evaluate(() => !!(window.__smoke && window.__smoke.canvas.getContext("webgl").getExtension("WEBGL_lose_context")))) {
     await p.evaluate(() => window.__smoke.canvas.getContext("webgl").getExtension("WEBGL_lose_context").loseContext());
-    await wait(p, 2700);
-    const s = await p.evaluate(() => ({ stills: document.querySelectorAll(".shophead > .smoke--still.smoke--bank.on").length, live: document.querySelectorAll("canvas.smoke").length }));
+    // The page gives the context 2 s to come back, then takes the canvas out, puts the stills in and fades them on two frames
+    // later (fx-smoke.js toStills, place). Read at a fixed 2.7 s of wall time, GitHub's 2-core software-GL machines caught the
+    // one state in between: {"stills":0,"live":0}, the canvas gone and the stills in but not yet on (runs 45951384375,
+    // 45954276171). So the check waits on the page's own steps: the canvas going (up to 6 s), then three frames, then reads.
+    const t1 = Date.now(), gone = await p.waitForFunction(() => !document.querySelector("canvas.smoke"), null, { timeout: 6000 }).then(() => Date.now() - t1, () => -1);
+    await p.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(r)))));
+    const s = await p.evaluate(() => ({ stills: document.querySelectorAll(".shophead > .smoke--still.smoke--bank.on").length, live: document.querySelectorAll("canvas.smoke").length })); s.goneAfter = gone;
     t("a lost context that does not come back is replaced by the stills", s.stills === 1 && s.live === 0, J(s));
   } else skip("lost context", "no live WebGL smoke in this browser");
 }
