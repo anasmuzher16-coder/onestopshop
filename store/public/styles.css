@@ -212,10 +212,15 @@ body:not([data-route]) .foot{visibility:hidden}
 /* minmax(0,1fr), never an implicit auto column (grid-auto-columns, so the landscape and desktop templates still apply): an auto column grows to its widest child's min-content, so one long word, a
    wide font on another system or a picture's own width could push the whole page past the screen (GitHub run 45930602151:
    p/OSS-9616 376px wide at 375). Long words break inside the column instead. */
-.pdp{display:grid;grid-auto-columns:minmax(0,1fr)}
+.pdp{display:grid;grid-auto-columns:minmax(0,1fr);overflow-x:clip}
+/* overflow-x:clip on .pdp: the product act's "give" (fx-sections.js give()) springs the edge-to-edge tile to scale 1.004, and a
+   transform counts toward the page's width: 375 x 1.004 put the tile's right edge at 375.75, the page 376 wide (phone-audit
+   p/OSS-9616 at 360/375/390, GitHub runs 46035595519, 46036050108). The tile already clips what moves inside it (.tile is
+   overflow:hidden); this clips the tile itself at the page's edge. clip, not hidden: no scroll box, so the desktop tile stays sticky,
+   and the vertical stays open. */
 .pdp > *,.grid > *,.shelf__head > .h2,.keep__b{min-width:0}
 .pdp__info,.card,.shelf__head .h2{overflow-wrap:break-word}
-.pdp__tile{border-radius:0;aspect-ratio:auto;height:min(105vw,52svh);background:var(--tile,var(--color-raised));transition:background-color var(--dur-state) var(--ease-state);overflow-x:clip}   /* the product act moves the photo sideways: never let it widen the page (phone-audit, OSS-9616 at 375, 2026-11-27); vertical stays open for the act's lift */
+.pdp__tile{border-radius:0;aspect-ratio:auto;height:min(105vw,52svh);background:var(--tile,var(--color-raised));transition:background-color var(--dur-state) var(--ease-state)}
 .pdp__tile .sticker{top:var(--s-4);right:var(--s-4);bottom:auto;width:92px;height:92px} .pdp__tile .sticker__v{font-size:2rem}
 .pdp__tile .shot:not(.shot--photo){padding:7% 6% 5%}   /* a cut-out never touches the tile edge on a phone, and has room above it to move */
 .pdp__tile.tile--photo{background:#000}
