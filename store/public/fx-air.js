@@ -50,7 +50,18 @@ function make() {
 }
 // the worker could not start (an old engine, a blocked module): the handed-over canvas is gone, so a fresh one is drawn here instead
 function swap() { const k = want; noWorker = true; stopWorker(); if (cv) { cv.remove(); cv = null; } mw = mh = -1; want = null; if (k) start(k); }
-function stopWorker() { if (wraf) cancelAnimationFrame(wraf); wraf = 0; if (!worker) return; const old = worker; worker = null; old.onmessage = old.onerror = null; try { old.terminate(); } catch {} }
+// A worker's end is joined on the main thread, and the join waits for its graphics context to close: right after a page swap, with the
+// graphics process busy with the new page and the first compiles, that held the main thread 100-150 ms inside the wave's reveal (first
+// tap from an air page to Hookahs, 2x trace, 2026-11-27: DidTerminateWorkerThread > PlatformThread::Join). Leaving an air page under a
+// wave, the worker is told to stop drawing (its canvas is already off the page) and is ended once the wave has gone and the page is idle.
+function stopWorker(later = false) {
+  if (wraf) cancelAnimationFrame(wraf); wraf = 0; if (!worker) return; const old = worker; worker = null; old.onmessage = old.onerror = null;
+  const kill = () => { try { old.terminate(); } catch {} };
+  if (!later) { kill(); return; }
+  try { old.postMessage({ type: "hide" }); } catch {}
+  const wait = () => { if (window.__wave?.active) { setTimeout(wait, 250); return; } if (window.requestIdleCallback) requestIdleCallback(kill, { timeout: 1500 }); else setTimeout(kill, 60); };
+  setTimeout(wait, 250);
+}
 function start(k) {
   root.classList.remove("air-still"); root.removeAttribute("data-air"); root.classList.add("air-page");
   const fresh = !cv; if (fresh && !make()) { still(k); return; }
@@ -60,9 +71,9 @@ function start(k) {
   if (local && !raf) raf = requestAnimationFrame(loop);
   if (fresh) requestAnimationFrame(() => { if (cv) cv.classList.add("on"); });
 }
-function end() { if (raf) cancelAnimationFrame(raf); raf = 0; stopWorker(); local = null; if (cv) { cv.remove(); cv = null; } mw = mh = -1; kind = want = null; }
+function end(later = false) { if (raf) cancelAnimationFrame(raf); raf = 0; stopWorker(later); local = null; if (cv) { cv.remove(); cv = null; } mw = mh = -1; kind = want = null; }
 function still(k) { root.classList.add("air-page", "air-still"); root.dataset.air = k; }
-function clear() { end(); root.classList.remove("air-page", "air-still"); root.removeAttribute("data-air"); }
+function clear() { end(!!window.__wave?.active); root.classList.remove("air-page", "air-still"); root.removeAttribute("data-air"); }
 function stick() { if (stuckHead?.isConnected && stuckBar) stuckBar.classList.toggle("is-stuck", stuckHead.getBoundingClientRect().bottom < stuckBar.getBoundingClientRect().top - .5); }
 function place() {
   const k = which(); stuckHead = document.querySelector(".shophead"); stuckBar = stuckHead && stuckHead.parentNode.querySelector(":scope > .chips");

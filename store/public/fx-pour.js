@@ -65,11 +65,6 @@ function launch() {
 }
 // still compiling: the smoke starts a frame or two later instead of holding the page (never more than a second of waiting)
 const compiling = () => !!pend?.par && performance.now() - (pend.w ??= performance.now()) < 1000 && !pend.g.isContextLost() && Object.values(pend.list).some(x => !pend.g.getProgramParameter(x.p, pend.par.COMPLETION_STATUS_KHR));
-// Collecting the programs and sizing the targets ask the graphics process for answers, and each ask waits for everything queued
-// before it. Under a wave that queue is the new page's raster and the compiles: on a first visit, before the warm-up had finished,
-// one ask (the renderer's name) waited 168 ms inside the reveal (2x trace, 2026-11-27). So a smoke page that is not set up yet
-// waits for the wave to finish, and for the next quiet moment after it (at most 4 s in all), before it asks anything.
-const underWave = () => !!pend && !!window.__wave?.active && performance.now() - (pend.w ??= performance.now()) < 4000;
 addEventListener("wave:start", e => { if (e.detail?.key === "hookahs" && !tried) setTimeout(() => { if (!gl && !tried) { launch(); if (pend) pend.w ??= pend.t; } }, 240); });   // the context is made once the wave's body covers the screen, never inside the tap or mid-motion
 function setup() {
   if (new URLSearchParams(location.search).has("still")) return false;
@@ -246,9 +241,7 @@ function begin() {
     beginAir(); return;
   }
   if (!RM.matches && !gl && !tried) {   // only the smoke and mist pages ever pay for this
-    launch();
-    if (underWave()) { document.documentElement.classList.add("pour-page"); requestAnimationFrame(() => { if (!modeName || M.air || on) return; if (underWave()) begin(); else idle(() => { if (modeName && !M.air && !on) begin(); }, 250); }); return; }
-    if (compiling()) { document.documentElement.classList.add("pour-page"); requestAnimationFrame(() => { if (modeName && !M.air && !on) begin(); }); return; }
+    launch(); if (compiling()) { document.documentElement.classList.add("pour-page"); requestAnimationFrame(() => { if (modeName && !M.air && !on) begin(); }); return; }
     tried = true; if (!setup()) gl = null; }
   if (gl && (lost || gl.isContextLost())) { document.documentElement.classList.add("pour-still", "pour-page"); return; }   // warmed at load and lost since: the still, never a bare ground
   if (RM.matches || !gl) { document.documentElement.classList.add("pour-still", "pour-page"); return; }
@@ -288,7 +281,8 @@ function spritzAll() {
 }
 // Leaving the smoke page under a wave, the canvas comes off at once and its targets and buffer are handed back once the wave has gone
 // and the page is idle: freeing them waits for the graphics process, 26-31 ms in the frames after the swap (2x profile, 2026-11-26).
-// The smoke page opened again before then simply reuses them (begin() runs before any free, and a free never runs while it is on).
+// The smoke page opened again before then keeps the canvas at its size, so no new buffer is made (size() still rebuilds the targets;
+// deleting them is queued, not waited for), and a free never runs while it is on.
 let freeT = 0, freeGen = 0;
 function free() { clearTimeout(freeT); freeT = 0; freeGen++; if (on) return; release(); cv.width = cv.height = 0; }
 function freeLater() {

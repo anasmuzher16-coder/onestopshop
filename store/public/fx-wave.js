@@ -412,11 +412,9 @@ function upAll() { const k = Object.keys(imgs).find(x => !tex[x] && !x.endsWith(
 const afterLoad = f => document.readyState === "complete" ? setTimeout(f, 500) : addEventListener("load", () => setTimeout(f, 500), { once: true });
 afterLoad(() => idle(warm, { timeout: 1000 }));
 addEventListener("pointerdown", () => warm(), { passive: true, capture: true });   // someone faster than the quiet moment
-// only the book this finger is about to open goes to the GPU, before the finger lifts: in the task right after the press, not at the next
-// idle moment, which often came after the click and put the upload (33-57 ms at 2x CPU) inside the tap's first frame (profile, 2026-11-27)
-addEventListener("pointerdown", e => {
+addEventListener("pointerdown", e => {   // only the book this finger is about to open goes to the GPU, before the finger lifts
   const a = e.target.closest?.("a[href]"); if (!a) return; let u; try { u = new URL(a.href); } catch { return; } if (u.origin !== location.origin) return;
-  const key = waveFor(u.pathname), k = key && (W[key].atlas || W[key].sprite); if (!k || !imgs[k] || tex[k]) return; setTimeout(() => { if (!gl || w || gl.isContextLost()) return; try { atlasTex(k); } catch {} }, 0);
+  const key = waveFor(u.pathname), k = key && (W[key].atlas || W[key].sprite); if (!k || !imgs[k]) return; idle(() => { if (!gl || w || gl.isContextLost()) return; try { atlasTex(k); } catch {} });
 }, { passive: true, capture: true });
 idle(loadAtlas);
 window.__wave = { palette: () => w ? w.o.p : null, get active() { return w ? { key: w.key, phase: w.phase, p: w.p, pending: w.path } : null; }, get canvas() { return cv; }, get tier() { return tier; }, get res() { return res; }, sectionOf, waveFor };

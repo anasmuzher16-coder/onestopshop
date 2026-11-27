@@ -175,7 +175,7 @@ for (const c of SECS) {
   await record(p);
   const band = p.locator(".shophead[data-cat]");
   for (let i = 0; i < 5; i++) {
-    if (i === 4) await p.waitForFunction(() => { const l = document.querySelector(".shophead[data-cat] > .fx"); return !l || !l.querySelector("canvas") && l.getAnimations({ subtree: true }).every(a => a.playState !== "running" && !a.pending); }, null, { timeout: 4000 }).catch(() => {});
+    if (i === 4) t(c + ": the band comes to rest before the fifth tap", await p.waitForFunction(() => { const l = document.querySelector(".shophead[data-cat] > .fx"); return !l || !l.querySelector("canvas") && l.getAnimations({ subtree: true }).every(a => a.playState !== "running" && !a.pending); }, null, { timeout: 4000 }).then(() => true, () => false));
     await band.click({ position: { x: 8, y: 8 } });
     if (i === 2 && c === "misc") { await wait(p, 200); t("misc: a tap never hides a price already on screen", (await probe(p)).hidden === 0); await wait(p, 700); }
     else if (i < 4) await wait(p, 900);

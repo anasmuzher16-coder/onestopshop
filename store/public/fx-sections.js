@@ -1103,8 +1103,8 @@ document.addEventListener("click", e => {
   const old = band.querySelector(":scope > .fx"); if (!old) return;
   // something is still moving: an arrival is never cut short. Moving is read against the clock, not the play state alone: the play
   // state only changes at the next animation frame, so on a busy page an act that had ended 45-100 ms before still read "running" and
-  // the tap was left alone with nothing on screen moving (fx-robust, laptop, 2026-11-27). Every move here plays at normal speed.
-  const now = performance.now(), moving = a => a.pending || a.playState === "running" && (a.startTime == null || a.startTime + a.effect.getComputedTiming().endTime > now);
+  // the tap was left alone with nothing on screen moving (fx-robust, laptop, 2026-11-27).
+  const now = performance.now(), moving = a => a.pending || a.playState === "running" && (a.startTime == null || !(a.playbackRate > 0) || a.startTime + a.effect.getComputedTiming().endTime / a.playbackRate > now);
   if (old.querySelector("canvas") || old.getAnimations({ subtree: true }).some(moving)) return;
   old.remove(); live = null; playedKey = ""; again = true; try { place(); } finally { again = false; }
 });
