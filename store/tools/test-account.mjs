@@ -232,7 +232,8 @@ ok(lv.points === earned && lv.coming === 0 && lv.can_redeem, "picked up: the poi
 const sub = mid.price_cents, o2 = await order({ name: "Carol", email: carolEmail, method: "pickup", use_reward: true, lines: [{ sku: mid.sku, qty: 1 }] }, carol);
 ok(o2.status === 201 && o2.data.order.reward_cents === 500 && o2.data.order.tax_cents === Math.round((sub - 500) * 0.13) && o2.data.order.total_cents === sub - 500 + Math.round((sub - 500) * 0.13), "the $5 reward comes off the items before HST: " + JSON.stringify({ r: o2.data.order.reward_cents, t: o2.data.order.tax_cents, tot: o2.data.order.total_cents }));
 ok(o2.data.order.points === Math.floor((sub - 500) / 100), "points are earned on what was paid for, not on the reward");
-const rec = lastMail(carolEmail); ok(rec.kind === "order_placed" && /Points reward/.test(rec.body), "the receipt shows the reward");
+// the newest receipt, not the newest email: with no keys the order is now marked ready (2026-11-27), which writes the ready email after it
+const rec = sql(`SELECT kind, body FROM emails WHERE recipient = '${carolEmail}' AND kind = 'order_placed' ORDER BY id DESC LIMIT 1`)[0]; ok(rec && rec.kind === "order_placed" && /Points reward/.test(rec.body), "the receipt shows the reward");
 lv = (await api("/me", { cookie: carol })).data.loyalty; ok(lv.points === earned - 100, "the reward spent 100 points: " + lv.points);
 // farming: cancel the order that used the reward -> points come back; refund the order that earned them -> they go
 sql(`UPDATE orders SET status = 'cancelled' WHERE id = '${o2.data.order.id}'`);
