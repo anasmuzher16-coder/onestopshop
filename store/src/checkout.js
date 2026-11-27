@@ -94,21 +94,22 @@ const stillOpen = () => json({ error: "Your order is still going through. Wait a
 
 // GET /api/order-status?id=W...&k=...: the customer's own status link, shown on the order confirmation (2026-11-27). The key is a
 // keyed hash of the order id (guard.js statusToken), checked in constant time, so only someone shown the link can read it. The
-// answer carries the first name, what was asked for and where the order stands; never the email, phone, address or money.
+// answer carries the first name, what was asked for, the order's total (what to bring to the counter; design review 2026-11-27)
+// and where the order stands; never the email, phone, address, line prices or payment details.
 const sameText = (a, b) => { if (a.length !== b.length) return false; let d = 0; for (let i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i); return d === 0; };
 export async function orderStatus(request, env, url) {
   if (request.method !== "GET" && request.method !== "HEAD") return json({ error: "Method not allowed" }, 405);
   const id = url.searchParams.get("id") || "", k = url.searchParams.get("k") || "";
   const nope = () => json({ error: "We cannot find that order. Check the link, or call the counter at 519-255-2222 with your order number." }, 404);
   if (!/^W[A-Z0-9]{6}$/.test(id) || !/^[a-f0-9]{32}$/.test(k) || !sameText(await statusToken(env, id), k)) return nope();
-  const db = env.DB, o = await db.prepare("SELECT id, name, status, method, pay_method, pay_status, ship_service, ready_at, updated_at FROM orders WHERE id = ?").bind(id).first();
+  const db = env.DB, o = await db.prepare("SELECT id, name, status, method, pay_method, pay_status, ship_service, total_cents, ready_at, updated_at FROM orders WHERE id = ?").bind(id).first();
   if (!o) return nope();
   const items = (await db.prepare("SELECT name, qty FROM order_items WHERE order_id = ? ORDER BY sku").bind(id).all()).results;
   const closed = ["cancelled", "refunded"].includes(o.status) || ["expired", "failed"].includes(o.pay_status);
   const status = closed ? "cancelled" : o.status === "pending" ? (o.pay_status === "pay_at_pickup" ? "requested" : "payment") : o.status === "paid" || o.status === "packed" ? "preparing" : o.status;   // ready, shipped, collected
   const readyAt = o.status === "ready" ? Date.parse(String(o.ready_at || o.updated_at).replace(/Z?$/, "Z")) : NaN;
   return json({ ok: true, order: { id: o.id, first: String(o.name || "").split(" ")[0], status, method: o.method, local: o.ship_service === "Local delivery", pay_at_counter: o.pay_method === "at_pickup", notify: mailReady(env) ? "email" : "call",
-    ...(Number.isFinite(readyAt) ? { held_until: new Date(readyAt + READY_HOLD_DAYS * 864e5).toISOString() } : {}), items } });
+    total_cents: Number(o.total_cents) || 0, ...(Number.isFinite(readyAt) ? { held_until: new Date(readyAt + READY_HOLD_DAYS * 864e5).toISOString() } : {}), items } });
 }
 
 export async function placeOrder(request, env, url) {

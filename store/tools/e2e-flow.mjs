@@ -40,7 +40,7 @@ try {
   await snap("flow-checkout");
   if (!CARD) t("no keys: the cart picked up is paid at the counter", /At the counter/.test(await p.locator(".co__pay").innerText()));
   await p.locator('[data-checkout] button[type="submit"]').tap(); await p.waitForTimeout(300);
-  t("empty form is stopped with a message", await p.locator("[data-co-err]").isVisible());
+  t("empty form is stopped with a message under the first field", await p.locator("#co-name-err").isVisible() && await p.locator("#co-name").getAttribute("aria-invalid") === "true");   // 2026-11-27: under the field, no longer above the button
   await p.fill("#co-name", "Sam Sample"); await p.fill("#co-email", "sam@example.com"); await p.fill("#co-phone", "519-555-0171"); /* a pickup gives a phone while the shop's mail is off (2026-11-27) */ if (CARD) { await p.fill("#co-line1", "1 Test Street"); await p.fill("#co-city", "Toronto"); }
   const shown = await p.locator(".totals__door dd").innerText();
   await p.locator('[data-checkout] button[type="submit"]').tap(); await payThrough(p, 15000);

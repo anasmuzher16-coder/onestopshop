@@ -43,7 +43,7 @@ export const PAGES = [
   { words: ["hour", "open", "close", "closing", "when"], label: "Opening hours", sub: "Mon to Sat 10 to 9, Sun 11 to 7", href: "/#visit-h" },
   { words: ["address", "where", "direction", "location", "map", "visit"], label: "Visit the counter", sub: "760 Wyandotte St E, Windsor", href: "/#visit-h" },
   { words: ["delivery", "deliver", "local", "driver"], label: PICKUP_ONLY ? "Local delivery, coming" : "Local delivery", sub: PICKUP_ONLY ? "Opens once we take card payment online. Pickup is free" : "From $10 near Windsor", href: "/shipping" },
-  { words: ["pickup", "pick", "collect"], label: "Pickup", sub: "Free at the counter, same day", href: "/shipping" },
+  { words: ["pickup", "pick", "collect"], label: "Pickup", sub: PICKUP_ONLY ? "Free at the counter, usually the same or the next day" : "Free at the counter, same day", href: "/shipping" },
   { words: ["ship", "shipping", "post", "canada post", "mail"], label: PICKUP_ONLY ? "Shipping, coming" : "Shipping across Canada", sub: PICKUP_ONLY ? "Opens once we take card payment online. Pickup is free" : "Everywhere but Quebec for now. How we pack and what it costs", href: "/shipping" },
   { words: ["return", "refund", "exchange", "broken"], label: "Returns and broken items", sub: "Shipping and returns", href: "/shipping" },
   { words: ["term", "condition"], label: "Terms of sale", sub: "", href: "/terms" },

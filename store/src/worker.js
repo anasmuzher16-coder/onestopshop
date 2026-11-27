@@ -135,6 +135,8 @@ async function page(request, env, url, ctx) {
     .on("[data-delivery-strip] .dstrip__act", { element(e) { if (ask === "slim") e.setInnerContent(SLIM_ACT); } })
     .on("[data-delivery-strip] .dchoose", { element(e) { if (ask === "choose") e.removeAttribute("hidden"); } })
     .on(".foot__en", { element(e) { e.setInnerContent(reach, { html: true }); } })
+    // signing in needs an emailed code: while the mail is off the header offers no "Sign in" (account.js shows "Account" to anyone signed in)
+    .on("[data-account-link]", { element(e) { if (!mailReady(env)) e.setAttribute("hidden", ""); } })
     .on("title", { element(e) { e.setInnerContent(meta.title); } })
     .on('meta[name="description"]', { element(e) { e.setAttribute("content", meta.desc); } })
     .on('meta[name="robots"]', { element(e) { if (live && meta.index) e.remove(); else e.setAttribute("content", "noindex, nofollow"); } })
