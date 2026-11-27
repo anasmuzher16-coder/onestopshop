@@ -7,6 +7,23 @@ import { orderPlaced, newOrder } from "../src/email.js";
 // Order safety against the running local store: the server refuses a total the shopper did not see, and a retry
 // after a lost answer can never make a second order. node store/tools/test-orders.mjs   (changes local sample data: reseed afterwards)
 const B = (process.env.BASE || "http://127.0.0.1:4420").replace(/\/$/, "");
+// The same test-rig guard as test-backoffice.mjs (see its comment): wrangler dev's proxy and the store's process both close a
+// kept-alive connection idle for 5 s, and a request handed one just as it closes fails with ECONNRESET (seen here at the line
+// after a burst, 2026-11-27, laptop and CI runner alike, store still up). No request starts while a pooled connection is 3.5-7 s
+// idle, and a reset before any answer is retried. The requests, their order and every check stay the same.
+const pool = [];
+const clearOfIdleEdge = async (from = 3500) => {
+  for (;;) {
+    const now = Date.now(); for (let i = pool.length - 1; i >= 0; i--) if (now - pool[i] >= 7000) pool.splice(i, 1);
+    const edge = pool.filter(t => now - t > from).map(t => t + 7000 - now); if (!edge.length) return;
+    await new Promise(r => setTimeout(r, Math.max(...edge)));
+  }
+};
+const fetch = async (u, o) => {
+  await clearOfIdleEdge(); if (pool.length) pool.splice(pool.indexOf(Math.max(...pool)), 1);
+  try { for (let i = 0; ; i++) try { return await globalThis.fetch(u, o); } catch (e) { if (i >= 2 || e?.cause?.code !== "ECONNRESET") throw e; } }
+  finally { pool.push(Date.now()); }
+};
 // the made-up sample rows this suite buys, switched back on in its own throwaway database (tools/fixtures/samples-on.mjs)
 await samplesOn(B, ["OSS-7006", "OSS-8004", "OSS-8003", "OSS-7004", "OSS-8001", "OSS-8002", "OSS-8006"]);
 // A pay-at-the-counter pickup is a request (2026-11-27): it takes no stock until the shop marks it ready. This suite places many
