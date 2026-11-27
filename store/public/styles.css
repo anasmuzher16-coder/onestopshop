@@ -953,6 +953,19 @@ a[href^="tel:"]{white-space:nowrap}
 .fx .bglow{fill:#ff4a14;opacity:.4} .fx .bline{fill:#ffb050}
 .fx .spk{fill:#ffb347;opacity:0} .fx .lit,.fx .stack{transform-box:view-box;transform-origin:50px 100px}
 .shophead[data-cat="charcoal"] .fx-obj:not([style]){top:auto;bottom:0;translate:none}   /* the stack stands on the band floor */
+/* ---------- SHISHA, the section's object (2026-11-26, the owner-approved still inventory-2026-11-24-next/art/shisha-a6) ----------
+   An open tub of molasses: slate-navy body with facet bands, a gold label with a double apple, a steel rim, the foil lid peeled
+   back behind the heap, a steel fork leaning right lifting a glossy strand that ends in a hanging drip (the one moving part).
+   Navy and steel are the suite's own (.steel, .lsteel); the label, apple and syrup are the drawing's. Classes: tools/objects-r5.txt. */
+.fx .stub{fill:#333d58} .fx .sfacet{fill:#3d4866} .fx .sedge{fill:none;stroke:#fff;stroke-width:1.1;stroke-linecap:round;opacity:.8} .fx .sedge.dim{stroke-width:.9;opacity:.55}
+.fx .slabel{fill:#e3a33a} .fx .sapple{fill:#d23a2e} .fx .sleaf{fill:#3f8f3c} .fx .sprint{fill:none;stroke:#333d58;stroke-width:1.8;stroke-linecap:round}
+.fx .slid{fill:#dcdfe4} .fx .slidc{fill:none;stroke:#a9b0ba;stroke-width:1;stroke-linecap:round} .fx .srim{fill:#c9d0da}
+.fx .smol{fill:#4a2310} .fx .sstr{fill:none;stroke:#8a4a22;stroke-width:1.2;stroke-linecap:round} .fx .sgloss{fill:none;stroke:#b87440;stroke-width:1.3;stroke-linecap:round}
+.fx .sfork{fill:none;stroke:#c9d0da;stroke-width:3.6;stroke-linecap:round} .fx .sfork.bar{stroke-width:2.4} .fx .sfork.tine{stroke-width:1.5}
+.fx .sforkd{fill:none;stroke:#3d4866;stroke-width:1.1;stroke-linecap:round;opacity:.7} .fx .sforkh{fill:none;stroke:#fff;stroke-width:.8;stroke-linecap:round}
+.fx .syrup{fill:#7a3a17} .fx .syruph{fill:none;stroke:#ffd79a;stroke-width:.8;stroke-linecap:round} .fx .sdhl{fill:#fff}
+.fx .ssplash{fill:none;stroke:#ffd79a;stroke-width:.7;opacity:0;transform-box:fill-box;transform-origin:center}   /* the ring the drip leaves in the molasses: only in the act */
+.fx .sfg{transform-box:view-box;transform-origin:51.6px 51px} .fx .sstrand{transform-box:view-box;transform-origin:65.4px 23.6px} .fx .sdrip{transform-box:view-box;transform-origin:73.4px 36.2px}
 /* ---------- STOCK ARRIVING SOON (2026-11-24, owner: "Hide samples, show coming soon") ----------
    atelier (review 3): the store's rule for an unknown is a dashed hairline, so the empty first slot of the grid is a dashed
    hairline in the section's jewel on the bare coal, and the section's own drawing stands in it drawn the same way: every
@@ -968,7 +981,7 @@ a[href^="tel:"]{white-space:nowrap}
 /* the drawing as an outline: fills off, every line a dashed hairline in the jewel; a state its band hides at rest shows */
 .soon__art svg *{fill:none !important;stroke:currentColor !important;stroke-width:1.5px !important;stroke-dasharray:4 2.5 !important;vector-effect:non-scaling-stroke;opacity:1 !important}
 .soon__art svg :is(defs,clipPath,clipPath *){stroke:none !important}
-.soon__art :is(.tongs,.gun){display:none}   /* the hands of the band's act (the tongs, the price gun) are not part of the object at rest */
+.soon__art :is(.tongs,.gun,.ssplash){display:none}   /* the hands of the band's act (the tongs, the price gun) are not part of the object at rest */
 .soon__slot .sticker.sticker--tbd{top:var(--s-3);right:var(--s-3);bottom:auto;color:var(--tile);border-color:var(--tile);background:none;box-shadow:none;transform:none;animation:tbd-in var(--dur-state) var(--ease-state) 380ms backwards}
 .soon__copy{order:1;display:grid;gap:var(--s-4);align-content:start}
 .soon__h{margin:0;font:400 var(--t-d1)/.95 var(--font-display);letter-spacing:-.01em;color:var(--color-strong);text-wrap:balance;padding-top:.1em}

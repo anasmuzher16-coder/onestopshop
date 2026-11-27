@@ -5,7 +5,7 @@ const { chromium } = createRequire(process.env.PW_FROM || "C:/dev/puckempire-are
 const sharp = createRequire(process.env.PW_FROM || "C:/dev/dijji-crm/package.json")("sharp");
 const [out, width = "390"] = process.argv.slice(2), B = process.env.BASE || "http://127.0.0.1:4420", W = +width;
 const PDP = (process.env.PDP || "").split(",").filter(Boolean); // product pages instead: PDP=OSS-7003,OSS-1001
-const ROWS = PDP.length ? PDP.map(sku => [sku, "[data-stage]"]) : [["hookahs", ".shophead"], ["cologne", ".shophead"], ["bases", ".shophead"], ["bowls", ".shophead"], ["heat", ".shophead"], ["hoses", ".shophead"], ["parts", ".shophead"], ["misc", "#main"]];
+const ROWS = PDP.length ? PDP.map(sku => [sku, "[data-stage]"]) : [["hookahs", ".shophead"], ["shisha", ".shophead"], ["cologne", ".shophead"], ["bases", ".shophead"], ["bowls", ".shophead"], ["heat", ".shophead"], ["hoses", ".shophead"], ["parts", ".shophead"], ["misc", "#main"]];
 const ONLY = (process.env.ONLY || "").split(",").filter(Boolean);
 const TIMES = (process.env.TIMES || "260,520,850,1250,1800,3200").split(",").map(Number);
 const b = await chromium.launch(); const errs = [], rows = [];
