@@ -14,7 +14,10 @@ let n = 0, f = 0, cookie = ""; const ok = (c, msg) => { n++; if (!c) { f++; cons
 // the shop's brake allows 12 new orders a minute: this suite makes more, so a 429 waits out the minute and goes again
 // each order comes from its own made-up address, as real shoppers do: the per-visitor order limits (src/guard.js) have their own checks in test-orders
 const shopper = () => `10.${(Math.random() * 250) | 0}.${(Math.random() * 250) | 0}.${(Math.random() * 250) | 0}`;
-const post = async body => { for (let i = 0; ; i++) { const r = await fetch(B + "/api/orders", { method: "POST", headers: { "Content-Type": "application/json", "CF-Connecting-IP": shopper() }, body: JSON.stringify(body) }); if (r.status === 429 && i < 2) { await new Promise(w => setTimeout(w, 61000)); continue; } return { status: r.status, data: await r.json().catch(() => ({})) }; } };
+// each order is its own shopper's email too (one email places at most 5 orders in 10 minutes, src/guard.js); a retry with the same
+// order key keeps the same email, so the retry checks still test what they did
+let nth = 0; const ownMail = b => b && typeof b.email === "string" && /^(test|pay)@example\.com$/.test(b.email) ? { ...b, email: b.email.replace("@", "+" + (b.order_key || "n" + ++nth) + "@") } : b;
+const post = async body => { for (let i = 0; ; i++) { const r = await fetch(B + "/api/orders", { method: "POST", headers: { "Content-Type": "application/json", "CF-Connecting-IP": shopper() }, body: JSON.stringify(ownMail(body)) }); if (r.status === 429 && i < 2) { await new Promise(w => setTimeout(w, 61000)); continue; } return { status: r.status, data: await r.json().catch(() => ({})) }; } };
 const admin = async (path, body) => { const r = await fetch(B + "/api/admin" + path, { method: body === undefined ? "GET" : "POST", headers: { Cookie: cookie, ...(body === undefined ? {} : { "Content-Type": "application/json", "X-OSS-Admin": "1" }) }, body: body === undefined ? undefined : JSON.stringify(body) }); return { status: r.status, data: await r.json().catch(() => ({})) }; };
 const stockOf = async sku => (await (await fetch(B + "/api/catalog")).json()).products.find(p => p.sku === sku)?.stock;
 const session = async id => (await fetch(S + "/__session/" + id)).json();
