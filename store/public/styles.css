@@ -64,7 +64,7 @@ body:not([data-route]) .foot{visibility:hidden}
 .field:focus{outline:2px solid var(--color-focus);outline-offset:2px}
 .field[aria-invalid]{border-color:var(--ember)}
 .field__err{margin:var(--s-2) 0 0;font-size:var(--t-14);color:var(--color-strong)}
-.field__err::before{content:"!";display:inline-grid;place-items:center;width:18px;height:18px;margin-right:var(--s-2);border-radius:50%;background:var(--ember);color:var(--white);font-weight:700;font-size:12px}
+.field__err::before{content:"!";display:inline-grid;place-items:center;width:18px;height:18px;margin-right:var(--s-2);border-radius:50%;background:var(--ember);color:var(--white);font-weight:600;font-size:12px}
 
 /* ---------- postal sheet ---------- */
 .sheet{width:100%;max-width:100%;margin:auto 0 0;padding:0;border:0;border-radius:16px 16px 0 0;background:var(--color-raised);color:var(--color-text)}
@@ -551,11 +551,12 @@ html:not(.hero-seen) .piece .sticker{animation-timing-function:linear(0,.25 6%,.
 .co__set .field{margin-bottom:var(--s-3)}
 .co__p{margin:0 0 var(--s-2);color:var(--color-text)}
 .co__back{margin:0;padding-bottom:var(--s-4);border-bottom:1px solid var(--color-line);color:var(--color-text)}
-.co__back b{color:var(--color-strong);font-weight:700}
+.co__back b{color:var(--color-strong);font-weight:600}
 .co .totals{margin-top:0}   /* the form's own gap already separates it */
 .co__main,.co__sum{display:grid;gap:var(--s-6);min-width:0}
 .co__set .field{text-transform:none;letter-spacing:0}   /* a name shows as typed, like the email (design review 2026-11-27) */
 .co__ferr{margin:calc(var(--s-1) * -1) 0 var(--s-3);padding-left:26px;text-indent:-26px}   /* a field's own error, right under it; its lines clear the mark */
+.co__ferr::before{text-indent:0}   /* the mark is its own box: it must not inherit the hanging indent */
 .co__sum>.h3{margin:0 0 calc(var(--s-4) * -1)}
 .co [data-acct-co]:empty{display:none}   /* the account box, with nothing in it, takes no gap */
 .co .co__lines{margin:0}
@@ -871,7 +872,7 @@ html.restoring .grid--shop .card{content-visibility:visible}
 /* the cart says plainly when the shelf changed what it holds: a word and a mark, in the reading order */
 .cartnews{margin:0 0 var(--s-4);font-size:var(--t-14);color:var(--color-strong);font-weight:500}
 .cartnews p{margin:0;padding:var(--s-3) 0;border-top:1px solid var(--color-line)}
-.cartnews p::before{content:"!";display:inline-grid;place-items:center;width:18px;height:18px;margin-right:var(--s-2);border-radius:50%;background:var(--ember);color:var(--white);font-weight:700;font-size:12px}
+.cartnews p::before{content:"!";display:inline-grid;place-items:center;width:18px;height:18px;margin-right:var(--s-2);border-radius:50%;background:var(--ember);color:var(--white);font-weight:600;font-size:12px}
 
 /* Charcoal (2026-11-24): pickup or local delivery only. The rule reads as a word in the meta register with a
    square glyph and weight, never as a coloured box edge. The drawn stand-in carries a quiet "Photo coming" tag. */

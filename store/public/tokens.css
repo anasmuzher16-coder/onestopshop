@@ -4,8 +4,14 @@
    for the sticker and the primary action. Type: Lalezar (Arabic + Latin poster display) + Readex Pro (UI). */
 @font-face{font-family:"Lalezar";src:url(fonts/lalezar-latin.woff2) format("woff2");font-weight:400;font-display:swap;unicode-range:U+0000-00FF,U+2010-2027,U+20AC}
 @font-face{font-family:"Lalezar";src:url(fonts/lalezar-arabic.woff2) format("woff2");font-weight:400;font-display:swap;unicode-range:U+0600-06FF,U+0750-077F,U+FB50-FDFF,U+FE70-FEFF}
-@font-face{font-family:"Readex Pro";src:url(fonts/readex-latin.woff2) format("woff2");font-weight:160 700;font-display:swap;unicode-range:U+0000-00FF,U+2010-2027,U+20AC}
-@font-face{font-family:"Readex Pro";src:url(fonts/readex-arabic.woff2) format("woff2");font-weight:160 700;font-display:swap;unicode-range:U+0600-06FF,U+0750-077F,U+FB50-FDFF,U+FE70-FEFF}
+/* Readex Pro as one static file per weight (400, 500, 600): WebKit does not apply the wght axis of the variable file
+   (every weight rendered as regular in Safari engines), static instances render the same everywhere. */
+@font-face{font-family:"Readex Pro";src:url(fonts/readex-latin-400.woff2) format("woff2");font-weight:400;font-display:swap;unicode-range:U+0000-00FF,U+2010-2027,U+20AC}
+@font-face{font-family:"Readex Pro";src:url(fonts/readex-latin-500.woff2) format("woff2");font-weight:500;font-display:swap;unicode-range:U+0000-00FF,U+2010-2027,U+20AC}
+@font-face{font-family:"Readex Pro";src:url(fonts/readex-latin-600.woff2) format("woff2");font-weight:600;font-display:swap;unicode-range:U+0000-00FF,U+2010-2027,U+20AC}
+@font-face{font-family:"Readex Pro";src:url(fonts/readex-arabic-400.woff2) format("woff2");font-weight:400;font-display:swap;unicode-range:U+0600-06FF,U+0750-077F,U+FB50-FDFF,U+FE70-FEFF}
+@font-face{font-family:"Readex Pro";src:url(fonts/readex-arabic-500.woff2) format("woff2");font-weight:500;font-display:swap;unicode-range:U+0600-06FF,U+0750-077F,U+FB50-FDFF,U+FE70-FEFF}
+@font-face{font-family:"Readex Pro";src:url(fonts/readex-arabic-600.woff2) format("woff2");font-weight:600;font-display:swap;unicode-range:U+0600-06FF,U+0750-077F,U+FB50-FDFF,U+FE70-FEFF}
 @font-face{font-family:"Lalezar Fallback";src:local("Impact"),local("Arial Black");size-adjust:92%;ascent-override:96%;descent-override:30%}
 @font-face{font-family:"Readex Fallback";src:local("Arial");size-adjust:106%;ascent-override:92%;descent-override:24%}
 
