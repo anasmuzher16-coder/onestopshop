@@ -112,7 +112,7 @@ const LOCAL = "'-5 hours'"; // the shop's clock (Windsor), close enough for day 
 const clampInt = (v, lo, hi) => { const n = Math.round(Number(v)); return Number.isFinite(n) && n >= lo && n <= hi ? n : null; };
 // A product name as the shop types it: newlines and tabs become spaces; other control characters and the invisible direction
 // overrides (U+202A-202E, U+2066-2069, plus the marks U+200E/200F/061C) are dropped; normal punctuation and accents stay.
-export const cleanItemName = v => typeof v !== "string" ? v : v.replace(/[\t\r\n\u2028\u2029\u000b\u000c\u0085]+/g, " ").replace(/[\u0000-\u001f\u007f-\u009f\u202a-\u202e\u2066-\u2069\u200e\u200f\u061c]/g, "").replace(/ {2,}/g, " ").trim();
+export const cleanItemName = v => typeof v !== "string" ? v : v.replace(/[\t\r\n\u2028\u2029\u000b\u000c\u0085]+/g, " ").replace(/[\u0000-\u001f\u007f-\u009f\u202a-\u202e\u2066-\u2069\u200e\u200f\u061c]/g, "").replace(/[­ᅟᅠ᠎​-‍⁠-⁯ㅤ﻿￹-￻\u{e0000}-\u{e007f}]/gu, "").replace(/ {2,}/g, " ").trim();
 const text = (v, max) => typeof v === "string" && v.trim().length <= max ? v.trim() : null;
 // The colours the shop has for one item, from the item editor: [{ name, hex? }]. A name is letters (and spaces, & / ' -),
 // up to 24; a hex only for a colour the shop added itself. The same name twice counts once. [] means "not known".
@@ -260,8 +260,12 @@ export async function openEdit(request, env, url, onShop) {
   // the body is read here, capped (~16 KB) before it is parsed; the save gets it already parsed
   let parsed;
   if (method === "PUT") {
-    const raw = await request.text();
-    if (new TextEncoder().encode(raw).length > OPEN_BODY_MAX) return json({ error: "That is too big." }, 413);
+    // read in pieces and stop at the cap, so an oversized body is never held whole in memory
+    const chunks = []; let got = 0, over = false;
+    if (request.body) { const rd = request.body.getReader(); for (;;) { const { done, value } = await rd.read(); if (done) break; got += value.byteLength; if (got > OPEN_BODY_MAX) { over = true; rd.cancel().catch(() => {}); break; } chunks.push(value); } }
+    if (over) return json({ error: "That is too big." }, 413);
+    const buf = new Uint8Array(got); let at = 0; for (const c of chunks) { buf.set(c, at); at += c.byteLength; }
+    const raw = new TextDecoder().decode(buf);
     try { parsed = JSON.parse(raw); } catch { parsed = null; }
   }
   const p = onShop.has(m[1]) ? await db.prepare(`SELECT ${OPEN_COLS} FROM products WHERE sku = ?`).bind(m[1]).first() : null;

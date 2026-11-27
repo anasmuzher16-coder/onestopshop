@@ -98,7 +98,11 @@ if (MODE) {
   { const nm = await req(`/api/open-edit/${t3.sku}`, { method: "PUT", body: { name: "\u202eCr\u00e8me\n\tBr\u00fbl\u00e9e\u2066 Tray\u0007 (No. 5) & co.\u200f" } });
     const after = (await req(`/api/open-edit/${t3.sku}`)).data.name;
     ok(nm.status === 200 && after === "Cr\u00e8me Br\u00fbl\u00e9e Tray (No. 5) & co.", `${MODE}: a name is cleaned of direction overrides, controls and newlines`, JSON.stringify(after));
-    ok((await req(`/api/open-edit/${t3.sku}`, { method: "PUT", body: { name: "\u202e\u202c\n" } })).status === 400, `${MODE}: a name that is only invisible characters is refused`); }
+    ok((await req(`/api/open-edit/${t3.sku}`, { method: "PUT", body: { name: "\u202e\u202c\n" } })).status === 400, `${MODE}: a name that is only invisible characters is refused`);
+    ok((await req(`/api/open-edit/${t3.sku}`, { method: "PUT", body: { name: "​⁠ㅤ­" } })).status === 400 && (await req(`/api/open-edit/${t3.sku}`, { method: "PUT", body: { name: "Zero​width" } })).status === 200 && (await req(`/api/open-edit/${t3.sku}`)).data.name === "Zerowidth", `${MODE}: zero-width characters are dropped from a name`); }
+  // a hose's colour: picking another changes what the page shows, not just the panel
+  { const r = await req(`/api/open-edit/${hoseC.sku}`, { method: "PUT", body: { colours: ["Teal"] } }), g2 = (await req(`/api/open-edit/${hoseC.sku}`)).data, after = (await catalog()).find(x => x.sku === hoseC.sku);
+    ok(r.status === 200 && JSON.stringify(g2.colours.map(c => c.name)) === '["Teal"]' && /Teal/.test(JSON.stringify(after)), `${MODE}: a hose's changed colour shows in the catalogue the page reads`, JSON.stringify(after)?.slice(0, 300)); }
   // never a sample, never an unticked catalogue page: not even readable, and a price never switches one on
   for (const x of [sample, unticked]) {
     ok((await req(`/api/open-edit/${x.sku}`)).status === 404 && (await req(`/api/open-edit/${x.sku}`, { method: "PUT", body: { price_cents: 1234 } })).status === 404, `${MODE}: ${x.sample ? "a made-up sample" : "an unticked catalogue page"} cannot be edited openly (${x.sku})`);
