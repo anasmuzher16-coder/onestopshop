@@ -23,7 +23,11 @@ try {
       await p.waitForLoadState("networkidle");
       const res = await p.evaluate(() => {
         const out = [], vw = innerWidth, vh = innerHeight, vis = e => { const r = e.getBoundingClientRect(), s = getComputedStyle(e); return r.width > 0 && r.height > 0 && s.visibility !== "hidden" && s.display !== "none"; };
-        if (document.documentElement.scrollWidth > vw) out.push("sideways scroll: page is " + document.documentElement.scrollWidth + "px wide");
+        if (document.documentElement.scrollWidth > vw) {   // same check as ever; it now also names what pokes out, so a Linux-only 1px case can be found
+          const past = [...document.querySelectorAll("body *")].map(e => [e, e.getBoundingClientRect()]).filter(([, r]) => r.width > 0 && r.right > vw + 0.5).sort((a, b) => b[1].right - a[1].right).slice(0, 3)
+            .map(([e, r]) => `${e.tagName.toLowerCase()}${e.id ? "#" + e.id : ""}${typeof e.className === "string" && e.className ? "." + e.className.trim().split(/\s+/).join(".") : ""} right=${r.right.toFixed(1)}`);
+          out.push("sideways scroll: page is " + document.documentElement.scrollWidth + "px wide" + (past.length ? " (past the edge: " + past.join("; ") + ")" : ""));
+        }
         // tap targets: the element or the label/link that wraps it must be at least 44px in both directions
         for (const e of document.querySelectorAll("a[href], button, input, summary, [tabindex='0']")) {
           if (!vis(e) || e.closest("dialog:not([open])")) continue;
