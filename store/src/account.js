@@ -3,7 +3,7 @@
 // any of it. Design, rules and sources: store/docs/ACCOUNTS-LOYALTY.md.
 import { writeEmail, frame, plain, esc } from "./email.js";
 import { loyaltyView } from "./loyalty.js";
-import { CHARCOAL } from "./catalog.js";
+import { CHARCOAL, TICKED } from "./catalog.js";
 
 const COOKIE = "oss_c", SESSION_DAYS = 30, CODE_MINUTES = 10, MAX_TRIES = 5;
 // rate limits: per email (any network), per network (any email), and the whole shop, so nobody can use the form to flood an inbox
@@ -202,7 +202,8 @@ export async function accountRoute(request, env, url) {
     if (!sku || typeof body.on !== "boolean") return json({ error: "That could not be read." }, 400);
     const table = fav ? "favourites" : "stock_alerts";
     if (body.on) {
-      const p = await db.prepare("SELECT stock FROM products WHERE sku = ? AND active = 1").bind(sku).first();
+      // the storefront's own rule (catalog.js): switched on, in a section on view, and not an unticked catalogue page
+      const p = await db.prepare(`SELECT p.stock FROM products p JOIN categories c ON c.id = p.category_id WHERE p.sku = ? AND p.active = 1 AND c.active = 1 AND ${TICKED}`).bind(sku).first();
       if (!p) return json({ error: "That item is not in the shop any more." }, 404);
       if (!fav && p.stock > 0) return json({ error: "It is in stock now.", in_stock: true }, 409);
       const n = await db.prepare(`SELECT COUNT(*) AS n FROM ${table} WHERE customer_id = ?`).bind(c.id).first("n");
@@ -258,7 +259,7 @@ export async function accountRoute(request, env, url) {
 export async function stockAlerts(env, origin = siteOrigin(env)) {
   const db = env.DB, site = env.SITE_NAME || "One Stop Shop";
   try {
-    const due = (await db.prepare("SELECT a.customer_id, a.sku, c.email, c.unsub_token, p.name FROM stock_alerts a JOIN customers c ON c.id = a.customer_id JOIN products p ON p.sku = a.sku WHERE p.stock > 0 AND p.active = 1 LIMIT 100").all()).results;
+    const due = (await db.prepare(`SELECT a.customer_id, a.sku, c.email, c.unsub_token, p.name FROM stock_alerts a JOIN customers c ON c.id = a.customer_id JOIN products p ON p.sku = a.sku JOIN categories cat ON cat.id = p.category_id WHERE p.stock > 0 AND p.active = 1 AND cat.active = 1 AND ${TICKED} LIMIT 100`).all()).results;
     for (const d of due) {
       const took = await db.prepare("DELETE FROM stock_alerts WHERE customer_id = ? AND sku = ?").bind(d.customer_id, d.sku).run();
       if (took.meta.changes) await writeEmail(env, null, d.email, backInStockMail(site, origin, d, d.unsub_token));

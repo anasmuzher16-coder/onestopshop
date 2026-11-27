@@ -41,7 +41,7 @@ async function signIn(email, from = ip()) {
 const CARD = /<meta name="oss-pay" content="card">/.test(await (await fetch(B + "/")).text());
 const order = async (body, cookie) => {
   const counter = !CARD && body.method === "pickup" && body.pay === undefined; if (counter) body = { ...body, pay: "at_pickup" };
-  const send = () => fetch(B + "/api/orders", { method: "POST", headers: { "Content-Type": "application/json", ...(cookie ? { Cookie: cookie } : {}) }, body: JSON.stringify(body) });
+  const send = () => fetch(B + "/api/orders", { method: "POST", headers: { "Content-Type": "application/json", "CF-Connecting-IP": ip(), ...(cookie ? { Cookie: cookie } : {}) }, body: JSON.stringify(body) });
   let r = await send();
   // the shop-wide brake (12 orders a minute, checkout.js) is a real feature: a fast machine running this suite's orders in a burst
   // trips it, so wait it out once, as a shopper would, rather than fail an account check on it
@@ -160,6 +160,19 @@ await new Promise(r => setTimeout(r, 1500));
 const bis = lastMail(a);
 ok(restock.status === 200 && bis.kind === "back_in_stock" && bis.body.includes("/p/" + soldSku) && /account\?stop=[a-f0-9]{48}/.test(bis.body) && /760 Wyandotte/.test(bis.body), "stock coming back writes the alert email, with the shop's address and an unsubscribe link");
 ok(!(await api("/me", { cookie: aliceNow })).data.alerts.includes(soldSku), "the alert is used up after one email");
+// an unticked catalogue page (Ace, stamp 'none') never shows on the storefront, even switched on (catalog.js TICKED): it cannot
+// be watched or saved, and an alert already on it is never sent
+const hidSku = sql(`SELECT sku FROM products WHERE active = 1 AND stock = 0 AND category_id != 'heat' AND sku != '${soldSku}' LIMIT 1`)[0]?.sku;
+if (!hidSku) ok(false, "no sold-out item left to hide for the tick check");
+else {
+  sql(`UPDATE products SET supplier_id = 'ace', facts_known = json_set(COALESCE(facts_known, '{}'), '$.stamp', 'none') WHERE sku = '${hidSku}'`);
+  ok((await api("/alerts", { method: "POST", cookie: aliceNow, body: { sku: hidSku, on: true } })).status === 404, "an unticked catalogue item cannot be watched: " + hidSku);
+  ok((await api("/favourites", { method: "POST", cookie: aliceNow, body: { sku: hidSku, on: true } })).status === 404, "nor saved");
+  const aliceId = sql(`SELECT id FROM customers WHERE email = '${a}'`)[0].id;
+  sql(`INSERT OR IGNORE INTO stock_alerts (customer_id, sku) VALUES (${aliceId}, '${hidSku}')`); sql(`UPDATE products SET stock = 3 WHERE sku = '${hidSku}'`);
+  await fetch(B + "/__scheduled?cron=0+8+*+*+*"); await new Promise(r => setTimeout(r, 1500));
+  ok(sql(`SELECT COUNT(*) AS n FROM emails WHERE recipient = '${a}' AND kind = 'back_in_stock' AND body LIKE '%/p/${hidSku}%'`)[0].n === 0, "an alert left on a hidden item is never sent");
+}
 
 // ---- 6. the charcoal reminder (CASL)
 ok((await api("/reminder", { method: "PUT", cookie: aliceNow, body: { days: 21 } })).status === 400, "the reminder needs the consent box");

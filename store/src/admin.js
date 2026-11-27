@@ -5,6 +5,7 @@ import { adminPay } from "./pay.js";
 import { sameSecret, hashPin, checkPin, pinProblem, cleanName } from "./staff.js";
 import { report, reportCsv, monthOf } from "./report.js";
 import { isSample } from "./samples.js";
+import { sourceOf } from "./guard.js";
 // The shop's back office: sign-in, shop numbers, stock and orders. Every route here needs the admin cookie,
 // and every write also needs a same-site JSON request, so another website cannot trigger one.
 // Two kinds of sign-in: the owner's passcode (ADMIN_KEY), and named staff with a 6-digit PIN. Every change is
@@ -58,21 +59,30 @@ export async function admin(request, env, url) {
     const staffLogin = typeof body.name === "string" || typeof body.pin === "string";
     if (staffLogin && env.LIVE === "1" && !env.PIN_PEPPER) return json({ error: "Staff sign-in is not set up yet. Sign in with the owner passcode." }, 503);
     const name = staffLogin ? cleanName(body.name) : null, nameKey = "n:" + await sha("name|" + (name || String(body.name || "")).toLowerCase());
-    // The try is written down BEFORE it is checked, so a burst of tries at once is counted in full. More than five
-    // tries from one place, more than five on one staff name from anywhere (names that do not exist lock the same way,
-    // so a lock does not reveal who works here), or more than forty staff tries in all, locks sign-in for fifteen
-    // minutes. The owner's passcode is not held back by other people's wrong PINs.
-    const who = await sha("who|" + (request.headers.get("CF-Connecting-IP") || "local"));
-    const mark = await db.batch([db.prepare("INSERT INTO login_attempts (who, ok) VALUES (?, 0)").bind(who), ...(staffLogin ? [db.prepare("INSERT INTO login_attempts (who, ok) VALUES (?, 0)").bind(nameKey)] : [])]);
-    const tries = await db.prepare("SELECT COALESCE(SUM(who = ?1 AND ok = 0),0) AS mine, COALESCE(SUM(who = ?2 AND ok = 0),0) AS this_name, COALESCE(SUM(ok = 0 AND who LIKE 'n:%'),0) AS everyone FROM login_attempts WHERE at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-15 minutes')").bind(who, nameKey).first();
-    if (tries.mine > 5 || (staffLogin && (tries.this_name > 5 || tries.everyone > 40))) { log("login_locked", { staff: staffLogin }); return json({ error: LOCKED }, 429); }
+    // Sign-in limits (docs/BACKEND-NOTES.md). A request already locked out is refused BEFORE anything is written, so a locked
+    // address cannot keep adding tries; a try that gets through is written down, then counted again, so a burst of tries at
+    // once is still counted in full. Locked for fifteen minutes: more than five tries from one address (IPv6 by its /64),
+    // more than five on one staff name from anywhere (names that do not exist lock the same way, so a lock does not reveal
+    // who works here), and, for everyone, more than forty staff tries or a hundred owner-passcode tries, each only when they
+    // come from at least ten different addresses, so no one address can lock out anybody but itself. Past twenty owner tries
+    // shop-wide from three or more addresses, each owner try is slowed (doubling, up to 8 seconds). The owner's passcode is not held back by staff PIN tries.
+    const who = await sha("who|" + sourceOf(request)), side = (staffLogin ? "s:" : "p:") + who;
+    const count = () => db.prepare(`SELECT COALESCE(SUM(who = ?1),0) AS mine, COALESCE(SUM(who = ?2),0) AS this_name, COALESCE(SUM(who LIKE 's:%'),0) AS staff_all, COUNT(DISTINCT CASE WHEN who LIKE 's:%' THEN who END) AS staff_from,
+      COALESCE(SUM(who LIKE 'p:%'),0) AS owner_all, COUNT(DISTINCT CASE WHEN who LIKE 'p:%' THEN who END) AS owner_from FROM login_attempts WHERE ok = 0 AND at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-15 minutes')`).bind(who, nameKey).first();
+    const locked = t => t.mine > 5 || (staffLogin ? t.this_name > 5 || (t.staff_all > 40 && t.staff_from >= 10) : t.owner_all > 100 && t.owner_from >= 10);
+    if (locked(await count())) { log("login_locked", { staff: staffLogin }); return json({ error: LOCKED }, 429); }
+    const mark = await db.batch([db.prepare("INSERT INTO login_attempts (who, ok) VALUES (?, 0)").bind(who), db.prepare("INSERT INTO login_attempts (who, ok) VALUES (?, 0)").bind(side), ...(staffLogin ? [db.prepare("INSERT INTO login_attempts (who, ok) VALUES (?, 0)").bind(nameKey)] : []),
+      db.prepare("DELETE FROM login_attempts WHERE at < strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 day')")]);
+    const tries = await count();
+    if (locked(tries)) { log("login_locked", { staff: staffLogin }); return json({ error: LOCKED }, 429); }
+    if (!staffLogin && tries.owner_all > 20 && tries.owner_from >= 3) await new Promise(r => setTimeout(r, Math.min(8000, 250 * 2 ** Math.floor((tries.owner_all - 20) / 10))));
     let right = false, staff = null;
     if (staffLogin) {
       staff = name ? await db.prepare("SELECT id, name, pin_hash FROM staff WHERE lower(name) = lower(?) AND active = 1").bind(name).first() : null;
       right = await checkPin(env, typeof body.pin === "string" ? body.pin : "", staff && staff.pin_hash) && !!staff;   // the same work whether or not the name exists
     } else right = typeof body.passcode === "string" && await sameSecret(body.passcode, env.ADMIN_KEY);
     if (!right) { if (staff) await db.prepare("UPDATE login_attempts SET staff_id = ? WHERE id = ?").bind(staff.id, mark[0].meta.last_row_id).run(); log("login_failed", { staff: staffLogin }); return json({ error: staffLogin ? "That name and PIN do not match." : "That passcode is not right." }, 401); }
-    await db.batch([db.prepare("UPDATE login_attempts SET ok = 1, staff_id = ? WHERE id = ?").bind(staff ? staff.id : null, mark[0].meta.last_row_id), ...(staffLogin ? [db.prepare("DELETE FROM login_attempts WHERE id = ?").bind(mark[1].meta.last_row_id)] : [])]);
+    await db.batch([db.prepare("UPDATE login_attempts SET ok = 1, staff_id = ? WHERE id = ?").bind(staff ? staff.id : null, mark[0].meta.last_row_id), db.prepare("DELETE FROM login_attempts WHERE id = ?").bind(mark[1].meta.last_row_id), ...(staffLogin ? [db.prepare("DELETE FROM login_attempts WHERE id = ?").bind(mark[2].meta.last_row_id)] : [])]);
     const actor = staff ? `${staff.name} #${staff.id}` : "owner", t = hex(crypto.getRandomValues(new Uint8Array(32)));
     await db.batch([
       db.prepare(`INSERT INTO sessions (token_hash, expires_at, actor, staff_id, last_seen) VALUES (?, strftime('%Y-%m-%dT%H:%M:%SZ','now','+12 hours'), ?, ?, ${NOW})`).bind(await sha(t), actor, staff ? staff.id : null),
@@ -410,16 +420,20 @@ export async function admin(request, env, url) {
   // the shop's questionnaire answers (public/intake.js): the owner reads the list of sends, or one send by its key
   if (path === "/intake" && method === "GET") {
     if (!session.owner) return json({ error: "Only the owner can read the shop's answers." }, 403);
-    const key = url.searchParams.get("key");
+    // Every send is its own dated file. A fixed "intake/latest.json" is never read or listed: before 2026-11-26 the public link
+    // could overwrite it, so it is not trusted. Asking for that name gets the newest dated send instead.
+    const sends = []; let cursor;
+    do { const l = await env.BACKUPS.list({ prefix: "intake/", cursor, limit: 1000 }); for (const o of l.objects) if (o.key !== "intake/latest.json") sends.push({ key: o.key, size: o.size, at: o.uploaded }); cursor = l.truncated ? l.cursor : undefined; } while (cursor && sends.length < 5000);
+    sends.sort((a, b) => b.key.localeCompare(a.key));
+    let key = url.searchParams.get("key");
+    if (key === "intake/latest.json") { if (!sends.length) return json({ error: "No such send." }, 404); key = sends[0].key; }
     if (key) {
       if (!/^intake\/[\w.-]+\.json$/.test(key)) return json({ error: "No such send." }, 400);
       const o = await env.BACKUPS.get(key); if (!o) return json({ error: "No such send." }, 404);
       return new Response(o.body, { headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" } });
     }
-    const sends = []; let cursor;
-    do { const l = await env.BACKUPS.list({ prefix: "intake/", cursor, limit: 1000 }); for (const o of l.objects) sends.push({ key: o.key, size: o.size, at: o.uploaded }); cursor = l.truncated ? l.cursor : undefined; } while (cursor && sends.length < 5000);
-    sends.sort((a, b) => b.key.localeCompare(a.key));
-    return json({ sends });
+    // the page reads the newest send by the name "intake/latest.json" (public/admin.js), so that name leads the list
+    return json({ sends: sends.length ? [{ key: "intake/latest.json", size: sends[0].size, at: sends[0].at, newest: sends[0].key }, ...sends] : [] });
   }
   if (path === "/backup" && method === "GET") {
     const snap = await snapshot(db);

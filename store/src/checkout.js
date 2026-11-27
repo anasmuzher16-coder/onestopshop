@@ -12,6 +12,7 @@ import { cardReady, openCheckout, releaseHeld, receipt, HOLD_MIN, LATE_SESSION_M
 import { customerFrom } from "./account.js";
 import { orderLoyalty, orderLoyaltyStatements } from "./loyalty.js";
 import { cleanSource } from "./source.js";
+import { nameOk, ORDER_CAPS, orderLimits, orderWho, orderAttempt, pickupHoldHours } from "./guard.js";
 
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" } });
 const text = (v, max) => typeof v === "string" && v.trim().length > 0 && v.trim().length <= max ? v.trim() : null;
@@ -91,22 +92,28 @@ export async function placeOrder(request, env, url) {
   const db = env.DB;
   const name = text(body.name, 80), email = text(body.email, 120), phone = body.phone ? text(String(body.phone), 30) : null, note = body.note ? text(String(body.note), 240) : null;
   if (!name) return json({ error: "Tell us the name for the order.", field: "name" }, 400);
+  // the name goes into the shop's emails: letters only, never anything a mail app could turn into a link (src/guard.js)
+  if (!nameOk(name)) return json({ error: "Write the name in letters. Spaces, apostrophes, hyphens and periods are fine.", field: "name" }, 400);
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return json({ error: "That email address does not look right.", field: "email" }, 400);
   const method = body.method === "pickup" ? "pickup" : body.method === "ship" ? "ship" : null;
   if (!method) return json({ error: "Choose shipping or pickup." }, 400);
   const pay = body.pay === undefined || body.pay === "card" ? "card" : body.pay === "at_pickup" ? "at_pickup" : null;
   if (!pay) return json({ error: "Choose how to pay." }, 400);
   if (pay === "at_pickup" && method !== "pickup") return json({ error: "Paying at the counter is for pickup orders. Pay by card for delivery.", field: "pay" }, 400);
-  if (!Array.isArray(body.lines) || !body.lines.length || body.lines.length > 60) return json({ error: "Your cart is empty." }, 400);
+  if (!Array.isArray(body.lines) || !body.lines.length) return json({ error: "Your cart is empty." }, 400);
+  // caps no real counter order reaches (src/guard.js ORDER_CAPS): a bigger order is a phone call, never a stock hold
+  const tooBig = json({ error: `Online orders take up to ${ORDER_CAPS.units} items, ${ORDER_CAPS.perLine} of any one item. For a bigger order, call the counter at 519-255-2222.`, too_big: true }, 400);
+  if (body.lines.length > ORDER_CAPS.lines * 3) return tooBig;
 
-  const cat = await loadCatalog(db), store = toStorefront(cat), bySku = Object.fromEntries(store.PRODUCTS.map(p => [p.sku, p]));
-  rates.useBoxes(store.BOXES);
   const want = new Map();
   for (const l of body.lines) {
-    const qty = Math.floor(Number(l && l.qty));
-    if (!l || typeof l.sku !== "string" || !(qty >= 1 && qty <= rates.MAX_QTY)) return json({ error: "Something in the cart could not be read. Refresh and try again." }, 400);
-    want.set(l.sku, (want.get(l.sku) || 0) + qty);
+    // a whole number of items, sent as a number: 99.9 or "50" is refused, never rounded
+    if (!l || typeof l !== "object" || typeof l.sku !== "string" || !Number.isInteger(l.qty) || l.qty < 1 || l.qty > rates.MAX_QTY) return json({ error: "Something in the cart could not be read. Refresh and try again." }, 400);
+    want.set(l.sku, (want.get(l.sku) || 0) + l.qty);
   }
+  if (want.size > ORDER_CAPS.lines || [...want.values()].some(q => q > ORDER_CAPS.perLine) || [...want.values()].reduce((a, q) => a + q, 0) > ORDER_CAPS.units) return tooBig;
+  const cat = await loadCatalog(db), store = toStorefront(cat), bySku = Object.fromEntries(store.PRODUCTS.map(p => [p.sku, p]));
+  rates.useBoxes(store.BOXES);
   // a retry of an order that already went through gets that order back, before stock or the brake can refuse it
   const key = body.order_key === undefined ? null : typeof body.order_key === "string" && /^[A-Za-z0-9-]{16,64}$/.test(body.order_key) ? body.order_key : false;
   if (key === false) return json({ error: "That order could not be read. Refresh and try again." }, 400);
@@ -122,7 +129,12 @@ export async function placeOrder(request, env, url) {
     if (keyed.row) return replay(env, url.origin, keyed.row);
   }
   if (pay === "card" && !cardReady(env)) return json({ error: method === "pickup" ? "Card payment is not switched on yet. Choose pay at the counter." : "Card payment is not switched on yet. Call the counter at 519-255-2222 to order.", pay_off: true }, 503);
-  // a brake, so nobody can flood the shop with orders
+  // Per visitor and per email first (src/guard.js): one visitor reaches their own limit, at 5 orders in 10 minutes, long
+  // before the shop-wide brake below, so nobody alone can make the shop busy for everyone else.
+  const customer = await customerFrom(request, env), own = !!customer && String(customer.email || "").toLowerCase() === email.toLowerCase();
+  const who = await orderWho(env, request), limit = await orderLimits(env, who, email, 0, own);
+  if (!limit.ok) return json({ error: limit.words, limited: limit.why }, 429);
+  // the shop-wide brake, a last resort against many visitors at once
   const recent = await db.prepare("SELECT COUNT(*) AS n FROM orders WHERE created_at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 minute')").first("n");
   if (recent >= 12) return json({ error: "The shop is busy. Try again in a minute." }, 429);
 
@@ -171,7 +183,7 @@ export async function placeOrder(request, env, url) {
     }
   }
   // signed in: the order joins the account; with points on, a reward the customer asked for comes off the items before tax
-  const customer = await customerFrom(request, env), loy = await orderLoyalty(db, customer, body.use_reward === true, subtotal);
+  const loy = await orderLoyalty(db, customer, body.use_reward === true, subtotal);
   if (loy.refused) { const t = rates.orderTotals(subtotal, shipping, province); return json({ error: "Your points reward is not available on this order. Check the new total, then place your order.", reward_gone: true, repriced: { subtotal_cents: subtotal, shipping_cents: shipping, tax_cents: t.tax, total_cents: t.total } }, 409); }
   const { tax, total } = rates.orderTotals(subtotal - loy.reward_cents, shipping, province);
   // the shopper agreed to a figure: if ours is different, nothing is placed and they are shown the new one
@@ -185,10 +197,11 @@ export async function placeOrder(request, env, url) {
   let first;
   try { first = await db.batch([
     db.prepare(`INSERT INTO orders (id, status, method, email, name, phone, address, subtotal_cents, shipping_cents, tax_cents, total_cents, tax_province, ship_service, ship_quote, pay_method, pay_status, pay_expires_at, source, source_detail)
-      VALUES (?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ${pay === "card" ? `strftime('%Y-%m-%dT%H:%M:%SZ','now','+${HOLD_MIN} minutes')` : "NULL"}, ?, ?)`)
+      VALUES (?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ','now','+${pay === "card" ? `${HOLD_MIN} minutes` : `${pickupHoldHours(env)} hours`}'), ?, ?)`)
       .bind(id, method, email, name, phone, JSON.stringify({ ...address, ...(note ? { note } : {}) }), subtotal, shipping, tax, total, province, service, JSON.stringify(quote), pay, pay === "card" ? "awaiting" : "pay_at_pickup", src.source, src.detail),
     ...lines.map(l => db.prepare("INSERT INTO order_items (order_id, sku, name, qty, unit_cents) VALUES (?,?,?,?,?)").bind(id, l.product.sku, l.product.name, l.qty, cents(l.product.price))),
     ...acct.statements,
+    ...(limit.missing ? [] : [orderAttempt(db, who, id)]),   // last, so the reward's index above stays where it is
   ]); } catch (e) {   // two copies of one retry at the same moment: the database let one through
     if (!key || !/UNIQUE|constraint/i.test(String(e && e.message))) throw e;
     let again = await findKeyed(env, key, sameOrder);
@@ -200,6 +213,13 @@ export async function placeOrder(request, env, url) {
     await db.batch([db.prepare("DELETE FROM loyalty_ledger WHERE order_id = ?").bind(id), db.prepare("DELETE FROM order_items WHERE order_id = ?").bind(id), db.prepare("DELETE FROM orders WHERE id = ?").bind(id)]);
     const t = rates.orderTotals(subtotal, shipping, province);
     return json({ error: "Your points reward is not available on this order. Check the new total, then place your order.", reward_gone: true, repriced: { subtotal_cents: subtotal, shipping_cents: shipping, tax_cents: t.tax, total_cents: t.total } }, 409);
+  }
+  // Many tries at the same moment all pass the check above before any is written: counted again now, with this order in,
+  // so a burst from one visitor or one email gets no further than its limit. Nothing is held yet, so this one is simply removed.
+  const after = await orderLimits(env, who, email, 1, own);
+  if (!after.ok) {
+    await db.batch([db.prepare("DELETE FROM loyalty_ledger WHERE order_id = ?").bind(id), db.prepare("DELETE FROM order_items WHERE order_id = ?").bind(id), db.prepare("DELETE FROM orders WHERE id = ? AND status = 'pending' AND release_op IS NULL").bind(id)]);
+    return json({ error: after.words, limited: after.why }, 429);
   }
   const took = await db.batch(lines.flatMap(l => [
     // the guard repeats the sale rule in the same statement: switched off, unpriced, or repriced since this order was worked out, it does not sell;

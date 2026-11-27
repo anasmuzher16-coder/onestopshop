@@ -11,7 +11,9 @@ const B = process.env.BASE || "http://127.0.0.1:4420";
 await samplesOn(B, ["OSS-2001", "OSS-7001", "OSS-7002", "OSS-7006", "OSS-7008", "OSS-8003", "OSS-8004"]);
 const KEY = readFileSync(new URL("../.dev.vars", import.meta.url), "utf8").match(/ADMIN_KEY=(.+)/)[1].trim();
 let n = 0, f = 0; const ok = (c, msg) => { n++; if (!c) { f++; console.log("FAIL", msg); } };
-const post = async body => { const r = await fetch(B + "/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }); return { status: r.status, data: await r.json().catch(() => ({})) }; };
+// each order comes from its own made-up address, as real shoppers do: the per-visitor order limits (src/guard.js) have their own checks in test-orders
+const shopper = () => `10.${(Math.random() * 250) | 0}.${(Math.random() * 250) | 0}.${(Math.random() * 250) | 0}`;
+const post = async body => { const r = await fetch(B + "/api/orders", { method: "POST", headers: { "Content-Type": "application/json", "CF-Connecting-IP": shopper() }, body: JSON.stringify(body) }); return { status: r.status, data: await r.json().catch(() => ({})) }; };
 const stockOf = async sku => (await (await fetch(B + "/api/catalog")).json()).products.find(p => p.sku === sku)?.stock;
 const who = { name: "Test Shopper", email: "test@example.com" }, to = { postal: "M5V 2T6", address: { line1: "1 Test Street", city: "Toronto" } };
 

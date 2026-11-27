@@ -12,7 +12,9 @@ await samplesOn(B, ["OSS-2001", "OSS-8001", "OSS-8002", "OSS-8003", "OSS-8004"])
 const KEY = process.env.ADMIN_KEY || readFileSync(new URL("../.dev.vars", import.meta.url), "utf8").match(/ADMIN_KEY=(.+)/)[1].trim();
 let n = 0, f = 0, cookie = ""; const ok = (c, msg) => { n++; if (!c) { f++; console.log("FAIL", msg); } };
 // the shop's brake allows 12 new orders a minute: this suite makes more, so a 429 waits out the minute and goes again
-const post = async body => { for (let i = 0; ; i++) { const r = await fetch(B + "/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }); if (r.status === 429 && i < 2) { await new Promise(w => setTimeout(w, 61000)); continue; } return { status: r.status, data: await r.json().catch(() => ({})) }; } };
+// each order comes from its own made-up address, as real shoppers do: the per-visitor order limits (src/guard.js) have their own checks in test-orders
+const shopper = () => `10.${(Math.random() * 250) | 0}.${(Math.random() * 250) | 0}.${(Math.random() * 250) | 0}`;
+const post = async body => { for (let i = 0; ; i++) { const r = await fetch(B + "/api/orders", { method: "POST", headers: { "Content-Type": "application/json", "CF-Connecting-IP": shopper() }, body: JSON.stringify(body) }); if (r.status === 429 && i < 2) { await new Promise(w => setTimeout(w, 61000)); continue; } return { status: r.status, data: await r.json().catch(() => ({})) }; } };
 const admin = async (path, body) => { const r = await fetch(B + "/api/admin" + path, { method: body === undefined ? "GET" : "POST", headers: { Cookie: cookie, ...(body === undefined ? {} : { "Content-Type": "application/json", "X-OSS-Admin": "1" }) }, body: body === undefined ? undefined : JSON.stringify(body) }); return { status: r.status, data: await r.json().catch(() => ({})) }; };
 const stockOf = async sku => (await (await fetch(B + "/api/catalog")).json()).products.find(p => p.sku === sku)?.stock;
 const session = async id => (await fetch(S + "/__session/" + id)).json();
