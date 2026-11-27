@@ -2,7 +2,8 @@
 
   python store/tools/catalog/photos_acc.py [--pdf PATH] [--work DIR] [--publish]
 
-One photo per ticked page: the page's cut-out with its own soft mask (no background removal, no AI upscaling). A group
+One photo per ticked page: the page's cut-out with its own soft mask (no background removal, no AI upscaling here; a
+kept upscale in suppliers/ace-acc/upscaled.json stays as it is, see photos.upscaled_kept). A group
 shot (rope bowls, D-61, silicone and ice cream bowls, brushes, connectors) stays one photo of the group. Loose specks under
 1% of the mask (a stray watermark, a fleck) are left out. Framed at 720x900 (product 810 px tall, 45 px foot, centred;
 -m and -s), status by enlargement: ready up to 1.25x, CHECK past it, needs_original past 2x (both go up labelled
@@ -69,6 +70,7 @@ def run(pdf: Path, work: Path, publish: bool):
     framed = work / "framed"
     framed.mkdir(parents=True, exist_ok=True)
     images = []
+    kept = P.upscaled_kept("ace-acc", PUBLIC, pdf)
     for r in pages:
         fid = f"acc-p{r['page']}"
         ph = r["photo"]
@@ -103,14 +105,19 @@ def run(pdf: Path, work: Path, publish: bool):
             note += f"; enlarged {s:.2f}x from a small source: needs Ace's original"
         tmp = framed / fid
         P.save_set(cv, tmp)
-        images.append({"page": r["page"], "family_id": fid, "xref": ph["xref"], "src_px": [int(rgb.shape[1]), int(rgb.shape[0])],
-                       "crop": list(bb), "scale": round(s, 3), "status": status, "out": f"acc/{fid}", "note": note,
-                       "tmp": str(tmp), "file": str(tmp) + "-s.webp"})
+        it = {"page": r["page"], "family_id": fid, "xref": ph["xref"], "src_px": [int(rgb.shape[1]), int(rgb.shape[0])],
+              "crop": list(bb), "scale": round(s, 3), "status": status, "out": f"acc/{fid}", "note": note,
+              "tmp": str(tmp), "file": str(tmp) + "-s.webp"}
+        P.apply_upscaled(it, kept)
+        images.append(it)
     if publish:
         PUBLIC.mkdir(parents=True, exist_ok=True)
         want = set()
         for im in images:
             if not im.get("tmp"):
+                continue
+            if im.get("upscaled"):   # its upscaled files (with the 1440 -l) stay exactly as they are
+                want.update(im["upscaled"])
                 continue
             for suf, _, _ in P.SIZES:
                 src = Path(im["tmp"] + suf + ".webp")

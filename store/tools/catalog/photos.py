@@ -3,7 +3,8 @@
   python store/tools/catalog/photos.py [--pdf PATH] [--work DIR] [--publish]
 
 Ace's photos are already cut out: nearly every embedded image carries its own soft mask. This script
-extracts image + mask (no background removal, no AI upscaling), sorts each image into hero / colour / group /
+extracts image + mask (no background removal, no AI upscaling here; a photo upscaled by hand and recorded in
+suppliers/<supplier>/upscaled.json is kept as it is, status ready, while its files and source match), sorts each image into hero / colour / group /
 kit / lifestyle, splits rows of colours at the gaps in the mask, frames each product at 720x900 (product
 810 px tall, 45 px foot, centred; -m 540x675, -s 360x450; Lanczos only; WebP method 4) and flags anything
 enlarged past 1.25x as CHECK. It writes a manifest (store/catalog/suppliers/ace/photos.json) and contact
@@ -148,6 +149,36 @@ def frame(rgba: Image.Image):
     c = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     c.alpha_composite(r, ((W - r.width) // 2, H - FOOT - r.height))
     return c, s, bb
+
+
+def upscaled_kept(supplier: str, public: Path, pdf: Path) -> dict:
+    """Photos re-made from a 4x upscale (store/catalog/suppliers/<supplier>/upscaled.json, owner 2026-11-27). One is kept,
+    files and "ready" status, only while it came from this same PDF and every recorded file on disk still matches its hash;
+    a rebuild never overwrites it. A dropped one is printed loudly: its row's img_lw must go back to NULL in the database,
+    or the browser asks for a -l file that --publish has just deleted."""
+    rec = C.load_json(C.SUPPLIERS / supplier / "upscaled.json", {}) or {}
+    kept = {}
+    src = C.sha256_file(pdf) if rec.get("images") else None
+    for out, r in rec.get("images", {}).items():
+        files = r.get("files") or {}
+        same_src = r.get("source_sha256") in (None, src)
+        if same_src and files and all((public / n).exists() and C.sha256_file(public / n) == h for n, h in files.items()):
+            kept[out] = r
+        else:
+            print(f"WARNING: upscaled photo {out} ({r.get('sku')}) no longer matches upscaled.json "
+                  f"({'new source PDF' if not same_src else 'files changed'}): it is rebuilt from the PDF and flagged again. "
+                  f"Remove it from upscaled.json, and set img_lw = NULL for {r.get('sku')} in the database"
+                  + (" (its -l file goes)." if r.get("lw") else "."))
+    return kept
+
+
+def apply_upscaled(it: dict, kept: dict):
+    """Marks an image as its kept upscale when it is the same cut of the same Ace image (xref and crop unchanged)."""
+    r = kept.get(it.get("out"))
+    if r and r["xref"] == it.get("xref") and list(r["crop"]) == list(it.get("crop") or []) and it["status"] in ("CHECK", "needs_original"):
+        it["note"] = f"{it['note']}; upscaled 4x ({r['method']}) {r['date']}, was {it['status']} {it['scale']}x"
+        it["status"] = "ready"
+        it["upscaled"] = sorted(r["files"])
 
 
 def save_set(canvas: Image.Image, base: Path):
@@ -308,6 +339,7 @@ def run(pdf: Path, work: Path, publish: bool):
         for im in pg.get_images(full=True):
             smask_of[im[0]] = im[1]
     overrides = C.load_json(C.SUPPLIERS / "ace" / "photo-overrides.json", {}).get("images", {})
+    kept = upscaled_kept("ace", PUBLIC, pdf)
     images = []
     for r in order:
         f = fams[r["page"]]
@@ -383,6 +415,7 @@ def run(pdf: Path, work: Path, publish: bool):
             out = base if names_used[base] == 1 else f"{base}-{names_used[base]}"
             it["out"] = f"ace/{out}"
             it["file"] = it["tmp"] + "-s.webp"
+            apply_upscaled(it, kept)   # after roles are set, so an upscale never reshuffles which photo is the hero
             images.append(it)
     # publish: only the images a product row will show (matched to a colour, or the family's hero)
     shipped = [im for im in images if im.get("status") in SHOWN and im.get("role") in ("hero", "colour")]
@@ -390,6 +423,9 @@ def run(pdf: Path, work: Path, publish: bool):
         PUBLIC.mkdir(parents=True, exist_ok=True)
         want = set()
         for im in shipped:
+            if im.get("upscaled"):   # its upscaled files (with the 1440 -l) stay exactly as they are
+                want.update(im["upscaled"])
+                continue
             for suf, _, _ in SIZES:
                 src = Path(im["tmp"] + suf + ".webp")
                 dst = PUBLIC / (im["out"].split("/", 1)[1] + suf + ".webp")

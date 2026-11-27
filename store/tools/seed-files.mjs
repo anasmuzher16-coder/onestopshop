@@ -23,6 +23,7 @@ export const SEED_FILES = [
   "catalog/live/menu-order-2026-11-26.sql",     // the menu order: hookahs, shisha, charcoal, heat, then the parts
   "catalog/live/shisha-flag-2026-11-26.sql",    // every shisha row carries its pay-at-the-counter rule itself, whatever its section
   "catalog/live/shisha-tone-2026-11-26.sql",    // Shisha's own jewel, chartreuse, in place of Hoses' emerald
+  "catalog/live/upscaled-photos-2026-11-27.sql", // the upscaled photo: its label off, its 1440 photo on
 ];
 export const seedPath = f => fileURLToPath(new URL(f, STORE));
 
