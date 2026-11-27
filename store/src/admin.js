@@ -64,12 +64,12 @@ export async function admin(request, env, url) {
     // once is still counted in full. Locked for fifteen minutes: more than five tries from one address (IPv6 by its /56),
     // more than five on one staff name from anywhere (names that do not exist lock the same way, so a lock does not reveal
     // who works here), and, for everyone, more than forty staff tries or a hundred owner-passcode tries, each only when they
-    // come from at least ten different places (IPv6 counted by /48), so no one address can lock out anybody but itself. Past twenty owner tries
+    // come from at least ten different places (IPv6 counted by /48), so no one address can lock out anybody but itself; one wider block (an IPv6 /48) also gets five tries in all, so it cannot act as 256 addresses. Past twenty owner tries
     // shop-wide from three or more addresses, each owner try is slowed (doubling, up to 8 seconds). The owner's passcode is not held back by staff PIN tries.
     const who = await sha("who|" + sourceOf(request)), side = (staffLogin ? "s:" : "p:") + await sha("from|" + sourceOf(request, 48));   // places counted by /48 for the shop-wide locks
-    const count = () => db.prepare(`SELECT COALESCE(SUM(who = ?1),0) AS mine, COALESCE(SUM(who = ?2),0) AS this_name, COALESCE(SUM(who LIKE 's:%'),0) AS staff_all, COUNT(DISTINCT CASE WHEN who LIKE 's:%' THEN who END) AS staff_from,
-      COALESCE(SUM(who LIKE 'p:%'),0) AS owner_all, COUNT(DISTINCT CASE WHEN who LIKE 'p:%' THEN who END) AS owner_from FROM login_attempts WHERE ok = 0 AND at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-15 minutes')`).bind(who, nameKey).first();
-    const locked = t => t.mine > 5 || (staffLogin ? t.this_name > 5 || (t.staff_all > 40 && t.staff_from >= 10) : t.owner_all > 100 && t.owner_from >= 10);
+    const count = () => db.prepare(`SELECT COALESCE(SUM(who = ?1),0) AS mine, COALESCE(SUM(who = ?2),0) AS this_name, COALESCE(SUM(who = ?3),0) AS place, COALESCE(SUM(who LIKE 's:%'),0) AS staff_all, COUNT(DISTINCT CASE WHEN who LIKE 's:%' THEN who END) AS staff_from,
+      COALESCE(SUM(who LIKE 'p:%'),0) AS owner_all, COUNT(DISTINCT CASE WHEN who LIKE 'p:%' THEN who END) AS owner_from FROM login_attempts WHERE ok = 0 AND at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-15 minutes')`).bind(who, nameKey, side).first();
+    const locked = t => t.mine > 5 || t.place > 5 || (staffLogin ? t.this_name > 5 || (t.staff_all > 40 && t.staff_from >= 10) : t.owner_all > 100 && t.owner_from >= 10);
     if (locked(await count())) { log("login_locked", { staff: staffLogin }); return json({ error: LOCKED }, 429); }
     const mark = await db.batch([db.prepare("INSERT INTO login_attempts (who, ok) VALUES (?, 0)").bind(who), db.prepare("INSERT INTO login_attempts (who, ok) VALUES (?, 0)").bind(side),
       db.prepare("DELETE FROM login_attempts WHERE ok = 0 AND at < strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 day')")]);
@@ -88,7 +88,7 @@ export async function admin(request, env, url) {
     const actor = staff ? `${staff.name} #${staff.id}` : "owner", t = hex(crypto.getRandomValues(new Uint8Array(32)));
     await db.batch([
       db.prepare(`INSERT INTO sessions (token_hash, expires_at, actor, staff_id, last_seen) VALUES (?, strftime('%Y-%m-%dT%H:%M:%SZ','now','+12 hours'), ?, ?, ${NOW})`).bind(await sha(t), actor, staff ? staff.id : null),
-      db.prepare("DELETE FROM sessions WHERE expires_at <= strftime('%Y-%m-%dT%H:%M:%SZ','now') OR last_seen <= strftime('%Y-%m-%dT%H:%M:%SZ','now','-2 hours')"), db.prepare("DELETE FROM login_attempts WHERE at < strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 day')"),
+      db.prepare("DELETE FROM sessions WHERE expires_at <= strftime('%Y-%m-%dT%H:%M:%SZ','now') OR last_seen <= strftime('%Y-%m-%dT%H:%M:%SZ','now','-2 hours')"), db.prepare("DELETE FROM login_attempts WHERE ok = 0 AND at < strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 day')"),
       db.prepare("INSERT INTO audit_log (actor, action) VALUES (?, 'session.login')").bind(actor),
     ]);
     const secure = url.protocol === "https:" ? " Secure;" : "";

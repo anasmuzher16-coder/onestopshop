@@ -106,6 +106,11 @@ else {
   for (let i = 0; i < 3; i++) heldV6.push(await from(`${v6}::${i + 1}`, counter(`v${i}-${run}@example.com`)));
   const fourthV6 = await from(`${v6}:ffff:1:2:3`, counter(`v3-${run}@example.com`));
   ok(heldV6.every(r => r.status === 201) && fourthV6.status === 429, "IPv6 addresses in one /64 count as one visitor: " + heldV6.map(r => r.status) + "," + fourthV6.status);
+  // one /48 (a free tunnel holds 256 /56s) is held to 6 unpaid orders in all, however many of its /56s it uses
+  const g48 = `2001:db8:${((Math.random() * 65000) | 0).toString(16)}`, heldG = [];
+  for (let i = 0; i < 6; i++) heldG.push(await from(`${g48}:${(i + 1) * 256 + 1}::1`.replace(/:(\d+)::1$/, (m, n) => ":" + Number(n).toString(16) + "::1"), counter(`g${i}-${run}@example.com`, "OSS-8004")));
+  const seventhG = await from(`${g48}:9901::1`, counter(`g6-${run}@example.com`, "OSS-8004"));
+  ok(heldG.every(r => r.status === 201) && seventhG.status === 429 && seventhG.data.limited === "open", "one IPv6 /48 cannot act as many visitors: " + heldG.map(r => r.status) + "," + seventhG.status);
   // one email holds at most 3 unpaid orders, from any address
   const em = `same-${run}@example.com`, heldE = [];
   for (let i = 0; i < 3; i++) heldE.push(await from(shopper(), counter(em)));

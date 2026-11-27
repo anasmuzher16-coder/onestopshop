@@ -110,7 +110,7 @@ export async function placeOrder(request, env, url) {
   const want = new Map();
   for (const l of body.lines) {
     // a whole number of items, sent as a number: 99.9 or "50" is refused, never rounded
-    if (!l || typeof l !== "object" || typeof l.sku !== "string" || !Number.isInteger(l.qty) || l.qty < 1 || l.qty > rates.MAX_QTY) return json({ error: "Something in the cart could not be read. Refresh and try again." }, 400);
+    if (!l || typeof l !== "object" || typeof l.sku !== "string" || !Number.isInteger(l.qty) || l.qty < 1) return json({ error: "Something in the cart could not be read. Refresh and try again." }, 400);
     want.set(l.sku, (want.get(l.sku) || 0) + l.qty);
   }
   if (want.size > ORDER_CAPS.lines || [...want.values()].some(q => q > ORDER_CAPS.perLine) || [...want.values()].reduce((a, q) => a + q, 0) > ORDER_CAPS.units) return tooBig;
@@ -134,7 +134,7 @@ export async function placeOrder(request, env, url) {
   // Per visitor and per email first (src/guard.js): one visitor reaches their own limit, at 5 orders in 10 minutes, long
   // before the shop-wide brake below, so nobody alone can make the shop busy for everyone else.
   const customer = await customerFrom(request, env), own = !!customer && String(customer.email || "").toLowerCase() === email.toLowerCase();
-  const who = await orderWho(env, request), limit = await orderLimits(env, who, email, 0, own);
+  const who = await orderWho(env, request), group = await orderWho(env, request, 48), limit = await orderLimits(env, who, email, 0, own, group);
   if (!limit.ok) return json({ error: limit.words, limited: limit.why }, 429);
   // the shop-wide brake, a last resort against many visitors at once
   const recent = await db.prepare("SELECT COUNT(*) AS n FROM orders WHERE created_at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 minute')").first("n");
@@ -203,7 +203,7 @@ export async function placeOrder(request, env, url) {
       .bind(id, method, email, name, phone, JSON.stringify({ ...address, ...(note ? { note } : {}) }), subtotal, shipping, tax, total, province, service, JSON.stringify(quote), pay, pay === "card" ? "awaiting" : "pay_at_pickup", src.source, src.detail),
     ...lines.map(l => db.prepare("INSERT INTO order_items (order_id, sku, name, qty, unit_cents) VALUES (?,?,?,?,?)").bind(id, l.product.sku, l.product.name, l.qty, cents(l.product.price))),
     ...acct.statements,
-    ...(limit.missing ? [] : [orderAttempt(db, who, id)]),   // last, so the reward's index above stays where it is
+    ...(limit.missing ? [] : [orderAttempt(db, who, id), ...(group !== who ? [orderAttempt(db, group, id)] : [])]),   // last, so the reward's index above stays where it is
   ]); } catch (e) {   // two copies of one retry at the same moment: the database let one through
     if (!key || !/UNIQUE|constraint/i.test(String(e && e.message))) throw e;
     let again = await findKeyed(env, key, sameOrder);
@@ -218,7 +218,7 @@ export async function placeOrder(request, env, url) {
   }
   // Many tries at the same moment all pass the check above before any is written: counted again now, with this order in,
   // so a burst from one visitor or one email gets no further than its limit. Nothing is held yet, so this one is simply removed.
-  const after = await orderLimits(env, who, email, 1, own);
+  const after = await orderLimits(env, who, email, 1, own, group);
   if (!after.ok) {
     await db.batch([db.prepare("DELETE FROM loyalty_ledger WHERE order_id = ?").bind(id), db.prepare("DELETE FROM order_items WHERE order_id = ?").bind(id), db.prepare("DELETE FROM orders WHERE id = ? AND status = 'pending' AND release_op IS NULL").bind(id)]);
     return json({ error: after.words, limited: after.why }, 429);

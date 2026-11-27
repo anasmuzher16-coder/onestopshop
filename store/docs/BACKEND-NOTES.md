@@ -52,6 +52,9 @@ the place in the code that follows it. "Follow-up" items are known gaps left for
 ## Placing an order: limits and holds (src/guard.js, src/checkout.js, src/pay.js; 2026-11-26)
 - Who is asking: `CF-Connecting-IP`, which Cloudflare sets at the edge; IPv6 is counted by its /56 (a home connection's usual block). Only a hash keyed
   with a Worker secret is stored, in `order_attempts` (migration 0012), with the order it placed; rows go after 30 days.
+- A whole IPv6 /48 (one tunnel or site) is also held to 10 orders in 10 minutes, 30 a day and 6 held at once, and to
+  5 sign-in tries in 15 minutes, so it cannot act as 256 visitors. A guest whose email already has 3 orders held is
+  asked to sign in with it (which skips the email's counts) or call.
 - Per visitor and per email: 5 orders in 10 minutes, 15 a day, and 3 pay-at-the-counter orders still holding stock unpaid at once (a card page lets its stock go by itself in 35 minutes). Checked
   before the order is written and again after (with it counted), so a burst gets no further than the limit. The
   shop-wide brake (12 orders a minute) stays as a last resort; one visitor reaches their own limit first.

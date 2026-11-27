@@ -38,38 +38,44 @@ export const ORDER_CAPS = { lines: 20, perLine: 20, units: 40 };   // perLine ma
 // A counter order the shop has marked ready is held as long as the ready email promises (14 days, email.js pickupReady).
 export const READY_HOLD_DAYS = 14;
 // A phone number: digits with the usual separators, and an extension. Never letters, so never a link.
-export const phoneOk = s => typeof s === "string" && s.length <= 30 && /^\+?[\d\s().\-]{7,24}(?:\s*(?:x|ext\.?)\s*\d{1,6})?$/i.test(s) && s.replace(/\D/g, "").length >= 7;
+export const phoneOk = s => typeof s === "string" && s.length <= 30 && /^\+?[\d\s().\-]{7,24}(?:\s*(?:x|ext\.?)\s*\d{1,6})?$/i.test(s) && s.replace(/\D/g, "").length >= 7 && !/^\d{1,3}(?:\.\d{1,3}){3}/.test(s.trim());
 export const ORDER_LIMITS = { per10min: 5, perDay: 15, openHolds: 3 };
 // How long an unpaid pay-at-the-counter order holds its stock (owner-vetoable, inventory-2026-11-23/DECISIONS.md beside the repo): PICKUP_HOLD_HOURS, 1 to 336, default 48.
 export const pickupHoldHours = env => { const n = Number(env.PICKUP_HOLD_HOURS); return Number.isInteger(n) && n >= 1 && n <= 336 ? n : 48; };
 // The visitor's key for the order_attempts table: a hash keyed with a Worker secret, so the table alone cannot be turned back into addresses.
-export const orderWho = async (env, request) => "o:" + await sha(`order|${env.PIN_PEPPER || env.ADMIN_KEY || ""}|${sourceOf(request)}`);
+// bits 48: the wider IPv6 block (one tunnel or one site), for a second, looser count, so one /48 cannot act as 256 visitors.
+export const orderWho = async (env, request, bits = 56) => (bits === 56 ? "o:" : "g:") + await sha(`order|${env.PIN_PEPPER || env.ADMIN_KEY || ""}|${sourceOf(request, bits)}`);
+// A whole /48 at most 10 orders in 10 minutes, 30 a day and 6 held at once: below the shop-wide brake, and room for a family or an office.
+export const GROUP_LIMITS = { per10min: 10, perDay: 30, openHolds: 6 };
 
-// Still holding stock unpaid for long: a counter order not paid yet, also once the shop has got it ready. (A card page lets
-// its stock go by itself within 35 minutes, src/pay.js HOLD_MIN, so it counts toward the order rates, not the holds.)
+// Still holding stock unpaid: a counter order not paid yet (also once the shop has got it ready) and, for a visitor, a card
+// page not paid yet. An email's count leaves card pages out: they let their stock go by themselves within 35 minutes.
 const OPEN = "o.release_op IS NULL AND o.pay_status = 'pay_at_pickup' AND o.status IN ('pending','ready')";
+const OPEN_VISITOR = "o.release_op IS NULL AND ((o.pay_status = 'pay_at_pickup' AND o.status IN ('pending','ready')) OR (o.pay_status = 'awaiting' AND o.status = 'pending'))";
 // One read: how many orders this visitor and this email placed lately, and how many of each still hold stock unpaid.
 // Answers null when a limit is reached (with the words to show), or { ok: true }. `missing` is true on a database that
 // does not have migration 0012 yet: the visitor counts are skipped (and logged), the email counts still hold.
 // `own`: the shopper is signed in with this very email, so they have shown the inbox is theirs; the email's own counts then
 // do not apply (they protect an inbox from receipts it never asked for, and must not let a stranger who typed that email
 // block its owner). The visitor limits still do.
-export async function orderLimits(env, who, email, placed = 0, own = false) {   // placed: 1 when the order being checked is already written
+export async function orderLimits(env, who, email, placed = 0, own = false, group = who) {   // placed: 1 when the order being checked is already written
   const db = env.DB, L = ORDER_LIMITS, k = placed;
   const byEmail = db.prepare(`SELECT COALESCE(SUM(created_at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-10 minutes')),0) AS m10, COALESCE(SUM(created_at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 day')),0) AS day,
     COALESCE(SUM(${OPEN}),0) AS open
     FROM orders o WHERE lower(email) = lower(?1) AND (created_at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 day') OR status IN ('pending','ready'))`).bind(email);
   const byWho = db.prepare(`SELECT COALESCE(SUM(a.at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-10 minutes')),0) AS m10, COALESCE(SUM(a.at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 day')),0) AS day,
-    COALESCE(SUM(EXISTS (SELECT 1 FROM orders o WHERE o.id = a.order_id AND ${OPEN})),0) AS open FROM order_attempts a WHERE a.who = ?1`).bind(who);
-  let e, w = { m10: 0, day: 0, open: 0 }, missing = false;
-  try { [e, w] = (await db.batch([byEmail, byWho])).map(r => r.results[0]); }
+    COALESCE(SUM(EXISTS (SELECT 1 FROM orders o WHERE o.id = a.order_id AND ${OPEN_VISITOR})),0) AS open FROM order_attempts a WHERE a.who = ?1`);
+  let e, w = { m10: 0, day: 0, open: 0 }, g = { m10: 0, day: 0, open: 0 }, missing = false;
+  try { [e, w, g] = (await db.batch([byEmail, byWho.bind(who), byWho.bind(group)])).map(r => r.results[0]); if (group === who) g = { m10: 0, day: 0, open: 0 }; }
   catch (err) {
     if (!/no such table/i.test(String(err && err.message))) throw err;
     missing = true; console.error(JSON.stringify({ at: "order-guard", problem: "migration 0012_order_guard.sql is not applied: per-visitor order limits are off" }));
     e = (await byEmail.first());
   }
-  if (w.open >= L.openHolds + k || (!own && e.open >= L.openHolds + k)) return { ok: false, missing, words: `You already have ${Math.max(w.open, e.open) - k} orders waiting to be paid and picked up. Pick those up first, or call the counter at 519-255-2222 to add to them.`, why: "open" };
-  if (w.m10 >= L.per10min + k || w.day >= L.perDay + k || (!own && (e.m10 >= L.per10min + k || e.day >= L.perDay + k))) return { ok: false, missing, words: "That is a lot of orders in a short time. Wait a few minutes and try again, or call the counter at 519-255-2222.", why: "rate" };
+  const G = GROUP_LIMITS;
+  if (!own && e.open >= L.openHolds + k) return { ok: false, missing, words: `This email already has ${e.open - k} orders waiting to be paid and picked up. If it is yours, sign in with it to order, or call the counter at 519-255-2222.`, why: "open" };
+  if (w.open >= L.openHolds + k || g.open >= G.openHolds + k) return { ok: false, missing, words: `You already have ${Math.max(w.open, Math.min(g.open, L.openHolds + k)) - k} orders waiting to be paid and picked up. Pick those up first, or call the counter at 519-255-2222 to add to them.`, why: "open" };
+  if (w.m10 >= L.per10min + k || w.day >= L.perDay + k || g.m10 >= G.per10min + k || g.day >= G.perDay + k || (!own && (e.m10 >= L.per10min + k || e.day >= L.perDay + k))) return { ok: false, missing, words: "That is a lot of orders in a short time. Wait a few minutes and try again, or call the counter at 519-255-2222.", why: "rate" };
   return { ok: true, missing };
 }
 // The row that counts this order for its visitor, written in the same batch as the order itself.
