@@ -1197,7 +1197,7 @@ function render({ chunk = false } = {}) {
   // Home reached by a tap: the hero is the first screen; the section tiles and the counter picks below it come in the frames
   // after the swap (wave-perf 2x, 2026-11-26: Home's build, style and layout took 55-70 ms inside the swap)
   // (wide: the tiles, a part, are drawn before the cards and still under the wave's cover, so nothing pops in on screen)
-  if (chunk && real && !a) queue = { q: [], first: 1, wide: true };
+  if (chunk && real && !a && navInfo().cause === "wave") queue = { q: [], first: 1, wide: true };   // only under a wave: a crossfade to Home draws it whole
   let html, q; try { html = !real ? viewMissing() : a === "shop" ? viewShop(b) : a === "p" ? viewProduct(b) : a === "cart" ? viewCart() : a === "shipping" ? viewShipping() : a === "set" ? viewSet() : a === "search" ? viewSearch() : a === "privacy" ? viewPrivacy() : a === "terms" ? viewTerms() : a === "checkout" ? viewCheckout() : a === "order" ? viewOrder(b) : a === "account" ? accountView(band) : !a ? viewHome() : viewMissing(); } finally { q = queue; queue = null; }
   $("#main").innerHTML = html; laterStart(q);
   document.body.dataset.route = a || "home";
@@ -1260,7 +1260,7 @@ window.addEventListener("routechange", () => {
   // A long section landed by the wave is drawn in the task after the wave's own frame, so the wave's drawing and the page's building
   // are two tasks, not one. The wave holds its full cover while data-swapping is set (fx-wave.js), so nothing old is ever revealed.
   const [ra, rb] = route().replace(/^#\/?/, "").split("/").filter(Boolean);
-  if (navInfo().cause === "wave" && ra === "shop" && (rb ? SHELF.filter(p => p.cat === rb).length : SHELF.length) > 24) {
+  if (navInfo().cause === "wave" && ((ra === "shop" && (rb ? SHELF.filter(p => p.cat === rb).length : SHELF.length) > 24) || !ra)) {   // Home too: its tiles come in under the held cover
     const root = document.documentElement; root.dataset.swapping = "";
     // data-swapping stays on until the first screen's cards are in (laterStart clears it); with no chunked draw after all it is
     // cleared here, and a timer makes sure the wave is never held longer than 400 ms whatever happens

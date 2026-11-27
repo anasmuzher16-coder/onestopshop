@@ -50,8 +50,12 @@ function groupHTML(cat, list, sel, g) {
     return `<button class="frow" type="button" role="checkbox" aria-checked="${on}" ${!n && !on ? 'aria-disabled="true"' : ""} data-f-toggle="${g.key}" data-v="${X.esc(v)}" ${many && i >= top && !on ? "data-more hidden" : ""}><span class="frow__box">${TICK}</span><span class="frow__l">${X.esc(label)}</span><span class="num">${n}</span></button>`;
   };
   const note = g.note ? g.note(list) : "";
+  // a group left with one choice that nobody has picked filters nothing (Heat with no foil: "Heat management", every item); it is
+  // not offered. A picked one always shows, so it can be unticked (breaker, 2026-11-26)
+  const rows = opts.map(row).filter(Boolean);
+  if (rows.length < 2 && !(sel[g.key] || []).length) return "";
   return `<fieldset class="fgroup"><legend class="fgroup__h">${g.label}${g.hint ? ` <small>${g.hint}</small>` : ""}</legend>
-    <div class="${g.drawn ? "fshapes" : "frows"}">${opts.map(row).join("")}</div>
+    <div class="${g.drawn ? "fshapes" : "frows"}">${rows.join("")}</div>
     ${many ? `<button class="fmore" type="button" data-f-more="${g.key}">All ${opts.length} ${g.key === "brand" ? "brands" : "sizes"}</button>` : ""}${note ? `<p class="fnote">${note}</p>` : ""}</fieldset>`;
 }
 function groupsHTML(cat, list, sel, sortLast = false) {
@@ -192,7 +196,9 @@ export function init(ctx) {
       else if (t.matches("[data-f-clear]")) draft = {};
       else if (t.matches("[data-f-apply]")) { const sel = draft; shut(); go(cat, sel); document.querySelector("[data-fbar] .fbar__btn")?.focus({ preventScroll: true }); return; }
       const key = t.dataset.fToggle ? `[data-f-toggle="${t.dataset.fToggle}"][data-v="${CSS.escape(t.dataset.v)}"]` : t.dataset.fSort !== undefined ? `[data-f-sort="${t.dataset.fSort}"]` : "[data-f-clear]";
-      drawSheet(cat); sheet.querySelector(key)?.focus({ preventScroll: true }); return;
+      // focus stays on the control used, or (an option nothing has, just unticked, is no longer drawn) the first one in its group,
+      // or the sheet's heading: never lost to the page behind an open sheet (breaker, 2026-11-26)
+      drawSheet(cat); (sheet.querySelector(key) || (t.dataset.fToggle && sheet.querySelector(`[data-f-toggle="${t.dataset.fToggle}"]`)) || sheet.querySelector("#fsheet-h"))?.focus({ preventScroll: true }); return;
     }
     // the row and the desktop rail apply at once
     const sel = readSel(cat, list, location.search);

@@ -267,6 +267,7 @@ function paint(now) {
 // finger), or, before any pointer event, a coarse primary pointer (never the user agent: an iPad reports itself as a Mac).
 const COARSE = matchMedia("(pointer: coarse)"); let lastPointer = "";
 addEventListener("pointerdown", e => { lastPointer = e.pointerType || ""; }, { capture: true, passive: true });
+addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") lastPointer = "key"; }, { capture: true, passive: true });   // Enter after an earlier finger tap is a keyboard press, not a tap
 const touchTap = () => lastPointer ? lastPointer === "touch" || lastPointer === "pen" : COARSE.matches;
 function holdKeyboard() { if (!touchTap()) return; const i = document.createElement("input"); i.type = "search"; i.tabIndex = -1; i.setAttribute("aria-label", "Search"); i.style.cssText = "position:fixed;left:0;top:0;width:1px;height:1px;opacity:0;font-size:16px;border:0;padding:0;pointer-events:none;z-index:14"; document.body.append(i); i.focus({ preventScroll: true }); proxy = i; }
 function dropKeyboard() { if (!proxy) return; const i = proxy; proxy = null; i.remove(); }

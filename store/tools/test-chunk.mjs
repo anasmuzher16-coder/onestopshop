@@ -26,6 +26,15 @@ for (const eng of [chromium, webkit]) {
     ok(got.length === direct.length && JSON.stringify(got) === JSON.stringify(direct) && new Set(got).size === got.length, `${eng.name()} ${sec}: ${got.length} cards, the same and in the same order as a direct load (${direct.length})`);
     ok(atLeave === null || atLeave >= 4, `${eng.name()} ${sec}: the first screen's cards are in before the wave leaves (${atLeave})`);
   }
+  // Home by a tap (2026-11-26): its tiles come in under the held cover, its counter picks just after, and it ends the same as a direct load
+  await p.goto(B + "/shop/misc", { waitUntil: "load" }); await p.waitForTimeout(700);
+  await watchLeave(p, "#main .cats .cat");
+  await tap(p, "/");
+  const homeDone = await p.waitForFunction(() => document.querySelector("#main .hero") && !document.querySelector("#main [data-later]") && !document.querySelector("#main[aria-busy]") && !document.documentElement.hasAttribute("data-swapping"), null, { timeout: 15000 }).then(() => true, () => false);
+  const home = await p.evaluate(() => ({ tiles: document.querySelectorAll("#main .cats .cat").length, picks: document.querySelectorAll("#main .shelf .card").length, leave: window.__atLeave }));
+  await p.goto(B + "/", { waitUntil: "load" }); const homeDirect = await p.evaluate(() => ({ tiles: document.querySelectorAll("#main .cats .cat").length, picks: document.querySelectorAll("#main .shelf .card").length }));
+  ok(homeDone && home.tiles === homeDirect.tiles && home.picks === homeDirect.picks && home.tiles > 0, `${eng.name()} home: by a tap it fills in to match a direct load ${JSON.stringify(home)} vs ${JSON.stringify(homeDirect)}`);
+  ok(home.leave === null || home.leave === homeDirect.tiles, `${eng.name()} home: every tile is in before the wave leaves (${home.leave})`);
   await p.goto(B + "/shop/misc", { waitUntil: "load" }); await p.waitForTimeout(500);
   await tap(p, "/shop/hookahs"); await filled(p, "hookahs");
   // well down the section, wherever its length puts that (Hookahs is 26 ticked families since 2026-11-26, not 83)
