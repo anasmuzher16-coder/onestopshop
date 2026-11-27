@@ -50,19 +50,19 @@ function swatchGroup(fam, chosen, { label, card = "" } = {}) {
   for (let k = 2; k <= SW_MAX; k++) if (n > k) { over.push("o" + k); more.push(`<a class="swatches__more" data-k="${k}" href="/p/${card}" aria-label="${n - k + 1} more ${n - k + 1 === 1 ? "colour" : "colours"} of ${esc(label.replace(/^Colours of /, ""))}"><span class="num">+${n - k + 1}</span></a>`); }
   return `<div class="swatchbox ${over.join(" ")}"><div class="swatches swatches--card" role="radiogroup" aria-label="${esc(label)}">${row.map(v => chip(v, fam.indexOf(v))).join("")}</div>${more.join("")}</div>`;
 }
-// The photo a colour shows, and its label in the quiet TBD style (owner, 2026-11-24): its own photo ("Photo to be upscaled" when it
-// was enlarged), the family's photo with "Shown in <colour>", or the drawn stand-in with "Photo coming". The label is in the alt text too.
+// The photo a colour shows, and its label in the quiet TBD style (owner, 2026-11-24): its own photo (no label: an enlarged one
+// is the shop's to-do, not the shopper's), the family's photo with "Shown in <colour>", or the drawn stand-in with "Photo coming". The label is in the alt text too.
 function photoLabel(v) {
   const f = (v && v.facts) || {};
   if (!v.img || v.photo === true) return "";   // the shop's own photo, uploaded in the back office, replaces whatever the label was about
-  // "to be upscaled" is the shop's own work list, never a shopper's business (design review, 2026-11-26): it stays in the data
-  // and the back office, and the storefront shows the photo without it
+  // "to be upscaled" is the shop's own work list, never a shopper's business (design review, 2026-11-26): it stays in the
+  // catalogue data, and the storefront shows the photo without it
   if (f.photo === "family") return `Shown in ${f.shown_in || "another colour"}`;
   if (v.details?.photo === "replace") return "Photo to be replaced";   // a stand-in photo of a similar pack (owner, 2026-11-24)
   return "";
 }
 // a number and its unit never part at the end of a line ("250 g", "72 cm"): one non-breaking space between them
-const nb = s => String(s).replace(/(\d)\s+(g|kg|cm|mm|ml|in)\b/g, "$1 $2");
+const nb = s => String(s).replace(/(\d)\s+(g|kg|cm|mm|ml|in|pcs?|sheets?)\b/gi, "$1 $2");
 const escN = s => nb(esc(s));
 const colourShot = (v, o = {}) => { const l = photoLabel(v); return shot(v, { ...o, alt: o.alt ? (l ? `${o.alt}. ${l}` : o.alt) : "" }) + (l ? `<span class="shot__tag shot__tag--tbd" aria-hidden="true">${esc(l)}</span>` : ""); };
 function cleanCart(x) {
@@ -116,7 +116,7 @@ const SAY = {
   ships: "Free pickup in Windsor, local delivery from $10, and shipping across Canada except Quebec, for now.",
   shipsOne: "Ships across Canada, except Quebec for now.",
   groundOne: "Ships by ground across Canada, except Quebec for now.",
-  shisha: "Paid in the shop. Shisha is pickup only.",
+  shisha: "Paid in the shop, pickup only.",
 };
 const realName = p => !/^Hookah No\.?\s*\d+$/i.test(p.name || "");
 const SHOP_STREET = "760 Wyandotte St E", SHOP_ADDRESS = "760 Wyandotte St E, Windsor, ON N9A 3J4", SHOP_MAP = "https://www.google.com/maps/search/?api=1&query=One%20Stop%20Shop%2C%20760%20Wyandotte%20St%20E%2C%20Windsor%2C%20ON%20N9A%203J4";
@@ -136,7 +136,7 @@ const localOnly = p => !!p && (p.ship === "pickup_only" || isCharcoal(p));
 const carried = lines => !lines.some(l => localOnly(l.product));
 // No shipping to Quebec until the site has a French version (Charter of the French Language; plan section 8). The server refuses it too.
 const toQuebec = () => !!(state.dest && state.dest.prov === "QC");
-const QC_NOTE = "<b>Not shipping to Quebec yet.</b> The site is in English only for now. Pickup in Windsor is free, or call <a class=\"link tel\" href=\"tel:+15192552222\">519-255-2222</a>.";
+const QC_NOTE = "<b>Not shipping to Quebec yet.</b> The site is in English only for now. Pickup in Windsor is free, or call <a class=\"link tel\" href=\"tel:+15192552222\">519-255-2222</a>.";
 const cpQuote = lines => state.dest && carried(lines) && !toQuebec() ? quote(state.dest, pack(lines)) : [];
 const freeNote = sub => sub >= FREE_LOCAL_CENTS ? "Free local delivery: your items are $200 or more before tax." : `Local delivery is free on orders of $200 or more before tax. Add ${money((FREE_LOCAL_CENTS - sub) / 100)} more to get it.`;
 function saveCart() { store.set("cart", state.cart); syncChrome(); }
@@ -278,7 +278,7 @@ function cardMeta(p) {
   const desc = p.details?.description;   // one line on the card, the whole of it on the product page
   if (!p.family) return `<p class="card__meta ${desc ? "card__meta--one" : ""}">${escN(desc || p.note || (p.facts && p.facts.size) || "")}</p>`;
   const fam = familyOf(p), bits = stemSet(p) ? "Stem set, no base" : "";   // the chips carry the colour count
-  return `${desc ? `<p class="card__meta card__meta--one">${esc(desc)}</p>` : ""}${fam.length > 1 ? swatchGroup(fam, p, { label: `Colours of ${p.name}`, card: p.sku }) : ""}${bits ? `<p class="card__meta card__meta--fam">${bits}</p>` : ""}`;
+  return `${desc ? `<p class="card__meta card__meta--one">${escN(desc)}</p>` : ""}${fam.length > 1 ? swatchGroup(fam, p, { label: `Colours of ${p.name}`, card: p.sku }) : ""}${bits ? `<p class="card__meta card__meta--fam">${bits}</p>` : ""}`;
 }
 
 // ---------- views ----------
@@ -478,12 +478,12 @@ function viewProduct(sku) {
       <p class="crumb"><a href="/shop/${p.cat}">${c.name}</a></p>
       <h1 class="pdp__name${p.name.length > 30 ? " pdp__name--long" : ""}">${escN(p.name)}</h1>
       ${p.family ? (stemSet(p) ? `<p class="pdp__note">Stem set, no base.</p>` : "") : (p.note || p.facts?.size || p.height) && !(!p.height && p.name.toLowerCase().includes(String(p.note || p.facts?.size).toLowerCase().replace(/\.$/, ""))) ? `<p class="pdp__note">${escN(p.note || p.facts?.size || "")}${p.height ? `${p.note || p.facts?.size ? ". " : ""}Stands ${p.height}&nbsp;cm.` : /[.!?]$/.test(p.note || p.facts?.size || ".") ? "" : "."}</p>` : ""}
-      ${p.details?.description ? `<p class="pdp__desc">${esc(p.details.description)}</p>` : ""}
+      ${p.details?.description ? `<p class="pdp__desc">${escN(p.details.description)}</p>` : ""}
       ${chips}
       ${p.details && p.details.notes ? `<p class="pdp__notes"><span>Notes</span> ${esc(p.details.notes)}</p>` : ""}
       ${localOnly(p) ? counterLine(p) : ""}
       ${!sale ? `${p.state === "tbd" ? `<p class="pdp__avail">${TBD("Price")} ${catItem(p) ? "In the shop now. " : ""}The shop sets the price and confirms stock.</p>` : `<p class="soldline">Coming soon.</p>`}<a class="btn btn--ghost btn--call btn--ask" href="tel:+15192552222">Ask the counter, 519-255-2222</a>`
-        : sold ? `<p class="soldline">${p.dark ? "This one has sold. Each resin stem is poured once." : "Sold out for now."}</p><a class="btn btn--ghost btn--call" href="tel:+15192552222">Call the counter</a>`
+        : sold ? `<p class="soldline">${p.dark ? "This one has sold. Each resin stem is poured once." : "Sold out for now."}</p><a class="btn btn--ghost btn--call" href="tel:+15192552222">Call the counter</a>`
         : `<p class="pdp__price num">${whole(p.price)}</p>${inCart ? `<a class="btn btn--wide" href="/cart">In your cart. View cart</a>` : `<button class="btn btn--wide" type="button" data-add="${p.sku}">Add to cart</button>`}`}
       ${sale ? deliveryLine(p, opts) : ""}
       ${!sale ? factsSpec(p, fam) : counterPay(p) ? "" : `<section class="ways" aria-labelledby="ways-h">
@@ -543,7 +543,7 @@ function setWhy() {
   const by = { tbd: [], sold: [], soon: [] }, and = l => l.length > 1 ? l.slice(0, -1).join(", ") + " and " + l.at(-1) : l[0];
   for (const [slot, cat] of SLOTS) { if (OPTIONAL.has(slot)) continue; const l = inCat(cat), name = (catById[cat]?.name || cat).toLowerCase(); by[!l.length ? "soon" : l.some(forSale) ? "sold" : "tbd"].push(name); }
   const cap = s => s[0].toUpperCase() + s.slice(1);
-  const parts = [by.tbd.length ? `${and(by.tbd.map(n => n.replace(/s$/, "")))} prices are on the way` : "", by.soon.length ? `our ${and(by.soon)} are not on the site yet` : "", by.sold.length ? `the ${and(by.sold)} are sold out for now` : ""].filter(Boolean);
+  const parts = [by.tbd.length ? `${and(by.tbd.map(n => n.replace(/s$/, "")))} prices are on the way` : "", by.soon.length ? `our ${and(by.soon)} are not on the site yet` : "", by.sold.length ? `the ${and(by.sold)} are sold out for now` : ""].filter(Boolean);
   return parts.length ? cap(parts.length > 1 ? parts.slice(0, -1).join(", ") + ", and " + parts.at(-1) : parts[0]) + "." : "";
 }
 function viewSet() {
@@ -553,7 +553,7 @@ function viewSet() {
     <h1 class="shophead__h">Build a set</h1>
     <p class="shophead__n">${soonBand("The counter puts a set together with you")}</p>
   </section>
-  ${soonShelf({ tone: "ruby", obj: "set", lead: `A set is a hookah, a bowl and a hose that go together. ${setWhy()}` })}`;
+  ${soonShelf({ tone: "ruby", obj: "set", title: "Sets are put together at the counter for now.", lead: `A set is a hookah, a bowl and a hose that go together. ${setWhy()}` })}`;
   return `
   <section class="shophead" data-tone="ruby" data-fx="set">
     <h1 class="shophead__h">Build a set</h1>
@@ -621,10 +621,10 @@ function deliveryLine(p, opts) {
   // shisha is paid at the counter until the card company approves it, so it is a pickup: never promise shipping the cart will not offer
   if (counterPay(p)) return `<p class="dline dline--fixed"><span class="dline__msg">Pickup at the Windsor counter</span><span class="dline__sub">Free, ready ${esc(pickupDay().toLowerCase())}. ${SAY.shisha}</span></p>`;
   // another item, with shisha already in the cart: the whole order is a pickup, so say that before anyone counts on shipping
-  if (counterPayIn(cartLines()).length) return `<p class="dline dline--fixed"><span class="dline__msg">Your order is a pickup while it has shisha</span><span class="dline__sub">Shisha is paid at the counter for now, so the whole order is picked up in Windsor</span></p>`;
+  if (counterPayIn(cartLines()).length) return `<p class="dline dline--fixed"><span class="dline__msg">Your order is a pickup while it has shisha</span><span class="dline__sub">Shisha is pickup only and paid in the shop, so the whole order is picked up in Windsor</span></p>`;
   let s = deliveryNow(cartCents() + (state.cart.some(l => l.sku === p.sku) ? 0 : toCents(p.price)));
   if (localOnly(p) && (s.key === "far" || s.key === "ship" || s.key === "down")) s = { msg: "This one goes by local delivery or pickup", sub: "Canada Post does not carry it. Pickup is free", act: "Change" };
-  else if (toQuebec()) s = { msg: "We do not ship to Quebec yet", sub: "The site is in English only for now. Pickup in Windsor is free", act: "Change" };
+  else if (toQuebec()) s = { msg: "We do not ship to Quebec yet", sub: "The site is in English only for now. Pickup in Windsor is free", act: "Change" };
   else if (state.dest && !opts.length && (s.key === "far" || s.key === "ship" || s.key === "down")) s = { msg: `We cannot price shipping to ${state.dest.full} here`, sub: "Call 519-255-2222, or pickup is free", act: "Change" };
   return `<button class="dline" type="button" data-open-postal><span class="dline__msg">${esc(s.msg)}</span>${s.sub ? `<span class="dline__sub">${esc(s.sub)}</span>` : ""}<span class="dline__act">${esc(s.act)}</span></button>`;
 }
@@ -731,9 +731,9 @@ function viewCart() {
 
 function viewShipping() {
   return `
-  ${band("shipping", "cobalt", "Shipping", "From Windsor across Canada, except Quebec for now.")}
+  ${band("shipping", "cobalt", "Shipping", "From Windsor across Canada, except Quebec for now.")}
   <section class="reading">
-    <p class="lead">We pack every order at the counter in Windsor and ship to every province and territory except Quebec, for now: the site is in English only, and we will ship there once it is also in French. Pickup in Windsor is open to everyone.</p>
+    <p class="lead">We pack every order at the counter in Windsor and ship to every province and territory except Quebec, for now: the site is in English only, and we will ship there once it is also in French. Pickup in Windsor is open to everyone.</p>
     <h2 class="h3">Local delivery</h2>
     <p>We deliver from our Walkerville shop, priced by road distance: $10 up to 10 km and $15 up to 25 km, per order, plus tax. Orders with $200 or more in items before tax deliver free. Anything in the shop can come by local delivery. Enter your postal code and we show your exact price, or tell you if you are past our delivery area.</p>
     <p>While the shop is open, it arrives in about 25 minutes to 1 hour. After closing, it arrives the next morning. These are estimates, not set times. Local delivery is paid online when you order.</p>
@@ -743,7 +743,7 @@ function viewShipping() {
     <h2 class="h3">How glass is packed</h2>
     <p>Hookahs ship taken apart. The glass base is double boxed. If anything arrives broken, bring it into the store and talk to the store manager.</p>
     <h2 class="h3">What we ship</h2>
-    <p>Everything in the shop except charcoal, once its packed weight is known: until then an item says it is pickup or local delivery for now. Charcoal goes by pickup or local delivery only: it is never sent by Canada Post.</p>
+    <p>Everything in the shop except charcoal, once its packed weight is known: until then an item says it is pickup or local delivery for now. Charcoal goes by pickup or local delivery only: it is never sent by Canada Post.</p>
     <h2 class="h3">Pick up</h2>
     <p>Order online and pick up for free at ${SHOP_ADDRESS}. ${directions()} or call <a class="link" href="tel:+15192552222">519-255-2222</a>.</p>
     <h2 class="h3">Returns</h2>
@@ -803,7 +803,7 @@ const sheetH = $("#sheet-h"), sheetP = $(".sheet__p", sheet), sheetGo = $('butto
 const SHEET_WORDS = {
   plain: { h: sheetH.textContent, p: sheetP.textContent, go: sheetGo.textContent },
   local: { h: "Where should we deliver?", p: "Local delivery is $10 up to 10 km and $15 up to 25 km from our Windsor shop. Free on orders of $200 or more before tax.", go: "Check local delivery" },
-  nationwide: { h: "Where should we ship it?", p: "We ship across Canada by Canada Post, except to Quebec for now. Enter your postal code to see the prices.", go: "See shipping prices" },
+  nationwide: { h: "Where should we ship it?", p: "We ship across Canada by Canada Post, except to Quebec for now. Enter your postal code to see the prices.", go: "See shipping prices" },
 };
 function sheetWords(mode) { const w = SHEET_WORDS[mode || "plain"]; state.sheetMode = mode || null; sheetH.textContent = w.h; sheetP.textContent = w.p; sheetGo.textContent = w.go; }
 function openSheet(mode) { sheetWords(mode); state.sheetFell = false; postalInput.value = state.dest ? state.dest.full : ""; postalErr.textContent = postalBad; postalErr.hidden = true; postalInput.removeAttribute("aria-invalid"); sheet.showModal(); postalInput.focus(); postalInput.select(); }
@@ -1149,7 +1149,7 @@ const viewPrivacy = () => doc("Privacy", "What we collect when you order, why, a
 const viewTerms = () => doc("Terms of sale", "The plain rules for buying from us online.", [
   ["Who you are buying from", [`One Stop Shop, 760 Wyandotte St E, Windsor, ON N9A 3J4. Call 519-255-2222. Legal business name ${TBD("")}.`]],
   ["Prices and tax", ["Prices are in Canadian dollars. Tax is added at checkout, based on the province the order ships to. Before you pay, checkout shows each item's price, delivery or shipping, tax and the total, and you can go back and change anything. We email you a copy of your order."]],
-  ["Shipping", ["We ship within Canada, except to Quebec for now: the site is in English only, and we will ship there once it is also in French. Anyone can pick up in Windsor. The price at checkout is the price you pay for shipping. Delivery times are the carrier's estimates. Cologne ships by ground only."]],
+  ["Shipping", ["We ship within Canada, except to Quebec for now: the site is in English only, and we will ship there once it is also in French. Anyone can pick up in Windsor. The price at checkout is the price you pay for shipping. Delivery times are the carrier's estimates. Cologne ships by ground only."]],
   ["Local delivery", ["We deliver within 25 km by road of our Windsor shop: $10 up to 10 km and $15 from there to 25 km, per order, plus tax. Orders with $200 or more in items before tax deliver free. Arrival times are estimates. Local delivery is paid online when you order."]],
   ["Pickup", ["Pickup at 760 Wyandotte St E, Windsor, ON N9A 3J4 is free. We email you when the order is ready and hold it for 14 days."]],
   ["Charcoal", ["Charcoal is sold for pickup or local delivery only. It is not shipped by Canada Post or any other carrier."]],

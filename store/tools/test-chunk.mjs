@@ -91,8 +91,9 @@ for (const eng of [chromium, webkit]) {
   await wb.close();
   ok(bad.length === 0, `cold load: every shop page's band is painted from the HTML and kept by the page, same node and box, no layout shift (${CATS.length + 1} pages at 390, 3 at 1440, 3 in WebKit, 1 answered): ${bad.slice(0, 3).join("; ")}`);
 }
-// A single item's photo marked to be upscaled (charcoal, foil, shisha carry it as details.photo) shows the same quiet label as
-// the Ace colours, on its card and its page; a photo state the page has no use for never reaches the storefront.
+// A single item's photo marked to be upscaled (charcoal, foil, shisha carry it as details.photo) shows no label to shoppers; a
+// stand-in photo says "Photo to be replaced" until the shop's own photo goes up; a photo state the page has no use for never
+// reaches the storefront.
 if (process.env.PERSIST) {
   const { execFileSync } = await import("node:child_process"), { fileURLToPath } = await import("node:url");
   const { join } = await import("node:path");
@@ -115,6 +116,12 @@ if (process.env.PERSIST) {
   const onPage = await p.evaluate(() => document.querySelector("[data-stage] .shot__tag--tbd")?.textContent || ""), alt = await p.evaluate(() => document.querySelector("[data-stage] img")?.alt || "");
   // design review 2026-11-26: "to be upscaled" is the shop's work list, never stamped on a photo shoppers see (the data keeps it, checked above)
   ok(onCard === "" && onPage === "" && !/upscaled/i.test(alt) && !(await p.evaluate(() => /to be upscaled/i.test(document.body.innerText))), `a photo to be upscaled carries no label on its card or its page: "${onCard}" "${onPage}" "${alt}"`);
+  // a stand-in photo still says so ("Photo to be replaced" is the shopper's business: it is not the item they will get)
+  sql(`UPDATE products SET details = json_set(details, '$.photo', 'replace') WHERE sku = '${up.sku}'`);
+  await fetch(B + "/api/admin/products/" + up.sku, { method: "PUT", headers: { "Content-Type": "application/json", "X-OSS-Admin": "1", Cookie: ck }, body: JSON.stringify({ low_stock_at: 2 }) });
+  await p.goto(B + "/p/" + up.sku, { waitUntil: "load" }); await p.waitForTimeout(600);
+  const standIn = await p.evaluate(() => document.querySelector("[data-stage] .shot__tag--tbd")?.textContent || "");
+  ok(standIn === "Photo to be replaced", `a stand-in photo is labelled on its page: "${standIn}"`);
   // the shop's own photo uploaded in the back office: the label about the old photo goes with it
   const jpeg = new Uint8Array(400); jpeg.set([0xff, 0xd8, 0xff, 0xe0]);
   const upl = await fetch(B + "/api/admin/products/" + up.sku + "/photo", { method: "POST", headers: { "Content-Type": "image/jpeg", "X-OSS-Admin": "1", Cookie: ck }, body: jpeg });
