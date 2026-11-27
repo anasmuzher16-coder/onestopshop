@@ -6,7 +6,7 @@
 name: store tests
 on:
   push:
-    branches: [shop-quality, section-waves, pay-email-ready]
+    branches: [shop-quality, section-waves, pay-email-ready, "fleet/**"]   # fleet/*: agents working in parallel get the full suites here, not in the laptop's one-browser queue (owner, 2026-11-26)
     paths: ["store/**", ".github/workflows/store-tests.yml"]
   workflow_dispatch:
 concurrency:
