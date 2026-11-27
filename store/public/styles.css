@@ -1020,7 +1020,7 @@ a[href^="tel:"]{white-space:nowrap}
 
 /* ========== design review fixes (2026-11-26, fleet/review-fixes) ========== */
 /* the home line about sections with nothing online: the links sit in the sentence, no gap after a short name */
-.cats__soon .link{min-width:0}
+.cats__soon .link{min-width:0;padding:0 7px;margin:0 -7px}   /* a 44 px target (padding) that takes no room in the sentence (negative margin) */
 /* 404: the long title wraps so the section object stands beside it at its full size, like every other band */
 @media (min-width:521px){.shophead[data-fx="missing"] .shophead__h{max-width:64%;text-wrap:balance}}
 /* the product page dock on a phone: Ask the counter is the desktop's outlined button, never a grey that reads disabled; the
