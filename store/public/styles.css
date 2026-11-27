@@ -962,10 +962,10 @@ html.restoring .grid--shop .card{content-visibility:visible}
 .card__a:hover .sticker--tbd,.card__a:active .sticker--tbd,.piece:active .sticker--tbd{transform:none}
 /* one Price TBD everywhere (design review, 2026-11-27: cards, search and the product page each had their own): the same dashed
    label in a search result row; the product page's line drops its own label, as the photo's label says it on the same screen */
-.row .sticker.sticker--tbd{display:inline-flex;gap:.4em;align-items:baseline;width:auto;height:auto;min-width:0;padding:5px 8px;border:1px dashed oklch(0.16 0.012 50 / .42);border-radius:var(--radius);
-  background:var(--tile,var(--bonelt));box-shadow:none;transform:none;color:var(--color-on-tile);font-size:12px;overflow:visible}
+.row .sticker.sticker--tbd{display:inline-flex;gap:.4em;align-items:baseline;width:auto;height:auto;min-width:0;padding:5px 8px;border:1px dashed var(--color-muted);border-radius:var(--radius);
+  background:transparent;box-shadow:none;transform:none;color:var(--color-muted);font-size:12px;overflow:visible}
 .row .sticker.sticker--tbd::before,.row .sticker.sticker--tbd::after{content:none}
-.row .sticker.sticker--tbd .sticker__k,.row .sticker.sticker--tbd .sticker__v{display:inline;max-width:none;padding:0;font:600 12px/1.25 var(--font-ui);letter-spacing:.06em;text-transform:uppercase;color:inherit;opacity:.86}
+.row .sticker.sticker--tbd .sticker__k,.row .sticker.sticker--tbd .sticker__v{display:inline;max-width:none;padding:0;font:600 12px/1.25 var(--font-ui);letter-spacing:.06em;text-transform:uppercase;color:inherit;opacity:1}
 .row .sticker.sticker--tbd .sticker__v::first-letter{font-size:inherit;vertical-align:baseline;margin:0}@keyframes tbd-in{from{opacity:0}}
 .tile[data-stick=go] .sticker--tbd{animation:tbd-in var(--dur-state) var(--ease-state) var(--stick-d,0ms) backwards}
 
