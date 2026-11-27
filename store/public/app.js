@@ -422,7 +422,9 @@ function counterSpec(p) {
 function factsSpec(p, fam) {
   const f = p.facts || {}, named = fam.every(v => v.named), base = f.includes_base === true ? "Included" : f.includes_base === false ? "Not included: stem set, no base" : null;
   // the shop's unknowns are said once, together, as TBD: never guessed, never left out, never one TBD per row (council, 2026-11-25)
-  const open = [p.family && base === null && "base", p.family && !f.height_cm && "height", p.family && !named && (fam.length > 1 ? "colour names" : "colour name"), p.family && fam.length > 1 && "which colours the shop has", ...(p.acc ? ["size", "weight", "colours"] : []), "stock count"].filter(Boolean);
+  // the shop fills in its colours and shelf count in the back office's item editor: a filled-in fact leaves this list (2026-11-26)
+  const shopCols = v => Array.isArray(v.details?.colours) && v.details.colours.length > 0, counted = p.family ? fam.every(v => v.counted) : p.counted === true;
+  const open = [p.family && base === null && "base", p.family && !f.height_cm && "height", p.family && !named && (fam.length > 1 ? "colour names" : "colour name"), p.family && fam.length > 1 && !fam.every(shopCols) && "which colours the shop has", ...(p.acc ? ["size", "weight", ...(shopCols(p) ? [] : ["colours"])] : []), !counted && "stock count"].filter(Boolean);
   const list = open.length > 1 ? open.slice(0, -1).join(", ") + " and " + open.at(-1) : open[0];
   return `<section class="spec" aria-labelledby="spec-h">
         <h2 class="h3" id="spec-h">Details</h2>
@@ -434,7 +436,8 @@ function factsSpec(p, fam) {
           ${Array.isArray(f.includes) && f.includes.length ? `<div><dt>Comes with</dt><dd>${esc(f.includes.join(", "))}</dd></div>` : ""}
           <div><dt>Colours</dt><dd>${fam.length > 1 ? `<span class="num">${fam.length}</span> shown${named ? ": " + esc(fam.map(v => v.colour).join(", ")) : ""}` : named ? esc(fam.map(v => v.colour).join(", ")) : "One"}</dd></div>` : ""}
           ${catItem(p) && ticked(p) ? `<div><dt>Availability</dt><dd>In the shop</dd></div>` : ""}
-          <div class="spec__open"><dt>Still to come</dt><dd>${list[0].toUpperCase() + list.slice(1)}. ${TBD("")}</dd></div>
+          ${p.acc && shopCols(p) ? `<div><dt>Colours</dt><dd>${esc(p.details.colours.join(", "))}</dd></div>` : ""}
+          ${list ? `<div class="spec__open"><dt>Still to come</dt><dd>${list[0].toUpperCase() + list.slice(1)}. ${TBD("")}</dd></div>` : ""}
           ${!p.img ? `<div><dt>Photo</dt><dd>Coming. The drawing stands in until the photo is ready.</dd></div>` : p.family && f.photo === "family" ? `<div><dt>Photo</dt><dd>Shows another colour of this hookah.</dd></div>` : ""}
           ${catItem(p) ? `<div><dt>Supplier</dt><dd>Ace Hookah</dd></div>` : ""}
           <div><dt>Item</dt><dd class="num">${p.sku}</dd></div>
@@ -466,6 +469,7 @@ function viewProduct(sku) {
       ${p.details?.description ? `<p class="pdp__desc">${esc(p.details.description)}</p>` : ""}
       ${chips}
       ${p.details && p.details.notes ? `<p class="pdp__notes"><span>Notes</span> ${esc(p.details.notes)}</p>` : ""}
+      ${!p.family && sale && Array.isArray(p.details?.colours) && p.details.colours.length ? `<p class="pdp__notes"><span>Colours</span> ${esc(p.details.colours.join(", "))}</p>` : ""}
       ${localOnly(p) ? counterLine(p) : ""}
       ${!sale ? `${p.state === "tbd" ? `<p class="pdp__avail">${TBD("Price")} ${catItem(p) ? "In the shop now. " : ""}The shop sets the price and confirms stock.</p>` : `<p class="soldline">Coming soon.</p>`}<a class="btn btn--ghost btn--call btn--ask" href="tel:+15192552222">Ask the counter, 519-255-2222</a>`
         : sold ? `<p class="soldline">${p.dark ? "This one has sold. Each resin stem is poured once." : "Sold out for now."}</p><a class="btn btn--ghost btn--call" href="tel:+15192552222">Call the counter</a>`

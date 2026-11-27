@@ -45,6 +45,33 @@ const SOLD = "('paid','packed','shipped','ready','collected')";
 const LOCAL = "'-5 hours'"; // the shop's clock (Windsor), close enough for day totals
 const clampInt = (v, lo, hi) => { const n = Math.round(Number(v)); return Number.isFinite(n) && n >= lo && n <= hi ? n : null; };
 const text = (v, max) => typeof v === "string" && v.trim().length <= max ? v.trim() : null;
+// The colours the shop has for one item, from the item editor: [{ name, hex? }]. A name is letters (and spaces, & / ' -),
+// up to 24; a hex only for a colour the shop added itself. The same name twice counts once. [] means "not known".
+export function cleanColours(list) {
+  if (!Array.isArray(list) || list.length > 16) return null;
+  const out = [], seen = new Set();
+  for (const c of list) {
+    const raw = typeof c === "string" ? c : c && typeof c === "object" ? c.name : null;
+    if (typeof raw !== "string") return null;
+    const name = raw.replace(/\s+/g, " ").trim();
+    if (!/^[\p{L}][\p{L} &/'-]{0,23}$/u.test(name)) return null;
+    const hex = c && typeof c === "object" && c.hex != null ? (typeof c.hex === "string" && /^#[0-9a-f]{6}$/i.test(c.hex) ? c.hex.toLowerCase() : false) : null;
+    if (hex === false) return null;
+    if (seen.has(name.toLowerCase())) continue;
+    seen.add(name.toLowerCase()); out.push(hex ? { name, hex } : { name });
+  }
+  return out;
+}
+export const joinColours = names => names.length < 2 ? names[0] || "" : names.slice(0, -1).join(", ") + " and " + names.at(-1);
+// What an item on view still needs from the shop before it reads complete: its price, its colours (Ace catalogue items),
+// its shelf count. Shown as the "Needs info" list in the back office, in the order the list is in.
+export function needsInfo(p) {
+  let f = {}, d = {}; try { f = JSON.parse(p.facts_known || "{}") || {}; } catch {} try { d = JSON.parse(p.details || "{}") || {}; } catch {}
+  const ace = ["ace", "ace-acc"].includes(p.supplier_id);
+  const onView = (p.active === 1 || p.listed === 1) && p.availability !== "dropped" && !(ace && f.stamp === "none") && !isSample(p.sku);
+  if (!onView) return [];
+  return [!(p.price_cents > 0) && "price", ace && !(Array.isArray(d.colours) && d.colours.length) && "colours", ["in_store_uncounted", "special_order"].includes(p.availability) && "stock"].filter(Boolean);
+}
 
 export async function admin(request, env, url) {
   const path = url.pathname.replace(/^\/api\/admin/, ""), method = request.method, db = env.DB;
@@ -121,11 +148,12 @@ export async function admin(request, env, url) {
 
   if (path === "/products" && method === "GET") {
     const [p, c, b] = await db.batch([
-      db.prepare("SELECT sku, name, category_id, price_cents, cost_cents, weight_g, box_id, glass, ship_class, height_cm, note, img, img_dark, photo_ver, details, stock, low_stock_at, active, listed, family, variant_label, updated_at FROM products ORDER BY active DESC, sort, sku"),
+      db.prepare("SELECT sku, name, category_id, price_cents, cost_cents, weight_g, box_id, glass, ship_class, height_cm, note, img, img_dark, photo_ver, details, stock, low_stock_at, active, listed, family, variant_label, availability, supplier_id, facts_known, updated_at FROM products ORDER BY active DESC, sort, sku"),
       db.prepare("SELECT id, name, tone FROM categories ORDER BY sort"), db.prepare("SELECT id, label, l_cm, w_cm, h_cm FROM boxes ORDER BY l_cm * w_cm * h_cm"),
     ]);
     // the demo's made-up samples are marked, so nobody switches one back on taking it for the shop's own stock (2026-11-24)
-    return json({ products: p.results.map(r => isSample(r.sku) ? { ...r, sample: true } : r), categories: c.results, boxes: b.results });
+    // each row also says what it still needs from the shop (price, colours, shelf count), for the "Needs info" list and its count
+    return json({ products: p.results.map(r => { const { supplier_id, facts_known, ...row } = r, needs = needsInfo(r); return { ...row, ...(isSample(r.sku) ? { sample: true } : {}), ...(needs.length ? { needs } : {}), ...(["ace", "ace-acc"].includes(supplier_id) ? { catalogue: true } : {}) }; }), categories: c.results, boxes: b.results });
   }
 
   // one product: fields to save, validated here so nothing odd reaches the storefront
@@ -199,6 +227,65 @@ export async function admin(request, env, url) {
     try { await db.batch([db.prepare(`UPDATE products SET ${cols.map(k => k + " = ?").join(", ")}, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE sku = ?`).bind(...cols.map(k => out[k]), m[1]), audit("product.edit", m[1], was, out)]); }
     catch (e) { if (/Set the shop price/.test(String(e && e.message))) return json({ error: "Set the shop price before turning this item on." }, 409); throw e; }
     return json({ ok: true });
+  }
+  // The item editor (owner, 2026-11-26: "put fields for the client to fill out on each item"): name, the colours the shop
+  // has, the shelf count and the price, filled in by the shop itself item by item. Nothing is ever filled in for them:
+  // a field left out of the request is left as it is. Prices stay the owner's (same rule as the full form above).
+  if ((m = path.match(/^\/products\/(OSS-\d{4,6})\/info$/)) && method === "PUT") {
+    const before = await db.prepare("SELECT * FROM products WHERE sku = ?").bind(m[1]).first(); if (!before) return json({ error: "No such product." }, 404);
+    const body = await request.json().catch(() => null);
+    if (!body || typeof body !== "object" || Array.isArray(body)) return json({ error: "Send the fields as JSON." }, 400);
+    const out = {}, bad = [];
+    if ("name" in body) { const v = text(body.name, 80); if (!v) bad.push("name (1 to 80 letters)"); else if (v !== before.name) out.name = v; }
+    let colours = null;
+    if ("colours" in body) { colours = cleanColours(body.colours); if (!colours) bad.push("colours (up to 16, each a name of up to 24 letters)"); }
+    let price = null;
+    if ("price_cents" in body) {
+      price = Number.isInteger(body.price_cents) ? clampInt(body.price_cents, 1, 5000000) : null;
+      if (price === null) bad.push("price (more than $0, up to $50,000, in cents)");
+    }
+    let count = null;
+    if ("stock" in body) {
+      const s = body.stock || {}, whole = v => Number.isInteger(v) ? clampInt(v, 0, 99999) : null;
+      count = { counted: whole(s.counted), seen: whole(s.seen) };
+      if (count.counted === null) bad.push("stock (a whole number, 0 to 99999)"); else if (count.seen === null) return json({ error: "Reload the item and count again." }, 400);
+    }
+    if (bad.length) return json({ error: "Check: " + bad.join(", ") + "." }, 400);
+    if (price !== null && price !== before.price_cents && !session.owner) { log("forbidden", { actor, path, field: "price" }); return json({ error: NOT_YOURS }, 403); }
+    if (price !== null && price !== before.price_cents) out.price_cents = price;
+    let had = {}; try { had = JSON.parse(before.details || "{}") || {}; } catch {}
+    if (colours) {
+      const d = { ...had }; delete d.colours; delete d.colour_hex;
+      const hex = Object.fromEntries(colours.filter(c => c.hex).map(c => [c.name, c.hex]));
+      if (colours.length) { d.colours = colours.map(c => c.name); if (Object.keys(hex).length) d.colour_hex = hex; }
+      // a hookah family's row is one colour of that hookah: its colours are its name on the chip ("Black and gold")
+      if (String(before.family || "").startsWith("ace-")) { if (colours.length) d.colour = joinColours(d.colours); else delete d.colour; }
+      if (JSON.stringify(d) !== JSON.stringify(had)) out.details = JSON.stringify(d);
+    }
+    if (out.details && (had.charcoal || String(before.family || "").startsWith("charcoal-"))) charcoalRules(out, JSON.parse(out.details));   // charcoal stays pickup or local only
+    // A price set on an item that is on view with "Price TBD" puts it on sale, so it can be bought as soon as the shop has priced it.
+    // Only an item already on view: never a made-up sample, an unticked catalogue page or a colour the supplier dropped.
+    const ticked = !["ace", "ace-acc"].includes(before.supplier_id) || (() => { try { return (JSON.parse(before.facts_known || "{}") || {}).stamp !== "none"; } catch { return false; } })();
+    if ("price_cents" in out && before.active === 0 && before.listed === 1 && before.availability !== "dropped" && ticked && !isSample(before.sku)) out.active = 1;
+    const stmts = [], cols = Object.keys(out);
+    const was = {}; for (const k of cols) was[k] = before[k];
+    if (count && count.seen !== before.stock) return json({ error: `An order changed this to ${before.stock} while you were counting. Check the shelf again.`, stock: before.stock, changed: true }, 409);
+    if (cols.length) stmts.push(db.prepare(`UPDATE products SET ${cols.map(k => k + " = ?").join(", ")}, updated_at = ${NOW} WHERE sku = ?`).bind(...cols.map(k => out[k]), m[1]));
+    if (count) {   // the shelf count, written as a count move like Count mode, and the item marked as counted
+      stmts.push(db.prepare(`INSERT INTO stock_moves (sku, delta, reason, ref, actor) SELECT sku, ?2 - stock, 'count', ?4, ?3 FROM products WHERE sku = ?1 AND stock = ?5`).bind(m[1], count.counted, actor, "counted " + count.counted, count.seen));
+      stmts.push(db.prepare(`UPDATE products SET stock = ?2, availability = CASE WHEN availability = 'dropped' THEN availability ELSE 'counted' END, updated_at = ${NOW} WHERE sku = ?1 AND changes() = 1`).bind(m[1], count.counted));
+    }
+    const logged = { ...out }; if (logged.details) { logged.colours = colours.map(c => c.name); delete logged.details; delete logged.ship_class; }
+    if (count) logged.stock = count.counted;
+    if (!stmts.length) return json({ ok: true, changed: false, stock: before.stock });
+    stmts.push(audit("product.info", m[1], count ? { ...was, stock: before.stock } : was, logged));
+    stmts.push(db.prepare("SELECT stock, price_cents, active, availability FROM products WHERE sku = ?").bind(m[1]));
+    let res;
+    try { res = await db.batch(stmts); }
+    catch (e) { if (/Set the shop price/.test(String(e && e.message))) return json({ error: "Set the shop price before turning this item on." }, 409); throw e; }
+    const now = res.at(-1).results[0];
+    if (count && now.stock !== count.counted) return json({ error: `An order changed this to ${now.stock} while you were counting. The rest is saved; check the shelf again.`, stock: now.stock, changed: true }, 409);
+    return json({ ok: true, changed: true, stock: now.stock, price_cents: now.price_cents, on_sale: now.active === 1 && now.price_cents > 0, counted: now.availability === "counted" });
   }
   // Stock changes. Each is one database transaction (a D1 batch): the move is written only if the count changed, the
   // count can never go below zero, and a tap's key (op) lets a repeated request count once and answer the same.
