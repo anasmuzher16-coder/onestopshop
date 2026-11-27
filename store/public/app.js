@@ -1116,19 +1116,63 @@ document.addEventListener("submit", async e => {
 });
 // ---------- the small print ----------
 const DRAFT = `<p class="done__tag"><span>Draft</span> <b>for the shop to review</b></p>`;
-const doc = (title, lead, parts) => `${band("docs", "bone", title, lead)}<section class="cart doc">${DRAFT}${parts.map(([h, body]) => `<h2 class="h3">${h}</h2>${body.map(t => `<p>${t}</p>`).join("")}`).join("")}</section>`;
-const viewPrivacy = () => doc("Privacy", "What we collect when you order, why, and how to ask about it.", [
-  ["What we collect", ["Your name, email, phone number if you give it, and delivery address, so we can send your order and answer questions about it.", "Your card details go straight to the payment company. We never see or store the card number."]],
+const doc = (title, lead, parts, tag = DRAFT) => `${band("docs", "bone", title, lead)}<section class="cart doc">${tag}${parts.map(([h, body]) => `<h2 class="h3">${h}</h2>${body.map(t => `<p>${t}</p>`).join("")}`).join("")}</section>`;
+// Privacy: checked line by line against the code on 2026-11-26 (research and sources: inventory-2026-11-24-next/PRIVACY-RESEARCH-2026-11-26.md).
+// Change this page whenever what the shop collects, keeps or shares changes. No draft tag: the owner asked for it to go.
+const viewPrivacy = () => doc("Privacy", "What we collect, why, who else handles it, and how to ask about it. Updated November 26, 2026.", [
+  ["Who we are", ["One Stop Shop, 760 Wyandotte St E, Windsor, ON N9A 3J4. This page covers our online shop: this website, the emails it sends and the orders placed on it. We sell for pickup in Windsor, local delivery and shipping within Canada, except Quebec for now. We follow Canada's privacy law for businesses (PIPEDA) and Canada's anti-spam law (CASL)."]],
+  ["What we collect and why", [
+    "When you order: your name, your email, your phone number (needed for local delivery so the driver can reach you, otherwise up to you), the delivery address if we deliver or ship it, and any note you add. We also keep what you bought, what you paid and how you chose to get it. We use these to fill your order, email you about it and answer your questions.",
+    "When you pay by card: you type your card details on Stripe's payment page, not ours. We never see or store your card number. Stripe tells us only whether the payment went through.",
+    "When you check delivery: the postal code you enter, and for local delivery your street address, are used to work out whether we deliver to you and what it costs.",
+    "When you ask for a sign-in code: we keep a coded form of your internet address, only to limit how many codes can be asked for or guessed.",
+    "We collect only what we need for these jobs. We do not use your details for anything else unless you agree first.",
+  ]],
   ["How you found us", ["When you place an order, we save with it where your first visit in the last 30 days came from: a short code from our business card or a link we posted, the name of the site that sent you (like Google or Instagram), and the first page you opened. It stays on your device until you order. We use it only to count which of our cards, posts and listings bring orders. It is not used to follow you around the web, and we never share it."]],
-  ["What we do not do", ["We do not sell or rent your details. We do not use advertising trackers. Visit counts on this site use no cookies and do not identify you.", "One small cookie holds a single yes or no: whether the shop pages should still ask how you want your order, so they open the right way. It holds no answer, postal code, address or name."]],
-  ["Who else sees it", ["The carrier or our driver gets your name, phone number and address to deliver the order. For local delivery, your address goes to our map service, Geoapify, to work out the distance. Card payments are taken by Stripe, which gets what it needs to take the payment. Our hosting company, Cloudflare, stores the shop's records on our behalf, and our email service sends the order emails.", "Some of these companies work outside Canada, mostly in the United States, so your details may be stored or handled there and can be reached by the courts and authorities of that country. Each of them may use your details only to do this work for us."]],
-  ["If you make an account", ["You sign in with a code we email you. We keep your email, the details you choose to save, your saved items, back-in-stock requests, your charcoal reminder choice and any points, so they are there next time. A cookie keeps you signed in for up to 30 days. You can delete the account yourself from the account page at any time."]],
-  ["Emails we send", ["Emails about your order: that it was placed, that it is ready or on its way. A back-in-stock email only when you ask for one, and a charcoal reminder only when you turn it on. Each reminder and alert has an unsubscribe link, and we act on it at once (the law allows up to 10 business days). We do not send newsletters."]],
-  ["How long we keep it", ["Order records are kept for six years, because tax law requires it. After that they are deleted."]],
-  ["Keeping it safe", ["The shop's records are behind a sign-in with named staff, and every change is logged with who made it. If something ever went wrong with your details that could put you at real risk, we would tell you and the Privacy Commissioner of Canada as soon as we could."]],
-  ["Your choices", ["You can ask to see what we hold about you, to correct it, or to have it deleted where the law allows. Email or call the counter and we will answer within 30 days."]],
-  ["Who to ask", ["The person responsible for privacy at the shop is the manager. Call 519-255-2222 or ask at 760 Wyandotte St E. If you are not happy with the answer, you can contact the Privacy Commissioner of Canada."]],
-]);
+  ["Cookies and storage on your device", [
+    "We use no advertising, analytics or social media trackers, and no other company's scripts run on our pages. We use three small cookies, each needed for the site to work:",
+    "oss_c keeps you signed in to your account, for up to 30 days. You only get it if you sign in.",
+    "oss-ask holds a single yes or no: whether the shop pages should still ask how you want your order, so they open the right way. It holds no answer, postal code, address or name, and lasts a year.",
+    "oss_admin is for shop staff only. It keeps them signed in to the back office for up to 12 hours.",
+    "Your browser also keeps a few things on your device: your cart, the postal code you entered, how you want your order (pickup, delivery or shipping), your order note, where your first visit came from, and a few settings for how the site behaves, like a note you closed or an animation you have already seen. They are sent to us only when you use them: the postal code when you check delivery, the rest when you place an order. While you check out, what you typed, and then your order's details for its confirmation page, are kept until you close the tab, so they are still there if you come back from the payment page. You can clear all of this in your browser's settings. The shop still works, but your cart will be empty.",
+    "Like any web host, Cloudflare, which runs this site, sees your internet address and the pages you ask for, to deliver them and protect the site from attacks.",
+  ]],
+  ["Who else handles your details", [
+    "Our staff and driver see your order to get it ready and deliver it. If we ship it, the carrier gets the name, address and details needed on the label. The shop's email inbox gets a note of each new order with your name, phone, email and address, so the counter can get it ready.",
+    "Stripe takes card payments and refunds. It gets your email, what you are buying and the amount, plus the card and billing details you type on its page. Stripe also uses payment details to prevent fraud, under its own privacy policy.",
+    "Resend sends our emails. It gets your email address and what each email says.",
+    "Geoapify, our map service, gets the postal code you enter near Windsor and, for local delivery, your street address, to work out the road distance from our shop. It does not get your name.",
+    "Cloudflare hosts the site and stores the shop's records and backups for us. The company that builds and looks after this site for us can reach these records only to keep the shop running.",
+    "We share only what each one needs for its job. We do not sell, rent or trade your details. We would give them to police or a court only when the law requires it.",
+    "Where it is handled: Stripe, Resend and Cloudflare are based in the United States, and Geoapify in Germany. So your details may be stored or handled outside Canada, and can be reached by the courts and authorities of those countries. We stay responsible for your details while they do this work for us,.",
+  ]],
+  ["If you make an account", [
+    "An account is up to you. Guest checkout always works. You sign in with a 6-digit code we email you, which works once, for 10 minutes. We keep your email, the name, phone and address you choose to save, your saved items, your back-in-stock requests, your charcoal reminder choice and any points, so they are there next time. Orders you placed as a guest with the same email join your account when you sign in.",
+    "You can delete the account yourself on the account page at any time. That removes your sign-ins, saved details, saved items, back-in-stock requests, reminder and points at once. Your past orders stay in our records as guest orders, because tax law requires us to keep sales records. The record of any yes you gave to reminders also stays, as proof of what you agreed to.",
+  ]],
+  ["Emails we send", [
+    "Emails about your order: that it is in or paid, that it is ready, or that it is on its way. These are part of your order, not marketing. Sign-in codes when you ask for one.",
+    "A back-in-stock email only when you ask for one: one email, then the request is gone. A charcoal reminder only when you tick the box to say yes, as often as you choose. We keep the words you agreed to and the date, because the law asks us to be able to show your consent.",
+    "Every reminder and back-in-stock email names the shop with its address and phone and has an unsubscribe link. It works without signing in and takes effect at once (the law allows up to 10 business days). You can also turn reminders off in your account. We do not send newsletters.",
+  ]],
+  ["How long we keep it", [
+    "Orders, including ones that were cancelled or never paid, and copies of the emails we sent about them: we keep these with the shop's sales records, which tax law requires us to keep for six years.",
+    "Your account: until you delete it. Sign-in sessions end after 30 days, or when you sign out. Our copy of a sign-in email is wiped soon after it is sent, used or expires.",
+    "Back-in-stock requests: until the email goes out or you remove the request. Copies of the reminder and back-in-stock emails we sent, and the record of your yes to reminders, are kept as proof of what we sent and what you agreed to.",
+    "Backups: the shop's records are copied every night, and only the last 30 nightly copies are kept.",
+    "On your device: until you clear it. The note of how you found us counts only for 30 days.",
+  ]],
+  ["Keeping it safe", ["The shop's records are behind a sign-in: each staff member has their own, and the owner has a passcode. Every change is logged with who made it. Sign-in cookies are kept on our side only in scrambled form, sign-in codes are checked against a scrambled copy, and everything you send us travels over an encrypted connection. If a breach of our safeguards could put you at real risk of significant harm, we will tell you and the Privacy Commissioner of Canada as soon as we can. We keep a record of every breach."]],
+  ["Your choices and rights", [
+    "See it: you can ask what personal information we hold about you, how we have used it and who we have given it to, and get a copy. Ask in writing: reply to any email we sent you, write to us, or ask at the counter. We answer within 30 days, free. If we need longer, we tell you why within those 30 days.",
+    "Correct it: if something is wrong, tell us and we will fix it. You can change your saved details yourself in your account.",
+    "Change your mind: turn off reminders or unsubscribe at any time, remove back-in-stock requests, or delete your account.",
+    "Delete it: ask us to delete what we hold about you. We delete everything the law does not require us to keep, and tell you what we kept and why.",
+    "We may ask you to confirm it is you first, for example by writing from the email on your order.",
+  ]],
+  ["Who to ask", ["The store manager is responsible for privacy at One Stop Shop. Call 519-255-2222, reply to any email we sent you, or write to or visit the store manager at One Stop Shop, 760 Wyandotte St E, Windsor, ON N9A 3J4. If you are not happy with our answer, you can complain to the Office of the Privacy Commissioner of Canada at <a class=\"link\" href=\"https://www.priv.gc.ca/en/\">priv.gc.ca</a> or 1-800-282-1376."]],
+  ["Changes to this page", ["If we change how we handle your details, we update this page and its date. If we want to use details we already hold for a new purpose, we ask you first. Updated November 26, 2026."]],
+], "");
 const viewTerms = () => doc("Terms of sale", "The plain rules for buying from us online.", [
   ["Who you are buying from", [`One Stop Shop, 760 Wyandotte St E, Windsor, ON N9A 3J4. Call 519-255-2222. Legal business name ${TBD("")}.`]],
   ["Prices and tax", ["Prices are in Canadian dollars. Tax is added at checkout, based on the province the order ships to. Before you pay, checkout shows each item's price, delivery or shipping, tax and the total, and you can go back and change anything. We email you a copy of your order."]],

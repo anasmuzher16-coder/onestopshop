@@ -86,6 +86,11 @@ for (const [engine, w, h, mobile] of [["chromium", 390, 844, true], ["webkit", 3
     { const words = await p.locator("#main").innerText(); t(`${tag} terms: draft marker, final sale, store manager`, /for the shop to review/i.test(words) && /All sales are final/.test(words) && /talk to the store manager/.test(words) && !/take a photo|within 14 days for a refund|\bcash\b/i.test(words)); }
     { const terms = await p.locator("#main").innerText(); await p.goto(B + "/shipping", { waitUntil: "networkidle" }); const words = terms + " " + await p.locator("#main").innerText();
       t(`${tag} terms and shipping: final sale keeps the legal carve-outs, no Quebec shipping yet, nothing about ID or age`, /All sales are final, except faulty, wrong, damaged or undelivered items/.test(words) && /except (to )?Quebec/.test(words) && !/\bID\b|\bage\b|\b19\+|\bminimum age/i.test(words)); }
+    await p.goto(B + "/privacy", { waitUntil: "networkidle" });
+    { const words = await p.locator("#main").innerText();   // final (owner, 2026-11-26): no draft tag, each element PIPEDA and CASL ask for, nothing about ID or age
+      t(`${tag} privacy: no draft tag, updated date, every processor and right named, nothing about ID or age`, !/for the shop to review|\bDraft\b/i.test(words) && /Updated November 26, 2026/.test(words)
+        && ["Stripe", "Resend", "Geoapify", "Cloudflare", "oss_c", "oss-ask", "United States", "within 30 days", "10 business days", "unsubscribe", "Delete", "store manager", "519-255-2222", "Privacy Commissioner of Canada"].every(s => words.includes(s))
+        && !/\bID\b|\bage\b|\b19\+|\bminimum age/i.test(words), words.slice(0, 160)); }
     await p.evaluate(() => { localStorage.clear(); localStorage.setItem("oss:strip-off", "true"); });
     await p.goto(B + "/p/OSS-8004", { waitUntil: "networkidle" }); await press(p.locator("[data-add]:visible").first()); await p.waitForTimeout(900);
     await p.goto(B + "/cart", { waitUntil: "networkidle" });
