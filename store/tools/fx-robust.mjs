@@ -195,6 +195,7 @@ for (const c of shop.cats) {
     await wait(p, 500); q = await probe(p);
     t(`${c} product: one layer on an in-site arrival`, q.layers === 1 && q.allLayers === 1, J(q));
     if (c === "cologne" && !pr.photo) t("cologne product: the mist is in the air", q.fxCanvas === 1, J(q));
+    if (c === "charcoal" && !pr.photo) t("charcoal product: the box's tap throws its coal dust", q.fxCanvas >= 1, J(q));   // its own act since 2026-11-26
     await wait(p, 7400); q = await probe(p); // the product-page mist hangs in the air for about six seconds
     t(`${c} product: no canvas 8 s on, price showing`, q.fxCanvas === 0 && q.stray === 0 && q.hidden === 0, J(q));
     const rest = await p.evaluate(() => { const i = document.querySelector("[data-stage] > img.shot"); return i ? getComputedStyle(i).transform + " | " + i.getAnimations().length : "no photo"; });
