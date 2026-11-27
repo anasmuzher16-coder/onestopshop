@@ -489,6 +489,7 @@ function factsSpec(p, fam) {
           ${aceItem(p) && f.features ? `<div><dt>Features</dt><dd>${esc(f.features)}</dd></div>` : ""}
           ${Array.isArray(f.includes) && f.includes.length ? `<div><dt>Comes with</dt><dd>${esc(f.includes.join(", "))}</dd></div>` : ""}
           <div><dt>Colours</dt><dd>${fam.length > 1 ? `<span class="num">${fam.length}</span> shown${named ? ": " + esc(fam.map(v => v.colour).join(", ")) : ""}` : named ? esc(fam.map(v => v.colour).join(", ")) : "One"}</dd></div>` : ""}
+          ${p.acc ? `${f.item_weight_g > 0 ? `<div><dt>Weight</dt><dd><span class="num">${+(f.item_weight_g / 1000).toFixed(2)}&nbsp;kg</span></dd></div>` : ""}${f.material ? `<div><dt>Material</dt><dd>${esc(f.material)}</dd></div>` : ""}${f.features ? `<div><dt>Features</dt><dd>${esc(f.features)}</dd></div>` : ""}` : ""}
           ${catItem(p) && ticked(p) ? `<div><dt>Availability</dt><dd>In the shop</dd></div>` : ""}
           ${shopCols(p) ? `<div><dt>${p.family ? "In the shop" : "Colours"}</dt><dd>${esc(p.details.colours.join(", "))}</dd></div>` : ""}
           ${!p.img ? `<div><dt>Photo</dt><dd>Photo coming soon</dd></div>` : p.family && f.photo === "family" ? `<div><dt>Photo</dt><dd>Shows another colour of this ${p.cat === "hookahs" ? "hookah" : "piece"}.</dd></div>` : ""}
