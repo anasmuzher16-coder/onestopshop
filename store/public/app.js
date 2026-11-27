@@ -1126,7 +1126,8 @@ const STATUS = {
 const STATUS_TAG = { requested: "Requested", payment: "Waiting for payment", preparing: "Being prepared", ready: "Ready for pickup", shipped: "On its way", collected: "Collected", cancelled: "Cancelled" };
 function statusHtml(id, s) {
   if (s && s.unreachable) return `<section class="cart done" data-status-page><p class="done__tag"><span>Order</span> <b class="num">${esc(id)}</b></p><h1 class="h2 h2--xl">We could not reach the shop.</h1><p class="lead" role="status">Check your connection and reload this page, or call the counter at <a class="link" href="tel:+15192552222">519-255-2222</a> with your order number.</p></section>`;
-  if (!s) return `${band("missing", "ruby", "We cannot find that order.")}<section class="empty" data-status-page><p class="lead">Check the link, or call the counter at <a class="link" href="tel:+15192552222">519-255-2222</a> with your order number.</p><p class="lead"><a class="link" href="/shop">See what is on the counter</a>.</p></section>`;
+  // drawn in place of the holding line, inside the same page: no new band, so nothing else on the page starts again
+  if (!s) return `<section class="cart done" data-status-page data-status="missing"><p class="done__tag"><span>Order</span> <b class="num">${esc(id)}</b></p><h1 class="h2 h2--xl">We cannot find that order.</h1><p class="lead">Check the link, or call the counter at <a class="link" href="tel:+15192552222">519-255-2222</a> with your order number.</p><p class="lead"><a class="link" href="/shop">See what is on the counter</a>.</p></section>`;
   const [head, lead] = (STATUS[s.status] || STATUS.requested)(s, s.notify === "call");
   return `<section class="cart done" data-status-page data-status="${esc(s.status)}">
     <p class="done__tag"><span>Order</span> <b class="num">${esc(id)}</b> <span data-status-tag>${esc(STATUS_TAG[s.status] || "")}</span></p>
