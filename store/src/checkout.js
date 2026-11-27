@@ -109,7 +109,7 @@ export async function orderStatus(request, env, url) {
   const status = closed ? "cancelled" : o.status === "pending" ? (o.pay_status === "pay_at_pickup" ? "requested" : "payment") : o.status === "paid" || o.status === "packed" ? "preparing" : o.status;   // ready, shipped, collected
   const readyAt = o.status === "ready" ? Date.parse(String(o.ready_at || o.updated_at).replace(/Z?$/, "Z")) : NaN;
   return json({ ok: true, order: { id: o.id, first: String(o.name || "").split(" ")[0], status, method: o.method, local: o.ship_service === "Local delivery", pay_at_counter: o.pay_method === "at_pickup", notify: mailReady(env) ? "email" : "call",
-    total_cents: Number(o.total_cents) || 0, ...(Number.isFinite(readyAt) ? { held_until: new Date(readyAt + READY_HOLD_DAYS * 864e5).toISOString() } : {}), items } });
+    ...(Number.isInteger(o.total_cents) ? { total_cents: o.total_cents } : {}), ...(Number.isFinite(readyAt) ? { held_until: new Date(readyAt + READY_HOLD_DAYS * 864e5).toISOString() } : {}), items } });
 }
 
 export async function placeOrder(request, env, url) {

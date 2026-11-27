@@ -91,8 +91,10 @@ try {
   }
   { // 10 after closing, pickup is not today (Sunday 8 pm in Windsor, closed at 7)
     const { c, p } = await open({ cart: [{ sku: "OSS-8004", qty: 1 }], postal: "M5V 2T6" }, "2026-11-23T01:00:00Z");
-    await go(p, "/cart"); t("10 cart says ready tomorrow", /Ready tomorrow/.test(await p.locator(".cartship").innerText()));
-    await go(p, "/p/OSS-8004"); t("10 product says tomorrow", CARD ? /Pick up at[\s\S]*Tomorrow/.test(await p.locator(".ledger").innerText()) : /ready tomorrow/i.test(await p.locator(".dline").first().innerText())); await c.close();
+    // 2026-11-27 (fleet/flow-polish): with card off every order is a request the shop checks first, said one way everywhere
+    // (the /shipping page's "usually the same or the next day"); after closing it must still never promise today
+    await go(p, "/cart"); { const cs = await p.locator(".cartship").innerText(); t(CARD ? "10 cart says ready tomorrow" : "10 card off: the cart's pickup request says the same or the next day, never today", CARD ? /Ready tomorrow/.test(cs) : /Usually ready the same or the next day/.test(cs) && !/Ready (the same day|today)/i.test(cs), cs.slice(0, 200)); }
+    await go(p, "/p/OSS-8004"); { const dl = CARD ? "" : await p.locator(".dline").first().innerText(); t(CARD ? "10 product says tomorrow" : "10 card off: the product's pickup line says the same or the next day, never today", CARD ? /Pick up at[\s\S]*Tomorrow/.test(await p.locator(".ledger").innerText()) : /usually ready the same or the next day/.test(dl) && !/today/i.test(dl), dl); } await c.close();
   }
   { // 11 sold pieces are not promoted
     const { c, p } = await open(); await go(p, "/");
