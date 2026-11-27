@@ -67,7 +67,8 @@ function viewHome(s) {
       ${need(todo.to_pack, todo.to_pack === 1 ? "order to pack" : "orders to pack", "Open orders", "orders:todo")}
       ${need(todo.to_ship, todo.to_ship === 1 ? "packed order to send" : "packed orders to send", "Open orders", "orders:todo")}
       ${need(todo.waiting_pickup, "waiting for pickup", todo.pickup_overdue ? `${todo.pickup_overdue} waiting 3 days or more` : "Open orders", "orders:todo")}
-      ${need(low, low === 1 ? "product low or out" : "products low or out", "Open stock", "stock:low")}</div></section>
+      ${need(low, low === 1 ? "product low or out" : "products low or out", "Open stock", "stock:low")}
+      ${need(needCount(), needCount() === 1 ? "item needs info" : "items need info", "Price, colours, stock", "stock:needs")}</div></section>
     <section><h2 class="h2">Sales, last 30 days</h2>
       <div class="chart" role="img" aria-label="Daily sales for the last 30 days. Best day ${money(max, true)}.">${days.map((d, i) => `<i style="--h:${Math.round(d.cents / max * 100)};--i:${i}" class="${i === 29 ? "now" : i >= 23 ? "wk" : ""}" title="${fmt(d.day)}: ${money(d.cents, true)}"></i>`).join("")}</div>
       <div class="chart__ax"><span>${fmt(days[0].day)}</span><span>Best day ${money(max, true)}</span><span>Today</span></div></section>
@@ -100,7 +101,7 @@ function stockRow(p) {
 }
 function stockList() {
   const q = state.q.trim().toLowerCase();
-  return state.products.filter(p => (state.cat === "all" || (state.cat === "low" ? p.active && p.stock <= p.low_stock_at : p.category_id === state.cat)) && (!q || (p.name + " " + p.sku).toLowerCase().includes(q)));
+  return state.products.filter(p => (state.cat === "all" || (state.cat === "needs" ? !!p.needs : state.cat === "low" ? p.active && p.stock <= p.low_stock_at : p.category_id === state.cat)) && (!q || (p.name + " " + p.sku).toLowerCase().includes(q)));
 }
 // Count and Receive: one number per row, typed on the phone's number pad. Enter (Next) saves the row and moves to the
 // next one, so a shelf can be counted without lifting a thumb off the keypad.
@@ -116,13 +117,13 @@ function viewStock() {
   const list = stockList(), chip = (id, label) => `<button class="chip" type="button" data-cat="${id}" aria-pressed="${state.cat === id}">${esc(label)}</button>`, tally = state.smode !== "adjust";
   const progress = state.smode === "count" ? `<p class="tally__progress num" data-progress>${state.counted.size} counted this session</p>` : "";
   return `<div class="tools"><div class="tools__head"><h1 class="h1">Stock</h1><div class="seg" role="group" aria-label="What you are doing">${modeChip("adjust", "Adjust")}${modeChip("count", "Count")}${modeChip("receive", "Receive")}</div></div>
-    ${tally ? `<p class="tools__help">${MODE_HELP[state.smode]}</p>` : ""}
+    ${tally ? `<p class="tools__help">${MODE_HELP[state.smode]}</p>` : state.cat === "needs" ? `<p class="tools__help">Items in the store still missing their price, colours or shelf count. Tap one, fill in what you know, and Save and next opens the one after.</p>` : ""}
     ${state.smode === "receive" ? `<label class="field tools__ref"><span>Delivery note or invoice number, optional</span><input class="input" id="recvref" value="${esc(state.recvRef)}" maxlength="60" autocomplete="off"></label>` : ""}
     <div class="tools__top"><input class="input" id="q" type="search" placeholder="Search stock" value="${esc(state.q)}" aria-label="Search stock">${tally || !state.me.owner ? "" : `<button class="btn" type="button" data-new>Add product</button>`}</div>
-    <div class="chips" role="group" aria-label="Section">${chip("all", "All " + state.products.length)}${chip("low", "Low or out")}${state.categories.map(c => chip(c.id, c.name)).join("")}</div>${progress}</div>
+    <div class="chips" role="group" aria-label="Section">${chip("all", "All " + state.products.length)}${chip("needs", "Needs info " + needCount())}${chip("low", "Low or out")}${state.categories.map(c => chip(c.id, c.name)).join("")}</div>${progress}</div>
     <div class="rows" data-rows>${rowsHtml(list)}</div>`;
 }
-const rowsHtml = list => list.map(state.smode === "adjust" ? stockRow : tallyRow).join("") || `<p class="empty">Nothing matches. Clear the search or pick another section.</p>`;
+const rowsHtml = list => list.map(state.smode !== "adjust" ? tallyRow : state.cat === "needs" ? needRow : stockRow).join("") || `<p class="empty">${state.cat === "needs" && !state.q.trim() ? "Every item on view has its price, colours and shelf count." : "Nothing matches. Clear the search or pick another section."}</p>`;
 async function saveTally(input) {
   const row = input.closest("[data-sku]"), p = state.products.find(x => x.sku === row.dataset.sku), say = $("[data-say]", row), raw = input.value.trim();
   if (input.dataset.busy) return true;
@@ -153,6 +154,7 @@ function editSheet(p) {
   sheet.innerHTML = `<form class="sheet__in" data-product="${isNew ? "" : p.sku}" novalidate>
     <div class="sheet__top"><div><p class="meta">${isNew ? "New product" : p.sku}</p><h2 class="h2" style="margin:0">${isNew ? "Add a product" : esc(p.name)}</h2></div><button class="sheet__x" type="button" data-close>Close</button></div>
     ${isNew ? "" : `<div class="photo">${thumb(p, c.tone).replace('width="52" height="64"', 'width="96" height="120"')}<div><p>Take or choose a photo. Plain background, the whole piece in frame.</p><label class="btn btn--ghost">Change photo<input type="file" accept="image/*" data-photo hidden></label></div></div>`}
+    ${isNew ? "" : `<button class="btn btn--ghost" type="button" data-info="${p.sku}">Fill in name, colours, stock and price</button>`}
     <label class="field"><span>Name</span><input class="input" name="name" value="${esc(p.name)}" maxlength="80" required></label>
     <div class="grid2"><label class="field"><span>Section</span><select class="input" name="category_id">${state.categories.map(x => opt(x.id, x.name, p.category_id)).join("")}</select></label>
       <label class="field"><span>Price, $</span><input class="input num" name="price" inputmode="decimal" value="${dol(p.price_cents)}" required ${state.me.owner ? "" : 'readonly aria-describedby="price-who"'}></label></div>
@@ -206,6 +208,93 @@ document.addEventListener("change", async e => {
   } catch (er) { toast(er.message || "That photo could not be read."); }
 });
 
+// ---------- Item editor: name, colours, shelf count, price ----------
+// The shop fills in what it knows for each item on its own phone, instead of sending a sheet (owner, 2026-11-26). Only
+// what is typed or picked is sent; a field left alone stays as it is, and nothing is ever filled in for them.
+const needCount = () => state.products.filter(p => p.needs).length;
+const NEED = { price: "price", colours: "colours", stock: "shelf count" };
+const needWords = n => { const w = n.map(k => NEED[k]); return w.length > 1 ? w.slice(0, -1).join(", ") + " and " + w.at(-1) : w[0]; };
+function needRow(p) {
+  const c = catOf(p.category_id);
+  return `<div class="row row--need ${p.active ? "" : "off"}" data-sku="${p.sku}">${thumb(p, c.tone)}
+    <button class="row__main" type="button" data-info="${p.sku}"><span class="row__name">${esc(p.name)}</span><span class="row__meta">${p.sku} &middot; ${esc(c.name)}</span><span class="state lack">Needs ${needWords(p.needs)}</span></button>
+    <button class="bar__link" type="button" data-info="${p.sku}" aria-label="Fill in ${esc(p.name)}">Fill in</button></div>`;
+}
+// Common hookah colours. Clear and Rainbow are drawn by CSS (a check pattern, a colour wheel).
+const PALETTE = [["Black", "#141414"], ["Silver", "#c3c5c9"], ["Gold", "#c9a24a"], ["Rose gold", "#c48b7f"], ["Red", "#c2262e"], ["Blue", "#2b59c3"], ["Green", "#2e8b57"], ["Purple", "#6c3fa6"], ["Pink", "#e58bb4"], ["White", "#f3f1ea"], ["Clear", ""], ["Rainbow", ""], ["Gunmetal", "#4b5057"], ["Bronze", "#8a5a2b"]];
+const swatch = (name, hex, on, custom) => `<button class="sw" type="button" data-sw data-name="${esc(name)}"${custom && hex ? ` data-hex="${esc(hex)}"` : ""} aria-pressed="${on}"><i class="sw__dot${name === "Clear" && !custom ? " sw__dot--clear" : name === "Rainbow" && !custom ? " sw__dot--rainbow" : ""}"${hex ? ` style="background:${esc(hex)}"` : ""}></i><span>${esc(name)}</span></button>`;
+const pickedColours = f => $$("[data-sw][aria-pressed=true]", f).map(b => b.dataset.hex ? { name: b.dataset.name, hex: b.dataset.hex } : { name: b.dataset.name });
+function colourCount(f) { const n = pickedColours(f).length, o = $("[data-colcount]", f); if (o) o.textContent = n ? `${n} picked` : "none picked"; }
+function infoSheet(p) {
+  if (!p) return;
+  const d = pj(p.details), had = Array.isArray(d.colours) ? d.colours : [], hexes = d.colour_hex || {}, c = catOf(p.category_id), owner = state.me.owner;
+  const known = new Set(PALETTE.map(x => x[0].toLowerCase())), custom = had.filter(n => !known.has(n.toLowerCase()));
+  const queue = state.products.filter(x => x.needs), at = queue.findIndex(x => x.sku === p.sku), counted = p.availability === "counted";
+  const hookahRow = /^ace-/.test(p.family || "");
+  sheet.innerHTML = `<form class="sheet__in info" data-info-form="${p.sku}" data-orig="${esc(JSON.stringify(had))}" novalidate>
+    <div class="sheet__top"><div><p class="meta">${p.sku}${at >= 0 ? ` &middot; ${at + 1} of ${queue.length} to fill in` : ""}</p><h2 class="h2" style="margin:0">${esc(p.name)}</h2></div><button class="sheet__x" type="button" data-close>Close</button></div>
+    <div class="photo">${thumb(p, c.tone).replace('width="52" height="64"', 'width="96" height="120"')}<div><p data-stillneed>${p.needs ? `Still needed: ${needWords(p.needs)}.` : "Everything is filled in. Change anything that is not right."}</p><p class="fineprint">Fill in what you know and leave the rest. Only what you change is saved, with your name.</p></div></div>
+    <label class="field"><span>Name</span><input class="input" name="name" value="${esc(p.name)}" maxlength="80" autocomplete="off" required></label>
+    <fieldset class="cols-pick"><legend class="field__l">Colours <span class="num" data-colcount></span></legend>
+      <p class="fineprint">${hookahRow ? "This is one colour of this hookah. Pick its colour; for two tones, pick both." : "Tap every colour the shop has of this item."}</p>
+      <div class="sw-grid" data-swgrid>${PALETTE.map(([n, h]) => swatch(n, h, had.some(x => x.toLowerCase() === n.toLowerCase()), false)).join("")}${custom.map(n => swatch(n, Object.hasOwn(hexes, n) && /^#[0-9a-f]{6}$/i.test(hexes[n]) ? hexes[n] : "", true, true)).join("")}</div>
+      <button class="bar__link" type="button" data-addcol aria-expanded="false" aria-controls="newcol">Add another colour</button>
+      <div class="newcol" id="newcol" data-newcol hidden><label class="field"><span>Colour name</span><input class="input" name="newcol" maxlength="24" autocomplete="off"></label>
+        <label class="field newcol__pick"><span>Swatch</span><input class="newcol__hex" name="newhex" type="color" value="#808080"></label><button class="btn btn--ghost" type="button" data-addcol-go>Add</button></div></fieldset>
+    <div class="grid2 info__nums">
+      <div class="field"><label class="field" for="info-stock"><span>Stock, on the shelf</span></label><input class="input num" id="info-stock" name="stock" inputmode="numeric" pattern="[0-9]*" maxlength="5" autocomplete="off" value="${counted ? p.stock : ""}" data-seen="${p.stock}" data-was="${counted ? p.stock : ""}" aria-describedby="stock-was">
+        <p class="fineprint" id="stock-was">${counted ? "Counted. Type a new count to change it." : "Not counted yet. Type what is on the shelf, 0 if none."}</p></div>
+      <div class="field"><label class="field" for="info-price"><span>Price, $ CAD</span></label><input class="input num" id="info-price" name="price" inputmode="decimal" autocomplete="off" value="${p.price_cents > 0 ? (p.price_cents / 100).toFixed(2) : ""}" ${owner ? 'aria-describedby="price-say"' : 'readonly aria-describedby="price-say"'}>
+        <p class="fineprint" id="price-say">${!owner ? "Prices are set by the owner." : p.price_cents > 0 ? "In dollars, like 24.99." : `In dollars, like 24.99. A price puts it on sale${p.listed && !p.active ? ", in place of Price TBD" : ""}.`}</p></div></div>
+    <p class="err" role="alert" data-err></p><p class="remind" data-saved aria-live="polite"></p>
+    <div class="sheet__act"><button class="btn" type="submit" data-then="stay">Save</button>${queue.some(x => x.sku !== p.sku) ? `<button class="btn btn--ghost" type="submit" data-then="next">Save and next</button>` : ""}</div></form>`;
+  colourCount($("[data-info-form]", sheet));
+  if (!sheet.open) sheet.showModal();
+}
+function addColour() {
+  const f = $("[data-info-form]", sheet), name = f.newcol.value.replace(/\s+/g, " ").trim(), err = $("[data-err]", f);
+  if (!/^\p{L}[\p{L} &/'-]{0,23}$/u.test(name)) { err.textContent = "Give the colour a name, letters only, up to 24."; f.newcol.focus(); return; }
+  const same = $$("[data-sw]", f).find(b => b.dataset.name.toLowerCase() === name.toLowerCase());
+  if (same) same.setAttribute("aria-pressed", "true"); else $("[data-swgrid]", f).insertAdjacentHTML("beforeend", swatch(name, f.newhex.value, true, true));
+  err.textContent = ""; f.newcol.value = ""; f.newhex.value = "#808080"; colourCount(f); f.newcol.focus();
+}
+document.addEventListener("keydown", e => { if (e.key === "Enter" && e.target.name === "newcol") { e.preventDefault(); addColour(); } });
+document.addEventListener("submit", async e => {
+  const f = e.target.closest("[data-info-form]"); if (!f) return; e.preventDefault();
+  const sku = f.dataset.infoForm, p = state.products.find(x => x.sku === sku), err = $("[data-err]", f), said = $("[data-saved]", f), then = e.submitter?.dataset.then || "stay";
+  err.textContent = ""; said.textContent = ""; $$("[aria-invalid]", f).forEach(i => i.removeAttribute("aria-invalid"));
+  const body = {}, name = f.name.value.trim(), stock = f.stock.value.trim(), price = f.price.value.trim().replace(/^\$\s*/, "").replace(/,/g, "");
+  if (!name) { err.textContent = "Give it a name."; return f.name.focus(); }
+  if (name !== p.name) body.name = name;
+  const picked = pickedColours(f), orig = JSON.parse(f.dataset.orig);
+  if (picked.map(c => c.name.toLowerCase()).sort().join("|") !== orig.map(n => n.toLowerCase()).sort().join("|")) body.colours = picked;
+  if (stock !== "" && stock !== f.stock.dataset.was) { if (!/^\d{1,5}$/.test(stock)) { err.textContent = "Stock is a whole number, like 4. Type 0 if there are none."; f.stock.setAttribute("aria-invalid", "true"); return f.stock.focus(); } body.stock = { counted: +stock, seen: +f.stock.dataset.seen }; }
+  if (state.me.owner && price !== "") {
+    if (!/^\d{1,5}(\.\d{1,2})?$/.test(price) || !(+price > 0) || +price > 50000) { err.textContent = "Enter the price in dollars, like 24.99."; f.price.setAttribute("aria-invalid", "true"); return f.price.focus(); }
+    const c = Math.round(+price * 100); if (c !== p.price_cents) body.price_cents = c;
+  }
+  if (!Object.keys(body).length) { if (then === "next") return nextInfo(sku); said.textContent = "Nothing changed yet."; return; }
+  const btns = $$("button[type=submit]", f); btns.forEach(b => b.disabled = true); said.textContent = "Saving";
+  try {
+    const r = await api(`/products/${sku}/info`, { method: "PUT", body });
+    await loadProducts(); render();
+    const q = state.products.find(x => x.sku === sku);
+    if (then === "next") { toast(`Saved ${q.name}.`); return nextInfo(sku); }
+    infoSheet(q);
+    const s2 = $("[data-saved]", sheet); s2.innerHTML = `<b>Saved${r.on_sale && body.price_cents ? ", now on sale" : ""}.</b> The store is updated.`;
+  } catch (er) {
+    // an order changed the stock while counting: nothing was saved. The typed fields stay; only the number counted against is new
+    if (er.data && er.data.changed) { await loadProducts(); render(); const q = state.products.find(x => x.sku === sku); f.stock.dataset.seen = q.stock; f.stock.dataset.was = ""; f.stock.value = ""; f.stock.setAttribute("aria-invalid", "true"); $("#stock-was", f).innerHTML = `On record now: <b class="num">${q.stock}</b>. Count again.`; err.textContent = er.message; said.textContent = ""; btns.forEach(b => b.disabled = false); f.stock.focus(); return; }
+    err.textContent = er.message; said.textContent = ""; btns.forEach(b => b.disabled = false);
+  }
+});
+// the next item still needing info, in list order after this one (going round to the top); done when none is left
+function nextInfo(sku) {
+  const all = state.products, i = all.findIndex(x => x.sku === sku), after = [...all.slice(i + 1), ...all.slice(0, i)].find(x => x.needs);
+  if (after) return infoSheet(after);
+  sheet.close(); toast("Every item has its info. Thank you.");
+}
+
 // ---------- Orders ----------
 const ORDER_STATE = { pending: ["done", "Not paid"], paid: ["go", "To pack"], packed: ["go", "Packed, to send"], ready: ["go", "Ready for pickup"], shipped: ["done", "Shipped"], collected: ["done", "Collected"], cancelled: ["out", "Cancelled"], refunded: ["out", "Refunded"] };
 const isLocal = o => o.ship_service === "Local delivery";
@@ -224,9 +313,9 @@ const dropCard = o => {
 const waitDays = o => o.status === "ready" && (o.ready_at || o.updated_at) ? Math.floor((Date.now() - Date.parse(o.ready_at || o.updated_at)) / 864e5) : 0;
 const REASON = { no_show: "Not picked up", customer: "Customer asked", other: "Other" };
 const pj = s => { try { return JSON.parse(s || "{}") || {}; } catch { return {}; } };
-const FIELD = { price_cents: "price", cost_cents: "cost", low_stock_at: "warning level", category_id: "section", ship_class: "shipping", note: "description", weight_g: "weight", box_id: "box" };
+const FIELD = { stock: "shelf count", price_cents: "price", cost_cents: "cost", low_stock_at: "warning level", category_id: "section", ship_class: "shipping", note: "description", weight_g: "weight", box_id: "box" };
 const ACTION = { "order.status": a => `Marked ${(pj(a.after).status || "").replace("ready", "ready for pickup")}`, "order.cancel": a => `Cancelled: ${(REASON[pj(a.after).reason] || "").toLowerCase()}`, "order.id_check": a => pj(a.after).checked ? "ID checked" : "ID tick removed",
-  "product.edit": a => `Edited ${Object.keys(pj(a.after)).map(k => FIELD[k] || k.replace(/_/g, " ")).join(", ")}`, "product.create": () => "Added to the store", "product.photo": () => "New photo",
+  "product.edit": a => `Edited ${Object.keys(pj(a.after)).map(k => FIELD[k] || k.replace(/_/g, " ")).join(", ")}`, "product.create": () => "Added to the store", "product.info": a => `Filled in ${Object.keys(pj(a.after)).filter(k => k !== "active").map(k => FIELD[k] || k.replace(/_/g, " ")).join(", ")}${pj(a.after).active ? ", now on sale" : ""}`, "product.photo": () => "New photo",
   "order.refund": a => `Refunded ${money(pj(a.after).amount_cents || 0)} to the card`, "order.counter_refund": a => `Recorded ${money(pj(a.after).amount_cents || 0)} given back at the counter${pj(a.after).reason ? ": " + pj(a.after).reason : ""}`, "order.paid_at_counter": () => "Paid at the counter" };
 const trailHtml = list => list.map(a => `<div><span>${esc((ACTION[a.action] || (() => a.action))(a))}, ${esc(who(a.actor))}</span><span class="num">${when(a.at)}</span></div>`).join("");
 const NEXT = o => ({ pending: o.pay_status === "pay_at_pickup" ? ["ready", "Mark ready for pickup"] : undefined, paid: o.method === "pickup" ? ["ready", "Mark ready for pickup"] : ["packed", "Mark packed"], packed: ["shipped", isLocal(o) ? "Mark out for delivery" : "Mark shipped"], ready: o.pay_status === "pay_at_pickup" ? undefined : ["collected", "Mark collected"] }[o.status]);
@@ -355,7 +444,7 @@ document.addEventListener("click", async e => {
   const t = e.target;
   let el;
   if ((el = t.closest("[data-tab]"))) { state.tab = el.dataset.tab; await render(); scrollTo(0, 0); return; }
-  if ((el = t.closest("[data-go]"))) { const [tab, f] = el.dataset.go.split(":"); state.tab = tab; if (tab === "stock") state.cat = f; else state.oflt = f; await render(); scrollTo(0, 0); return; }
+  if ((el = t.closest("[data-go]"))) { const [tab, f] = el.dataset.go.split(":"); state.tab = tab; if (tab === "stock") { state.cat = f; state.smode = "adjust"; } else state.oflt = f; await render(); scrollTo(0, 0); return; }
   if ((el = t.closest("[data-cat]"))) { state.cat = el.dataset.cat; return render(); }
   if ((el = t.closest("[data-oflt]"))) { state.oflt = el.dataset.oflt; return render(); }
   if (t.closest("[data-new]")) return editSheet(null);
@@ -366,6 +455,10 @@ document.addEventListener("click", async e => {
   if ((el = t.closest("[data-unstaff]"))) { const n = el.dataset.name; if (!confirm(`Remove ${n}? Their sign-in stops now. Their past changes keep their name.`)) return; try { await api(`/staff/${el.dataset.unstaff}`, { method: "DELETE", body: {} }); toast(`${n} removed.`); render(); } catch (er) { toast(er.message); } return; }
   if ((el = t.closest("[data-repin]"))) { const pin = prompt(`New 6-digit PIN for ${el.dataset.name}`); if (pin === null) return; try { await api(`/staff/${el.dataset.repin}/pin`, { method: "POST", body: { pin: pin.trim() } }); toast("PIN changed. Their old sign-ins ended."); } catch (er) { toast(er.message); } return; }
   if ((el = t.closest("[data-edit]"))) return editSheet(state.products.find(p => p.sku === el.dataset.edit));
+  if ((el = t.closest("[data-info]"))) return infoSheet(state.products.find(p => p.sku === el.dataset.info));
+  if ((el = t.closest("[data-sw]"))) { el.setAttribute("aria-pressed", el.getAttribute("aria-pressed") === "true" ? "false" : "true"); colourCount(el.closest("form")); return; }
+  if ((el = t.closest("[data-addcol]"))) { const box = $("[data-newcol]", sheet), open = box.hidden; box.hidden = !open; el.setAttribute("aria-expanded", String(open)); if (open) $("[name=newcol]", box).focus(); return; }
+  if (t.closest("[data-addcol-go]")) return addColour();
   if ((el = t.closest("[data-order]"))) return orderSheet(el.dataset.order).catch(er => toast(er.message));
   if ((el = t.closest("[data-resendmail]"))) { el.disabled = true; const oid = $("[data-ordersheet]", sheet)?.dataset.ordersheet; try { await api(`/emails/${el.dataset.resendmail}/resend`, { method: "POST", body: {} }); toast("Sent."); } catch (er) { toast(er.message); } if (oid) return orderSheet(oid).catch(er => toast(er.message)); return; }
   if ((el = t.closest("[data-mail]"))) return mailView(el.dataset.mail).catch(er => toast(er.message));

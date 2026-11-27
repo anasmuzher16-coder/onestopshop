@@ -64,6 +64,20 @@ the place in the code that follows it. "Follow-up" items are known gaps left for
 - Money is whole cents end to end. The studio share is rounded once, at the end, half away from zero, in integer
   maths. Values typed as numbers into text (like "counted 9") are bound as strings, because D1 binds JS numbers as REAL.
 
+## The item editor (2026-11-26)
+- `PUT /api/admin/products/:sku/info` takes any of `name`, `colours` (`[{ name, hex? }]`, up to 16), `stock`
+  (`{ counted, seen }`) and `price_cents`. Only what is sent changes; nothing is filled in for the shop. Every field is
+  checked before anything is written, so one bad field saves nothing.
+- Same guards as every write: the admin cookie, the `X-OSS-Admin` marker, JSON only, same origin. Prices stay the
+  owner's: a staff save carrying a changed price is refused whole (403).
+- Colours live in `details.colours` (names) and `details.colour_hex` (only for colours the shop added itself). On an Ace
+  hookah colour row they also become its chip name (`details.colour`, "Black and Gold"). No migration.
+- The shelf count is a `count` move with the number the screen showed (`seen`), as in Count mode, and marks the row
+  `availability = 'counted'`. A price set on an item on view with Price TBD (`listed = 1`, off, ticked, not dropped, not
+  a sample) switches it on. Logged as `product.info` with the person's name.
+- "Needs info" (`needs` on each row of `GET /products`): an item on view missing its price, its colours (Ace items) or
+  its shelf count (`in_store_uncounted`, `special_order`).
+
 ## The audit trail (OWASP Logging)
 - Who, what, when: `audit_log` (product edits, order steps, cancels, ID ticks, staff and settings changes, sign-ins)
   and `stock_moves` (every count, receipt, sale and put-back) carry the signed-in person's name and number.

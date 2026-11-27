@@ -87,7 +87,7 @@ export function toStorefront(cat) {
       // an unpriced hookah is not sold at all, so it carries no "pickup only" line; once priced without a weight, it is pickup or local only
       // an unpriced Ace accessory is the same: shown, not sold, so no pickup line until it is priced (then pickup or local until weighed)
       ship: coal || (weightTbd && (sale || !(grouped(p) || p.family.startsWith("acc-")))) ? "pickup_only" : p.ship_class, stock: sale ? p.stock : 0, details,
-      ...(p.family && !grouped(p) ? { facts, ...(p.family.startsWith("acc-") ? { acc: true } : {}), ...(weightTbd ? { weightTbd: true } : {}) } : {}),   // acc: an item from Ace's accessories catalogue, one card each
+      ...(p.family && !grouped(p) ? { facts, ...(p.family.startsWith("acc-") ? { acc: true } : {}), ...(weightTbd ? { weightTbd: true } : {}), counted: p.availability === "counted" } : {}),   // acc: an item from Ace's accessories catalogue, one card each
       ...(grouped(p) ? { family: p.family, lead: lead[p.family].sku === p.sku, colour: details.colour || p.variant_label || "", named: !!details.colour || facts.colour_confirmed === true, chip: [facts.photo_hex, p.swatch_hex].find(h => /^#[0-9a-f]{6}$/i.test(h || "")) || null, facts,
         counted: p.availability === "counted", ...(weightTbd ? { weightTbd: true } : {}) } : {}) };
   });
