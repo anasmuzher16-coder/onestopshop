@@ -5,7 +5,7 @@
 //   bases    the third ice cube is dropped in; it splashes         bowls    tongs set the third coal on the foil; it flares
 //   heat     the coals take; the lid is let down on them           hoses    tossed down coiled; the handle bounces
 //   charcoal the sixth cube is set on the stack; it catches from below
-//   shisha   the fork lifts the strand; the drip lets go into the molasses
+//   shisha   the apples settle onto the lid; the mint sways
 //   parts    the kit is set down on the counter, piece by piece      misc     the price gun labels a pair of sunglasses
 // Timing: T0 is when the page change has landed; each act says in its own notes when its contact is. A tap on the
 // band plays a short version with no page change to wait for (a tap while anything is still moving is left alone,
@@ -366,28 +366,32 @@ const FX = {
     sparks(C + 640);
   },
   shisha(layer, go, host, re) {
-    // An open tub of molasses (the owner-approved still, 2026-11-26): the lid peeled back, a fork standing in the heap, lifting
-    // a glossy strand that ends in a hanging drip. The drip is the one beat. On arrival the fork lifts a little, the strand
-    // stretches, the drip swells, lets go and drops into the molasses with a small glossy ring, the strand eases back and a new
-    // drip forms at its end. A tap does the same, quicker. At rest (and with motion off) it is the drawing, the drip hanging.
-    const o = obj(layer, OBJ.shisha), q = c => o.querySelector(c), fork = q(".sfg"), strand = q(".sstrand"), drip = q(".sdrip"), ring = q(".ssplash");
-    const dt = (y, sx = 1, sy = 1) => `translate(0px,${y}px) scale(${sx},${sy})`;
-    idle(layer, () => play(drip, [{ transform: dt(0), easing: SINE }, { transform: dt(.3, 1.07, 1.12), offset: .45, easing: SINE }, { transform: dt(0) }], 1500, 0, "none"));   // it fills a little and hangs back
+    // The closed tub crowned (the owner-approved still "Crowned", 2026-11-27): a glossy double apple sitting on the steel lid,
+    // mint behind it, an orange wedge at its foot. The one beat: the apples settle onto the lid. On arrival they come down the
+    // last few px onto it, squash softly, give one small bounce and sit; the mint behind them, brushed, sways a little and the
+    // apple's own leaf nods after it. A tap lifts them a touch first, then the same settle, quicker (k). Transform only: the
+    // apples are always there, so nothing pops. At rest (and with motion off) it is the drawing.
+    const o = obj(layer, OBJ.shisha.replaceAll("ID", "fxc" + (++uid))), q = c => o.querySelector(c), apples = q(".sapples"), mint = q(".smint"), leaf = q(".sleafa");
+    const ap = (y, sx = 1, sy = 1) => `translate(0px,${y}px) scale(${sx},${sy})`, rot = d => `rotate(${d}deg)`;
+    const sway = (n, a, ms, delay) => play(n, [{ transform: rot(0), easing: SINE }, { transform: rot(-a), offset: .3, easing: SINE }, { transform: rot(a * .5), offset: .62, easing: SINE }, { transform: rot(-a * .15), offset: .85, easing: SINE }, { transform: rot(0) }], ms, delay, "none");
+    idle(layer, () => { sway(mint, 1.4, 1600, 0); sway(leaf, 2.2, 1400, 140); });   // a breath of air through the mint
     if (!go) return;
-    const k = re ? .72 : 1, S = re ? T0 - 100 : Math.max(0, T0 - 250), D = Math.round(1180 * k), at = v => v / 1180;   // S: the fork starts to lift. Times below are for an arrival; a tap runs the same act k times as long (D)
-    const R = 560, LAND = 700, STRETCH = 1.76;   // R: the drip lets go. LAND: it is in the molasses. STRETCH: how far the strand's end comes down
-    // the fork lifts along its own line, holds while the drip goes, and is set back in the heap
-    play(fork, [{ transform: "translate(0px,0px)", easing: STATE }, { transform: "translate(.87px,-2.45px)", offset: at(340), easing: STATE }, { transform: "translate(.87px,-2.45px)", offset: at(760), easing: STATE }, { transform: "translate(0px,0px)" }], D, S, "none");
-    // the strand stretches under the drip's weight; when it lets go the strand springs up a touch and eases back
-    play(strand, [{ transform: "scale(1,1)", easing: STATE }, { transform: "scale(1,1)", offset: at(150), easing: STATE }, { transform: "scale(1,1.14)", offset: at(R), easing: ENTER },
-      { transform: "scale(1,.97)", offset: at(R + 110), easing: SINE }, { transform: "scale(1,1)", offset: at(1000) }, { transform: "scale(1,1)" }], D, S, "none");
-    // the drip swells and draws out, falls speeding up, squashes into the molasses and is gone; a new one forms at the strand's end (it flattens about the point where it touched: its top is the pivot, so it moves down as it squashes)
-    play(drip, [{ transform: dt(0), opacity: 1, easing: STATE }, { transform: dt(0), opacity: 1, offset: at(150), easing: STATE },
-      { transform: dt(STRETCH, 1.15, 1.2), opacity: 1, offset: at(R), easing: STRIKE }, { transform: dt(8.2, .94, 1.14), opacity: 1, offset: at(LAND), easing: STATE },
-      { transform: dt(14.1, 1.35, .45), opacity: 0, offset: at(LAND + 60) }, { transform: dt(0, .12, .12), opacity: 0, offset: at(LAND + 70), easing: STATE },
-      { transform: dt(0, .55, .55), opacity: .85, offset: at(LAND + 240), easing: STATE }, { transform: dt(0), opacity: 1 }], D, S, "none");
-    // where it went in: one glossy ring opens on the molasses and thins out
-    play(ring, [{ opacity: 0, transform: "scale(.3)", easing: ENTER }, { opacity: .95, transform: "scale(.8)", offset: .2, easing: STATE }, { opacity: 0, transform: "scale(1.7)" }], Math.round(480 * k), S + Math.round(LAND * k), "none");
+    const k = re ? .72 : 1, D = Math.round(1200 * k), S = re ? T0 - 100 : Math.max(0, T0 - 360), C = S + Math.round(360 * k);   // S: the act starts. C (.3 of it): the apples are down on the lid
+    const FALL = "cubic-bezier(.45,0,.85,.55)", RISE = "cubic-bezier(.2,.7,.4,1)";   // speeding up as they come down; slowing as they go up
+    // an arrival opens with them a few px above the lid (held there until S, a moment); a tap lifts them off it first
+    const ups = re ? [[0, undefined, RISE], [-4, .14, FALL]] : [[-6, undefined, FALL]], kf = (transform, offset, easing) => offset === undefined ? { transform, easing } : { transform, offset, easing };
+    play(apples, [...ups.map(([y, f, e]) => kf(ap(y), f, e)), { transform: ap(0), offset: .3, easing: STATE },   // C: down on the lid
+      { transform: ap(0, 1.05, .92), offset: .38, easing: RISE },             // a soft squash about where they sit
+      { transform: ap(-1.6, .985, 1.02), offset: .5, easing: FALL },          // one small bounce
+      { transform: ap(0), offset: .6, easing: STATE },
+      { transform: ap(0, 1.015, .98), offset: .67, easing: SINE },            // and they settle
+      { transform: ap(0), offset: .78 }, { transform: ap(0) }], D, S);
+    // the mint stands behind them on the lid: it comes down with them (else its bare stem shows under the raised apples), and
+    // once they are down (C, .3 of the act) it is brushed and sways from its stem. One move on the apples' clock, so the two can never drift
+    const mt = (y, d) => `translate(0px,${y}px) rotate(${d}deg)`;
+    play(mint, [...ups.map(([y, f, e]) => kf(mt(y, 0), f, e)), { transform: mt(0, 0), offset: .3, easing: SINE }, { transform: mt(0, -2.4), offset: .51, easing: SINE },
+      { transform: mt(0, 1.2), offset: .734, easing: SINE }, { transform: mt(0, -.36), offset: .895, easing: SINE }, { transform: mt(0, 0) }], D, S);
+    sway(leaf, 3.2, Math.round(780 * k), C + Math.round(60 * k));                // the apple's own leaf nods just after
   },
   hoses(layer, go, host, re) {
     // A wrapped hose lying coiled on the counter: steel connector at one end, two loose turns, its wooden handle lying

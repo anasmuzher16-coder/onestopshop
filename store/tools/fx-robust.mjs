@@ -85,18 +85,39 @@ const probe = p => p.evaluate(() => {
     hidden: vis.filter(s => +getComputedStyle(s).opacity < 1).length, stickers: vis.length, loose: document.querySelectorAll(".puff,.fly").length,
     sameLayer: !!window.__l && !!host && host.querySelector(":scope > .fx") === window.__l,
     dash: coil ? coil.style.strokeDasharray : "",
-    gone: o ? [...o.querySelectorAll(".kit0,.kit1,.kit2,.kit3,.ice,.mtag,.hline,.hlid,.hc,.coal,.recoil,.pipe,.rock,.tub,.sfg,.sstrand,.sdrip")].filter(n => getComputedStyle(n).opacity === "0").map(n => n.getAttribute("class")) : [],   // the parts of a drawing that are always on show at rest
+    gone: o ? [...o.querySelectorAll(".kit0,.kit1,.kit2,.kit3,.ice,.mtag,.hline,.hlid,.hc,.coal,.recoil,.pipe,.rock,.shfresh,.sapples,.smint,.sleafa")].filter(n => getComputedStyle(n).opacity === "0").map(n => n.getAttribute("class")) : [],   // the parts of a drawing that are always on show at rest
     orphans: (window.__cv || []).filter(c => c.width * c.height > 0 && !c.isConnected && !(c.width === 64 && c.height === 64)).length, // 64 x 64 is the kept sprite
   };
 });
-// shisha: the ring must open where the drip goes in, on the same clock (an arrival and a tap alike): the drip's first
-// keyframe at opacity 0 (it has flattened into the molasses) against the ring's start, both in ms from the act's start
+// shisha: the apples settle onto the lid (an arrival and a tap alike). Read from the act's own keyframes: they start above the
+// lid (an arrival) or are lifted off it (a tap), come down onto it (contact: the first frame back at y 0 after a frame above),
+// squash there (wider and shorter), give one bounce (above the lid again after the squash) and end at rest; they never fade
+// (always on show, so nothing pops). The mint stands behind them on the lid: it is one move on the apples' own clock (same delay
+// and length, so it is still there to read whenever the apples are), up with them while they are up (same start, same highest
+// point; else its bare stem shows under them), down when they land, turning only once they are down (its sway starts at contact,
+// never before) and it does sway. A few units, a soft squash, one bounce: bounded, so a wild act fails too. The apple's leaf nods from contact to 120 ms after it, never before.
 const shishaClock = p => p.evaluate(() => {
-  const o = document.querySelector(".shophead .fx-obj"), d = o && o.querySelector(".sdrip").getAnimations()[0], r = o && o.querySelector(".ssplash").getAnimations()[0];
-  if (!d || !r) return null; const dt = d.effect.getTiming(), k = d.effect.getKeyframes(), z = k.find(f => +f.opacity === 0);
-  return { gone: Math.round(dt.delay + z.computedOffset * dt.duration), ring: Math.round(r.effect.getTiming().delay), dur: dt.duration };
+  const o = document.querySelector(".shophead .fx-obj"), a = o && o.querySelector(".sapples").getAnimations()[0], m = o && o.querySelector(".smint").getAnimations()[0], l = o && o.querySelector(".sleafa").getAnimations()[0];
+  if (!a || !m || !l) return { missing: [!a && "apples", !m && "mint", !l && "leaf"].filter(Boolean) };
+  const at = a.effect.getTiming(), k = a.effect.getKeyframes(), mt = m.effect.getTiming(), mk = m.effect.getKeyframes();
+  const tf = f => { const n = (/translate\(0px,\s*(-?[\d.]+)px\)\s*scale\(([\d.]+),\s*([\d.]+)\)/.exec(f.transform || "") || []).slice(1).map(Number); return n.length === 3 ? { y: n[0], sx: n[1], sy: n[2], o: f.computedOffset } : null; };
+  const tr = f => { const n = (/translate\(0px,\s*(-?[\d.]+)px\)\s*rotate\((-?[\d.]+)deg\)/.exec(f.transform || "") || []).slice(1).map(Number); return n.length === 2 ? { y: n[0], r: n[1], o: f.computedOffset } : null; };
+  const F = k.map(tf), M = mk.map(tr); if (F.some(f => !f) || M.some(f => !f)) return { bad: "a keyframe of another shape", k: k.map(f => f.transform), mk: mk.map(f => f.transform) };
+  const c = F.findIndex((f, i) => i > 0 && f.y === 0 && F[i - 1].y < 0), sq = F.findIndex((f, i) => i > c && f.sx > 1 && f.sy < 1), bo = F.findIndex((f, i) => i > sq && f.y < 0), last = F[F.length - 1];
+  if (c <= 0) return { land: null, k: k.map(f => f.transform) };
+  const co = F[c].o, land = Math.round(at.delay + co * at.duration), up = F.slice(0, c).map(f => f.y), mUp = M.filter(f => f.o < co).map(f => f.y);
+  const turn = M.findIndex(f => f.r !== 0), mintAt = turn > 0 ? Math.round(mt.delay + M[turn - 1].o * mt.duration) : null;
+  return { land, mint: mintAt, leaf: Math.round(l.effect.getTiming().delay), dur: at.duration, squash: sq > c, bounce: bo > sq && sq > 0,
+    rest: last.y === 0 && last.sx === 1 && last.sy === 1,
+    // bounded both ways: never more than 10 units above the lid nor into it, squash and stretch within 12-14%, the mint turning at
+    // most 6 degrees, the leaf at most 8, and the leaf done when the apples are
+    few: F.every(f => f.y >= -10 && f.y <= 0 && f.sx <= 1.12 && f.sx >= .88 && f.sy >= .86 && f.sy <= 1.14) && M.every(f => f.y >= -10 && f.y <= 0 && Math.abs(f.r) <= 6)
+      && (() => { const L = l.effect.getKeyframes().map(f => +((/^rotate\((-?[\d.]+)deg\)$/.exec(f.transform || "") || [])[1])), lt = l.effect.getTiming();
+        return L.every(r => Number.isFinite(r) && Math.abs(r) <= 8) && lt.delay + lt.duration <= at.delay + at.duration + 1; })(), once: F.filter((f, i) => i > c && f.y < 0).length === 1, fade: k.some(f => f.opacity !== undefined) || mk.some(f => f.opacity !== undefined),
+    ride: mt.delay === at.delay && mt.duration === at.duration && mUp.length > 0 && mUp[0] === up[0] && Math.min(...mUp) === Math.min(...up)
+      && M.filter(f => f.o >= co).every(f => f.y === 0) && M.filter(f => f.o < co).every(f => f.r === 0) && M[M.length - 1].r === 0 };
 });
-const inStep = c => !!c && c.ring <= c.gone && c.gone - c.ring <= 80;
+const inStep = c => !!c && c.land != null && c.squash && c.bounce && c.few && c.once && c.rest && !c.fade && c.ride && c.mint != null && Math.abs(c.mint - c.land) <= 1 && c.leaf >= c.land - 1 && c.leaf - c.land <= 120;   // 1 ms: both are rounded
 // lowest opacity an element shows over a stretch of frames (catches a label that blinks off and on)
 const lowest = (p, sel, ms) => p.evaluate(([sel, ms]) => new Promise(done => {
   let m = 1, seen = false; const t0 = performance.now();
@@ -153,9 +174,9 @@ for (const c of SECS) {
       done(g ? { opacity: +getComputedStyle(g).opacity, y: g.getBoundingClientRect().bottom - o.getBoundingClientRect().top, h: o.getBoundingClientRect().height, at: at == null ? null : Math.round(at) } : null); };
     step(); }));
     t("bowls: mid-act the tongs are in view and down at the bowl", !!b && b.opacity > .9 && b.y > b.h * .2 && b.y < b.h * .55, J(b)); }
-  if (c === "shisha") { const d = await p.evaluate(() => { const o = document.querySelector(".shophead .fx-obj"), n = o && o.querySelector(".sdrip"); return n ? { drip: n.getAnimations().filter(a => a.playState === "running").length, fork: o.querySelector(".sfg").getAnimations().length, ring: o.querySelector(".ssplash").getAnimations().length } : null; });
-    t("shisha: mid-act the drip, the fork and the splash ring are all in the act", !!d && d.drip > 0 && d.fork > 0 && d.ring > 0, J(d));
-    const ck = await shishaClock(p); t("shisha: the ring opens as the drip goes into the molasses (arrival)", inStep(ck), J(ck)); }
+  if (c === "shisha") { const d = await p.evaluate(() => { const o = document.querySelector(".shophead .fx-obj"), n = o && o.querySelector(".sapples"); return n ? { apples: n.getAnimations().filter(a => a.playState === "running").length, mint: o.querySelector(".smint").getAnimations().length, leaf: o.querySelector(".sleafa").getAnimations().length } : null; });
+    t("shisha: mid-act the apples, the mint and the apple's leaf are all in the act", !!d && d.apples > 0 && d.mint > 0 && d.leaf > 0, J(d));
+    const ck = await shishaClock(p); t("shisha: the apples come down onto the lid, squash, bounce once and sit; the mint sways as they land (arrival)", inStep(ck), J(ck)); }
   await wait(p, 650); q = await probe(p);
   if (CANVAS.has(c)) t(c + ": its canvas is up mid-act", q.fxCanvas === 1, J(q));
   await mark(p);
@@ -175,8 +196,8 @@ for (const c of SECS) {
     t("bowls: three coals at rest with their light, tongs gone, nothing still moving", !!b && b.tongs === "0" && b.coals === 3 && /matrix\(1, 0, 0, 1, 67, 37\.4\) 1$/.test(b.front) && b.glow === "0.9" && b.flash === "0" && b.moving === 0, J(b)); }
   if (c === "hoses") t("hoses: the drawn hose keeps no dash", q.dash === "none" || q.dash === "", q.dash);
   if (c === "shisha") { const d = await p.evaluate(() => { const o = document.querySelector(".shophead .fx-obj"); if (!o) return null; const cs = n => getComputedStyle(o.querySelector(n));
-    return { drip: cs(".sdrip").transform + " " + cs(".sdrip").opacity, strand: cs(".sstrand").transform, fork: cs(".sfg").transform, ring: cs(".ssplash").opacity, moving: o.getAnimations({ subtree: true }).filter(a => a.playState === "running" && a.effect.getTiming().duration < 1300).length }; });
-    t("shisha: at rest the drip hangs where it is drawn, the strand and fork are home, no ring, nothing still moving", !!d && d.drip === "none 1" && d.strand === "none" && d.fork === "none" && d.ring === "0" && d.moving === 0, J(d)); }
+    return { apples: cs(".sapples").transform + " " + cs(".sapples").opacity, mint: cs(".smint").transform, leaf: cs(".sleafa").transform, moving: o.getAnimations({ subtree: true }).filter(a => a.playState === "running" && a.effect.getTiming().duration < 1300).length }; });
+    t("shisha: at rest the apples sit on the lid where they are drawn, the mint and the leaf are home, nothing still moving", !!d && d.apples === "none 1" && d.mint === "none" && d.leaf === "none" && d.moving === 0, J(d)); }
 
   // five taps. A tap while the band's act is still moving is left alone by design (fx-sections.js), so whether the fifth tap lands
   // inside the fourth tap's act used to depend on how long each click took (about a second each on the laptop against a 1.7 s
@@ -192,7 +213,7 @@ for (const c of SECS) {
   }
   await wait(p, 500); q = await probe(p);
   t(c + ": a tap plays the act again", q.runningInFx > 0 || q.fxCanvas === 1, J(q));
-  if (c === "shisha") { const ck = await shishaClock(p); t("shisha: the ring opens as the drip goes into the molasses (a tap, the quick version)", inStep(ck) && ck.dur < 1000, J(ck)); }
+  if (c === "shisha") { const ck = await shishaClock(p); t("shisha: a tap lifts the apples and settles them again, the mint on the same clock (the quick version)", inStep(ck) && ck.dur < 1000, J(ck)); }
   t(c + ": one layer and at most one canvas after five taps", q.layers === 1 && q.allLayers === 1 && q.fxCanvas <= 1 && q.stray === 0, J(q));
   await wait(p, 6000); q = await probe(p);
   t(c + ": one layer, no canvas, every price showing 6 s after the taps", q.layers === 1 && q.fxCanvas === 0 && q.stray === 0 && q.hidden === 0, J(q));
