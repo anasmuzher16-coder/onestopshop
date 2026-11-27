@@ -1,6 +1,6 @@
 import { orderShipped, pickupReady, writeEmail, resendEmail, mailReady } from "./email.js";
 import { snapshot } from "./backup.js";
-import { CHARCOAL } from "./catalog.js";
+import { CHARCOAL, weightUnknown, knownWeightG, weightGrams, isCharcoalRow } from "./catalog.js";
 import { adminPay, lowNote } from "./pay.js";
 import { sameSecret, hashPin, checkPin, pinProblem, cleanName } from "./staff.js";
 import { report, reportCsv, monthOf } from "./report.js";
@@ -135,6 +135,9 @@ export const joinColours = names => names.length < 2 ? names[0] || "" : names.sl
 // What an item on view still needs from the shop before it reads complete: its price, its colours (Ace catalogue items),
 // its shelf count, and a check of its name and length when the catalogue marked it unsure (facts needs_confirm: the shop's
 // own hoses matched to the recording by best guess, 2026-11-27) until the shop ticks it checked in the item editor.
+// Its weight only where a missing weight blocks something: an item the catalogue says ships (facts fulfilment "ships": foil)
+// whose weight is still unknown cannot be sent by a carrier until it is weighed. Charcoal never ships, so never asks; nor does an
+// item with no shipping promise yet (an unpriced Ace piece asks for its price first), so the list does not fill with weights.
 // Shown as the "Needs info" list in the back office, in the order the list is in.
 export function needsInfo(p) {
   let f = {}, d = {}; try { f = JSON.parse(p.facts_known || "{}") || {}; } catch {} try { d = JSON.parse(p.details || "{}") || {}; } catch {}
@@ -143,7 +146,8 @@ export function needsInfo(p) {
   if (!onView) return [];
   return [!(p.price_cents > 0) && "price", ace && !(Array.isArray(d.colours) && d.colours.length) && !(String(p.family || "").startsWith("ace-") && d.colour) && "colours", ["in_store_uncounted", "special_order"].includes(p.availability) && "stock",
     f.needs_confirm === true && d.checked !== true && "check",
-    "length" in f && !f.length && !(typeof d.length === "string" && d.length) && "length"].filter(Boolean);   // a hose whose length is not known yet
+    "length" in f && !f.length && !(typeof d.length === "string" && d.length) && "length",   // a hose whose length is not known yet
+    f.fulfilment === "ships" && weightUnknown(p) && !isCharcoalRow(p) && d.charcoal !== true && "weight"].filter(Boolean);
 }
 
 // The item editor's save (PUT /api/admin/products/<sku>/info), shared with the preview's open edit (/api/open-edit/<sku>,
@@ -177,6 +181,10 @@ async function itemInfo(db, sku, request, session, path, parsed) {
       length = text(typeof body.length === "string" ? body.length.replace(/\s+/g, " ") : body.length, 30);
       if (!lf) bad.push("length (only for items that have one)"); else if (!length || !/^[\p{L}\p{N} .,'"/-]{1,30}$/u.test(length)) bad.push("length (up to 30 letters and numbers, like 60.5 inches)");
     }
+    // its weight, as the shop types it ("250 g", "1.2 kg"), for every item: whole grams in products.weight_g, the weight rates and
+    // checkout read, so typing it is what makes the weight known for shipping (src/catalog.js weightUnknown). Staff may set it.
+    let grams = null;
+    if ("weight" in body) { grams = weightGrams(body.weight); if (grams === null) bad.push("weight (like 250 g or 1.2 kg, from 1 g up to 30 kg)"); }
     if (bad.length) return json({ error: "Check: " + bad.join(", ") + "." }, 400);
     if (price !== null && price !== before.price_cents && !session.owner) { log("forbidden", { actor, path, field: "price" }); return json({ error: NOT_YOURS }, 403); }
     if (price !== null && price !== before.price_cents) out.price_cents = price;
@@ -196,6 +204,8 @@ async function itemInfo(db, sku, request, session, path, parsed) {
     }
     if (body.checked === true && had.checked !== true) { const d = out.details ? JSON.parse(out.details) : { ...had }; d.checked = true; out.details = JSON.stringify(d); }
     if (length && length !== had.length) { const d = out.details ? JSON.parse(out.details) : { ...had }; d.length = length; out.details = JSON.stringify(d); }
+    const weighNow = grams !== null && (grams !== before.weight_g || had.weighed !== true);
+    if (weighNow) { if (grams !== before.weight_g) out.weight_g = grams; const d = out.details ? JSON.parse(out.details) : { ...had }; d.weighed = true; out.details = JSON.stringify(d); }
     if (out.details && (had.charcoal || String(before.family || "").startsWith("charcoal-"))) charcoalRules(out, JSON.parse(out.details));   // charcoal stays pickup or local only
     // A first price on an item on view with "Price TBD" puts it on sale, so it can be bought as soon as the shop has priced it.
     // Only an item that had no price (an item priced and switched off stays off), already on view: never a made-up sample,
@@ -204,9 +214,11 @@ async function itemInfo(db, sku, request, session, path, parsed) {
     if ("price_cents" in out && !(before.price_cents > 0) && before.active === 0 && before.listed === 1 && before.availability !== "dropped" && ticked && !isSample(before.sku)) out.active = 1;
     const cols = Object.keys(out);
     const was = {}; for (const k of cols) was[k] = before[k];
+    if (weighNow) was.weight_g = before.weight_g;
     const STALE = "An order changed this to %n while you were counting. Nothing was saved: check the shelf, then save again.";
     if (count && count.seen !== before.stock) return json({ error: STALE.replace("%n", before.stock), stock: before.stock, changed: true }, 409);
     const logged = { ...out }; if (logged.details) { if (colours) logged.colours = colours.map(c => c.name); if (body.checked === true && !had.checked) logged.checked = true; if (length && length !== had.length) logged.length = length; delete logged.details; }
+    if (weighNow) logged.weight_g = grams;   // the audit log names a weight change, even one that only marks a placeholder as weighed
     if (count) logged.stock = count.counted;
     if (!cols.length && !count) return json({ ok: true, changed: false, stock: before.stock });
     // One transaction. With a count, every statement holds only while the stock is still the number the screen showed, so an
@@ -237,7 +249,7 @@ async function itemInfo(db, sku, request, session, path, parsed) {
 // catalogue) and that the needs-info rules count as on view: never a made-up sample, an unticked catalogue page or a dropped colour.
 // Writes need what every back office write needs: same site (Fetch Metadata and Origin), JSON, and the X-OSS-Admin marker.
 const OPEN_BODY_MAX = 16 * 1024;
-const OPEN_COLS = "sku, name, price_cents, stock, active, listed, availability, family, variant_label, details, supplier_id, facts_known";
+const OPEN_COLS = "sku, name, category_id, price_cents, weight_g, stock, active, listed, availability, family, variant_label, details, supplier_id, facts_known";
 // The colours the panel starts on: the ones saved on the item, else (a member of a colour family) the item's own colour, which is
 // what its page shows (details.colour, or the family chip name), so the panel matches the page.
 function ownColours(d, p) {
@@ -286,7 +298,7 @@ export async function openEdit(request, env, url, onShop) {
   const hex = d.colour_hex && typeof d.colour_hex === "object" ? d.colour_hex : {};
   return json({ sku: p.sku, editable: true, name: p.name, price_cents: p.price_cents > 0 ? p.price_cents : null, stock: p.stock, counted: p.availability === "counted", on_sale: p.active === 1 && p.price_cents > 0,
     colours: ownColours(d, p).map(n => Object.hasOwn(hex, n) && /^#[0-9a-f]{6}$/i.test(hex[n]) ? { name: n, hex: hex[n] } : { name: n }),
-    hookah_row: String(p.family || "").startsWith("ace-"), family_row: /^(ace|hose)-/.test(String(p.family || "")), needs, ...(hasLen ? { length: curLen || "", has_length: true } : {}), ...(needs.includes("check") ? { check: true } : {}), next: next ? next.sku : null, left, scope: openScope(env) });
+    hookah_row: String(p.family || "").startsWith("ace-"), family_row: /^(ace|hose)-/.test(String(p.family || "")), needs, weight_g: knownWeightG(p), ...(isCharcoalRow(p) || d.charcoal === true ? { charcoal: true } : {}), ...(hasLen ? { length: curLen || "", has_length: true } : {}), ...(needs.includes("check") ? { check: true } : {}), next: next ? next.sku : null, left, scope: openScope(env) });
 }
 // why an unsure item needs its name and length checked (back office only; the storefront never sees facts_known's notes)
 const checkWhy = s => { try { const w = (JSON.parse(s || "{}") || {}).confirm_why; return typeof w === "string" ? w.slice(0, 300) : ""; } catch { return ""; } };
@@ -429,7 +441,7 @@ export async function admin(request, env, url) {
     ]);
     // the demo's made-up samples are marked, so nobody switches one back on taking it for the shop's own stock (2026-11-24)
     // each row also says what it still needs from the shop (price, colours, shelf count), for the "Needs info" list and its count
-    return json({ products: p.results.map(r => { const { supplier_id, facts_known, ...row } = r, needs = needsInfo(r); return { ...row, ...(isSample(r.sku) ? { sample: true } : {}), ...(needs.length ? { needs } : {}), ...(needs.includes("check") ? { check_why: checkWhy(facts_known) } : {}), ...(["ace", "ace-acc"].includes(supplier_id) ? { catalogue: true } : {}) }; }), categories: c.results, boxes: b.results });
+    return json({ products: p.results.map(r => { const { supplier_id, facts_known, ...row } = r, needs = needsInfo(r); const kw = knownWeightG(r); return { ...row, ...(isSample(r.sku) ? { sample: true } : {}), ...(needs.length ? { needs } : {}), ...(kw ? { weight_known_g: kw } : {}), ...(needs.includes("check") ? { check_why: checkWhy(facts_known) } : {}), ...(["ace", "ace-acc"].includes(supplier_id) ? { catalogue: true } : {}) }; }), categories: c.results, boxes: b.results });
   }
 
   // one product: fields to save, validated here so nothing odd reaches the storefront

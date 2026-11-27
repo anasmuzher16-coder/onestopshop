@@ -102,6 +102,8 @@ Supplier columns (`supplier_id, supplier_ref, supplier_price_cents, family, vari
 facts_known`) are refreshed by every import. Shop columns (`name, price_cents, stock, active, note, weight_g, box_id,
 ship_class, category_id, sort, availability`) are written once, when the row is created, and never again. The only
 exception: an item gone from the catalogue gets `availability = 'dropped'` (never deleted, never switched off).
+A weight typed in the item editor (2026-11-27) is written to `weight_g` (whole grams) and marked `details.weighed = true`;
+that makes it the item's known shipping weight (src/catalog.js `weightUnknown`), even when it equals an import placeholder.
 
 ## Commands (from the repo root)
 

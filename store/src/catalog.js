@@ -20,7 +20,24 @@ export async function loadCatalog(db) {
 // A catalogue item's weight is unknown while its facts say so and the row still holds the import's placeholder
 // (1 g; 2,500 g for an Ace hookah). It cannot be priced for a carrier until the weight is known: pickup or local delivery only.
 // toStorefront, counterRow (page titles and descriptions) and the public feed all use this one rule.
-export const weightUnknown = p => { if (!p || !p.family) return false; const f = parse(p.facts_known); if (!("weight_g" in f) || f.weight_g > 0) return false; return p.weight_g <= 1 || (p.family.startsWith("ace-") && p.weight_g === 2500); };
+// A weight the shop typed in the item editor (2026-11-27) is the item's real shipping weight: it is stored in products.weight_g
+// (whole grams, the column rates and checkout read) and marked details.weighed (a shop column no import touches), so even a
+// weight that equals a placeholder counts as known.
+export const shopWeighed = p => !!p && parse(p.details).weighed === true;
+const placeholderWeight = p => p.weight_g <= 1 || (String(p.family || "").startsWith("ace-") && p.weight_g === 2500);
+export const weightUnknown = p => { if (!p || !p.family || shopWeighed(p)) return false; const f = parse(p.facts_known); if (!("weight_g" in f) || f.weight_g > 0) return false; return placeholderWeight(p); };
+// The weight in grams the item editor starts on: the shop's own, else a real one on the row or in the facts; null while unknown
+// (an import's placeholder is never shown as if it were weighed).
+export const knownWeightG = p => { if (!p) return null; if (shopWeighed(p)) return p.weight_g; const f = parse(p.facts_known); if (p.weight_g <= 1 && f.weight_g > 0) return f.weight_g; if (p.family && placeholderWeight(p)) return null; return p.weight_g > 0 ? p.weight_g : null; };
+// A weight as the shop types it in the item editor: "250 g", "1.2 kg", "0.75kg". Whole grams after conversion (grams take no
+// decimals; kilograms up to 3), from 1 g up to 30 kg, the carrier's limit for one parcel. Anything else is null (refused).
+export function weightGrams(v) {
+  if (typeof v !== "string" || v.length > 20) return null;
+  const m = v.replace(/\s+/g, " ").trim().toLowerCase().match(/^(\d{1,5})(?:\.(\d{1,3}))? ?(g|kg)$/);
+  if (!m || (m[3] === "g" && m[2] !== undefined)) return null;
+  const g = m[3] === "kg" ? Number(m[1]) * 1000 + Number((m[2] || "").padEnd(3, "0")) : Number(m[1]);
+  return Number.isInteger(g) && g >= 1 && g <= 30000 ? g : null;
+}
 // Sellable means switched on with the shop's own price. Anything else on view is shown, never sold.
 export const sellable = p => !!p && p.active === 1 && p.price_cents > 0;
 const parse = s => { try { const v = JSON.parse(s || "{}"); return v && typeof v === "object" ? v : {}; } catch { return {}; } };
@@ -85,6 +102,9 @@ export function toStorefront(cat) {
     // a length the shop typed in the item editor (details.length, a shop column) replaces the catalogue's; the check tick stays in the back office
     if ("length" in facts && typeof details.length === "string" && details.length) facts.length = details.length;
     delete details.length; delete details.checked;
+    // a weight the shop typed (details.weighed) is the real one: it is also the weight a page shows, in place of a maker's figure
+    const weighed = shopWeighed(p); delete details.weighed;
+    if (weighed && p.family) facts.item_weight_g = p.weight_g;
     // a catalogue item whose pack weight is not known yet cannot be priced for a carrier: pickup or local delivery until it is
     const weightTbd = weightUnknown(p);
     return { sku: p.sku, name: p.name, cat: p.category_id,
@@ -92,7 +112,7 @@ export function toStorefront(cat) {
       state: sale ? "sale" : p.price_cents > 0 ? "soon" : "tbd",
       price: p.price_cents > 0 ? p.price_cents / 100 : null,
       // a weight set later in the master file (facts) replaces the import's 1 g placeholder, and shipping switches on by itself
-      kg: (p.weight_g <= 1 && facts.weight_g > 0 ? facts.weight_g : p.weight_g) / 1000, box: p.box_id, glass: !!p.glass,
+      kg: (!weighed && p.weight_g <= 1 && facts.weight_g > 0 ? facts.weight_g : p.weight_g) / 1000, box: p.box_id, glass: !!p.glass,
       height: p.height_cm, note: p.note, ...(p.photo_ver ? { img: `/api/photo/${p.sku}?v=${p.photo_ver}`, photo: true, dark: false } : { img: p.img, dark: !!p.img_dark, lw: p.img_lw ?? undefined, ...(IMG_VERSIONS[p.img] ? { iv: IMG_VERSIONS[p.img] } : {}) }),
       // an unpriced hookah is not sold at all, so it carries no "pickup only" line; once priced without a weight, it is pickup or local only
       // an unpriced Ace accessory is the same: shown, not sold, so no pickup line until it is priced (then pickup or local until weighed)

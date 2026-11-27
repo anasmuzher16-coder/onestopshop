@@ -106,6 +106,10 @@ if (!CARD) {
     for (const m of mails) { const e = (await (await fetch(B + "/api/admin/emails/" + m.id, { headers: { Cookie: cookie } })).json()).email; ok(!/\bID\b/.test(e.html + e.subject) && !/photo id|\bage\b|adult/i.test(e.html + e.subject), `the customer's ${m.kind} email says nothing about age or ID`); }
   }
   ok(!/MinAge|age_check|RULES/.test(await (await fetch(B + "/api/catalog-module")).text()), "no age setting reaches the storefront");
+  // the item editor's weight (2026-11-27): charcoal given a real weight is still pickup only; with no card keys nothing ships anyway
+  { const w = await fetch(B + `/api/admin/products/${coalSku}/info`, { method: "PUT", headers: { "Content-Type": "application/json", "X-OSS-Admin": "1", Cookie: cookie }, body: JSON.stringify({ weight: "1.5 kg" }) });
+    const r = await post({ ...who, ...to, method: "ship", service: "cp-exp", lines: [{ sku: coalSku, qty: 1 }] }), fd = (await (await fetch(B + "/api/catalog")).json()).products.find(p => p.sku === coalSku);
+    ok(w.status === 200 && noKeys(r) && fd.ship_class === "pickup_only" && fd.weight_g === 1500, `no keys: charcoal with a weight from the item editor is still pickup only: ${w.status} ${r.status} ${fd.ship_class} ${fd.weight_g}`); }
   console.log(f ? `FAIL ${f} of ${n} checks (no card keys)` : `PASS ${n} checks (no card keys)`); process.exit(f ? 1 : 0);
 }
 
@@ -190,6 +194,14 @@ ok(carrierIds.length >= 2, "the carrier services to try: " + carrierIds.join(","
   const feed = (await (await fetch(B + "/api/catalog")).json()).products.find(p => p.sku === "OSS-9102");
   ok(mv.status === 200 && out.status === 409 && out.data.local_only === true && feed.ship_class === "pickup_only" && JSON.parse(feed.details).charcoal === true, `charcoal moved out of Charcoal still cannot go by carrier: ${mv.status} ${out.status} ${feed.ship_class}`);
   await put({ category_id: "charcoal" }); }
+// the item editor's weight (2026-11-27): charcoal given a real weight there still never goes by carrier; foil, pickup or local
+// while its weight is TBD, gets carrier prices once the shop types its weight
+{ const info = (sku, body) => fetch(B + `/api/admin/products/${sku}/info`, { method: "PUT", headers: { "Content-Type": "application/json", "X-OSS-Admin": "1", Cookie: cookie }, body: JSON.stringify(body) });
+  const w = await info(coalSku, { weight: "1.5 kg" }), r = await post({ ...who, ...to, method: "ship", service: carrierIds[0], lines: [{ sku: coalSku, qty: 1 }] });
+  ok(w.status === 200 && r.status === 409 && r.data.local_only === true, `charcoal with a weight from the item editor still cannot go by carrier: ${w.status} ${r.status}`);
+  const foilShip = { ...who, ...to, method: "ship", service: carrierIds[0], lines: [{ sku: "OSS-9301", qty: 1 }] };
+  const f0 = await post(foilShip), fw = await info("OSS-9301", { weight: "120 g" }), f1 = await post(foilShip);
+  ok(f0.status === 409 && f0.data.local_only === true && fw.status === 200 && f1.status === 201 && f1.data.order?.shipping_cents > 0, `foil ships by carrier once its weight is typed: ${f0.status} ${fw.status} ${f1.status} ${f1.data.error || ""}`); }
 for (const service of [...carrierIds, "cp-nope", undefined]) {
   const r = await post({ ...who, ...to, method: "ship", service, lines: [{ sku: coalSku, qty: 1 }] });
   ok(r.status === 409 && /cannot be shipped/.test(r.data.error || "") && !r.data.order, `charcoal cannot be shipped by ${service}: ${r.status}`);

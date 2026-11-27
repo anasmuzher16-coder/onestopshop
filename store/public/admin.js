@@ -228,7 +228,11 @@ document.addEventListener("change", async e => {
 // The shop fills in what it knows for each item on its own phone, instead of sending a sheet (owner, 2026-11-26). Only
 // what is typed or picked is sent; a field left alone stays as it is, and nothing is ever filled in for them.
 const needCount = () => state.products.filter(p => p.needs).length;
-const NEED = { price: "price", colours: "colours", stock: "shelf count", check: "a check of its name", length: "its length" };
+const NEED = { price: "price", colours: "colours", stock: "shelf count", check: "a check of its name", length: "its length", weight: "weight" };
+// A weight as the shop types it: a number in the unit picked (g or kg), or with its unit typed ("1.2 kg"). Sent as "<n> <unit>";
+// the server turns it into whole grams and refuses anything outside 1 g to 30 kg (src/catalog.js weightGrams).
+const readWeight = (raw, unit) => { const m = String(raw).trim().toLowerCase().replace(",", ".").match(/^(\d{1,5})(?:\.(\d{1,3}))?\s*(g|kg)?$/); if (!m) return null; const u = m[3] || unit; if (u === "g" && m[2] !== undefined) return null; return { n: m[1] + (m[2] !== undefined ? "." + m[2] : ""), unit: u, typed: !!m[3], g: u === "kg" ? +m[1] * 1000 + +(m[2] || "").padEnd(3, "0") : +m[1] }; };   // whole grams, or kg to 3 places, as the server takes it
+const isCoal = p => p.category_id === "charcoal" || /^charcoal-/.test(p.family || "") || pj(p.details).charcoal === true;
 const needWords = n => { const w = n.map(k => NEED[k]); return w.length > 1 ? w.slice(0, -1).join(", ") + " and " + w.at(-1) : w[0]; };
 function needRow(p) {
   const c = catOf(p.category_id);
@@ -261,6 +265,10 @@ function infoSheet(p) {
       <button class="bar__link" type="button" data-addcol aria-expanded="false" aria-controls="newcol">Add another colour</button>
       <div class="newcol" id="newcol" data-newcol hidden><label class="field"><span>Colour name</span><input class="input" name="newcol" maxlength="24" autocomplete="off"></label>
         <label class="field newcol__pick"><span>Swatch</span><input class="newcol__hex" name="newhex" type="color" value="#808080"></label><button class="btn btn--ghost" type="button" data-addcol-go>Add</button></div></fieldset>
+    ${(() => { const g = p.weight_known_g || 0, unit = g >= 1000 || (!g && /^ace-/.test(p.family || "")) ? "kg" : "g", v = !g ? "" : unit === "kg" ? String(+(g / 1000).toFixed(3)) : String(g), need = (p.needs || []).includes("weight");
+      return `<div class="field"><label class="field" for="info-weight"><span>Weight</span></label><div class="wrow"><input class="input num" id="info-weight" name="weight" inputmode="decimal" autocomplete="off" value="${v}" placeholder="${unit === "kg" ? "1.2" : "250"}" data-was="${g || ""}" aria-describedby="weight-say">
+        <div class="wunit" role="radiogroup" aria-label="Weight unit">${["g", "kg"].map(u => `<label><input type="radio" name="wunit" value="${u}"${u === unit ? " checked" : ""}><span>${u}</span></label>`).join("")}</div></div>
+        <p class="fineprint" id="weight-say">${isCoal(p) ? "Charcoal is never shipped, whatever it weighs. This is for the record." : need ? "Needed before it can ship. Weigh the item on its own; the box is added for you." : g ? "Weighed. Type a new weight to change it." : "Weigh the item on its own; the box is added for you. Up to 30 kg."}</p></div>`; })()}
     <div class="grid2 info__nums">
       <div class="field"><label class="field" for="info-stock"><span>Stock, on the shelf</span></label><input class="input num" id="info-stock" name="stock" inputmode="numeric" pattern="[0-9]*" maxlength="5" autocomplete="off" value="${counted ? p.stock : ""}" data-seen="${p.stock}" data-was="${counted ? p.stock : ""}" aria-describedby="stock-was">
         <p class="fineprint" id="stock-was">${counted ? "Counted. Type a new count to change it." : "Not counted yet. Type what is on the shelf, 0 if none."}</p></div>
@@ -288,6 +296,12 @@ document.addEventListener("submit", async e => {
   if (name !== p.name) body.name = name;
   if (f.checked && f.checked.checked) body.checked = true;
   if (f.length && f.length.value.trim() && f.length.value.trim() !== (pj(p.details).length || "")) body.length = f.length.value.trim();
+  if (f.weight && f.weight.value.trim() !== "") {
+    const w = readWeight(f.weight.value, (f.querySelector("input[name=wunit]:checked") || {}).value || "g");
+    if (!w || !(w.g >= 1) || w.g > 30000) { err.textContent = "Weight is a number in grams or kilograms, like 250 g or 1.2 kg, up to 30 kg."; f.weight.setAttribute("aria-invalid", "true"); return f.weight.focus(); }
+    if (w.unit === "g" && w.g < 10 && !w.typed) { err.textContent = `${w.g} g is very light. If you meant kilograms, tap kg. If it really is ${w.g} g, type it as ${w.g} g.`; f.weight.setAttribute("aria-invalid", "true"); return f.weight.focus(); }
+    if (String(w.g) !== f.weight.dataset.was) body.weight = `${w.n} ${w.unit}`;
+  }
   const picked = pickedColours(f), orig = JSON.parse(f.dataset.orig);
   if (picked.map(c => c.name.toLowerCase()).sort().join("|") !== orig.map(n => n.toLowerCase()).sort().join("|")) body.colours = picked;
   if (stock !== "" && stock !== f.stock.dataset.was) { if (!/^\d{1,5}$/.test(stock)) { err.textContent = "Stock is a whole number, like 4. Type 0 if there are none."; f.stock.setAttribute("aria-invalid", "true"); return f.stock.focus(); } body.stock = { counted: +stock, seen: +f.stock.dataset.seen }; }

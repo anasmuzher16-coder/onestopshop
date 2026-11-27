@@ -8,7 +8,11 @@ const SCOPE = document.querySelector('meta[name="oss-open-edit"]')?.content;
 const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const HEX = /^#[0-9a-f]{6}$/i, SKU = /^OSS-\d{4,6}$/;
-const NEED = { price: "price", colours: "colours", stock: "shelf count", length: "length", check: "a name check" };
+const NEED = { price: "price", colours: "colours", stock: "shelf count", length: "length", check: "a name check", weight: "weight" };
+// A weight as the shop types it: a number in the unit picked (g or kg), or with its unit typed ("1.2 kg"). Sent as "<n> <unit>";
+// the server turns it into whole grams and refuses anything outside 1 g to 30 kg (src/catalog.js weightGrams).
+const readWeight = (raw, unit) => { const m = String(raw).trim().toLowerCase().replace(",", ".").match(/^(\d{1,5})(?:\.(\d{1,3}))?\s*(g|kg)?$/); if (!m) return null; const u = m[3] || unit; if (u === "g" && m[2] !== undefined) return null; return { n: m[1] + (m[2] !== undefined ? "." + m[2] : ""), unit: u, typed: !!m[3], g: u === "kg" ? +m[1] * 1000 + +(m[2] || "").padEnd(3, "0") : +m[1] }; };   // whole grams, or kg to 3 places, as the server takes it
+const showWeight = g => g >= 1000 ? { v: String(+(g / 1000).toFixed(3)), unit: "kg" } : { v: g ? String(g) : "", unit: "g" };
 const needs = d => (d.needs || []).filter(k => Object.hasOwn(NEED, k));   // a need the panel has no words for is not printed
 const words = l => l.length > 1 ? l.slice(0, -1).join(", ") + " and " + l.at(-1) : l[0] || "";
 // the back office's palette (public/admin.js PALETTE): Clear and Rainbow are drawn by CSS
@@ -82,6 +86,7 @@ async function openSheet(sku) {
         <div><label class="field__label" for="oe-newname">Colour name</label><input class="field field--text" id="oe-newname" name="newcol" maxlength="24" autocomplete="off"></div>
         <div><label class="field__label" for="oe-newhex">Swatch</label><input class="oe__hex" id="oe-newhex" name="newhex" type="color" value="#808080"></div>
         <button class="btn btn--ghost" type="button" data-oe-addgo>Add</button></div></fieldset>
+    ${weightField(d)}
     <div class="oe__nums">
       <div><label class="field__label" for="oe-stock">Stock, on the shelf</label><input class="field num" id="oe-stock" name="stock" inputmode="numeric" pattern="[0-9]*" maxlength="5" autocomplete="off" enterkeyhint="next" value="${d.counted ? esc(d.stock) : ""}" data-seen="${esc(d.stock)}" data-was="${d.counted ? esc(d.stock) : ""}" aria-describedby="oe-stock-say">
         <p class="oe__help" id="oe-stock-say">${d.counted ? "Counted. Type a new count to change it." : "Not counted yet. Type what is on the shelf, 0 if none."}</p></div>
@@ -92,6 +97,14 @@ async function openSheet(sku) {
   const f = $("[data-oe-form]", sheet); f.dataset.orig = JSON.stringify(had); f.dataset.next = d.next || ""; f.dataset.priceWas = d.price_cents || ""; f.dataset.nameWas = d.name; f.dataset.lengthWas = d.length || "";
   count(f);
   if (!sheet.open) sheet.showModal();
+}
+function weightField(d) {
+  const w = d.weight_g ? showWeight(d.weight_g) : { v: "", unit: d.hookah_row ? "kg" : "g" }, need = (d.needs || []).includes("weight");
+  const say = d.charcoal ? "Charcoal is never shipped, whatever it weighs. This is for the record." : need ? "Needed before it can ship. Weigh the item on its own; the box is added for you." : d.weight_g ? "Weighed. Type a new weight to change it." : "Weigh the item on its own; the box is added for you. Up to 30 kg.";
+  return `<label class="field__label" for="oe-weight">Weight</label>
+    <div class="oe__w"><input class="field num" id="oe-weight" name="weight" inputmode="decimal" autocomplete="off" enterkeyhint="next" value="${esc(w.v)}" placeholder="${w.unit === "kg" ? "1.2" : "250"}" data-was="${esc(d.weight_g || "")}" aria-describedby="oe-weight-say">
+      <div class="oe__unit" role="radiogroup" aria-label="Weight unit">${["g", "kg"].map(u => `<label><input type="radio" name="wunit" value="${u}"${u === w.unit ? " checked" : ""}><span>${u}</span></label>`).join("")}</div></div>
+    <p class="oe__help" id="oe-weight-say">${say}</p>`;
 }
 const picked = f => $$("[data-sw][aria-pressed=true]", f).map(b => b.dataset.hex ? { name: b.dataset.name, hex: b.dataset.hex } : { name: b.dataset.name });
 function count(f) { const n = picked(f).length, o = $("[data-oe-count]", f); if (o) o.textContent = n ? `${n} picked` : "none picked"; }
@@ -125,6 +138,13 @@ document.addEventListener("submit", async e => {
   const lenIn = $("#oe-length", f), tick = $("#oe-checked", f);
   if (lenIn) { const len = lenIn.value.replace(/\s+/g, " ").trim(); if (len !== f.dataset.lengthWas) { if (!/^[\p{L}\p{N} .,'"\/-]{1,30}$/u.test(len)) return fail(f, "Length is up to 30 letters and numbers, like 60.5 inches.", lenIn); body.length = len; } }
   if (tick?.checked) body.checked = true;
+  const wIn = $("#oe-weight", f);
+  if (wIn && wIn.value.trim() !== "") {
+    const w = readWeight(wIn.value, $("input[name=wunit]:checked", f)?.value || "g");
+    if (!w || !(w.g >= 1) || w.g > 30000) return fail(f, "Weight is a number in grams or kilograms, like 250 g or 1.2 kg, up to 30 kg.", wIn);
+    if (w.unit === "g" && w.g < 10 && !w.typed) return fail(f, `${w.g} g is very light. If you meant kilograms, tap kg. If it really is ${w.g} g, type it as ${w.g} g.`, wIn);
+    if (String(w.g) !== wIn.dataset.was) body.weight = `${w.n} ${w.unit}`;
+  }
   const cols = picked(f), orig = JSON.parse(f.dataset.orig);
   if (cols.map(c => c.name.toLowerCase()).sort().join("|") !== orig.map(n => n.toLowerCase()).sort().join("|")) body.colours = cols;
   if (stock !== "" && stock !== f.stock.dataset.was) { if (!/^\d{1,5}$/.test(stock)) return fail(f, "Stock is a whole number, like 4. Type 0 if there are none.", f.stock); body.stock = { counted: +stock, seen: +f.stock.dataset.seen }; }
