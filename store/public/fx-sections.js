@@ -1101,7 +1101,11 @@ document.addEventListener("click", e => {
   const band = e.target.closest(".shophead[data-cat], .shophead[data-fx]"); if (!band || RM.matches || e.target.closest("a,button,input,select,label,summary")) return;
   const sel = window.getSelection && getSelection(); if (sel && !sel.isCollapsed && band.contains(sel.anchorNode)) return; // the end of a drag-select of the title is not a tap
   const old = band.querySelector(":scope > .fx"); if (!old) return;
-  if (old.querySelector("canvas") || old.getAnimations({ subtree: true }).some(a => a.playState === "running" || a.pending)) return;   // something is still moving: an arrival is never cut short
+  // something is still moving: an arrival is never cut short. Moving is read against the clock, not the play state alone: the play
+  // state only changes at the next animation frame, so on a busy page an act that had ended 45-100 ms before still read "running" and
+  // the tap was left alone with nothing on screen moving (fx-robust, laptop, 2026-11-27).
+  const now = performance.now(), moving = a => a.pending || a.playState === "running" && (a.startTime == null || !(a.playbackRate > 0) || a.startTime + a.effect.getComputedTiming().endTime / a.playbackRate > now);
+  if (old.querySelector("canvas") || old.getAnimations({ subtree: true }).some(moving)) return;
   old.remove(); live = null; playedKey = ""; again = true; try { place(); } finally { again = false; }
 });
 place();

@@ -180,10 +180,20 @@ function loadAtlas() {
   const evs = ["pointerdown", "touchstart", "keydown", "scroll", "click"], rest = () => { evs.forEach(e => removeEventListener(e, rest, true)); loadBooks(Object.keys(BOOKS).filter(k => !FIRST_BOOKS.includes(k))); };
   evs.forEach(e => addEventListener(e, rest, { passive: true, capture: true }));
 }
+// Each sheet is decoded once, off the main thread, into a bitmap that stays decoded with its colour values exactly as stored (no
+// colour management, alpha not premultiplied: what the upload asked of an <img> before). An <img> had to be decoded a second time on
+// the main thread at its upload to drop the colour profile, 20-40 ms a sheet at 2x CPU, around the first taps (trace, 2026-11-26).
+// Chromium only (navigator.userAgentData is Chromium's own): an engine that ignored those two options would upload darker, premultiplied
+// edges, so WebKit and Gecko keep the <img> path, as does any failure here.
+const BM = { premultiplyAlpha: "none", colorSpaceConversion: "none" };
+function sheet(src) {
+  const viaImg = () => { const im = new Image(); im.decoding = "async"; im.src = src; return im.decode().then(() => im); };
+  if (!navigator.userAgentData || typeof createImageBitmap !== "function" || typeof fetch !== "function") return viaImg();
+  return fetch(src, { priority: "low" }).then(r => { if (!r.ok) throw new Error(r.status); return r.blob(); }).then(b => createImageBitmap(b, BM)).catch(viaImg);
+}
 function loadBooks(keys) {
-  for (const k of keys) { const B = BOOKS[k], im = new Image(); im.decoding = "async"; im.src = "img/wave/" + B.file + "?v=" + (ART[B.file] || "0");   /* the version is the file's own hash, from tools/build-wave-art.mjs */
-    const fl = B.flow ? new Image() : null; if (fl) { fl.decoding = "async"; fl.src = "img/wave/" + B.flow; }
-    Promise.all([im.decode(), fl?.decode()]).then(() => { atlas[k] = B; imgs[k] = im; if (fl) imgs[k + ":flow"] = fl; if (warmed) idle(upAll); }).catch(() => {}); }   // decoded off the main thread, so the tap never pays for it
+  for (const k of keys) { const B = BOOKS[k];   /* the version is the file's own hash, from tools/build-wave-art.mjs */
+    Promise.all([sheet("img/wave/" + B.file + "?v=" + (ART[B.file] || "0")), B.flow ? sheet("img/wave/" + B.flow) : null]).then(([im, fl]) => { atlas[k] = B; imgs[k] = im; if (fl) imgs[k + ":flow"] = fl; if (warmed) idle(upAll); }).catch(() => {}); }   // decoded off the main thread, so the tap never pays for it
 }
 function upload(key, unit, im) {
   if (tex[key]) return tex[key]; const t = gl.createTexture(); gl.activeTexture(unit); gl.bindTexture(gl.TEXTURE_2D, t);
@@ -390,7 +400,7 @@ function warm() {
   const next = () => {
     if (!gl || gl.isContextLost() || broken) { warming = false; return; }
     if (w) { setTimeout(() => idle(next), 600); return; }   // never during a wave
-    const k = todo[0]; if (k == null) { warming = false; warmed = true; try { gauge(); } catch {} idle(upAll); return; }
+    const k = todo[0]; if (k == null) { warming = false; warmed = true; try { gauge(); } catch {} idle(upAll); try { dispatchEvent(new Event("wave:warmed")); } catch {} return; }   // fx-pour.js warms its smoke after this
     if (compiling(k)) { setTimeout(() => idle(next, { timeout: 200 }), 40); return; }
     try { hush(k); todo.shift(); } catch (e) { console.error("fx-wave: " + e); broken = true; warming = false; return; }
     idle(next, { timeout: 200 });   // a page that is always animating has few idle moments: each step still runs within 200 ms

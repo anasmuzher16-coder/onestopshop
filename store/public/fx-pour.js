@@ -64,8 +64,8 @@ function launch() {
   pend = { g, vs, list, par, t: performance.now() };
 }
 // still compiling: the smoke starts a frame or two later instead of holding the page (never more than a second of waiting)
-const compiling = () => !!pend?.par && performance.now() - pend.t < 1000 && !pend.g.isContextLost() && Object.values(pend.list).some(x => !pend.g.getProgramParameter(x.p, pend.par.COMPLETION_STATUS_KHR));
-addEventListener("wave:start", e => { if (e.detail?.key === "hookahs" && !tried) setTimeout(() => { if (!gl && !tried) launch(); }, 240); });   // the context is made once the wave's body covers the screen, never inside the tap or mid-motion
+const compiling = () => !!pend?.par && performance.now() - (pend.w ??= performance.now()) < 1000 && !pend.g.isContextLost() && Object.values(pend.list).some(x => !pend.g.getProgramParameter(x.p, pend.par.COMPLETION_STATUS_KHR));
+addEventListener("wave:start", e => { if (e.detail?.key === "hookahs" && !tried) setTimeout(() => { if (!gl && !tried) { launch(); if (pend) pend.w ??= pend.t; } }, 240); });   // the context is made once the wave's body covers the screen, never inside the tap or mid-motion
 function setup() {
   if (new URLSearchParams(location.search).has("still")) return false;
   launch(); if (!pend) return false; const { g, vs, list } = pend; pend = null;
@@ -79,16 +79,42 @@ function setup() {
   }
   g.deleteShader(vs);
   g.bindBuffer(g.ARRAY_BUFFER, g.createBuffer()); g.bufferData(g.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), g.STATIC_DRAW); g.enableVertexAttribArray(0); g.vertexAttribPointer(0, 2, g.FLOAT, false, 0, 0);
-  g.disable(g.BLEND); gl = g; return true;
+  g.disable(g.BLEND); fbOK = null; gl = g; return true;
 }
+// WARM. In a quiet moment after the page has loaded, the context is made and the programs are handed to the driver, then collected
+// once the driver says they are compiled, and whether the half-float targets can be drawn into is asked once. The first wave to the
+// smoke page then pays none of it: made at the wave's start, the compile ran on the graphics process while the wave needed it and
+// held the page 150-280 ms at the swap (1x and 2x traces, 2026-11-26). Nothing is drawn and the canvas stays 0x0 until the page opens.
+const idle = (f, t) => window.requestIdleCallback ? requestIdleCallback(f, { timeout: t }) : setTimeout(f, 60);
+function prewarm() {
+  // only where idle moments exist (requestIdleCallback): elsewhere the smoke is made when its page opens, as before
+  if (!window.requestIdleCallback || gl || tried || pend || RM.matches || document.hidden || navigator.connection?.saveData || new URLSearchParams(location.search).has("still")) return;
+  launch(); if (!pend) return; const t0 = performance.now();
+  if (!pend.par) return;   // no way to ask whether a compile is done without waiting for it: the programs stay handed over, collected when the page opens
+  const done = () => Object.values(pend.list).every(x => pend.g.getProgramParameter(x.p, pend.par.COMPLETION_STATUS_KHR));
+  const collect = () => {
+    if (gl || tried || !pend || on) return;   // the smoke page opened first: begin() collects them itself
+    if (pend.g.isContextLost()) { pend = null; return; }
+    if (window.__wave?.active || !done() && performance.now() - t0 < 8000) { setTimeout(() => idle(collect, 400), 150); return; }   // never during a wave
+    tried = true; if (!setup()) { gl = null; return; } const t = target(8, 8); gl.deleteTexture(t.t); gl.deleteFramebuffer(t.f); gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  };
+  setTimeout(() => idle(collect, 400), 120);
+}
+// After the wave's own warm-up (fx-wave.js "wave:warmed"), so the two compiles never queue behind each other; 5 s after load where the
+// wave never warms (broken, or a tap came first). The one-second grace begin() gives a compile still running counts from its first ask.
+addEventListener("wave:warmed", () => idle(prewarm, 300), { once: true });
+(document.readyState === "complete" ? setTimeout(() => idle(prewarm, 600), 5000) : addEventListener("load", () => setTimeout(() => idle(prewarm, 600), 5000), { once: true }));
 function target(w, h) {
   const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
   for (const [k, x] of [[gl.TEXTURE_MIN_FILTER, gl.LINEAR], [gl.TEXTURE_MAG_FILTER, gl.LINEAR], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, k, x);
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA16F, w, h, 0, gl.RGBA, gl.HALF_FLOAT, null);
   const f = gl.createFramebuffer(); gl.bindFramebuffer(gl.FRAMEBUFFER, f); gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t, 0);
-  const ok = gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE; gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT);
+  // every target is the same half-float format on the same context, so whether it can be drawn into is asked once per context: each
+  // ask waits for the graphics process, and inside a wave that wait was 10-100 ms a target (2x trace, 2026-11-26)
+  if (fbOK === null) fbOK = gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE; const ok = fbOK; gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT);
   return { t, f, w, h, ok };
 }
+let fbOK = null;
 const pair = (w, h) => { const x = { a: target(w, h), b: target(w, h), swap() { const s = x.a; x.a = x.b; x.b = s; } }; return x; };
 function release() { if (!F || !gl) { F = null; return; } for (const x of [F.u.a, F.u.b, F.d.a, F.d.b, F.p.a, F.p.b, F.div]) { gl.deleteTexture(x.t); gl.deleteFramebuffer(x.f); } F = null; }
 function size() {
@@ -217,6 +243,7 @@ function begin() {
   if (!RM.matches && !gl && !tried) {   // only the smoke and mist pages ever pay for this
     launch(); if (compiling()) { document.documentElement.classList.add("pour-page"); requestAnimationFrame(() => { if (modeName && !M.air && !on) begin(); }); return; }
     tried = true; if (!setup()) gl = null; }
+  if (gl && (lost || gl.isContextLost())) { document.documentElement.classList.add("pour-still", "pour-page"); return; }   // warmed at load and lost since: the still, never a bare ground
   if (RM.matches || !gl) { document.documentElement.classList.add("pour-still", "pour-page"); return; }
   document.body.prepend(cv); if (!size()) { toStill(); return; }
   on = true; parked = false; skip = false; odd = false; slow = 0; iters = 14; T = 0; drifts = []; aim(); heavy = firstOpen();
@@ -252,8 +279,19 @@ function spritzAll() {
   };
   spray = { c, raf: requestAnimationFrame(run) };
 }
-function off() { endSpray(); endAir(); on = false; pre = 0; settling = false; if (raf) cancelAnimationFrame(raf); raf = 0; cv.classList.remove("on"); release(); cv.width = cv.height = 0; cv.remove(); }
-function stop() { document.documentElement.classList.remove("pour-page", "pour-still", "pour-mist"); if (on || air || spray || cv.isConnected) off(); }
+// Leaving the smoke page under a wave, the canvas comes off at once and its targets and buffer are handed back once the wave has gone
+// and the page is idle: freeing them waits for the graphics process, 26-31 ms in the frames after the swap (2x profile, 2026-11-26).
+// The smoke page opened again before then keeps the canvas at its size, so no new buffer is made (size() still rebuilds the targets;
+// deleting them is queued, not waited for), and a free never runs while it is on.
+let freeT = 0, freeGen = 0;
+function free() { clearTimeout(freeT); freeT = 0; freeGen++; if (on) return; release(); cv.width = cv.height = 0; }
+function freeLater() {
+  clearTimeout(freeT); const g = ++freeGen;
+  const wait = () => { freeT = 0; if (g !== freeGen || on) return; if (window.__wave?.active) { freeT = setTimeout(wait, 250); return; } idle(() => { if (g === freeGen && !on) free(); }, 1000); };
+  freeT = setTimeout(wait, 250);
+}
+function off(later = false) { endSpray(); endAir(); on = false; pre = 0; settling = false; if (raf) cancelAnimationFrame(raf); raf = 0; cv.classList.remove("on"); cv.remove(); if (later && gl && !lost) freeLater(); else free(); }
+function stop() { document.documentElement.classList.remove("pour-page", "pour-still", "pour-mist"); if (on || air || spray || cv.isConnected) off(!!window.__wave?.active); }
 // the filter bar is see-through while it sits in the page, and solid once it sticks over the products
 function stick() { if (!head || !chips || !head.isConnected) return; chips.classList.toggle("is-stuck", head.getBoundingClientRect().bottom < chips.getBoundingClientRect().top - .5); }
 // where the spray leaves the bottle
@@ -264,7 +302,7 @@ function place() {
   head = hk || co || ((pdp || hkp) && (pdp || hkp).querySelector("[data-stage]")) || null; chips = hk || co ? head.parentNode.querySelector(":scope > .chips") : null;
   const settled = () => { if (document.querySelector("#main > :not(.ssr)")) arrivedBack = false; };   // only the page you came Back to skips its opening
   if (!next) { stop(); modeName = null; settled(); return; }
-  if (next !== modeName) { document.documentElement.classList.remove("pour-still", "pour-mist"); if (on || air || spray || cv.isConnected) off(); }
+  if (next !== modeName) { document.documentElement.classList.remove("pour-still", "pour-mist"); if (on || air || spray || cv.isConnected) off(!!window.__wave?.active); }
   modeName = next; M = MODES[next]; begin(); stick(); settled();
 }
 addEventListener("scroll", stick, { passive: true });
@@ -274,7 +312,8 @@ addEventListener("pagehide", () => { if (on && !lost) { if (raf) cancelAnimation
 addEventListener("pageshow", () => { if (parked && on && !lost) { parked = false; if (size()) settle(); else { toStill(); return; } } kick(); });
 RM.addEventListener("change", () => { if (modeName) { stop(); place(); } });
 const giveUp = () => { if (!lost || !on) return; if (document.hidden) { lostTimer = setTimeout(giveUp, 2000); return; } lost = false; F = null; toStill(); };
-cv.addEventListener("webglcontextlost", e => { e.preventDefault(); lost = true; if (raf) cancelAnimationFrame(raf); raf = 0; F = null; clearTimeout(lostTimer); lostTimer = setTimeout(giveUp, 2000); });
-cv.addEventListener("webglcontextrestored", () => { clearTimeout(lostTimer); lost = false; parked = false; gl = null; const live = on, ok = setup(); if (!live) return; if (!ok || !size()) { toStill(); return; } if (heavy && T < M.end) show(); else settle(); kick(); });
+cv.addEventListener("webglcontextlost", e => { e.preventDefault(); lost = true; fbOK = null; if (raf) cancelAnimationFrame(raf); raf = 0; F = null; clearTimeout(lostTimer); lostTimer = setTimeout(giveUp, 2000); });
+cv.addEventListener("webglcontextrestored", () => { clearTimeout(lostTimer); lost = false; parked = false; gl = null; if (!on) { tried = false; pend = null; return; }   // off the smoke page: made again when it next opens, never compiled here mid-page
+  const live = on, ok = setup(); if (!live) return; if (!ok || !size()) { toStill(); return; } if (heavy && T < M.end) show(); else settle(); kick(); });
 new MutationObserver(afterSwap(place, 1)).observe(document.getElementById("main"), { childList: true }); place();   // a background: at a wave's swap, just after the band act (route.js)
 window.__pour = { canvas: cv, hold() { manual = true; if (raf) cancelAnimationFrame(raf); raf = 0; }, advance(sec, fps = 60) { const n = Math.round(sec * fps); for (let i = 0; i < n; i++) { T += 1 / fps; step(60 / fps); } show(); return T; }, get t() { return T; } };
