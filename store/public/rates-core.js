@@ -47,7 +47,7 @@ export function parsePostal(raw) {
 // Hookahs and glass ship in their own carton. Loose items are consolidated: they ride in a
 // hookah carton if they fit its spare space, otherwise they fill as many boxes as needed.
 // No parcel may exceed 30 kg real weight (Canada Post maximum, price guide "weight over 30 kg").
-export const MAX_KG = 30, MAX_QTY = 99;
+export const MAX_KG = 30, MAX_QTY = 20;   // the most of one item in one order; the server refuses more (src/guard.js ORDER_CAPS.perLine), so the cart never offers it
 const LOOSE_FILL = 0.35, BOX_FILL = 0.7, RIDE_SHARE = 0.15;
 const boxVol = b => b.l * b.w * b.h;
 const round = (n, d = 2) => Math.round(n * 10 ** d) / 10 ** d;

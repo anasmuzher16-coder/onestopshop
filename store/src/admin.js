@@ -61,20 +61,22 @@ export async function admin(request, env, url) {
     const name = staffLogin ? cleanName(body.name) : null, nameKey = "n:" + await sha("name|" + (name || String(body.name || "")).toLowerCase());
     // Sign-in limits (docs/BACKEND-NOTES.md). A request already locked out is refused BEFORE anything is written, so a locked
     // address cannot keep adding tries; a try that gets through is written down, then counted again, so a burst of tries at
-    // once is still counted in full. Locked for fifteen minutes: more than five tries from one address (IPv6 by its /64),
+    // once is still counted in full. Locked for fifteen minutes: more than five tries from one address (IPv6 by its /56),
     // more than five on one staff name from anywhere (names that do not exist lock the same way, so a lock does not reveal
     // who works here), and, for everyone, more than forty staff tries or a hundred owner-passcode tries, each only when they
-    // come from at least ten different addresses, so no one address can lock out anybody but itself. Past twenty owner tries
+    // come from at least ten different places (IPv6 counted by /48), so no one address can lock out anybody but itself. Past twenty owner tries
     // shop-wide from three or more addresses, each owner try is slowed (doubling, up to 8 seconds). The owner's passcode is not held back by staff PIN tries.
-    const who = await sha("who|" + sourceOf(request)), side = (staffLogin ? "s:" : "p:") + who;
+    const who = await sha("who|" + sourceOf(request)), side = (staffLogin ? "s:" : "p:") + await sha("from|" + sourceOf(request, 48));   // places counted by /48 for the shop-wide locks
     const count = () => db.prepare(`SELECT COALESCE(SUM(who = ?1),0) AS mine, COALESCE(SUM(who = ?2),0) AS this_name, COALESCE(SUM(who LIKE 's:%'),0) AS staff_all, COUNT(DISTINCT CASE WHEN who LIKE 's:%' THEN who END) AS staff_from,
       COALESCE(SUM(who LIKE 'p:%'),0) AS owner_all, COUNT(DISTINCT CASE WHEN who LIKE 'p:%' THEN who END) AS owner_from FROM login_attempts WHERE ok = 0 AND at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-15 minutes')`).bind(who, nameKey).first();
     const locked = t => t.mine > 5 || (staffLogin ? t.this_name > 5 || (t.staff_all > 40 && t.staff_from >= 10) : t.owner_all > 100 && t.owner_from >= 10);
     if (locked(await count())) { log("login_locked", { staff: staffLogin }); return json({ error: LOCKED }, 429); }
-    const mark = await db.batch([db.prepare("INSERT INTO login_attempts (who, ok) VALUES (?, 0)").bind(who), db.prepare("INSERT INTO login_attempts (who, ok) VALUES (?, 0)").bind(side), ...(staffLogin ? [db.prepare("INSERT INTO login_attempts (who, ok) VALUES (?, 0)").bind(nameKey)] : []),
-      db.prepare("DELETE FROM login_attempts WHERE at < strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 day')")]);
-    const tries = await count();
+    const mark = await db.batch([db.prepare("INSERT INTO login_attempts (who, ok) VALUES (?, 0)").bind(who), db.prepare("INSERT INTO login_attempts (who, ok) VALUES (?, 0)").bind(side),
+      db.prepare("DELETE FROM login_attempts WHERE ok = 0 AND at < strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 day')")]);
+    let tries = await count();
     if (locked(tries)) { log("login_locked", { staff: staffLogin }); return json({ error: LOCKED }, 429); }
+    // the name's own row only once this address is through its own limit, so one address's burst cannot lock every name
+    if (staffLogin) { mark.push(await db.prepare("INSERT INTO login_attempts (who, ok) VALUES (?, 0)").bind(nameKey).run()); tries = await count(); if (locked(tries)) { log("login_locked", { staff: true }); return json({ error: LOCKED }, 429); } }
     if (!staffLogin && tries.owner_all > 20 && tries.owner_from >= 3) await new Promise(r => setTimeout(r, Math.min(8000, 250 * 2 ** Math.floor((tries.owner_all - 20) / 10))));
     let right = false, staff = null;
     if (staffLogin) {
@@ -82,7 +84,7 @@ export async function admin(request, env, url) {
       right = await checkPin(env, typeof body.pin === "string" ? body.pin : "", staff && staff.pin_hash) && !!staff;   // the same work whether or not the name exists
     } else right = typeof body.passcode === "string" && await sameSecret(body.passcode, env.ADMIN_KEY);
     if (!right) { if (staff) await db.prepare("UPDATE login_attempts SET staff_id = ? WHERE id = ?").bind(staff.id, mark[0].meta.last_row_id).run(); log("login_failed", { staff: staffLogin }); return json({ error: staffLogin ? "That name and PIN do not match." : "That passcode is not right." }, 401); }
-    await db.batch([db.prepare("UPDATE login_attempts SET ok = 1, staff_id = ? WHERE id = ?").bind(staff ? staff.id : null, mark[0].meta.last_row_id), db.prepare("DELETE FROM login_attempts WHERE id = ?").bind(mark[1].meta.last_row_id), ...(staffLogin ? [db.prepare("DELETE FROM login_attempts WHERE id = ?").bind(mark[2].meta.last_row_id)] : [])]);
+    await db.batch([db.prepare("UPDATE login_attempts SET ok = 1, staff_id = ? WHERE id = ?").bind(staff ? staff.id : null, mark[0].meta.last_row_id), db.prepare("DELETE FROM login_attempts WHERE id = ?").bind(mark[1].meta.last_row_id), ...(staffLogin ? [db.prepare("DELETE FROM login_attempts WHERE id = ?").bind(mark[3].meta.last_row_id)] : [])]);
     const actor = staff ? `${staff.name} #${staff.id}` : "owner", t = hex(crypto.getRandomValues(new Uint8Array(32)));
     await db.batch([
       db.prepare(`INSERT INTO sessions (token_hash, expires_at, actor, staff_id, last_seen) VALUES (?, strftime('%Y-%m-%dT%H:%M:%SZ','now','+12 hours'), ?, ?, ${NOW})`).bind(await sha(t), actor, staff ? staff.id : null),

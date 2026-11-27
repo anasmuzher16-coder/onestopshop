@@ -46,7 +46,7 @@ export function orderPlaced(site, o, items, how = "at_pickup") {
     [`Tax, ${esc(o.tax_province || "")}`, money(o.tax_cents)], [paid ? "Paid by card" : "To pay at pickup", money(o.total_cents), true]];
   const heading = paid ? `Order ${esc(o.id)} is paid` : `Order ${esc(o.id)} is in`, first = esc(unlink(String(o.name).split(" ")[0]));
   const next = o.method === "pickup" ? "We email you when it is ready to pick up." : o.ship_service === "Local delivery" ? "Our driver calls before coming." : "We email the tracking number when it ships.";
-  const hold = paid ? null : holdOf(o), held = hold ? ` We hold it for ${hold.hours} hours, until ${esc(hold.until.replace(/\.$/, ""))}. If it is not picked up by then, it may be cancelled and the items put back on the shelf.` : "";
+  const hold = paid ? null : holdOf(o), held = hold ? ` We hold it for ${hold.hours} hours, until ${esc(hold.until.replace(/\.$/, ""))}. If it is not picked up and paid by then, it is cancelled and the items go back on the shelf.` : "";
   const intro = paid ? `Thank you, ${first}. Your payment went through. ${next}` : `Thank you, ${first}. You pay at the counter when you pick it up. ${next}${held}`;
   const foot = "Questions? Reply to this email or call the counter at 519-255-2222.";
   return { kind: "order_placed", subject: paid ? `Receipt for your ${site} order ${o.id}` : `Your ${site} order ${o.id}`, html: frame(site, heading, intro, rows, foot), body: plain(heading, intro, rows, foot) };

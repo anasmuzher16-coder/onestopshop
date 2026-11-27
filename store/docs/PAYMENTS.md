@@ -81,7 +81,8 @@ The counter reader is a separate decision. Square's is cheaper in store (2.5%) a
 For pickup only. The order is placed `pending` with pay `pay_at_pickup`, its stock is held, and the email says to
 pay at the counter. In the back office it can be marked ready before payment but cannot be marked collected until
 the shop taps "Mark paid at the counter" (`POST /api/admin/orders/<code>/paid`). Open item for the back-office
-branch: a counter order never collected holds its stock until the shop cancels it with restock.
+branch: since 2026-11-26 an unpaid counter order holds its stock for 48 hours (`PICKUP_HOLD_HOURS`), or 14 days from
+when the shop marks it ready, then the 10-minute sweep cancels it and puts the stock back (src/pay.js expirePickups).
 
 ## Refunds
 

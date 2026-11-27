@@ -8,7 +8,7 @@
 //  - every call that creates something at Stripe carries an Idempotency-Key, so a retry can never charge twice.
 import * as rates from "../public/rates-core.js";
 import { orderPlaced, newOrder, lowStock, writeEmail } from "./email.js";
-import { pruneGuards } from "./guard.js";
+import { pruneGuards, READY_HOLD_DAYS } from "./guard.js";
 
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" } });
 const NOW = "strftime('%Y-%m-%dT%H:%M:%SZ','now')";
@@ -85,14 +85,19 @@ export async function openCheckout(env, origin, o) {
 // One batch: the order closes only if it is still pending and unpaid, and that winning step stamps a fresh op;
 // the stock rows move only where the stamp is ours. A second expiry, a repeat webhook, or a sweep racing a webhook
 // all find the stamp taken and change nothing.
-// `from` is the payment state the order must still be in: 'awaiting' (a card page), or 'pay_at_pickup' (a counter order
-// whose hold ran out: then only once its pay_expires_at has passed, so staff marking it paid a moment earlier always wins).
+// `from` says what the order must still be: 'awaiting' (a card page), 'pay_at_pickup' (a counter order whose hold ran out:
+// only once its pay_expires_at has passed), or 'ready_unpaid' (a counter order the shop got ready, still unpaid 14 days
+// after it was ready, as the ready email promises). Each repeats its condition in the update, so staff marking it paid,
+// collected or cancelled a moment earlier always wins.
 export async function releaseHeld(db, id, why, from = "awaiting") {
-  const op = rand(), due = from === "pay_at_pickup" ? ` AND pay_expires_at IS NOT NULL AND pay_expires_at <= ${NOW}` : "";
+  const op = rand();
+  const when = from === "pay_at_pickup" ? `status = 'pending' AND pay_status = 'pay_at_pickup' AND pay_expires_at IS NOT NULL AND pay_expires_at <= ${NOW}`
+    : from === "ready_unpaid" ? `status = 'ready' AND pay_status = 'pay_at_pickup' AND COALESCE(ready_at, updated_at) <= strftime('%Y-%m-%dT%H:%M:%SZ','now','-${READY_HOLD_DAYS} days')`
+    : "status = 'pending' AND pay_status = 'awaiting'";
   const held = (await db.prepare("SELECT sku, -SUM(delta) AS qty FROM stock_moves WHERE ref = ? AND reason IN ('sale','released') GROUP BY sku HAVING -SUM(delta) > 0").bind(id).all()).results;
   const ours = "EXISTS (SELECT 1 FROM orders WHERE id = ?3 AND release_op = ?4)";
   const res = await db.batch([
-    db.prepare(`UPDATE orders SET status = 'cancelled', pay_status = ?1, release_op = ?2, pay_url = NULL, cancelled_at = ${NOW}, updated_at = ${NOW} WHERE id = ?3 AND status = 'pending' AND pay_status = ?4 AND release_op IS NULL${due}`).bind(why, op, id, from === "pay_at_pickup" ? "pay_at_pickup" : "awaiting"),
+    db.prepare(`UPDATE orders SET status = 'cancelled', pay_status = ?1, release_op = ?2, pay_url = NULL, cancelled_at = ${NOW}, updated_at = ${NOW} WHERE id = ?3 AND ${when} AND release_op IS NULL`).bind(why, op, id),
     ...held.flatMap(h => [
       db.prepare(`UPDATE products SET stock = stock + ?1, updated_at = ${NOW} WHERE sku = ?2 AND ${ours}`).bind(h.qty, h.sku, id, op),
       db.prepare(`INSERT INTO stock_moves (sku, delta, reason, ref, actor) SELECT ?2, ?1, 'released', ?3, 'payments' WHERE ${ours}`).bind(h.qty, h.sku, id, op),
@@ -192,12 +197,14 @@ export async function payStatus(request, env, url) {
 
 // ---------- 6. the safety net ----------
 // A pay-at-the-counter order holds its stock for PICKUP_HOLD_HOURS (48 by default, src/guard.js). One still unpaid and not
-// got ready by then (staff marking it ready, paid or cancelled ends the clock) closes as cancelled, payment 'expired', and
-// its stock goes back exactly once (releaseHeld). Orders placed before holds had an end (no pay_expires_at) never expire.
+// got ready by then closes as cancelled, payment 'expired', and its stock goes back exactly once (releaseHeld). One the shop
+// marked ready is held as the ready email says, 14 days from ready, then let go the same way. Paid or cancelled ends it.
+// Orders placed before holds had an end (no pay_expires_at) never expire.
 export async function expirePickups(env) {
-  const db = env.DB, list = (await db.prepare(`SELECT id FROM orders WHERE status = 'pending' AND pay_status = 'pay_at_pickup' AND release_op IS NULL AND pay_expires_at IS NOT NULL AND pay_expires_at <= ${NOW} ORDER BY pay_expires_at LIMIT 50`).all()).results;
+  const db = env.DB, list = (await db.prepare(`SELECT id, 'pay_at_pickup' AS hold FROM orders WHERE status = 'pending' AND pay_status = 'pay_at_pickup' AND release_op IS NULL AND pay_expires_at IS NOT NULL AND pay_expires_at <= ${NOW}
+    UNION ALL SELECT id, 'ready_unpaid' AS hold FROM orders WHERE status = 'ready' AND pay_status = 'pay_at_pickup' AND release_op IS NULL AND pay_expires_at IS NOT NULL AND COALESCE(ready_at, updated_at) <= strftime('%Y-%m-%dT%H:%M:%SZ','now','-${READY_HOLD_DAYS} days') LIMIT 50`).all()).results;
   let released = 0;
-  for (const o of list) { try { released += +(await releaseHeld(db, o.id, "expired", "pay_at_pickup")); } catch (e) { console.error(JSON.stringify({ at: "pickup-expiry", order: o.id, message: String(e && e.message || e) })); } }
+  for (const o of list) { try { released += +(await releaseHeld(db, o.id, "expired", o.hold)); } catch (e) { console.error(JSON.stringify({ at: "pickup-expiry", order: o.id, message: String(e && e.message || e) })); } }
   if (released) console.log(JSON.stringify({ at: "pickup-expiry", released }));
   return released;
 }

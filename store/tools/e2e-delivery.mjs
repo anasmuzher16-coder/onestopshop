@@ -20,7 +20,8 @@ let run = Date.now() % 100000;
 for (const [engine, w, h, mobile] of [["chromium", 390, 844, true], ["webkit", 390, 844, true], ["chromium", 1440, 900, false], ["webkit", 1440, 900, false]]) {
   run++; const b = await pw[engine].launch(), tag = `${engine}-${w}`, errs = [];
   try {
-    const ctx = await b.newContext({ viewport: { width: w, height: h }, ...(engine === "chromium" ? { isMobile: mobile } : {}), hasTouch: mobile, deviceScaleFactor: mobile ? 2 : 1 });
+    // each run is its own shopper (its own address and email): one shopper holds at most 3 unpaid orders (src/guard.js), and this suite places one per run
+    const ctx = await b.newContext({ extraHTTPHeaders: { "CF-Connecting-IP": `10.40.${run}.1` }, viewport: { width: w, height: h }, ...(engine === "chromium" ? { isMobile: mobile } : {}), hasTouch: mobile, deviceScaleFactor: mobile ? 2 : 1 });
     const p = await ctx.newPage(); p.on("pageerror", e => errs.push(e.message));
     // a capture for a person to look at, not a check: a page taller than WebKit can photograph in one piece (32,767 px; the
     // 83 hookah families since 2026-11-24) is captured to the first screen instead of failing the journey
@@ -65,7 +66,7 @@ for (const [engine, w, h, mobile] of [["chromium", 390, 844, true], ["webkit", 3
     t(`${tag} $200 or more shows Free in the cart`, /Local delivery[\s\S]*Free/.test(await p.locator(".opts").innerText()) && /Delivery\s*Free/.test(await p.locator(".totals").innerText()));
     await p.goto(B + "/checkout", { waitUntil: "networkidle" }); await p.waitForSelector("[data-checkout]");
     t(`${tag} $200 or more shows Free at checkout`, /Delivery\s*Free/.test(await p.locator(".totals").innerText()));
-    await p.fill("#co-name", "Dee Livery"); await p.fill("#co-email", "dee@example.com"); await p.fill("#co-city", "Windsor"); await p.fill("#co-line1", `7 D3000 ${run} St`); await p.fill("#co-phone", "519-555-0101");
+    await p.fill("#co-name", "Dee Livery"); await p.fill("#co-email", `dee-${run}@example.com`); await p.fill("#co-city", "Windsor"); await p.fill("#co-line1", `7 D3000 ${run} St`); await p.fill("#co-phone", "519-555-0101");
     if (CARD) {
       await press(p.locator('[data-checkout] button[type="submit"]')); await payThrough(p, 15000); await p.waitForTimeout(500);
       t(`${tag} order page shows Free and arrival wording`, /Delivery\s*Free/.test(await p.locator(".totals").innerText()) && /Arrives /.test(await p.locator("#main").innerText()));
@@ -112,7 +113,7 @@ for (const [engine, w, h, mobile] of [["chromium", 390, 844, true], ["webkit", 3
       await p.goto(B + "/cart", { waitUntil: "networkidle" }); await p.locator('input[name="ship"][value="pickup"]').check({ force: true }); await p.waitForTimeout(400);
       await p.goto(B + "/checkout", { waitUntil: "networkidle" }); await p.waitForSelector("[data-checkout]");
       t(`${tag} no keys: a pickup is paid at the counter`, /At the counter when you pick it up/.test(await p.locator(".co__pay").innerText()) && await go.isEnabled());
-      await p.fill("#co-name", "Dee Livery"); await p.fill("#co-email", "dee@example.com"); if (await p.locator("#co-phone").isVisible()) await p.fill("#co-phone", "519-555-0101");
+      await p.fill("#co-name", "Dee Livery"); await p.fill("#co-email", `dee-${run}@example.com`); if (await p.locator("#co-phone").isVisible()) await p.fill("#co-phone", "519-555-0101");
       await press(go); await p.waitForURL(/\/order\/W[A-Z0-9]{6}$/, { timeout: 15000 }); await p.waitForTimeout(600);
       t(`${tag} no keys: the pickup order is placed, to pay at the counter`, /counter/i.test(await p.locator("#main").innerText()) && !/tracking/i.test(await p.locator("#main").innerText()));
       await snap("done");
@@ -123,7 +124,7 @@ for (const [engine, w, h, mobile] of [["chromium", 390, 844, true], ["webkit", 3
       await ctx.close(); t(`${tag} no page errors`, !errs.length, errs.slice(0, 2).join(" | ")); continue;   // the browser closes in finally
     }
     t(`${tag} checkout already shows the exact fee`, /\$10\.00/.test(await p.locator(".totals").innerText()) && /^Pay \$/.test(await go.innerText()));
-    await p.fill("#co-name", "Dee Livery"); await p.fill("#co-email", "dee@example.com"); await p.fill("#co-city", "Windsor"); await p.fill("#co-line1", `7 D30000 ${run} St`); await p.fill("#co-phone", "519-555-0101");
+    await p.fill("#co-name", "Dee Livery"); await p.fill("#co-email", `dee-${run}@example.com`); await p.fill("#co-city", "Windsor"); await p.fill("#co-line1", `7 D30000 ${run} St`); await p.fill("#co-phone", "519-555-0101");
     await press(go); await p.waitForSelector("[data-local-off]");
     t(`${tag} an address past 25 km is refused plainly`, /past our 25 km/.test(await p.locator("[data-deliv-msg]").innerText()));
     await snap("far");

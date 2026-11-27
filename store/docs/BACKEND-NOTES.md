@@ -28,14 +28,14 @@ the place in the code that follows it. "Follow-up" items are known gaps left for
   600,000 for PBKDF2-SHA256; Workers refuse more than 100,000 (workerd#1346), so the pepper (a Worker secret,
   `PIN_PEPPER`, falling back to `ADMIN_KEY`) carries the rest: a stolen database alone cannot be guessed offline.
 - A 6-digit PIN is weak by itself (OWASP calls anything under 8 characters weak), so online guessing is capped:
-  more than 5 tries from one address (IPv6 counted by its /64), 5 on one name from anywhere (names that do not exist
+  more than 5 tries from one address (IPv6 counted by its /56), 5 on one name from anywhere (names that do not exist
   lock the same way, so a lock does not reveal who works there), or, for everyone, more than 40 staff tries coming
-  from at least 10 different addresses, lock staff sign-in for 15 minutes. A request already locked is refused before
+  from at least 10 different places (IPv6 counted by /48), lock staff sign-in for 15 minutes. A request already locked is refused before
   anything is written (a locked address cannot keep adding rows); one that gets through is written down and counted
-  again, so a burst of simultaneous tries on separate Workers is still counted in full. The owner's passcode has its own
+  again, and only then is the staff name's own row written (one address's burst cannot lock every name), so a burst of simultaneous tries on separate Workers is still counted in full. The owner's passcode has its own
   per-address limit plus a shop-wide ceiling of 100 tries from at least 10 addresses, with each owner try slowed past 20
   shop-wide (doubling, up to 8 s); staff PIN tries never count against it. No single address can trigger a shop-wide
-  lock. Tries older than a day are deleted on every try and by the 10-minute sweep. Obvious PINs are refused. On the
+  lock. Failed tries older than a day are deleted on every try and by the 10-minute sweep. Obvious PINs are refused. On the
   live site, staff sign-in refuses to run without `PIN_PEPPER`.
 - **Create `PIN_PEPPER` before any staff account exists** (`npx wrangler secret put PIN_PEPPER`, a long random value
   kept in Bitwarden, never in the repo). Every PIN hash is made with it when it is set (checked in test-backoffice:
@@ -50,19 +50,23 @@ the place in the code that follows it. "Follow-up" items are known gaps left for
 - Roles: staff do the daily work; staff, settings, the monthly report and the full backup are owner only (403).
 
 ## Placing an order: limits and holds (src/guard.js, src/checkout.js, src/pay.js; 2026-11-26)
-- Who is asking: `CF-Connecting-IP`, which Cloudflare sets at the edge; IPv6 is counted by its /64. Only a hash keyed
-  with a Worker secret is stored, in `order_attempts` (migration 0012), with the order it placed; rows go after 15 days.
-- Per visitor and per email: 5 orders in 10 minutes, 15 a day, and 3 orders still holding stock unpaid at once. Checked
+- Who is asking: `CF-Connecting-IP`, which Cloudflare sets at the edge; IPv6 is counted by its /56 (a home connection's usual block). Only a hash keyed
+  with a Worker secret is stored, in `order_attempts` (migration 0012), with the order it placed; rows go after 30 days.
+- Per visitor and per email: 5 orders in 10 minutes, 15 a day, and 3 pay-at-the-counter orders still holding stock unpaid at once (a card page lets its stock go by itself in 35 minutes). Checked
   before the order is written and again after (with it counted), so a burst gets no further than the limit. The
   shop-wide brake (12 orders a minute) stays as a last resort; one visitor reaches their own limit first.
-- Per order: 20 different items, 20 of one item, 40 units. A quantity must be a whole number sent as a number.
+- Per order: 20 different items, 20 of one item (the cart's own most, MAX_QTY), 40 units. A quantity must be a whole
+  number sent as a number. A phone number must be digits and separators.
 - Pay-at-the-counter holds end: `pay_expires_at` is set to `PICKUP_HOLD_HOURS` (default 48) after the order; the
   10-minute sweep cancels an order still pending and unpaid past it (payment 'expired') and puts its stock back once
-  (`releaseHeld`, guarded on the deadline so staff marking it paid always wins). Marking it ready, paid or cancelled
-  ends the clock. The receipt and the shop's new-order note state the window; the back office shows "Held until" and
+  (`releaseHeld`, guarded on the deadline so staff marking it paid always wins). One the shop marked ready is held 14
+  days from ready (as the ready email says), then let go the same way; ready-but-unpaid orders still count as held.
+  Paid or cancelled ends it. The receipt and the shop's new-order note state the window; the back office shows "Held until" and
   "Hold ended, unpaid". Orders placed before this change have no deadline and never expire.
 - The order name must be letters, spaces, apostrophes, hyphens and periods, with no period running into two letters,
-  so it can never carry a link into "Thank you, {name}". Customer text in emails (notes, addresses) has zero-width
+  so it can never carry a link into "Thank you, {name}". A signed-in shopper ordering with their own email is not held to that email's counts (a
+  stranger typing it cannot block them); the visitor limits still apply. Known limit: shoppers sharing one public IPv4
+  (carrier NAT, campus Wi-Fi) share one visitor's limits. Customer text in emails (notes, addresses) has zero-width
   spaces put into anything link-shaped, then is escaped.
 - Turnstile is not wired anywhere on the site yet (ACCOUNTS-LOYALTY.md lists it as a next step), so orders do not ask for it.
 - Apply migration 0012 before deploying this code. Without it, orders still go through on the email limits and the

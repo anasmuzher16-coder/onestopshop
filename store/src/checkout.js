@@ -12,7 +12,7 @@ import { cardReady, openCheckout, releaseHeld, receipt, HOLD_MIN, LATE_SESSION_M
 import { customerFrom } from "./account.js";
 import { orderLoyalty, orderLoyaltyStatements } from "./loyalty.js";
 import { cleanSource } from "./source.js";
-import { nameOk, ORDER_CAPS, orderLimits, orderWho, orderAttempt, pickupHoldHours } from "./guard.js";
+import { nameOk, phoneOk, ORDER_CAPS, orderLimits, orderWho, orderAttempt, pickupHoldHours } from "./guard.js";
 
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" } });
 const text = (v, max) => typeof v === "string" && v.trim().length > 0 && v.trim().length <= max ? v.trim() : null;
@@ -94,6 +94,8 @@ export async function placeOrder(request, env, url) {
   if (!name) return json({ error: "Tell us the name for the order.", field: "name" }, 400);
   // the name goes into the shop's emails: letters only, never anything a mail app could turn into a link (src/guard.js)
   if (!nameOk(name)) return json({ error: "Write the name in letters. Spaces, apostrophes, hyphens and periods are fine.", field: "name" }, 400);
+  // the phone goes into the shop's new-order note: digits and separators only, never anything a mail app makes a link
+  if (phone && !phoneOk(phone)) return json({ error: "Enter the phone number in digits, like 519-555-0144.", field: "phone" }, 400);
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return json({ error: "That email address does not look right.", field: "email" }, 400);
   const method = body.method === "pickup" ? "pickup" : body.method === "ship" ? "ship" : null;
   if (!method) return json({ error: "Choose shipping or pickup." }, 400);

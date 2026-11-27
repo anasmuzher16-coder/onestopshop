@@ -87,6 +87,8 @@ else {
   ok((await from(shopper(), { ...counter(`big-${run}@example.com`), lines: ["OSS-8001", "OSS-8003", "OSS-8004"].map(sku => ({ sku, qty: 15 })) })).data.too_big, "45 units in one order is refused");
   ok((await from(shopper(), { ...counter(`big-${run}@example.com`), lines: Array.from({ length: 21 }, (_, i) => ({ sku: "OSS-" + (9000 + i), qty: 1 })) })).data.too_big, "21 different items in one order is refused");
   // the name goes into the shop's mail: letters only, nothing a mail app turns into a link
+  const phone = await from(shopper(), counter(`ph-${run}@example.com`, "OSS-8001", { phone: "evil.example/pay" }));
+  ok(phone.status === 400 && phone.data.field === "phone", "a phone that is not a phone number is refused: " + phone.status);
   for (const bad of ["https://evil.example/claim x", "evil.example", "Visit www.example.com", "Sam 2", "a@b.co", "<b>x</b>"]) {
     const r = await from(shopper(), counter(`name-${run}@example.com`, "OSS-8001", { name: bad }));
     ok(r.status === 400 && r.data.field === "name", `the name "${bad}" is refused: ${r.status}`);
@@ -109,6 +111,9 @@ else {
   for (let i = 0; i < 3; i++) heldE.push(await from(shopper(), counter(em)));
   const fourthE = await from(shopper(), counter(em.toUpperCase()));
   ok(heldE.every(r => r.status === 201) && fourthE.status === 429 && fourthE.data.limited === "open", "a fourth unpaid order for one email is refused, in any case: " + heldE.map(r => r.status) + "," + fourthE.status);
+  sql(`UPDATE orders SET status = 'ready', ready_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id IN (${heldE.map(r => `'${r.data.order.id}'`).join(",")})`);
+  const readyE = await from(shopper(), counter(em));
+  ok(readyE.status === 429 && readyE.data.limited === "open", "orders the shop got ready but not yet paid still count as held: " + readyE.status);
   // paid orders free the hold, but one address still places at most 5 orders in 10 minutes
   sql(`UPDATE orders SET status = 'paid', pay_status = 'paid', paid_cents = total_cents WHERE id IN (${heldA.map(r => `'${r.data.order.id}'`).join(",")})`);
   const more = [await from(ipA, counter(`a4-${run}@example.com`, "OSS-7004")), await from(ipA, counter(`a5-${run}@example.com`, "OSS-7004"))];
@@ -131,7 +136,7 @@ else {
   const row = sql(`SELECT CAST((julianday(pay_expires_at) - julianday(created_at)) * 24 + 0.5 AS INTEGER) AS h FROM orders WHERE id = '${hold.data.order.id}'`)[0];
   ok(row && row.h === 48, "its hold ends 48 hours after it was placed: " + JSON.stringify(row));
   const mails = sql(`SELECT kind, body FROM emails WHERE order_id = '${hold.data.order.id}'`), rcpt = mails.find(m => m.kind === "order_placed"), note = mails.find(m => m.kind === "new_order");
-  ok(rcpt && /We hold it for 48 hours, until /.test(rcpt.body), "the receipt states the 48-hour hold plainly");
+  ok(rcpt && /We hold it for 48 hours, until .+ it is cancelled and the items go back on the shelf/.test(rcpt.body), "the receipt states the 48-hour hold plainly");
   ok(note && /within 48 hours, it cancels itself/.test(note.body) && /Held until/.test(note.body), "the shop's new-order note states the hold and when it ends");
   // one still pending past its time, one the shop already got ready: only the first is let go
   const ready = await from(shopper(), counter(`ready-${run}@example.com`, "OSS-8001"));
@@ -144,5 +149,11 @@ else {
   ok(rd && rd.status === "ready" && rd.pay_status === "pay_at_pickup", "an order the shop got ready is not touched: " + JSON.stringify(rd));
   ok((await stock("OSS-8001")) === mid + 1, `its one item went back on the shelf, once: ${mid} -> ${await stock("OSS-8001")}`);
   ok(sql(`SELECT COUNT(*) AS n FROM stock_moves WHERE ref = '${hold.data.order.id}' AND reason = 'released'`)[0].n === 1, "one put-back line in the stock history");
+  // the ready order is held as the ready email promises, 14 days, then let go the same way
+  sql(`UPDATE orders SET ready_at = strftime('%Y-%m-%dT%H:%M:%SZ','now','-15 days') WHERE id = '${ready.data.order.id}'`);
+  const mid2 = await stock("OSS-8001");
+  await fetch(B + "/__scheduled?cron=" + encodeURIComponent("*/10 * * * *")); await wait(2000);
+  const rd2 = sql(`SELECT status, pay_status FROM orders WHERE id = '${ready.data.order.id}'`)[0];
+  ok(rd2.status === "cancelled" && rd2.pay_status === "expired" && (await stock("OSS-8001")) === mid2 + 1, "a ready order still unpaid 14 days after it was ready is let go: " + JSON.stringify(rd2));
 }
 console.log(f ? `FAIL ${f} of ${n} checks` : `PASS ${n} checks`); process.exit(f ? 1 : 0);
