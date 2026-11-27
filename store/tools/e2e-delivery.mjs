@@ -52,7 +52,8 @@ for (const [engine, w, h, mobile] of [["chromium", 390, 844, true], ["webkit", 3
         t(`${tag} mail off: checkout says the shop calls or texts when it is ready, never an email`, /call or text you when it is ready/.test(w) && /wait for our call/.test(w) && !/email you|ready-for-pickup note|wait for that email/i.test(w), w.slice(0, 300)); }
       await p.fill("#co-name", "Dee Livery"); await p.fill("#co-email", `dee-${run}@example.com`);
       await press(go); await p.waitForTimeout(400);
-      t(`${tag} mail off: a pickup request with no phone is stopped, asking for one`, await p.locator("[data-co-err]").isVisible() && /phone number/.test(await p.locator("[data-co-err]").innerText()) && new URL(p.url()).pathname === "/checkout");
+      // 2026-11-27 (fleet/flow-polish): a field's error shows under that field, which is marked invalid and has the focus
+      t(`${tag} mail off: a pickup request with no phone is stopped, asking for one under the phone field`, await p.locator("#co-phone-err").isVisible() && /phone number/.test(await p.locator("#co-phone-err").innerText()) && await p.locator("#co-phone").getAttribute("aria-invalid") === "true" && await p.locator("#co-phone").getAttribute("aria-describedby") === "co-phone-err" && await p.evaluate(() => document.activeElement?.id) === "co-phone" && new URL(p.url()).pathname === "/checkout");
       await p.fill("#co-phone", "519-555-0181");
       await press(go); await p.waitForURL(/\/order\/W[A-Z0-9]{6}$/, { timeout: 15000 }); await p.waitForTimeout(600);
       const oid = new URL(p.url()).pathname.split("/").pop();

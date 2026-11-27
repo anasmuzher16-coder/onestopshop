@@ -30,7 +30,9 @@ export function loadMe(force) {
   return meWait;
 }
 const signedIn = () => !!(me && me.signed_in);
-function chrome() { $$("[data-account-link]").forEach(a => { a.textContent = signedIn() ? "Account" : "Sign in"; }); }
+// while the mail is off nobody can sign in (the code comes by email), so the header offers no "Sign in" (the Worker hides it in the
+// page it sends, too); someone already signed in still sees "Account"
+function chrome() { $$("[data-account-link]").forEach(a => { a.textContent = signedIn() ? "Account" : "Sign in"; a.hidden = !signedIn() && !MAIL_ON; }); }
 
 // ---------- points at checkout (read by app.js) ----------
 const choice = { reward: sess.get("use-reward") !== false };
@@ -284,6 +286,7 @@ function checkoutBits() {
   const f = $("[data-checkout]"); if (!f) return;
   const l = L(), box = $("[data-acct-co]", f);
   const html = signedIn() ? (l ? `${l.can_redeem ? `<label class="check co__reward"><input type="checkbox" data-use-reward ${choice.reward ? "checked" : ""}> <span>Use my ${money(l.reward_cents)} points reward</span></label>` : ""}<div class="co__pts">${punches(l)}<p>This order earns <b class="num">${earnNow(l)}</b> points, counted once it is picked up or delivered. <a class="link" href="/account">Your card</a></p></div>` : "")
+    : !MAIL_ON ? ""   // signing in needs an emailed code: no offer while our email is off
     : `<p class="co__p co__acct"><a class="link" href="/account?next=%2Fcheckout">Sign in</a> to fill this in for you${l ? " and collect points" : ""}. Or just carry on as a guest.</p>`;
   if (box) box.innerHTML = html; else { const t = $(".totals", f); if (t) t.insertAdjacentHTML("beforebegin", `<div data-acct-co>${html}</div>`); }
   if (!signedIn()) return;

@@ -146,7 +146,13 @@ const directions = (label = "Get directions") => `<a class="link" href="${SHOP_M
 const HOURS = SHOP_HOURS;   // DAYS, h12, nowInWindsor and openLine live in band.js: the Worker writes the band's open line too
 
 const pickupDay = () => { const { day, t } = nowInWindsor(); return t >= HOURS[day][1] ? "Tomorrow" : "Today"; };   // after closing, the counter's next chance is tomorrow
-const pickupReady = () => pickupDay() === "Today" ? "Ready the same day" : "Ready tomorrow";
+// A pickup request's ready time, said the same way everywhere (the /shipping page's words, design review 2026-11-27): the shop
+// checks the shelf first, so "today" is never promised. A paid pickup (card on) still says today or tomorrow.
+const READY_WHEN = "usually the same or the next day";
+const pickupReady = (request = PICKUP_ONLY) => request ? "Usually ready the same or the next day" : pickupDay() === "Today" ? "Ready the same day" : "Ready tomorrow";
+const REQ_LAPSE = () => `A request we have not confirmed is cancelled after ${REQ_SPAN}.`;
+// the counter's address and hours, one line for the confirmation and the order's own page (the footer's hours)
+const SHOP_OPEN = "Open Mon to Sat 10&nbsp;to&nbsp;9, Sun 11&nbsp;to&nbsp;7", pickupWhere = () => `Pickup at ${SHOP_ADDRESS}. ${SHOP_OPEN}. ${directions()}`;
 const cartLines = () => state.cart.map(l => ({ product: bySku[l.sku], qty: l.qty }));
 const cartCount = () => state.cart.reduce((a, l) => a + l.qty, 0);
 const toCents = n => Math.round(n * 100);
@@ -405,7 +411,7 @@ function viewHome() {
       <p class="visit__now">${openLine()}</p>
       <dl class="visit__facts">
         <div><dt>Where</dt><dd>${SHOP_ADDRESS}<span class="visit__todo">${directions()}</span></dd></div>
-        <div><dt>Pick up</dt><dd>Order online, pick up at the counter the same day. Free.</dd></div>
+        <div><dt>Pick up</dt><dd>${PICKUP_ONLY ? `Order online, pick up at the counter, ${READY_WHEN}. Free.` : "Order online, pick up at the counter the same day. Free."}</dd></div>
         <div><dt>Call</dt><dd><a class="link" href="tel:+15192552222">519-255-2222</a></dd></div>
         <div><dt>Rated</dt><dd>${directions("4.5 stars on Google, 115 reviews")}</dd></div>
       </dl>
@@ -437,9 +443,9 @@ function viewShop(cat) {
 
 // The product page for charcoal: one plain answer about how it is bought, in place of the delivery and shipping rows.
 // The rule sits above the button, so nobody adds it to the cart before reading how it is bought.
-const counterLine = p => PICKUP_ONLY
-  ? `<div class="dline dline--fixed dline--above" role="note"><span class="dline__msg">Pickup only</span><span class="dline__sub">${isCharcoal(p) ? "Never shipped by Canada Post. " : ""}Free pickup at ${SHOP_STREET}, paid in the shop.</span></div>`
-  : p.weightTbd && !isCharcoal(p)
+// While card payment is off every item is a pickup, so charcoal gets the same pickup line as everything else (deliveryLine) and
+// this note, which would imply other items ship today, is not drawn (design review, 2026-11-27).
+const counterLine = p => p.weightTbd && !isCharcoal(p)
   ? `<div class="dline dline--fixed dline--above" role="note"><span class="dline__msg">Pickup or local delivery for now</span><span class="dline__sub">Shipping TBD: the pack weight is being confirmed. Free pickup at ${SHOP_STREET}, or local delivery from $10 near Windsor.</span></div>`
   : `<div class="dline dline--fixed dline--above" role="note"><span class="dline__msg">Pickup or local delivery only</span><span class="dline__sub">Never shipped by Canada Post. Free pickup at ${SHOP_STREET}, or local delivery from $10 near Windsor.</span></div>`;
 // a charcoal box's size and count, read from the shop's own line; a size the list leaves blank says so
@@ -453,11 +459,11 @@ function counterSpec(p) {
           ${d.brand ? `<div><dt>Brand</dt><dd>${esc(d.brand)}</dd></div>` : ""}
           ${box ? `<div><dt>From the box</dt><dd><a class="link" href="/p/${box.sku}">${esc(box.name)}</a>, ${whole(box.price)}</dd></div>` : ""}
           ${rolls.map(r => `<div><dt>One roll</dt><dd><a class="link" href="/p/${r.sku}">Single roll</a>, ${whole(r.price)}</dd></div>`).join("")}
-          ${isCharcoal(p) || p.weightTbd ? `<div><dt>Size</dt><dd>${sizeOf(p) ? escN(sizeOf(p)) : TBD("")}</dd></div>` : ""}
-          ${p.facts && "count" in p.facts ? `<div><dt>${isCharcoal(p) ? "Pieces" : "Sheets"}</dt><dd>${p.facts.count ? `<span class="num">${p.facts.count}</span>` : TBD("")}</dd></div>` : ""}
-          ${p.weightTbd ? `<div><dt>Weight</dt><dd>${TBD("")}</dd></div>` : ""}
+          ${(isCharcoal(p) || p.weightTbd) && (sizeOf(p) || !PICKUP_ONLY) ? `<div><dt>Size</dt><dd>${sizeOf(p) ? escN(sizeOf(p)) : TBD("")}</dd></div>` : ""}
+          ${p.facts && "count" in p.facts && (p.facts.count || !PICKUP_ONLY) ? `<div><dt>${isCharcoal(p) ? "Pieces" : "Sheets"}</dt><dd>${p.facts.count ? `<span class="num">${p.facts.count}</span>` : TBD("")}</dd></div>` : ""}
+          ${p.weightTbd && !PICKUP_ONLY ? `<div><dt>Weight</dt><dd>${TBD("")}</dd></div>` : ""}
           <div><dt>Getting it</dt><dd>${PICKUP_ONLY ? "Pickup at the counter, paid in the shop" : p.weightTbd && !isCharcoal(p) ? `Pickup or local delivery. ${TBD("Shipping")}` : "Pickup or local delivery only"}</dd></div>
-          ${!p.img && !p.photo ? `<div><dt>Photo</dt><dd>${box && box.img ? "Shows the box this roll comes from." : "Coming. The drawing stands in until the shop's photo is up."}</dd></div>` : ""}
+          ${!p.img && !p.photo ? `<div><dt>Photo</dt><dd>${box && box.img ? "Shows the box this roll comes from." : "Photo coming soon"}</dd></div>` : ""}
         </dl>
       </section>`;
 }
@@ -478,7 +484,7 @@ function factsSpec(p, fam) {
           <div><dt>Colours</dt><dd>${fam.length > 1 ? `<span class="num">${fam.length}</span> shown${named ? ": " + esc(fam.map(v => v.colour).join(", ")) : ""}` : named ? esc(fam.map(v => v.colour).join(", ")) : "One"}</dd></div>` : ""}
           ${catItem(p) && ticked(p) ? `<div><dt>Availability</dt><dd>In the shop</dd></div>` : ""}
           ${shopCols(p) ? `<div><dt>${p.family ? "In the shop" : "Colours"}</dt><dd>${esc(p.details.colours.join(", "))}</dd></div>` : ""}
-          ${!p.img ? `<div><dt>Photo</dt><dd>Coming. The drawing stands in until the photo is ready.</dd></div>` : p.family && f.photo === "family" ? `<div><dt>Photo</dt><dd>Shows another colour of this hookah.</dd></div>` : ""}
+          ${!p.img ? `<div><dt>Photo</dt><dd>Photo coming soon</dd></div>` : p.family && f.photo === "family" ? `<div><dt>Photo</dt><dd>Shows another colour of this hookah.</dd></div>` : ""}
           ${catItem(p) ? `<div><dt>Supplier</dt><dd>Ace Hookah</dd></div>` : ""}
           <div><dt>Item</dt><dd class="num">${p.sku}</dd></div>
         </dl>
@@ -511,7 +517,7 @@ function viewProduct(sku) {
       ${chips}
       ${p.details && p.details.notes ? `<p class="pdp__notes"><span>Notes</span> ${esc(p.details.notes)}</p>` : ""}
       ${!p.family && sale && Array.isArray(p.details?.colours) && p.details.colours.length ? `<p class="pdp__notes"><span>Colours</span> ${esc(p.details.colours.join(", "))}</p>` : ""}
-      ${localOnly(p) ? counterLine(p) : ""}
+      ${localOnly(p) && !PICKUP_ONLY ? counterLine(p) : ""}
       ${!sale ? `${p.state === "tbd" ? `<p class="pdp__avail">Price TBD. ${catItem(p) ? "In the shop now. " : ""}The shop sets the price and confirms stock.</p>` : `<p class="soldline">Coming soon.</p>`}<a class="btn btn--ghost btn--call btn--ask" href="tel:+15192552222">Ask the counter, 519-255-2222</a>`
         : sold ? `<p class="soldline">${p.dark ? "This one has sold. Each resin stem is poured once." : "Sold out for now."}</p><a class="btn btn--ghost btn--call" href="tel:+15192552222">Call the counter</a>`
         : `<p class="pdp__price num">${whole(p.price)}</p>${inCart ? `<a class="btn btn--wide" href="/cart">In your cart. View cart</a>` : `<button class="btn btn--wide" type="button" data-add="${p.sku}">Add to cart</button>`}`}
@@ -652,9 +658,9 @@ function deliveryNow(subCents = cartCents()) {
 function deliveryLine(p, opts) {
   if (isSold(p) || !forSale(p)) return "";
   // shisha is paid at the counter until the card company approves it, so it is a pickup: never promise shipping the cart will not offer
-  if (counterPay(p)) return `<p class="dline dline--fixed"><span class="dline__msg">Pickup at the Windsor counter</span><span class="dline__sub">Free, ready ${esc(pickupDay().toLowerCase())}. ${SAY.shisha}</span></p>`;
-  // card payment off: every order is a pickup paid at the counter (charcoal says it in its own line above the button)
-  if (PICKUP_ONLY) return localOnly(p) ? "" : `<p class="dline dline--fixed"><span class="dline__msg">Pickup at the Windsor counter</span><span class="dline__sub">Free, ready ${esc(pickupDay().toLowerCase())}. Paid in the shop.</span></p>`;
+  if (counterPay(p)) return `<p class="dline dline--fixed"><span class="dline__msg">Pickup at the Windsor counter</span><span class="dline__sub">Free pickup, usually ready the same or the next day. ${SAY.shisha}</span></p>`;
+  // card payment off: every order is a pickup paid at the counter, charcoal included, said the same way for every item
+  if (PICKUP_ONLY) return `<p class="dline dline--fixed"><span class="dline__msg">Pickup at the Windsor counter</span><span class="dline__sub">Free pickup, usually ready the same or the next day. Paid in the shop.</span></p>`;
   // another item, with shisha already in the cart: the whole order is a pickup, so say that before anyone counts on shipping
   if (counterPayIn(cartLines()).length) return `<p class="dline dline--fixed"><span class="dline__msg">Your order is a pickup while it has shisha</span><span class="dline__sub">Shisha is pickup only and paid in the shop, so the whole order is picked up in Windsor</span></p>`;
   let s = deliveryNow(cartCents() + (state.cart.some(l => l.sku === p.sku) ? 0 : toCents(p.price)));
@@ -757,7 +763,7 @@ function viewCart() {
       ${chosen ? `<details class="why" ${state.whyOpen ? "open" : ""}><summary>What makes up ${money(chosen.total)}</summary><dl>
         ${chosen.perParcel.map((p, i) => `<div><dt>Box ${i + 1}, billed at ${p.billableKg} kg</dt><dd class="num">${money(p.freight)}</dd></div>`).join("")}
         ${chosen.cover ? `<div><dt>Glass coverage and signature</dt><dd class="num">${money(chosen.cover)}</dd></div>` : ""}
-        <div><dt>Carrier fuel charge, ${(fuelOn().pct * 100).toFixed(1)}%, ${fuelOn().stale ? "the last rate we have, for" : "the rate posted for"} ${fuelOn().week}</dt><dd class="num">${money(chosen.fuel)}</dd></div></dl></details>` : ""}` : atCounter ? `<p class="pickline"><b>Pick up at the Windsor counter</b> <span>${SHOP_STREET}, Windsor. ${pickupReady()}</span> <span class="num">Free</span></p>` : `<fieldset class="opts"><legend>${counter && state.dest ? `Getting it to ${esc(state.dest.full)} <button class="link" type="button" data-open-postal>Change</button>` : counter ? "Choose one" : "Or skip shipping"}</legend><label class="opt"><input type="radio" name="ship" value="pickup" ${pickup ? "checked" : ""}><span class="opt__name">Pick up at the Windsor counter<small>${SHOP_STREET}, Windsor. ${pickupReady()}</small></span><span class="num">Free</span></label>${mixed && !atCounter ? dropOpt(lines) : ""}</fieldset>`}
+        <div><dt>Carrier fuel charge, ${(fuelOn().pct * 100).toFixed(1)}%, ${fuelOn().stale ? "the last rate we have, for" : "the rate posted for"} ${fuelOn().week}</dt><dd class="num">${money(chosen.fuel)}</dd></div></dl></details>` : ""}` : atCounter ? `<p class="pickline"><b>Pick up at the Windsor counter</b> <span>${SHOP_STREET}, Windsor. ${pickupReady(true)}</span> <span class="num">Free</span></p>` : `<fieldset class="opts"><legend>${counter && state.dest ? `Getting it to ${esc(state.dest.full)} <button class="link" type="button" data-open-postal>Change</button>` : counter ? "Choose one" : "Or skip shipping"}</legend><label class="opt"><input type="radio" name="ship" value="pickup" ${pickup ? "checked" : ""}><span class="opt__name">Pick up at the Windsor counter<small>${SHOP_STREET}, Windsor. ${pickupReady()}</small></span><span class="num">Free</span></label>${mixed && !atCounter ? dropOpt(lines) : ""}</fieldset>`}
     </section>
     <div class="giftnote"><label class="field__label" for="note">Gift note <span class="fine">optional, written on a card with your order</span></label>
       <textarea class="field field--text field--area" id="note" data-note maxlength="240" rows="2" placeholder="Happy birthday, from all of us">${esc(state.note)}</textarea></div>
@@ -996,12 +1002,16 @@ function shownTotals(lines, sc) {
 function coTotals(lines, sc) {
   const { pickup, local } = sc, t = shownTotals(lines, sc), units = lines.reduce((a, l) => a + l.qty, 0);
   return `<dl class="totals" data-total="${t.total}">
-        <div><dt>${units} ${units === 1 ? "item" : "items"}</dt><dd class="num">${money(t.subtotal / 100)}</dd></div>
+        <div><dt>Items</dt><dd class="num">${money(t.subtotal / 100)}</dd></div>
         ${rewardRow(t.reward)}<div><dt>${pickup ? "Pickup" : local ? "Delivery" : "Shipping"}</dt><dd class="num">${pickup ? "Free" : local ? (t.fee === null ? "Enter your address" : feeText(t.shipping / 100)) : money(t.shipping / 100)}</dd></div>
         <div><dt>${taxLabel(t.prov)}</dt><dd class="num">${money(t.tax / 100)}</dd></div>
-        <div class="totals__door"><dt>${local && t.fee === null ? "Total before delivery" : "Total"}</dt><dd class="num">${money(t.total / 100)}</dd></div>
+        <div class="totals__door"><dt>${local && t.fee === null ? "Total before delivery" : pickup && payWay(sc) === "at_pickup" ? "To pay at pickup" : "Total"}</dt><dd class="num">${money(t.total / 100)}</dd></div>
       </dl>`;
 }
+// what is asked for, one line per item, the way the confirmation lists it ("2 × name", colour under it, the line's price)
+const coLines = lines => `<ul class="co__lines done__lines">${lines.map(({ product: p, qty }) => `<li><span><b class="num">${qty}</b> &times; ${esc(p.name)}${p.family && p.named && p.colour ? `<small class="co__col">${esc(p.colour)}</small>` : ""}</span><span class="num">${money(p.price * qty)}</span></li>`).join("")}</ul>`;
+// the checkout's lines and totals change together (another tab's cart, a new price from the shop, points spent elsewhere)
+function swapTotals(f, lines, sc) { const t = f.querySelector(".totals"), l = f.querySelector(".co__lines"); if (t) t.outerHTML = coTotals(lines, sc); if (l) l.outerHTML = coLines(lines); }
 // One key per order attempt. A retry after a lost answer sends the same key, so the shop can never make the order twice.
 function orderKey(sig) {
   let k = state.orderKey; if (!k) try { k = JSON.parse(sessionStorage.getItem("oss:order-key")); } catch {}
@@ -1020,7 +1030,7 @@ const SHISHA_CARD = document.querySelector('meta[name="oss-shisha-card"]')?.cont
 const counterPay = p => !!p && (p.cat === "shisha" || !!p.details?.tobacco) && !SHISHA_CARD;   // the same rule as checkout.js tobacco()
 const counterPayIn = lines => lines.filter(l => counterPay(l.product));
 const payWay = sc => !sc.pickup ? "card" : !CARD_ON || counterPayIn(cartLines()).length ? "at_pickup" : state.pay === "at_pickup" ? "at_pickup" : "card";
-const payLabel = (sc, total) => sc.local && deliveryFeeNow() === null ? "Check delivery price" : payWay(sc) === "card" ? `Pay ${money(total / 100)}` : "Place order";
+const payLabel = (sc, total) => sc.local && deliveryFeeNow() === null ? "Check delivery price" : payWay(sc) === "card" ? `Pay ${money(total / 100)}` : "Send pickup request";   // paid at the counter: nothing is charged, so no total on the button
 function payBlock(sc, total) {
   const shisha = counterPayIn(cartLines());
   if (shisha.length) return `<fieldset class="co__set co__pay"><legend class="h3">Payment</legend><p class="co__p">${sc.pickup ? "At the counter when you pick it up. Shisha is paid in the shop." : `Shisha is paid at the counter when you pick it up, so this order needs pickup. <a class="link" href="/cart">Choose pickup</a>, or take ${shisha.length === 1 ? esc(shisha[0].product.name) : "the shisha"} out to have the rest delivered.`}</p></fieldset>`;
@@ -1060,18 +1070,22 @@ function viewCheckout() {
   if (!state.form?.name) try { const kept = JSON.parse(sessionStorage.getItem("oss:co-form")); if (kept) state.form = { ...kept, ...(state.form || {}) }; } catch {}
   const f = state.form || {}, quoted = local && deliveryFeeNow() !== null;
   const back = new URLSearchParams(location.search).get("unpaid"), unpaid = back && /^W[A-Z0-9]{6}$/.test(back) ? `<p class="co__back" role="status"><b>Payment not finished.</b> Nothing was charged. Your items are held for 30 minutes.</p>` : "";
-  const field = (id, label, attrs, hint = "") => `<label class="field__label" for="co-${id}">${label}${hint ? ` <span class="fine">${hint}</span>` : ""}</label><input class="field" id="co-${id}" name="${id}" value="${esc(f[id] || "")}" ${attrs}>`;
+  // each field carries its own error line, shown under it (design review 2026-11-27: the phone's error sat ~700 px below the field)
+  const field = (id, label, attrs, hint = "") => `<label class="field__label" for="co-${id}">${label}${hint ? ` <span class="fine">${hint}</span>` : ""}</label><input class="field" id="co-${id}" name="${id}" value="${esc(f[id] || "")}" ${attrs}><p class="field__err co__ferr" id="co-${id}-err" hidden></p>`;
+  const atCounter = pickup && payWay(sc) === "at_pickup";
   return `
   ${band("checkout", "emerald", "Checkout", `<a href="/cart">Back to the cart</a>`)}
   <section class="cart checkout">
     <form class="co" data-checkout novalidate>
+      <div class="co__main">
       ${unpaid}
       <fieldset class="co__set"><legend class="h3">Who it is for</legend>
         ${field("name", "Full name", 'autocomplete="name" maxlength="80" required')}
         ${field("email", "Email", 'type="email" autocomplete="email" inputmode="email" maxlength="120" required', !MAIL_ON ? "kept with your order" : local ? "for the receipt" : pickup ? "for the receipt and the ready-for-pickup note" : "for the receipt and tracking")}
         ${field("phone", "Phone", `type="tel" autocomplete="tel" inputmode="tel" maxlength="30"${local || phoneNeeded(sc) ? " required" : ""}`, local ? "so the driver can reach you" : phoneNeeded(sc) ? "we call or text you when it is ready" : "optional")}
       </fieldset>
-      ${pickup ? `<fieldset class="co__set"><legend class="h3">Pickup</legend><p class="co__p">At ${SHOP_ADDRESS}. ${payWay(sc) === "at_pickup" ? `We check the shelf and ${TELL} when it is ready` : `We ${TELL} when it is ready`}, usually ${pickupDay() === "Today" ? "the same day" : "tomorrow"}.${payWay(sc) === "at_pickup" ? ` Please wait for ${TOLD} before you come in: nothing is set aside until then.` : ""} Bring the order number. ${directions()}</p></fieldset>`
+      <div data-acct-co></div>
+      ${pickup ? `<fieldset class="co__set"><legend class="h3">Pickup</legend><p class="co__p">At ${SHOP_ADDRESS}. ${atCounter ? `We check the shelf and ${TELL} when it is ready, ${READY_WHEN}. Please wait for ${TOLD} before you come in: nothing is set aside until then. ${REQ_LAPSE()}` : `We ${TELL} when it is ready, usually ${pickupDay() === "Today" ? "the same day" : "tomorrow"}.`} Bring the order number. ${directions()}</p></fieldset>`
         : `<fieldset class="co__set"><legend class="h3">Where it is going</legend>
         ${field("line1", "Street address", 'autocomplete="address-line1" maxlength="120" required')}
         ${field("city", "City or town", 'autocomplete="address-level2" maxlength="60" required')}
@@ -1081,10 +1095,15 @@ function viewCheckout() {
           : `<p class="co__p">${chosen.carrier} ${chosen.service}, ${days(chosen.days)}. <a class="link" href="/cart">Change</a></p>`}</fieldset>`}
       ${sc.counter && !PICKUP_ONLY ? `<p class="co__p co__coal"><b class="line__pick">Pickup or local delivery only</b> ${lines.filter(l => localOnly(l.product)).map(l => esc(l.product.name)).join(", ")}</p>` : ""}
       ${payBlock(sc, shownTotals(lines, sc).total)}
+      </div>
+      <div class="co__sum">
+      <h2 class="h3">${PICKUP_ONLY ? "Your pickup request" : "Your order"}</h2>
+      ${coLines(lines)}
       ${coTotals(lines, sc)}
       <p class="field__err" role="alert" data-co-err hidden></p>
       <button class="btn btn--wide" type="submit" ${(!pickup && !state.dest.complete) || (!pickup && !CARD_ON) || (!pickup && counterPayIn(lines).length) ? "disabled" : ""}>${payLabel(sc, shownTotals(lines, sc).total)}</button>
       ${CARD_ON ? `<p class="fine" data-pay-fine ${payWay(sc) === "card" ? "" : "hidden"}>Payment is taken by Stripe. We never see your card number.</p>` : ""}
+      </div>
     </form>
   </section>`;
 }
@@ -1134,6 +1153,8 @@ function statusHtml(id, s) {
     <h1 class="h2 h2--xl">${head}</h1>
     <p class="lead" role="status" aria-live="polite">${lead}</p>
     <ul class="done__lines">${s.items.map(i => `<li><span><b class="num">${i.qty}</b> &times; ${esc(i.name)}</span></li>`).join("")}</ul>
+    ${Number.isInteger(s.total_cents) ? `<dl class="totals"><div class="totals__door"><dt>${s.pay_at_counter && !["collected", "cancelled"].includes(s.status) ? "To pay at pickup" : "Total"}</dt><dd class="num">${money(s.total_cents / 100)}</dd></div></dl>` : ""}
+    ${s.method === "pickup" && !["cancelled", "collected"].includes(s.status) ? `<p class="fine">${s.status === "ready" ? `${SHOP_OPEN}.` : pickupWhere()}</p>` : ""}
     <p class="fine">Questions? Call the counter at <a class="link" href="tel:+15192552222">519-255-2222</a> with your order number.</p>
     <a class="btn btn--wide" href="/shop">Keep looking</a>
   </section>`;
@@ -1158,17 +1179,22 @@ function viewOrder(id) {
   const k = new URLSearchParams(location.search).get("k");
   if (k && /^[a-f0-9]{32}$/.test(k)) return viewStatus(id, k);
   let o = null; try { o = JSON.parse(sessionStorage.getItem("oss:order:" + id)); } catch { o = null; }
-  if (!o) return `${band("missing", "ruby", "We cannot show that order.")}<section class="empty"><p class="lead">Order details only open on the phone or computer that placed the order. To ask about one, call the counter at <a class="link" href="tel:+15192552222">519-255-2222</a>.</p><p class="lead"><a class="link" href="/shop">See what is on the counter</a>.</p></section>`;
+  if (!o) return `${band("missing", "ruby", "We cannot show that order.")}<section class="empty"><p class="lead">This order opens from its private link. Lost it? Call <a class="link" href="tel:+15192552222">519-255-2222</a> with your order number.</p><p class="lead"><a class="link" href="/shop">See what is on the counter</a>.</p></section>`;
   const c = n => money(n / 100), p = o.pay || {}, first = esc(o.name.split(" ")[0]);
   if (p.method === "card" && p.status === "awaiting" && p.session && !p.slow) watchPayment(o);
   const { head, lead, door } = payWords(o);
+  const link = o.status_url && /^\/order\/W[A-Z0-9]{6}\?k=[a-f0-9]{32}$/.test(o.status_url) ? o.status_url : "";
+  // the private link is the way back to this order from any phone or computer, so it gets buttons beside the order sticker
+  // (design review 2026-11-27: with mail off nothing else carries it, and a small grey link was easy to lose)
+  const keep = link ? `<div class="keeplink"><button class="btn btn--ghost keeplink__b" type="button" data-copy-link>Copy link</button>${typeof navigator.share === "function" ? `<button class="btn btn--ghost keeplink__b" type="button" data-share-link>Share</button>` : ""}</div>` : "";
   return `
   <section class="cart done">
-    <p class="done__tag"><span>Order</span> <b class="num">${esc(o.id)}</b></p>
+    <div class="done__head"><p class="done__tag"><span>Order</span> <b class="num">${esc(o.id)}</b></p>${keep}</div>
     <h1 class="h2 h2--xl" data-pay-head>${head}</h1>
     <p class="lead" role="status" aria-live="polite" data-pay-state="${esc(p.status || "")}">${lead}</p>
-    ${o.status_url && /^\/order\/W[A-Z0-9]{6}\?k=[a-f0-9]{32}$/.test(o.status_url) ? `<p class="fine" data-status-link>See where it stands any time on <a class="link" href="${esc(o.status_url)}">your order's own page</a>. Keep the link: it is the only way to open it.</p>` : ""}
-    <p class="fine">${o.method === "pickup" ? `Pickup at ${SHOP_ADDRESS}. ${directions()}` : o.service === "Local delivery" ? `Local delivery.${o.eta ? " " + esc(o.eta) + "." : ""}` : `${esc(o.service)}.`}</p>
+    ${link ? `<p class="fine" data-status-link data-link="${esc(link)}">See where it stands any time on <a class="link" href="${esc(link)}">your order's private page</a>. It opens on any phone or computer. <span class="sr" role="status" aria-live="polite" data-copy-said></span></p>` : ""}
+    ${o.method === "pickup" && p.method === "at_pickup" ? `<p class="fine">Usually ready the same or the next day. ${REQ_LAPSE()}</p>` : ""}
+    <p class="fine">${o.method === "pickup" ? pickupWhere() : o.service === "Local delivery" ? `Local delivery.${o.eta ? " " + esc(o.eta) + "." : ""}` : `${esc(o.service)}.`}</p>
     <ul class="done__lines">${o.items.map(i => `<li><span><b class="num">${i.qty}</b> &times; ${esc(i.name)}</span><span class="num">${c(i.unit_cents * i.qty)}</span></li>`).join("")}</ul>
     <dl class="totals">
       <div><dt>Items</dt><dd class="num">${c(o.subtotal_cents)}</dd></div>
@@ -1180,15 +1206,33 @@ function viewOrder(id) {
     <a class="btn btn--wide" href="/shop">Keep looking</a>
   </section>`;
 }
+// Copy link / Share on the confirmation: the full address of the order's private page. Copy falls back to a hidden text box when
+// the clipboard API is missing or refused; if that fails too, the link is selected on screen to copy by hand. Says what happened.
+let copySaidT = 0;
+document.addEventListener("click", async e => {
+  const b = e.target.closest("[data-copy-link],[data-share-link]"); if (!b) return;
+  const box = document.querySelector("[data-status-link]"), said = box && box.querySelector("[data-copy-said]"); if (!box) return;
+  const url = new URL(box.dataset.link, location.origin).href;
+  if (b.hasAttribute("data-share-link")) { try { await navigator.share({ title: "One Stop Shop order", url }); } catch {} return; }   // a closed share sheet is not an error
+  let ok = false;
+  try { await navigator.clipboard.writeText(url); ok = true; } catch {}
+  if (!ok) try { const t = document.createElement("textarea"); t.value = url; t.setAttribute("readonly", ""); t.style.cssText = "position:fixed;top:0;left:0;opacity:0"; document.body.append(t); t.select(); ok = document.execCommand("copy"); t.remove(); } catch {}
+  if (!ok) { const a = box.querySelector("a"); if (a) { const r = document.createRange(); r.selectNodeContents(a); getSelection().removeAllRanges(); getSelection().addRange(r); } }
+  b.textContent = ok ? "Link copied" : "Copy link"; if (said) said.textContent = ok ? "Link copied." : "Select the link to copy it.";
+  clearTimeout(copySaidT); copySaidT = setTimeout(() => { if (b.isConnected) b.textContent = "Copy link"; }, 2600);
+});
 document.addEventListener("change", e => {   // the choice changes the button and the small print in place; the form is never rebuilt
   const f = e.target.name === "pay" && e.target.closest("[data-checkout]"); if (!f) return;
   state.pay = e.target.value; const lines = cartLines(), sc = shipChoice(lines);
-  f.querySelector('button[type="submit"]').textContent = payLabel(sc, shownTotals(lines, sc).total); f.querySelector("[data-pay-fine]").hidden = payWay(sc) !== "card";
+  swapTotals(f, lines, sc); f.querySelector('button[type="submit"]').textContent = payLabel(sc, shownTotals(lines, sc).total); f.querySelector("[data-pay-fine]").hidden = payWay(sc) !== "card";
 });
+// a field's own error goes as soon as it is being put right
+function clearFieldErrs(f, only) { for (const el of f.querySelectorAll("input[aria-invalid]")) { if (only && el !== only) continue; el.removeAttribute("aria-invalid"); el.removeAttribute("aria-describedby"); const own = f.querySelector(`#co-${el.name}-err`); if (own) own.hidden = true; } }
+document.addEventListener("input", e => { const f = e.target.closest("[data-checkout]"); if (f && e.target.name && e.target.hasAttribute("aria-invalid")) clearFieldErrs(f, e.target); });
 document.addEventListener("input", e => { const f = e.target.closest("[data-checkout]"); if (f && e.target.name) { state.form = state.form || {}; state.form[e.target.name] = e.target.value; if ((e.target.name === "line1" || e.target.name === "city") && f.querySelector("[data-deliv-msg]")) refreshDelivery(f); } });
 function refreshDelivery(f, msg) {
   const lines = cartLines(), sc = shipChoice(lines), quoted = deliveryFeeNow() !== null, box = f.querySelector("[data-deliv-msg]"), btn = f.querySelector('button[type="submit"]');
-  f.querySelector(".totals").outerHTML = coTotals(lines, sc);
+  swapTotals(f, lines, sc);
   if (box) box.innerHTML = msg !== undefined ? msg : quoted ? `Good news, we deliver to ${esc(state.dest.full)}.` : "";
   btn.textContent = payLabel(sc, shownTotals(lines, sc).total);
 }
@@ -1209,7 +1253,14 @@ async function checkDelivery(f, btn) {
 document.addEventListener("submit", async e => {
   const f = e.target.closest("[data-checkout]"); if (!f) return; e.preventDefault();
   const err = f.querySelector("[data-co-err]"), btn = f.querySelector('button[type="submit"]'), sc = shipChoice(cartLines()), pickup = sc.pickup, local = sc.local, chosen = sc.chosen;
-  const fail = (msg, field) => { err.textContent = msg; err.hidden = false; const el = field && f.querySelector(`[name="${field}"]`); if (el) el.focus(); };
+  // a field's error shows under that field, which is marked invalid and brought into view with the focus; anything else above the button
+  const fail = (msg, field) => {
+    clearFieldErrs(f); err.hidden = true;
+    const el = field && f.querySelector(`input[name="${field}"]`), own = el && f.querySelector(`#co-${field}-err`);
+    if (!own) { err.textContent = msg; err.hidden = false; if (el) el.focus(); return; }
+    own.textContent = msg; own.hidden = false; el.setAttribute("aria-invalid", "true"); el.setAttribute("aria-describedby", own.id);
+    el.focus({ preventScroll: true }); el.scrollIntoView({ block: "center", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+  };
   const v = n => (f.elements[n] ? f.elements[n].value.trim() : "");
   if (!v("name")) return fail("Tell us the name for the order.", "name");
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v("email"))) return fail("That email address does not look right.", "email");
@@ -1227,7 +1278,7 @@ document.addEventListener("submit", async e => {
     if (deliveryFeeNow() === null) return checkDelivery(f, btn);   // show the price first: the next tap places the order
   }
   const pay = payWay(sc), label = payLabel(sc, +f.querySelector(".totals").dataset.total);
-  btn.disabled = true; btn.textContent = pay === "card" ? "Opening secure payment" : "Placing your order"; err.hidden = true;
+  btn.disabled = true; btn.textContent = pay === "card" ? "Opening secure payment" : "Sending your request"; err.hidden = true; clearFieldErrs(f);
   const sent = cartLines(), sig = orderSig(sent, sc), shownTotal = +f.querySelector(".totals").dataset.total;   // the figure on the screen, not a fresh sum: if the rate moved since, the server says so
   try {
     const r = await fetch("/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ order_key: orderKey(sig + pay + v("email").toLowerCase()), expected_total_cents: shownTotal, use_reward: rewardCents(cartCents(sent)) > 0, lines: state.cart, method: pickup ? "pickup" : "ship", service: local ? "local" : chosen && chosen.id, delivery_fee_cents: local ? Math.round(deliveryFeeNow() * 100) : undefined, postal: state.dest && state.dest.full,
@@ -1235,8 +1286,8 @@ document.addEventListener("submit", async e => {
     const data = await r.json().catch(() => ({}));
     if (!r.ok) { btn.disabled = false; btn.textContent = label; if (local && data.delivery) { if (data.delivery === "far") state.farFor = state.dest.full; state.delivery = data.delivery === "ok" ? { key: deliveryKey(), fee_cents: data.base_fee_cents ?? data.fee_cents, due: data.fee_cents, sub: cartCents() } : null; state.refused = data.delivery === "ok" ? null : deliveryKey(); refreshDelivery(f, data.delivery === "ok" ? undefined : deliveryMsg(data.delivery)); if (data.delivery !== "ok") return; } 
       if (data.local_only) { state.cartNews = [data.error]; state.ship = null; store.set("ship", null); navigate("/cart"); return; }   // an out-of-date page offered a carrier: back to the cart, where the real choices are
-      if (data.reward_gone) { rewardGone(); state.priced = null; f.querySelector(".totals").outerHTML = coTotals(sent, sc); btn.textContent = payLabel(sc, +f.querySelector(".totals").dataset.total); return fail(data.error); }   // the points were spent elsewhere: the full price is shown before anything is placed
-      if (data.repriced) { state.priced = { sig, ...data.repriced }; f.querySelector(".totals").outerHTML = coTotals(sent, sc); btn.textContent = payLabel(sc, data.repriced.total_cents); }
+      if (data.reward_gone) { rewardGone(); state.priced = null; swapTotals(f, sent, sc); btn.textContent = payLabel(sc, +f.querySelector(".totals").dataset.total); return fail(data.error); }   // the points were spent elsewhere: the full price is shown before anything is placed
+      if (data.repriced) { state.priced = { sig, ...data.repriced }; swapTotals(f, sent, sc); btn.textContent = payLabel(sc, data.repriced.total_cents); }
       if (typeof data.stock === "number" && bySku[data.sku]) {   // the shelf changed: the cart is put right and says what happened
         bySku[data.sku].stock = data.stock; const fit = fitCart(state.cart); state.cart = fit.kept; state.cartNews = fit.news.length ? fit.news : [data.error]; state.priced = null; saveCart(); navigate("/cart"); return;
       }
@@ -1314,10 +1365,10 @@ const viewPrivacy = () => doc("Privacy", "What we collect, why, who else handles
 ], "");
 const viewTerms = () => doc("Terms of sale", "The plain rules for buying from us online.", [
   ["Who you are buying from", [`One Stop Shop, 760 Wyandotte St E, Windsor, ON N9A 3J4. Call 519-255-2222. Legal business name ${TBD("")}.`]],
-  ["Prices and tax", [`Prices are in Canadian dollars. Tax is added at checkout, based on the province the order ships to. Before you pay, checkout shows each item's price, delivery or shipping, tax and the total, and you can go back and change anything. ${MAIL_ON ? "We email you a copy of your order." : "The confirmation page shows your order number and what you asked for."}`]],
+  ["Prices and tax", [`Prices are in Canadian dollars. ${PICKUP_ONLY ? "Tax is added at checkout. For now every order is picked up at our Windsor counter, so Ontario's 13% HST applies. Before you send a pickup request, checkout shows each item's price, the tax and the total, and you can go back and change anything. You pay at the counter when you pick it up." : "Tax is added at checkout, based on the province the order ships to. Before you pay, checkout shows each item's price, delivery or shipping, tax and the total, and you can go back and change anything."} ${MAIL_ON ? "We email you a copy of your order." : "The confirmation page shows your order number and what you asked for."}`]],
   ...(PICKUP_ONLY ? [["For now", ["Online orders are picked up at 760 Wyandotte St E and paid at the counter. Local delivery and shipping open once we take card payment online; the rules for them are below."]]] : []),
-  ["Shipping", ["We ship within Canada, except to Quebec for now: the site is in English only, and we will ship there once it is also in French. Anyone can pick up in Windsor. The price at checkout is the price you pay for shipping. Delivery times are the carrier's estimates. Cologne ships by ground only."]],
-  ["Local delivery", ["We deliver within 25 km by road of our Windsor shop: $10 up to 10 km and $15 from there to 25 km, per order, plus tax. Orders with $200 or more in items before tax deliver free. Arrival times are estimates. Local delivery is paid online when you order."]],
+  [PICKUP_ONLY ? "Shipping, once card payment opens" : "Shipping", ["We ship within Canada, except to Quebec for now: the site is in English only, and we will ship there once it is also in French. Anyone can pick up in Windsor. The price at checkout is the price you pay for shipping. Delivery times are the carrier's estimates. Cologne ships by ground only."]],
+  [PICKUP_ONLY ? "Local delivery, once card payment opens" : "Local delivery", ["We deliver within 25 km by road of our Windsor shop: $10 up to 10 km and $15 from there to 25 km, per order, plus tax. Orders with $200 or more in items before tax deliver free. Arrival times are estimates. Local delivery is paid online when you order."]],
   ["Pickup", [`Pickup at 760 Wyandotte St E, Windsor, ON N9A 3J4 is free. An order you pay for at the counter is a request: we check the shelf and ${TELL} when it is ready, and nothing is set aside before ${TOLD}, so please wait for it before you come in. From then we hold it for 14 days. A request we have not confirmed is cancelled after ${REQ_SPAN}.`]],
   ["Charcoal", [`Charcoal is sold for pickup${PICKUP_ONLY ? "" : " or local delivery"} only. It is not shipped by Canada Post or any other carrier.`]],
   ["Returns", ["All sales are final, except faulty, wrong, damaged or undelivered items. We do not take back an item because you changed your mind."]],
@@ -1392,7 +1443,7 @@ document.addEventListener("click", e => {
 function cartFromStorage() {
   const saved = store.get("cart"), fit = fitCart(cleanCart(saved)), gone = goneNote(saved); state.cart = fit.kept; if (fit.news.length || gone) state.cartNews = [...fit.news, ...(gone ? [gone] : [])]; if (gone) store.set("cart", state.cart);
   const on = route().replace(/^#\/?/, "").split("/")[0], f = $("[data-checkout]"), lines = cartLines();
-  if (f && lines.length) { const sc = shipChoice(lines); if (sc.pickup || sc.local || sc.chosen) { f.querySelector(".totals").outerHTML = coTotals(lines, sc); syncChrome(); return; } }   // never rebuild a form someone is typing in
+  if (f && lines.length) { const sc = shipChoice(lines); if (sc.pickup || sc.local || sc.chosen) { swapTotals(f, lines, sc); syncChrome(); return; } }   // never rebuild a form someone is typing in
   if (["cart", "checkout", "p"].includes(on)) render(); else syncChrome();
 }
 // The account changed the cart (Buy again), or signed in, or the points reward was switched at checkout.
@@ -1400,7 +1451,7 @@ addEventListener("oss:cart", e => {   // Buy again: the usual's pickup choice co
   if (store.get("ship") === "pickup") state.ship = "pickup";
   cartFromStorage(); if (e.detail && e.detail.news) state.cartNews = e.detail.news;
 });
-const refreshCo = () => { const f = $("[data-checkout]"), lines = cartLines(); if (!f || !lines.length) return; const sc = shipChoice(lines); if (sc.pickup || sc.local || sc.chosen) f.querySelector(".totals").outerHTML = coTotals(lines, sc); };
+const refreshCo = () => { const f = $("[data-checkout]"), lines = cartLines(); if (!f || !lines.length) return; const sc = shipChoice(lines); if (sc.pickup || sc.local || sc.chosen) swapTotals(f, lines, sc); };
 addEventListener("oss:account", refreshCo); addEventListener("oss:totals", refreshCo);
 addEventListener("storage", e => { if (e.key === null || e.key === "oss:cart") cartFromStorage(); });
 addEventListener("pageshow", e => { if (e.persisted) cartFromStorage(); });

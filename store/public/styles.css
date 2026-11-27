@@ -548,12 +548,31 @@ html:not(.hero-seen) .piece .sticker{animation-timing-function:linear(0,.25 6%,.
 .co__back{margin:0;padding-bottom:var(--s-4);border-bottom:1px solid var(--color-line);color:var(--color-text)}
 .co__back b{color:var(--color-strong);font-weight:700}
 .co .totals{margin-top:0}   /* the form's own gap already separates it */
+.co__main,.co__sum{display:grid;gap:var(--s-6);min-width:0}
+.co__set .field{text-transform:none;letter-spacing:0}   /* a name shows as typed, like the email (design review 2026-11-27) */
+.co__ferr{margin:calc(var(--s-1) * -1) 0 var(--s-3);padding-left:26px;text-indent:-26px}   /* a field's own error, right under it; its lines clear the mark */
+.co__sum>.h3{margin:0 0 calc(var(--s-4) * -1)}
+.co [data-acct-co]:empty{display:none}   /* the account box, with nothing in it, takes no gap */
+.co .co__lines{margin:0}
+.co__col{display:block;margin-top:2px;font-size:var(--t-12);color:var(--color-muted)}
+.done__head{display:flex;flex-wrap:wrap;align-items:center;gap:var(--s-3) var(--s-4);margin:0 0 var(--s-4)}
+.done__head .done__tag{margin:0}
+.keeplink{display:flex;gap:var(--s-2)}
+.keeplink__b{min-height:44px;min-width:8.75rem;padding:0 var(--s-4)}   /* wide enough for "Link copied": the button never changes width */
+.done .num,.done a[href^="tel:"]{white-space:nowrap}   /* a phone number or order number never splits across lines */
 .done__tag{display:inline-flex;align-items:baseline;gap:var(--s-2);margin:0 0 var(--s-4);padding:6px 12px 4px;background:var(--white);color:var(--ink);border-bottom:4px solid var(--ember);transform:rotate(-2deg);font-size:var(--t-12);letter-spacing:.09em;text-transform:uppercase}
 .done__tag b{font:400 1.5rem/1 var(--font-display);letter-spacing:.02em}
 .done__lines{list-style:none;margin:var(--s-6) 0;padding:0;border-bottom:1px solid var(--color-line)}
 .done__lines li{display:flex;justify-content:space-between;gap:var(--s-4);padding:var(--s-3) 0;border-top:1px solid var(--color-line)}
 .done__lines b{color:var(--color-strong)}
-@media (min-width:960px){.checkout,.done{max-width:640px}}
+.done__lines+.totals{margin-top:calc(var(--s-6) * -1)}   /* the totals carry on from the list's closing hairline: no empty band, no double line */
+.done__lines+.totals>div:first-child{border-top:0}
+@media (min-width:960px){.done{max-width:640px}
+  .done__head{margin-bottom:var(--s-6)}
+  /* checkout at desktop: the form on the left, what is asked for and the total in a column on the right that stays in view */
+  .checkout{max-width:none}
+  .co{grid-template-columns:minmax(0,640px) minmax(360px,460px);column-gap:var(--s-12);justify-content:space-between;align-items:start}
+  .co__sum{position:sticky;top:96px}}
 .cart.done>.btn--wide{display:inline-flex}
 .shot--none{display:grid;place-items:center;font-size:var(--t-12);letter-spacing:.08em;text-transform:uppercase;color:var(--color-on-tile);opacity:.82;text-align:center;padding:var(--s-3)}
 .checkout .h2--xl{margin-bottom:var(--s-6)}

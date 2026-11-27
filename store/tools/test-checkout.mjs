@@ -78,7 +78,8 @@ if (!CARD) {
     const k = (o.status_url || "").split("k=")[1] || "", st = async (id = o.id, key = k) => { const r = await fetch(`${B}/api/order-status?id=${id}&k=${key}`); return { status: r.status, data: await r.json().catch(() => ({})) }; };
     const s1 = await st();
     ok(s1.status === 200 && s1.data.order.status === "requested" && s1.data.order.first === "Callie" && s1.data.order.items[0]?.qty === 2 && s1.data.order.notify === "call", "the status link shows it as requested, with the first name and what was asked for: " + JSON.stringify(s1.data));
-    ok(!/callie-|call-\d|@example|555-0177|total|cents|address/i.test(JSON.stringify(s1.data)), "the status link carries no email, phone, address or money: " + JSON.stringify(s1.data));
+    // 2026-11-27 (fleet/flow-polish): the order's total is now shown on its page (what to bring to the counter); nothing else about money
+    ok(!/callie-|call-\d|@example|555-0177|address|unit_|subtotal|tax|pay_session|pay_url/i.test(JSON.stringify(s1.data)) && (JSON.stringify(s1.data).match(/cents|price|paid|total/gi) || []).join() === "total,cents" && s1.data.order.total_cents === o.total_cents, "the status link carries no email, phone or address, and of the money only the order's total: " + JSON.stringify(s1.data));
     ok((await st(o.id, k.replace(/^./, c => c === "a" ? "b" : "a"))).status === 404 && (await st(o.id, "")).status === 404 && (await st(pu.data.order.id, k)).status === 404, "a wrong, missing or other order's key opens nothing");
     const page = await (await fetch(B + o.status_url)).text(), pageRes = await fetch(B + o.status_url);
     ok(pageRes.status === 200 && pageRes.headers.get("referrer-policy") === "no-referrer" && /noindex/.test(pageRes.headers.get("x-robots-tag") || "") && page.length > 0, "the status page opens, never sends its link onward and is never indexed");
