@@ -487,7 +487,7 @@ document.addEventListener("click", async e => {
   if ((el = t.closest("[data-markpaid]"))) { const id = el.closest("[data-ordersheet]").dataset.ordersheet; el.disabled = true;
     try { await api(`/orders/${id}/paid`, { method: "POST", body: {} }); await loadOrders(); await orderSheet(id); render(); toast("Marked paid."); } catch (er) { $("[data-err]", sheet).textContent = er.message; el.disabled = false; } return; }
   if ((el = t.closest("[data-next]"))) { const id = el.closest("[data-ordersheet]").dataset.ordersheet; el.disabled = true;
-    try { await api(`/orders/${id}/status`, { method: "POST", body: { status: el.dataset.next } }); await loadOrders(); await orderSheet(id); render(); toast("Order updated."); } catch (er) { $("[data-err]", sheet).textContent = er.message; el.disabled = false; } return; }
+    try { await api(`/orders/${id}/status`, { method: "POST", body: { status: el.dataset.next } }); await Promise.all([loadOrders(), loadProducts()]); await orderSheet(id); render(); toast("Order updated."); }   // marking a pickup ready (or cancelling) moves stock: the Stock tab must not show the old counts catch (er) { $("[data-err]", sheet).textContent = er.message; el.disabled = false; } return; }
   if ((el = t.closest("[data-step]"))) {
     const row = el.closest("[data-sku]"), p = state.products.find(x => x.sku === row.dataset.sku), delta = +el.dataset.step, before = p.stock;
     if (p.stock + delta < 0) return;
