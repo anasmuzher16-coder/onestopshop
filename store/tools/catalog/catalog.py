@@ -20,6 +20,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import catlib as C  # noqa: E402
+from shop_photos import SHOP_PHOTOS  # noqa: E402
 
 SUPPLIER_META = {
     "ace": {"id": "ace", "name": "Ace Hookah", "sku_block": "OSS-10NNNN",
@@ -33,6 +34,8 @@ SUPPLIER_META = {
                 "credit": "Credit Ace as text only. No Ace logo, marble or 'ACE IT' artwork on the site."},
     # The shop's own hanging hoses (2026-11-27): no supplier catalogue, its shelf photos and the captions of its recording.
     "shop-hoses": {"id": "shop-hoses", "name": "The shop's own hoses", "sku_block": "OSS-12NNNN", "credit": "No supplier credit needed."},
+    # The shop's own bowls (2026-11-27): no supplier catalogue, its own photos of each bowl; named from the brand on the bowl.
+    "shop-bowls": {"id": "shop-bowls", "name": "The shop's own bowls", "sku_block": "OSS-13NNNN", "credit": "No supplier credit needed."},
 }
 SHISHA_SECTION = "INSERT OR IGNORE INTO categories (id, name, tone, sort, active) VALUES ('shisha', 'Shisha', 'emerald', 8, 0)"
 # Charcoal, its own section after Heat (shop request, 2026-11-24): the sections from place 4 on move down one, once.
@@ -81,12 +84,18 @@ def build_ace(reg, pdf: Path, photos_manifest, day):
             colour = C.cell(ph["colour"], f"photo:{ph['out']} (p{ph['page']} xref {ph['xref']}), dominant colour; human-confirm") \
                 if ph and ph.get("colour") else C.cell(None, None)
             img = ph["out"] if ph else hero.get(f["family_id"])
+            status = ph["status"] if ph else ("family_hero_only" if img else "none")
+            psrc = "photo manifest store/catalog/suppliers/ace/photos.json" if img else None
+            own = SHOP_PHOTOS.get(key)
+            if own and (C.STORE / "public" / "img" / "pc" / (own[0] + ".webp")).exists():
+                # the shop's own photo of this very piece replaces a low-resolution or missing catalogue photo (shop_photos.py)
+                img, status, psrc = own[0], "shop", f"photo:{own[2]} (the shop's own photo, cut out); {own[3]}"
+                colour = C.cell(own[1], f"photo:{own[2]} (the shop's own photo); human-confirm")
             variants.append({
                 "sku": sku, "key": key,
                 "swatch_hex": C.cell(hx, f"{p}:colour square {i + 1} fill (chip colour only; never a colour name)" if hx else None),
                 "colour": colour,
-                "photo": {"img": img, "status": (ph["status"] if ph else ("family_hero_only" if img else "none")),
-                          "src": f"photo manifest store/catalog/suppliers/ace/photos.json" if img else None,
+                "photo": {"img": img, "status": status, "src": psrc,
                           **({"web_src": web_src[img]} if img in web_src else {})},
                 "shop": C.blank_shop(),
             })
@@ -149,10 +158,50 @@ def build_hoses(reg, day):
     return m, retired
 
 
+def build_bowls(reg, day):
+    """The shop's bowls: one family per bowl model, one variant per colour photographed. Every photo must be published
+    already; -l (1440x1800) exists only where the source photo carries that detail, and img_lw tells the page so."""
+    import src_shop_bowls
+    fams = src_shop_bowls.families()
+    live = set()
+    pc = C.STORE / "public" / "img" / "pc"
+    for f in fams:
+        f["variants"] = []
+        for v in f.pop("variants_src"):
+            live.add(v["key"])
+            img = v.pop("img")
+            have = (pc / (img + ".webp")).exists()
+            f["variants"].append({"sku": C.sku_for(reg, "shop-bowls", v["key"], day), "key": v["key"], "swatch_hex": v["swatch_hex"],
+                                  "colour": v["colour"], "confirm": v["confirm"],
+                                  "photo": {"img": img if have else None, "status": "ready" if have else "none",
+                                            "large": have and (pc / (img + "-l.webp")).exists(),
+                                            "src": f"photo:{v['photo_file']} (the shop's own photo, cut off the white sweep)" if have else None},
+                                  "shop": C.blank_shop()})
+    retired = C.retire_missing(reg, "shop-bowls", live, day, "not on the shop's bowl list any more")
+    m = {"schema": C.SCHEMA_ID, "supplier": SUPPLIER_META["shop-bowls"],
+         "sources": [{"id": src_shop_bowls.SRC_ID, "kind": "shop photos", "file": "IMG_0584..IMG_0665 (bowls on a white sweep)",
+                      "sha256": C.sha256_text(json.dumps(src_shop_bowls.BOWLS, ensure_ascii=False)), "products": len(live),
+                      "edition": src_shop_bowls.EDITION, "received": src_shop_bowls.RECEIVED}],
+         "rulings": ["owner 2026-11-27: put the photographed bowls on the site",
+                     "only a bowl whose brand is printed on it goes up, named from that brand; the shape word is ours and flagged to confirm",
+                     "in the shop, Price TBD, stock not counted; the shop fills price and stock in the item editor",
+                     "pickup or local delivery once priced, until each bowl's weight is known (same rule as the Ace accessories)"],
+         "families": fams,
+         "retired": {s: reg["skus"][s] for s in sorted(reg["skus"]) if reg["skus"][s]["supplier"] == "shop-bowls" and reg["skus"][s]["status"] == "retired"}}
+    return m, retired
+
+
 def build(args):
     day = today()
     reg = C.load_registry()
     summary = {}
+    # The shop's bowls (no outside source: always built)
+    old = C.load_master("shop-bowls")
+    m, retired = build_bowls(reg, day)
+    C.carry_shop(old, m)
+    C.validate_master(m, reg)
+    summary["shop-bowls"] = {"families": len(m["families"]), "variants": sum(len(f["variants"]) for f in m["families"]),
+                             "newly_retired": retired, "written": C.write_json(C.master_path("shop-bowls"), m)}
     # The shop's hoses (no outside source: always built)
     old = C.load_master("shop-hoses")
     m, retired = build_hoses(reg, day)
@@ -160,7 +209,7 @@ def build(args):
     C.validate_master(m, reg)
     summary["shop-hoses"] = {"families": len(m["families"]), "variants": sum(len(f["variants"]) for f in m["families"]),
                              "newly_retired": retired, "written": C.write_json(C.master_path("shop-hoses"), m)}
-    if getattr(args, "only", None) == "shop-hoses":
+    if getattr(args, "only", None) in ("shop", "shop-hoses"):
         C.validate_registry(reg)
         C.write_json(C.REGISTRY, reg)
         print(json.dumps(summary, indent=1))
@@ -307,7 +356,7 @@ def public_group(f):
     return src_ace.group_for(f["supplier_ref"]["v"], None, tags)[0]
 
 
-USABLE_PHOTO = ("ready", "CHECK", "needs_original", "hand_crop")   # gallery-only images are never a main photo
+USABLE_PHOTO = ("ready", "CHECK", "needs_original", "hand_crop", "shop")   # gallery-only images are never a main photo; shop = the shop's own photo (shop_photos.py)
 # owner, 2026-11-24: blurry or over-enlarged (CHECK), held (needs_original) and hand-crop photos go up labelled "Photo to be upscaled"
 UPSCALE_PHOTO = ("CHECK", "needs_original", "hand_crop")
 
@@ -419,6 +468,24 @@ def desired_rows(supplier: str, m):
                         "note": "", "stock": shop["stock"]["v"] or 0, "low_stock_at": 1,
                         "active": 1 if (shop["active"]["v"] and shop["price_cents"]["v"]) else 0,
                         "sort": 4500 + i, "availability": "in_store_uncounted", "listed": 1}
+        elif supplier == "shop-bowls":
+            # one family per bowl model, a colour per photo (one card, colour chips, like the shop's hoses). In the shop (its own
+            # photo), Price TBD, stock not counted, weight unknown (1 g placeholder + facts.weight_g = null: pickup or local
+            # delivery once priced). needs_confirm and its reason are for the back office only. img_lw = 1440 when the -l
+            # photo exists, so the page offers it to large screens.
+            st = v["photo"]["status"]
+            facts.update({"stamp": "shelf", "photo": "own" if st in USABLE_PHOTO and v["photo"]["img"] else "none", "colour_confirmed": True})
+            if v["confirm"]["v"]:
+                facts.update({"needs_confirm": True, "confirm_why": v["confirm"]["v"]})
+            sup = {"supplier_id": "shop-bowls", "supplier_ref": f["supplier_ref"]["v"], "supplier_price_cents": None,
+                   "family": f["family_id"], "variant_label": v["colour"]["v"], "swatch_hex": v["swatch_hex"]["v"],
+                   "img": v["photo"]["img"] or "", "img_lw": 1440 if v["photo"].get("large") else None, "height_cm": None,
+                   "facts_known": json.dumps(facts, sort_keys=True, ensure_ascii=False)}
+            shopcols = {"name": shop["display_name"]["v"] or f["name"]["v"], "category_id": "bowls",
+                        "price_cents": shop["price_cents"]["v"] or 0, "weight_g": 1, "box_id": "XS", "glass": 0, "ship_class": "standard",
+                        "note": "", "stock": shop["stock"]["v"] or 0, "low_stock_at": 1,
+                        "active": 1 if (shop["active"]["v"] and shop["price_cents"]["v"]) else 0,
+                        "sort": 4100 + i, "availability": "in_store_uncounted", "listed": 1}
         elif supplier == "ace-acc":
             # one card per item (family acc-..., never grouped like hookahs); on view with "Price TBD" until the shop's price.
             # Weight unknown: the 1 g placeholder plus facts.weight_g = null keep it pickup or local delivery once priced.
@@ -775,7 +842,7 @@ def main(argv=None):
     b.add_argument("--ace-pdf", default=str(C.ACE_PDF))
     b.add_argument("--acc-pdf", default=str(C.ACE_ACC_PDF))
     b.add_argument("--intake", default=str(C.INTAKE))
-    b.add_argument("--only", choices=["shop-hoses"], help="build only this master (and the registry)")
+    b.add_argument("--only", choices=["shop", "shop-hoses"], help="build only the shop's own masters, hoses and bowls (and the registry); shop-hoses is the older name for the same")
     x = sub.add_parser("xlsx")
     x.add_argument("--out")
     a = sub.add_parser("answers")

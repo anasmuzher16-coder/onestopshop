@@ -1,0 +1,1769 @@
+{
+ "schema": "oss-catalog/1",
+ "supplier": {
+  "id": "shop-bowls",
+  "name": "The shop's own bowls",
+  "sku_block": "OSS-13NNNN",
+  "credit": "No supplier credit needed."
+ },
+ "sources": [
+  {
+   "id": "shop-bowls-2026-11-27",
+   "kind": "shop photos",
+   "file": "IMG_0584..IMG_0665 (bowls on a white sweep)",
+   "sha256": "41de95e665fc6e2e2f4bc1cc1505df0fc95a79980cd4b70afaeacd7d77454884",
+   "products": 28,
+   "edition": "Shop bowl photos on a white sweep, Google Drive 2026-11-27",
+   "received": "2026-11-27"
+  }
+ ],
+ "rulings": [
+  "owner 2026-11-27: put the photographed bowls on the site",
+  "only a bowl whose brand is printed on it goes up, named from that brand; the shape word is ours and flagged to confirm",
+  "in the shop, Price TBD, stock not counted; the shop fills price and stock in the item editor",
+  "pickup or local delivery once priced, until each bowl's weight is known (same rule as the Ace accessories)"
+ ],
+ "families": [
+  {
+   "family_id": "bowl-oblako-bowl",
+   "order": 0,
+   "category": "bowls",
+   "name": {
+    "v": "Oblako Bowl",
+    "src": "photo:IMG_0589 (ОБЛАКО stamped on the clay stem); rule 2026-11-27 (owner: put the photographed bowls on the site; name only from the brand on the bowl)"
+   },
+   "supplier_ref": {
+    "v": "Oblako (ОБЛАКО stamped on the clay stem)",
+    "src": "photo:IMG_0589"
+   },
+   "facts": {
+    "brand": {
+     "v": "Oblako",
+     "src": "photo:IMG_0589 (ОБЛАКО stamped on the clay stem); rule 2026-11-27 (owner: put the photographed bowls on the site; name only from the brand on the bowl)"
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: named from the stamp on the stem (ОБЛАКО, written Oblako): check the name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-130001",
+     "key": "bowl-oblako-bowl#green",
+     "swatch_hex": {
+      "v": "#2f6b2a",
+      "src": "rule: chip colour for 'Green'"
+     },
+     "colour": {
+      "v": "Green",
+      "src": "photo:IMG_0589 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named from the stamp on the stem (ОБЛАКО, written Oblako): check the name",
+      "src": "rule 2026-11-27 (owner: put the photographed bowls on the site; name only from the brand on the bowl)"
+     },
+     "photo": {
+      "img": "bowl/oblako-bowl-green",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0589 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-130002",
+     "key": "bowl-oblako-bowl#sage",
+     "swatch_hex": {
+      "v": "#7fa08a",
+      "src": "rule: chip colour for 'Sage'"
+     },
+     "colour": {
+      "v": "Sage",
+      "src": "photo:IMG_0618 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named from the stamp on the stem (ОБЛАКО, written Oblako): check the name",
+      "src": "rule 2026-11-27 (owner: put the photographed bowls on the site; name only from the brand on the bowl)"
+     },
+     "photo": {
+      "img": "bowl/oblako-bowl-sage",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0618 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-130003",
+     "key": "bowl-oblako-bowl#black",
+     "swatch_hex": {
+      "v": "#141414",
+      "src": "rule: chip colour for 'Black'"
+     },
+     "colour": {
+      "v": "Black",
+      "src": "photo:IMG_0608 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named from the stamp on the stem (ОБЛАКО, written Oblako): check the name",
+      "src": "rule 2026-11-27 (owner: put the photographed bowls on the site; name only from the brand on the bowl)"
+     },
+     "photo": {
+      "img": "bowl/oblako-bowl-black",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0608 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-130004",
+     "key": "bowl-oblako-bowl#yellow",
+     "swatch_hex": {
+      "v": "#e3d21f",
+      "src": "rule: chip colour for 'Yellow'"
+     },
+     "colour": {
+      "v": "Yellow",
+      "src": "photo:IMG_0616 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named from the stamp on the stem (ОБЛАКО, written Oblako): check the name",
+      "src": "rule 2026-11-27 (owner: put the photographed bowls on the site; name only from the brand on the bowl)"
+     },
+     "photo": {
+      "img": "bowl/oblako-bowl-yellow",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0616 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-130005",
+     "key": "bowl-oblako-bowl#orange",
+     "swatch_hex": {
+      "v": "#e0662a",
+      "src": "rule: chip colour for 'Orange'"
+     },
+     "colour": {
+      "v": "Orange",
+      "src": "photo:IMG_0617 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named from the stamp on the stem (ОБЛАКО, written Oblako): check the name",
+      "src": "rule 2026-11-27 (owner: put the photographed bowls on the site; name only from the brand on the bowl)"
+     },
+     "photo": {
+      "img": "bowl/oblako-bowl-orange",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0617 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "bowl-von-funnel-bowl",
+   "order": 1,
+   "category": "bowls",
+   "name": {
+    "v": "VON Funnel Bowl",
+    "src": "photo:IMG_0606 (VON swing tag); rule 2026-11-27 (owner: put the photographed bowls on the site; name only from the brand on the bowl)"
+   },
+   "supplier_ref": {
+    "v": "VON (VON swing tag)",
+    "src": "photo:IMG_0606"
+   },
+   "facts": {
+    "brand": {
+     "v": "VON",
+     "src": "photo:IMG_0606 (VON swing tag); rule 2026-11-27 (owner: put the photographed bowls on the site; name only from the brand on the bowl)"
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: named from the brand on the bowl; the shape word is ours (no model name is printed): check the name",
+    "NEEDS SHOP: Green: named from the brand on the bowl; the shape word is ours (no model name is printed): check the name; the brand is turned away in this photo; shape and finish match the family: check it is the same bowl"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-130006",
+     "key": "bowl-von-funnel-bowl#red-and-white",
+     "swatch_hex": {
+      "v": "#c8423a",
+      "src": "rule: chip colour for 'Red and white'"
+     },
+     "colour": {
+      "v": "Red and white",
+      "src": "photo:IMG_0606 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named from the brand on the bowl; the shape word is ours (no model name is printed): check the name",
+      "src": "rule 2026-11-27 (owner: put the photographed bowls on the site; name only from the brand on the bowl)"
+     },
+     "photo": {
+      "img": "bowl/von-funnel-bowl-red-and-white",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0606 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-130007",
+     "key": "bowl-von-funnel-bowl#orange",
+     "swatch_hex": {
+      "v": "#e0662a",
+      "src": "rule: chip colour for 'Orange'"
+     },
+     "colour": {
+      "v": "Orange",
+      "src": "photo:IMG_0607 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named from the brand on the bowl; the shape word is ours (no model name is printed): check the name",
+      "src": "rule 2026-11-27 (owner: put the photographed bowls on the site; name only from the brand on the bowl)"
+     },
+     "photo": {
+      "img": "bowl/von-funnel-bowl-orange",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0607 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-130008",
+     "key": "bowl-von-funnel-bowl#brown",
+     "swatch_hex": {
+      "v": "#8a5a2b",
+      "src": "rule: chip colour for 'Brown'"
+     },
+     "colour": {
+      "v": "Brown",
+      "src": "photo:IMG_0610 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named from the brand on the bowl; the shape word is ours (no model name is printed): check the name",
+      "src": "rule 2026-11-27 (owner: put the photographed bowls on the site; name only from the brand on the bowl)"
+     },
+     "photo": {
+      "img": "bowl/von-funnel-bowl-brown",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0610 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-130009",
+     "key": "bowl-von-funnel-bowl#blue",
+     "swatch_hex": {
+      "v": "#22409a",
+      "src": "rule: chip colour for 'Blue'"
+     },
+     "colour": {
+      "v": "Blue",
+      "src": "photo:IMG_0614 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named from the brand on the bowl; the shape word is ours (no model name is printed): check the name",
+      "src": "rule 2026-11-27 (owner: put the photographed bowls on the site; name only from the brand on the bowl)"
+     },
+     "photo": {
+      "img": "bowl/von-funnel-bowl-blue",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0614 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-130010",
+     "key": "bowl-von-funnel-bowl#green",
+     "swatch_hex": {
+      "v": "#2f6b2a",
+      "src": "rule: chip colour for 'Green'"
+     },
+     "colour": {
+      "v": "Green",
+      "src": "photo:IMG_0609 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named from the brand on the bowl; the shape word is ours (no model name is printed): check the name; the brand is turned away in this photo; shape and finish match the family: check it is the same bowl",
+      "src": "rule 2026-11-27 (owner: put the photographed bowls on the site; name only from the brand on the bowl)"
+     },
+     "photo": {
+      "img": "bowl/von-funnel-bowl-green",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0609 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "bowl-von-short-bowl",
+   "order": 2,
+   "category": "bowls",
+   "name": {
+    "v": "VON Short Bowl",
+    "src": "photo:IMG_0591 (VON swing tag); rule 2026-11-27 (owner: put the photographed bowls on the site; name only from the brand on the bowl)"
+   },
+   "supplier_ref": {
+    "v": "VON (VON swing tag)",
+    "src": "photo:IMG_0591"
+   },
+   "facts": {
+    "brand": {
+     "v": "VON",
+     "src": "photo:IMG_0591 (VON swing tag); rule 2026-11-27 (owner: put the photographed bowls on the site; name only from the brand on the bowl)"
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: named from the brand on the bowl; the shape word is ours (no model name is printed): check the name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-130011",
+     "key": "bowl-von-short-bowl#orange",
+     "swatch_hex": {
+      "v": "#e0662a",
+      "src": "rule: chip colour for 'Orange'"
+     },
+     "colour": {
+      "v": "Orange",
+      "src": "photo:IMG_0591 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named from the brand on the bowl; the shape word is ours (no model name is printed): check the name",
+      "src": "rule 2026-11-27 (owner: put the photographed bowls on the site; name only from the brand on the bowl)"
+     },
+     "photo": {
+      "img": "bowl/von-short-bowl-orange",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0591 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-130012",
+     "key": "bowl-von-short-bowl#blue",
+     "swatch_hex": {
+      "v": "#22409a",
+      "src": "rule: chip colour for 'Blue'"
+     },
+     "colour": {
+      "v": "Blue",
+      "src": "photo:IMG_0592 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named from the brand on the bowl; the shape word is ours (no model name is printed): check the name",
+      "src": "rule 2026-11-27 (owner: put the photographed bowls on the site; name only from the brand on the bowl)"
+     },
+     "photo": {
+      "img": "bowl/von-short-bowl-blue",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0592 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "bowl-von-ribbed-bowl",
+   "order": 3,
+   "category": "bowls",
+   "name": {
+    "v": "VON Ribbed Bowl",
+    "src": "photo:IMG_0596 (VON swing tag); rule 2026-11-27 (owner: put the photographed bowls on the site; name only from the brand on the bowl)"
+   },
+   "supplier_ref": {
+    "v": "VON (VON swing tag)",
+    "src": "photo:IMG_0596"
+   },
+   "facts": {
+    "brand": {
+     "v": "VON",
+     "src": "photo:IMG_0596 (VON swing tag); rule 2026-11-27 (owner: put the photographed bowls on the site; name only from the brand on the bowl)"
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: named from the brand on the bowl; the shape word is ours (no model name is printed): check the name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-130013",
+     "key": "bowl-von-ribbed-bowl#green",
+     "swatch_hex": {
+      "v": "#2f6b2a",
+      "src": "rule: chip colour for 'Green'"
+     },
+     "colour": {
+      "v": "Green",
+      "src": "photo:IMG_0596 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named from the brand on the bowl; the shape word is ours (no model name is printed): check the name",
+      "src": "rule 2026-11-27 (owner: put the photographed bowls on the site; name only from the brand on the bowl)"
+     },
+     "photo": {
+      "img": "bowl/von-ribbed-bowl-green",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0596 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "bowl-von-speckled-bowl",
+   "order": 4,
+   "category": "bowls",
+   "name": {
+    "v": "VON Speckled Bowl",
+    "src": "photo:IMG_0615 (VON swing tag); rule 2026-11-27 (owner: put the photographed bowls on the site; name only from the brand on the bowl)"
+   },
+   "supplier_ref": {
+    "v": "VON (VON swing tag)",
+    "src": "photo:IMG_0615"
+   },
+   "facts": {
+    "brand": {
+     "v": "VON",
+     "src": "photo:IMG_0615 (VON swing tag); rule 2026-11-27 (owner: put the photographed bowls on the site; name only from the brand on the bowl)"
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: named from the brand on the bowl; the shape word is ours (no model name is printed): check the name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-130014",
+     "key": "bowl-von-speckled-bowl#yellow",
+     "swatch_hex": {
+      "v": "#e3d21f",
+      "src": "rule: chip colour for 'Yellow'"
+     },
+     "colour": {
+      "v": "Yellow",
+      "src": "photo:IMG_0615 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named from the brand on the bowl; the shape word is ours (no model name is printed): check the name",
+      "src": "rule 2026-11-27 (owner: put the photographed bowls on the site; name only from the brand on the bowl)"
+     },
+     "photo": {
+      "img": "bowl/von-speckled-bowl-yellow",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0615 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "bowl-tas-bowl",
+   "order": 5,
+   "category": "bowls",
+   "name": {
+    "v": "TAS Bowl",
+    "src": "photo:IMG_0595 (TA$ stamped on the foot); rule 2026-11-27 (owner: put the photographed bowls on the site; name only from the brand on the bowl)"
+   },
+   "supplier_ref": {
+    "v": "TAS (TA$ stamped on the foot)",
+    "src": "photo:IMG_0595"
+   },
+   "facts": {
+    "brand": {
+     "v": "TAS",
+     "src": "photo:IMG_0595 (TA$ stamped on the foot); rule 2026-11-27 (owner: put the photographed bowls on the site; name only from the brand on the bowl)"
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: named from the stamp on the foot (TA$, written TAS): check the name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-130015",
+     "key": "bowl-tas-bowl#blue-and-red",
+     "swatch_hex": {
+      "v": "#2b3fa8",
+      "src": "rule: chip colour for 'Blue and red'"
+     },
+     "colour": {
+      "v": "Blue and red",
+      "src": "photo:IMG_0595 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named from the stamp on the foot (TA$, written TAS): check the name",
+      "src": "rule 2026-11-27 (owner: put the photographed bowls on the site; name only from the brand on the bowl)"
+     },
+     "photo": {
+      "img": "bowl/tas-bowl-blue-and-red",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0595 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-130016",
+     "key": "bowl-tas-bowl#red-and-black",
+     "swatch_hex": {
+      "v": "#c33a32",
+      "src": "rule: chip colour for 'Red and black'"
+     },
+     "colour": {
+      "v": "Red and black",
+      "src": "photo:IMG_0611 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named from the stamp on the foot (TA$, written TAS): check the name",
+      "src": "rule 2026-11-27 (owner: put the photographed bowls on the site; name only from the brand on the bowl)"
+     },
+     "photo": {
+      "img": "bowl/tas-bowl-red-and-black",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0611 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-130017",
+     "key": "bowl-tas-bowl#yellow-and-purple",
+     "swatch_hex": {
+      "v": "#e6dc2a",
+      "src": "rule: chip colour for 'Yellow and purple'"
+     },
+     "colour": {
+      "v": "Yellow and purple",
+      "src": "photo:IMG_0612 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named from the stamp on the foot (TA$, written TAS): check the name",
+      "src": "rule 2026-11-27 (owner: put the photographed bowls on the site; name only from the brand on the bowl)"
+     },
+     "photo": {
+      "img": "bowl/tas-bowl-yellow-and-purple",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0612 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "bowl-yahya-bowl",
+   "order": 6,
+   "category": "bowls",
+   "name": {
+    "v": "Yahya Bowl",
+    "src": "photo:IMG_0605 (YAHYA stamped on the stem); rule 2026-11-27 (owner: put the photographed bowls on the site; name only from the brand on the bowl)"
+   },
+   "supplier_ref": {
+    "v": "Yahya (YAHYA stamped on the stem)",
+    "src": "photo:IMG_0605"
+   },
+   "facts": {
+    "brand": {
+     "v": "Yahya",
+     "src": "photo:IMG_0605 (YAHYA stamped on the stem); rule 2026-11-27 (owner: put the photographed bowls on the site; name only from the brand on the bowl)"
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: named from the stamp on the stem (YAHYA): check the name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-130018",
+     "key": "bowl-yahya-bowl#brown",
+     "swatch_hex": {
+      "v": "#8a5a2b",
+      "src": "rule: chip colour for 'Brown'"
+     },
+     "colour": {
+      "v": "Brown",
+      "src": "photo:IMG_0605 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named from the stamp on the stem (YAHYA): check the name",
+      "src": "rule 2026-11-27 (owner: put the photographed bowls on the site; name only from the brand on the bowl)"
+     },
+     "photo": {
+      "img": "bowl/yahya-bowl-brown",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0605 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-130019",
+     "key": "bowl-yahya-bowl#blue",
+     "swatch_hex": {
+      "v": "#22409a",
+      "src": "rule: chip colour for 'Blue'"
+     },
+     "colour": {
+      "v": "Blue",
+      "src": "photo:IMG_0613 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named from the stamp on the stem (YAHYA): check the name",
+      "src": "rule 2026-11-27 (owner: put the photographed bowls on the site; name only from the brand on the bowl)"
+     },
+     "photo": {
+      "img": "bowl/yahya-bowl-blue",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0613 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "bowl-zanobia-bowl",
+   "order": 7,
+   "category": "bowls",
+   "name": {
+    "v": "Zanobia Bowl",
+    "src": "photo:IMG_0641 (ZANOBIA moulded round the bowl); rule 2026-11-27 (owner: put the photographed bowls on the site; name only from the brand on the bowl)"
+   },
+   "supplier_ref": {
+    "v": "Zanobia (ZANOBIA moulded round the bowl)",
+    "src": "photo:IMG_0641"
+   },
+   "facts": {
+    "brand": {
+     "v": "Zanobia",
+     "src": "photo:IMG_0641 (ZANOBIA moulded round the bowl); rule 2026-11-27 (owner: put the photographed bowls on the site; name only from the brand on the bowl)"
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: named from the moulded band (ZANOBIA): check the name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-130020",
+     "key": "bowl-zanobia-bowl#blue",
+     "swatch_hex": {
+      "v": "#22409a",
+      "src": "rule: chip colour for 'Blue'"
+     },
+     "colour": {
+      "v": "Blue",
+      "src": "photo:IMG_0641 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named from the moulded band (ZANOBIA): check the name",
+      "src": "rule 2026-11-27 (owner: put the photographed bowls on the site; name only from the brand on the bowl)"
+     },
+     "photo": {
+      "img": "bowl/zanobia-bowl-blue",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0641 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-130021",
+     "key": "bowl-zanobia-bowl#red",
+     "swatch_hex": {
+      "v": "#c8372d",
+      "src": "rule: chip colour for 'Red'"
+     },
+     "colour": {
+      "v": "Red",
+      "src": "photo:IMG_0642 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named from the moulded band (ZANOBIA): check the name",
+      "src": "rule 2026-11-27 (owner: put the photographed bowls on the site; name only from the brand on the bowl)"
+     },
+     "photo": {
+      "img": "bowl/zanobia-bowl-red",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0642 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-130022",
+     "key": "bowl-zanobia-bowl#yellow",
+     "swatch_hex": {
+      "v": "#e3d21f",
+      "src": "rule: chip colour for 'Yellow'"
+     },
+     "colour": {
+      "v": "Yellow",
+      "src": "photo:IMG_0643 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named from the moulded band (ZANOBIA): check the name",
+      "src": "rule 2026-11-27 (owner: put the photographed bowls on the site; name only from the brand on the bowl)"
+     },
+     "photo": {
+      "img": "bowl/zanobia-bowl-yellow",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0643 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-130023",
+     "key": "bowl-zanobia-bowl#black",
+     "swatch_hex": {
+      "v": "#141414",
+      "src": "rule: chip colour for 'Black'"
+     },
+     "colour": {
+      "v": "Black",
+      "src": "photo:IMG_0645 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named from the moulded band (ZANOBIA): check the name",
+      "src": "rule 2026-11-27 (owner: put the photographed bowls on the site; name only from the brand on the bowl)"
+     },
+     "photo": {
+      "img": "bowl/zanobia-bowl-black",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0645 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "bowl-zanobia-multi-hole-bowl",
+   "order": 8,
+   "category": "bowls",
+   "name": {
+    "v": "Zanobia Multi-hole Bowl",
+    "src": "photo:IMG_0649 (ZANOBIA moulded round the bowl); rule 2026-11-27 (owner: put the photographed bowls on the site; name only from the brand on the bowl)"
+   },
+   "supplier_ref": {
+    "v": "Zanobia (ZANOBIA moulded round the bowl)",
+    "src": "photo:IMG_0649"
+   },
+   "facts": {
+    "brand": {
+     "v": "Zanobia",
+     "src": "photo:IMG_0649 (ZANOBIA moulded round the bowl); rule 2026-11-27 (owner: put the photographed bowls on the site; name only from the brand on the bowl)"
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: named from the brand on the bowl; the shape word is ours (no model name is printed): check the name",
+    "NEEDS SHOP: Yellow: named from the brand on the bowl; the shape word is ours (no model name is printed): check the name; the brand is turned away in this photo; shape and finish match the family: check it is the same bowl"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-130024",
+     "key": "bowl-zanobia-multi-hole-bowl#black",
+     "swatch_hex": {
+      "v": "#141414",
+      "src": "rule: chip colour for 'Black'"
+     },
+     "colour": {
+      "v": "Black",
+      "src": "photo:IMG_0649 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named from the brand on the bowl; the shape word is ours (no model name is printed): check the name",
+      "src": "rule 2026-11-27 (owner: put the photographed bowls on the site; name only from the brand on the bowl)"
+     },
+     "photo": {
+      "img": "bowl/zanobia-multi-hole-bowl-black",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0649 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-130025",
+     "key": "bowl-zanobia-multi-hole-bowl#red",
+     "swatch_hex": {
+      "v": "#c8372d",
+      "src": "rule: chip colour for 'Red'"
+     },
+     "colour": {
+      "v": "Red",
+      "src": "photo:IMG_0650 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named from the brand on the bowl; the shape word is ours (no model name is printed): check the name",
+      "src": "rule 2026-11-27 (owner: put the photographed bowls on the site; name only from the brand on the bowl)"
+     },
+     "photo": {
+      "img": "bowl/zanobia-multi-hole-bowl-red",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0650 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-130026",
+     "key": "bowl-zanobia-multi-hole-bowl#blue",
+     "swatch_hex": {
+      "v": "#22409a",
+      "src": "rule: chip colour for 'Blue'"
+     },
+     "colour": {
+      "v": "Blue",
+      "src": "photo:IMG_0651 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named from the brand on the bowl; the shape word is ours (no model name is printed): check the name",
+      "src": "rule 2026-11-27 (owner: put the photographed bowls on the site; name only from the brand on the bowl)"
+     },
+     "photo": {
+      "img": "bowl/zanobia-multi-hole-bowl-blue",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0651 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-130027",
+     "key": "bowl-zanobia-multi-hole-bowl#yellow",
+     "swatch_hex": {
+      "v": "#e3d21f",
+      "src": "rule: chip colour for 'Yellow'"
+     },
+     "colour": {
+      "v": "Yellow",
+      "src": "photo:IMG_0648 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named from the brand on the bowl; the shape word is ours (no model name is printed): check the name; the brand is turned away in this photo; shape and finish match the family: check it is the same bowl",
+      "src": "rule 2026-11-27 (owner: put the photographed bowls on the site; name only from the brand on the bowl)"
+     },
+     "photo": {
+      "img": "bowl/zanobia-multi-hole-bowl-yellow",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0648 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "bowl-zanobia-star-bowl",
+   "order": 9,
+   "category": "bowls",
+   "name": {
+    "v": "Zanobia Star Bowl",
+    "src": "photo:IMG_0644 (ZANOBIA moulded on the stem); rule 2026-11-27 (owner: put the photographed bowls on the site; name only from the brand on the bowl)"
+   },
+   "supplier_ref": {
+    "v": "Zanobia (ZANOBIA moulded on the stem)",
+    "src": "photo:IMG_0644"
+   },
+   "facts": {
+    "brand": {
+     "v": "Zanobia",
+     "src": "photo:IMG_0644 (ZANOBIA moulded on the stem); rule 2026-11-27 (owner: put the photographed bowls on the site; name only from the brand on the bowl)"
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: named from the brand on the bowl; the shape word is ours (no model name is printed): check the name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-130028",
+     "key": "bowl-zanobia-star-bowl#light-blue",
+     "swatch_hex": {
+      "v": "#7fa7cf",
+      "src": "rule: chip colour for 'Light blue'"
+     },
+     "colour": {
+      "v": "Light blue",
+      "src": "photo:IMG_0644 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named from the brand on the bowl; the shape word is ours (no model name is printed): check the name",
+      "src": "rule 2026-11-27 (owner: put the photographed bowls on the site; name only from the brand on the bowl)"
+     },
+     "photo": {
+      "img": "bowl/zanobia-star-bowl-light-blue",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0644 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  }
+ ],
+ "retired": {},
+ "shop_answers": [],
+ "retired_shop": {}
+}

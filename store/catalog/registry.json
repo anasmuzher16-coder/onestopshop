@@ -6,14 +6,16 @@
   "20": "charcoal-foil",
   "30": "shisha",
   "11": "ace-acc",
-  "12": "shop-hoses"
+  "12": "shop-hoses",
+  "13": "shop-bowls"
  },
  "next": {
   "10": 297,
   "20": 1,
   "30": 1,
   "11": 40,
-  "12": 32
+  "12": 32,
+  "13": 29
  },
  "skus": {
   "OSS-100001": {
@@ -3175,6 +3177,174 @@
   "OSS-120031": {
    "supplier": "shop-hoses",
    "key": "hose-hookah-hose-blue#blue",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130001": {
+   "supplier": "shop-bowls",
+   "key": "bowl-oblako-bowl#green",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130002": {
+   "supplier": "shop-bowls",
+   "key": "bowl-oblako-bowl#sage",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130003": {
+   "supplier": "shop-bowls",
+   "key": "bowl-oblako-bowl#black",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130004": {
+   "supplier": "shop-bowls",
+   "key": "bowl-oblako-bowl#yellow",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130005": {
+   "supplier": "shop-bowls",
+   "key": "bowl-oblako-bowl#orange",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130006": {
+   "supplier": "shop-bowls",
+   "key": "bowl-von-funnel-bowl#red-and-white",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130007": {
+   "supplier": "shop-bowls",
+   "key": "bowl-von-funnel-bowl#orange",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130008": {
+   "supplier": "shop-bowls",
+   "key": "bowl-von-funnel-bowl#brown",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130009": {
+   "supplier": "shop-bowls",
+   "key": "bowl-von-funnel-bowl#blue",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130010": {
+   "supplier": "shop-bowls",
+   "key": "bowl-von-funnel-bowl#green",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130011": {
+   "supplier": "shop-bowls",
+   "key": "bowl-von-short-bowl#orange",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130012": {
+   "supplier": "shop-bowls",
+   "key": "bowl-von-short-bowl#blue",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130013": {
+   "supplier": "shop-bowls",
+   "key": "bowl-von-ribbed-bowl#green",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130014": {
+   "supplier": "shop-bowls",
+   "key": "bowl-von-speckled-bowl#yellow",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130015": {
+   "supplier": "shop-bowls",
+   "key": "bowl-tas-bowl#blue-and-red",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130016": {
+   "supplier": "shop-bowls",
+   "key": "bowl-tas-bowl#red-and-black",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130017": {
+   "supplier": "shop-bowls",
+   "key": "bowl-tas-bowl#yellow-and-purple",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130018": {
+   "supplier": "shop-bowls",
+   "key": "bowl-yahya-bowl#brown",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130019": {
+   "supplier": "shop-bowls",
+   "key": "bowl-yahya-bowl#blue",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130020": {
+   "supplier": "shop-bowls",
+   "key": "bowl-zanobia-bowl#blue",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130021": {
+   "supplier": "shop-bowls",
+   "key": "bowl-zanobia-bowl#red",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130022": {
+   "supplier": "shop-bowls",
+   "key": "bowl-zanobia-bowl#yellow",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130023": {
+   "supplier": "shop-bowls",
+   "key": "bowl-zanobia-bowl#black",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130024": {
+   "supplier": "shop-bowls",
+   "key": "bowl-zanobia-multi-hole-bowl#black",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130025": {
+   "supplier": "shop-bowls",
+   "key": "bowl-zanobia-multi-hole-bowl#red",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130026": {
+   "supplier": "shop-bowls",
+   "key": "bowl-zanobia-multi-hole-bowl#blue",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130027": {
+   "supplier": "shop-bowls",
+   "key": "bowl-zanobia-multi-hole-bowl#yellow",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130028": {
+   "supplier": "shop-bowls",
+   "key": "bowl-zanobia-star-bowl#light-blue",
    "status": "active",
    "assigned": "2026-11-27"
   }

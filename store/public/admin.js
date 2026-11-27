@@ -250,13 +250,13 @@ function infoSheet(p) {
   const d = pj(p.details), had = Array.isArray(d.colours) ? d.colours : [], hexes = d.colour_hex || {}, c = catOf(p.category_id), owner = state.me.owner;
   const known = new Set(PALETTE.map(x => x[0].toLowerCase())), custom = had.filter(n => !known.has(n.toLowerCase()));
   const queue = state.products.filter(x => x.needs), at = queue.findIndex(x => x.sku === p.sku), counted = p.availability === "counted";
-  const hookahRow = /^(ace|hose)-/.test(p.family || "");   // one colour of a hookah, or of one of the shop's hoses
+  const hookahRow = /^(ace|hose|bowl)-/.test(p.family || "");   // one colour of a hookah, or of one of the shop's hoses or bowls
   const check = (p.needs || []).includes("check"), d0 = pj(p.details), lenRow = (p.needs || []).includes("length") || typeof d0.length === "string";
   sheet.innerHTML = `<form class="sheet__in info" data-info-form="${p.sku}" data-orig="${esc(JSON.stringify(had))}" novalidate>
     <div class="sheet__top"><div><p class="meta">${p.sku}${at >= 0 ? ` &middot; ${at + 1} of ${queue.length} to fill in` : ""}</p><h2 class="h2" style="margin:0">${esc(p.name)}</h2></div><button class="sheet__x" type="button" data-close>Close</button></div>
     <div class="photo">${thumb(p, c.tone).replace('width="52" height="64"', 'width="96" height="120"')}<div><p data-stillneed>${p.needs ? `Still needed: ${needWords(p.needs)}.` : "Everything is filled in. Change anything that is not right."}</p><p class="fineprint">Fill in what you know and leave the rest. Only what you change is saved, with your name.</p></div></div>
     <label class="field"><span>Name</span><input class="input" name="name" value="${esc(p.name)}" maxlength="80" autocomplete="off" required></label>
-    ${check ? `<fieldset class="cols-pick"><legend class="field__l">Name and length</legend><p class="fineprint">Not sure yet: ${esc(p.check_why || "matched by best guess")}. Fix the name above if it is wrong, then tick this.${p.family ? " Each colour is ticked on its own." : ""}</p>
+    ${check ? `<fieldset class="cols-pick"><legend class="field__l">${/^hose-/.test(p.family || "") ? "Name and length" : "Name"}</legend><p class="fineprint">Not sure yet: ${esc(p.check_why || "matched by best guess")}. Fix the name above if it is wrong, then tick this.${p.family ? " Each colour is ticked on its own." : ""}</p>
       <label class="field"><span><input type="checkbox" name="checked"> Checked with the shop</span></label></fieldset>` : ""}
     ${lenRow ? `<label class="field"><span>Length, as the shop says it</span><input class="input" name="length" value="${esc(d0.length || "")}" maxlength="30" autocomplete="off" placeholder="60.5 inches"></label>` : ""}
     <fieldset class="cols-pick"><legend class="field__l">Colours <span class="num" data-colcount></span></legend>

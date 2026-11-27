@@ -3708,13 +3708,13 @@
       "src": "pdf:ace-2026-10#p48:colour square 1 fill (chip colour only; never a colour name)"
      },
      "colour": {
-      "v": "silver",
-      "src": "photo:ace/ace-rose-silver (p48 xref 3572), dominant colour; human-confirm"
+      "v": "red",
+      "src": "photo:IMG_0713 (the shop's own photo); human-confirm"
      },
      "photo": {
-      "img": "ace/ace-rose-silver",
-      "status": "CHECK",
-      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
+      "img": "shop/ace-rose-red",
+      "status": "shop",
+      "src": "photo:IMG_0713 (the shop's own photo, cut out); Ace Rose hookah: the metal rose on the stem, ACE on the tongs, the swirled glass base (catalogue p48)"
      },
      "shop": {
       "price_cents": {
@@ -18884,12 +18884,6 @@
    "family": "ace-glass",
    "photo_status": "upscale",
    "img": "ace/ace-glass-silver"
-  },
-  {
-   "sku": "OSS-100150",
-   "family": "ace-rose",
-   "photo_status": "upscale",
-   "img": "ace/ace-rose-silver"
   },
   {
    "sku": "OSS-100153",
