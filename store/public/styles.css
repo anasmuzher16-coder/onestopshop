@@ -40,7 +40,7 @@ body:not([data-route]) .foot{visibility:hidden}
 .dock .dock__buy{background:var(--color-action);color:var(--color-on-action);margin:var(--s-2) 0;border-radius:var(--radius);font-weight:600;gap:var(--s-3)}
 .dock .dock__buy:active{background:var(--color-action-press)}
 .btn--call{width:100%}
-@media (max-width:959px){.pdp__info>.btn--wide,.pdp__info>.btn--ask,.cart>.btn--wide,.top__cart{display:none}}
+@media (max-width:959px){.pdp__info>.btn--wide,.pdp__info>.btn--ask,.cart>.btn--wide,.cart__sum>.btn--wide,.top__cart{display:none}}
 @media (orientation:landscape) and (max-height:500px){
   .pdp{grid-template-columns:1fr 1fr} .pdp__tile{height:calc(100svh - 150px)}
   .hero__stage{height:calc(100svh - 150px)}
@@ -1017,3 +1017,38 @@ a[href^="tel:"]{white-space:nowrap}
 @media (min-width:960px){.cats:has(> .cat:nth-child(4):last-child) .cat:first-child{grid-row:span 3} .cats:has(> .cat:nth-child(4):last-child) .cat:not(:first-child){grid-column:span 6;min-height:180px}}
 /* the band's call is the phone's first-screen action; from 640 px the Call button is in the first screen, so it is said once */
 @media (min-width:640px){.shophead__n .tel{display:none}}
+
+/* ========== design review fixes (2026-11-26, fleet/review-fixes) ========== */
+/* the home line about sections with nothing online: the links sit in the sentence, no gap after a short name */
+.cats__soon .link{min-width:0}
+/* 404: the long title wraps so the section object stands beside it at its full size, like every other band */
+@media (min-width:521px){.shophead[data-fx="missing"] .shophead__h{max-width:64%;text-wrap:balance}}
+/* the product page dock on a phone: Ask the counter is the desktop's outlined button, never a grey that reads disabled; the
+   cart is named, not a bare count */
+.dock--buy{grid-template-columns:72px 1fr auto}
+.dock .dock__cart{min-width:56px;padding:0 var(--s-4) 0 var(--s-3);gap:var(--s-2)}
+.dock .dock__buy--call,.dock .dock__buy--call:active{background:transparent;color:var(--color-strong);box-shadow:inset 0 0 0 1px var(--color-field)}
+/* price labels: a label too small to print the shop's name has no band at all (an empty ember strip read as a mistake);
+   the name prints where it can be read. Price TBD is one look everywhere: the dashed blank label on the colour behind it. */
+.sticker:not(.sticker--big){padding-top:.14em}
+.sticker:not(.sticker--big)::before,.sticker:not(.sticker--big)::after{content:none}
+@media (min-width:640px){.grid .sticker:not(.sticker--big){padding-top:1.06em} .grid .sticker:not(.sticker--big)::before{content:"ONE STOP"} .grid .sticker:not(.sticker--big)::after{content:""}}
+@media (min-width:960px){.piece .sticker:not(.sticker--big){padding-top:1.06em} .piece .sticker:not(.sticker--big)::before{content:"ONE STOP"} .piece .sticker:not(.sticker--big)::after{content:""}}
+.piece .sticker.sticker--tbd{background:transparent}
+/* the delivery question on a phone: one compact row (it was two tall plates, about 160 px, pushing the band down). The question
+   stays for screen readers; the two answers carry the words. Same markup as the Worker writes, CSS only, so nothing shifts. */
+@media (max-width:959px){
+  .dchoose{display:block;padding:var(--s-2) calc(var(--gutter) + 44px) var(--s-2) var(--gutter)}
+  .dchoose__h{position:absolute;width:1px;height:1px;min-height:0;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  .dstrip[data-mode="choose"] .dstrip__x{top:50%;margin-top:-22px}
+  .dchoose__opt{justify-content:center;gap:2px;min-height:52px;padding:var(--s-2) var(--s-3)}
+  .dchoose__name{font:600 13px/1.2 var(--font-ui);letter-spacing:0;text-transform:none;white-space:nowrap}
+  .dchoose__sub{font-size:12px;line-height:15px}
+}
+/* the cart on a wide screen: the lines on the left, the totals and the button in a column on the right that stays in view */
+@media (min-width:1200px){
+  .cart:has(> .cart__sum){display:grid;grid-template-columns:minmax(0,760px) minmax(320px,400px);column-gap:var(--s-12);max-width:none;align-items:start}
+  .cart:has(> .cart__sum) > :not(.cart__sum){grid-column:1}
+  .cart > .cart__sum{grid-column:2;grid-row:1 / span 8;position:sticky;top:96px}
+  .cart__sum .totals{margin-top:0}
+}

@@ -18,7 +18,10 @@ export function openLine() {
   const { day, t } = nowInWindsor(), [o, c] = SHOP_HOURS[day], next = SHOP_HOURS[(day + 1) % 7];
   return t >= o && t < c ? `Open now until ${h12(c)}` : t < o ? `Opens today at ${h12(o)}` : `Closed now. Opens ${DAYS[(day + 1) % 7]} at ${h12(next[0])}`;
 }
-export const soonBand = () => `${openLine()}. <a class="tel" href="tel:+15192552222">Call 519-255-2222</a>`;   // the band line of every coming-soon page
+// the band line of a coming-soon page says what to do, not the hours (those are in the visit block and the footer; design
+// review, 2026-11-26). Each page says what the counter does for it.
+// From 640 px the page's own Call button is in the first screen and the band's call hides (styles.css), so the line reads whole without it.
+export const soonBand = (say = "Ask the counter what is on the shelf") => `${say}. <a class="tel" href="tel:+15192552222">Call 519-255-2222</a>`;
 
 // Pickup or local delivery only (charcoal): the same rule as app.js localOnly
 const localOnly = p => !!p && (p.ship === "pickup_only" || !!(p.details && p.details.charcoal));
