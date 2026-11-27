@@ -1422,8 +1422,9 @@
      },
      "photo": {
       "img": "ace/ace-tsar-molotov-white",
-      "status": "CHECK",
-      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
+      "status": "ready",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json",
+      "web_src": "https://tsar-hookah.com/tsar-molotov-x-plus/"
      },
      "shop": {
       "price_cents": {
@@ -1470,7 +1471,8 @@
      "photo": {
       "img": "ace/ace-tsar-molotov-blue",
       "status": "family_hero_only",
-      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json",
+      "web_src": "https://tsar-hookah.com/tsar-molotov-x-plus/"
      },
      "shop": {
       "price_cents": {
@@ -1516,8 +1518,9 @@
      },
      "photo": {
       "img": "ace/ace-tsar-molotov-blue",
-      "status": "CHECK",
-      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
+      "status": "ready",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json",
+      "web_src": "https://tsar-hookah.com/tsar-molotov-x-plus/"
      },
      "shop": {
       "price_cents": {
@@ -1563,8 +1566,9 @@
      },
      "photo": {
       "img": "ace/ace-tsar-molotov-black",
-      "status": "CHECK",
-      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
+      "status": "ready",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json",
+      "web_src": "https://tsar-hookah.com/tsar-molotov-x-plus/"
      },
      "shop": {
       "price_cents": {
@@ -1611,7 +1615,8 @@
      "photo": {
       "img": "ace/ace-tsar-molotov-blue",
       "status": "family_hero_only",
-      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json",
+      "web_src": "https://tsar-hookah.com/tsar-molotov-x-plus/"
      },
      "shop": {
       "price_cents": {
@@ -1658,7 +1663,8 @@
      "photo": {
       "img": "ace/ace-tsar-molotov-blue",
       "status": "family_hero_only",
-      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json",
+      "web_src": "https://tsar-hookah.com/tsar-molotov-x-plus/"
      },
      "shop": {
       "price_cents": {
@@ -1945,7 +1951,8 @@
      "photo": {
       "img": "ace/ace-tsar-h-one-black",
       "status": "family_hero_only",
-      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json",
+      "web_src": "https://tsar-hookah.com/tsar-h-one/"
      },
      "shop": {
       "price_cents": {
@@ -1992,7 +1999,8 @@
      "photo": {
       "img": "ace/ace-tsar-h-one-black",
       "status": "family_hero_only",
-      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json",
+      "web_src": "https://tsar-hookah.com/tsar-h-one/"
      },
      "shop": {
       "price_cents": {
@@ -2039,7 +2047,8 @@
      "photo": {
       "img": "ace/ace-tsar-h-one-black",
       "status": "family_hero_only",
-      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json",
+      "web_src": "https://tsar-hookah.com/tsar-h-one/"
      },
      "shop": {
       "price_cents": {
@@ -2086,7 +2095,8 @@
      "photo": {
       "img": "ace/ace-tsar-h-one-black-2",
       "status": "ready",
-      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json",
+      "web_src": "https://tsar-hookah.com/tsar-h-one/"
      },
      "shop": {
       "price_cents": {
@@ -2133,7 +2143,8 @@
      "photo": {
       "img": "ace/ace-tsar-h-one-black",
       "status": "ready",
-      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json",
+      "web_src": "https://tsar-hookah.com/tsar-h-one/"
      },
      "shop": {
       "price_cents": {
@@ -2780,8 +2791,9 @@
      },
      "photo": {
       "img": "ace/ace-techno-yellow",
-      "status": "needs_original",
-      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
+      "status": "CHECK",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json",
+      "web_src": "https://shishazone.ca/product/techno-hookah/"
      },
      "shop": {
       "price_cents": {
@@ -2827,8 +2839,9 @@
      },
      "photo": {
       "img": "ace/ace-techno-red",
-      "status": "needs_original",
-      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
+      "status": "CHECK",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json",
+      "web_src": "https://shishazone.ca/product/techno-hookah/"
      },
      "shop": {
       "price_cents": {
@@ -2874,8 +2887,9 @@
      },
      "photo": {
       "img": "ace/ace-techno-blue",
-      "status": "needs_original",
-      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
+      "status": "CHECK",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json",
+      "web_src": "https://shishazone.ca/product/techno-hookah/"
      },
      "shop": {
       "price_cents": {
@@ -2921,8 +2935,9 @@
      },
      "photo": {
       "img": "ace/ace-techno-black",
-      "status": "needs_original",
-      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
+      "status": "CHECK",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json",
+      "web_src": "https://shishazone.ca/product/techno-hookah/"
      },
      "shop": {
       "price_cents": {
@@ -2969,7 +2984,8 @@
      "photo": {
       "img": "ace/ace-techno-grey",
       "status": "family_hero_only",
-      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json",
+      "web_src": "https://shishazone.ca/product/techno-hookah/"
      },
      "shop": {
       "price_cents": {
@@ -3015,8 +3031,9 @@
      },
      "photo": {
       "img": "ace/ace-techno-grey",
-      "status": "needs_original",
-      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
+      "status": "CHECK",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json",
+      "web_src": "https://shishazone.ca/product/techno-hookah/"
      },
      "shop": {
       "price_cents": {
@@ -4906,8 +4923,9 @@
      },
      "photo": {
       "img": "ace/ace-226-wood-bronze",
-      "status": "CHECK",
-      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
+      "status": "ready",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json",
+      "web_src": "https://shishazone.ca/product/wood-226/"
      },
      "shop": {
       "price_cents": {
@@ -4953,8 +4971,9 @@
      },
      "photo": {
       "img": "ace/ace-226-wood-blue",
-      "status": "CHECK",
-      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
+      "status": "ready",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json",
+      "web_src": "https://shishazone.ca/product/wood-226/"
      },
      "shop": {
       "price_cents": {
@@ -5000,8 +5019,9 @@
      },
      "photo": {
       "img": "ace/ace-226-wood-black",
-      "status": "CHECK",
-      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
+      "status": "ready",
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json",
+      "web_src": "https://shishazone.ca/product/wood-226/"
      },
      "shop": {
       "price_cents": {
@@ -5048,7 +5068,8 @@
      "photo": {
       "img": "ace/ace-226-wood-blue",
       "status": "family_hero_only",
-      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json",
+      "web_src": "https://shishazone.ca/product/wood-226/"
      },
      "shop": {
       "price_cents": {
@@ -5095,7 +5116,8 @@
      "photo": {
       "img": "ace/ace-226-wood-blue",
       "status": "family_hero_only",
-      "src": "photo manifest store/catalog/suppliers/ace/photos.json"
+      "src": "photo manifest store/catalog/suppliers/ace/photos.json",
+      "web_src": "https://shishazone.ca/product/wood-226/"
      },
      "shop": {
       "price_cents": {
@@ -18712,29 +18734,11 @@
    "shown_in": "gold"
   },
   {
-   "sku": "OSS-100079",
-   "family": "ace-tsar-molotov",
-   "photo_status": "upscale",
-   "img": "ace/ace-tsar-molotov-white"
-  },
-  {
    "sku": "OSS-100080",
    "family": "ace-tsar-molotov",
    "photo_status": "shown_in",
    "img": "ace/ace-tsar-molotov-blue",
    "shown_in": "blue"
-  },
-  {
-   "sku": "OSS-100081",
-   "family": "ace-tsar-molotov",
-   "photo_status": "upscale",
-   "img": "ace/ace-tsar-molotov-blue"
-  },
-  {
-   "sku": "OSS-100082",
-   "family": "ace-tsar-molotov",
-   "photo_status": "upscale",
-   "img": "ace/ace-tsar-molotov-black"
   },
   {
    "sku": "OSS-100083",
@@ -18914,24 +18918,6 @@
    "photo_status": "shown_in",
    "img": "ace/ace-247-cutie-red",
    "shown_in": "red"
-  },
-  {
-   "sku": "OSS-100231",
-   "family": "ace-226-wood",
-   "photo_status": "upscale",
-   "img": "ace/ace-226-wood-bronze"
-  },
-  {
-   "sku": "OSS-100232",
-   "family": "ace-226-wood",
-   "photo_status": "upscale",
-   "img": "ace/ace-226-wood-blue"
-  },
-  {
-   "sku": "OSS-100233",
-   "family": "ace-226-wood",
-   "photo_status": "upscale",
-   "img": "ace/ace-226-wood-black"
   },
   {
    "sku": "OSS-100234",

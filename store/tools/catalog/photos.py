@@ -4,7 +4,8 @@
 
 Ace's photos are already cut out: nearly every embedded image carries its own soft mask. This script
 extracts image + mask (no background removal, no AI upscaling here; a photo upscaled by hand and recorded in
-suppliers/<supplier>/upscaled.json is kept as it is, status ready, while its files and source match), sorts each image into hero / colour / group /
+suppliers/<supplier>/upscaled.json is kept as it is, status ready, while its files and source match; so is a photo
+replaced by a sharper web photo of the same product, recorded with its source in suppliers/<supplier>/web-photos.json), sorts each image into hero / colour / group /
 kit / lifestyle, splits rows of colours at the gaps in the mask, frames each product at 720x900 (product
 810 px tall, 45 px foot, centred; -m 540x675, -s 360x450; Lanczos only; WebP method 4) and flags anything
 enlarged past 1.25x as CHECK. It writes a manifest (store/catalog/suppliers/ace/photos.json) and contact
@@ -181,6 +182,34 @@ def apply_upscaled(it: dict, kept: dict):
         it["upscaled"] = sorted(r["files"])
 
 
+def web_kept(supplier: str, public: Path) -> dict:
+    """Photos replaced by a higher-resolution photo of the same product found online (owner 2026-11-27: "if there's any high
+    quality photos online let's just go ahead and use them"), listed in store/catalog/suppliers/<supplier>/web-photos.json
+    with the image and page they came from. One is kept, files untouched, only while every recorded file on disk still
+    matches its hash; a changed or missing one is printed loudly and rebuilt from the PDF (its old status comes back)."""
+    rec = C.load_json(C.SUPPLIERS / supplier / "web-photos.json", {}) or {}
+    kept = {}
+    for out, r in rec.get("images", {}).items():
+        files = r.get("files") or {}
+        if files and all((public / n).exists() and C.sha256_file(public / n) == h for n, h in files.items()):
+            kept[out] = r
+        else:
+            print(f"WARNING: web photo {out} ({', '.join(r.get('skus', []))}) no longer matches web-photos.json (files changed): "
+                  f"it is rebuilt from the PDF. Remove it from web-photos.json and put its old photo_label back in the database.")
+    return kept
+
+
+def apply_web(it: dict, kept: dict):
+    """Marks an image as its kept web photo when it stands for the same cut of the same Ace image (xref and crop unchanged).
+    Its status is the web photo's own (ready, or CHECK when even the web original had to be enlarged past 1.25x)."""
+    r = kept.get(it.get("out"))
+    if r and r["xref"] == it.get("xref") and list(r["crop"]) == list(it.get("crop") or []) and it["status"] in SHOWN:
+        it["note"] = f"{it['note']}; replaced {r['date']} by a web photo ({r['site']}, {r['scale_720']}x), was {it['status']} {it['scale']}x"
+        it["status"] = r["status"]
+        it["web"] = sorted(r["files"])
+        it["photo_src"] = r["page_url"]
+
+
 def save_set(canvas: Image.Image, base: Path):
     base.parent.mkdir(parents=True, exist_ok=True)
     for suf, size, qual in SIZES:
@@ -340,6 +369,7 @@ def run(pdf: Path, work: Path, publish: bool):
             smask_of[im[0]] = im[1]
     overrides = C.load_json(C.SUPPLIERS / "ace" / "photo-overrides.json", {}).get("images", {})
     kept = upscaled_kept("ace", PUBLIC, pdf)
+    web = web_kept("ace", PUBLIC)
     images = []
     for r in order:
         f = fams[r["page"]]
@@ -416,15 +446,23 @@ def run(pdf: Path, work: Path, publish: bool):
             it["out"] = f"ace/{out}"
             it["file"] = it["tmp"] + "-s.webp"
             apply_upscaled(it, kept)   # after roles are set, so an upscale never reshuffles which photo is the hero
+            apply_web(it, web)         # same: a web photo takes the place of this cut, roles unchanged
             images.append(it)
+    # a kept web photo whose Ace cut moved (new PDF: other xref or crop) is not applied, and --publish would put the Ace cut back
+    applied = {im["out"] for im in images if im.get("web")}
+    for out, r in web.items():
+        if out not in applied:
+            print(f"WARNING: web photo {out} ({', '.join(r.get('skus', []))}) no longer matches its Ace cut (xref {r['xref']}, crop "
+                  f"{r['crop']}): the Ace photo is used again. Re-check the match, update web-photos.json, and put the old "
+                  f"photo_label back and clear photo_src in the database if it stays off.")
     # publish: only the images a product row will show (matched to a colour, or the family's hero)
     shipped = [im for im in images if im.get("status") in SHOWN and im.get("role") in ("hero", "colour")]
     if publish:
         PUBLIC.mkdir(parents=True, exist_ok=True)
         want = set()
         for im in shipped:
-            if im.get("upscaled"):   # its upscaled files (with the 1440 -l) stay exactly as they are
-                want.update(im["upscaled"])
+            if im.get("upscaled") or im.get("web"):   # upscaled or web-photo files (with any 1440 -l) stay exactly as they are
+                want.update(im.get("web") or im["upscaled"])
                 continue
             for suf, _, _ in SIZES:
                 src = Path(im["tmp"] + suf + ".webp")
@@ -441,7 +479,8 @@ def run(pdf: Path, work: Path, publish: bool):
                 "published_dir": "store/public/img/pc/ace", "images": []}
     for im in images:
         manifest["images"].append({k: im.get(k) for k in ("page", "xref", "family_id", "class", "role", "crop", "src_px", "scale",
-                                                          "colour", "rgb", "variant_key", "sku", "status", "out", "note")})
+                                                          "colour", "rgb", "variant_key", "sku", "status", "out", "note")}
+                                  | ({"photo_src": im["photo_src"]} if im.get("photo_src") else {}))
     C.write_json(C.SUPPLIERS / "ace" / "photos.json", manifest)
     # contact sheets
     pal_bg, pal = tokens()

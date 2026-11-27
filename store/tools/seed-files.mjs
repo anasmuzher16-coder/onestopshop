@@ -25,6 +25,7 @@ export const SEED_FILES = [
   "catalog/live/shisha-tone-2026-11-26.sql",    // Shisha's own jewel, chartreuse, in place of Hoses' emerald
   "catalog/live/upscaled-photos-2026-11-27.sql", // the upscaled photo: its label off, its 1440 photo on
   "catalog/live/reverse-search-facts-2026-11-27.sql", // makers' names for 4 stand-ins, facts from the exact reverse-search rows (no-op over this seed: proves it is safe twice)
+  "catalog/live/web-photos-2026-11-27.sql",     // sharper web photos of the same products: their source kept, labels off where now crisp
 ];
 export const seedPath = f => fileURLToPath(new URL(f, STORE));
 

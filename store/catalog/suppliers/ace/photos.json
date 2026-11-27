@@ -653,9 +653,10 @@
    ],
    "variant_key": "ace-tsar-molotov##5271ff",
    "sku": "OSS-100081",
-   "status": "CHECK",
+   "status": "ready",
    "out": "ace/ace-tsar-molotov-blue",
-   "note": "person checked: swing tag and Ace's baked-in grey shadow under the vase and bowl: mask them by hand"
+   "note": "person checked: swing tag and Ace's baked-in grey shadow under the vase and bowl: mask them by hand; replaced 2026-11-27 by a web photo (tsar-hookah.com, 0.975x), was CHECK 1.219x",
+   "photo_src": "https://tsar-hookah.com/tsar-molotov-x-plus/"
   },
   {
    "page": 26,
@@ -682,9 +683,10 @@
    ],
    "variant_key": "ace-tsar-molotov##a6a6a6",
    "sku": "OSS-100079",
-   "status": "CHECK",
+   "status": "ready",
    "out": "ace/ace-tsar-molotov-white",
-   "note": "person checked: swing tag and Ace's baked-in grey shadow under the vase and bowl: mask them by hand"
+   "note": "person checked: swing tag and Ace's baked-in grey shadow under the vase and bowl: mask them by hand; replaced 2026-11-27 by a web photo (tsar-hookah.com, 1.04x), was CHECK 1.3x",
+   "photo_src": "https://tsar-hookah.com/tsar-molotov-x-plus/"
   },
   {
    "page": 26,
@@ -711,9 +713,10 @@
    ],
    "variant_key": "ace-tsar-molotov##000000",
    "sku": "OSS-100082",
-   "status": "CHECK",
+   "status": "ready",
    "out": "ace/ace-tsar-molotov-black",
-   "note": "person checked: swing tag and Ace's baked-in grey shadow under the vase and bowl: mask them by hand"
+   "note": "person checked: swing tag and Ace's baked-in grey shadow under the vase and bowl: mask them by hand; replaced 2026-11-27 by a web photo (tsar-hookah.com, 0.975x), was CHECK 1.221x",
+   "photo_src": "https://tsar-hookah.com/tsar-molotov-x-plus/"
   },
   {
    "page": 27,
@@ -883,7 +886,8 @@
    "sku": "OSS-100092",
    "status": "ready",
    "out": "ace/ace-tsar-h-one-black",
-   "note": "single product"
+   "note": "single product; replaced 2026-11-27 by a web photo (tsar-hookah.com, 0.842x), was ready 1.056x",
+   "photo_src": "https://tsar-hookah.com/tsar-h-one/"
   },
   {
    "page": 29,
@@ -912,7 +916,8 @@
    "sku": "OSS-100091",
    "status": "ready",
    "out": "ace/ace-tsar-h-one-black-2",
-   "note": "single product, 1 loose piece(s) left out"
+   "note": "single product, 1 loose piece(s) left out; replaced 2026-11-27 by a web photo (tsar-hookah.com, 0.878x), was ready 1.098x",
+   "photo_src": "https://tsar-hookah.com/tsar-h-one/"
   },
   {
    "page": 30,
@@ -1192,9 +1197,10 @@
    ],
    "variant_key": "ace-techno##ff1616",
    "sku": "OSS-100108",
-   "status": "needs_original",
+   "status": "CHECK",
    "out": "ace/ace-techno-red",
-   "note": "enlarged 2.20x from a small source: needs Ace's original"
+   "note": "enlarged 2.20x from a small source: needs Ace's original; replaced 2026-11-27 by a web photo (shishazone.ca, 1.368x), was needs_original 2.201x",
+   "photo_src": "https://shishazone.ca/product/techno-hookah/"
   },
   {
    "page": 35,
@@ -1221,9 +1227,10 @@
    ],
    "variant_key": "ace-techno##000000",
    "sku": "OSS-100110",
-   "status": "needs_original",
+   "status": "CHECK",
    "out": "ace/ace-techno-black",
-   "note": "enlarged 2.21x from a small source: needs Ace's original"
+   "note": "enlarged 2.21x from a small source: needs Ace's original; replaced 2026-11-27 by a web photo (shishazone.ca, 1.375x), was needs_original 2.207x",
+   "photo_src": "https://shishazone.ca/product/techno-hookah/"
   },
   {
    "page": 35,
@@ -1250,9 +1257,10 @@
    ],
    "variant_key": "ace-techno##a6a6a6",
    "sku": "OSS-100112",
-   "status": "needs_original",
+   "status": "CHECK",
    "out": "ace/ace-techno-grey",
-   "note": "enlarged 2.19x from a small source: needs Ace's original"
+   "note": "enlarged 2.19x from a small source: needs Ace's original; replaced 2026-11-27 by a web photo (shishazone.ca, 1.366x), was needs_original 2.189x",
+   "photo_src": "https://shishazone.ca/product/techno-hookah/"
   },
   {
    "page": 35,
@@ -1279,9 +1287,10 @@
    ],
    "variant_key": "ace-techno##ffde59",
    "sku": "OSS-100107",
-   "status": "needs_original",
+   "status": "CHECK",
    "out": "ace/ace-techno-yellow",
-   "note": "enlarged 2.21x from a small source: needs Ace's original"
+   "note": "enlarged 2.21x from a small source: needs Ace's original; replaced 2026-11-27 by a web photo (shishazone.ca, 1.378x), was needs_original 2.207x",
+   "photo_src": "https://shishazone.ca/product/techno-hookah/"
   },
   {
    "page": 35,
@@ -1308,9 +1317,10 @@
    ],
    "variant_key": "ace-techno##5271ff",
    "sku": "OSS-100109",
-   "status": "needs_original",
+   "status": "CHECK",
    "out": "ace/ace-techno-blue",
-   "note": "enlarged 2.21x from a small source: needs Ace's original"
+   "note": "enlarged 2.21x from a small source: needs Ace's original; replaced 2026-11-27 by a web photo (shishazone.ca, 1.382x), was needs_original 2.213x",
+   "photo_src": "https://shishazone.ca/product/techno-hookah/"
   },
   {
    "page": 36,
@@ -2120,9 +2130,10 @@
    ],
    "variant_key": "ace-226-wood##ff914d",
    "sku": "OSS-100231",
-   "status": "CHECK",
+   "status": "ready",
    "out": "ace/ace-226-wood-bronze",
-   "note": "split from a row of colours at a gap in the mask"
+   "note": "split from a row of colours at a gap in the mask; replaced 2026-11-27 by a web photo (shishazone.ca, 1.023x), was CHECK 1.636x",
+   "photo_src": "https://shishazone.ca/product/wood-226/"
   },
   {
    "page": 68,
@@ -2149,9 +2160,10 @@
    ],
    "variant_key": "ace-226-wood##000000",
    "sku": "OSS-100232",
-   "status": "CHECK",
+   "status": "ready",
    "out": "ace/ace-226-wood-blue",
-   "note": "split from a row of colours at a gap in the mask"
+   "note": "split from a row of colours at a gap in the mask; replaced 2026-11-27 by a web photo (shishazone.ca, 1.023x), was CHECK 1.633x",
+   "photo_src": "https://shishazone.ca/product/wood-226/"
   },
   {
    "page": 68,
@@ -2178,9 +2190,10 @@
    ],
    "variant_key": "ace-226-wood##a6a6a6",
    "sku": "OSS-100233",
-   "status": "CHECK",
+   "status": "ready",
    "out": "ace/ace-226-wood-black",
-   "note": "split from a row of colours at a gap in the mask"
+   "note": "split from a row of colours at a gap in the mask; replaced 2026-11-27 by a web photo (shishazone.ca, 1.02x), was CHECK 1.633x",
+   "photo_src": "https://shishazone.ca/product/wood-226/"
   },
   {
    "page": 70,

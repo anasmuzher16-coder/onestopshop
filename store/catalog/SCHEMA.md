@@ -73,6 +73,12 @@ A `CHECK` or `needs_original` photo re-made from a 4x upscale and passed by a de
 `suppliers/<supplier>/upscaled.json` (method, source PDF sha256, sha256 of each published file, 1440 width): photos.py and
 photos_acc.py then keep its files and give it `ready`. If its files or the PDF change, the scripts warn and flag it again;
 its row's `img_lw` must then go back to NULL. First one: OSS-110026, 2026-11-27 (`catalog/live/upscaled-photos-2026-11-27.sql`).
+A photo replaced by a sharper photo of the same product and colour found online (owner 2026-11-27: high quality web photos
+are fair game; the brand's own product shots first) is listed in `suppliers/<supplier>/web-photos.json` (image and page URL,
+site, who owns the image, source and product size, the Ace cut it stands for, sha256 of each published file): photos.py
+keeps its files and gives it the status recorded there (`ready`, or `CHECK` when even the web original is enlarged past
+1.25x). The page URL goes to `photo.web_src` in the master and `facts_known.photo_src` in the row, so any photo can be swapped
+later. First batch: 13 Ace photos, 2026-11-27 (`catalog/live/web-photos-2026-11-27.sql`).
 
 ## SKUs: OSS-SSNNNN
 
