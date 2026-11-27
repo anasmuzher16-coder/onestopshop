@@ -10,7 +10,7 @@ export const SEED_FILES = [
   "catalog/out/seed-ace.sql",                   // Ace, Price TBD (store/tools/catalog/catalog.py seed)
   "catalog/out/seed-ace-acc.sql",               // Ace accessories the shop ticked, Price TBD (catalog.py seed --supplier ace-acc)
   "catalog/out/seed-shop-hoses.sql",            // the shop's own hoses, Price TBD (catalog.py seed --supplier shop-hoses, or plain seed)
-  "catalog/live/hoses-2026-11-27.sql",          // the same hoses as the live database gets them (run twice here: proves it is safe to)
+  "catalog/live/hoses-2026-11-27.sql",          // the same hoses as the live database gets them (after seed-shop-hoses.sql, so the hose rows go in twice: proves it is safe)
   "catalog/out/seed-shop-bowls.sql",            // the shop's own bowls, Price TBD (catalog.py seed --supplier shop-bowls, or plain seed)
   "catalog/live/shop-photos-2026-11-27.sql",    // hoses' Starbuzz length + the shop's bowls, as the live database gets them (run twice)
   "catalog/out/seed-shisha.sql",                // shisha flavours

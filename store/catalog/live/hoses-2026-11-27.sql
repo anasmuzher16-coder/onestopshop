@@ -1,3 +1,5 @@
+-- SUPERSEDED by shop-photos-2026-11-27.sql (same day, later): if this file is ever run again, run that one straight after it,
+-- or the four Starbuzz hoses lose their 76.5 inches length (this file's UPDATE lines carry the older master).
 -- The shop's own hanging hoses (owner, 2026-11-27: "Let's just get all on the site"): 31 hoses, OSS-120001 to OSS-120031,
 -- section Hoses, Price TBD, in the shop, stock not counted. Built from store/catalog/suppliers/shop-hoses/master.json
 -- (python store/tools/catalog/catalog.py build --only shop-hoses); the lines below are exactly what `catalog.py seed

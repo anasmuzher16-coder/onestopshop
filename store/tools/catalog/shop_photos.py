@@ -11,7 +11,8 @@ from __future__ import annotations
 # Ace variant key -> (site photo name under img/pc, colour seen in the shop's photo, shop photo file, why it is this piece)
 SHOP_PHOTOS = {
     # IMG_0713: below the base's widest point the cut-out is trimmed to the base's own outline (convex hull of its orange
-    # glass), which takes off the shop's black display stand and a sliver of the white table under it
+    # glass), which takes off the shop's black display stand and a sliver of the white table under it:
+    #   frame_cutouts.py CUTOUTS OUT --kind hookah --trim-base-below 3560 IMG_0713   (then -l is not kept: Ace rows set no img_lw)
     "ace-rose##000000": ("shop/ace-rose-red", "red", "IMG_0713",
                          "Ace Rose hookah: the metal rose on the stem, ACE on the tongs, the swirled glass base (catalogue p48)"),
     # Not used: the Tsar Molotov photos (IMG_0684 green, IMG_0685 blue). Their clear base shows the shop's patterned mat through the
