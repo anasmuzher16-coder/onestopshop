@@ -4,6 +4,7 @@
 // never paying a test order, shisha refused for card until STRIPE_TOBACCO_OK=1 and taken by card once it is, and charcoal
 // never sent by a carrier however it is paid. Card mode only: it fails if the store has no card keys.
 // node store/tools/test-pay-card.mjs   (store started with the fake Stripe vars, optionally STRIPE_TOBACCO_OK:1; changes local data: reseed afterwards)
+import { withPhone } from "./fixtures/phone.mjs";   // a counter pickup carries a phone while the shop's mail is off (2026-11-27)
 import { readFileSync } from "node:fs";
 import { samplesOn } from "./fixtures/samples-on.mjs";
 import { post as hook, completed, event } from "./fixtures/stripe-webhooks.mjs";
@@ -20,7 +21,7 @@ const login = await fetch(B + "/api/admin/login", { method: "POST", headers: { "
 const cookie = (login.headers.get("set-cookie") || "").split(";")[0];
 // each order comes from its own made-up address, as real shoppers do: the per-visitor order limits (src/guard.js) have their own checks in test-orders
 const shopper = () => `10.${(Math.random() * 250) | 0}.${(Math.random() * 250) | 0}.${(Math.random() * 250) | 0}`;
-const post = async body => { for (let i = 0; ; i++) { const r = await fetch(B + "/api/orders", { method: "POST", headers: { "Content-Type": "application/json", "CF-Connecting-IP": shopper() }, body: JSON.stringify(body) }); if (r.status === 429 && i < 2) { await new Promise(w => setTimeout(w, 61000)); continue; } return { status: r.status, data: await r.json().catch(() => ({})) }; } };
+const post = async body => { for (let i = 0; ; i++) { const r = await fetch(B + "/api/orders", { method: "POST", headers: { "Content-Type": "application/json", "CF-Connecting-IP": shopper() }, body: JSON.stringify(withPhone(body)) }); if (r.status === 429 && i < 2) { await new Promise(w => setTimeout(w, 61000)); continue; } return { status: r.status, data: await r.json().catch(() => ({})) }; } };
 const order = async id => (await (await fetch(B + "/api/admin/orders/" + id, { headers: { Cookie: cookie } })).json());
 const session = async id => (await fetch(S + "/__session/" + id)).json();
 const stockOf = async sku => (await (await fetch(B + "/api/catalog")).json()).products.find(p => p.sku === sku)?.stock;

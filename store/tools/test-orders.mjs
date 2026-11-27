@@ -1,4 +1,5 @@
 import { samplesOn } from "./fixtures/samples-on.mjs";
+import { withPhone, phoneFor } from "./fixtures/phone.mjs";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
@@ -17,7 +18,8 @@ for (const sku of ["OSS-8004", "OSS-8003", "OSS-7004", "OSS-8001"]) { const r = 
 let n = 0, f = 0; const ok = (c, msg) => { n++; if (!c) { f++; console.log("FAIL", msg); } };
 // each order comes from its own made-up address, as real shoppers do: the per-visitor order limits (src/guard.js) have their own checks in test-orders
 const shopper = () => `10.${(Math.random() * 250) | 0}.${(Math.random() * 250) | 0}.${(Math.random() * 250) | 0}`;
-const post = async body => { const r = await fetch(B + "/api/orders", { method: "POST", headers: { "Content-Type": "application/json", "CF-Connecting-IP": shopper() }, body: JSON.stringify(body) }); return { status: r.status, data: await r.json().catch(() => ({})) }; };
+// a counter pickup carries its customer's phone (needed while the shop's mail is off, 2026-11-27: tools/fixtures/phone.mjs)
+const post = async body => { const r = await fetch(B + "/api/orders", { method: "POST", headers: { "Content-Type": "application/json", "CF-Connecting-IP": shopper() }, body: JSON.stringify(withPhone(body)) }); return { status: r.status, data: await r.json().catch(() => ({})) }; };
 const stockOf = async sku => (await (await fetch(B + "/api/catalog")).json()).products.find(p => p.sku === sku)?.stock;
 // each part below orders as its own customer (its own email): one email holds at most 3 unpaid orders at once (src/guard.js)
 const who = { name: "Key Tester", email: "key@example.com" }, as = tag => { who.email = `key-${tag}@example.com`; }, key = s => `test-${s}-${crypto.randomUUID()}`.slice(0, 60);
@@ -78,7 +80,7 @@ const WRANGLER = process.env.WRANGLER_JS || join(execFileSync(process.platform =
 const sql = cmd => { const out = execFileSync(process.execPath, [WRANGLER, "d1", "execute", "onestopshop", "--local", "--persist-to", PERSIST, "--json", "--command", cmd], { cwd: fileURLToPath(new URL("..", import.meta.url)), encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }); return JSON.parse(out.slice(out.indexOf("["))).flatMap(r => r.results); };
 const wait = ms => new Promise(r => setTimeout(r, ms));
 // one shopper at a given address; the shop-wide brake (60 a minute) would be waited out like a shopper would, never a visitor limit
-const from = async (ip, body) => { for (let i = 0; ; i++) { const r = await fetch(B + "/api/orders", { method: "POST", headers: { "Content-Type": "application/json", "CF-Connecting-IP": ip }, body: JSON.stringify(body) }); const out = { status: r.status, data: await r.json().catch(() => ({})) }; if (out.status === 429 && (!out.data.limited || out.data.limited === "busy") && i < 2) { await wait(61000); continue; } return out; } };
+const from = async (ip, body) => { for (let i = 0; ; i++) { const r = await fetch(B + "/api/orders", { method: "POST", headers: { "Content-Type": "application/json", "CF-Connecting-IP": ip }, body: JSON.stringify(withPhone(body)) }); const out = { status: r.status, data: await r.json().catch(() => ({})) }; if (out.status === 429 && (!out.data.limited || out.data.limited === "busy") && i < 2) { await wait(61000); continue; } return out; } };
 const run = Math.random().toString(36).slice(2, 8), counter = (email, sku = "OSS-8003", extra = {}) => ({ name: "Guard Tester", email, method: "pickup", pay: "at_pickup", lines: [{ sku, qty: 1 }], ...extra });
 // mail from the shop never carries a link someone typed: a name saved before names were checked, a note, an address
 { const o = { id: "WTEST23", name: "https://evil.example/claim x", method: "pickup", pay_status: "pay_at_pickup", created_at: "2026-11-26T20:00:00Z", pay_expires_at: "2026-11-28T20:00:00Z", subtotal_cents: 100, tax_cents: 13, total_cents: 113, tax_province: "ON", email: "a@b.co", address: JSON.stringify({ note: "go to www.evil.example now" }) };
@@ -105,42 +107,56 @@ else {
   const fine = await from(shopper(), counter(`fine-${run}@example.com`, "OSS-8001", { name: "Seán O'Brien-Smith J.R." }));
   ok(fine.status === 201, "a real name with an accent, apostrophe, hyphen and initials goes through: " + fine.status);
 
-  // one address holds at most 3 unpaid orders, whatever email it types
-  const ipA = "10.250.1." + ((Math.random() * 200) | 0), heldA = [];
-  for (let i = 0; i < 3; i++) heldA.push(await from(ipA, counter(`a${i}-${run}@example.com`)));
-  const fourthA = await from(ipA, counter(`a3-${run}@example.com`));
-  ok(heldA.every(r => r.status === 201) && fourthA.status === 429 && fourthA.data.limited === "open", "a fourth unpaid order from one address is refused: " + heldA.map(r => r.status) + "," + fourthA.status);
-  // an IPv6 visitor is one visitor across its whole /64
-  const v6 = `2001:db8:${((Math.random() * 65000) | 0).toString(16)}:7`, heldV6 = [];
-  for (let i = 0; i < 3; i++) heldV6.push(await from(`${v6}::${i + 1}`, counter(`v${i}-${run}@example.com`)));
-  const fourthV6 = await from(`${v6}:ffff:1:2:3`, counter(`v3-${run}@example.com`));
-  ok(heldV6.every(r => r.status === 201) && fourthV6.status === 429, "IPv6 addresses in one /64 count as one visitor: " + heldV6.map(r => r.status) + "," + fourthV6.status);
-  // one /48 (a free tunnel holds 256 /56s) is held to 6 unpaid orders in all, however many of its /56s it uses
-  const g48 = `2001:db8:${((Math.random() * 65000) | 0).toString(16)}`, heldG = [];
-  for (let i = 0; i < 6; i++) heldG.push(await from(`${g48}:${(i + 1) * 256 + 1}::1`.replace(/:(\d+)::1$/, (m, n) => ":" + Number(n).toString(16) + "::1"), counter(`g${i}-${run}@example.com`, "OSS-8004")));
-  const seventhG = await from(`${g48}:9901::1`, counter(`g6-${run}@example.com`, "OSS-8004"));
-  ok(heldG.every(r => r.status === 201) && seventhG.status === 429 && seventhG.data.limited === "open", "one IPv6 /48 cannot act as many visitors: " + heldG.map(r => r.status) + "," + seventhG.status);
-  // one email holds at most 3 unpaid orders, from any address
+  // ---------- 2026-11-27 (fleet/guard4): one PERSON is the main open-order limit; networks only guard against spam ----------
+  // Rewritten: these checks used to hold one address to 3 open orders whatever email it typed (carrier NAT, mobile IPv6 pools,
+  // Private Relay and public Wi-Fi put strangers on one address, so real customers were turned away for days), and one email to 3
+  // from anywhere (so a stranger typing your email used up your slots). Now a person is an email plus the same phone (or, with no
+  // phone on either order, the same network): 3 open; a network takes 20 open (an IPv6 /48 40), with the old rate limits.
   const em = `same-${run}@example.com`, heldE = [];
   for (let i = 0; i < 3; i++) heldE.push(await from(shopper(), counter(em)));
   const fourthE = await from(shopper(), counter(em.toUpperCase()));
-  ok(heldE.every(r => r.status === 201) && fourthE.status === 429 && fourthE.data.limited === "open", "a fourth unpaid order for one email is refused, in any case: " + heldE.map(r => r.status) + "," + fourthE.status);
+  ok(heldE.every(r => r.status === 201) && fourthE.status === 429 && fourthE.data.limited === "open" && /You already have 3 pickup requests waiting/.test(fourthE.data.error || "") && /519-255-2222/.test(fourthE.data.error || ""), "one person (email and phone) holds 3 open requests from any address, in any case; the fourth is told why, with the shop's number: " + heldE.map(r => r.status) + "," + fourthE.status + " " + (fourthE.data.error || ""));
+  const samePhone = await from(shopper(), counter(em, "OSS-8003", { phone: "+1 " + phoneFor(em).replace(/-/g, " ") }));
+  ok(samePhone.status === 429 && samePhone.data.limited === "open", "the same phone written another way (+1, spaces) is the same person: " + samePhone.status);
+  const stranger = await from(shopper(), counter(em, "OSS-8003", { phone: "226-555-0199" }));
+  ok(stranger.status === 201, "a stranger who types that email with their own phone is not blocked by it, so they cannot use its slots either: " + stranger.status + " " + (stranger.data.error || ""));
   sql(`UPDATE orders SET status = 'ready', ready_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id IN (${heldE.map(r => `'${r.data.order.id}'`).join(",")})`);
   const readyE = await from(shopper(), counter(em));
-  ok(readyE.status === 429 && readyE.data.limited === "open", "orders the shop got ready but not yet paid still count as held: " + readyE.status);
-  // paid orders free the hold, but one address still places at most 5 orders in 10 minutes
-  sql(`UPDATE orders SET status = 'paid', pay_status = 'paid', paid_cents = total_cents WHERE id IN (${heldA.map(r => `'${r.data.order.id}'`).join(",")})`);
-  const more = [await from(ipA, counter(`a4-${run}@example.com`, "OSS-7004")), await from(ipA, counter(`a5-${run}@example.com`, "OSS-7004"))];
-  const sixth = await from(ipA, counter(`a6-${run}@example.com`, "OSS-7004"));
+  ok(readyE.status === 429 && readyE.data.limited === "open", "orders the shop got ready but not yet paid still count for their person: " + readyE.status);
+  // one carrier-shared address: a real customer with 3 open does not block the next real customer on the same address
+  const ipA = "10.250.1." + ((Math.random() * 200) | 0), custA = `carrier-a-${run}@example.com`, heldA = [];
+  for (let i = 0; i < 3; i++) heldA.push(await from(ipA, counter(custA, "OSS-8004")));
+  const fourthA = await from(ipA, counter(custA, "OSS-8004")), custB = await from(ipA, counter(`carrier-b-${run}@example.com`, "OSS-8004"));
+  ok(heldA.every(r => r.status === 201) && fourthA.status === 429 && fourthA.data.limited === "open" && custB.status === 201, "on one shared address, a customer with 3 open is stopped and the next customer still orders: " + heldA.map(r => r.status) + "," + fourthA.status + "," + custB.status + " " + (custB.data.error || ""));
+  // one address still takes at most 20 open requests from different people (anti-spam). The rate limits (5 in 10 minutes, 15 a day)
+  // would stop this first, so this suite moves its own rows' times back a day after each 5 to reach the open count.
+  const net = "10.252.3." + ((Math.random() * 200) | 0), netHeld = [], back = list => sql(`UPDATE order_attempts SET at = strftime('%Y-%m-%dT%H:%M:%SZ','now','-2 days') WHERE order_id IN (${list.map(r => `'${r.data.order?.id}'`).join(",")})`);
+  for (let i = 0; i < 20; i++) { netHeld.push(await from(net, counter(`net${i}-${run}@example.com`, "OSS-8004"))); if (i % 5 === 4) back(netHeld.slice(-5)); }
+  const net21 = await from(net, counter(`net20-${run}@example.com`, "OSS-8004"));
+  ok(netHeld.every(r => r.status === 201) && net21.status === 429 && net21.data.limited === "network" && /internet connection/.test(net21.data.error || "") && /519-255-2222/.test(net21.data.error || ""), "one address takes 20 open requests from 20 people; the 21st is told the connection may be shared, with the shop's number: " + netHeld.map(r => r.status).join("") + "," + net21.status + " " + (net21.data.error || ""));
+  // an IPv6 visitor is one network across its /56: 5 orders in 10 minutes from different addresses in it, then the rate limit
+  const v6 = `2001:db8:${((Math.random() * 65000) | 0).toString(16)}:7`, heldV6 = [];
+  for (let i = 0; i < 5; i++) heldV6.push(await from(`${v6}::${i + 1}`, counter(`v${i}-${run}@example.com`)));
+  const sixthV6 = await from(`${v6}:ffff:1:2:3`, counter(`v5-${run}@example.com`));
+  ok(heldV6.every(r => r.status === 201) && sixthV6.status === 429 && sixthV6.data.limited === "rate", "IPv6 addresses in one /56 count as one network: " + heldV6.map(r => r.status) + "," + sixthV6.status);
+  // one /48 (a free tunnel holds 256 /56s) is held to 10 orders in 10 minutes in all, however many of its /56s it uses
+  const g48 = `2001:db8:${((Math.random() * 65000) | 0).toString(16)}`, heldG = [];
+  for (let i = 0; i < 10; i++) heldG.push(await from(`${g48}:${((i + 1) * 256 + 1).toString(16)}::1`, counter(`g${i}-${run}@example.com`, "OSS-8004")));
+  const eleventhG = await from(`${g48}:9901::1`, counter(`g10-${run}@example.com`, "OSS-8004"));
+  ok(heldG.every(r => r.status === 201) && eleventhG.status === 429 && eleventhG.data.limited === "rate", "one IPv6 /48 cannot act as many networks: " + heldG.map(r => r.status) + "," + eleventhG.status);
+  // one address places at most 5 orders in 10 minutes
+  const ipR = "10.249.4." + ((Math.random() * 200) | 0), more = [];
+  for (let i = 0; i < 5; i++) more.push(await from(ipR, counter(`r5-${i}-${run}@example.com`, "OSS-7004")));
+  const sixth = await from(ipR, counter(`r5-x-${run}@example.com`, "OSS-7004"));
   ok(more.every(r => r.status === 201) && sixth.status === 429 && sixth.data.limited === "rate", "a sixth order in 10 minutes from one address is refused: " + more.map(r => r.status) + "," + sixth.status);
 
-  // the shop-wide brake cannot be reached by one visitor: a burst of 15 at once places at most 3, and the next shopper gets in
+  // the shop-wide brake cannot be reached by one visitor: a burst of 15 at once places at most 5, and the next shopper gets in
   await wait(61000);   // the last minute holds only this burst
   const ipB = "10.251.2." + ((Math.random() * 200) | 0);
-  const burst = await Promise.all(Array.from({ length: 15 }, (_, i) => fetch(B + "/api/orders", { method: "POST", headers: { "Content-Type": "application/json", "CF-Connecting-IP": ipB }, body: JSON.stringify(counter(`b${i}-${run}@example.com`, "OSS-7004")) }).then(async r => ({ status: r.status, data: await r.json().catch(() => ({})) }))));
+  const burst = await Promise.all(Array.from({ length: 15 }, (_, i) => fetch(B + "/api/orders", { method: "POST", headers: { "Content-Type": "application/json", "CF-Connecting-IP": ipB }, body: JSON.stringify(withPhone(counter(`b${i}-${run}@example.com`, "OSS-7004"))) }).then(async r => ({ status: r.status, data: await r.json().catch(() => ({})) }))));
   const placed = burst.filter(r => r.status === 201).length;
-  ok(placed <= 3 && burst.every(r => r.status === 201 || r.data.limited), "15 orders at once from one address place at most 3, each refusal from its own limit: " + burst.map(r => r.status));
-  const next = await fetch(B + "/api/orders", { method: "POST", headers: { "Content-Type": "application/json", "CF-Connecting-IP": shopper() }, body: JSON.stringify(counter(`next-${run}@example.com`, "OSS-8004")) });
+  ok(placed <= 5 && burst.every(r => r.status === 201 || r.data.limited), "15 orders at once from one address place at most 5, each refusal from its own limit: " + burst.map(r => r.status));
+  const next = await fetch(B + "/api/orders", { method: "POST", headers: { "Content-Type": "application/json", "CF-Connecting-IP": shopper() }, body: JSON.stringify(withPhone(counter(`next-${run}@example.com`, "OSS-8004"))) });
   ok(next.status === 201, "a different shopper is not told the shop is busy after one visitor's burst: " + next.status);
 
   // ---------- 2026-11-27: the brake, unpaid pickup caps, the half-of-an-item ceiling, emails as one person ----------
@@ -199,16 +215,17 @@ else {
   ok(oldReady.status === 200 && (await stockOf("OSS-8001")) === oldBefore, "an order that already took its stock is marked ready without taking it again: " + oldReady.status);
   await admin(`/orders/${old.data.order.id}/cancel`, { reason: "customer", op: crypto.randomUUID() });
   ok((await stockOf("OSS-8001")) === oldBefore + 1, "and cancelling it puts back the 1 it took, once");
-  // an email is one person for the limits: case, +tags and Gmail dots or googlemail do not make a new one
-  const nb = `normtester${run}`, variants = [`Norm.Tester${run.toUpperCase()}+a@gmail.com`, `${nb}+b@googlemail.com`, `n.o.r.m.tester${run}@GMAIL.com`];
-  const heldN = []; for (const e of variants) heldN.push(await from(shopper(), counter(e, "OSS-8004")));
-  const fourthN = await from(shopper(), counter(`${nb}+zzz@gmail.com`, "OSS-8004"));
-  ok(heldN.every(r => r.status === 201) && fourthN.status === 429 && fourthN.data.limited === "open", "three spellings of one Gmail inbox hold 3, the fourth is asked to sign in or call: " + heldN.map(r => r.status) + "," + fourthN.status);
+  // an email is one person for the limits: case, +tags and Gmail dots or googlemail do not make a new one (one phone throughout:
+  // the same person with the same phone, so only the email's spelling changes)
+  const nb = `normtester${run}`, variants = [`Norm.Tester${run.toUpperCase()}+a@gmail.com`, `${nb}+b@googlemail.com`, `n.o.r.m.tester${run}@GMAIL.com`], nph = { phone: phoneFor(nb) };
+  const heldN = []; for (const e of variants) heldN.push(await from(shopper(), counter(e, "OSS-8004", nph)));
+  const fourthN = await from(shopper(), counter(`${nb}+zzz@gmail.com`, "OSS-8004", nph));
+  ok(heldN.every(r => r.status === 201) && fourthN.status === 429 && fourthN.data.limited === "open", "three spellings of one Gmail inbox (same phone) hold 3, the fourth is refused: " + heldN.map(r => r.status) + "," + fourthN.status);
   const kept = sql(`SELECT email FROM orders WHERE id = '${heldN[0].data.order?.id}'`)[0];
   ok(kept && kept.email === variants[0], "the order keeps the email exactly as typed: " + JSON.stringify(kept));
-  const plusA = [], dom = `p${run}@example.com`;
-  for (const tag of ["a", "b", "c"]) plusA.push(await from(shopper(), counter(dom.replace("@", "+" + tag + "@"), "OSS-8004")));
-  const plusD = await from(shopper(), counter(dom, "OSS-8004"));
+  const plusA = [], dom = `p${run}@example.com`, pph = { phone: phoneFor(dom) };
+  for (const tag of ["a", "b", "c"]) plusA.push(await from(shopper(), counter(dom.replace("@", "+" + tag + "@"), "OSS-8004", pph)));
+  const plusD = await from(shopper(), counter(dom, "OSS-8004", pph));
   ok(plusA.every(r => r.status === 201) && plusD.status === 429, "+tags on any mail service count as one inbox: " + plusA.map(r => r.status) + "," + plusD.status);
 
   // a request waits 3 days for the shop to confirm it, holding nothing; the receipt never promises a hold (2026-11-27)

@@ -129,7 +129,7 @@ const pk = /<meta name="oss-pay" content="card">/.test((await call("/", { as: "n
 // no keys: a counter pickup is a request (2026-11-27), so to make it a sale as a card payment would be, the shop marks it ready
 // (which takes its stock) and then paid at the counter; `asRequest` leaves it a request, to confirm
 const place = async (sku, qty, extra = {}, asRequest = false) => {
-  const r = await call("/api/orders", { method: "POST", as: "none", body: { name: "Rhea Mbeki", email: "rhea@example.com", method: "pickup", ...pk, lines: [{ sku, qty }], ...extra } });
+  const r = await call("/api/orders", { method: "POST", as: "none", body: { name: "Rhea Mbeki", email: "rhea@example.com", phone: "519-555-0143", method: "pickup", ...pk, lines: [{ sku, qty }], ...extra } });
   if (r.status === 201 && r.data.pay?.url) { await fetch(r.data.pay.url, { method: "POST", redirect: "manual" }); await new Promise(res => setTimeout(res, 300)); }
   else if (r.status === 201 && pk.pay && extra.pay === undefined && !asRequest) { await A(`/orders/${r.data.order.id}/status`, { method: "POST", body: { status: "ready" } }); await A(`/orders/${r.data.order.id}/paid`, { method: "POST", body: {} }); }
   return r;
@@ -166,7 +166,7 @@ const d3 = (await A("/orders/" + id2)).data;
 ok(st.filter(r => r.status === 200).length === 1 && d3.emails.filter(e => e.kind === "pickup_ready").length === 1 && d3.order.ready_at, "two taps on Mark ready: one change, one email: " + st.map(r => r.status));
 ok((await prod("OSS-8003")).stock === s8003 - 1, "the order's 1 came off the shelf once, whichever tap won");
 // ---- pickup requests in the back office (2026-11-27): to confirm, then ready takes the stock ----
-{ const s0 = (await prod("OSS-8003")).stock, rq = await call("/api/orders", { method: "POST", as: "none", headers: { "CF-Connecting-IP": "10.44.0.7" }, body: { name: "Rhea Mbeki", email: "rhea-req@example.com", method: "pickup", pay: "at_pickup", lines: [{ sku: "OSS-8003", qty: 2 }] } }), rid = rq.data.order?.id;
+{ const s0 = (await prod("OSS-8003")).stock, rq = await call("/api/orders", { method: "POST", as: "none", headers: { "CF-Connecting-IP": "10.44.0.7" }, body: { name: "Rhea Mbeki", email: "rhea-req@example.com", phone: "519-555-0144", method: "pickup", pay: "at_pickup", lines: [{ sku: "OSS-8003", qty: 2 }] } }), rid = rq.data.order?.id;
   ok(rq.status === 201 && (await prod("OSS-8003")).stock === s0, "a counter pickup request takes nothing off the shelf: " + rq.status);
   const row = (await A("/orders", { as: "staff" })).data.orders.find(o => o.id === rid);
   ok(row && row.to_confirm === 1 && row.stock_taken === 0, "the order list shows it as to confirm, nothing taken: " + JSON.stringify(row && { to_confirm: row.to_confirm, stock_taken: row.stock_taken }));

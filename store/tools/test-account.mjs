@@ -4,6 +4,7 @@
 // Needs the store running with --test-scheduled, and PERSIST set to its --persist-to folder (sign-in codes are read
 // from the local outbox, the way a customer reads them from their inbox; nothing is sent).
 //   PERSIST=<folder> BASE=http://127.0.0.1:4490 node store/tools/test-account.mjs   (changes local sample data: reseed afterwards)
+import { withPhone } from "./fixtures/phone.mjs";   // a counter pickup carries a phone while the shop's mail is off (2026-11-27)
 import { samplesOn } from "./fixtures/samples-on.mjs";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
@@ -41,7 +42,7 @@ async function signIn(email, from = ip()) {
 const CARD = /<meta name="oss-pay" content="card">/.test(await (await fetch(B + "/")).text());
 const order = async (body, cookie) => {
   const counter = !CARD && body.method === "pickup" && body.pay === undefined; if (counter) body = { ...body, pay: "at_pickup" };
-  const send = () => fetch(B + "/api/orders", { method: "POST", headers: { "Content-Type": "application/json", "CF-Connecting-IP": ip(), ...(cookie ? { Cookie: cookie } : {}) }, body: JSON.stringify(body) });
+  const send = () => fetch(B + "/api/orders", { method: "POST", headers: { "Content-Type": "application/json", "CF-Connecting-IP": ip(), ...(cookie ? { Cookie: cookie } : {}) }, body: JSON.stringify(withPhone(body)) });
   let r = await send();
   // the shop-wide brake (60 orders a minute since 2026-11-27, src/guard.js SHOP_BRAKE_PER_MIN; it was 12) is a real feature: a fast machine running this suite's orders in a burst
   // trips it, so wait it out once, as a shopper would, rather than fail an account check on it
@@ -78,9 +79,14 @@ ok((await api("/code", { method: "POST", body: { email: known }, h: { "X-OSS-Acc
 ok((await api("/code", { method: "POST", body: { email: known }, h: { Origin: "https://evil.example" } })).status === 403, "a request from another website is refused");
 ok((await fetch(B + "/api/account/code", { method: "POST", headers: { "Content-Type": "text/plain", "X-OSS-Account": "1" }, body: "email=" + known })).status === 415, "a form post (cross-site style) is refused");
 ok((await api("/code", { method: "POST", body: { email: "not an email" } })).status === 400, "a bad email is refused");
-const flood = `flood-${run}@example.com`; const fl = [];
-for (let i = 0; i < 4; i++) fl.push((await api("/code", { method: "POST", body: { email: flood }, ip: ip() })).status);
-ok(fl.join() === "200,200,200,429", "a fourth code for one inbox within 15 minutes is refused, from any network: " + fl);
+// rewritten 2026-11-27 (fleet/guard4): the 3-in-15-minutes cap is per inbox AND network, so a stranger asking codes for your email
+// from their connection never stops you asking from yours; every network together gets 10 codes an hour for one inbox
+const flood = `flood-${run}@example.com`, fip = ip(); const fl = [];
+for (let i = 0; i < 4; i++) fl.push((await api("/code", { method: "POST", body: { email: flood }, ip: fip })).status);
+ok(fl.join() === "200,200,200,429", "a fourth code for one inbox from one network within 15 minutes is refused: " + fl);
+{ const fh = `floodh-${run}@example.com`, st = [];
+  for (let i = 0; i < 11; i++) st.push((await api("/code", { method: "POST", body: { email: fh }, ip: ip() })).status);
+  ok(st.slice(0, 10).every(s => s === 200) && st[10] === 429, "from many networks one inbox gets 10 codes an hour, the 11th waits: " + st); }
 const m0 = lastMail(flood);
 ok(m0 && m0.kind === "sign_in" && /^\d{3} \d{3} is your/.test(m0.subject) && !!linkIn(m0), "the code email holds a 6-digit code and a one-tap link");
 const rows0 = sql(`SELECT code_hash, link_hash, used FROM sign_in_codes WHERE email = '${flood}' ORDER BY id`);
@@ -99,9 +105,13 @@ const g2 = `race-${run}@example.com`; await api("/code", { method: "POST", body:
 await Promise.all(Array.from({ length: 12 }, (_, i) => api("/verify", { method: "POST", body: { email: g2, code: String((+real2 + 1 + i) % 1000000).padStart(6, "0") }, ip: ip() })));
 ok(sql(`SELECT tries FROM sign_in_codes WHERE email = '${g2}'`)[0].tries <= 5, "twelve guesses at once still count as at most five");
 ok((await api("/verify", { method: "POST", body: { email: g2, code: real2 }, ip: ip() })).status === 400, "and the code is dead after them");
-const cap = `cap-${run}@example.com`; let capSt = [];
-for (let round = 0; round < 3; round++) { await new Promise(r => setTimeout(r, 0)); sql(`DELETE FROM sign_in_codes WHERE email = '${cap}'`); await api("/code", { method: "POST", body: { email: cap }, ip: ip() }); for (let i = 0; i < 5; i++) capSt.push((await api("/verify", { method: "POST", body: { email: cap, code: "000000" }, ip: ip() })).status); }
-ok(capSt.every(s => s === 400) && (await api("/code", { method: "POST", body: { email: cap }, ip: ip() })).status === 429, "15 wrong codes at one inbox in a day, from any networks, stop new codes for it");
+// rewritten 2026-11-27 (fleet/guard4): 15 wrong codes used to stop new codes for the inbox from every network for a day, so a
+// stranger could lock any customer out. Now the 15 are counted per inbox AND network: the stranger's network is stopped, the
+// customer's own is not (checked below, after the keyed-hash checks, with the customer signing in from home).
+const cap = `cap-${run}@example.com`, capIp = ip(); let capSt = [];
+for (let round = 0; round < 3; round++) { sql(`DELETE FROM sign_in_codes WHERE email = '${cap}'`); await api("/code", { method: "POST", body: { email: cap }, ip: capIp }); for (let i = 0; i < 5; i++) capSt.push((await api("/verify", { method: "POST", body: { email: cap, code: "000000" }, ip: capIp })).status); }
+const capAgain = await api("/code", { method: "POST", body: { email: cap }, ip: capIp }), capTyped = await api("/verify", { method: "POST", body: { email: cap, code: "000000" }, ip: capIp });
+ok(capSt.every(s => s === 400) && capAgain.status === 429 && /this connection/.test(capAgain.data.error || "") && capTyped.status === 429 && capTyped.data.use_link === true, "15 wrong codes at one inbox from one network in a day stop that network asking or typing codes for it: " + capAgain.status + "," + capTyped.status);
 // one network guessing across many inboxes is slowed too
 const bip = ip(); let st = [];
 for (let i = 0; i < 31; i++) st.push((await api("/verify", { method: "POST", body: { email: `spray${i}-${run}@example.com`, code: "123456" }, ip: bip })).status);
@@ -118,7 +128,20 @@ ok(st[29] === 400 && st[30] === 429, "thirty wrong codes from one network lock i
   const cr = sql(`SELECT salt, code_hash, email FROM sign_in_codes WHERE email = '${flood}' ORDER BY id DESC LIMIT 1`)[0];
   ok(cr && cr.code_hash === h(`code|${KEY}|${cr.salt}:${codeIn(m0)}`) && cr.code_hash !== h(cr.salt + ":" + codeIn(m0)), "a sign-in code is kept as a keyed hash, so a copied table cannot be tried offline");
   const mails = sql(`SELECT who FROM account_attempts`).map(r => r.who);
-  ok(!mails.includes(h("mail|" + cap)) && mails.includes(h(`mail|${KEY}|${cap}`)), "an inbox's wrong-code count is kept under a keyed hash too"); }
+  ok(!mails.includes(h("mail|" + cap)) && mails.includes(h(`mail|${KEY}|${cap}`)) && mails.includes(h(`mailnet|${KEY}|${cap}|${capIp}`)), "an inbox's wrong-code counts (all networks, and per network) are kept under keyed hashes too");
+  // the customer whose email the stranger hammered asks from their own connection: a code comes, and it signs them in
+  const home = ip(), mine = await api("/code", { method: "POST", body: { email: cap }, ip: home });
+  const inHome = mine.status === 200 ? await api("/verify", { method: "POST", body: { email: cap, code: codeIn(lastMail(cap)) }, ip: home }) : mine;
+  ok(mine.status === 200 && inHome.status === 200 && inHome.setCookie.includes("oss_c="), "a stranger's 15 wrong codes do not lock the customer out: from their own network a code comes and signs them in: " + mine.status + "," + inHome.status);
+  // every network together: 100 wrong codes a day for one inbox (NIST's ceiling). Past it a typed code is refused, even the right one,
+  // and the one-tap link in the code email still signs the customer in
+  const ceil = `ceil-${run}@example.com`;
+  sql(`WITH RECURSIVE c(x) AS (SELECT 1 UNION ALL SELECT x + 1 FROM c WHERE x < 100) INSERT INTO account_attempts (who) SELECT '${h(`mail|${KEY}|${ceil}`)}' FROM c`);
+  const cip = ip(), cc = await api("/code", { method: "POST", body: { email: ceil }, ip: cip }), cm = lastMail(ceil);
+  const typed = await api("/verify", { method: "POST", body: { email: ceil, code: codeIn(cm) }, ip: cip });
+  ok(cc.status === 200 && typed.status === 429 && typed.data.use_link === true && !typed.setCookie.includes("oss_c="), "past 100 wrong codes for an inbox in a day, a typed code is refused, even the right one: " + cc.status + "," + typed.status);
+  const byLink = await api("/verify", { method: "POST", body: { link: linkIn(cm) }, ip: cip });
+  ok(byLink.status === 200 && byLink.setCookie.includes("oss_c="), "and the one-tap link in that email still signs the customer in: " + byLink.status); }
 
 // ---- 3. signing in, fixation, single use, the link
 const a = `alice-${run}@example.com`, aip = ip();

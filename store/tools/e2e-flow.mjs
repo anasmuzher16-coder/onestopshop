@@ -41,7 +41,7 @@ try {
   if (!CARD) t("no keys: the cart picked up is paid at the counter", /At the counter/.test(await p.locator(".co__pay").innerText()));
   await p.locator('[data-checkout] button[type="submit"]').tap(); await p.waitForTimeout(300);
   t("empty form is stopped with a message", await p.locator("[data-co-err]").isVisible());
-  await p.fill("#co-name", "Sam Sample"); await p.fill("#co-email", "sam@example.com"); if (CARD) { await p.fill("#co-line1", "1 Test Street"); await p.fill("#co-city", "Toronto"); }
+  await p.fill("#co-name", "Sam Sample"); await p.fill("#co-email", "sam@example.com"); await p.fill("#co-phone", "519-555-0171"); /* a pickup gives a phone while the shop's mail is off (2026-11-27) */ if (CARD) { await p.fill("#co-line1", "1 Test Street"); await p.fill("#co-city", "Toronto"); }
   const shown = await p.locator(".totals__door dd").innerText();
   await p.locator('[data-checkout] button[type="submit"]').tap(); await payThrough(p, 15000);
   const id1 = new URL(p.url()).pathname.split("/").pop(), paid = await p.locator(".totals__door dd").innerText();
@@ -54,7 +54,7 @@ try {
   await p.goto(B + "/cart", { waitUntil: "networkidle" }); if (CARD) { await p.locator('input[name="ship"][value="pickup"]').check(); await p.waitForTimeout(300); }
   await p.locator('a[href="/checkout"]:visible').first().tap(); await p.waitForURL(/\/checkout$/);
   t("pickup checkout asks for no address", await p.locator("#co-line1").count() === 0);
-  await p.fill("#co-name", "Pat Pickup"); await p.fill("#co-email", "pat@example.com");
+  await p.fill("#co-name", "Pat Pickup"); await p.fill("#co-email", "pat@example.com"); await p.fill("#co-phone", "519-555-0172");
   await p.locator('[data-checkout] button[type="submit"]').tap(); await payThrough(p, 15000);
   const id2 = new URL(p.url()).pathname.split("/").pop();
   // 3 sold out on the shelf
@@ -94,7 +94,7 @@ try {
   await p.locator('a[href="/checkout"]:visible').first().tap(); await p.waitForURL(/\/checkout$/);
   t("checkout asks nothing about age", await p.locator('input[type="checkbox"]').count() === 0 && !/photo id|\bage\b|adult/i.test(await p.locator("#main").innerText()));
   await snap("flow-charcoal-checkout");
-  await p.fill("#co-name", "Cole Coal"); await p.fill("#co-email", "cole@example.com");
+  await p.fill("#co-name", "Cole Coal"); await p.fill("#co-email", "cole@example.com"); await p.fill("#co-phone", "519-555-0173");
   await p.locator('[data-checkout] button[type="submit"]').tap(); await payThrough(p, 15000);
   const id3 = new URL(p.url()).pathname.split("/").pop();
   t("the confirmation says nothing about age or ID", !/photo id|\bage\b|adult/i.test(await p.locator("#main").innerText()));

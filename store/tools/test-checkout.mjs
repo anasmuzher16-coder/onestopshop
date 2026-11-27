@@ -2,6 +2,7 @@
 // stock comes down and never oversells, cologne cannot take the fast service, bad input is refused.
 // node store/tools/test-checkout.mjs   (changes the local sample data: reseed afterwards)
 import { samplesOn } from "./fixtures/samples-on.mjs";
+import { withPhone } from "./fixtures/phone.mjs";
 import { readFileSync } from "node:fs";
 import { parsePostal, pack, quote } from "../../site/rates.js";
 import { PRODUCTS } from "../../site/catalog.js";
@@ -16,7 +17,8 @@ const shopper = () => `10.${(Math.random() * 250) | 0}.${(Math.random() * 250) |
 // each order is its own shopper's email too (one email places at most 5 orders in 10 minutes, src/guard.js); a retry with the same
 // order key keeps the same email, so the retry checks still test what they did
 let nth = 0; const ownMail = b => b && typeof b.email === "string" && /^(test|pay)@example\.com$/.test(b.email) ? { ...b, email: b.email.replace("@", "-" + (b.order_key || "n" + ++nth) + "@") } : b;   // a separate inbox, not a +tag: since 2026-11-27 +tags count as the same inbox for the order limits (src/guard.js normEmail)
-const post = async body => { const r = await fetch(B + "/api/orders", { method: "POST", headers: { "Content-Type": "application/json", "CF-Connecting-IP": shopper() }, body: JSON.stringify(ownMail(body)) }); return { status: r.status, data: await r.json().catch(() => ({})) }; };
+// a counter pickup carries its customer's phone (needed while the shop's mail is off, 2026-11-27: tools/fixtures/phone.mjs)
+const post = async body => { const r = await fetch(B + "/api/orders", { method: "POST", headers: { "Content-Type": "application/json", "CF-Connecting-IP": shopper() }, body: JSON.stringify(withPhone(ownMail(body))) }); return { status: r.status, data: await r.json().catch(() => ({})) }; };
 const stockOf = async sku => (await (await fetch(B + "/api/catalog")).json()).products.find(p => p.sku === sku)?.stock;
 const who = { name: "Test Shopper", email: "test@example.com" }, to = { postal: "M5V 2T6", address: { line1: "1 Test Street", city: "Toronto" } };
 
@@ -60,6 +62,35 @@ if (!CARD) {
   ok(readies.filter(r => r.status === 200).length === 1 && readies.filter(r => r.status === 409 && r.data.shortfall).length === 2 && (await stockOf("OSS-7006")) === 0, `marked ready at once, exactly one gets the last ${last}, two are reported short (${readies.map(r => r.status).join(",")})`);
   const orders = (await (await fetch(B + "/api/admin/orders", { headers: { Cookie: cookie } })).json()).orders;
   ok(pu.status === 201 && orders.some(o => o.id === pu.data.order.id && o.pay_status === "pay_at_pickup"), "the back office has the counter order, to be paid at pickup");
+  // ---------- 2026-11-27: the shop's mail is NOT connected here (no RESEND_API_KEY): the store calls instead of emailing ----------
+  { const adm = (path, body) => fetch(B + "/api/admin" + path, { method: body ? "POST" : "GET", headers: { "Content-Type": "application/json", "X-OSS-Admin": "1", Cookie: cookie }, ...(body ? { body: JSON.stringify(body) } : {}) }).then(async x => ({ status: x.status, data: await x.json().catch(() => ({})) }));
+    const home = await (await fetch(B + "/")).text();
+    ok(/<meta name="oss-mail" content="off">/.test(home) && /<meta name="oss-req-hours" content="72">/.test(home), "mail off: every page says so (meta oss-mail off) with the request's 72 hours");
+    const noPhone = await post({ ...who, ...at, phone: "", method: "pickup", lines: [{ sku: "OSS-8004", qty: 1 }] });
+    ok(noPhone.status === 400 && noPhone.data.field === "phone" && noPhone.data.phone_needed === true && /call or text/.test(noPhone.data.error || "") && !noPhone.data.order, "mail off: a pickup request with no phone is refused, asking for one: " + noPhone.status + " " + (noPhone.data.error || ""));
+    const short = await post({ ...who, ...at, phone: "555-0144", method: "pickup", lines: [{ sku: "OSS-8004", qty: 1 }] });
+    ok(short.status === 400 && short.data.field === "phone", "mail off: a phone with no area code is refused: " + short.status);
+    const shipNote = await post({ ...who, ...at, method: "ship", service: "cp-exp", ...to, lines: [{ sku: "OSS-8004", qty: 1 }] });
+    ok(shipNote.status === 400 && /Delivery opens once we take card payment online/.test(shipNote.data.error || "") && !/Pay by card/.test(shipNote.data.error || ""), "card off: paying at the counter for delivery says delivery opens with card payment: " + (shipNote.data.error || ""));
+    const rq = await post({ ...who, email: `call-${Date.now()}@example.com`, name: "Callie Morgan", ...at, phone: "(519) 555-0177", method: "pickup", lines: [{ sku: "OSS-8004", qty: 2 }] }), o = rq.data.order || {};
+    ok(rq.status === 201 && o.notify === "call" && o.phone === "(519) 555-0177" && /^\/order\/W[A-Z0-9]{6}\?k=[a-f0-9]{32}$/.test(o.status_url || ""), "mail off: the request answers notify call, the phone to call and a status link: " + JSON.stringify({ notify: o.notify, phone: o.phone, url: o.status_url }));
+    const k = (o.status_url || "").split("k=")[1] || "", st = async (id = o.id, key = k) => { const r = await fetch(`${B}/api/order-status?id=${id}&k=${key}`); return { status: r.status, data: await r.json().catch(() => ({})) }; };
+    const s1 = await st();
+    ok(s1.status === 200 && s1.data.order.status === "requested" && s1.data.order.first === "Callie" && s1.data.order.items[0]?.qty === 2 && s1.data.order.notify === "call", "the status link shows it as requested, with the first name and what was asked for: " + JSON.stringify(s1.data));
+    ok(!/callie-|call-\d|@example|555-0177|total|cents|address/i.test(JSON.stringify(s1.data)), "the status link carries no email, phone, address or money: " + JSON.stringify(s1.data));
+    ok((await st(o.id, k.replace(/^./, c => c === "a" ? "b" : "a"))).status === 404 && (await st(o.id, "")).status === 404 && (await st(pu.data.order.id, k)).status === 404, "a wrong, missing or other order's key opens nothing");
+    const page = await (await fetch(B + o.status_url)).text(), pageRes = await fetch(B + o.status_url);
+    ok(pageRes.status === 200 && pageRes.headers.get("referrer-policy") === "no-referrer" && /noindex/.test(pageRes.headers.get("x-robots-tag") || "") && page.length > 0, "the status page opens, never sends its link onward and is never indexed");
+    const today = await adm("/summary");
+    ok(today.status === 200 && today.data.mail_on === false && today.data.todo.to_confirm >= 1 && today.data.confirm.some(c => c.id === o.id && c.name === "Callie Morgan" && c.phone === "(519) 555-0177" && c.units === 2), "Today lists the new request to confirm, with the name, phone and items: " + JSON.stringify(today.data.confirm?.find(c => c.id === o.id)));
+    const rd = await adm(`/orders/${o.id}/status`, { status: "ready" });
+    ok(rd.status === 200 && rd.data.call?.phone === "(519) 555-0177", "mail off: marking it ready tells staff to call the customer's phone: " + JSON.stringify(rd.data));
+    const s2 = await st();
+    ok(s2.data.order?.status === "ready" && /^\d{4}-/.test(s2.data.order.held_until || ""), "the status link shows ready, and until when it is held: " + JSON.stringify(s2.data.order));
+    await adm(`/orders/${o.id}/cancel`, { reason: "customer", op: crypto.randomUUID() });
+    ok((await st()).data.order?.status === "cancelled", "and cancelled once the shop cancels it");
+    const bad = await fetch(`${B}/api/order-status?id=${o.id}&k=${k}`, { method: "POST" });
+    ok(bad.status === 405, "the status link only reads"); }
   const cat = await (await fetch(B + "/api/catalog")).json(), coal = cat.products.filter(p => p.category_id === "charcoal" && JSON.parse(p.details).charcoal === true);
   ok(coal.length === 69 && coal.every(p => p.ship_class === "pickup_only"), "the Charcoal section holds the shop's 69 charcoal items, all pickup or local delivery only: " + coal.length);
   const coalOk = await post({ ...who, ...at, method: "pickup", lines: [{ sku: coalSku, qty: 1 }, { sku: "OSS-8003", qty: 1 }] });

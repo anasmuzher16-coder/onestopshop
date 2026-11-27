@@ -18,7 +18,7 @@ for (const p of ["/privacy", "/terms"]) { const r = await call(p); ok(r.status =
 ok((await call("/api/admin/backup")).status === 401 && (await call("/api/admin/emails/1")).status === 401, "backup and emails need sign-in");
 
 // a shopper orders the last Midnight Coal for pickup, and something to ship
-const pick = await call("/api/orders", { method: "POST", body: { name: "Pat Pickup", email: "pat@example.com", method: "pickup", pay: "at_pickup", lines: [{ sku: "OSS-7006", qty: 1 }] } });
+const pick = await call("/api/orders", { method: "POST", body: { name: "Pat Pickup", email: "pat@example.com", phone: "519-555-0140", method: "pickup", pay: "at_pickup", lines: [{ sku: "OSS-7006", qty: 1 }] } });
 const ship = await call("/api/orders", { method: "POST", body: { name: "Sam Sample", email: "sam@example.com", method: "ship", service: "cp-exp", postal: "M5V 2T6", address: { line1: "1 Test Street", city: "Toronto" }, lines: [{ sku: "OSS-8001", qty: 1 }] } });
 // with no card keys (the live demo) the ship order is refused with the shop's number: the shipped email is checked with keys
 const CARD = /<meta name="oss-pay" content="card">/.test((await call("/")).text);
@@ -50,9 +50,9 @@ ok(view && view.html.includes(ship.data.order.id) && view.html.includes("Sunset 
 }
 // Updated 2026-11-26 (fleet/order-guard): a name with code in it is now refused at the order (names are letters only, src/guard.js),
 // so it never reaches an email; the email's own escaping is still checked, with the one markup character a real name holds.
-const evil = await call("/api/orders", { method: "POST", body: { name: '<img src=x onerror=alert(1)>', email: "x@example.com", method: "pickup", pay: "at_pickup", lines: [{ sku: "OSS-8003", qty: 1 }] } });
+const evil = await call("/api/orders", { method: "POST", body: { name: '<img src=x onerror=alert(1)>', email: "x@example.com", phone: "519-555-0141", method: "pickup", pay: "at_pickup", lines: [{ sku: "OSS-8003", qty: 1 }] } });
 ok(evil.status === 400 && evil.data.field === "name", "a name with code in it is refused before any order or email: " + evil.status);
-const quoted = await call("/api/orders", { method: "POST", body: { name: "O'Neil", email: "x@example.com", method: "pickup", pay: "at_pickup", lines: [{ sku: "OSS-8003", qty: 1 }] } });
+const quoted = await call("/api/orders", { method: "POST", body: { name: "O'Neil", email: "x@example.com", phone: "519-555-0141", method: "pickup", pay: "at_pickup", lines: [{ sku: "OSS-8003", qty: 1 }] } });
 const evilMail = (await call("/api/admin/orders/" + quoted.data.order.id)).data.emails.find(e => e.kind === "order_placed"), evilHtml = (await call("/api/admin/emails/" + evilMail.id)).data.email.html;
 ok(!evilHtml.includes("O'Neil") && evilHtml.includes("O&#39;Neil"), "the name is escaped in the email");
 

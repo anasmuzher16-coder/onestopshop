@@ -5,7 +5,7 @@ import { adminPay, lowNote } from "./pay.js";
 import { sameSecret, hashPin, checkPin, pinProblem, cleanName } from "./staff.js";
 import { report, reportCsv, monthOf } from "./report.js";
 import { isSample } from "./samples.js";
-import { sourceOf, TAKEN_SQL, keyedHash } from "./guard.js";
+import { sourceOf, TAKEN_SQL, keyedHash, normEmailSql } from "./guard.js";
 // The shop's back office: sign-in, shop numbers, stock and orders. Every route here needs the admin cookie,
 // and every write also needs a same-site JSON request, so another website cannot trigger one.
 // Two kinds of sign-in: the owner's passcode (ADMIN_KEY), and named staff with a 6-digit PIN. Every change is
@@ -65,6 +65,14 @@ const SOLD = "('paid','packed','shipped','ready','collected')";
 // holds stock now. TO_CONFIRM: still a request the shop has to check against the shelf and mark ready (nothing held yet).
 const STOCKED = t => `EXISTS (SELECT 1 FROM ${TAKEN_SQL(`${t}.id`)})`;
 const TO_CONFIRM = t => `${t}.status = 'pending' AND ${t}.pay_status = 'pay_at_pickup' AND ${t}.release_op IS NULL AND NOT EXISTS (SELECT 1 FROM stock_moves sm WHERE sm.ref = ${t}.id AND sm.reason = 'sale')`;
+// Other open pickup orders with the same email (as one person: normEmailSql) that were placed from a different network (2026-11-27):
+// a stranger typing a customer's email shows up this way, so staff can see it on the list and cancel it. Counted only for open
+// pickup orders, and only between orders whose network is on record (order_attempts, migration 0012; "o:" = IPv4 or IPv6 /56).
+const OPEN_PICKUP = t => `${t}.pay_status = 'pay_at_pickup' AND ${t}.status IN ('pending','ready') AND ${t}.release_op IS NULL`;
+const OTHER_NETS = t => `CASE WHEN ${OPEN_PICKUP(t)} AND EXISTS (SELECT 1 FROM order_attempts a0 WHERE a0.order_id = ${t}.id AND a0.who LIKE 'o:%') THEN (SELECT COUNT(*) FROM orders o2 WHERE o2.id != ${t}.id AND ${OPEN_PICKUP("o2")}
+  AND ${normEmailSql("o2.email")} = ${normEmailSql(`${t}.email`)} AND EXISTS (SELECT 1 FROM order_attempts a2 WHERE a2.order_id = o2.id AND a2.who LIKE 'o:%')
+  AND NOT EXISTS (SELECT 1 FROM order_attempts a1 JOIN order_attempts a2 ON a2.who = a1.who WHERE a1.order_id = ${t}.id AND a2.order_id = o2.id AND a1.who LIKE 'o:%')) ELSE 0 END`;
+const noTable = err => /no such table/i.test(String(err && err.message));   // a database without migration 0012: the note is left out
 const LOCAL = "'-5 hours'"; // the shop's clock (Windsor), close enough for day totals
 const clampInt = (v, lo, hi) => { const n = Math.round(Number(v)); return Number.isFinite(n) && n >= lo && n <= hi ? n : null; };
 const text = (v, max) => typeof v === "string" && v.trim().length <= max ? v.trim() : null;
@@ -215,7 +223,10 @@ export async function admin(request, env, url) {
       db.prepare("SELECT COALESCE(SUM(stock * COALESCE(cost_cents, 0)),0) AS cost_cents, COALESCE(SUM(stock * price_cents),0) AS retail_cents, COALESCE(SUM(stock),0) AS units, COUNT(*) AS products FROM products WHERE active = 1"),
       db.prepare(`SELECT SUM(status = 'paid') AS to_pack, SUM(status = 'packed') AS to_ship, SUM(status = 'ready') AS waiting_pickup, SUM(status = 'ready' AND COALESCE(ready_at, updated_at) <= strftime('%Y-%m-%dT%H:%M:%SZ','now','-3 days')) AS pickup_overdue, SUM(${TO_CONFIRM("orders")}) AS to_confirm FROM orders WHERE status IN ('paid','packed','ready','pending')`),
     ]);
-    return json({ totals: tot.results[0], daily: daily.results, top: top.results, slow: slow.results, low: low.results, provinces: prov.results, shipping: ship.results[0], value: value.results[0], todo: todo.results[0], actor, owner: session.owner });
+    // the pickup requests still to confirm, newest first, for Today's own list (2026-11-27): while the shop's mail is not connected no
+    // new-order note reaches anyone, so Today is where staff see a new request: name, phone, when, and how many items
+    const confirm = (await db.prepare(`SELECT o.id, o.name, o.phone, o.created_at, o.pay_expires_at, o.total_cents, (SELECT SUM(qty) FROM order_items i WHERE i.order_id = o.id) AS units FROM orders o WHERE ${TO_CONFIRM("o")} ORDER BY o.created_at DESC LIMIT 25`).all()).results;
+    return json({ totals: tot.results[0], daily: daily.results, top: top.results, slow: slow.results, low: low.results, provinces: prov.results, shipping: ship.results[0], value: value.results[0], todo: todo.results[0], confirm, mail_on: mailReady(env), actor, owner: session.owner });
   }
 
   if (path === "/products" && method === "GET") {
@@ -441,9 +452,10 @@ export async function admin(request, env, url) {
   }
 
   if (path === "/orders" && method === "GET") {
-    const r = await db.prepare(`SELECT o.id, o.status, o.method, o.name, o.total_cents, o.pay_method, o.pay_status, o.tax_province, o.ship_service, o.tracking, o.created_at, CASE WHEN o.status = 'ready' THEN COALESCE(o.ready_at, o.updated_at) END AS ready_at, o.source, (SELECT SUM(qty) FROM order_items i WHERE i.order_id = o.id) AS units, ${STOCKED("o")} AS stock_taken, (${TO_CONFIRM("o")}) AS to_confirm,
-      EXISTS (SELECT 1 FROM order_items i JOIN products p ON p.sku = i.sku WHERE i.order_id = o.id AND ${CHARCOAL_ITEM}) AS charcoal FROM orders o ORDER BY o.created_at DESC LIMIT 200`).all();
-    return json({ orders: r.results });
+    const list = nets => db.prepare(`SELECT o.id, o.status, o.method, o.name, o.total_cents, o.pay_method, o.pay_status, o.tax_province, o.ship_service, o.tracking, o.created_at, CASE WHEN o.status = 'ready' THEN COALESCE(o.ready_at, o.updated_at) END AS ready_at, o.source, (SELECT SUM(qty) FROM order_items i WHERE i.order_id = o.id) AS units, ${STOCKED("o")} AS stock_taken, (${TO_CONFIRM("o")}) AS to_confirm,
+      ${nets ? OTHER_NETS("o") : "0"} AS other_networks, EXISTS (SELECT 1 FROM order_items i JOIN products p ON p.sku = i.sku WHERE i.order_id = o.id AND ${CHARCOAL_ITEM}) AS charcoal FROM orders o ORDER BY o.created_at DESC LIMIT 200`).all();
+    const r = await list(true).catch(err => { if (noTable(err)) return list(false); throw err; });
+    return json({ orders: r.results, mail_on: mailReady(env) });
   }
   if ((m = path.match(/^\/orders\/([A-Z0-9]{3,12})$/)) && method === "GET") {
     const [o, i, mail, trail] = await db.batch([db.prepare("SELECT * FROM orders WHERE id = ?").bind(m[1]), db.prepare("SELECT i.sku, i.name, i.qty, i.unit_cents, p.img, p.img_dark, p.photo_ver, p.box_id, p.category_id, p.details FROM order_items i LEFT JOIN products p ON p.sku = i.sku WHERE i.order_id = ?").bind(m[1]),
@@ -453,6 +465,7 @@ export async function admin(request, env, url) {
     const { cancel_op, ...order } = o.results[0];
     const st = await db.prepare(`SELECT ${STOCKED("o")} AS stock_taken, (${TO_CONFIRM("o")}) AS to_confirm FROM orders o WHERE o.id = ?`).bind(m[1]).first();
     order.stock_taken = st.stock_taken; order.to_confirm = st.to_confirm;
+    order.other_networks = await db.prepare(`SELECT ${OTHER_NETS("o")} AS n FROM orders o WHERE o.id = ?`).bind(m[1]).first("n").catch(err => { if (noTable(err)) return 0; throw err; });
     return json({ order, items: i.results, emails: mail.results, trail: trail.results, mail_on: mailReady(env) });
   }
   // Cancel and put the stock back. Exactly one request can win the change to "cancelled" (the row records that
@@ -520,12 +533,15 @@ export async function admin(request, env, url) {
         db.prepare("INSERT INTO audit_log (actor, action, target, before, after) SELECT ?, 'order.status', ?, ?, ? WHERE changes() = 1").bind(actor, m[1], JSON.stringify({ status: o.status }), JSON.stringify({ status: body.status }))]);
       if (!moved[0].meta.changes) return json({ error: "Someone else just changed this order. Reload it." }, 409);
     }
+    let call = null;
     if (body.status === "shipped" || body.status === "ready") {
       const [full, items] = await db.batch([db.prepare("SELECT * FROM orders WHERE id = ?").bind(m[1]), db.prepare("SELECT name, qty, unit_cents FROM order_items WHERE order_id = ?").bind(m[1])]);
       const site = env.SITE_NAME || "One Stop Shop", ord = full.results[0];
       await writeEmail(env, m[1], ord.email, (body.status === "shipped" ? orderShipped : pickupReady)(site, ord, items.results));
+      // with the mail service not connected the email above is only kept: staff are told to call or text the customer instead
+      if (!mailReady(env) && body.status === "ready") call = { phone: ord.phone || null };
     }
-    return json({ ok: true, status: body.status });
+    return json({ ok: true, status: body.status, ...(call ? { call } : {}) });
   }
   if ((m = path.match(/^\/orders\/([A-Z0-9]{3,12})\/(refund|paid|counter-refund)$/)) && method === "POST") {   // src/pay.js
     if (m[2] !== "paid" && !session.owner) { log("forbidden", { actor, path }); return json({ error: m[2] === "refund" ? "Only the owner can refund to a card." : "Only the owner can record a refund." }, 403); }   // money back is the owner's call; staff take counter payments

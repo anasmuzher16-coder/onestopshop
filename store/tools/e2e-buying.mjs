@@ -112,7 +112,7 @@ try {
     const { c, p } = await open({ cart: [{ sku: "OSS-8003", qty: 1 }] }); let sends = 0, keys = new Set();
     await c.route("**/api/orders", async r => { sends++; keys.add(r.request().postDataJSON().order_key); if (sends === 1) { await r.fetch(); return r.abort("connectionreset"); } return r.continue(); });
     await go(p, "/cart"); if (await p.locator('input[name="ship"][value="pickup"]').count()) { await p.locator('input[name="ship"][value="pickup"]').check(); await p.waitForTimeout(150); }   /* card off: the cart is a pickup already, with no choice */ await go(p, "/checkout");
-    await p.fill("#co-name", "Lost Answer"); await p.fill("#co-email", "lost@example.com");
+    await p.fill("#co-name", "Lost Answer"); await p.fill("#co-email", "lost@example.com"); await p.fill("#co-phone", "519-555-0161");   // a pickup gives a phone while the shop's mail is off (2026-11-27)
     await p.locator('[data-checkout] button[type="submit"]').click(); await p.waitForSelector("[data-co-err]:not([hidden])");
     await p.locator('[data-checkout] button[type="submit"]').click(); await payThrough(p, 10000);
     t("5 the retry used the same order key", sends === 2 && keys.size === 1, `${sends} sends, ${keys.size} keys`); await c.close();
@@ -121,7 +121,7 @@ try {
     const { c, p } = await open({ cart: [{ sku: "OSS-8003", qty: 1 }] }); let hit = 0;
     await c.route("**/api/orders", r => { hit++; if (hit > 1) return r.continue(); return r.fulfill({ status: 409, contentType: "application/json", body: JSON.stringify({ error: "The total is now $99.99. Check it, then place your order.", repriced: { subtotal_cents: 8000, shipping_cents: 0, tax_cents: 1999, total_cents: 9999 } }) }); });
     await go(p, "/cart"); if (await p.locator('input[name="ship"][value="pickup"]').count()) { await p.locator('input[name="ship"][value="pickup"]').check(); await p.waitForTimeout(150); }   /* card off: the cart is a pickup already, with no choice */ await go(p, "/checkout");
-    await p.fill("#co-name", "New Total"); await p.fill("#co-email", "total@example.com"); await p.locator('[data-checkout] button[type="submit"]').click(); await p.waitForSelector("[data-co-err]:not([hidden])");
+    await p.fill("#co-name", "New Total"); await p.fill("#co-email", "total@example.com"); await p.fill("#co-phone", "519-555-0162"); await p.locator('[data-checkout] button[type="submit"]').click(); await p.waitForSelector("[data-co-err]:not([hidden])");
     t("4 the new total is on screen", /\$99\.99/.test(await p.locator(".totals__door").innerText()) && /\$99\.99/.test(await p.locator("[data-co-err]").innerText())); await c.close();
   }
 } finally { await b.close(); }

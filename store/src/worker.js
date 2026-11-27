@@ -7,13 +7,13 @@ import { heroPicks } from "../public/picks.js";
 import { admin, photo, signedIn, shopDevice } from "./admin.js";
 import { accountRoute, stockAlerts, restockReminders, scrubCodes } from "./account.js";
 import { loyaltyAdmin } from "./loyalty.js";
-import { placeOrder } from "./checkout.js";
+import { placeOrder, orderStatus } from "./checkout.js";
 import { webhook, payStatus, sweep, cardReady } from "./pay.js";
 import { deliveryRoute } from "./delivery.js";
-import { retryEmails } from "./email.js";
+import { retryEmails, mailReady } from "./email.js";
 import { nightly } from "./backup.js";
 import { isSample } from "./samples.js";
-import { sourceOf, keyedHash } from "./guard.js";
+import { sourceOf, keyedHash, pickupRequestHours } from "./guard.js";
 
 const SECURITY = {
   "Content-Security-Policy": "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'",
@@ -119,7 +119,7 @@ async function page(request, env, url, ctx) {
   const live = liveHere(env, url); if (env.LIVE === "1" && originProblem(env)) console.error(JSON.stringify({ at: "seo", problem: originProblem(env) }));
   const seo = seoFor({ env, url, cat, meta, site }), canonical = seo.canonical, img = seo.share;
   const shell = await env.ASSETS.fetch(new URL("/index.html", url));
-  const extra = [`<link rel="canonical" href="${esc(canonical)}">`, `<meta name="oss-pay" content="${cardReady(env) ? "card" : "off"}">`, `<meta name="oss-shisha-card" content="${env.STRIPE_TOBACCO_OK === "1" ? "1" : "0"}">`,
+  const extra = [`<link rel="canonical" href="${esc(canonical)}">`, `<meta name="oss-pay" content="${cardReady(env) ? "card" : "off"}">`, `<meta name="oss-mail" content="${mailReady(env) ? "on" : "off"}">`, `<meta name="oss-req-hours" content="${pickupRequestHours(env)}">`, `<meta name="oss-shisha-card" content="${env.STRIPE_TOBACCO_OK === "1" ? "1" : "0"}">`,
     `<meta property="og:type" content="${meta.product ? "product" : "website"}">`, `<meta property="og:site_name" content="${esc(site)}">`, `<meta property="og:locale" content="en_CA">`,
     `<meta property="og:title" content="${esc(meta.title)}">`, `<meta property="og:description" content="${esc(meta.desc)}">`, `<meta property="og:url" content="${esc(canonical)}">`,
     // the share picture: absolute, versioned per photo (a changed photo gets a new address, so previews refresh), sized when known
@@ -145,7 +145,7 @@ async function page(request, env, url, ctx) {
   for (const [k, v] of Object.entries(SECURITY)) headers.set(k, v);
   headers.set("Content-Type", "text/html; charset=utf-8");
   headers.set("Cache-Control", "no-cache");
-  if (url.pathname.startsWith("/account")) headers.set("Referrer-Policy", "no-referrer");   // sign-in and unsubscribe links never leak onward
+  if (url.pathname.startsWith("/account") || url.pathname.startsWith("/order/")) headers.set("Referrer-Policy", "no-referrer");   // sign-in, unsubscribe and order-status links never leak onward
   if (!(live && meta.index)) headers.set("X-Robots-Tag", "noindex, nofollow"); else headers.delete("X-Robots-Tag");   // the shell came from the static files: a live, indexable page must never carry a copied noindex
   // the page's oss-ask handed back as it came, its year renewed: Safari keeps a cookie written by script for 7 days only
   { const k = askCookie(request); if (k) headers.append("Set-Cookie", `oss-ask=${k}; Path=/; Max-Age=31536000; SameSite=Lax${url.protocol === "https:" ? "; Secure" : ""}`); }
@@ -278,6 +278,7 @@ async function intakeSave(request, env) {
       if (path.startsWith("/api/admin/")) { const r = await admin(request, env, url); if (request.method !== "GET" && r.ok) { dropCatalog(ctx); ctx.waitUntil(stockAlerts(env, url.origin)); } return r; } // a change in the back office shows in the shop at once; anything back in stock emails whoever asked
       if (path.startsWith("/api/account/")) return await accountRoute(request, env, url);
       if (path === "/api/orders") { if (request.method !== "POST") return json({ error: "Method not allowed" }, 405); const r = await placeOrder(request, env, url); if (r.ok) dropCatalog(ctx); return r; }
+      if (path === "/api/order-status") return await orderStatus(request, env, url);   // the customer's own status link (checkout.js)
       if (path === "/api/delivery") return await deliveryRoute(request, env, url);
       if (path === "/api/pay/webhook") { const r = await webhook(request, env); if (r.ok) dropCatalog(ctx); return r; }   // Stripe calls this; the signature is the only way in
       if (path === "/api/pay/status") return await payStatus(request, env, url);
