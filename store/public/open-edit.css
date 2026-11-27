@@ -53,3 +53,13 @@
 .oe__check{display:flex;align-items:center;gap:var(--s-3);min-height:48px;margin-top:var(--s-3);font-size:var(--t-14);font-weight:500}
 .oe__check input{width:24px;height:24px;flex:none}
 .oe__form .field::placeholder{color:var(--ash);opacity:.6}
+/* the weight: a number, and its unit as two segments (g, kg) a thumb can hit; typing "1.2 kg" works too */
+.oe__w{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--s-2);align-items:stretch}
+.oe__unit{display:grid;grid-template-columns:repeat(2,3.5rem);border:1px solid var(--coal-3);border-radius:var(--radius);overflow:hidden}
+.oe__unit label{position:relative;display:grid;place-items:center;min-height:48px;cursor:pointer}
+.oe__unit label+label{border-left:1px solid var(--coal-3)}
+.oe__unit input{position:absolute;inset:0;margin:0;opacity:0;cursor:pointer}
+.oe__unit span{font:500 var(--t-14)/1 var(--font-ui);color:var(--color-text)}
+.oe__unit label:has(input:checked){background:var(--bone)}
+.oe__unit label:has(input:checked) span{color:var(--ink);font-weight:600}
+.oe__unit label:has(input:focus-visible){outline:2px solid var(--color-focus);outline-offset:-2px}

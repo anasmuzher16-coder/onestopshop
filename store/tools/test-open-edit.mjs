@@ -41,6 +41,9 @@ const hoseC = rows.find(x => x.family?.startsWith("hose-") && x.needs?.includes(
 const hoseL = rows.find(x => x.family?.startsWith("hose-") && x.needs?.includes("length") && onShop.has(x.sku) && x.sku !== hoseC?.sku);
 const unticked = rows.find(x => x.catalogue && !onShop.has(x.sku) && !x.sample && x.availability !== "dropped");
 const coal = rows.find(x => x.category_id === "charcoal" && /"charcoal":true/.test(x.details || "") && onShop.has(x.sku));
+// weight (2026-11-27): foil is on sale but its pack weight is unknown, so it needs its weight; two packs, one for the API, one for the page
+const [wf1, wf2] = rows.filter(x => /^foil-/.test(x.family || "") && x.needs?.includes("weight") && onShop.has(x.sku));
+ok(wf1 && wf2 && !rows.some(x => x.needs?.includes("weight") && (x.category_id === "charcoal" || /^charcoal-/.test(x.family || "") || /"charcoal":true/.test(x.details || ""))), "weight: foil needs its weight; charcoal never does", JSON.stringify({ wf1: wf1?.sku, wf2: wf2?.sku }));
 ok(hoseC && hoseL, "hose test items found", JSON.stringify({ hoseC: hoseC?.sku, hoseL: hoseL?.sku }));
 ok(t && t2 && t3 && sample && unticked && coal, "test items found", JSON.stringify({ t: t?.sku, t2: t2?.sku, sample: sample?.sku, unticked: unticked?.sku, coal: coal?.sku }));
 const history = async sku => (await req(`/api/admin/products/${sku}/history`, { cookie: OWNER })).data;
@@ -55,6 +58,7 @@ if (!MODE) {
   ok((await req(`/api/open-edit/${t.sku}`, { method: "PUT", body: { price_cents: 999 }, cookie: OWNER })).status === 404, "off: /api/open-edit refuses even the signed-in owner");
   for (const p of WALL) ok((await req("/api/admin" + p)).status === 401, "off: " + p + " needs sign-in");
   ok((await req(`/api/admin/products/${t.sku}/info`, { method: "PUT", body: { price_cents: 999 } })).status === 401 && (await req("/api/admin/loyalty")).status === 401, "off: the item editor and the points settings need sign-in");
+  ok((await req(`/api/open-edit/${wf1.sku}`, { method: "PUT", body: { weight: "1.2 kg" } })).status === 404 && (await row(wf1.sku)).weight_g === wf1.weight_g && (await row(wf1.sku)).needs?.includes("weight"), "off: a weight cannot be set openly");
   const same = await row(t.sku); ok(same.price_cents === t.price_cents && same.active === t.active && same.name === t.name, "off: nothing was written");
 }
 
@@ -91,6 +95,24 @@ if (MODE) {
     ok(s1.status === 200 && s2.status === 200 && !la.needs.includes("length") && la.length === "60.5 inches" && !ha.needs.includes("check") && !("check" in ha), `${MODE}: length and checked save and clear those needs`, JSON.stringify({ la: la.needs, ha: ha.needs, l: la.length }));
     ok((await req(`/api/open-edit/${hoseC.sku}`, { method: "PUT", body: { checked: true } })).status === 200, `${MODE}: ticking an already-checked item is harmless`);
   }
+  // weight: typed as the shop thinks it, stored as whole grams; it makes foil's weight known, so it is no longer weight TBD
+  { const wg = (await req(`/api/open-edit/${wf1.sku}`)).data;
+    ok(wg.weight_g === null && wg.needs.includes("weight") && !wg.charcoal, `${MODE}: foil reads no weight and needs one`, JSON.stringify(wg));
+    ok((await req(`/api/open-edit/${t.sku}`)).data.needs.every(k => k !== "weight"), `${MODE}: an unpriced catalogue piece does not ask for its weight`);
+    for (const bad of ["0 g", "0 kg", "30.001 kg", "30001 g", "250.5 g", "1.2345 kg", "-1 kg", "12", "abc", "1,2 kg", "", 250, null, { g: 250 }, "1".repeat(30) + " g"])
+      ok((await req(`/api/open-edit/${wf1.sku}`, { method: "PUT", body: { weight: bad } })).status === 400, `${MODE}: bad weight refused: ${JSON.stringify(bad).slice(0, 16)}`);
+    ok((await row(wf1.sku)).weight_g === wf1.weight_g && (await row(wf1.sku)).details === wf1.details, `${MODE}: nothing was written by a refused weight`);
+    ok((await req(`/api/open-edit/${wf1.sku}`, { method: "PUT", body: { weight: "1.2 kg", pad: "x".repeat(15000) } })).status === 200, `${MODE}: a weight saves inside the 16 KB cap`);
+    const wa = (await req(`/api/open-edit/${wf1.sku}`)).data, wr = await row(wf1.sku), wc = (await catalog()).find(x => x.sku === wf1.sku);
+    ok(wa.weight_g === 1200 && !wa.needs.includes("weight") && wr.weight_g === 1200 && wr.weight_known_g === 1200 && !wr.needs, `${MODE}: 1.2 kg is stored as 1200 g and clears the weight need`, JSON.stringify({ w: wa.weight_g, needs: wa.needs, row: wr.weight_g }));
+    ok(wc && !wc.weightTbd && wc.ship === "standard" && wc.kg === 1.2 && !("weighed" in wc.details), `${MODE}: foil with a weight is no longer weight TBD and can be priced for a carrier`, JSON.stringify(wc && { tbd: wc.weightTbd, ship: wc.ship, kg: wc.kg }));
+    const wh = (await history(wf1.sku)).changes.find(a => a.action === "product.info");
+    ok(wh && ACTOR.test(wh.actor) && JSON.parse(wh.after).weight_g === 1200 && JSON.parse(wh.before).weight_g === wf1.weight_g, `${MODE}: the weight change is in the audit log`, JSON.stringify(wh));
+    ok((await req(`/api/open-edit/${wf1.sku}`, { method: "PUT", body: { weight: "1200 g" } })).data.changed === false, `${MODE}: the same weight again changes nothing`);
+    ok((await req(`/api/open-edit/${wf1.sku}`, { method: "PUT", body: { weight: " 350  G " } })).status === 200 && (await row(wf1.sku)).weight_g === 350, `${MODE}: grams save as typed, spaces and capitals allowed`);
+    // charcoal: a weight is kept for the record, and it is still never shipped
+    ok((await req(`/api/open-edit/${coal.sku}`, { method: "PUT", body: { weight: "1 kg" } })).status === 200 && (await row(coal.sku)).weight_g === 1000 && (await row(coal.sku)).ship_class === "pickup_only", `${MODE}: charcoal takes a weight and stays pickup only`);
+    const cc = (await catalog()).find(x => x.sku === coal.sku); ok(cc && cc.ship === "pickup_only" && cc.details.charcoal === true && (await req(`/api/open-edit/${coal.sku}`)).data.charcoal === true, `${MODE}: charcoal with a weight is still pickup or local only on the storefront`, JSON.stringify(cc && cc.ship)); }
   // a body over ~16 KB is refused before it is parsed
   ok((await req(`/api/open-edit/${t.sku}`, { method: "PUT", body: JSON.stringify({ name: "ok", pad: "x".repeat(17000) }) })).status === 413, `${MODE}: a body over 16 KB is refused with 413`);
   ok((await req(`/api/open-edit/${t.sku}`, { method: "PUT", body: "{not json" })).status === 400, `${MODE}: a body that is not JSON is refused with 400`);
@@ -235,6 +257,21 @@ try {
         ok(!d2.needs.includes("check") && d2.length === "61 inches", `${MODE}: the page's Checked box and Length save`, JSON.stringify(d2.needs));
       } else if (SHOTS) await p.screenshot({ path: join(SHOTS, "hose-editor-390.png") });
       ok(!p.errs.length, `${MODE}: no page errors on a hose`, p.errs.join(" | ")); await c.close(); }
+    { // a foil page at phone width: the Weight field with its g / kg unit, typed and saved through the page
+      const { c, p } = await page(390, 844); await go(p, `/p/${wf2.sku}`);
+      await p.waitForFunction(() => /weight/.test(document.querySelector("[data-oe-need]")?.textContent || ""), null, { timeout: 8000 });
+      await p.locator("[data-oe-open]").click(); const sh = p.locator("dialog[data-oe-sheet][open]"); await sh.waitFor({ timeout: 5000 });
+      const wi = p.locator("#oe-weight"), units = sh.locator("input[name=wunit]"), ub = await sh.locator(".oe__unit label").first().boundingBox(), wb = await wi.boundingBox();
+      ok(await wi.count() === 1 && await p.getAttribute("#oe-weight", "inputmode") === "decimal" && await units.count() === 2 && await sh.locator("input[name=wunit][value=g]").isChecked() && ub.height >= 44 && wb.width > 150, `${MODE}: the Weight field, a number keyboard, g and kg big enough to tap`, JSON.stringify({ ub, wb }));
+      ok(/Needed before it can ship/.test(await sh.innerText()), `${MODE}: the panel says why foil needs its weight`);
+      await sh.locator(".oe__unit label", { hasText: "kg" }).click(); await p.fill("#oe-weight", "0.25");
+      await wi.scrollIntoViewIfNeeded(); if (SHOTS) await p.screenshot({ path: join(SHOTS, "foil-weight-390.png") });
+      await Promise.all([p.waitForNavigation({ waitUntil: "domcontentloaded" }), sh.locator('button[data-then="stay"]').click()]);
+      await p.waitForTimeout(800); const d3 = (await req(`/api/open-edit/${wf2.sku}`)).data;
+      ok(d3.weight_g === 250 && !d3.needs.includes("weight"), `${MODE}: 0.25 kg typed on the page saves as 250 g`, JSON.stringify(d3));
+      await p.locator("[data-oe-open]").click(); await sh.waitFor({ timeout: 5000 });
+      ok(await p.inputValue("#oe-weight") === "250" && await sh.locator("input[name=wunit][value=g]").isChecked() && /Weighed/.test(await sh.innerText()), `${MODE}: the panel reopens on the saved weight`);
+      ok(!p.errs.length, `${MODE}: no page errors on the weight`, p.errs.join(" | ")); await c.close(); }
     // the back office: "items" still asks for the passcode; "all" opens without one
     const { c, p } = await page(1440, 900); await p.goto(B + "/admin", { waitUntil: "domcontentloaded" }); await p.waitForTimeout(1200);
     ok(await p.locator(".pvbar").count() === 1, `${MODE}: the back office shows the banner`);

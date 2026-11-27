@@ -2,13 +2,32 @@
 // Needs tools/fake-geoapify.mjs and the store on 4420 with GEOAPIFY_KEY:test and GEOAPIFY_BASE. Changes local sample data.
 import { samplesOn } from "./fixtures/samples-on.mjs";
 import { readFileSync } from "node:fs";
-import { deliveryFee, localDue, localEta, localArea, parsePostal } from "../public/rates-core.js";
+import { deliveryFee, localDue, localEta, localArea, parsePostal, pack, quote, useBoxes } from "../public/rates-core.js";
+import { toStorefront, weightUnknown, counterRow } from "../src/catalog.js";
 const B = process.env.BASE || "http://127.0.0.1:4420", MAP = process.env.MAP || "http://127.0.0.1:4499";
 // the made-up sample rows this suite buys, switched back on in its own throwaway database (tools/fixtures/samples-on.mjs)
 await samplesOn(B, ["OSS-8004"]);
 const KEY = process.env.ADMIN_KEY || readFileSync(new URL("../.dev.vars", import.meta.url), "utf8").match(/ADMIN_KEY=(.+)/)[1].trim();
 let n = 0, f = 0; const ok = (c, msg) => { n++; if (!c) { f++; console.log("FAIL", msg); } };
 for (const [m, want] of [[0, 1000], [500, 1000], [10000, 1000], [10000.01, 1500], [10010, 1500], [25000, 1500], [25000.01, null], [25010, null], [-1, null], [NaN, null], [Infinity, null]]) ok(deliveryFee(m) === want, `fee at ${m} m is ${want}, got ${deliveryFee(m)}`);
+// weight from the item editor (2026-11-27): products.weight_g marked details.weighed is the shipping weight rates are worked out from.
+// Foil with it is no longer weight TBD and gets carrier prices; charcoal with it is still never shipped; a weight that equals the
+// import's placeholder (2,500 g on an Ace hookah) still counts once the shop typed it, and shows in place of the maker's figure.
+{ const { BOXES } = await import("data:text/javascript;base64," + Buffer.from(await (await fetch(B + "/api/catalog-module")).text()).toString("base64"));
+  const boxes = Object.entries(BOXES).map(([id, b]) => ({ id, label: b.label, l_cm: b.l, w_cm: b.w, h_cm: b.h, tare_g: Math.round(b.tare * 1000) }));
+  const base = { category_id: "heat", price_cents: 999, box_id: "XS", glass: 0, ship_class: "standard", height_cm: null, note: "", img: "", img_dark: 0, img_lw: null, photo_ver: 0, stock: 5, active: 1, listed: 1, variant_label: "", swatch_hex: null, availability: "counted" };
+  const foil = { ...base, sku: "OSS-9301", name: "Foil", family: "foil-oss-9301", weight_g: 1, details: "{}", facts_known: '{"fulfilment":"ships","weight_g":null}' };
+  const foilW = { ...foil, sku: "OSS-9302", weight_g: 120, details: '{"weighed":true}' };
+  const coal = { ...base, sku: "OSS-9104", name: "Coal", category_id: "charcoal", family: "charcoal-oss-9104", ship_class: "standard", weight_g: 1000, details: '{"charcoal":true,"weighed":true}', facts_known: '{"fulfilment":"pickup_or_local_delivery","weight_g":null}' };
+  const hk = { ...base, sku: "OSS-100001", name: "Hookah", category_id: "hookahs", box_id: "T", family: "ace-test", weight_g: 2500, details: '{"weighed":true}', facts_known: '{"weight_g":null,"item_weight_g":2800}' };
+  const S = Object.fromEntries(toStorefront({ categories: [], boxes, products: [foil, foilW, coal, hk] }).PRODUCTS.map(p => [p.sku, p]));
+  useBoxes(toStorefront({ categories: [], boxes, products: [] }).BOXES);
+  const to = parsePostal("M5V 2T6"), q = p => quote(to, pack([{ product: p, qty: 1 }]));
+  ok(weightUnknown(foil) && S["OSS-9301"].weightTbd && S["OSS-9301"].ship === "pickup_only", "weight: foil without a weight is weight TBD, pickup or local only");
+  ok(!weightUnknown(foilW) && !S["OSS-9302"].weightTbd && S["OSS-9302"].ship === "standard" && S["OSS-9302"].kg === 0.12 && !("weighed" in S["OSS-9302"].details), "weight: foil with the shop's weight ships on 120 g, the mark stays in the back office");
+  const qw = q(S["OSS-9302"]); ok(qw.length > 0 && qw.every(o => o.perParcel.every(pp => pp.billableKg >= 0.12)), "weight: foil with a weight gets carrier prices: " + qw.length);
+  ok(S["OSS-9104"].ship === "pickup_only" && counterRow(coal), "weight: charcoal with a weight is still pickup or local only, never a carrier");
+  ok(!weightUnknown(hk) && !S["OSS-100001"].weightTbd && S["OSS-100001"].kg === 2.5 && S["OSS-100001"].facts.item_weight_g === 2500, "weight: a typed weight equal to the import's placeholder counts, and is the weight shown"); }
 for (const [sub, want] of [[0, 1500], [19999, 1500], [20000, 0], [20001, 0]]) ok(localDue(1500, sub) === want, `items of ${sub} cents pay ${want}`);
 // November in Windsor is UTC-5. 2026-11-22 is a Sunday (open 11 to 7); Monday is open 10 to 9.
 for (const [at, want] of [["2026-11-22T15:59:00Z", "this morning"], ["2026-11-22T16:00:00Z", "25 minutes"], ["2026-11-22T23:59:00Z", "25 minutes"], ["2026-11-23T00:00:00Z", "tomorrow morning"], ["2026-11-23T07:00:00Z", "this morning"], ["2026-11-23T15:00:00Z", "25 minutes"], ["2026-11-24T01:59:00Z", "25 minutes"], ["2026-11-24T02:00:00Z", "tomorrow morning"]]) ok(localEta(new Date(at)).includes(want), `at ${at} wanted "${want}", got "${localEta(new Date(at))}"`);
