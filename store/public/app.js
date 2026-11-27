@@ -443,6 +443,8 @@ const counterLine = p => PICKUP_ONLY
   : p.weightTbd && !isCharcoal(p)
   ? `<div class="dline dline--fixed dline--above" role="note"><span class="dline__msg">Pickup or local delivery for now</span><span class="dline__sub">Shipping TBD: the pack weight is being confirmed. Free pickup at ${SHOP_STREET}, or local delivery from $10 near Windsor.</span></div>`
   : `<div class="dline dline--fixed dline--above" role="note"><span class="dline__msg">Pickup or local delivery only</span><span class="dline__sub">Never shipped by Canada Post. Free pickup at ${SHOP_STREET}, or local delivery from $10 near Windsor.</span></div>`;
+// a hose's length as the shop says it; one not known yet says so, never a guess
+const lengthRow = p => `<div><dt>Length</dt><dd>${p.facts.length ? escN(p.facts.length) : `<span class="tbd">To confirm</span>`}</dd></div>`;
 // a charcoal box's size and count, read from the shop's own line; a size the list leaves blank says so
 const sizeOf = p => { const t = [p.details?.variant, p.name, p.facts?.size].filter(Boolean).join(" "); const m = t.match(/\b\d+(?:\.\d+)?\s?(?:mm|cm|in)\b/i); return m ? m[0] : ""; };
 function counterSpec(p) {
@@ -454,7 +456,7 @@ function counterSpec(p) {
           ${d.brand ? `<div><dt>Brand</dt><dd>${esc(d.brand)}</dd></div>` : ""}
           ${box ? `<div><dt>From the box</dt><dd><a class="link" href="/p/${box.sku}">${esc(box.name)}</a>, ${whole(box.price)}</dd></div>` : ""}
           ${rolls.map(r => `<div><dt>One roll</dt><dd><a class="link" href="/p/${r.sku}">Single roll</a>, ${whole(r.price)}</dd></div>`).join("")}
-          ${isCharcoal(p) || p.weightTbd ? `<div><dt>Size</dt><dd>${sizeOf(p) ? escN(sizeOf(p)) : TBD("")}</dd></div>` : ""}
+          ${p.facts && "length" in p.facts ? lengthRow(p) : isCharcoal(p) || p.weightTbd ? `<div><dt>Size</dt><dd>${sizeOf(p) ? escN(sizeOf(p)) : TBD("")}</dd></div>` : ""}
           ${p.facts && "count" in p.facts ? `<div><dt>${isCharcoal(p) ? "Pieces" : "Sheets"}</dt><dd>${p.facts.count ? `<span class="num">${p.facts.count}</span>` : TBD("")}</dd></div>` : ""}
           ${p.weightTbd ? `<div><dt>Weight</dt><dd>${TBD("")}</dd></div>` : ""}
           <div><dt>Getting it</dt><dd>${PICKUP_ONLY ? "Pickup at the counter, paid in the shop" : p.weightTbd && !isCharcoal(p) ? `Pickup or local delivery. ${TBD("Shipping")}` : "Pickup or local delivery only"}</dd></div>
@@ -474,7 +476,7 @@ function factsSpec(p, fam) {
           ${p.state === "tbd" ? "" : `<div><dt>Price</dt><dd><span class="num">${whole(p.price)}</span>, coming soon</dd></div>`}
           ${p.family ? `${base ? `<div><dt>Base</dt><dd>${base}</dd></div>` : ""}
           ${f.height_cm ? `<div><dt>Height</dt><dd><span class="num">${f.height_cm}&nbsp;cm</span></dd></div>` : ""}
-          ${"length" in f ? `<div><dt>Length</dt><dd>${f.length ? escN(f.length) : `<span class="tbd">To confirm</span>`}</dd></div>` : ""}
+          ${"length" in f ? lengthRow(p) : ""}
           ${f.acrylic ? `<div><dt>Material</dt><dd>Acrylic</dd></div>` : ""}
           ${Array.isArray(f.includes) && f.includes.length ? `<div><dt>Comes with</dt><dd>${esc(f.includes.join(", "))}</dd></div>` : ""}
           <div><dt>Colours</dt><dd>${fam.length > 1 ? `<span class="num">${fam.length}</span> shown${named ? ": " + esc(fam.map(v => v.colour).join(", ")) : ""}` : named ? esc(fam.map(v => v.colour).join(", ")) : "One"}</dd></div>` : ""}
@@ -504,7 +506,7 @@ function viewProduct(sku) {
   const sold = isSold(p);
   return `
   <article class="pdp" data-tone="${toneOf(p)}" data-cat="${p.cat}">
-    <div data-stage="${p.sku}" class="pdp__tile tile ${p.dark || p.photo ? "tile--photo" : ""}">${p.family ? colourShot(p, { eager: true, alt: p.named && p.colour ? `${p.name}, ${p.colour}` : p.name }) : colourShot(p, { eager: true, alt: p.name })}${sticker(p, { big: true })}</div>
+    <div data-stage="${p.sku}" class="pdp__tile tile ${p.dark || p.photo ? "tile--photo" : ""}">${p.family ? colourShot(p, { eager: true, alt: p.named && p.colour && !p.name.toLowerCase().endsWith(p.colour.toLowerCase()) ? `${p.name}, ${p.colour}` : p.name }) : colourShot(p, { eager: true, alt: p.name })}${sticker(p, { big: true })}</div>
     <div class="pdp__info">
       <p class="crumb"><a href="/shop/${p.cat}">${c.name}</a></p>
       <h1 class="pdp__name${p.name.length > 30 ? " pdp__name--long" : ""}">${escN(p.name)}</h1>
@@ -526,7 +528,7 @@ function viewProduct(sku) {
         <tr><td>Pick up at ${SHOP_STREET}</td><td>${pickupDay()}</td><td class="r num">Free</td></tr></tbody></table>`
         : `<p class="ways__to">Local delivery from $10 near Windsor. Free pickup. ${localOnly(p) ? "" : p.ship === "ground_only" ? SAY.groundOne : SAY.shipsOne}</p>`}
       </section>`}
-      ${!sale ? "" : counterPay(p) || (PICKUP_ONLY && !localOnly(p)) ? `<section class="spec" aria-labelledby="spec-h"><h2 class="h3" id="spec-h">Details</h2><dl class="spec__list"><div><dt>Item</dt><dd class="num">${p.sku}</dd></div>${p.facts?.size || p.note ? `<div><dt>Size</dt><dd>${escN(p.facts?.size || p.note)}</dd></div>` : ""}<div><dt>Getting it</dt><dd>Pickup at the counter, paid in the shop</dd></div></dl></section>` : localOnly(p) ? counterSpec(p) : `<section class="spec" aria-labelledby="spec-h">
+      ${!sale ? "" : counterPay(p) || (PICKUP_ONLY && !localOnly(p)) ? `<section class="spec" aria-labelledby="spec-h"><h2 class="h3" id="spec-h">Details</h2><dl class="spec__list"><div><dt>Item</dt><dd class="num">${p.sku}</dd></div>${p.facts && "length" in p.facts ? lengthRow(p) : ""}${p.facts?.size || p.note ? `<div><dt>Size</dt><dd>${escN(p.facts?.size || p.note)}</dd></div>` : ""}<div><dt>Getting it</dt><dd>Pickup at the counter, paid in the shop</dd></div></dl></section>` : localOnly(p) ? counterSpec(p) : `<section class="spec" aria-labelledby="spec-h">
         <h2 class="h3" id="spec-h">Packed size</h2>
         <dl class="spec__list">
           <div><dt>Item</dt><dd class="num">${p.sku}</dd></div>

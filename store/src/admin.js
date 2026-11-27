@@ -137,7 +137,8 @@ export function needsInfo(p) {
   const onView = (p.active === 1 || p.listed === 1) && p.availability !== "dropped" && !(ace && f.stamp === "none") && !isSample(p.sku);
   if (!onView) return [];
   return [!(p.price_cents > 0) && "price", ace && !(Array.isArray(d.colours) && d.colours.length) && !(String(p.family || "").startsWith("ace-") && d.colour) && "colours", ["in_store_uncounted", "special_order"].includes(p.availability) && "stock",
-    f.needs_confirm === true && d.checked !== true && "check"].filter(Boolean);
+    f.needs_confirm === true && d.checked !== true && "check",
+    "length" in f && !f.length && !(typeof d.length === "string" && d.length) && "length"].filter(Boolean);   // a hose whose length is not known yet
 }
 
 // why an unsure item needs its name and length checked (back office only; the storefront never sees facts_known's notes)
@@ -379,6 +380,13 @@ export async function admin(request, env, url) {
     }
     // "Name and length checked" on an item the catalogue marked unsure: only true is taken (the tick cannot be taken back here)
     if ("checked" in body && body.checked !== true) bad.push("checked (true only)");
+    // a hose's length, as the shop says it ("60.5 inches"); only for items whose catalogue facts carry a length
+    let length = null;
+    if ("length" in body) {
+      let lf = false; try { lf = "length" in (JSON.parse(before.facts_known || "{}") || {}); } catch {}
+      length = text(body.length, 30);
+      if (!lf) bad.push("length (only for items that have one)"); else if (!length || !/^[\p{L}\p{N} .,'"/-]{1,30}$/u.test(length)) bad.push("length (up to 30 letters and numbers, like 60.5 inches)");
+    }
     if (bad.length) return json({ error: "Check: " + bad.join(", ") + "." }, 400);
     if (price !== null && price !== before.price_cents && !session.owner) { log("forbidden", { actor, path, field: "price" }); return json({ error: NOT_YOURS }, 403); }
     if (price !== null && price !== before.price_cents) out.price_cents = price;
@@ -392,11 +400,12 @@ export async function admin(request, env, url) {
       if (/^(ace|hose)-/.test(String(before.family || ""))) {   // a hookah colour, or a colour of one of the shop's hoses
         const ours = !had.colour || (Array.isArray(had.colours) && had.colour === joinColours(had.colours));
         if (ours) { if (colours.length) d.colour = joinColours(d.colours); else delete d.colour; }
-        if (ours && colours.length && d.colour.length > 40) return json({ error: "Check: colours (a hookah colour's name is up to 40 letters; pick fewer)." }, 400);
+        if (ours && colours.length && d.colour.length > 40) return json({ error: "Check: colours (a colour's name is up to 40 letters; pick fewer)." }, 400);
       }
       if (JSON.stringify(d) !== JSON.stringify(had)) out.details = JSON.stringify(d);
     }
     if (body.checked === true && had.checked !== true) { const d = out.details ? JSON.parse(out.details) : { ...had }; d.checked = true; out.details = JSON.stringify(d); }
+    if (length && length !== had.length) { const d = out.details ? JSON.parse(out.details) : { ...had }; d.length = length; out.details = JSON.stringify(d); }
     if (out.details && (had.charcoal || String(before.family || "").startsWith("charcoal-"))) charcoalRules(out, JSON.parse(out.details));   // charcoal stays pickup or local only
     // A first price on an item on view with "Price TBD" puts it on sale, so it can be bought as soon as the shop has priced it.
     // Only an item that had no price (an item priced and switched off stays off), already on view: never a made-up sample,
@@ -407,7 +416,7 @@ export async function admin(request, env, url) {
     const was = {}; for (const k of cols) was[k] = before[k];
     const STALE = "An order changed this to %n while you were counting. Nothing was saved: check the shelf, then save again.";
     if (count && count.seen !== before.stock) return json({ error: STALE.replace("%n", before.stock), stock: before.stock, changed: true }, 409);
-    const logged = { ...out }; if (logged.details) { if (colours) logged.colours = colours.map(c => c.name); if (body.checked === true && !had.checked) logged.checked = true; delete logged.details; }
+    const logged = { ...out }; if (logged.details) { if (colours) logged.colours = colours.map(c => c.name); if (body.checked === true && !had.checked) logged.checked = true; if (length && length !== had.length) logged.length = length; delete logged.details; }
     if (count) logged.stock = count.counted;
     if (!cols.length && !count) return json({ ok: true, changed: false, stock: before.stock });
     // One transaction. With a count, every statement holds only while the stock is still the number the screen showed, so an

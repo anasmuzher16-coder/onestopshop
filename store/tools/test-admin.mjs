@@ -141,7 +141,14 @@ if (paid) {
     ok(prods.some(x => /^hose-/.test(x.family || "") && x.needs && !x.needs.includes("check") && !("check_why" in x)), "a hose matched for sure never asks for a check");
     ok((await info(hz.sku, { checked: "yes" })).status === 400 && (await row(hz.sku)).needs.includes("check"), "the check takes true only");
     const ck = await info(hz.sku, { checked: true }), hr = await row(hz.sku);
-    ok(ck.status === 200 && !hr.needs?.includes("check") && JSON.parse(hr.details || "{}").checked === true && !("check_why" in hr), "ticking it takes the hose off the check: " + JSON.stringify(hr.needs)); }
+    ok(ck.status === 200 && !hr.needs?.includes("check") && JSON.parse(hr.details || "{}").checked === true && !("check_why" in hr), "ticking it takes the hose off the check: " + JSON.stringify(hr.needs));
+    // a hose with no known length asks for it; the shop types it once and every page shows it (the tick and the typed value stay out of the details shoppers get)
+    const hl = prods.find(x => /^hose-/.test(x.family || "") && x.needs?.includes("length") && x.sku !== soon.sku);
+    ok(hl && (await info(hl.sku, { length: "<b>6</b>" })).status === 400 && (await info(t.sku, { length: "60 inches" })).status === 400, "a length takes plain words only, and only on an item that has one");
+    ok((await info(hl.sku, { length: "66.5 inches" })).status === 200 && !(await row(hl.sku)).needs?.includes("length"), "the typed length takes the hose off the length need");
+    const m3 = await import("data:text/javascript;base64," + Buffer.from(await (await fetch(B + "/api/catalog-module")).text()).toString("base64"));
+    const h3 = m3.PRODUCTS.find(x => x.sku === hl.sku), c3 = m3.PRODUCTS.find(x => x.sku === hz.sku);
+    ok(h3 && h3.facts.length === "66.5 inches" && !("length" in h3.details) && c3 && !("checked" in c3.details), "the storefront shows the typed length; the check tick never leaves the back office"); }
   const sample = (await call("/products")).data.products.find(x => x.sample && x.active === 0);
   ok(sample && (await info(sample.sku, { price_cents: 1234 })).status === 200 && (await row(sample.sku)).active === 0, "a made-up sample is never switched on by a price");
   // the full product form refuses it too (breaker, 2026-11-27: it used to switch a sample on), whatever else the save carries

@@ -3,7 +3,12 @@
 -- (python store/tools/catalog/catalog.py build --only shop-hoses); the lines below are exactly what `catalog.py seed
 -- --supplier shop-hoses` writes (store/tools/catalog/test_catalog.py checks they still match). Safe to run twice.
 -- Needs the photos in store/public/img/pc/hose/ deployed with the same commit.
--- Rollback (nothing has been sold or counted yet; check first: SELECT COUNT(*) FROM order_items WHERE sku LIKE 'OSS-12%'):
+-- Rollback. First check nothing has been sold: SELECT COUNT(*) FROM order_items WHERE sku LIKE 'OSS-12____'; if that is not 0,
+-- do not delete: set listed = 0, active = 0 on the hoses instead. Otherwise (this also drops any shelf count, photo upload,
+-- favourite or back-in-stock alert made on them since):
+--   DELETE FROM product_photos WHERE sku IN (SELECT sku FROM products WHERE supplier_id = 'shop-hoses');
+--   DELETE FROM favourites WHERE sku IN (SELECT sku FROM products WHERE supplier_id = 'shop-hoses');
+--   DELETE FROM stock_alerts WHERE sku IN (SELECT sku FROM products WHERE supplier_id = 'shop-hoses');
 --   DELETE FROM stock_moves WHERE sku IN (SELECT sku FROM products WHERE supplier_id = 'shop-hoses');
 --   DELETE FROM products WHERE supplier_id = 'shop-hoses' AND sku LIKE 'OSS-12____';
 --   DELETE FROM catalog_imports WHERE supplier_id = 'shop-hoses'; DELETE FROM suppliers WHERE id = 'shop-hoses';

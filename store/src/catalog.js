@@ -82,6 +82,9 @@ export function toStorefront(cat) {
     const coal = !!details.charcoal; delete details.photo_rights; delete details.photo_rejected; delete details.source_lines;   // shop-only notes stay in the back office
     if ("photo" in details && !PUBLIC_PHOTO.includes(details.photo)) delete details.photo;   // only the photo states a page shows; any other note on a photo stays in the back office
     const sale = sellable(p), facts = p.family ? shownFacts(p) : {};
+    // a length the shop typed in the item editor (details.length, a shop column) replaces the catalogue's; the check tick stays in the back office
+    if ("length" in facts && typeof details.length === "string" && details.length) facts.length = details.length;
+    delete details.length; delete details.checked;
     // a catalogue item whose pack weight is not known yet cannot be priced for a carrier: pickup or local delivery until it is
     const weightTbd = weightUnknown(p);
     return { sku: p.sku, name: p.name, cat: p.category_id,

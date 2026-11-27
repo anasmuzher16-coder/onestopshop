@@ -1,6 +1,7 @@
 """Publish the shop's hose photos: each cut-out master (IMG_xxxx.png, 720x900 RGBA: the hose in its bag, the bag kept as
-see-through film, on transparency) -> store/public/img/pc/hose/<name>.webp, -m, -s, the same sizes and quality as every
-catalogue photo (photos.save_set). The masters stay outside the repo; only the web sizes are kept here.
+see-through film, on transparency) -> store/public/img/pc/hose/<name>.webp, -m, -s, the same sizes and quality settings as
+every catalogue photo (photos.save_set). The creased film is detailed, so these files come out about 4x heavier than the Ace
+cut-outs at the same size (-s median about 64 KB against about 18 KB). The masters stay outside the repo; only the web sizes are kept.
 
   python store/tools/catalog/photos_hoses.py CROPS_DIR
   node store/tools/photo-versions.mjs          then, so each photo gets its version
