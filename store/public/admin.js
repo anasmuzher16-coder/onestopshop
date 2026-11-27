@@ -13,7 +13,7 @@ async function api(path, opts = {}) {
   if (!r.ok) throw Object.assign(new Error(data.error || "That did not work. Try again."), { data, status: r.status });
   return data;
 }
-const state = { in: false, tab: "home", products: [], categories: [], boxes: [], orders: [], q: "", cat: "all", oflt: "todo", me: { actor: "", owner: false }, smode: "adjust", recvRef: "", counted: new Set(), month: null, ownerGate: (() => { try { return localStorage.getItem("oss:gate") !== "staff"; } catch { return true; } })() };   // this device remembers how it last signed in; a new device starts with the owner passcode
+const state = { in: false, tab: "home", products: [], categories: [], boxes: [], orders: [], finMore: null, openCut: false, found: null, oq: "", selecting: false, osel: new Set(), todayShown: 25, q: "", cat: "all", oflt: "todo", me: { actor: "", owner: false }, smode: "adjust", recvRef: "", counted: new Set(), month: null, ownerGate: (() => { try { return localStorage.getItem("oss:gate") !== "staff"; } catch { return true; } })() };   // this device remembers how it last signed in; a new device starts with the owner passcode
 const opKey = () => crypto.randomUUID();   // one key per tap: a repeat of the same tap counts once
 const who = a => a === "owner" ? "Owner" : a === "store" ? "Website" : a === "seed" ? "Setup" : String(a || "").replace(/ #\d+$/, "");
 const catOf = id => state.categories.find(c => c.id === id) || { name: id, tone: "bone" };
@@ -47,13 +47,17 @@ document.addEventListener("submit", async e => {
 // ---------- Today ----------
 // New pickup requests, first and by name (2026-11-27): while the shop's mail is not connected no new-order note reaches anyone, so
 // this list is how staff learn of a request. Newest first; each row opens the order. With mail off it says to call the customer.
+// Every request to confirm is listed (breaker, 2026-11-27: a newest-25 list let junk push real requests out of sight). A long list
+// scrolls in its own box and shows 25 at a time with "Show more"; nothing is dropped without saying so.
 function confirmList(s) {
-  const list = s.confirm || [], n = (s.todo && s.todo.to_confirm) || list.length;
+  const list = s.confirm || [], n = Math.max((s.todo && s.todo.to_confirm) || 0, list.length);
   if (!n) return "";
+  const shown = list.slice(0, state.todayShown), left = list.length - shown.length;
   return `<section class="wide" data-confirmlist><h2 class="h2"><b class="num">${n}</b> new pickup ${n === 1 ? "request" : "requests"} to confirm</h2>
     <p class="fineprint">${s.mail_on ? "Check the shelf, then mark each one ready: that emails the customer to come in." : "The shop's email is not connected, so customers get no email from us. Check the shelf, mark it ready, then call or text the customer at the number on the order."}</p>
-    <div class="rows">${list.map(o => `<button class="row order" type="button" data-order="${esc(o.id)}"><span class="row__main"><span class="row__name">${esc(o.name)}</span><span class="row__meta">${esc(o.id)} &middot; ${when(o.created_at)} &middot; ${o.units} ${o.units === 1 ? "item" : "items"}${o.phone ? ` &middot; ${esc(o.phone)}` : ""}</span></span><span class="order__r"><b class="num">${money(o.total_cents)}</b><span class="state go">To confirm</span></span></button>`).join("")}</div>
-    ${n > list.length ? `<p class="fineprint"><button class="chip" type="button" data-go="orders:todo">See all ${n} in Orders</button></p>` : ""}</section>`;
+    <div class="rows" data-confirmrows style="max-height:70vh;overflow-y:auto">${shown.map(o => `<button class="row order" type="button" data-order="${esc(o.id)}"><span class="row__main"><span class="row__name">${esc(o.name)}</span><span class="row__meta">${esc(o.id)} &middot; ${when(o.created_at)} &middot; ${esc(o.units)} ${o.units === 1 ? "item" : "items"}${o.phone ? ` &middot; ${esc(o.phone)}` : ""}</span></span><span class="order__r"><b class="num">${money(o.total_cents)}</b><span class="state go">To confirm</span></span></button>`).join("")}</div>
+    <p class="fineprint">Showing <b class="num" data-confirmshown>${shown.length}</b> of ${n}.${left > 0 ? ` <button class="chip" type="button" data-moreconfirm>Show ${Math.min(100, left)} more</button>` : ""} ${n > 5 ? `<button class="chip" type="button" data-go="orders:todo">Find or clear junk in Orders</button>` : ""}</p>
+    ${s.confirm_cut || n > list.length ? `<p class="remind" data-confirmcut><b>Not all ${n} could be listed here.</b> Use Find in Orders, or clear junk requests there.</p>` : ""}</section>`;
 }
 function viewHome(s) {
   const t = s.totals, aov = t.month_orders ? t.month_cents / t.month_orders : 0;
@@ -338,7 +342,7 @@ const isTodo = o => ["paid", "packed", "ready"].includes(o.status) || (o.status 
 // How the order is paid, in words, and what can be done about it from here.
 const PAY = { awaiting: "Card, not paid yet", paid: "Paid", pay_at_pickup: "To pay at the counter", expired: "Card page closed unpaid", failed: "Card payment failed", refunded: "Refunded", part_refunded: "Part refunded" };
 const holdEnd = o => o.pay_status !== "pay_at_pickup" || !o.pay_expires_at ? null : o.status === "pending" ? o.pay_expires_at : o.status === "ready" ? new Date(Date.parse(o.ready_at || o.updated_at) + 14 * 864e5).toISOString() : null;   // src/pay.js expirePickups
-// Same email, other networks (src/admin.js OTHER_NETS): a stranger may have typed this customer's email. A small note, no new UI.
+// Same email, other networks (src/admin.js netNotes): a stranger may have typed this customer's email. A small note, no new UI.
 const otherNets = o => o.other_networks > 0 ? `<b class="wait" data-othernets>Same email, ${o.other_networks} from another network</b>` : "";
 const reqUntil = (o, mailOn = true) => `<div><dt>To confirm</dt><dd>Nothing is held for this customer yet. Check the shelf, then mark it ready: ${mailOn ? "that takes the items off the stock count and emails them to come in" : "that takes the items off the stock count. Then call or text them to come in: the shop's email is not connected, so no email goes out"}. If the shelf is short, call them.${o.pay_expires_at ? ` Not marked ready by ${esc(new Date(o.pay_expires_at).toLocaleString("en-CA", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }))}, it cancels itself.` : ""}</dd></div>`;
 const holdUntil = (o, mailOn = true) => toConfirm(o) ? reqUntil(o, mailOn) :holdEnd(o) ? `<div><dt>Held until</dt><dd>${esc(new Date(holdEnd(o)).toLocaleString("en-CA", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }))}. ${o.status === "pending" ? "Mark it ready or paid before then" : "Take the payment before then"}, or it cancels itself and the stock goes back.</dd></div>` : "";
@@ -353,22 +357,40 @@ const payActs = o => toConfirm(o) ? `<p class="fineprint" data-confirmfirst>Mark
       <button class="btn btn--ghost" type="submit">Record the refund</button>
       <p class="fineprint" id="tr-note">For money already given back at the till. Up to ${money(o.paid_cents - (o.refunded_cents || 0))}. It comes off the monthly report and takes back the customer's points. Count returned items in with the stock button.</p></form>`
   : o.pay_method === "at_pickup" && ["paid", "part_refunded"].includes(o.pay_status) && o.status !== "cancelled" ? `<p class="fineprint">Refunds given at the counter are recorded by the owner.</p>` : "";
+const orderMeta = o => `${esc(o.id)} &middot; ${when(o.created_at)} &middot; ${esc(o.units)} ${o.units === 1 ? "item" : "items"} &middot; ${o.method === "pickup" ? "Pickup" : isLocal(o) ? "Delivery" : esc(o.tax_province || "")}`;
+const orderEnd = o => { const k = (ORDER_STATE[o.status] || ["done"])[0]; return `<span class="order__r"><b class="num">${money(o.total_cents)}</b><span class="state ${k}">${esc(stateLabel(o))}</span>${waitDays(o) >= 3 ? `<b class="wait">Waiting ${waitDays(o)} days</b>` : ""}${otherNets(o)}</span>`; };
+const orderRow = o => `<button class="row order" type="button" data-order="${esc(o.id)}"><span class="row__main"><span class="row__name">${esc(o.name)}</span><span class="row__meta">${orderMeta(o)}</span></span>${orderEnd(o)}</button>`;
+// Clear junk: a request row with a tick box, its phone and the short tag of the network it came from
+const selRow = o => `<label class="row order" data-selrow="${esc(o.id)}"><input type="checkbox" data-osel="${esc(o.id)}" ${state.osel.has(o.id) ? "checked" : ""} aria-label="Select ${esc(o.name)}, ${esc(o.id)}"><span class="row__main"><span class="row__name">${esc(o.name)}</span><span class="row__meta">${orderMeta(o)}${o.phone ? ` &middot; ${esc(o.phone)}` : ""}${o.net ? ` &middot; network ${esc(o.net)}` : ""}</span></span>${orderEnd(o)}</label>`;
 function viewOrders() {
-  const todo = isTodo, list = state.orders.filter(o => state.oflt === "all" || (state.oflt === "todo" ? todo(o) : !todo(o)));
-  const chip = (id, label) => `<button class="chip" type="button" data-oflt="${id}" aria-pressed="${state.oflt === id}">${label}</button>`;
-  return `<div class="tools"><h1 class="h1">Orders<span class="sample">Sample orders</span></h1><div class="chips" role="group" aria-label="Filter">${chip("todo", "To do " + state.orders.filter(todo).length)}${chip("done", "Finished")}${chip("all", "All " + state.orders.length)}</div></div>
-    <div class="rows">${list.map(o => { const k = ORDER_STATE[o.status][0], label = stateLabel(o); return `<button class="row order" type="button" data-order="${o.id}"><span class="row__main"><span class="row__name">${esc(o.name)}</span><span class="row__meta">${o.id} &middot; ${when(o.created_at)} &middot; ${o.units} ${o.units === 1 ? "item" : "items"} &middot; ${o.method === "pickup" ? "Pickup" : isLocal(o) ? "Delivery" : esc(o.tax_province || "")}</span></span><span class="order__r"><b class="num">${money(o.total_cents)}</b><span class="state ${k}">${label}</span>${waitDays(o) >= 3 ? `<b class="wait">Waiting ${waitDays(o)} days</b>` : ""}${otherNets(o)}</span></button>`; }).join("") || `<p class="empty">Nothing waiting. New orders show up here.</p>`}</div>`;
+  const todo = isTodo, found = state.found, reqs = state.orders.filter(toConfirm);
+  const list = found ? found.orders : state.selecting ? reqs : state.orders.filter(o => state.oflt === "all" || (state.oflt === "todo" ? todo(o) : !todo(o)));
+  const chip = (id, label) => `<button class="chip" type="button" data-oflt="${id}" aria-pressed="${state.oflt === id && !found}">${label}</button>`;
+  const nets = Object.entries(reqs.reduce((a, o) => { if (o.net) a[o.net] = (a[o.net] || 0) + 1; return a; }, {})).filter(([, c]) => c >= 2).sort((a, b) => b[1] - a[1]);
+  const junkBar = !found && state.oflt === "todo" && reqs.length ? (state.selecting ? `<div class="junk" data-junkbar><p class="tools__help">Tick the requests to cancel, or pick every request from one network. A flagged request (same email, other network) may be the customer's or a stranger's: open it to check before ticking it. Only requests still to confirm can be cleared here; each is cancelled with your name.</p>
+      <div class="chips"><button class="chip" type="button" data-selnone>Select none</button></div>
+      ${nets.length ? `<label class="field"><span>Select every request from one network</span><select class="input" data-onet><option value="">Pick a network</option>${nets.map(([n, c]) => `<option value="${esc(n)}">Network ${esc(n)}: ${c} requests</option>`).join("")}</select></label>` : ""}
+      <div class="sheet__act"><button class="btn btn--danger" type="button" data-bulkcancel ${state.osel.size ? "" : "disabled"}>Cancel <span data-selcount>${state.osel.size}</span> selected</button><button class="btn btn--ghost" type="button" data-selecting>Done</button></div><p class="err" role="alert" data-bulkerr></p></div>`
+    : `<p><button class="chip" type="button" data-selecting>Clear junk requests</button></p>`) : "";
+  return `<div class="tools"><h1 class="h1">Orders<span class="sample">Sample orders</span></h1>
+    <form class="tools__top" data-ofind role="search"><input class="input" id="oq" type="search" placeholder="Find: order number, name, phone or email" value="${esc(state.oq)}" maxlength="80" aria-label="Find an order by number, name, phone or email"><button class="btn" type="submit">Find</button></form>
+    <div class="chips" role="group" aria-label="Filter">${chip("todo", "To do " + state.orders.filter(todo).length)}${chip("done", "Finished")}${chip("all", "All " + state.orders.length)}</div>
+    ${found ? `<p class="tools__help" data-found>${found.orders.length} found for &ldquo;${esc(found.q)}&rdquo;${found.more ? `, the newest ${found.orders.length} shown: type more to narrow it` : ""}. <button class="chip" type="button" data-ofindclear>Clear</button></p>` : ""}
+    ${state.openCut ? `<p class="remind" data-opencut><b>There are more open orders than this list can hold.</b> Every ready, paid and packed order is here; use Find for a request, or clear junk requests.</p>` : ""}
+    ${junkBar}</div>
+    <div class="rows">${list.map(state.selecting && !found ? selRow : orderRow).join("") || `<p class="empty">${found ? "No order matches. Try the order number, or part of the name, phone or email." : "Nothing waiting. New orders show up here."}</p>`}</div>
+    ${!found && !state.selecting && state.oflt !== "todo" && state.finMore ? `<p><button class="btn btn--ghost" type="button" data-olderfin>Show older finished orders</button></p>` : ""}`;
 }
 async function orderSheet(id) {
   const { order: o, items, emails = [], trail = [], mail_on = false } = await api("/orders/" + id), k = ORDER_STATE[o.status][0], label = stateLabel(o), next = NEXT(o);
   const charcoal = items.some(i => i.category_id === "charcoal" || /"charcoal":true/.test(i.details || "")), canCancel = ["paid", "packed", "ready"].includes(o.status) || (o.status === "pending" && o.pay_status === "pay_at_pickup"), wait = waitDays(o), units = items.reduce((a, i) => a + i.qty, 0), src = pj(o.source_detail);
-  sheet.innerHTML = `<div class="sheet__in" data-ordersheet="${o.id}">
-    <div class="sheet__top"><div><p class="meta">Order ${o.id} &middot; ${when(o.created_at)}</p><h2 class="h2" style="margin:0">${esc(o.name)}</h2><span class="state ${k}">${label}</span></div><button class="sheet__x" type="button" data-close>Close</button></div>
+  sheet.innerHTML = `<div class="sheet__in" data-ordersheet="${esc(o.id)}">
+    <div class="sheet__top"><div><p class="meta">Order ${esc(o.id)} &middot; ${when(o.created_at)}</p><h2 class="h2" style="margin:0">${esc(o.name)}</h2><span class="state ${k}">${esc(label)}</span></div><button class="sheet__x" type="button" data-close>Close</button></div>
     ${dropCard(o)}
     ${wait >= 3 ? `<p class="remind" data-remind><b>Waiting ${wait} days.</b> A friendly call usually does it. We hold pickups for 14 days.</p>` : ""}
     ${o.status === "cancelled" ? `<p class="remind"><b>Cancelled${o.cancel_reason ? ", " + esc(REASON[o.cancel_reason].toLowerCase()) : ""}.</b> ${o.cancelled_by ? `By ${esc(who(o.cancelled_by))}, ${when(o.cancelled_at).replace(/[.]$/, "")}.` : ""} ${o.cancel_note ? esc(o.cancel_note) : ""}${o.cancelled_by ? (o.pay_method === "at_pickup" ? " Anything it had taken off the shelf went back." : " The stock went back on the shelf.") : ""}</p>` : ""}
     ${charcoal ? `<div class="idcheck" data-staff-note><p>Charcoal order. Check ID if the customer looks young.</p><label class="check"><input type="checkbox" data-idcheck ${o.id_checked_at ? "checked" : ""}> ID checked</label><p class="fineprint">${o.id_checked_at ? `By ${esc(who(o.id_checked_by))}, ${when(o.id_checked_at).replace(/[.]$/, "")}. ` : ""}Staff only: customers never see this.</p></div>` : ""}
-    <div class="rows items">${items.map(i => `<div class="row">${thumb(i, catOf((state.products.find(p => p.sku === i.sku) || {}).category_id).tone)}<span class="row__main"><span class="row__name">${esc(i.name)}</span><span class="row__meta">${i.sku}${i.box_id ? " &middot; box " + esc(i.box_id) : ""}</span></span><span class="num"><b style="color:var(--color-strong)">${i.qty}</b> &times; ${money(i.unit_cents)}</span></div>`).join("")}</div>
+    <div class="rows items">${items.map(i => `<div class="row">${thumb(i, catOf((state.products.find(p => p.sku === i.sku) || {}).category_id).tone)}<span class="row__main"><span class="row__name">${esc(i.name)}</span><span class="row__meta">${esc(i.sku)}${i.box_id ? " &middot; box " + esc(i.box_id) : ""}</span></span><span class="num"><b style="color:var(--color-strong)">${esc(i.qty)}</b> &times; ${money(i.unit_cents)}</span></div>`).join("")}</div>
     <dl class="facts"><div><dt>Items</dt><dd class="num">${money(o.subtotal_cents)}</dd></div><div><dt>${o.method === "pickup" ? "Pickup at the counter" : isLocal(o) ? "Local delivery" : "Shipping, " + esc(o.ship_service || "")}</dt><dd class="num">${o.method === "pickup" || (isLocal(o) && !o.shipping_cents) ? "Free" : money(o.shipping_cents)}</dd></div>
       <div><dt>Tax, ${esc(o.tax_province || "")}</dt><dd class="num">${money(o.tax_cents)}</dd></div><div><dt><b style="color:var(--color-strong)">${o.pay_status === "paid" || o.pay_status === "refunded" || o.pay_status === "part_refunded" || !o.pay_status ? "Total paid" : "Total"}</b></dt><dd class="num"><b>${money(o.total_cents)}</b></dd></div>
       ${payFacts(o, mail_on)}${o.other_networks > 0 ? `<div data-othernets><dt>Same email</dt><dd>${o.other_networks} other open ${o.other_networks === 1 ? "order uses" : "orders use"} this email from a different network. If the customer did not place ${o.other_networks === 1 ? "it" : "them"}, cancel ${o.other_networks === 1 ? "it" : "them"}.</dd></div>` : ""}${!mail_on && o.status === "ready" && o.pay_status === "pay_at_pickup" ? `<div><dt>Tell them</dt><dd>The shop's email is not connected: call or text ${o.phone ? esc(o.phone) : "the customer"} to say it is ready.</dd></div>` : ""}${o.tracking ? `<div><dt>Tracking</dt><dd class="num">${esc(o.tracking)}</dd></div>` : ""}${dropInfo(o)}
@@ -384,7 +406,7 @@ async function orderSheet(id) {
       <label class="field"><span>Note (needed for Other)</span><input class="input" name="note" maxlength="200" autocomplete="off"></label>
       <p class="fineprint">The order stays on record, marked cancelled with your name. Nothing is emailed to the customer.</p>
       <p class="err" role="alert" data-cerr></p>
-      <button class="btn btn--danger" type="submit">Cancel ${o.id} and put ${units} ${units === 1 ? "item" : "items"} back</button></form></details>` : ""}</div>`;
+      <button class="btn btn--danger" type="submit">Cancel ${esc(o.id)} and put ${units} ${units === 1 ? "item" : "items"} back</button></form></details>` : ""}</div>`;
   if (!sheet.open) sheet.showModal();
 }
 
@@ -451,7 +473,12 @@ function intakeView(q) {
 }
 // ---------- shell ----------
 async function loadProducts() { const r = await api("/products"); state.products = r.products; state.categories = r.categories; state.boxes = r.boxes; }
-async function loadOrders() { state.orders = (await api("/orders")).orders; }
+// every open order, and the newest finished ones (older ones a page at a time, data-olderfin); a search on screen is run again
+async function loadOrders() {
+  const r = await api("/orders"); state.orders = r.orders; state.finMore = r.finished_more || null; state.openCut = !!r.open_cut;
+  const ids = new Set(r.orders.map(o => o.id)); for (const id of [...state.osel]) if (!ids.has(id) || !toConfirm(r.orders.find(o => o.id === id))) state.osel.delete(id);
+  if (state.found) state.found = await api("/orders/find?q=" + encodeURIComponent(state.found.q)).catch(er => { toast("The search could not be refreshed: " + er.message); return state.found; });
+}
 function chrome() {
   const todo = state.orders.filter(isTodo).length;
   $$("[data-tab]").forEach(b => { b.toggleAttribute("aria-current", false); if (b.dataset.tab === state.tab) b.setAttribute("aria-current", "page"); if (b.dataset.tab === "orders") b.innerHTML = "Orders" + (todo ? `<i class="num">${todo}</i>` : ""); });
@@ -461,7 +488,7 @@ async function render() {
   if (state.tab === "stock") main.innerHTML = viewStock();
   else if (state.tab === "orders") main.innerHTML = viewOrders();
   else if (state.tab === "office" && state.me.owner) { const [r, st, se, iq] = await Promise.all([api("/report?month=" + (state.month || "")), api("/staff"), api("/settings"), api("/intake").catch(() => null)]); const pick = iq?.sends?.some(x => x.key === state.intakeKey) ? state.intakeKey : iq?.sends?.[0]?.newest, latest = pick ? await api("/intake?key=" + encodeURIComponent(pick)).catch(() => null) : null; state.month = r.month; if (state.tab === "office") { let extra = iq && { ...iq, latest, shownKey: pick }; try { intakeView(extra); } catch { extra = null; } main.innerHTML = viewOffice(r, st.staff, se.settings, extra); } }
-  else { const s = await api("/summary"); if (state.tab === "home") main.innerHTML = viewHome(s); }
+  else { const s = await api("/summary"); state.summary = s; if (state.tab === "home") main.innerHTML = viewHome(s); }
 }
 async function boot() {
   try { await Promise.all([loadProducts(), loadOrders()]); } catch { return; }
@@ -475,7 +502,24 @@ document.addEventListener("click", async e => {
   if ((el = t.closest("[data-tab]"))) { state.tab = el.dataset.tab; await render(); scrollTo(0, 0); return; }
   if ((el = t.closest("[data-go]"))) { const [tab, f] = el.dataset.go.split(":"); state.tab = tab; if (tab === "stock") { state.cat = f; state.smode = "adjust"; } else state.oflt = f; await render(); scrollTo(0, 0); return; }
   if ((el = t.closest("[data-cat]"))) { state.cat = el.dataset.cat; return render(); }
-  if ((el = t.closest("[data-oflt]"))) { state.oflt = el.dataset.oflt; return render(); }
+  if ((el = t.closest("[data-oflt]"))) { state.oflt = el.dataset.oflt; state.found = null; state.selecting = false; return render(); }
+  if (t.closest("[data-moreconfirm]")) { state.todayShown += 100; const box = $("[data-confirmrows]"), top = box ? box.scrollTop : 0; await render(); const b2 = $("[data-confirmrows]"); if (b2) b2.scrollTop = top; return; }   // fresh from the server, keeping the place
+  if (t.closest("[data-ofindclear]")) { state.found = null; state.oq = ""; return render(); }
+  if (t.closest("[data-selecting]")) { state.selecting = !state.selecting; state.osel.clear(); return render(); }
+  if (t.closest("[data-selnone]")) { state.osel.clear(); return render(); }
+  if ((el = t.closest("[data-olderfin]"))) { el.disabled = true;
+    try { const r = await api("/orders?before=" + encodeURIComponent(state.finMore)), have = new Set(state.orders.map(o => o.id)); state.orders = [...state.orders, ...r.orders.filter(o => !have.has(o.id))]; state.finMore = r.finished_more || null; await render(); } catch (er) { toast(er.message); el.disabled = false; } return; }
+  if ((el = t.closest("[data-bulkcancel]"))) {   // asks first, then cancels in groups of 100 (src/admin.js bulk-cancel), each with this person's name
+    const ids = [...state.osel].filter(id => toConfirm(state.orders.find(o => o.id === id) || {})), err = $("[data-bulkerr]");
+    if (!ids.length) return;
+    const names = ids.slice(0, 12).map(id => { const o = state.orders.find(x => x.id === id) || {}; return `${o.name || ""}, ${id}${o.phone ? ", " + o.phone : ""}`; }).join("\n");   // plain text in the dialog, never HTML
+    if (!confirm(`Cancel ${ids.length} pickup ${ids.length === 1 ? "request" : "requests"}? Each is marked cancelled with your name. Nothing is emailed and nothing was taken off the shelf.\n\n${names}${ids.length > 12 ? `\nand ${ids.length - 12} more` : ""}`)) return;
+    el.disabled = true; let done = 0, skipped = 0, failed = "";
+    try { for (let i = 0; i < ids.length; i += 100) { const part = ids.slice(i, i + 100), r = await api("/orders/bulk-cancel", { method: "POST", body: { ids: part, confirm: part.length, note: "Cleared as junk", op: opKey() } }); done += r.cancelled.length; skipped += r.skipped.length; part.forEach(id => state.osel.delete(id)); } }
+    catch (er) { failed = er.message; }
+    if (!failed) { state.osel.clear(); state.selecting = false; } await loadOrders(); await render();
+    if (failed) { const e2 = $("[data-bulkerr]"); if (e2) e2.textContent = `Cancelled ${done}, then: ${failed}`; else toast(failed); return; }
+    toast(`Cancelled ${done}.${skipped ? ` ${skipped} could not be: they were no longer requests to confirm.` : ""}`); return; }
   if (t.closest("[data-new]")) return editSheet(null);
   if ((el = t.closest("[data-smode]"))) { state.smode = el.dataset.smode; await render(); return; }
   if (t.closest("[data-gate-swap]")) { state.ownerGate = !state.ownerGate; return gate(); }
@@ -522,6 +566,8 @@ document.addEventListener("change", async e => {
   if (e.target.id === "recvref") { state.recvRef = e.target.value.trim(); return; }
   if (e.target.matches("[data-intake]")) { state.intakeKey = e.target.value; render(); return; }
   if (e.target.matches("[data-basis]")) { const b = $("[data-savebasis]"); if (b) b.hidden = false; return; }
+  if (e.target.matches("[data-osel]")) { const id = e.target.dataset.osel; if (e.target.checked) state.osel.add(id); else state.osel.delete(id); const c = $("[data-selcount]"), b = $("[data-bulkcancel]"); if (c) c.textContent = state.osel.size; if (b) b.disabled = !state.osel.size; return; }
+  if (e.target.matches("[data-onet]")) { const net = e.target.value; if (net) { state.orders.filter(o => toConfirm(o) && o.net === net).forEach(o => state.osel.add(o.id)); render(); } return; }
   if (!e.target.matches("[data-idcheck]")) return;
   const id = e.target.closest("[data-ordersheet]").dataset.ordersheet, on = e.target.checked; e.target.disabled = true;
   try { await api(`/orders/${id}/id-check`, { method: "POST", body: { checked: on } }); await orderSheet(id); } catch (er) { e.target.checked = !on; e.target.disabled = false; toast(er.message); }
@@ -534,6 +580,15 @@ document.addEventListener("submit", async e => {
   const btn = $('button[type="submit"]', f); btn.disabled = true; f.dataset.op = f.dataset.op || opKey();
   try { const r = await api(`/orders/${id}/cancel`, { method: "POST", body: { reason, note: f.note.value, op: f.dataset.op } }); await Promise.all([loadOrders(), loadProducts()]); await orderSheet(id); render(); toast(r.replayed ? "Already cancelled." : "Cancelled. The stock is back on the shelf."); }
   catch (er) { err.textContent = er.message; btn.disabled = false; }
+});
+// Find an order on the server (src/admin.js /orders/find), so no order is out of reach whatever the list holds
+document.addEventListener("submit", async e => {
+  const f = e.target.closest("[data-ofind]"); if (!f) return; e.preventDefault();
+  const q = f.oq.value.trim(); state.oq = q;
+  if (!q) { state.found = null; return render(); }
+  if (q.length < 2) return toast("Type at least 2 characters.");
+  const btn = $('button[type="submit"]', f); btn.disabled = true;
+  try { state.found = await api("/orders/find?q=" + encodeURIComponent(q)); state.selecting = false; await render(); } catch (er) { toast(er.message); btn.disabled = false; }
 });
 document.addEventListener("submit", async e => {
   const f = e.target.closest("[data-addstaff]"); if (!f) return; e.preventDefault();

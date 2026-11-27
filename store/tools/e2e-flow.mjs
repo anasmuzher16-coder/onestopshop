@@ -100,9 +100,24 @@ try {
   t("the confirmation says nothing about age or ID", !/photo id|\bage\b|adult/i.test(await p.locator("#main").innerText()));
   await p.evaluate(() => { localStorage.removeItem("oss:postal"); localStorage.removeItem("oss:ship"); });
   // 4 the back office
+  // a pickup request whose note carries HTML (breaker, 2026-11-27: WSW333R): Today, the list and the order sheet show it as text
+  const XSS = '<img src=x onerror="window.__xss=1"><b data-xss>bold</b>';
+  const xr = await (await fetch(B + "/api/orders", { method: "POST", headers: { "Content-Type": "application/json", "CF-Connecting-IP": "10.77.0.1" }, body: JSON.stringify({ name: "Nina Notes", email: "nina-notes@example.com", phone: "519-555-0177", method: "pickup", pay: "at_pickup", note: XSS, lines: [{ sku: "OSS-8004", qty: 1 }] }) })).json(), xid = xr.order?.id;
   await p.goto(B + "/admin", { waitUntil: "networkidle" }); await p.fill("#passcode", KEY); await p.locator('button[type="submit"]').tap(); await p.waitForSelector(".hero__fig");
+  t("Today lists the new request", !!xid && await p.locator(`[data-confirmlist] [data-order="${xid}"]`).count() === 1, JSON.stringify(xr).slice(0, 200));
   await p.locator('[data-tab="orders"]').tap(); await p.waitForSelector(".order");
   t("both new orders are waiting in the back office", await p.locator(`[data-order="${id1}"]`).count() === 1 && await p.locator(`[data-order="${id2}"]`).count() === 1);
+  if (xid) {
+    await p.locator(`[data-order="${xid}"]`).tap(); await p.waitForSelector("dialog[open] [data-ordersheet]");
+    const shown = await p.locator("dialog[open]").innerText();
+    t("a note with HTML in it is shown as text on the order sheet, never run", shown.includes(XSS) && await p.locator('img[src="x"], [data-xss]').count() === 0 && await p.evaluate(() => window.__xss === undefined), shown.slice(0, 300));
+    await p.locator("dialog[open] .sheet__act [data-close]").tap(); await p.waitForTimeout(200);
+    // find it on the server by phone, written another way
+    await p.fill("#oq", "(519) 555 0177"); await p.locator('[data-ofind] button[type="submit"]').tap(); await p.waitForSelector("[data-found]");
+    t("Find by phone shows the order", await p.locator(`[data-order="${xid}"]`).count() === 1 && await p.locator(".rows .order").count() >= 1);
+    await p.locator("[data-ofindclear]").tap(); await p.waitForTimeout(200);
+    t("nothing from the note ran anywhere", await p.locator('img[src="x"], [data-xss]').count() === 0 && await p.evaluate(() => window.__xss === undefined));
+  }
   await p.locator(`[data-order="${id3}"]`).tap(); await p.waitForSelector("dialog[open] [data-next]");
   t("staff, and only staff, get a discreet ID note on the charcoal order", /Check ID if the customer looks young/.test(await p.locator("dialog[open]").innerText()));
   if (CARD) t("a card-paid order shows it is paid and offers a refund to the card", /Payment\s*Paid, card/.test(await p.locator("dialog[open]").innerText()) && await p.locator("dialog[open] [data-refundform]").count() === 1);

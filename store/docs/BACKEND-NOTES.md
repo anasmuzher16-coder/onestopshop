@@ -116,7 +116,20 @@ All numbers here are owner-vetoable defaults; they live in src/guard.js (and DEC
   (googlemail.com reads as gmail.com), in JS (`normEmail`) and the same rule in SQL (`normEmailSql`). The order keeps the
   address exactly as typed.
 - The back office marks open pickup orders that share an email but came from different networks ("Same email, N from another
-  network" on the order list, and a line on the order sheet saying to cancel them if the customer did not place them).
+  network" on the order list, and a line on the order sheet saying to cancel them if the customer did not place them). Worked out
+  in JS (src/admin.js `netNotes`) with the same `normEmail` and `phoneKey` the limits use, so one customer's "519-555-0101 x2" and
+  "5195550101" are one phone and never flagged (breaker, 2026-11-27: an SQL copy of the phone rule kept extensions and 00/011).
+- Orders in the back office (breaker, 2026-11-27: a newest-200 list let ~200 junk requests push real ones out of reach):
+  `GET /api/admin/orders` always answers every open order (anything not shipped, collected, cancelled, lapsed or refunded) plus the
+  50 newest finished ones, and `?before=<cursor>` (its `finished_more`) the next 50 finished ("Show older finished orders"). Every open
+  order that is not a request always comes back; only past 5000 open requests is the answer cut (`open_cut`: the oldest 2500 and
+  the newest 2500 requests come back, so real ones from before and during a flood stay in view), and the screen says so. Today lists every request to confirm (25 at a time, "Show more", in its own scrolling box).
+  `GET /api/admin/orders/find?q=` finds by order number, name, email or phone (phoneKey), 2 to 80 characters, 50 answers at most.
+  `POST /api/admin/orders/bulk-cancel` ("Clear junk requests" in Orders, To do): up to 100 requests still to confirm at a time,
+  picked by hand or as "every request from one network" (no automatic "select flagged": nothing tells the customer from a
+  stranger who typed their email, so staff open a flagged request before ticking it) (an 8-character tag of the stored keyed hash), with a
+  confirm step; the body must repeat the count (`confirm`). Each is cancelled with the person's name and its own log line; a
+  ready, paid or already cancelled order is never touched by it. Staff and owner, signed in, same-site JSON only (as every write).
 - The shop-wide brake: 60 orders a minute (`SHOP_BRAKE_PER_MIN`). A shopper signed in with the order's own email is never braked.
 - Per order: a card order 20 different items, 20 of one item (the cart's most, MAX_QTY), 40 units. A pay-at-the-counter order
   (`PICKUP_CAPS`): 5 of one item and 15 in all; while card payment is off the cart stops at 5 of an item and asks for a call past
@@ -129,7 +142,8 @@ All numbers here are owner-vetoable defaults; they live in src/guard.js (and DEC
   a real flood: "The shop is busy. Try again in a minute."
 - The order name must be letters, spaces, apostrophes, hyphens and periods, with no period running into two letters,
   so it can never carry a link into "Thank you, {name}". Shoppers sharing one public IPv4 (carrier NAT, campus Wi-Fi) still share
-  the network's rate limits (10 in 10 minutes, 40 a day), but no longer its open slots. Customer text in emails (notes, addresses) has zero-width spaces put into anything
+  the network's limits (10 in 10 minutes, 40 a day, and 20 requests waiting at once, `NET_LIMITS`), but each person's own 3 open
+  is theirs alone: a stranger on the same address cannot use them. Customer text in emails (notes, addresses) has zero-width spaces put into anything
   link-shaped, then is escaped.
 - Turnstile is not wired anywhere on the site yet (ACCOUNTS-LOYALTY.md lists it as a next step), so orders do not ask for it.
 - Migration 0012 stays the last one; nothing new for 2026-11-27.

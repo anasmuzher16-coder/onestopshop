@@ -5,7 +5,7 @@ import { adminPay, lowNote } from "./pay.js";
 import { sameSecret, hashPin, checkPin, pinProblem, cleanName } from "./staff.js";
 import { report, reportCsv, monthOf } from "./report.js";
 import { isSample } from "./samples.js";
-import { sourceOf, TAKEN_SQL, keyedHash, normEmailSql } from "./guard.js";
+import { sourceOf, TAKEN_SQL, keyedHash, normEmailSql, normEmail, phoneKey } from "./guard.js";
 // The shop's back office: sign-in, shop numbers, stock and orders. Every route here needs the admin cookie,
 // and every write also needs a same-site JSON request, so another website cannot trigger one.
 // Two kinds of sign-in: the owner's passcode (ADMIN_KEY), and named staff with a 6-digit PIN. Every change is
@@ -65,18 +65,47 @@ const SOLD = "('paid','packed','shipped','ready','collected')";
 // holds stock now. TO_CONFIRM: still a request the shop has to check against the shelf and mark ready (nothing held yet).
 const STOCKED = t => `EXISTS (SELECT 1 FROM ${TAKEN_SQL(`${t}.id`)})`;
 const TO_CONFIRM = t => `${t}.status = 'pending' AND ${t}.pay_status = 'pay_at_pickup' AND ${t}.release_op IS NULL AND NOT EXISTS (SELECT 1 FROM stock_moves sm WHERE sm.ref = ${t}.id AND sm.reason = 'sale')`;
-// Other open pickup orders with the same email (as one person: normEmailSql) that were placed from a different network (2026-11-27):
-// a stranger typing a customer's email shows up this way, so staff can see it on the list and cancel it. Counted only for open
-// pickup orders, and only between orders whose network is on record (order_attempts, migration 0012; "o:" = IPv4 or IPv6 /56).
+// Other open pickup orders with the same email (as one person) that were placed from a different network (2026-11-27): a stranger
+// typing a customer's email shows up this way, so staff can see it on the list and cancel it. Counted only for open pickup orders,
+// and only between orders whose network is on record (order_attempts, migration 0012; "o:" = IPv4 or IPv6 /56).
 const OPEN_PICKUP = t => `${t}.pay_status = 'pay_at_pickup' AND ${t}.status IN ('pending','ready') AND ${t}.release_op IS NULL`;
-// A phone as digits (separators and a leading North American 1 dropped), so the same customer on mobile data and then home Wi-Fi,
-// with the same phone, is not flagged (breaker, 2026-11-27).
-const PHONE_SQL = c => { const d = `replace(replace(replace(replace(replace(replace(COALESCE(${c},''),' ',''),'-',''),'(',''),')',''),'.',''),'+','')`; return `(CASE WHEN length(${d}) = 11 AND substr(${d},1,1) = '1' THEN substr(${d},2) ELSE ${d} END)`; };
-const OTHER_NETS = t => `CASE WHEN ${OPEN_PICKUP(t)} AND EXISTS (SELECT 1 FROM order_attempts a0 WHERE a0.order_id = ${t}.id AND a0.who LIKE 'o:%') THEN (SELECT COUNT(*) FROM orders o2 WHERE o2.id != ${t}.id AND ${OPEN_PICKUP("o2")}
-  AND NOT (COALESCE(o2.phone,'') != '' AND ${PHONE_SQL("o2.phone")} = ${PHONE_SQL(`${t}.phone`)})
-  AND ${normEmailSql("o2.email")} = ${normEmailSql(`${t}.email`)} AND EXISTS (SELECT 1 FROM order_attempts a2 WHERE a2.order_id = o2.id AND a2.who LIKE 'o:%')
-  AND NOT EXISTS (SELECT 1 FROM order_attempts a1 JOIN order_attempts a2 ON a2.who = a1.who WHERE a1.order_id = ${t}.id AND a2.order_id = o2.id AND a1.who LIKE 'o:%')) ELSE 0 END`;
 const noTable = err => /no such table/i.test(String(err && err.message));   // a database without migration 0012: the note is left out
+// Worked out here in JS with the very rules the order limits use (src/guard.js normEmail and phoneKey: separators, an extension,
+// a 00/011 prefix and a leading North American 1 all dropped), so "519-555-0101 x2" on mobile and "5195550101" at home are one
+// person and never flagged (breaker, 2026-11-27: the old SQL copy of the phone rule kept extensions and prefixes). No migration.
+// Answers a Map: order id -> { n: how many such other orders, net: a short tag of the network it came from (8 characters of the
+// keyed hash already stored, never the address), so staff can pick every request from one network to clear junk }.
+async function netNotes(db, email = null) {
+  const where = OPEN_PICKUP("o") + (email !== null ? ` AND ${normEmailSql("o.email")} = ?1` : ""), args = email !== null ? [normEmail(email)] : [];
+  let rows, nets;
+  try { [rows, nets] = await db.batch([db.prepare(`SELECT o.id, o.email, o.phone, o.created_at FROM orders o WHERE ${where} ORDER BY o.created_at, o.id`).bind(...args),
+    db.prepare(`SELECT a.order_id, a.who FROM order_attempts a JOIN orders o ON o.id = a.order_id WHERE a.who LIKE 'o:%' AND ${where} ORDER BY a.id`).bind(...args)]); }
+  catch (err) { if (noTable(err)) return new Map(); throw err; }
+  const netsOf = new Map(); for (const a of nets.results) { if (!netsOf.has(a.order_id)) netsOf.set(a.order_id, new Set()); netsOf.get(a.order_id).add(a.who); }
+  const groups = new Map(), out = new Map();
+  for (const o of rows.results) { const k = normEmail(o.email); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(o); }
+  for (const list of groups.values()) {
+    const byNet = new Map(), byPhone = new Map(), withNet = list.filter(o => netsOf.has(o.id));
+    for (const o of withNet) { for (const w of netsOf.get(o.id)) { if (!byNet.has(w)) byNet.set(w, new Set()); byNet.get(w).add(o.id); }
+      const pk = phoneKey(o.phone); if (pk) { if (!byPhone.has(pk)) byPhone.set(pk, new Set()); byPhone.get(pk).add(o.id); } }
+    const sameAs = o => { const s = new Set([o.id]); for (const w of netsOf.get(o.id) || []) for (const id of byNet.get(w)) s.add(id); const pk = phoneKey(o.phone); if (pk && byPhone.has(pk)) for (const id of byPhone.get(pk)) s.add(id); return s; };
+    for (const o of list) {
+      const mine = netsOf.get(o.id); if (!mine) { out.set(o.id, { n: 0, net: null }); continue; }
+      const n = withNet.length - sameAs(o).size;
+      out.set(o.id, { n, net: [...mine][0].slice(2, 10) });
+    }
+  }
+  return out;
+}
+// The order list (breaker, 2026-11-27: a flat newest-200 let ~200 junk requests push real requests and ready orders out of reach).
+// Every open order always comes back, whatever the count; finished ones (sent, collected, cancelled, lapsed, refunded) come newest
+// first a page at a time ("Show older"). OPEN_CAP is only a guard on the answer's size, for requests only: every open order that is
+// not a request always comes back; past OPEN_CAP requests the oldest and newest halves do, and the answer says it was cut.
+const FINISHED = "('shipped','collected','cancelled','refunded')", OPEN_CAP = 5000, FIN_PAGE = 50, FIND_MAX = 50, BULK_MAX = 100;
+const ROW = `o.id, o.status, o.method, o.name, o.phone, o.total_cents, o.pay_method, o.pay_status, o.tax_province, o.ship_service, o.tracking, o.created_at, CASE WHEN o.status = 'ready' THEN COALESCE(o.ready_at, o.updated_at) END AS ready_at, o.source, (SELECT SUM(qty) FROM order_items i WHERE i.order_id = o.id) AS units, ${STOCKED("o")} AS stock_taken, (${TO_CONFIRM("o")}) AS to_confirm,
+  EXISTS (SELECT 1 FROM order_items i JOIN products p ON p.sku = i.sku WHERE i.order_id = o.id AND ${CHARCOAL_ITEM}) AS charcoal`;
+const withNets = (list, notes) => list.map(o => { const x = notes.get(o.id); return { ...o, other_networks: x ? x.n : 0, ...(x && x.net ? { net: x.net } : {}) }; });
+const cursorOf = o => `${o.created_at}|${o.id}`;
 const LOCAL = "'-5 hours'"; // the shop's clock (Windsor), close enough for day totals
 const clampInt = (v, lo, hi) => { const n = Math.round(Number(v)); return Number.isFinite(n) && n >= lo && n <= hi ? n : null; };
 const text = (v, max) => typeof v === "string" && v.trim().length <= max ? v.trim() : null;
@@ -227,10 +256,13 @@ export async function admin(request, env, url) {
       db.prepare("SELECT COALESCE(SUM(stock * COALESCE(cost_cents, 0)),0) AS cost_cents, COALESCE(SUM(stock * price_cents),0) AS retail_cents, COALESCE(SUM(stock),0) AS units, COUNT(*) AS products FROM products WHERE active = 1"),
       db.prepare(`SELECT SUM(status = 'paid') AS to_pack, SUM(status = 'packed') AS to_ship, SUM(status = 'ready') AS waiting_pickup, SUM(status = 'ready' AND COALESCE(ready_at, updated_at) <= strftime('%Y-%m-%dT%H:%M:%SZ','now','-3 days')) AS pickup_overdue, SUM(${TO_CONFIRM("orders")}) AS to_confirm FROM orders WHERE status IN ('paid','packed','ready','pending')`),
     ]);
-    // the pickup requests still to confirm, newest first, for Today's own list (2026-11-27): while the shop's mail is not connected no
-    // new-order note reaches anyone, so Today is where staff see a new request: name, phone, when, and how many items
-    const confirm = (await db.prepare(`SELECT o.id, o.name, o.phone, o.created_at, o.pay_expires_at, o.total_cents, COALESCE((SELECT SUM(qty) FROM order_items i WHERE i.order_id = o.id), 0) AS units FROM orders o WHERE ${TO_CONFIRM("o")} ORDER BY o.created_at DESC LIMIT 25`).all()).results;
-    return json({ totals: tot.results[0], daily: daily.results, top: top.results, slow: slow.results, low: low.results, provinces: prov.results, shipping: ship.results[0], value: value.results[0], todo: todo.results[0], confirm, mail_on: mailReady(env), actor, owner: session.owner });
+    // EVERY pickup request still to confirm, for Today's own list (2026-11-27): while the shop's mail is not connected no new-order note
+    // reaches anyone, so Today is where staff see a new request: name, phone, when, and how many items. Never only the newest few
+    // (breaker, 2026-11-27: a flood of junk pushed real requests off a newest-25 list). Past OPEN_CAP the oldest and newest halves are kept, and it says so.
+    const C = `SELECT o.id, o.name, o.phone, o.created_at, o.pay_expires_at, o.total_cents, COALESCE((SELECT SUM(qty) FROM order_items i WHERE i.order_id = o.id), 0) AS units FROM orders o WHERE ${TO_CONFIRM("o")}`;
+    const [cOld, cNew] = await db.batch([db.prepare(`${C} ORDER BY o.created_at ASC, o.id ASC LIMIT ${OPEN_CAP / 2}`), db.prepare(`${C} ORDER BY o.created_at DESC, o.id DESC LIMIT ${OPEN_CAP / 2}`)]);
+    const cm = new Map([...cOld.results, ...cNew.results].map(o => [o.id, o])), confirm = [...cm.values()].sort((a, b) => b.created_at.localeCompare(a.created_at) || b.id.localeCompare(a.id));
+    return json({ totals: tot.results[0], daily: daily.results, top: top.results, slow: slow.results, low: low.results, provinces: prov.results, shipping: ship.results[0], value: value.results[0], todo: todo.results[0], confirm, confirm_cut: (todo.results[0].to_confirm || 0) > confirm.length, mail_on: mailReady(env), actor, owner: session.owner });
   }
 
   if (path === "/products" && method === "GET") {
@@ -456,10 +488,69 @@ export async function admin(request, env, url) {
   }
 
   if (path === "/orders" && method === "GET") {
-    const list = nets => db.prepare(`SELECT o.id, o.status, o.method, o.name, o.total_cents, o.pay_method, o.pay_status, o.tax_province, o.ship_service, o.tracking, o.created_at, CASE WHEN o.status = 'ready' THEN COALESCE(o.ready_at, o.updated_at) END AS ready_at, o.source, (SELECT SUM(qty) FROM order_items i WHERE i.order_id = o.id) AS units, ${STOCKED("o")} AS stock_taken, (${TO_CONFIRM("o")}) AS to_confirm,
-      ${nets ? OTHER_NETS("o") : "0"} AS other_networks, EXISTS (SELECT 1 FROM order_items i JOIN products p ON p.sku = i.sku WHERE i.order_id = o.id AND ${CHARCOAL_ITEM}) AS charcoal FROM orders o ORDER BY o.created_at DESC LIMIT 200`).all();
-    const r = await list(true).catch(err => { if (noTable(err)) return list(false); throw err; });
-    return json({ orders: r.results, mail_on: mailReady(env) });
+    // ?before=<created_at>|<id> asks for the next page of finished orders only (the cursor the last answer gave as finished_more)
+    const before = url.searchParams.get("before"), cur = before === null ? null : before.match(/^(\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ)\|([A-Z0-9]{3,12})$/);
+    if (before !== null && !cur) return json({ error: "That page link is not right. Reload the orders." }, 400);
+    const fin = db.prepare(`SELECT ${ROW} FROM orders o WHERE o.status IN ${FINISHED}${cur ? " AND (o.created_at < ?1 OR (o.created_at = ?1 AND o.id < ?2))" : ""} ORDER BY o.created_at DESC, o.id DESC LIMIT ${FIN_PAGE + 1}`).bind(...(cur ? [cur[1], cur[2]] : []));
+    if (cur) {
+      const f = (await fin.all()).results;
+      return json({ orders: f.slice(0, FIN_PAGE).map(o => ({ ...o, other_networks: 0 })), finished_more: f.length > FIN_PAGE ? cursorOf(f[FIN_PAGE - 1]) : null, mail_on: mailReady(env) });
+    }
+    // every open order that is not a request, always; requests all of them up to OPEN_CAP, past it the oldest and newest halves
+    const half = OPEN_CAP / 2, REQ = TO_CONFIRM("o");
+    const [other, oldReq, newReq, nReq, f] = await db.batch([db.prepare(`SELECT ${ROW} FROM orders o WHERE o.status NOT IN ${FINISHED} AND NOT (${REQ})`),
+      db.prepare(`SELECT ${ROW} FROM orders o WHERE ${REQ} ORDER BY o.created_at ASC, o.id ASC LIMIT ${half}`), db.prepare(`SELECT ${ROW} FROM orders o WHERE ${REQ} ORDER BY o.created_at DESC, o.id DESC LIMIT ${half}`),
+      db.prepare(`SELECT COUNT(*) AS n FROM orders o WHERE ${REQ}`), fin]);
+    const reqs = new Map([...oldReq.results, ...newReq.results].map(o => [o.id, o])), cut = nReq.results[0].n > reqs.size;
+    const keep = [...other.results, ...reqs.values()].sort((a, b) => b.created_at.localeCompare(a.created_at) || b.id.localeCompare(a.id));
+    const notes = await netNotes(db), done = f.results.slice(0, FIN_PAGE);
+    return json({ orders: [...withNets(keep, notes), ...done.map(o => ({ ...o, other_networks: 0 }))], open_count: keep.length, open_cut: cut, requests_total: nReq.results[0].n,
+      finished_more: f.results.length > FIN_PAGE ? cursorOf(done[FIN_PAGE - 1]) : null, mail_on: mailReady(env) });
+  }
+  // Find an order (2026-11-27) by its number, the customer's name, phone or email, on the server, so an order is never out of reach
+  // whatever the list shows. Signed-in staff and owner only (every route here is), 2 to 80 characters, at most FIND_MAX answers.
+  // A phone is compared as one person (phoneKey), so "(519) 555-0101 ext 4", "+1 519 555 0101" and "5195550101" all find it.
+  if (path === "/orders/find" && method === "GET") {
+    const q = String(url.searchParams.get("q") || "").trim();
+    if (q.length < 2 || q.length > 80) return json({ error: "Type at least 2 characters: an order number, a name, a phone number or an email." }, 400);
+    const like = "%" + q.toLowerCase().replace(/[\\%_]/g, c => "\\" + c) + "%", stmts = [];
+    // SQLite lowers ASCII only, so a name with an accented capital ("Élodie") is also matched as typed and with each word's first
+    // letter capitalised (breaker, 2026-11-27)
+    const raw = s => "%" + s.replace(/[\\%_]/g, c => "\\" + c) + "%", titled = q.toLowerCase().replace(/(^|[\s'’-])(\p{L})/gu, (m, a, b) => a + b.toUpperCase());
+    stmts.push(db.prepare(`SELECT ${ROW} FROM orders o WHERE upper(o.id) LIKE ?1 ESCAPE '\\' OR lower(o.name) LIKE ?2 ESCAPE '\\' OR lower(o.email) LIKE ?2 ESCAPE '\\' OR o.name LIKE ?4 ESCAPE '\\' OR o.name LIKE ?5 ESCAPE '\\'${q.includes("@") ? ` OR ${normEmailSql("o.email")} = ?3` : ""} ORDER BY o.created_at DESC, o.id DESC LIMIT ${FIND_MAX + 1}`)
+      .bind(like.toUpperCase(), like, q.includes("@") ? normEmail(q) : null, raw(q), raw(titled)));
+    // a phone: at least 4 digits and nothing but phone characters. The database narrows by the last digits; phoneKey decides.
+    const pk = phoneKey(q), phoneish = /^\+?[\d\s().\-]+(?:\s*(?:x|ext\.?)\s*\d{1,6})?$/i.test(q) && pk.length >= 4;
+    const tail = phoneish ? pk.slice(-Math.min(7, pk.length)) : null;
+    if (phoneish) stmts.push(db.prepare(`SELECT ${ROW} FROM orders o WHERE replace(replace(replace(replace(replace(replace(COALESCE(o.phone,''),' ',''),'-',''),'(',''),')',''),'.',''),'+','') LIKE ?1 ORDER BY o.created_at DESC, o.id DESC LIMIT 2001`).bind("%" + tail + "%"));
+    const res = await db.batch(stmts), seen = new Map();
+    for (const o of res[0].results) seen.set(o.id, o);
+    if (phoneish) for (const o of res[1].results) if (phoneKey(o.phone).includes(pk) && !seen.has(o.id)) seen.set(o.id, o);
+    const all = [...seen.values()].sort((a, b) => b.created_at.localeCompare(a.created_at) || b.id.localeCompare(a.id));
+    const notes = await netNotes(db);
+    // more: there may be matches not shown (the name/email query or the phone candidates hit their cap): type more to narrow it
+    return json({ q, orders: withNets(all.slice(0, FIND_MAX), notes), more: all.length > FIND_MAX || res[0].results.length > FIND_MAX || (phoneish && res[1].results.length > 2000) });
+  }
+  // Clear junk (2026-11-27): cancel several pickup requests in one go. Only requests still to confirm (nothing taken off the shelf, so
+  // nothing to put back), at most BULK_MAX a time, and the request must say how many it means (the screen asks first). Each order is
+  // marked cancelled with the person's name and gets its own log line; an order that is no longer a request (got ready, paid,
+  // cancelled meanwhile) is left alone and named in the answer. One transaction; the same tap key twice cancels nothing more.
+  if (path === "/orders/bulk-cancel" && method === "POST") {
+    const body = await request.json().catch(() => ({})), ids = Array.isArray(body.ids) ? [...new Set(body.ids)] : null;
+    if (!ids || !ids.length || ids.length > BULK_MAX || !ids.every(i => typeof i === "string" && /^[A-Z0-9]{3,12}$/.test(i))) return json({ error: `Pick 1 to ${BULK_MAX} requests to cancel.` }, 400);
+    if (body.confirm !== ids.length) return json({ error: "Confirm how many requests to cancel." }, 400);
+    const note = text(body.note ?? "", 200); if (note === null) return json({ error: "Keep the note under 200 characters." }, 400);
+    const op = cleanOp(body.op) || crypto.randomUUID(), why = note || "Cleared as junk", list = JSON.stringify(ids);
+    const after = JSON.stringify({ status: "cancelled", reason: "other", note: why, bulk: ids.length });
+    const res = await db.batch([
+      db.prepare(`INSERT INTO audit_log (actor, action, target, before, after) SELECT ?2, 'order.cancel', o.id, '{"status":"pending"}', ?3 FROM orders o WHERE o.id IN (SELECT value FROM json_each(?1)) AND ${TO_CONFIRM("o")} AND o.cancel_op IS NULL`).bind(list, actor, after),
+      db.prepare(`UPDATE orders SET status = 'cancelled', cancelled_at = ${NOW}, cancelled_by = ?2, cancel_reason = 'other', cancel_note = ?3, cancel_op = ?4 || ':' || id, updated_at = ${NOW} WHERE id IN (SELECT value FROM json_each(?1)) AND ${TO_CONFIRM("orders")} AND cancel_op IS NULL`).bind(list, actor, why, op),
+      db.prepare("SELECT id, status, cancel_op FROM orders WHERE id IN (SELECT value FROM json_each(?1))").bind(list),
+    ]);
+    const now = new Map(res[2].results.map(r => [r.id, r])), cancelled = ids.filter(i => now.get(i)?.cancel_op === op + ":" + i);
+    const skipped = ids.filter(i => !cancelled.includes(i)).map(i => ({ id: i, why: !now.has(i) ? "No such order." : now.get(i).status === "cancelled" ? "Already cancelled." : "No longer a request to confirm: open it to cancel." }));
+    log("bulk_cancel", { actor, asked: ids.length, cancelled: res[1].meta.changes });
+    return json({ ok: true, cancelled, skipped });
   }
   if ((m = path.match(/^\/orders\/([A-Z0-9]{3,12})$/)) && method === "GET") {
     const [o, i, mail, trail] = await db.batch([db.prepare("SELECT * FROM orders WHERE id = ?").bind(m[1]), db.prepare("SELECT i.sku, i.name, i.qty, i.unit_cents, p.img, p.img_dark, p.photo_ver, p.box_id, p.category_id, p.details FROM order_items i LEFT JOIN products p ON p.sku = i.sku WHERE i.order_id = ?").bind(m[1]),
@@ -469,7 +560,7 @@ export async function admin(request, env, url) {
     const { cancel_op, ...order } = o.results[0];
     const st = await db.prepare(`SELECT ${STOCKED("o")} AS stock_taken, (${TO_CONFIRM("o")}) AS to_confirm FROM orders o WHERE o.id = ?`).bind(m[1]).first();
     order.stock_taken = st.stock_taken; order.to_confirm = st.to_confirm;
-    order.other_networks = await db.prepare(`SELECT ${OTHER_NETS("o")} AS n FROM orders o WHERE o.id = ?`).bind(m[1]).first("n").catch(err => { if (noTable(err)) return 0; throw err; });
+    { const x = (await netNotes(db, order.email)).get(order.id); order.other_networks = x ? x.n : 0; if (x && x.net) order.net = x.net; }
     return json({ order, items: i.results, emails: mail.results, trail: trail.results, mail_on: mailReady(env) });
   }
   // Cancel and put the stock back. Exactly one request can win the change to "cancelled" (the row records that
