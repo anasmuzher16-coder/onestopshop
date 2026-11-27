@@ -152,7 +152,7 @@ const READY_WHEN = "usually the same or the next day";
 const pickupReady = () => PICKUP_ONLY ? "Usually ready the same or the next day" : pickupDay() === "Today" ? "Ready the same day" : "Ready tomorrow";
 const REQ_LAPSE = () => `A request we have not confirmed is cancelled after ${REQ_SPAN}.`;
 // the counter's address and hours, one line for the confirmation and the order's own page (the footer's hours)
-const SHOP_OPEN = "Open Mon to Sat 10 to 9, Sun 11 to 7", pickupWhere = () => `Pickup at ${SHOP_ADDRESS}. ${SHOP_OPEN}. ${directions()}`;
+const SHOP_OPEN = "Open Mon to Sat 10&nbsp;to&nbsp;9, Sun 11&nbsp;to&nbsp;7", pickupWhere = () => `Pickup at ${SHOP_ADDRESS}. ${SHOP_OPEN}. ${directions()}`;
 const cartLines = () => state.cart.map(l => ({ product: bySku[l.sku], qty: l.qty }));
 const cartCount = () => state.cart.reduce((a, l) => a + l.qty, 0);
 const toCents = n => Math.round(n * 100);

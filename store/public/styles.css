@@ -552,6 +552,7 @@ html:not(.hero-seen) .piece .sticker{animation-timing-function:linear(0,.25 6%,.
 .co__set .field{text-transform:none}   /* a name shows as typed, like the email and phone (design review 2026-11-27) */
 .co__ferr{margin:calc(var(--s-1) * -1) 0 var(--s-3)}   /* a field's own error, right under it */
 .co__sum>.h3{margin:0 0 calc(var(--s-4) * -1)}
+.co [data-acct-co]:empty{display:none}   /* the account box account.js adds, with nothing in it, takes no gap */
 .co__lines{list-style:none;margin:0;padding:0}
 .co__lines li{display:grid;grid-template-columns:1fr auto auto;gap:var(--s-4);align-items:baseline;padding:var(--s-3) 0;border-top:1px solid var(--color-line)}
 .co__item{color:var(--color-strong);font-weight:500;min-width:0;overflow-wrap:anywhere}
@@ -568,6 +569,8 @@ html:not(.hero-seen) .piece .sticker{animation-timing-function:linear(0,.25 6%,.
 .done__lines{list-style:none;margin:var(--s-6) 0;padding:0;border-bottom:1px solid var(--color-line)}
 .done__lines li{display:flex;justify-content:space-between;gap:var(--s-4);padding:var(--s-3) 0;border-top:1px solid var(--color-line)}
 .done__lines b{color:var(--color-strong)}
+.done__lines+.totals{margin-top:calc(var(--s-6) * -1)}   /* the totals carry on from the list's closing hairline: no empty band, no double line */
+.done__lines+.totals>div:first-child{border-top:0}
 @media (min-width:960px){.done{max-width:640px}
   /* checkout at desktop: the form on the left, what is asked for and the total in a column on the right that stays in view */
   .checkout{max-width:none}
