@@ -1,0 +1,34 @@
+{
+ "schema": "oss-upscaled/1",
+ "why": "owner 2026-11-27: upscale the flagged photos. photos.py keeps these files and their ready status when it rebuilds, as long as the source PDF and the file hashes match (a new Ace source or a hand change shows here).",
+ "images": {
+  "acc/acc-p76": {
+   "sku": "OSS-110026",
+   "method": "realesrgan-x4plus",
+   "date": "2026-11-27",
+   "was": "needs_original",
+   "was_scale": 2.105,
+   "scale_720": 0.527,
+   "lw": 1440,
+   "xref": 2523,
+   "crop": [
+    133,
+    298,
+    399,
+    530
+   ],
+   "check": {
+    "mean": 2.9,
+    "worst_block": 12.7,
+    "look": false
+   },
+   "files": {
+    "acc-p76-l.webp": "ae95f1ad48e26cba22b0581fc1b68bcf37e2988f87c31acc69e128139b314721",
+    "acc-p76-m.webp": "0faaff11a411abf63cd283989e30e36b1b87399fae2016010ce87211af4a9ba4",
+    "acc-p76-s.webp": "29568b997b2ba6b2c7fdecc78ef6fc6d85e57b930c09deffd96ed4d186c51605",
+    "acc-p76.webp": "2ddeb8196238b8c280fbb3e157e04e8cbba2d3e633b2352ee128158c0edde69c"
+   },
+   "source_sha256": "200ff2f8e963786ad1e7048a6b4d6419e3d9b2bfb238f5bda88adb5316ee8c18"
+  }
+ }
+}
