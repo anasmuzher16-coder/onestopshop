@@ -26,7 +26,8 @@ const TBD = what => `<span class="tbd">${what ? what + " " : ""}TBD</span>`;   /
 const SHELF = (l => [...l.filter(p => p.img), ...l.filter(p => !p.img)])(shelfOf(PRODUCTS));
 const FAMILIES = new Map(); for (const p of PRODUCTS) if (p.family) { if (!FAMILIES.has(p.family)) FAMILIES.set(p.family, []); FAMILIES.get(p.family).push(p); }   // built once: every card used to filter the whole catalogue for its colours
 const familyOf = p => p && p.family ? FAMILIES.get(p.family) || [p] : p ? [p] : [];
-const GROUPS = [["full_size", "Full size"], ["stem_set", "Stem sets"], ["compact_travel", "Compact and travel"], ["statement", "Statement pieces"]];
+const GROUPS = [["full_size", "Full size"],   // the Kind filter (find-core.js HOOKAHS) uses these same names: change both together
+ ["stem_set", "Stem only, no base"], ["compact_travel", "Compact and travel"], ["statement", "Statement pieces"]];
 const stemSet = p => !!(p && p.facts && p.facts.includes_base === false);
 // ---------- THE COLOUR SWITCHER: every catalogue colour, a radio group; a colour without its own photo says "Photo coming" ----------
 const catItem = p => !!(p && (p.family || p.acc));   // from an Ace catalogue: a hookah family, or an accessory (one card each)
@@ -42,7 +43,10 @@ const chipStyle = v => `--c:${esc(v.chip || "#8a8a8a")}${lum(v.chip) < .1 ? ";--
 // the one that fits, so nothing is measured while a section is drawn. Up to 8 places on the widest card.
 const SW_MAX = 8;
 function swatchGroup(fam, chosen, { label, card = "" } = {}) {
-  const chip = (v, i) => `<button class="swatch" type="button" role="radio" data-swatch="${v.sku}" ${card ? `data-card="${card}"` : ""} aria-checked="${v.sku === chosen.sku}" tabindex="${v.sku === chosen.sku ? 0 : -1}" style="${chipStyle(v)}" aria-label="${esc(colourName(v, i))}${photoOf(v) ? "" : ", photo coming"}">${photoOf(v) ? "" : `<span class="swatch__none" aria-hidden="true"></span>`}</button>`;
+  // the "photo coming" mark only tells colours apart when some have a photo and some do not; on a family with no photo at all
+  // (Panda) every chip carried it and read as a stray dot (design review, 2026-11-27). The words stay in every chip's name.
+  const mark = fam.some(photoOf) && !fam.every(photoOf);
+  const chip = (v, i) => `<button class="swatch" type="button" role="radio" data-swatch="${v.sku}" ${card ? `data-card="${card}"` : ""} aria-checked="${v.sku === chosen.sku}" tabindex="${v.sku === chosen.sku ? 0 : -1}" style="${chipStyle(v)}" aria-label="${esc(colourName(v, i))}${photoOf(v) ? "" : ", photo coming"}">${photoOf(v) || !mark ? "" : `<span class="swatch__none" aria-hidden="true"></span>`}</button>`;
   if (!card) return `<div class="swatches" role="radiogroup" aria-label="${esc(label)}">${fam.map(chip).join("")}</div>`;   // the product page wraps: every colour shows
   // the chosen colour always shows on the card: it leads the row when it would otherwise be hidden
   const at = fam.findIndex(v => v.sku === chosen.sku), row = at > 0 ? [fam[at], ...fam.slice(0, at), ...fam.slice(at + 1)] : fam, n = row.length;
@@ -276,7 +280,9 @@ function cardHTML(p, i = 9) {
 // What a card says under the name: the item's own line, or for a hookah family its colours and whether it has a base.
 function cardMeta(p) {
   const desc = p.details?.description;   // one line on the card, the whole of it on the product page
-  if (!p.family) return `<p class="card__meta ${desc ? "card__meta--one" : ""}">${escN(desc || p.note || (p.facts && p.facts.size) || "")}</p>`;
+  // nothing to say (the Ace accessories have no catalogue description): the card is its name alone, never an empty line or a
+  // line written for it (design review, 2026-11-27)
+  if (!p.family) { const line = desc || p.note || (p.facts && p.facts.size) || ""; return line ? `<p class="card__meta ${desc ? "card__meta--one" : ""}">${escN(line)}</p>` : ""; }
   const fam = familyOf(p), bits = stemSet(p) ? "Stem set, no base" : "";   // the chips carry the colour count
   return `${desc ? `<p class="card__meta card__meta--one">${escN(desc)}</p>` : ""}${fam.length > 1 ? swatchGroup(fam, p, { label: `Colours of ${p.name}`, card: p.sku }) : ""}${bits ? `<p class="card__meta card__meta--fam">${bits}</p>` : ""}`;
 }
@@ -467,8 +473,9 @@ function viewProduct(sku) {
   const fam = familyOf(p), sale = forSale(p);
   const more = SHELF.filter(x => x.cat === p.cat && x.sku !== sku && (!p.family || x.family !== p.family) && !x.dark && !isSold(x))
     .sort((a, b) => p.family ? ((b.facts?.group === p.facts.group) - (a.facts?.group === p.facts.group)) || (ticked(b) - ticked(a)) : (seriesOf(b) === seriesOf(p)) - (seriesOf(a) === seriesOf(p))).slice(0, 4);
-  const n = parseInt(p.sku.slice(-3), 10), nth = (c, k) => { const l = liveCat(c); return l.length ? l[(n + k) % l.length] : null; };
-  const goes = p.cat === "hookahs" ? [nth("bowls", 0), nth("charcoal", 1), nth("hoses", 2), nth("parts", 3)].filter(Boolean) : [];
+  const n = parseInt(p.sku.slice(-3), 10), nth = (c, k) => { const l = liveCat(c).filter(x => x.img); return l.length ? l[(n + k) % l.length] : null; };   // a suggestion always has its photo
+  // what a hookah is smoked with, one from each section that has something on sale (foil from Heat too); never padded with anything else
+  const goes = p.cat === "hookahs" ? [nth("bowls", 0), nth("charcoal", 1), nth("hoses", 2), nth("parts", 3), nth("heat", 4)].filter(Boolean).slice(0, 4) : [];
   // a hookah family's colours: each chip shows its colour and swaps the photo; a name the shop has not confirmed is never stated as fact
   const chips = fam.length > 1 ? `<p class="swatches__n" id="colour-h">Colour <b data-colour-name ${p.named ? "" : "hidden"}>${esc(p.named ? p.colour : "")}</b> <span class="num">${fam.indexOf(p) + 1} of ${fam.length}</span></p>
       ${swatchGroup(fam, p, { label: "Colour" })}` : "";
@@ -485,7 +492,7 @@ function viewProduct(sku) {
       ${p.details && p.details.notes ? `<p class="pdp__notes"><span>Notes</span> ${esc(p.details.notes)}</p>` : ""}
       ${!p.family && sale && Array.isArray(p.details?.colours) && p.details.colours.length ? `<p class="pdp__notes"><span>Colours</span> ${esc(p.details.colours.join(", "))}</p>` : ""}
       ${localOnly(p) ? counterLine(p) : ""}
-      ${!sale ? `${p.state === "tbd" ? `<p class="pdp__avail">${TBD("Price")} ${catItem(p) ? "In the shop now. " : ""}The shop sets the price and confirms stock.</p>` : `<p class="soldline">Coming soon.</p>`}<a class="btn btn--ghost btn--call btn--ask" href="tel:+15192552222">Ask the counter, 519-255-2222</a>`
+      ${!sale ? `${p.state === "tbd" ? `<p class="pdp__avail">Price TBD. ${catItem(p) ? "In the shop now. " : ""}The shop sets the price and confirms stock.</p>` : `<p class="soldline">Coming soon.</p>`}<a class="btn btn--ghost btn--call btn--ask" href="tel:+15192552222">Ask the counter, 519-255-2222</a>`
         : sold ? `<p class="soldline">${p.dark ? "This one has sold. Each resin stem is poured once." : "Sold out for now."}</p><a class="btn btn--ghost btn--call" href="tel:+15192552222">Call the counter</a>`
         : `<p class="pdp__price num">${whole(p.price)}</p>${inCart ? `<a class="btn btn--wide" href="/cart">In your cart. View cart</a>` : `<button class="btn btn--wide" type="button" data-add="${p.sku}">Add to cart</button>`}`}
       ${sale ? deliveryLine(p, opts) : ""}
@@ -510,7 +517,7 @@ function viewProduct(sku) {
       </section>`}
     </div>
   </article>
-  ${goes.length ? `<section class="shelf"><header class="shelf__head"><h2 class="h2">Goes with this</h2>${sale ? `<a class="link" href="/set">Build a set</a>` : ""}</header><div class="grid">${goes.map(card).join("")}</div></section>` : ""}
+  ${goes.length ? `<section class="shelf${goes.length < 4 ? " shelf--few" : ""}"><header class="shelf__head"><h2 class="h2">Goes with this</h2>${sale ? `<a class="link" href="/set">Build a set</a>` : ""}</header><div class="grid">${goes.map(card).join("")}</div></section>` : ""}
   ${more.length ? `<section class="shelf"><header class="shelf__head"><h2 class="h2">More ${localOnly(p) ? "charcoal" : c.name.toLowerCase()}</h2><a class="link" href="/shop/${p.cat}">All ${localOnly(p) ? "charcoal" : c.name.toLowerCase()}</a></header><div class="grid">${more.map(card).join("")}</div></section>` : ""}`;
 }
 
@@ -549,12 +556,14 @@ function setWhy() {
   const parts = [by.tbd.length ? `${and(by.tbd.map(n => n.replace(/s$/, "")))} prices are on the way` : "", by.soon.length ? `our ${and(by.soon)} are not on the site yet` : "", by.sold.length ? `the ${and(by.sold)} are sold out for now` : ""].filter(Boolean);
   return parts.length ? cap(parts.length > 1 ? parts.slice(0, -1).join(", ") + ", and " + parts.at(-1) : parts[0]) + "." : "";
 }
+// While sets are put together at the counter, the band says so without the number: the page's own Call button is in the first
+// screen at every width, so the number shows once (design review, 2026-11-27).
 function viewSet() {
   const picks = setPicks();
   if (!setReady()) return `
   <section class="shophead" data-tone="ruby" data-fx="set">
     <h1 class="shophead__h">Build a set</h1>
-    <p class="shophead__n">${soonBand("The counter puts a set together with you")}</p>
+    <p class="shophead__n">The counter puts a set together with you.</p>
   </section>
   ${soonShelf({ tone: "ruby", obj: "set", title: "Sets are put together at the counter for now.", lead: `A set is a hookah, a bowl and a hose that go together. ${setWhy()}` })}`;
   return `
@@ -797,7 +806,7 @@ function syncChrome() {
     : ra === "set"
     ? `<a class="dock__side" href="/shop">Shop</a>${setPicks().some(Boolean) ? `<button class="dock__buy" type="button" data-add-set>Add the set <span class="num">${whole(setPicks().filter(Boolean).reduce((a, p) => a + p.price, 0))}</span></button>` : `<a class="dock__buy dock__buy--off" href="/shop">See what is in stock</a>`}<a class="dock__side dock__cart" href="/cart">Cart ${count}</a>`
     : ra === "cart" && lines.length
-    ? `<a class="dock__side" href="/shop">Shop</a>${canPay ? `<a class="dock__buy" href="/checkout">${sc.pickup && (!CARD_ON || counterPayIn(lines).length) ? "Reserve for pickup" : "Check out"} <span class="num">${money(sub + (ship ? ship.total : sc && sc.local ? sc.localFee || 0 : 0))}</span></a>` : sc && sc.counter ? `<button class="dock__buy dock__buy--ask" type="button" data-pickup-jump>Choose how you get it</button>` : sc && sc.checking ? `<span class="dock__buy dock__buy--off">Checking delivery</span>` : `<button class="dock__buy" type="button" data-open-postal>${state.dest ? "Change postal code" : "Add postal code for shipping"}</button>`}<span class="dock__side">${count}</span>`
+    ? `<a class="dock__side" href="/shop">Shop</a>${canPay ? `<a class="dock__buy" href="/checkout">${sc.pickup && (!CARD_ON || counterPayIn(lines).length) ? "Reserve for pickup" : "Check out"} <span class="num">${money(sub + (ship ? ship.total : sc && sc.local ? sc.localFee || 0 : 0))}</span></a>` : sc && sc.counter ? `<button class="dock__buy dock__buy--ask" type="button" data-pickup-jump>Choose how you get it</button>` : sc && sc.checking ? `<span class="dock__buy dock__buy--off">Checking delivery</span>` : `<button class="dock__buy" type="button" data-open-postal>${state.dest ? "Change postal code" : "Add postal code for shipping"}</button>`}<span class="dock__side dock__cart"><span class="dock__w">Cart </span>${count}</span>`
     : `<a href="/" ${h === "#/" ? 'aria-current="page"' : ""}>Home</a><a href="/shop" ${here(h.startsWith("#/shop"), h === "#/shop")}>Shop</a><a href="/search" ${h === "#/search" ? 'aria-current="page"' : ""}>Search</a><a href="/cart" ${h === "#/cart" ? 'aria-current="page"' : ""}>Cart ${count}</a>`;
   syncDelivery();
 }
@@ -835,8 +844,9 @@ function paintColour(tile, v, alt) {
   const old = tile.querySelector(":scope > .shot"); if (!old) return;
   const frag = document.createElement("template"); frag.innerHTML = colourShot(v, { eager: true, small: !tile.matches("[data-stage]"), alt });
   const img = frag.content.querySelector(".shot"), tag = frag.content.querySelector(".shot__tag");
-  tile.querySelectorAll(":scope > .shot__tag").forEach(t => t.remove());
-  const done = () => { if (!old.isConnected) return; img.classList.add("shot--in"); old.after(img); if (tag) img.after(tag);
+  // the old label stays until the new picture is in: a tile with a label keeps its photo clear of it (styles.css), so taking the
+  // label off early would resize the old photo while the new one decodes
+  const done = () => { if (!old.isConnected) return; tile.querySelectorAll(":scope > .shot__tag").forEach(t => t.remove()); img.classList.add("shot--in"); old.after(img); if (tag) img.after(tag);
     requestAnimationFrame(() => { img.classList.add("is-on"); const end = () => { old.remove(); img.classList.remove("shot--in", "is-on"); }; if (matchMedia("(prefers-reduced-motion: reduce)").matches) end(); else setTimeout(end, 280); }); };
   (img.decode ? img.decode() : Promise.resolve()).then(done, done);
 }

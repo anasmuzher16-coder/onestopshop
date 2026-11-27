@@ -52,7 +52,10 @@ const HEAT = [
   { key: "brand", label: "Brand", of: p => brandOf(p) && slug(brandOf(p)), opts: "dyn", fmt: (v, list) => brandOf(list.find(p => slug(brandOf(p)) === v)) || v, top: 8 },
 ];
 const HOOKAHS = [
-  { key: "kind", label: "Kind", of: kindOf, opts: [["full", "Full size"], ["small", "Small and travel"], ["show", "Display pieces"], ["stem", "Stem only, no base"]], quick: true },
+  // the same names as the section's kind heads (app.js GROUPS): one name for each kind, change both together (design review, 2026-11-27).
+  // A label's words are also search's "Jump to" words (search-core.js jumps): "Stem sets" would send "hookah set" to hookahs with
+  // no base, so that kind keeps its plain name; the third item is an older word a kind still answers to.
+  { key: "kind", label: "Kind", of: kindOf, opts: [["full", "Full size"], ["small", "Compact and travel"], ["show", "Statement pieces", ["display"]], ["stem", "Stem only, no base"]], quick: true },
   { key: "colour", label: "Colour", of: colourOf, opts: "dyn", fmt: v => v[0].toUpperCase() + v.slice(1), family: true, note: l => cover(l, colourOf, "Colours named") },
 ];
 // shisha: the flavour family is read from the flavour's own name, with this word list and nothing else

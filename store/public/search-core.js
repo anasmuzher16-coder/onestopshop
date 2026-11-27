@@ -133,7 +133,7 @@ export function jumps(ix, q, { terms } = understand(ix, q)) {
         if (/^\d+$/.test(alt)) { if ((g.key === "mm" && unit(i) === "mm") || (g.key === "mic" && /^mic/.test(unit(i) || ""))) v = alt; }
         else if (g.key === "brand") { const b = [...new Set(list.map(brandOf).filter(Boolean))], one = b.filter(x => slug(x) === slug(alt) || (alt === t.w && !SYN.has(alt) && alt.length >= 4 && toks(x).includes(alt))); if (one.length === 1) v = slug(one[0]); }
         else if (g.opts === "dyn") { if (list.some(p => g.of(p) === alt)) v = alt; }
-        else { const o = g.opts.find(o => o[0] === alt || toks(o[1]).join(" ") === alt || (toks(o[1]).length <= 2 && toks(o[1]).includes(alt))); if (o) v = o[0]; }
+        else { const o = g.opts.find(o => o[0] === alt || toks(o[1]).join(" ") === alt || (toks(o[1]).length <= 2 && toks(o[1]).includes(alt)) || (o[2] || []).includes(alt)); if (o) v = o[0]; }
         if (v != null && list.some(p => g.of(p) === v) && !(sel[g.key] || []).includes(v)) { (sel[g.key] ||= []).push(v); named.push(labelOf(g, list, v)); }
       } });
     }
