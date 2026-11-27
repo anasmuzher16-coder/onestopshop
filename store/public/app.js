@@ -1266,18 +1266,29 @@ document.addEventListener("submit", async e => {
     el.focus({ preventScroll: true }); el.scrollIntoView({ block: "center", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
   };
   const v = n => (f.elements[n] ? f.elements[n].value.trim() : "");
-  if (!v("name")) return fail("Tell us the name for the order.", "name");
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v("email"))) return fail("That email address does not look right.", "email");
   if (!pickup && !local && !chosen && !state.ship && (sc.status === "far" || sc.status === "down")) return fail("Delivery is not available here. Choose shipping or pickup in your cart.");
   if (sc.counter && chosen) return fail("Charcoal goes by pickup or local delivery only. Choose one in your cart.");
+  // every field is checked and every error shows under its own field (aria-invalid + aria-describedby); the focus goes to the first
+  const bad = [];
+  if (!v("name")) bad.push(["name", "Tell us the name for the order."]);
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v("email"))) bad.push(["email", "That email address does not look right."]);
   if (phoneNeeded(sc)) {   // the server's own rule (src/guard.js callable): a North American number the shop can call back
     const d = v("phone").replace(/\s*(?:x|ext\.?)\s*\d{1,6}\s*$/i, "").replace(/\D/g, "").replace(/^(?:011|00)/, "").replace(/^1(?=\d{10}$)/, "");
-    if (!/^[2-9]\d{2}[2-9]\d{6}$/.test(d) || /^(\d)\1{9}$/.test(d)) return fail("Enter a phone number with its area code, like 519-555-0144. We call or text you when your order is ready.", "phone");
+    if (!/^[2-9]\d{2}[2-9]\d{6}$/.test(d) || /^(\d)\1{9}$/.test(d)) bad.push(["phone", "Enter a phone number with its area code, like 519-555-0144. We call or text you when your order is ready."]);
+  } else if (local && v("phone").replace(/\D/g, "").length < 10) bad.push(["phone", "Enter a phone number so the driver can reach you."]);
+  if (!pickup && !v("line1")) bad.push(["line1", "Enter the street address."]);
+  if (!pickup && !v("city")) bad.push(["city", "Enter the city or town."]);
+  if (bad.length) {
+    clearFieldErrs(f); err.hidden = true; let first = null;
+    for (const [field, msg] of bad) {
+      const el = f.querySelector(`input[name="${field}"]`), own = f.querySelector(`#co-${field}-err`); if (!el || !own) continue;
+      own.textContent = msg; own.hidden = false; el.setAttribute("aria-invalid", "true"); el.setAttribute("aria-describedby", own.id); first = first || el;
+    }
+    if (first) { first.focus({ preventScroll: true }); first.scrollIntoView({ block: "center", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); }
+    else return fail(bad[0][1]);
+    return;
   }
-  if (!pickup && !v("line1")) return fail("Enter the street address.", "line1");
-  if (!pickup && !v("city")) return fail("Enter the city or town.", "city");
   if (local) {
-    if (v("phone").replace(/\D/g, "").length < 10) return fail("Enter a phone number so the driver can reach you.", "phone");
     state.form = { ...(state.form || {}), line1: v("line1"), city: v("city") }; err.hidden = true;
     if (deliveryFeeNow() === null) return checkDelivery(f, btn);   // show the price first: the next tap places the order
   }
