@@ -712,8 +712,12 @@ class TestShopPhotosForAce(Base):
         for s in skus:
             old = {"height_cm": 61, "material": "web fact", "photo": "family", "photo_label": "shown_in", "shown_in": "blue", "photo_hex": "#000000"}
             db.execute("INSERT INTO products VALUES (?, 'Live name', 'ace', 'ace/old', '', ?, NULL)", (s, json.dumps(old)))
+        # a bystander: the black Tsar keeps its web photo, so no line may touch it (nor any row not listed above)
+        db.execute("INSERT INTO products VALUES ('OSS-100082', 'Live name', 'ace', 'ace/ace-tsar-molotov-black', 'black', '{\"photo\": \"own\"}', NULL)")
         sql = (C.CATALOG / "live" / "hookah-glass-2026-11-27.sql").read_text(encoding="utf-8")
         db.executescript(sql)
+        self.assertEqual(db.execute("SELECT img, variant_label, facts_known, updated_at FROM products WHERE sku = 'OSS-100082'").fetchone(),
+                         ("ace/ace-tsar-molotov-black", "black", '{"photo": "own"}', None))
         photo_keys = {"photo", "photo_hex", "photo_label", "shown_in", "photo_upscale"}
         for s in skus:
             name, img, label, fk = db.execute("SELECT name, img, variant_label, facts_known FROM products WHERE sku = ?", (s,)).fetchone()
