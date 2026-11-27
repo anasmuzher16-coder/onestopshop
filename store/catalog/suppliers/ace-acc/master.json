@@ -494,8 +494,16 @@
      "src": null
     },
     "size": {
-     "v": null,
-     "src": null
+     "v": "5 × 5 × 5 in",
+     "src": "web:https://shishashop.ca/product/frankfurt-classic-bowl/ 2026-11-27 (5 x 5 x 5 in)"
+    },
+    "item_weight_g": {
+     "v": 330,
+     "src": "web:https://shishashop.ca/product/frankfurt-classic-bowl/ 2026-11-27 (0.330 kg)"
+    },
+    "material": {
+     "v": "CNC-machined aluminium, silicone base",
+     "src": "web:https://shishashop.ca/product/frankfurt-classic-bowl/ 2026-11-27"
     }
    },
    "flags": [],

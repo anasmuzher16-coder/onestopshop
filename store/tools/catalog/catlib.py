@@ -300,6 +300,18 @@ def carry_shop(old_master, new_master):
     new_master["shop_answers"] = old_master.get("shop_answers", [])
 
 
+def carry_web_facts(old_master, new_master):
+    """Facts read off a maker's or retailer's page (source 'web:<url> <date>', added by hand to the master) are not in the
+    supplier's catalogue, so a rebuild would drop them. Copy each one across by family, unless the rebuild found a value."""
+    if not old_master:
+        return
+    old = {f["family_id"]: f.get("facts", {}) for f in old_master.get("families", [])}
+    for f in new_master.get("families", []):
+        for k, c in old.get(f["family_id"], {}).items():
+            if (c.get("src") or "").startswith("web:") and (f.setdefault("facts", {}).get(k) or {}).get("v") is None:
+                f["facts"][k] = c
+
+
 def iter_variants(m):
     for f in m.get("families", []):
         for v in f["variants"]:

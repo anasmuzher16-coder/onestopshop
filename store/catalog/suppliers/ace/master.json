@@ -1388,8 +1388,8 @@
      "src": null
     },
     "height_cm": {
-     "v": null,
-     "src": null
+     "v": 35,
+     "src": "web:https://www.mistersmoke.com/en/produits/chichas/chicha-tsar-molotov-x-plus/ 2026-11-27 (35 cm without the bowl; the Molotov X page https://www.mistersmoke.com/en/produits/chichas/chichas-classiques/chicha-tsar-molotov-x/ gives the same height)"
     },
     "acrylic": {
      "v": null,
@@ -1398,6 +1398,10 @@
     "weight_g": {
      "v": null,
      "src": null
+    },
+    "material": {
+     "v": "Aluminium",
+     "src": "web:https://www.mistersmoke.com/en/produits/chichas/chicha-tsar-molotov-x-plus/ 2026-11-27 (aluminium; the Molotov X page says the same)"
     }
    },
    "flags": [
@@ -1427,8 +1431,8 @@
        "src": null
       },
       "display_name": {
-       "v": null,
-       "src": null
+       "v": "Tsar Molotov X/X+",
+       "src": "shop:owner yes 2026-11-27 to the reverse-search names (exact matches only); web:https://tsar-hookah.com/tsar-molotov-x-plus/ 2026-11-27"
       },
       "stock": {
        "v": null,
@@ -1474,8 +1478,8 @@
        "src": null
       },
       "display_name": {
-       "v": null,
-       "src": null
+       "v": "Tsar Molotov X/X+",
+       "src": "shop:owner yes 2026-11-27 to the reverse-search names (exact matches only); web:https://tsar-hookah.com/tsar-molotov-x-plus/ 2026-11-27"
       },
       "stock": {
        "v": null,
@@ -1521,8 +1525,8 @@
        "src": null
       },
       "display_name": {
-       "v": null,
-       "src": null
+       "v": "Tsar Molotov X/X+",
+       "src": "shop:owner yes 2026-11-27 to the reverse-search names (exact matches only); web:https://tsar-hookah.com/tsar-molotov-x-plus/ 2026-11-27"
       },
       "stock": {
        "v": null,
@@ -1568,8 +1572,8 @@
        "src": null
       },
       "display_name": {
-       "v": null,
-       "src": null
+       "v": "Tsar Molotov X/X+",
+       "src": "shop:owner yes 2026-11-27 to the reverse-search names (exact matches only); web:https://tsar-hookah.com/tsar-molotov-x-plus/ 2026-11-27"
       },
       "stock": {
        "v": null,
@@ -1615,8 +1619,8 @@
        "src": null
       },
       "display_name": {
-       "v": null,
-       "src": null
+       "v": "Tsar Molotov X/X+",
+       "src": "shop:owner yes 2026-11-27 to the reverse-search names (exact matches only); web:https://tsar-hookah.com/tsar-molotov-x-plus/ 2026-11-27"
       },
       "stock": {
        "v": null,
@@ -1662,8 +1666,8 @@
        "src": null
       },
       "display_name": {
-       "v": null,
-       "src": null
+       "v": "Tsar Molotov X/X+",
+       "src": "shop:owner yes 2026-11-27 to the reverse-search names (exact matches only); web:https://tsar-hookah.com/tsar-molotov-x-plus/ 2026-11-27"
       },
       "stock": {
        "v": null,
@@ -1736,8 +1740,8 @@
      "src": null
     },
     "height_cm": {
-     "v": null,
-     "src": null
+     "v": 50,
+     "src": "web:https://www.animashop.cz/en/tsar-ultimate-stainless-hookah-silver/ 2026-11-27 (50 cm)"
     },
     "acrylic": {
      "v": null,
@@ -1746,6 +1750,18 @@
     "weight_g": {
      "v": null,
      "src": null
+    },
+    "item_weight_g": {
+     "v": 4200,
+     "src": "web:https://www.animashop.cz/en/tsar-ultimate-stainless-hookah-silver/ 2026-11-27 (4.2 kg)"
+    },
+    "material": {
+     "v": "Stainless steel and borosilicate glass",
+     "src": "web:https://www.tsar-hookah.com/tsar-ultimate/ 2026-11-27 (stainless steel body and plate, glass base; borosilicate per https://www.animashop.cz/en/tsar-ultimate-stainless-hookah-silver/)"
+    },
+    "features": {
+     "v": "Adjustable diffuser with 3 positions, removable dive tube",
+     "src": "web:https://www.tsar-hookah.com/tsar-ultimate/ 2026-11-27"
     }
    },
    "flags": [
@@ -1774,8 +1790,8 @@
        "src": null
       },
       "display_name": {
-       "v": null,
-       "src": null
+       "v": "Tsar Ultimate",
+       "src": "shop:owner yes 2026-11-27 to the reverse-search names (exact matches only); web:https://www.tsar-hookah.com/tsar-ultimate/ 2026-11-27"
       },
       "stock": {
        "v": null,
@@ -1821,8 +1837,8 @@
        "src": null
       },
       "display_name": {
-       "v": null,
-       "src": null
+       "v": "Tsar Ultimate",
+       "src": "shop:owner yes 2026-11-27 to the reverse-search names (exact matches only); web:https://www.tsar-hookah.com/tsar-ultimate/ 2026-11-27"
       },
       "stock": {
        "v": null,
@@ -1895,8 +1911,8 @@
      "src": null
     },
     "height_cm": {
-     "v": null,
-     "src": null
+     "v": 45,
+     "src": "web:https://www.mistersmoke.com/en/produits/chichas/chicha-tsar-h-one/ 2026-11-27 (about 45 cm)"
     },
     "acrylic": {
      "v": null,
@@ -1905,6 +1921,10 @@
     "weight_g": {
      "v": null,
      "src": null
+    },
+    "material": {
+     "v": "Aluminium and glass",
+     "src": "web:https://www.mistersmoke.com/en/produits/chichas/chicha-tsar-h-one/ 2026-11-27"
     }
    },
    "flags": [
@@ -1933,8 +1953,8 @@
        "src": null
       },
       "display_name": {
-       "v": null,
-       "src": null
+       "v": "Tsar H-One",
+       "src": "shop:owner yes 2026-11-27 to the reverse-search names (exact matches only); web:https://tsar-hookah.com/tsar-h-one/ 2026-11-27"
       },
       "stock": {
        "v": null,
@@ -1980,8 +2000,8 @@
        "src": null
       },
       "display_name": {
-       "v": null,
-       "src": null
+       "v": "Tsar H-One",
+       "src": "shop:owner yes 2026-11-27 to the reverse-search names (exact matches only); web:https://tsar-hookah.com/tsar-h-one/ 2026-11-27"
       },
       "stock": {
        "v": null,
@@ -2027,8 +2047,8 @@
        "src": null
       },
       "display_name": {
-       "v": null,
-       "src": null
+       "v": "Tsar H-One",
+       "src": "shop:owner yes 2026-11-27 to the reverse-search names (exact matches only); web:https://tsar-hookah.com/tsar-h-one/ 2026-11-27"
       },
       "stock": {
        "v": null,
@@ -2074,8 +2094,8 @@
        "src": null
       },
       "display_name": {
-       "v": null,
-       "src": null
+       "v": "Tsar H-One",
+       "src": "shop:owner yes 2026-11-27 to the reverse-search names (exact matches only); web:https://tsar-hookah.com/tsar-h-one/ 2026-11-27"
       },
       "stock": {
        "v": null,
@@ -2121,8 +2141,8 @@
        "src": null
       },
       "display_name": {
-       "v": null,
-       "src": null
+       "v": "Tsar H-One",
+       "src": "shop:owner yes 2026-11-27 to the reverse-search names (exact matches only); web:https://tsar-hookah.com/tsar-h-one/ 2026-11-27"
       },
       "stock": {
        "v": null,
@@ -2195,8 +2215,8 @@
      "src": null
     },
     "height_cm": {
-     "v": null,
-     "src": null
+     "v": 40,
+     "src": "web:https://www.el-badia.com/en/classic-shisha-hookah/2575-chicha-amotion-flash-bang.html 2026-11-27 (40 cm)"
     },
     "acrylic": {
      "v": null,
@@ -2205,6 +2225,14 @@
     "weight_g": {
      "v": null,
      "src": null
+    },
+    "item_weight_g": {
+     "v": 3000,
+     "src": "web:https://www.el-badia.com/en/classic-shisha-hookah/2575-chicha-amotion-flash-bang.html 2026-11-27 (3 kg)"
+    },
+    "material": {
+     "v": "Stainless steel and aluminium",
+     "src": "web:https://www.el-badia.com/en/classic-shisha-hookah/2575-chicha-amotion-flash-bang.html 2026-11-27"
     }
    },
    "flags": [
@@ -2233,8 +2261,8 @@
        "src": null
       },
       "display_name": {
-       "v": null,
-       "src": null
+       "v": "Amotion Flash Bang",
+       "src": "shop:owner yes 2026-11-27 to the reverse-search names (exact matches only); web:https://www.el-badia.com/en/classic-shisha-hookah/2575-chicha-amotion-flash-bang.html 2026-11-27"
       },
       "stock": {
        "v": null,
@@ -2280,8 +2308,8 @@
        "src": null
       },
       "display_name": {
-       "v": null,
-       "src": null
+       "v": "Amotion Flash Bang",
+       "src": "shop:owner yes 2026-11-27 to the reverse-search names (exact matches only); web:https://www.el-badia.com/en/classic-shisha-hookah/2575-chicha-amotion-flash-bang.html 2026-11-27"
       },
       "stock": {
        "v": null,
@@ -2327,8 +2355,8 @@
        "src": null
       },
       "display_name": {
-       "v": null,
-       "src": null
+       "v": "Amotion Flash Bang",
+       "src": "shop:owner yes 2026-11-27 to the reverse-search names (exact matches only); web:https://www.el-badia.com/en/classic-shisha-hookah/2575-chicha-amotion-flash-bang.html 2026-11-27"
       },
       "stock": {
        "v": null,
@@ -2374,8 +2402,8 @@
        "src": null
       },
       "display_name": {
-       "v": null,
-       "src": null
+       "v": "Amotion Flash Bang",
+       "src": "shop:owner yes 2026-11-27 to the reverse-search names (exact matches only); web:https://www.el-badia.com/en/classic-shisha-hookah/2575-chicha-amotion-flash-bang.html 2026-11-27"
       },
       "stock": {
        "v": null,
@@ -2727,6 +2755,14 @@
     "weight_g": {
      "v": null,
      "src": null
+    },
+    "material": {
+     "v": "Stainless steel tray, powder-coated stainless steel shaft",
+     "src": "web:https://shishazone.ca/product/techno-hookah/ 2026-11-27"
+    },
+    "features": {
+     "v": "Removable diffuser, vertical blowdown",
+     "src": "web:https://shishazone.ca/product/techno-hookah/ 2026-11-27"
     }
    },
    "flags": [],
@@ -3268,8 +3304,8 @@
      "src": null
     },
     "height_cm": {
-     "v": null,
-     "src": null
+     "v": 68.5,
+     "src": "web:https://shishazone.ca/product/baseball-bat-hookah-ace-hookah/ 2026-11-27 (68.5 cm)"
     },
     "acrylic": {
      "v": null,
@@ -3278,6 +3314,10 @@
     "weight_g": {
      "v": null,
      "src": null
+    },
+    "item_weight_g": {
+     "v": 2800,
+     "src": "web:https://shishazone.ca/product/baseball-bat-hookah-ace-hookah/ 2026-11-27 (2.8 kg)"
     }
    },
    "flags": [],

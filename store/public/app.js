@@ -482,8 +482,11 @@ function factsSpec(p, fam) {
           ${p.state === "tbd" ? "" : `<div><dt>Price</dt><dd><span class="num">${whole(p.price)}</span>, coming soon</dd></div>`}
           ${p.family ? `${base ? `<div><dt>Base</dt><dd>${base}</dd></div>` : ""}
           ${f.height_cm ? `<div><dt>Height</dt><dd><span class="num">${f.height_cm}&nbsp;cm</span></dd></div>` : ""}
+          ${aceItem(p) && f.item_weight_g > 0 ? `<div><dt>Weight</dt><dd><span class="num">${+(f.item_weight_g / 1000).toFixed(2)}&nbsp;kg</span></dd></div>` : ""}
           ${"length" in f ? lengthRow(p) : ""}
-          ${f.acrylic ? `<div><dt>Material</dt><dd>Acrylic</dd></div>` : ""}
+          ${aceItem(p) && f.material ? `<div><dt>Material</dt><dd>${esc(f.material)}</dd></div>` : f.acrylic ? `<div><dt>Material</dt><dd>Acrylic</dd></div>` : ""}
+          ${aceItem(p) && f.size ? `<div><dt>Size</dt><dd>${escN(f.size)}</dd></div>` : ""}
+          ${aceItem(p) && f.features ? `<div><dt>Features</dt><dd>${esc(f.features)}</dd></div>` : ""}
           ${Array.isArray(f.includes) && f.includes.length ? `<div><dt>Comes with</dt><dd>${esc(f.includes.join(", "))}</dd></div>` : ""}
           <div><dt>Colours</dt><dd>${fam.length > 1 ? `<span class="num">${fam.length}</span> shown${named ? ": " + esc(fam.map(v => v.colour).join(", ")) : ""}` : named ? esc(fam.map(v => v.colour).join(", ")) : "One"}</dd></div>` : ""}
           ${catItem(p) && ticked(p) ? `<div><dt>Availability</dt><dd>In the shop</dd></div>` : ""}
