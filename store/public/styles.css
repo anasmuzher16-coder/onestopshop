@@ -42,7 +42,7 @@ body:not([data-route]) .foot{visibility:hidden}
 .btn--call{width:100%}
 @media (max-width:959px){.pdp__info>.btn--wide,.pdp__info>.btn--ask,.cart>.btn--wide,.top__cart{display:none}}
 @media (orientation:landscape) and (max-height:500px){
-  .pdp{grid-template-columns:1fr 1fr} .pdp__tile{height:calc(100svh - 150px)}
+  .pdp{grid-template-columns:minmax(0,1fr) minmax(0,1fr)} .pdp__tile{height:calc(100svh - 150px)}
   .hero__stage{height:calc(100svh - 150px)}
   .hero__slabs span:nth-child(n+4){display:block} .hero__pieces .piece:nth-child(n+4){display:flex}
 }
@@ -200,7 +200,12 @@ body:not([data-route]) .foot{visibility:hidden}
 .chips a[aria-current]{background:var(--color-strong);color:var(--ink);box-shadow:none}
 
 /* ---------- product page ---------- */
-.pdp{display:grid}
+/* minmax(0,1fr), never an implicit auto column (grid-auto-columns, so the landscape and desktop templates still apply): an auto column grows to its widest child's min-content, so one long word, a
+   wide font on another system or a picture's own width could push the whole page past the screen (GitHub run 45930602151:
+   p/OSS-9616 376px wide at 375). Long words break inside the column instead. */
+.pdp{display:grid;grid-auto-columns:minmax(0,1fr)}
+.pdp > *,.grid > *,.shelf__head > .h2,.keep__b{min-width:0}
+.pdp__info,.card,.shelf__head .h2{overflow-wrap:break-word}
 .pdp__tile{border-radius:0;aspect-ratio:auto;height:min(105vw,52svh);background:var(--tile,var(--color-raised));transition:background-color var(--dur-state) var(--ease-state)}
 .pdp__tile .sticker{top:var(--s-4);right:var(--s-4);bottom:auto;width:92px;height:92px} .pdp__tile .sticker__v{font-size:2rem}
 .pdp__tile .shot:not(.shot--photo){padding:7% 6% 5%}   /* a cut-out never touches the tile edge on a phone, and has room above it to move */
@@ -225,7 +230,7 @@ body:not([data-route]) .foot{visibility:hidden}
 .ledger td{padding:var(--s-3) var(--s-2) var(--s-3) 0;border-bottom:1px solid var(--color-line);vertical-align:top}
 .ledger .r{text-align:right;padding-right:0}
 .spec__list{margin:0;display:grid}
-.spec__list>div{display:grid;grid-template-columns:120px 1fr;gap:var(--s-3);padding:var(--s-3) 0;border-top:1px solid var(--color-line);font-size:var(--t-14)}
+.spec__list>div{display:grid;grid-template-columns:120px minmax(0,1fr);gap:var(--s-3);padding:var(--s-3) 0;border-top:1px solid var(--color-line);font-size:var(--t-14)}
 .spec__list dt{color:var(--color-muted)} .spec__list dd{margin:0}
 
 /* ---------- cart ---------- */
