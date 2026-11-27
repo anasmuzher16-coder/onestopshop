@@ -10,6 +10,8 @@ the product are dropped) and framed:
   hookah: like the Ace hookahs (photos.py): 720x900, product 810 tall (or 630 wide), 45 px foot, centred across;
 sizes -m 540x675 and -s 360x450, and -l 1440x1800 only when the product is at least 1100 px tall in the source photo
 (so the large size is never an enlargement); Lanczos, WebP method 4, same qualities as photos.py.
+--glass: for a cut-out from clear_glass.py, which has done its own cleaning and whose see-through glass lies under the
+alpha the speck cleaning keeps; framed as is.
 Every framed photo is then checked by eye on coal, bone and cobalt tiles before it is published.
 """
 from __future__ import annotations
@@ -89,11 +91,12 @@ if __name__ == "__main__":
     ap.add_argument("cutouts"); ap.add_argument("out"); ap.add_argument("names", nargs="+")
     ap.add_argument("--kind", choices=sorted(FRAME), required=True)
     ap.add_argument("--trim-base-below", type=int, help="source row below which only the coloured glass base's own outline is kept")
+    ap.add_argument("--glass", action="store_true", help="the cut-out came from clear_glass.py: no speck cleaning (its see-through glass sits under the 16%% alpha the cleaning keeps)")
     a = ap.parse_args()
     out = Path(a.out); out.mkdir(parents=True, exist_ok=True)
     for n in a.names:
         im = Image.open(Path(a.cutouts) / f"{n}.png").convert("RGBA")
         if a.trim_base_below:
             im = trim_base(im, a.trim_base_below)
-        made, src_h = frame(clean(im), out, n, a.kind)
+        made, src_h = frame(im if a.glass else clean(im), out, n, a.kind)
         print(n, made, f"product {src_h} px tall in the source")

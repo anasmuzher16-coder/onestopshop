@@ -682,7 +682,51 @@ class TestShopPhotosForAce(Base):
         mine = [l for l in live if l.startswith("UPDATE products SET supplier_id = 'ace'")]
         seed = [l for l in K.seed_sql("ace", C.load_master("ace")).splitlines()
                 if l.startswith("UPDATE products SET supplier_id = 'ace'") and "WHERE sku = 'OSS-100150'" in l]
-        self.assertEqual(mine, seed)
+        # the Rose's measured chip colour came later, in hookah-glass-2026-11-27.sql (test_live_hookah_glass_targets_photo_keys)
+        self.assertEqual(mine, [re.sub(r'"photo_hex": "#[0-9a-f]{6}", ', "", l) for l in seed])
+
+    def test_tsar_uses_the_shop_photos(self):
+        """Green and blue get their own shop photo, no label; red and yellow still say "Shown in blue", now on the shop's photo."""
+        ace = C.load_master("ace")
+        v = {v["sku"]: v for f in ace["families"] if f["family_id"] == "ace-tsar-molotov" for v in f["variants"]}
+        self.assertEqual((v["OSS-100084"]["photo"]["img"], v["OSS-100084"]["photo"]["status"], v["OSS-100084"]["colour"]["v"]),
+                         ("shop/ace-tsar-molotov-green", "shop", "green"))
+        self.assertEqual((v["OSS-100081"]["photo"]["img"], v["OSS-100081"]["photo"]["status"]), ("shop/ace-tsar-molotov-blue", "shop"))
+        labels = {x["sku"]: x for x in ace["photo_labels"]}
+        self.assertNotIn("OSS-100081", labels); self.assertNotIn("OSS-100084", labels)
+        for sku in ("OSS-100080", "OSS-100083"):
+            self.assertEqual((labels[sku]["img"], labels[sku]["shown_in"]), ("shop/ace-tsar-molotov-blue", "blue"))
+        for f in ace["families"]:   # no colour anywhere is left pointing at a catalogue photo that a shop photo replaced
+            for x in f["variants"]:
+                if x["photo"]["status"] == "family_hero_only":
+                    self.assertNotEqual(x["photo"]["img"], "ace/ace-tsar-molotov-blue")
+
+    def test_live_hookah_glass_targets_photo_keys(self):
+        """Run on rows holding other facts and old photo values, the live file gives exactly catalog.py's img, label and photo
+        keys, leaves every other fact and column alone, and a second run changes nothing."""
+        import sqlite3
+        skus = ("OSS-100080", "OSS-100081", "OSS-100083", "OSS-100084", "OSS-100150")
+        rows = {r["sku"]: r["sup"] for r in K.desired_rows("ace", C.load_master("ace")) if r["sku"] in skus}
+        db = sqlite3.connect(":memory:")
+        db.execute("CREATE TABLE products (sku TEXT, name TEXT, supplier_id TEXT, img TEXT, variant_label TEXT, facts_known TEXT, updated_at TEXT)")
+        for s in skus:
+            old = {"height_cm": 61, "material": "web fact", "photo": "family", "photo_label": "shown_in", "shown_in": "blue", "photo_hex": "#000000"}
+            db.execute("INSERT INTO products VALUES (?, 'Live name', 'ace', 'ace/old', '', ?, NULL)", (s, json.dumps(old)))
+        # a bystander: the black Tsar keeps its web photo, so no line may touch it (nor any row not listed above)
+        db.execute("INSERT INTO products VALUES ('OSS-100082', 'Live name', 'ace', 'ace/ace-tsar-molotov-black', 'black', '{\"photo\": \"own\"}', NULL)")
+        sql = (C.CATALOG / "live" / "hookah-glass-2026-11-27.sql").read_text(encoding="utf-8")
+        db.executescript(sql)
+        self.assertEqual(db.execute("SELECT img, variant_label, facts_known, updated_at FROM products WHERE sku = 'OSS-100082'").fetchone(),
+                         ("ace/ace-tsar-molotov-black", "black", '{"photo": "own"}', None))
+        photo_keys = {"photo", "photo_hex", "photo_label", "shown_in", "photo_upscale"}
+        for s in skus:
+            name, img, label, fk = db.execute("SELECT name, img, variant_label, facts_known FROM products WHERE sku = ?", (s,)).fetchone()
+            want = {k: v for k, v in json.loads(rows[s]["facts_known"]).items() if k in photo_keys}
+            self.assertEqual((name, img, label), ("Live name", rows[s]["img"], rows[s]["variant_label"]), s)
+            self.assertEqual(json.loads(fk), {"height_cm": 61, "material": "web fact", **want}, s)
+        n = db.total_changes
+        db.executescript(sql)
+        self.assertEqual(db.total_changes, n)
 
 
 def live_sections(name):

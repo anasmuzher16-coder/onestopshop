@@ -13,6 +13,7 @@ export const SEED_FILES = [
   "catalog/live/hoses-2026-11-27.sql",          // the same hoses as the live database gets them (after seed-shop-hoses.sql, so the hose rows go in twice: proves it is safe)
   "catalog/out/seed-shop-bowls.sql",            // the shop's own bowls, Price TBD (catalog.py seed --supplier shop-bowls, or plain seed)
   "catalog/live/shop-photos-2026-11-27.sql",    // hoses' Starbuzz length + the shop's bowls, as the live database gets them (run twice)
+  "catalog/live/hookah-glass-2026-11-27.sql",   // the Tsar Molotov's shop photos (glass cleared), as the live database gets them (run twice)
   "catalog/out/seed-shisha.sql",                // shisha flavours
   "catalog/out/seed-charcoal-foil-foil.sql",    // foil only (catalog.py seed --supplier charcoal-foil --category foil)
   "catalog/out/seed-charcoal-foil-charcoal.sql", // charcoal's catalogue facts (shape, material, brand) onto the rows already in seed.sql;

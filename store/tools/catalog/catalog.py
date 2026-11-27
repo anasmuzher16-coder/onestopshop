@@ -72,7 +72,7 @@ def build_ace(reg, pdf: Path, photos_manifest, day):
         p = f"pdf:{src_ace.SRC_ID}#p{f['page']}"
         sw = f.pop("swatches") or [None]
         f.pop("images")
-        variants, used = [], {}
+        variants, used, swapped = [], {}, {}
         for i, s in enumerate(sw):
             hx = s["hex"] if s else None
             base = f"{f['family_id']}#{hx or 'one'}"
@@ -89,6 +89,8 @@ def build_ace(reg, pdf: Path, photos_manifest, day):
             own = SHOP_PHOTOS.get(key)
             if own and (C.STORE / "public" / "img" / "pc" / (own[0] + ".webp")).exists():
                 # the shop's own photo of this very piece replaces a low-resolution or missing catalogue photo (shop_photos.py)
+                if ph and img:
+                    swapped[img] = own[0]   # this colour's own catalogue photo, now the shop's: colours shown in it follow
                 img, status, psrc = own[0], "shop", f"photo:{own[2]} (the shop's own photo, cut out); {own[3]}"
                 colour = C.cell(own[1], f"photo:{own[2]} (the shop's own photo); human-confirm")
             variants.append({
@@ -99,6 +101,9 @@ def build_ace(reg, pdf: Path, photos_manifest, day):
                           **({"web_src": web_src[img]} if img in web_src else {})},
                 "shop": C.blank_shop(),
             })
+        for v in variants:   # a colour shown in another colour's photo gets that colour's shop photo when it has one
+            if v["photo"]["status"] == "family_hero_only" and v["photo"]["img"] in swapped:
+                v["photo"]["img"] = swapped[v["photo"]["img"]]
         f["variants"] = variants
         out.append(f)
     # stamped products first, then catalogue order
@@ -403,6 +408,17 @@ def photo_colours():
     for im in man.get("images", []):
         if im.get("out") and im.get("rgb") and im.get("status") in USABLE_PHOTO:
             out[im["out"]] = "#%02x%02x%02x" % tuple(im["rgb"])
+    # the shop's own photos (shop_photos.py): measured the same way (photos.colour_of on the published 720x900 photo)
+    import numpy as np
+    from PIL import Image
+    from photos import colour_of
+    for img, *_ in SHOP_PHOTOS.values():
+        p = C.STORE / "public" / "img" / "pc" / (img + ".webp")
+        if p.exists():
+            a = np.asarray(Image.open(p).convert("RGBA"))
+            _name, rgb = colour_of(a[..., :3], a[..., 3])
+            if rgb:
+                out[img] = "#%02x%02x%02x" % tuple(rgb)
     return out
 
 
