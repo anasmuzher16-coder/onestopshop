@@ -30,7 +30,8 @@ try {
     t("C1 a shisha page says pickup, paid in the shop, and never promises shipping", /Pickup at the Windsor counter/.test(m) && /Paid in the shop/.test(m) && !/Ships across Canada|Ships by ground|Billed as/.test(m), m.slice(0, 400));
     t("C1 a shisha page shows its price above Add to cart", await p.locator(".pdp__price").count() === 1);
     await go(p, "/cart"); m = await main(p);
-    t("C2 a shisha + charcoal cart is one pickup story", /Pickup only, paid in the shop/.test(m) && /this order is a pickup/.test(m) && !/Choose local delivery|ship the rest|Leave the charcoal out/.test(m) && await p.locator(".pickline").count() === 1 && !(await p.locator('input[name="ship"]').count()), m.slice(0, 600));
+    // card off, the whole site is pickup only, so the lines no longer repeat it (design review, 2026-11-27); card on, shisha still says it
+    t("C2 a shisha + charcoal cart is one pickup story", (CARD ? /Pickup only, paid in the shop/.test(m) : !/Pickup only/.test(m)) && /this order is a pickup/.test(m) && !/Choose local delivery|ship the rest|Leave the charcoal out/.test(m) && await p.locator(".pickline").count() === 1 && !(await p.locator('input[name="ship"]').count()), m.slice(0, 600));
     await go(p, "/p/OSS-100024"); m = await main(p);
     const tbds = await p.locator("#main .spec .tbd").count();
     // design review 2026-11-26: the shopper sees "Price TBD" and the facts the shop has given; the list of details still to come is the shop's, not shown

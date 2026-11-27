@@ -7,8 +7,8 @@ const money = c => "$" + (c / 100).toLocaleString("en-CA", { minimumFractionDigi
 // anything link-shaped into a link: a zero-width space after each period, colon, @ or slash that runs straight into a letter
 // or digit, and inside "www", so "evil.example" or "https://x" in mail from the shop stays plain words. Escape it after this.
 export const unlink = s => String(s ?? "").replace(/([.:@\/])(?=[\p{L}\p{N}\/])/gu, "$1​").replace(/w(?=ww)/gi, "$&​");
-// How long an unpaid pay-at-the-counter order is held (pay_expires_at, set by checkout.js from PICKUP_HOLD_HOURS), in the
-// shop's own time. Null for anything else.
+// How long a pay-at-the-counter pickup request waits for the shop to confirm it (pay_expires_at, set by checkout.js from
+// PICKUP_REQUEST_HOURS), in the shop's own time. Null for anything else. Nothing is held during that time (2026-11-27).
 const holdOf = o => {
   if (o.pay_status !== "pay_at_pickup" || !o.pay_expires_at || !o.created_at) return null;
   const end = Date.parse(o.pay_expires_at.endsWith("Z") ? o.pay_expires_at : o.pay_expires_at + "Z"), start = Date.parse(o.created_at.endsWith("Z") ? o.created_at : o.created_at + "Z");
@@ -44,10 +44,13 @@ export function orderPlaced(site, o, items, how = "at_pickup") {
   const paid = how === "paid";
   const rows = [...lines(items), ["Items", money(o.subtotal_cents)], ...(o.reward_cents ? [["Points reward", "−" + money(o.reward_cents)]] : []), [o.method === "pickup" ? "Pickup at the counter" : o.ship_service === "Local delivery" ? "Local delivery" : `Shipping, ${esc(o.ship_service || "")}`, o.method === "pickup" || (o.ship_service === "Local delivery" && !o.shipping_cents) ? "Free" : money(o.shipping_cents)],
     [`Tax, ${esc(o.tax_province || "")}`, money(o.tax_cents)], [paid ? "Paid by card" : "To pay at pickup", money(o.total_cents), true]];
-  const heading = paid ? `Order ${esc(o.id)} is paid` : `Order ${esc(o.id)} is in`, first = esc(unlink(String(o.name).split(" ")[0]));
+  const heading = paid ? `Order ${esc(o.id)} is paid` : `Order request ${esc(o.id)} is in`, first = esc(unlink(String(o.name).split(" ")[0]));
   const next = o.method === "pickup" ? "We email you when it is ready to pick up." : o.ship_service === "Local delivery" ? "Our driver calls before coming." : "We email the tracking number when it ships.";
-  const hold = paid ? null : holdOf(o), held = hold ? ` We hold it for ${hold.hours} hours, until ${esc(hold.until.replace(/\.$/, ""))}. If it is not picked up and paid by then, it is cancelled and the items go back on the shelf, unless we have emailed you that it is ready.` : "";
-  const intro = paid ? `Thank you, ${first}. Your payment went through. ${next}` : `Thank you, ${first}. You pay at the counter when you pick it up. ${next}${held}`;
+  // A pay-at-the-counter pickup is a request (2026-11-27): nothing is set aside until the shop has checked the shelf, so the
+  // receipt never promises a hold. It says to wait for the "ready" email before coming in.
+  const req = paid ? null : holdOf(o);
+  const asked = ` This is an order request. We check the shelf and email you as soon as it is ready. Please wait for that email before you come in: nothing is set aside for you until then.${req ? ` A request we have not confirmed is cancelled after ${req.hours >= 48 && req.hours % 24 === 0 ? `${req.hours / 24} days` : `${req.hours} hours`} (${esc(req.until)}).` : ""}`;
+  const intro = paid ? `Thank you, ${first}. Your payment went through. ${next}` : `Thank you, ${first}. You pay at the counter when you pick it up.${asked}`;
   const foot = "Questions? Reply to this email or call the counter at 519-255-2222.";
   return { kind: "order_placed", subject: paid ? `Receipt for your ${site} order ${o.id}` : `Your ${site} order ${o.id}`, html: frame(site, heading, intro, rows, foot), body: plain(heading, intro, rows, foot) };
 }
@@ -57,7 +60,7 @@ export function orderShipped(site, o, items) {
   return { kind: "order_shipped", subject: o.ship_service === "Local delivery" ? `Your ${site} order ${o.id} is out for delivery` : `Your ${site} order ${o.id} has shipped`, html: frame(site, heading, intro, lines(items), foot), body: plain(heading, intro, lines(items), foot) };
 }
 export function pickupReady(site, o, items) {
-  const heading = `Order ${esc(o.id)} is ready`, intro = "It is waiting at 760 Wyandotte St E, Windsor, ON N9A 3J4. Bring this order number.";
+  const heading = `Order ${esc(o.id)} is ready`, intro = "We checked the shelf and set it aside for you. It is waiting at 760 Wyandotte St E, Windsor, ON N9A 3J4. Bring this order number.";
   const foot = "We hold pickup orders for 14 days. Call 519-255-2222 if you need longer.";
   return { kind: "pickup_ready", subject: `Your ${site} order ${o.id} is ready for pickup`, html: frame(site, heading, intro, lines(items), foot), body: plain(heading, intro, lines(items), foot) };
 }
@@ -69,11 +72,11 @@ export function newOrder(site, o, items, how = "at_pickup") {
   // the figures the customer was shown, line for line, so the counter can answer "what did I pay for delivery" from the note
   const rows = [...lines(items), ["Items", money(o.subtotal_cents)], ...(o.reward_cents ? [["Points reward", "−" + money(o.reward_cents)]] : []),
     [way, o.method === "pickup" || !o.shipping_cents ? "Free" : money(o.shipping_cents)], [`Tax, ${esc(o.tax_province || "")}`, money(o.tax_cents)],
-    ...(where ? [["Deliver to", esc(where)]] : []), ...(a.note ? [["Note", esc(unlink(a.note))]] : []), ...(hold ? [["Held until", `${esc(hold.until)} (${hold.hours} hours)`]] : []),
+    ...(where ? [["Deliver to", esc(where)]] : []), ...(a.note ? [["Note", esc(unlink(a.note))]] : []), ...(paid ? [] : [["Status", "To confirm"]]), ...(hold ? [["Open until", `${esc(hold.until)}`]] : []),
     [paid ? "Paid by card" : "To pay at pickup", money(o.total_cents), true]];
-  const say = e => `${e(unlink(o.name))}${o.phone ? `, ${e(o.phone)}` : ""}${o.email ? `, ${e(o.email)}` : ""}. ${paid ? "Paid by card." : "Pays at the counter."} Open it in the back office to get it ready.${hold ? ` If it is not marked ready or paid within ${hold.hours} hours, it cancels itself and the stock goes back on the shelf.` : ""}`;
+  const say = e => `${e(unlink(o.name))}${o.phone ? `, ${e(o.phone)}` : ""}${o.email ? `, ${e(o.email)}` : ""}. ${paid ? "Paid by card. Open it in the back office to get it ready." : "Pays at the counter. To confirm: nothing is held yet. Check the shelf, then mark it ready in the back office: that takes the items off the stock count and emails the customer to come in. If the shelf cannot cover it, call the customer."}${hold ? ` Not marked ready within ${hold.hours >= 48 && hold.hours % 24 === 0 ? `${hold.hours / 24} days` : `${hold.hours} hours`}, the request cancels itself.` : ""}`;
   const heading = `New order ${esc(o.id)}`, intro = say(esc);
-  return { kind: "new_order", customer: o.email, subject: `${site}: new order ${o.id}, ${money(o.total_cents)}, ${o.method === "pickup" ? "pickup" : o.ship_service === "Local delivery" ? "local delivery" : "ship"}${paid ? "" : ", pay at pickup"}`, html: frame(site, heading, intro, rows, "Sent to the shop for every new order. Reply to reach the customer."), body: plain(`New order ${o.id}`, say(String), rows, "") };   // the plain text carries the name as typed (O'Brien, not O&#39;Brien)
+  return { kind: "new_order", customer: o.email, subject: `${site}: new order ${o.id}, ${money(o.total_cents)}, ${o.method === "pickup" ? "pickup" : o.ship_service === "Local delivery" ? "local delivery" : "ship"}${paid ? "" : ", pay at pickup, to confirm"}`, html: frame(site, heading, intro, rows, "Sent to the shop for every new order. Reply to reach the customer."), body: plain(`New order ${o.id}`, say(String), rows, "") };   // the plain text carries the name as typed (O'Brien, not O&#39;Brien)
 }
 export function lowStock(site, list) {
   const rows = list.map(p => [esc(p.name), p.stock <= 0 ? "Out" : `${p.stock} left`]);

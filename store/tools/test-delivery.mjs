@@ -18,8 +18,18 @@ const routeCount = async () => (await (await fetch(MAP + "/__routes")).json()).r
 const run = Date.now() % 1000;
 // each order comes from its own made-up address, as real shoppers do: the per-visitor order limits (src/guard.js) have their own checks in test-orders
 const shopper = () => `10.${(Math.random() * 250) | 0}.${(Math.random() * 250) | 0}.${(Math.random() * 250) | 0}`;
-const post = async (path, body) => { const r = await fetch(B + path, { method: "POST", headers: { "Content-Type": "application/json", ...(path === "/api/orders" ? { "CF-Connecting-IP": shopper() } : {}) }, body: JSON.stringify(body) }); return { status: r.status, data: await r.json().catch(() => ({})) }; };
+// every request from its own made-up address: the delivery check counts real map lookups per visitor (src/delivery.js), with its own check below
+const post = async (path, body, ip = shopper()) => { const r = await fetch(B + path, { method: "POST", headers: { "Content-Type": "application/json", "CF-Connecting-IP": ip }, body: JSON.stringify(body) }); return { status: r.status, data: await r.json().catch(() => ({})) }; };
+const CARD = /<meta name="oss-pay" content="card">/.test(await (await fetch(B + "/")).text());
+// NO CARD KEYS (the live demo, breaker 2026-11-27): delivery cannot be ordered, so the public delivery check answers "pickup only for
+// now" without a paid map lookup, whatever is asked
+if (!CARD) {
+  const before = await routeCount(), r = await post("/api/delivery", { line1: `7 D3000 ${run}nk St`, city: "Windsor", postal: "N9A 1A1" }), r2 = await post("/api/delivery", { postal: "N8X 1A1" });
+  ok(r.status === 200 && r.data.status === "down" && r.data.pickup_only === true && /Pickup only for now/.test(r.data.message || "") && r2.data.pickup_only === true && !("fee_cents" in r.data), "no keys: the delivery check says pickup only for now: " + JSON.stringify(r.data));
+  ok(await routeCount() === before, "no keys: the delivery check makes no map lookup");
+}
 const check = (line1, postal = "N9A 1A1") => post("/api/delivery", { line1, city: "Windsor", postal });
+if (CARD) {
 const cases = [[`7 D10000 ${run} St`, "ok", 1000], [`7 D10000_1 ${run} St`, "ok", 1500], [`7 D25000 ${run} St`, "ok", 1500], [`7 D25000_1 ${run} St`, "far"], [`Unit 2, 7 D3000 ${run} St`, "ok", 1000], [`1-7 D3001 ${run} St`, "ok", 1000], [`D3002 ${run} St`, "unsure"], [`9 WRONGNUM ${run}`, "ok", 1000], [`9 ROADSAME ${run}`, "ok", 1000], [`9 ROADSPLIT ${run}`, "ok", 1000], [`9 NOBOX ${run}`, "ok", 1000], [`7 NOTFOUND ${run}`, "ok", 1000], [`7 MAPDOWN ${run}`, "down"], [`7 DETROIT ${run}`, "unsure"], [`7 WRONGPC ${run}`, "unsure"], [`7 VAGUE ${run}`, "ok", 1000], [`100 FARHIT ${run}`, "unsure"],
   [`7 LZ9000W11000 ${run} St`, "ok", 1500], [`7 LZ11000W9000 ${run} St`, "ok", 1000], [`7 LZ10000W30000 ${run} St`, "far"], [`7 LZ30000W10000 ${run} St`, "ok", 1000], [`7 LZ25000W40000 ${run} St`, "far"], [`7 LZ40000W25000 ${run} St`, "ok", 1500], [`7 LZ25001W40000 ${run} St`, "far"], [`7 LZ26000W26000 ${run} St`, "far"]];
 const wait = () => new Promise(r => setTimeout(r, 4100));
@@ -32,7 +42,17 @@ ok((await check(`7 D5000 ${run} St`, "M5V 2T6")).data.status === "far", "a Toron
 const byPostal = postal => post("/api/delivery", { postal });
 for (const [code, status, fee] of [["N9A 1A1", "ok", 1000], ["N8X 1A1", "ok", 1000], ["N8N 1W9", "ok", 1500], ["N9H 1A1", "ok", 1500], ["N0R 1A0", "far"], ["N8H 1A1", "far"], ["N8M 1A8", "far"], ["N9A 9Z9", "address"], ["T2P 1J9", "far"]]) { const r = await byPostal(code); ok(r.data.status === status && (fee === undefined || r.data.fee_cents === fee), `postal ${code}: wanted ${status} ${fee ?? ""}, got ${JSON.stringify(r.data)}`); }
 ok((await post("/api/delivery", { line1: `7 NOTFOUND ${run}b`, city: "Detroit", postal: "N9A 1A1" })).data.status === "unsure", "an unmapped street in the wrong town is not priced by postal code");
-for (const [a, b] of [[`7 D4000 ${run} St`, `7-D4000 ${run} St`]]) ok((await check(a)).data.status === "ok" && (await check(b)).data.status === "unsure", "addresses that differ only by punctuation do not share an answer");
+{ const ip = shopper(); for (const [a, b] of [[`7 D4000 ${run} St`, `7-D4000 ${run} St`]]) ok((await post("/api/delivery", { line1: a, city: "Windsor", postal: "N9A 1A1" }, ip)).data.status === "ok" && (await post("/api/delivery", { line1: b, city: "Windsor", postal: "N9A 1A1" }, ip)).data.status === "unsure", "addresses that differ only by punctuation do not share an answer"); }
+// one visitor gets 30 real map lookups an hour, counted in the database across every Worker; a cached address is free
+{ const ip = shopper(), one = i => post("/api/delivery", { line1: `7 D2000 Q${i}x${run} St`, city: "Windsor", postal: "N9A 1A1" }, ip), got = [];
+  for (let i = 0; i < 15; i++) got.push(await one(i));
+  await new Promise(r => setTimeout(r, 61000));   // the per-Worker speed bump (15 a minute) is not what is being checked
+  for (let i = 15; i < 30; i++) got.push(await one(i));
+  const before = await routeCount(), past = await one(30), again = await post("/api/delivery", { line1: `7 D2000 Q0x${run} St`, city: "Windsor", postal: "N9A 1A1" }, ip);
+  ok(got.every(r => r.data.status === "ok"), "30 lookups in an hour from one visitor are answered: " + got.map(r => r.data.status).join(","));
+  ok(past.data.status === "down" && past.data.limited === true && await routeCount() === before, "the 31st new address in an hour is refused without a map lookup: " + JSON.stringify(past.data));
+  ok(again.data.status === "ok", "an address already checked still answers from the cache: " + JSON.stringify(again.data)); }
+}
 const who = { name: "Dee Livery", email: "dee@example.com", phone: "519-555-0101" }, base = { ...who, method: "ship", service: "local", postal: "N9A 1A1", lines: [{ sku: "OSS-8004", qty: 1 }] };
 const at = line1 => ({ line1, city: "Windsor" });
 // NO CARD KEYS (the live demo): the delivery quote above still answers, but a delivery order is refused with the shop's

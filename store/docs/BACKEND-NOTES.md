@@ -28,28 +28,35 @@ the place in the code that follows it. "Follow-up" items are known gaps left for
   600,000 for PBKDF2-SHA256; Workers refuse more than 100,000 (workerd#1346), so the pepper (a Worker secret,
   `PIN_PEPPER`, falling back to `ADMIN_KEY`) carries the rest: a stolen database alone cannot be guessed offline.
 - A 6-digit PIN is weak by itself (OWASP calls anything under 8 characters weak), so online guessing is capped. Reworked
-  2026-11-27 (breaker: about 10 addresses could lock all staff out, about 17 the owner, again and again): there is no
-  shop-wide lock any more. Within 15 minutes:
-  - one address (IPv4, or IPv6 by its /56): more than 5 wrong tries and that address waits 15 minutes; its IPv6 /48 gets
+  twice on 2026-11-27 (breaker: about 10 addresses could lock all staff out; then ~6 IPv4 x 5 tries passed the 30-a-name cap, names
+  that did not exist counted, so common first names could be locked in advance, and the cap allowed ~2,880 PIN guesses a day). Now:
+  - one address (IPv4, or IPv6 by its /56), 15 minutes: more than 5 wrong tries and that address waits 15 minutes; its IPv6 /48 gets
     5 in all, so a tunnel cannot act as 256 addresses. Only that address is affected.
-  - one staff name (names that do not exist count the same, so nothing shows who works there): past 5 wrong tries from
-    addresses not seen signing in, each try is slowed (doubling from 250 ms, up to 8 s); past 30 (`NAME_CAP`) such tries are
-    refused for that name. An address that signed in correctly in the last 30 days (a `login_attempts` row with ok = 1,
-    which is kept: the staff list reads "last signed in" from it) is held by neither the delay nor the name cap, so a
-    stranger hammering a name never locks the real person out at the counter. A staff member on a network never used
-    before, while someone is hammering their name, waits up to 15 minutes or signs in at the shop.
-  - the owner's passcode (`ADMIN_KEY`): only the per-address limits; past 20 wrong owner tries shop-wide, each try from an
-    address not seen signing in is slowed (doubling, up to 8 s). Nothing locks the owner out. The passcode must be long and
-    random (16 characters or more; the Worker log warns on the live site when it is shorter): at 5 tries per address per 15
-    minutes, a thousand addresses make under half a million guesses a day.
-  - Brute force on a PIN: 10^6 PINs (obvious ones refused) and at most 30 tries per name per 15 minutes from unknown
-    addresses (2,880 a day, however many addresses) puts the expected time to guess one PIN at about half a year; the pepper
-    keeps a stolen database from being guessed offline.
-  A request already over a limit is refused before anything is written; one that gets through is written down and counted
-  again, and only then is the staff name's own row written, so a burst of simultaneous tries on separate Workers is still
-  counted in full. Signed-in sessions are never touched by these limits. Failed tries older than a day are deleted on every
-  try and by the 10-minute sweep. Obvious PINs are refused. On the live site, staff sign-in refuses to run without `PIN_PEPPER`.
-  These numbers are owner-vetoable (src/admin.js `NAME_CAP` and the sign-in block).- **Create `PIN_PEPPER` before any staff account exists** (`npx wrangler secret put PIN_PEPPER`, a long random value
+  - one staff name, a day, from unfamiliar devices and places: past 3 wrong tries each try is slowed (doubling from 500 ms, up to
+    8 s); at 20 (`NAME_DAY_CAP`) that name refuses them for the rest of the day ("Too many wrong tries for this name today...").
+    20 guesses a day against 10^6 PINs puts the expected time to guess one at about 68 years; the pepper keeps a stolen database
+    from being guessed offline.
+  - only names on the staff list count against a name (`n:` rows). A name that does not exist is counted under its own key (`u:`)
+    with the same rules, so the answers never show who works here, and a staff member added later starts clean: a common first
+    name cannot be locked in advance.
+  - familiar devices and places are held by neither the delay nor the name cap: a phone or computer that signed in correctly before
+    (the `oss_dev` cookie: a random id plus an HMAC of it keyed with the Worker secret, HttpOnly, SameSite=Strict, Secure on https,
+    400 days; recorded at that sign-in as a `login_attempts` row `d:` + keyed hash, ok = 1, with the staff id; it counts only while
+    that row is under 400 days old and the person who signed in there is still on the staff list, or it was the owner), or an
+    address that signed in correctly in the last 30 days. A familiar device with 10 wrong tries in a day (`e:` rows) loses its pass
+    for the day. The cookie never signs anyone in; it only skips the name's slowdown. A staff member on a new device AND a new
+    network while their name is being hammered waits until the next day, signs in at the counter, or asks the owner.
+  - the owner's passcode (`ADMIN_KEY`): only the per-address limits; past 20 wrong owner tries shop-wide in 15 minutes, each try
+    from an unfamiliar device and place is slowed (doubling, up to 8 s). Nothing locks the owner out. The passcode must be long and
+    random (16 characters or more; the Worker log warns on the live site when it is shorter).
+  Addresses, names and devices are stored only as keyed hashes (src/guard.js `keyedHash`). The keys changed on 2026-11-27, so every
+  place and device is unfamiliar once after deploy, until it signs in again. A request already over a limit is refused before
+  anything is written; one that gets through is written down and counted again, and only then is the staff name's own row written,
+  so a burst of simultaneous tries on separate Workers is still counted in full. Signed-in sessions are never touched by these
+  limits. Failed tries older than a day are deleted on every try and by the 10-minute sweep. Obvious PINs are refused. On the live
+  site, staff sign-in refuses to run without `PIN_PEPPER`. These numbers are owner-vetoable (src/admin.js `NAME_DAY_CAP`,
+  `DEVICE_WRONG_CAP`).
+- **Create `PIN_PEPPER` before any staff account exists** (`npx wrangler secret put PIN_PEPPER`, a long random value
   kept in Bitwarden, never in the repo). Every PIN hash is made with it when it is set (checked in test-backoffice:
   a hash made with it fails without it). A PIN set before it existed was made with the `ADMIN_KEY` fallback and stops
   working the moment the pepper is created; changing or losing the pepper does the same to every PIN, and the owner
@@ -61,51 +68,66 @@ the place in the code that follows it. "Follow-up" items are known gaps left for
   sign-out; all of a person's sessions deleted when the owner removes them or resets their PIN.
 - Roles: staff do the daily work; staff, settings, the monthly report and the full backup are owner only (403).
 
-## Placing an order: limits and holds (src/guard.js, src/checkout.js, src/pay.js; 2026-11-26, reworked 2026-11-27)
+## Placing an order: limits, and pickups as requests (src/guard.js, src/checkout.js, src/admin.js, src/pay.js; 2026-11-26, reworked twice 2026-11-27)
 All numbers here are owner-vetoable defaults; they live in src/guard.js (and DECISIONS.md beside the repo says so).
+- **A pay-at-the-counter pickup reserves nothing when it is placed (2026-11-27, breaker launch blocker).** Before, unpaid pickups held
+  stock under a shared "at most half an item" ceiling for 48 hours, renewable, so with card off one order of 5 (or two real shoppers
+  ordering 3 and 2) made an item unorderable online, and ~43 orders from ~15 IPv4s shut the whole shop. Now:
+  - placing it writes the order (status `pending`, pay `pay_at_pickup`) and no stock moves at all, so no number of requests can
+    block another shopper. The shelf count must still cover the quantity asked (a request for more than the count is refused).
+  - the customer's receipt says it is an order request: the shop checks the shelf and emails when it is ready, wait for that email
+    before coming in, nothing is set aside until then. The shop's new-order note (subject "..., to confirm") and the back office show
+    it as "To confirm" (`to_confirm` on the order list and sheet, a count on Today).
+  - staff mark it ready once it is on the shelf (src/admin.js `takeForReady`): one D1 batch moves the order to `ready` only if every
+    item it has not taken yet is covered by the stock count, and in the same transaction takes the stock with a `sale` move by the
+    person who marked it. All of it or none. If the count cannot cover it, nothing moves and staff are told which items are short
+    (`shortfall`), to call the customer. A second tap takes nothing more. The low-stock note is written then, not at placement.
+  - it cannot be marked paid before it is ready (marking ready is what checks the shelf); collected and paid completes as before.
+  - cancelling gives back exactly what the order's own stock moves show it took, once (`TAKEN_SQL`): a request never confirmed gives
+    back nothing, a ready order gives back what readying took. Card orders still get back what they ordered, unchanged.
+  - a request never confirmed cancels itself after `PICKUP_REQUEST_HOURS` (default 168, 7 days; 1 to 720), payment `expired`, with
+    no stock effect. A ready order is held 14 days from ready (as the ready email says), then let go the same way, its stock back once.
+  - card orders (when card payment is on) are unchanged: stock is taken when the order is placed and held for the 35-minute payment
+    page, and given back once if it is not paid.
+  - Migration of open orders (no SQL migration): pay-at-the-counter orders placed before this change took their stock when placed and
+    keep it. Readying one takes nothing more (it already has its `sale` moves); cancelling or expiry gives back what it took, once;
+    those still pending keep their 48-hour `pay_expires_at` and are let go then as before.
 - Who is asking: `CF-Connecting-IP`, which Cloudflare sets at the edge; IPv6 is counted by its /56 (a home connection's
   usual block) and again by its /48. Only a hash keyed with a Worker secret is stored, in `order_attempts` (migration 0012),
   with the order it placed; rows are deleted after 30 days by the 10-minute sweep (`pruneGuards`).
-- Per visitor and per email: 5 orders in 10 minutes, 15 a day, and 3 pay-at-the-counter orders still holding stock unpaid at
-  once (a card page lets its stock go by itself in 35 minutes). A whole IPv6 /48 gets 10 in 10 minutes, 30 a day and 6 held.
-  Checked before the order is written and again after (with it counted), so a burst gets no further than the limit.
+- Per visitor and per email: 5 orders in 10 minutes, 15 a day, and 3 pay-at-the-counter orders open unpaid at once (a card page
+  lets its stock go by itself in 35 minutes). A whole IPv6 /48 gets 10 in 10 minutes, 30 a day and 6 open. These no longer guard
+  the shelf; they guard staff time and inboxes. Checked before the order is written and again after (with it counted), so a burst
+  gets no further than the limit.
 - Emails are compared as one person for these limits (2026-11-27): lowercase, any +tag dropped, and for Gmail the dots too
   (googlemail.com reads as gmail.com), in JS (`normEmail`) and the same rule in SQL (`normEmailSql`). The order keeps the
-  address exactly as typed. A guest whose email already has 3 orders held is asked to sign in with it (which skips the
+  address exactly as typed. A guest whose email already has 3 orders open is asked to sign in with it (which skips the
   email's counts: a signed-in shopper has shown the inbox is theirs) or call.
-- The shop-wide brake: 60 orders a minute (`SHOP_BRAKE_PER_MIN`; it was 12, which one person with home IPv4, a tunnel /48
-  and a phone could reach). With the per-network caps above, 60 in a minute takes 20 or more networks at once. A shopper
-  signed in with the order's own email is never braked. Chosen over "brake only new visitors" because the shop cannot tell a
-  returning guest from a stranger without trusting the typed email, which anyone can type.
-- Per order: a card order 20 different items, 20 of one item (the cart's most, MAX_QTY), 40 units. An unpaid
-  pay-at-the-counter order (`PICKUP_CAPS`): 5 of one item and 15 in all, which covers any counter order the shop has seen
-  (charcoal by the box, foil by the pack, shisha by the tub, hookahs one at a time); while card payment is off the cart
-  stops at 5 of an item and asks for a call past 15. A quantity must be a whole number sent as a number.
-- Per item (2026-11-27): all unpaid pickups together hold at most half of an item's units (on the shelf plus already held),
-  and always at least 1 (`holdMax`; so an item with a single unit can be held whole, by design). Only orders that have
-  really taken their stock count, so an order still going through checkout never makes the ceiling stricter. Checked before the order is written for a plain answer, and again inside the very
-  statement that takes the stock (one D1 transaction), so orders at the same moment cannot pass it together. Card orders
-  are not held to it. So a handful of addresses can hold at most 3 x 15 units each and never more than half of any item.
-- What a blocked shopper sees (all with the counter's number, 519-255-2222): too many held: "You already have N orders
-  waiting to be paid and picked up. Pick those up first, or call..."; an email with 3 held: "...If it is yours, sign in with
-  it to order, or call..."; too fast: "That is a lot of orders in a short time. Wait a few minutes and try again, or call...";
-  too big: "Pickup orders paid at the counter take up to 15 items, 5 of any one item. For more, call..."; item held to its
-  half: "We can hold N of <item> for a pickup order right now. Lower the number, or call the counter ... to hold more"; a real
-  flood: "The shop is busy. Try again in a minute." A family on one Wi-Fi placing two orders, or a returning customer, meets
-  none of these.
-- Pay-at-the-counter holds end: `pay_expires_at` is set to `PICKUP_HOLD_HOURS` (default 48) after the order; the
-  10-minute sweep cancels an order still pending and unpaid past it (payment 'expired') and puts its stock back once
-  (`releaseHeld`, guarded on the deadline so staff marking it paid always wins). One the shop marked ready is held 14
-  days from ready (as the ready email says), then let go the same way; ready-but-unpaid orders still count as held.
-  Paid or cancelled ends it. The receipt and the shop's new-order note state the window; the back office shows "Held until" and
-  "Hold ended, unpaid". Orders placed before this change have no deadline and never expire.
+- The shop-wide brake: 60 orders a minute (`SHOP_BRAKE_PER_MIN`). A shopper signed in with the order's own email is never braked.
+- Per order: a card order 20 different items, 20 of one item (the cart's most, MAX_QTY), 40 units. A pay-at-the-counter order
+  (`PICKUP_CAPS`): 5 of one item and 15 in all; while card payment is off the cart stops at 5 of an item and asks for a call past
+  15. A quantity must be a whole number sent as a number.
+- What a blocked shopper sees (all with the counter's number, 519-255-2222): too many open: "You already have N orders waiting to be
+  paid and picked up..."; an email with 3 open: "...If it is yours, sign in with it to order, or call..."; too fast: "That is a lot of
+  orders in a short time..."; too big: "Pickup orders paid at the counter take up to 15 items, 5 of any one item..."; a real flood:
+  "The shop is busy. Try again in a minute." Nothing about an item being held for others any more.
 - The order name must be letters, spaces, apostrophes, hyphens and periods, with no period running into two letters,
   so it can never carry a link into "Thank you, {name}". Known limit: shoppers sharing one public IPv4 (carrier NAT, campus
   Wi-Fi) share one visitor's limits. Customer text in emails (notes, addresses) has zero-width spaces put into anything
   link-shaped, then is escaped.
 - Turnstile is not wired anywhere on the site yet (ACCOUNTS-LOYALTY.md lists it as a next step), so orders do not ask for it.
-- Apply migration 0012 before deploying this code. Without it, orders still go through on the email limits, the caps and
-  the per-item hold ceiling (the visitor limits are skipped and the Worker log says so). No new migration for 2026-11-27.
+- Migration 0012 stays the last one; nothing new for 2026-11-27.
+
+## Customer sign-in codes and other keyed hashes (2026-11-27)
+- The sign-in code limits count a visitor the way every other limit does (IPv6 by its /56) and store the visitor, the inbox and the
+  code itself only as hashes keyed with the Worker secret (`keyedHash`: label, `PIN_PEPPER` or `ADMIN_KEY`, value). Before, they were
+  plain SHA-256, which a list of IPv4 addresses or emails (or the 10^6 codes) undoes. The privacy page says "a coded form ... made with
+  a secret key". Codes outstanding at deploy (10 minutes) stop working once.
+
+## The public delivery check (2026-11-27)
+- While card payment is off, `/api/delivery` answers `{ status: "down", pickup_only: true }` with no Geoapify lookup (delivery cannot
+  be ordered). With card on, each visitor (IPv6 by /56, keyed hash, `v:` rows in `login_attempts`, deleted after a day) gets 30 real
+  map lookups an hour across every Worker; a cached address is free. The per-instance speed bump stays behind it.
 
 ## Card payment off: every promise follows the switch (2026-11-27)
 - One switch: card payment is on when `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` are set (src/pay.js `cardReady`). The
@@ -125,11 +147,14 @@ All numbers here are owner-vetoable defaults; they live in src/guard.js (and DEC
 
 ## The questionnaire link (2026-11-27)
 - `/api/intake/<link>` takes at most 5 sends a day from one place, 10 from one IPv6 /48 and 30 a day in all (rows in
-  `login_attempts` under `k:` and `q:` with keyed hashes of the address, deleted after a day), at most 200 KB each, and stops taking sends once 300 are kept.
+  `login_attempts` under `k:` and `q:` with keyed hashes of the address, deleted after a day), at most 200 KB each, and stops taking
+  sends once 300 are kept. The shop's own sends skip those counts and are not counted (breaker: 6 outside addresses could use up the
+  day and block the shop): a browser signed in to the back office, or a shop device that signed in before (`oss_dev`, see staff
+  sign-in). They are labelled "sent from a shop device".
   Each send is its own file labelled with its time, a short place tag (keyed hash, never the address) and its country;
   the back office lists every send that way, says whether each came from the same place as the first send, and the
-  owner picks which to read, so a stranger's newer send cannot pass for the shop's. Known limits: 30 sends a day from
-  many addresses can still fill a day, and 300 kept sends stop the link until some are removed from the backups bucket by hand.
+  owner picks which to read, so a stranger's newer send cannot pass for the shop's. The owner removes a send from the back office
+  (`DELETE /api/admin/intake`, owner only, only `intake/<dated name>.json`, logged as `intake.delete`), which also makes room under 300.
 ## Writes from another site (CSRF)
 - Every admin write needs JSON, the `X-OSS-Admin: 1` header (a custom header a form cannot send), a same-site
   cookie, a matching `Origin` when present, and is refused when the browser marks it `Sec-Fetch-Site` other than
@@ -187,7 +212,7 @@ All numbers here are owner-vetoable defaults; they live in src/guard.js (and DEC
 
 ## Follow-ups (not done here)
 - Cookie name `__Host-oss_admin` (OWASP): changing it signs everyone out and the existing tests pin the name.
-- A stranger can still slow a staff name, and lock it for addresses never seen signing in, for 15 minutes. Cloudflare
+- A stranger can still slow a staff name, and lock it for a day for devices and places never seen signing in. Cloudflare
   rate limiting rules on /api/admin/login would blunt this further.
 - PBKDF2 at 100,000 rounds measured about 100 ms of CPU in Node. The Workers Free plan allows 10 ms per request,
   so confirm the plan before staff sign in (REMOTE-STEPS step 5 gives the fallback).

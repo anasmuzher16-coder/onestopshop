@@ -1,7 +1,9 @@
-// Local delivery: road distance from the Walkerville shop to the shopper's full address, worked out on the server.
+// Local delivery: road distance from the Windsor shop to the shopper's full address, worked out on the server.
 // The price comes only from deliveryFee() in rates-core.js. If the address cannot be confirmed, or the map service
 // is down, delivery is simply not offered: shipping and pickup keep working.
 import { LOCAL_LIMIT_M, deliveryFee, localArea, parsePostal } from "../public/rates-core.js";
+import { cardReady } from "./pay.js";
+import { keyedHash, sourceOf } from "./guard.js";
 
 // The shop's map pin, fixed here so one bad lookup can never move it.
 const SHOPS = [
@@ -97,7 +99,7 @@ async function cacheKey(line1, city, full) {
   return new Request("https://delivery.cache/v4/" + hash);
 }
 
-export async function deliveryQuote(env, { line1, city, postal }, ip = "local") {
+export async function deliveryQuote(env, { line1, city, postal }, ip = "local", gate = null) {
   const dest = parsePostal(postal);
   const byPostal = !line1 && !city;
   if (dest && dest.prov !== "ON" || dest && !localArea(dest)) return { status: "far" };
@@ -105,6 +107,7 @@ export async function deliveryQuote(env, { line1, city, postal }, ip = "local") 
   if (!env.GEOAPIFY_KEY) return { status: "down" };
   let key = null;
   try { key = await cacheKey(line1 || "", city || "", dest.full); const c = await caches.default.match(key); if (c) { const k = await c.json(); if (Number.isFinite(k.metres) && typeof k.shop === "string") return priced(k); } } catch { key = null; }
+  if (gate && !(await gate())) return { status: "down", limited: true };   // the shared, database-backed count (deliveryRoute), first, so it is never skipped
   if (tooFast(ip)) return { status: "down" };   // only real map lookups count, so a repeat of a checked address is never held up
   let out;
   try {
@@ -120,6 +123,7 @@ export async function deliveryQuote(env, { line1, city, postal }, ip = "local") 
   return out;
 }
 
+const DELIVERY_LOOKUPS = 30;   // real map lookups per visitor per hour from the public delivery check (owner-vetoable)
 // A brake on one visitor burning the day's free lookups. Per Worker instance, so it is a speed bump and not a wall.
 const seen = new Map();
 function tooFast(ip) {
@@ -134,8 +138,19 @@ export async function deliveryRoute(request, env, url) {
   if (request.method !== "POST") return send({ error: "Method not allowed" }, 405);
   if (!(request.headers.get("Content-Type") || "").startsWith("application/json")) return send({ error: "Send JSON." }, 415);
   const origin = request.headers.get("Origin"); if (origin && origin !== url.origin) return send({ error: "Wrong origin." }, 403);
+  // Card payment off: every order is a pickup and delivery cannot be ordered, so no paid map lookup is made (breaker, 2026-11-27).
+  if (!cardReady(env)) return send({ status: "down", pickup_only: true, message: "Pickup only for now: local delivery opens once we take card payment online." });
   const b = await request.json().catch(() => null);
   const clean = (v, max) => typeof v === "string" && v.trim() && v.trim().length <= max ? v.trim() : null;
-  const q = await deliveryQuote(env, { line1: clean(b && b.line1, 120), city: clean(b && b.city, 60), postal: b && b.postal }, request.headers.get("CF-Connecting-IP") || "local");
-  return send(q.status === "ok" ? { status: "ok", fee_cents: q.fee_cents } : { status: q.status });
+  // Card on: each visitor (IPv6 by its /56, a keyed hash) gets DELIVERY_LOOKUPS real map lookups an hour across every Worker, counted
+  // in login_attempts under "v:" (deleted after a day by the sweep). A cached address costs nothing and is never counted.
+  const key = "v:" + await keyedHash(env, "delivery", sourceOf(request)), db = env.DB;
+  const gate = async () => {
+    const n = await db.prepare("SELECT COUNT(*) AS n FROM login_attempts WHERE who = ? AND ok = 0 AND at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 hour')").bind(key).first("n");
+    if (n >= DELIVERY_LOOKUPS) return false;
+    await db.prepare("INSERT INTO login_attempts (who, ok) VALUES (?, 0)").bind(key).run();
+    return true;
+  };
+  const q = await deliveryQuote(env, { line1: clean(b && b.line1, 120), city: clean(b && b.city, 60), postal: b && b.postal }, request.headers.get("CF-Connecting-IP") || "local", gate);
+  return send(q.status === "ok" ? { status: "ok", fee_cents: q.fee_cents } : { status: q.status, ...(q.limited ? { limited: true } : {}) });
 }

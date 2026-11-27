@@ -42,7 +42,7 @@ if (!/<meta name="oss-pay" content="card">/.test(await (await fetch(B + "/")).te
   ok((await post({ ...who, method: "pickup", pay: "bitcoin", lines: [{ sku: "OSS-8004", qty: 1 }] })).status === 400, "an unknown way to pay is refused");
   ok((await post({ ...who, ...to, method: "ship", service: "cp-exp", pay: "at_pickup", lines: [{ sku: "OSS-8001", qty: 1 }] })).status === 400, "pay at the counter is refused for shipping");
   const c0 = await stockOf("OSS-8001"), cp = await post(pickup("OSS-8001", 1, { pay: "at_pickup" }));
-  ok(cp.status === 201 && cp.data.pay.status === "pay_at_pickup" && !cp.data.pay.url && (await stockOf("OSS-8001")) === c0 - 1, "pay at the counter: placed, stock held, no payment page");
+  ok(cp.status === 201 && cp.data.pay.status === "pay_at_pickup" && !cp.data.pay.url && (await stockOf("OSS-8001")) === c0, "pay at the counter: placed as a request, no stock taken yet, no payment page");   // rewritten 2026-11-27: a request reserves nothing until it is marked ready
   let co = await order(cp.data.order.id);
   ok(co.order.status === "pending" && co.order.pay_status === "pay_at_pickup", "it waits as pay at pickup");
   const mail = co.emails.find(e => e.kind === "order_placed"), html = mail ? (await admin("/emails/" + mail.id)).data.email.html : "";
@@ -51,7 +51,8 @@ if (!/<meta name="oss-pay" content="card">/.test(await (await fetch(B + "/")).te
   ok(wh.status === 503 && (await order(cp.data.order.id)).order.pay_status === "pay_at_pickup", "no keys: the webhook is shut and cannot touch an order: " + wh.status);
   ok((await fetch(B + "/api/pay/webhook")).status === 405, "the webhook only takes POST");
   ok((await admin(`/orders/${cp.data.order.id}/refund`, { op: "x".repeat(20) })).status === 409, "nothing to refund to a card on a counter order");
-  ok((await admin(`/orders/${cp.data.order.id}/status`, { status: "ready" })).status === 200, "it can be got ready before it is paid");
+  ok((await admin(`/orders/${cp.data.order.id}/paid`, {})).status === 409, "it cannot be marked paid before the shop marks it ready (that checks the shelf)");
+  ok((await admin(`/orders/${cp.data.order.id}/status`, { status: "ready" })).status === 200 && (await stockOf("OSS-8001")) === c0 - 1, "it can be got ready before it is paid, and marking it ready takes its stock");
   ok((await admin(`/orders/${cp.data.order.id}/status`, { status: "collected" })).status === 409, "it cannot be handed over unpaid");
   ok((await admin(`/orders/${cp.data.order.id}/paid`, {})).status === 200 && (await admin(`/orders/${cp.data.order.id}/paid`, {})).status === 409, "the shop marks it paid at the counter, once");
   co = await order(cp.data.order.id);
@@ -153,13 +154,14 @@ ok((await stockOf("OSS-8004")) === f0 - 1, "the old order's stock went back, the
 const c0 = await stockOf("OSS-8001");
 ok((await post({ ...who, postal: "M5V 2T6", address: { line1: "1 Test Street", city: "Toronto" }, method: "ship", service: "cp-exp", pay: "at_pickup", lines: [{ sku: "OSS-8001", qty: 1 }] })).status === 400, "pay at the counter is refused for shipping");
 const cp = await post(pickup("OSS-8001", 1, { pay: "at_pickup" }));
-ok(cp.status === 201 && cp.data.pay.status === "pay_at_pickup" && !cp.data.pay.url && (await stockOf("OSS-8001")) === c0 - 1, "pay at the counter: placed, stock held, no payment page");
+ok(cp.status === 201 && cp.data.pay.status === "pay_at_pickup" && !cp.data.pay.url && (await stockOf("OSS-8001")) === c0, "pay at the counter: placed as a request, no stock taken yet, no payment page");   // rewritten 2026-11-27: a request reserves nothing until it is marked ready
 let co = await order(cp.data.order.id);
 ok(co.order.status === "pending" && co.order.pay_status === "pay_at_pickup", "it waits as pay at pickup");
 const mail = co.emails.find(e => e.kind === "order_placed"), html = mail ? (await admin("/emails/" + mail.id)).data.email.html : "";
 ok(/pay at the counter/i.test(html) && !/payment went through/i.test(html) && !/\bID\b|age/i.test(html.replace(/<[^>]+>/g, " ").replace(/page|message|manage/gi, "")), "its email says pay at the counter, never paid, and nothing about ID or age");
 ok((await admin(`/orders/${cp.data.order.id}/refund`, { op: "x".repeat(20) })).status === 409, "nothing to refund on a counter order");
-ok((await admin(`/orders/${cp.data.order.id}/status`, { status: "ready" })).status === 200, "it can be got ready before it is paid");
+ok((await admin(`/orders/${cp.data.order.id}/paid`, {})).status === 409, "it cannot be marked paid before the shop marks it ready (that checks the shelf)");
+  ok((await admin(`/orders/${cp.data.order.id}/status`, { status: "ready" })).status === 200 && (await stockOf("OSS-8001")) === c0 - 1, "it can be got ready before it is paid, and marking it ready takes its stock");
 ok((await admin(`/orders/${cp.data.order.id}/status`, { status: "collected" })).status === 409, "it cannot be handed over unpaid");
 ok((await admin(`/orders/${cp.data.order.id}/paid`, {})).status === 200, "the shop marks it paid at the counter");
 ok((await admin(`/orders/${cp.data.order.id}/paid`, {})).status === 409, "marking it paid twice is refused");

@@ -8,9 +8,9 @@ import { orderPlaced, newOrder } from "../src/email.js";
 const B = (process.env.BASE || "http://127.0.0.1:4420").replace(/\/$/, "");
 // the made-up sample rows this suite buys, switched back on in its own throwaway database (tools/fixtures/samples-on.mjs)
 await samplesOn(B, ["OSS-7006", "OSS-8004", "OSS-8003", "OSS-7004", "OSS-8001", "OSS-8002", "OSS-8006"]);
-// All unpaid pickups together hold at most half of an item (src/guard.js holdMax, 2026-11-27). This suite places many unpaid
-// pickups of the same few samples to test the per-visitor limits, so those get a deep shelf first (the back office's own
-// receive), and the half-of-the-item rule has its own checks below on samples left at their seeded stock (OSS-8002, OSS-8006).
+// A pay-at-the-counter pickup is a request (2026-11-27): it takes no stock until the shop marks it ready. This suite places many
+// requests of the same few samples to test the per-visitor limits, so those get a deep shelf first (the back office's own receive),
+// and the request rules have their own checks below on samples left at their seeded stock (OSS-8002, OSS-8006).
 const KEY = process.env.ADMIN_KEY || (await import("node:fs")).readFileSync(new URL("../.dev.vars", import.meta.url), "utf8").match(/ADMIN_KEY=(.+)/)[1].trim();
 const adminCookie = ((await fetch(B + "/api/admin/login", { method: "POST", headers: { "Content-Type": "application/json", "X-OSS-Admin": "1" }, body: JSON.stringify({ passcode: KEY }) })).headers.get("set-cookie") || "").split(";")[0];
 for (const sku of ["OSS-8004", "OSS-8003", "OSS-7004", "OSS-8001"]) { const r = await fetch(`${B}/api/admin/products/${sku}/receive`, { method: "POST", headers: { "Content-Type": "application/json", "X-OSS-Admin": "1", Cookie: adminCookie }, body: JSON.stringify({ qty: 200, ref: "test shelf" }) }); if (!r.ok) { console.log("FAIL could not stock", sku, r.status); process.exit(1); } }
@@ -24,6 +24,9 @@ const who = { name: "Key Tester", email: "key@example.com" }, as = tag => { who.
 // with no card keys (the live demo) a pickup is paid at the counter, so these orders say so
 const pk = /<meta name="oss-pay" content="card">/.test(await (await fetch(B + "/")).text()) ? {} : { pay: "at_pickup" };
 const pickup = (sku, qty, extra = {}) => ({ ...who, ...pk, method: "pickup", lines: [{ sku, qty }], ...extra });
+// what one order takes from the shelf when it is placed: a card order takes it at once; a pay-at-the-counter request takes nothing
+const takes = qty => pk.pay ? 0 : qty;
+const admin = (path, body) => fetch(`${B}/api/admin${path}`, { method: body === undefined ? "GET" : "POST", headers: { "Content-Type": "application/json", "X-OSS-Admin": "1", Cookie: adminCookie }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) }).then(async r => ({ status: r.status, data: await r.json().catch(() => ({})) }));
 
 // the total
 as("total");
@@ -42,7 +45,7 @@ const a = await post(pickup("OSS-8004", 1, { order_key: k1 })), b = await post(p
 ok(a.status === 201 && /^W[A-Z0-9]{6}$/.test(a.data.order?.id), "first send places the order: " + a.status);
 ok(b.status === 200 && b.data.replayed === true && b.data.order?.id === a.data.order?.id, "a retry gets the same order back: " + b.status);
 ok(b.data.order?.total_cents === a.data.order?.total_cents && b.data.order?.items?.length === 1 && b.data.order?.tax_label === a.data.order?.tax_label, "the retry carries the same figures");
-ok((await stockOf("OSS-8004")) === s1 - 1, "stock came down once, not twice");
+ok((await stockOf("OSS-8004")) === s1 - takes(1), pk.pay ? "a pickup request and its retry take no stock at all" : "stock came down once, not twice");
 
 // sent at the same moment
 as("race");
@@ -50,7 +53,7 @@ const k2 = key("b"), s2 = await stockOf("OSS-8004");
 const race = await Promise.all([1, 2, 3].map(() => post(pickup("OSS-8004", 1, { order_key: k2 }))));
 const ids = new Set(race.filter(r => r.data.order).map(r => r.data.order.id));
 ok(ids.size === 1 && race.filter(r => r.status === 201).length === 1, "three copies at once make one order: " + race.map(r => r.status).join(","));
-ok((await stockOf("OSS-8004")) === s2 - 1, "three copies take one from stock");
+ok((await stockOf("OSS-8004")) === s2 - takes(1), pk.pay ? "three copies of a request take no stock" : "three copies take one from stock");
 
 // the last one, then a retry: the retry must not say sold out
 as("last");
@@ -155,14 +158,47 @@ else {
     const card6 = await from(shopper(), { ...counter(`card6-${run}@example.com`), pay: "card", lines: [{ sku: "OSS-8004", qty: 6 }] });
     ok(card6.status === 201, "6 of one item paid by card is still taken: " + card6.status + " " + (card6.data.error || ""));
   }
-  // unpaid pickups together hold at most half of an item (OSS-8002: 5 on the shelf, so 2), always at least 1; the rest stays buyable
-  const s8002 = await stockOf("OSS-8002"), h1 = await from(shopper(), counter(`h1-${run}@example.com`, "OSS-8002")), h2 = await from(shopper(), counter(`h2-${run}@example.com`, "OSS-8002"));
-  const h3 = await from(shopper(), counter(`h3-${run}@example.com`, "OSS-8002"));
-  ok(s8002 === 5 && h1.status === 201 && h2.status === 201 && h3.status === 409 && h3.data.hold_cap === true && h3.data.room === 0 && /519-255-2222/.test(h3.data.error || ""), `a third unpaid pickup of an item with 5 is refused, the shop's number given: ${s8002} ${h1.status},${h2.status},${h3.status} ${h3.data.error || ""}`);
-  ok((await stockOf("OSS-8002")) === 3, "the refusal took no stock, and 3 of 5 are still on the shelf");
-  // the same ceiling holds for orders at the same moment (OSS-8006: 4 on the shelf, so 2 held at most)
+  // ---------- 2026-11-27: a pay-at-the-counter pickup is a request; stock is taken when the shop marks it ready ----------
+  // (replaces the "at most half of an item" checks: that ceiling let one order of 5, or a few real shoppers, make an item
+  // unorderable for 48 hours, and ~43 orders from ~15 addresses shut the whole shop)
+  const s8002 = await stockOf("OSS-8002"), reqs = [];
+  for (let i = 0; i < 8; i++) reqs.push(await from(shopper(), counter(`r${i}-${run}@example.com`, "OSS-8002")));
+  const five = await from(shopper(), { ...counter(`r5x-${run}@example.com`), lines: [{ sku: "OSS-8002", qty: 5 }] });
+  ok(s8002 === 5 && reqs.every(r => r.status === 201 && r.data.order?.request === true) && five.status === 201, `nine requests for an item with 5 on the shelf (one for all 5) are all taken: ${s8002} ${reqs.map(r => r.status)},${five.status} ${five.data.error || ""}`);
+  ok((await stockOf("OSS-8002")) === 5 && sql(`SELECT COUNT(*) AS n FROM stock_moves WHERE ref IN (${[...reqs, five].map(r => `'${r.data.order.id}'`).join(",")})`)[0].n === 0, "requests take no stock and write no stock moves: the shelf still shows 5");
   const rush = await Promise.all(Array.from({ length: 4 }, (_, i) => from(shopper(), counter(`rush${i}-${run}@example.com`, "OSS-8006"))));
-  ok(rush.filter(r => r.status === 201).length === 2 && rush.filter(r => r.status === 409 && r.data.hold_cap).length === 2 && (await stockOf("OSS-8006")) === 2, "4 unpaid pickups at once of an item with 4: exactly 2 held, 2 told to call: " + rush.map(r => r.status));
+  ok(rush.every(r => r.status === 201) && (await stockOf("OSS-8006")) === 4, "4 requests at once for an item with 4 all go through and take nothing: " + rush.map(r => r.status));
+  if (!pk.pay) {   // card keys on: a card order still takes its stock at once, whatever requests are open
+    const cardAll = await from(shopper(), { ...counter(`cardall-${run}@example.com`), pay: "card", lines: [{ sku: "OSS-8006", qty: 4 }] });
+    ok(cardAll.status === 201 && (await stockOf("OSS-8006")) === 0, "a card order takes its stock when placed, unchanged by open requests: " + cardAll.status);
+    if (cardAll.data.pay?.url) await fetch(cardAll.data.pay.url, { method: "POST", redirect: "manual" });
+  }
+  // marking ready takes the stock, all of it or none, in one step
+  const ready5 = await admin(`/orders/${five.data.order.id}/status`, { status: "ready" });
+  ok(ready5.status === 200 && (await stockOf("OSS-8002")) === 0, "marking the request for 5 ready takes the 5: " + ready5.status + " " + (ready5.data.error || ""));
+  ok(sql(`SELECT COUNT(*) AS n FROM stock_moves WHERE ref = '${five.data.order.id}' AND reason = 'sale' AND delta = -5`)[0].n === 1, "one sale line in the stock history, at ready");
+  const short = await admin(`/orders/${reqs[0].data.order.id}/status`, { status: "ready" });
+  ok(short.status === 409 && Array.isArray(short.data.shortfall) && short.data.shortfall[0]?.sku === "OSS-8002" && short.data.shortfall[0].stock === 0 && /call the customer/.test(short.data.error || ""), "a request the shelf cannot cover is not marked ready: staff are told what is short, to call the customer: " + JSON.stringify(short.data));
+  ok((await stockOf("OSS-8002")) === 0 && sql(`SELECT status FROM orders WHERE id = '${reqs[0].data.order.id}'`)[0].status === "pending", "nothing is oversold and the request stays to confirm");
+  const twice = await admin(`/orders/${five.data.order.id}/status`, { status: "ready" });
+  ok(twice.status === 409 && (await stockOf("OSS-8002")) === 0, "a second tap on ready takes nothing more: " + twice.status);
+  ok((await admin(`/orders/${reqs[1].data.order.id}/paid`, {})).status === 409, "a request cannot be marked paid before it is marked ready (that is what checks the shelf)");
+  // cancelling a ready order puts its stock back once; cancelling a request never confirmed puts nothing back
+  const cx = await Promise.all([1, 2, 3].map(() => admin(`/orders/${five.data.order.id}/cancel`, { reason: "customer", op: crypto.randomUUID() })));
+  ok(cx.filter(r => r.status === 200).length === 1 && (await stockOf("OSS-8002")) === 5, "three cancels at once of the ready order: one wins and the 5 go back once: " + cx.map(r => r.status) + " stock " + await stockOf("OSS-8002"));
+  const cx2 = await admin(`/orders/${reqs[2].data.order.id}/cancel`, { reason: "customer", op: crypto.randomUUID() });
+  ok(cx2.status === 200 && (await stockOf("OSS-8002")) === 5 && sql(`SELECT COUNT(*) AS n FROM stock_moves WHERE ref = '${reqs[2].data.order.id}'`)[0].n === 0, "cancelling a request never confirmed changes no stock: " + cx2.status);
+  // two requests of 3 marked ready at the same moment on an item with 5: exactly one is covered
+  const t1 = await from(shopper(), { ...counter(`t1-${run}@example.com`), lines: [{ sku: "OSS-8002", qty: 3 }] }), t2 = await from(shopper(), { ...counter(`t2-${run}@example.com`), lines: [{ sku: "OSS-8002", qty: 3 }] });
+  const both = await Promise.all([t1, t2].map(t => admin(`/orders/${t.data.order.id}/status`, { status: "ready" })));
+  ok(both.filter(r => r.status === 200).length === 1 && both.filter(r => r.status === 409 && r.data.shortfall).length === 1 && (await stockOf("OSS-8002")) === 2, "two requests of 3 marked ready at once on 5: one taken, one told it is short, never below zero: " + both.map(r => r.status) + " stock " + await stockOf("OSS-8002"));
+  // an order placed before 2026-11-27 took its stock when placed: it keeps it, ready takes nothing more, a cancel gives back what it took once
+  const old = await from(shopper(), counter(`legacy-${run}@example.com`, "OSS-8001"));
+  sql(`UPDATE products SET stock = stock - 1 WHERE sku = 'OSS-8001'`); sql(`INSERT INTO stock_moves (sku, delta, reason, ref, actor) VALUES ('OSS-8001', -1, 'sale', '${old.data.order.id}', 'store')`);
+  const oldBefore = await stockOf("OSS-8001"), oldReady = await admin(`/orders/${old.data.order.id}/status`, { status: "ready" });
+  ok(oldReady.status === 200 && (await stockOf("OSS-8001")) === oldBefore, "an order that already took its stock is marked ready without taking it again: " + oldReady.status);
+  await admin(`/orders/${old.data.order.id}/cancel`, { reason: "customer", op: crypto.randomUUID() });
+  ok((await stockOf("OSS-8001")) === oldBefore + 1, "and cancelling it puts back the 1 it took, once");
   // an email is one person for the limits: case, +tags and Gmail dots or googlemail do not make a new one
   const nb = `normtester${run}`, variants = [`Norm.Tester${run.toUpperCase()}+a@gmail.com`, `${nb}+b@googlemail.com`, `n.o.r.m.tester${run}@GMAIL.com`];
   const heldN = []; for (const e of variants) heldN.push(await from(shopper(), counter(e, "OSS-8004")));
@@ -175,31 +211,34 @@ else {
   const plusD = await from(shopper(), counter(dom, "OSS-8004"));
   ok(plusA.every(r => r.status === 201) && plusD.status === 429, "+tags on any mail service count as one inbox: " + plusA.map(r => r.status) + "," + plusD.status);
 
-  // a pay-at-the-counter order holds its stock 48 hours, then lets it go
+  // a request waits 7 days for the shop to confirm it, holding nothing; the receipt never promises a hold (2026-11-27)
   const stock = async sku => (await (await fetch(B + "/api/catalog")).json()).products.find(p => p.sku === sku)?.stock;
   const before = await stock("OSS-8001"), hold = await from(shopper(), counter(`hold-${run}@example.com`, "OSS-8001"));
-  ok(hold.status === 201 && (await stock("OSS-8001")) === before - 1, "the counter order takes its stock: " + hold.status);
+  ok(hold.status === 201 && (await stock("OSS-8001")) === before, "the counter request takes no stock: " + hold.status);
   const row = sql(`SELECT CAST((julianday(pay_expires_at) - julianday(created_at)) * 24 + 0.5 AS INTEGER) AS h FROM orders WHERE id = '${hold.data.order.id}'`)[0];
-  ok(row && row.h === 48, "its hold ends 48 hours after it was placed: " + JSON.stringify(row));
-  const mails = sql(`SELECT kind, body FROM emails WHERE order_id = '${hold.data.order.id}'`), rcpt = mails.find(m => m.kind === "order_placed"), note = mails.find(m => m.kind === "new_order");
-  ok(rcpt && /We hold it for 48 hours, until .+ it is cancelled and the items go back on the shelf/.test(rcpt.body), "the receipt states the 48-hour hold plainly");
-  ok(note && /within 48 hours, it cancels itself/.test(note.body) && /Held until/.test(note.body), "the shop's new-order note states the hold and when it ends");
-  // one still pending past its time, one the shop already got ready: only the first is let go
+  ok(row && row.h === 168, "the request stays open 7 days for the shop to confirm: " + JSON.stringify(row));
+  const mails = sql(`SELECT kind, subject, body FROM emails WHERE order_id = '${hold.data.order.id}'`), rcpt = mails.find(m => m.kind === "order_placed"), note = mails.find(m => m.kind === "new_order");
+  ok(rcpt && /order request/.test(rcpt.body) && /wait for that email before you come in/.test(rcpt.body) && /nothing is set aside for you until then/.test(rcpt.body) && !/We hold it/.test(rcpt.body), "the receipt says plainly the shop confirms it is ready before they come in, and promises no hold");
+  ok(note && /To confirm/.test(note.body) && /nothing is held yet/.test(note.body) && /mark it ready/.test(note.body) && /to confirm/.test(note.subject) && !/Held until/.test(note.body), "the shop's new-order note shows it as to confirm");
+  ok(!mails.some(m => m.kind === "low_stock"), "a request writes no low-stock note: it took nothing");
+  // one request still unconfirmed past its time, one the shop marked ready: only the first is closed, and no stock moves
   const ready = await from(shopper(), counter(`ready-${run}@example.com`, "OSS-8001"));
-  sql(`UPDATE orders SET status = 'ready' WHERE id = '${ready.data.order.id}'`);
+  ok((await admin(`/orders/${ready.data.order.id}/status`, { status: "ready" })).status === 200, "the shop marks the second one ready");
+  const readyMail = sql(`SELECT body FROM emails WHERE order_id = '${ready.data.order.id}' AND kind = 'pickup_ready'`)[0];
+  ok(readyMail && /set it aside for you/.test(readyMail.body) && /14 days/.test(readyMail.body), "the ready email says it is now set aside, for 14 days");
   sql(`UPDATE orders SET pay_expires_at = strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 minute') WHERE id IN ('${hold.data.order.id}', '${ready.data.order.id}')`);
   const mid = await stock("OSS-8001");
-  for (let i = 0; i < 2; i++) { await fetch(B + "/__scheduled?cron=" + encodeURIComponent("*/10 * * * *")); await wait(2000); }   // twice: the stock comes back once
+  for (let i = 0; i < 2; i++) { await fetch(B + "/__scheduled?cron=" + encodeURIComponent("*/10 * * * *")); await wait(2000); }
   const after = sql(`SELECT id, status, pay_status FROM orders WHERE id IN ('${hold.data.order.id}', '${ready.data.order.id}') ORDER BY id`), h = after.find(o => o.id === hold.data.order.id), rd = after.find(o => o.id === ready.data.order.id);
-  ok(h && h.status === "cancelled" && h.pay_status === "expired", "the unpaid order past its hold is cancelled, payment expired: " + JSON.stringify(h));
+  ok(h && h.status === "cancelled" && h.pay_status === "expired", "the request never confirmed is cancelled when its time is up: " + JSON.stringify(h));
   ok(rd && rd.status === "ready" && rd.pay_status === "pay_at_pickup", "an order the shop got ready is not touched: " + JSON.stringify(rd));
-  ok((await stock("OSS-8001")) === mid + 1, `its one item went back on the shelf, once: ${mid} -> ${await stock("OSS-8001")}`);
-  ok(sql(`SELECT COUNT(*) AS n FROM stock_moves WHERE ref = '${hold.data.order.id}' AND reason = 'released'`)[0].n === 1, "one put-back line in the stock history");
-  // the ready order is held as the ready email promises, 14 days, then let go the same way
+  ok((await stock("OSS-8001")) === mid && sql(`SELECT COUNT(*) AS n FROM stock_moves WHERE ref = '${hold.data.order.id}'`)[0].n === 0, "the lapsed request moved no stock: it held none");
+  // the ready order is held as the ready email promises, 14 days, then let go, its stock back once
   sql(`UPDATE orders SET ready_at = strftime('%Y-%m-%dT%H:%M:%SZ','now','-15 days') WHERE id = '${ready.data.order.id}'`);
   const mid2 = await stock("OSS-8001");
-  await fetch(B + "/__scheduled?cron=" + encodeURIComponent("*/10 * * * *")); await wait(2000);
+  for (let i = 0; i < 2; i++) { await fetch(B + "/__scheduled?cron=" + encodeURIComponent("*/10 * * * *")); await wait(2000); }
   const rd2 = sql(`SELECT status, pay_status FROM orders WHERE id = '${ready.data.order.id}'`)[0];
-  ok(rd2.status === "cancelled" && rd2.pay_status === "expired" && (await stock("OSS-8001")) === mid2 + 1, "a ready order still unpaid 14 days after it was ready is let go: " + JSON.stringify(rd2));
+  ok(rd2.status === "cancelled" && rd2.pay_status === "expired" && (await stock("OSS-8001")) === mid2 + 1, "a ready order still unpaid 14 days after it was ready is let go, its 1 back once: " + JSON.stringify(rd2));
+  ok(sql(`SELECT COUNT(*) AS n FROM stock_moves WHERE ref = '${ready.data.order.id}' AND reason = 'released'`)[0].n === 1, "one put-back line in the stock history");
 }
 console.log(f ? `FAIL ${f} of ${n} checks` : `PASS ${n} checks`); process.exit(f ? 1 : 0);

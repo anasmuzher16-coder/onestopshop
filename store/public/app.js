@@ -285,7 +285,7 @@ function cardHTML(p, i = 9) {
       <div class="tile ${p.dark || p.photo ? "tile--photo" : ""}">${colourShot(p, { small: true, eager: i < 2 })}${sticker(p)}</div>
       <h3 class="card__name">${sh ? `${esc(sh.flavour)}<span class="sr">, ${escN(sh.line)}</span>` : escN(p.name)}</h3>${sh ? `<p class="card__maker" aria-hidden="true">${escN(sh.line)}</p>` : ""}
     </a>
-    ${cardMeta(p)}${localOnly(p) ? `<p class="card__pick">${PICKUP_ONLY ? "Pickup only" : "Pickup or local delivery only"}</p>` : ""}
+    ${cardMeta(p)}${localOnly(p) && !PICKUP_ONLY ? `<p class="card__pick">Pickup or local delivery only</p>` : ""}
   </article>`;
 }
 
@@ -728,7 +728,7 @@ function viewCart() {
     <ul class="lines">${lines.map(({ product: p, qty }) => `
       <li class="line" data-tone="${toneOf(p)}">
         <a class="line__tile tile ${p.dark || p.photo ? "tile--photo" : ""}" href="/p/${p.sku}" aria-label="${esc(p.name)}">${shot(p, { small: true, use: "thumb" })}</a>
-        <div class="line__body"><a class="line__name" href="/p/${p.sku}">${esc(p.name)}</a><p class="line__meta num">${p.sku} &middot; ${counterPay(p) ? `<b class="line__pick">Pickup only, paid in the shop</b>` : localOnly(p) ? `<b class="line__pick">${atCounter ? "Pickup with this order" : "Pickup or local delivery only"}</b>` : `${p.kg} kg`}${stockShort(p, qty) ? ` &middot; only ${stockFor(p)} in stock` : qty >= LINE_MAX && PICKUP_ONLY ? ` &middot; ${LINE_MAX} is the most we hold online` : ""}</p>
+        <div class="line__body"><a class="line__name" href="/p/${p.sku}">${esc(p.name)}</a><p class="line__meta num">${p.sku}${PICKUP_ONLY ? "" : ` &middot; ${counterPay(p) ? `<b class="line__pick">Pickup only, paid in the shop</b>` : localOnly(p) ? `<b class="line__pick">${atCounter ? "Pickup with this order" : "Pickup or local delivery only"}</b>` : `${p.kg} kg`}`}${stockShort(p, qty) ? ` &middot; only ${stockFor(p)} in stock` : qty >= LINE_MAX && PICKUP_ONLY ? ` &middot; ${LINE_MAX} is the most for one online order` : ""}</p>
           <div class="qty"><button type="button" aria-label="One less ${esc(p.name)}" data-qty="${p.sku}" data-n="${qty - 1}">&minus;</button><span class="num" aria-live="polite">${qty}</span><button type="button" aria-label="One more ${esc(p.name)}" data-qty="${p.sku}" data-n="${qty + 1}" ${qty >= stockFor(p) ? "disabled" : ""}>+</button></div></div>
         <p class="line__price num">${money(p.price * qty)}</p>
       </li>`).join("")}</ul>
@@ -762,32 +762,46 @@ function viewCart() {
       <div class="totals__door"><dt>${local && localFee === null ? "Total before delivery and tax" : "Total before tax"}</dt><dd class="num">${local ? money(sub + (localFee || 0)) : chosen ? money(sub + chosen.total) : money(sub)}</dd></div>
     </dl>
     ${!ready && !checking && !tooHeavy && !overUnits ? `<p class="fine" id="checkout-why">${counter ? (canLocal ? "Choose local delivery or pickup to check out." : mixed ? "Choose pickup, or leave the charcoal out to ship the rest, to check out." : "Choose pickup to check out.") : "Add a postal code or choose pickup to check out."}</p>` : ""}
-    ${ready ? `<a class="btn btn--wide" href="/checkout">${inShop ? "Reserve for pickup" : "Check out"}</a>` : `<button class="btn btn--wide" type="button" disabled ${overUnits ? 'aria-describedby="checkout-units"' : !checking && !tooHeavy ? 'aria-describedby="checkout-why"' : ""}>Check out</button>`}
-    <p class="fine">${inShop ? "Tax is added on the next step. You pay at the counter when you pick it up." : "Tax is added at checkout."}</p>
+    ${ready ? `<a class="btn btn--wide" href="/checkout">${inShop ? "Request pickup" : "Check out"}</a>` : `<button class="btn btn--wide" type="button" disabled ${overUnits ? 'aria-describedby="checkout-units"' : !checking && !tooHeavy ? 'aria-describedby="checkout-why"' : ""}>Check out</button>`}
+    <p class="fine">${inShop ? "Tax is added on the next step. We check the shelf and email you when it is ready; you pay at the counter when you pick it up." : "Tax is added at checkout."}</p>
     </div>
   </section>`;
 }
 
 function viewShipping() {
-  return `
-  ${band("shipping", "cobalt", "Shipping", PICKUP_ONLY ? "Pickup at our Windsor counter, for now." : !shipsNow() ? "Pickup and local delivery in Windsor, for now." :"From Windsor across Canada, except Quebec for now.")}
+  const pickup = `<h2 class="h3">Pick up</h2>
+    <p>Order online and pick up for free at ${SHOP_ADDRESS}. ${PICKUP_ONLY ? "Your order is a request: we check the shelf and email you when it is ready, usually the same or the next day. Please wait for that email before you come in, because nothing is set aside until then. You pay at the counter, and we hold it for 14 days from the email." : "We email you when it is ready and hold it for 14 days."} ${directions()} or call <a class="link" href="tel:+15192552222">519-255-2222</a>.</p>`;
+  const returns = `<h2 class="h3">Returns</h2>
+    <p>All sales are final, except faulty, wrong, damaged or undelivered items. If something ${PICKUP_ONLY ? "is faulty" : "arrives broken"} or is not what you ordered, call 519-255-2222 or bring it into the store and talk to the store manager: we repair, replace or refund it. <a class="link" href="/terms">Terms of sale</a>.</p>`;
+  // While card payment is off, every order is a pickup (breaker and design review, 2026-11-27): pickup and returns come first, and
+  // delivery and shipping are described as what opens with card payment, in the future tense, with no postal-code tool.
+  if (PICKUP_ONLY) return `
+  ${band("shipping", "cobalt", "Shipping", "Pickup at our Windsor counter, for now.")}
   <section class="reading">
-    ${PICKUP_ONLY ? `<p class="lead"><b>For now, online orders are picked up and paid at our Windsor counter.</b> Local delivery and shipping open once we take card payment online. This page says how they will work.</p>` : ""}
-    <p class="${PICKUP_ONLY ? "" : "lead"}">We pack every order at the counter in Windsor and ship to every province and territory except Quebec, for now: the site is in English only, and we will ship there once it is also in French. Pickup in Windsor is open to everyone.</p>
+    <p class="lead"><b>For now, online orders are picked up and paid at our Windsor counter.</b> Local delivery and shipping open once we take card payment online.</p>
+    ${pickup}
+    ${returns}
+    <h2 class="h3">When card payment opens</h2>
+    <p>Local delivery will come from our Windsor counter, priced by road distance: $10 up to 10 km and $15 up to 25 km, per order, plus tax, and free on orders with $200 or more in items before tax. Delivery times will be estimates, and local delivery will be paid online when you order.</p>
+    <p>Shipping will go to every province and territory except Quebec, for now: the site is in English only, and we will ship there once it is also in French. Its price will be worked out from the packed weight and box size of your order and the carrier\u2019s rate to your postal code, and shown before you pay. Hookahs will ship taken apart, with the glass base double boxed.</p>
+    <p>Charcoal will never be shipped by Canada Post or any carrier: it stays pickup or local delivery only. Other items ship once their packed weight is known.</p>
+  </section>`;
+  return `
+  ${band("shipping", "cobalt", "Shipping", !shipsNow() ? "Pickup and local delivery in Windsor, for now." :"From Windsor across Canada, except Quebec for now.")}
+  <section class="reading">
+    <p class="lead">We pack every order at the counter in Windsor and ship to every province and territory except Quebec, for now: the site is in English only, and we will ship there once it is also in French. Pickup in Windsor is open to everyone.</p>
     <h2 class="h3">Local delivery</h2>
-    <p>We deliver from our Walkerville shop, priced by road distance: $10 up to 10 km and $15 up to 25 km, per order, plus tax. Orders with $200 or more in items before tax deliver free. Anything in the shop can come by local delivery. Enter your postal code and we show your exact price, or tell you if you are past our delivery area.</p>
+    <p>We deliver from our Windsor counter, priced by road distance: $10 up to 10 km and $15 up to 25 km, per order, plus tax. Orders with $200 or more in items before tax deliver free. Anything in the shop can come by local delivery. Enter your postal code and we show your exact price, or tell you if you are past our delivery area.</p>
     <p>While the shop is open, it arrives in about 25 minutes to 1 hour. After closing, it arrives the next morning. These are estimates, not set times. Local delivery is paid online when you order.</p>
     <h2 class="h3">What it costs</h2>
     <p>Shipping is worked out from the packed weight and box size of your order and the carrier\u2019s rate to your postal code. You see the cost on the product page and in the cart before you pay.</p>
-    ${PICKUP_ONLY ? "" : `<p><button class="btn btn--ghost" type="button" data-open-postal>${state.dest ? "Estimating to " + esc(state.dest.full) + ". Change" : "Enter my postal code"}</button></p>`}
+    <p><button class="btn btn--ghost" type="button" data-open-postal>${state.dest ? "Estimating to " + esc(state.dest.full) + ". Change" : "Enter my postal code"}</button></p>
     <h2 class="h3">How glass is packed</h2>
     <p>Hookahs ship taken apart. The glass base is double boxed. If anything arrives broken, bring it into the store and talk to the store manager.</p>
     <h2 class="h3">What we ship</h2>
-    <p>Everything in the shop except charcoal, once its packed weight is known: until then an item says it is pickup or local delivery for now. Charcoal goes by pickup or local delivery only: it is never sent by Canada Post.</p>
-    <h2 class="h3">Pick up</h2>
-    <p>Order online and pick up for free at ${SHOP_ADDRESS}. ${directions()} or call <a class="link" href="tel:+15192552222">519-255-2222</a>.</p>
-    <h2 class="h3">Returns</h2>
-    <p>All sales are final, except faulty, wrong, damaged or undelivered items. If something arrives broken or is not what you ordered, call 519-255-2222 or bring it into the store and talk to the store manager: we repair, replace or refund it. <a class="link" href="/terms">Terms of sale</a>.</p>
+    <p>Everything in the shop except charcoal, once its packed weight is known: until then an item says it is pickup or local delivery for now. Charcoal goes by pickup or local delivery only: it is never sent by Canada Post.</p>
+    ${pickup}
+    ${returns}
   </section>`;
 }
 
@@ -834,7 +848,7 @@ function syncChrome() {
     : ra === "set"
     ? `<a class="dock__side" href="/shop">Shop</a>${setPicks().some(Boolean) ? `<button class="dock__buy" type="button" data-add-set>Add the set <span class="num">${whole(setPicks().filter(Boolean).reduce((a, p) => a + p.price, 0))}</span></button>` : `<a class="dock__buy dock__buy--off" href="/shop">See what is in stock</a>`}<a class="dock__side dock__cart" href="/cart">Cart ${count}</a>`
     : ra === "cart" && lines.length
-    ? `<a class="dock__side" href="/shop">Shop</a>${canPay ? `<a class="dock__buy" href="/checkout">${sc.pickup && (!CARD_ON || counterPayIn(lines).length) ? "Reserve for pickup" : "Check out"} <span class="num">${money(sub + (ship ? ship.total : sc && sc.local ? sc.localFee || 0 : 0))}</span></a>` : sc && sc.counter ? `<button class="dock__buy dock__buy--ask" type="button" data-pickup-jump>Choose how you get it</button>` : sc && sc.checking ? `<span class="dock__buy dock__buy--off">Checking delivery</span>` : `<button class="dock__buy" type="button" data-open-postal>${state.dest ? "Change postal code" : "Add postal code for shipping"}</button>`}<span class="dock__side dock__cart"><span class="dock__w">Cart </span>${count}</span>`
+    ? `<a class="dock__side" href="/shop">Shop</a>${canPay ? `<a class="dock__buy" href="/checkout">${sc.pickup && (!CARD_ON || counterPayIn(lines).length) ? "Request pickup" : "Check out"} <span class="num">${money(sub + (ship ? ship.total : sc && sc.local ? sc.localFee || 0 : 0))}</span></a>` : sc && sc.counter ? `<button class="dock__buy dock__buy--ask" type="button" data-pickup-jump>Choose how you get it</button>` : sc && sc.checking ? `<span class="dock__buy dock__buy--off">Checking delivery</span>` : `<button class="dock__buy" type="button" data-open-postal>${state.dest ? "Change postal code" : "Add postal code for shipping"}</button>`}<span class="dock__side dock__cart"><span class="dock__w">Cart </span>${count}</span>`
     : `<a href="/" ${h === "#/" ? 'aria-current="page"' : ""}>Home</a><a href="/shop" ${here(h.startsWith("#/shop"), h === "#/shop")}>Shop</a><a href="/search" ${h === "#/search" ? 'aria-current="page"' : ""}>Search</a><a href="/cart" ${h === "#/cart" ? 'aria-current="page"' : ""}>Cart ${count}</a>`;
   syncDelivery();
 }
@@ -1051,7 +1065,7 @@ function viewCheckout() {
         ${field("email", "Email", 'type="email" autocomplete="email" inputmode="email" maxlength="120" required', local ? "for the receipt" : pickup ? "for the receipt and the ready-for-pickup note" : "for the receipt and tracking")}
         ${field("phone", "Phone", `type="tel" autocomplete="tel" inputmode="tel" maxlength="30"${local ? " required" : ""}`, local ? "so the driver can reach you" : "optional")}
       </fieldset>
-      ${pickup ? `<fieldset class="co__set"><legend class="h3">Pickup</legend><p class="co__p">At ${SHOP_ADDRESS}. We email you when it is ready, usually ${pickupDay() === "Today" ? "the same day" : "tomorrow"}. Bring the order number. ${directions()}</p></fieldset>`
+      ${pickup ? `<fieldset class="co__set"><legend class="h3">Pickup</legend><p class="co__p">At ${SHOP_ADDRESS}. ${payWay(sc) === "at_pickup" ? "We check the shelf and email you when it is ready" : "We email you when it is ready"}, usually ${pickupDay() === "Today" ? "the same day" : "tomorrow"}.${payWay(sc) === "at_pickup" ? " Please wait for that email before you come in: nothing is set aside until then." : ""} Bring the order number. ${directions()}</p></fieldset>`
         : `<fieldset class="co__set"><legend class="h3">Where it is going</legend>
         ${field("line1", "Street address", 'autocomplete="address-line1" maxlength="120" required')}
         ${field("city", "City or town", 'autocomplete="address-level2" maxlength="60" required')}
@@ -1059,7 +1073,7 @@ function viewCheckout() {
           : `<p class="co__p">We need the full postal code for the label. <button class="link" type="button" data-open-postal>Enter it</button></p>`}
         ${local ? `<p class="co__p">Local delivery from our Windsor shop. ${localEta()}. <a class="link" href="/cart">Change</a></p><p class="co__p">${freeNote(cartCents(lines))}</p><div class="co__p" role="status" data-deliv-msg>${quoted ? `Good news, we deliver to ${esc(state.dest.full)}.` : ""}</div><p class="fine">Address check by <a class="link" href="https://www.geoapify.com/" rel="noopener">Geoapify</a>. Map data from OpenStreetMap contributors.</p>`
           : `<p class="co__p">${chosen.carrier} ${chosen.service}, ${days(chosen.days)}. <a class="link" href="/cart">Change</a></p>`}</fieldset>`}
-      ${sc.counter ? `<p class="co__p co__coal"><b class="line__pick">${PICKUP_ONLY ? "Pickup only" : "Pickup or local delivery only"}</b> ${lines.filter(l => localOnly(l.product)).map(l => esc(l.product.name)).join(", ")}</p>` : ""}
+      ${sc.counter && !PICKUP_ONLY ? `<p class="co__p co__coal"><b class="line__pick">Pickup or local delivery only</b> ${lines.filter(l => localOnly(l.product)).map(l => esc(l.product.name)).join(", ")}</p>` : ""}
       ${payBlock(sc, shownTotals(lines, sc).total)}
       ${coTotals(lines, sc)}
       <p class="field__err" role="alert" data-co-err hidden></p>
@@ -1074,7 +1088,7 @@ function payWords(o) {
   return {
     head: closed ? "This payment did not go through." : p.method === "card" && p.status !== "paid" ? `One moment, ${first}.` : `Thank you, ${first}.`,
     lead: closed ? `Nothing was charged. <a class="link" href="/cart">Your cart</a> is still here.`
-      : p.method === "at_pickup" ? `Pay at the counter when you pick it up. We email ${esc(o.email)} when it is ready.`
+      : p.method === "at_pickup" ? `This is an order request. We check the shelf and email ${esc(o.email)} when it is ready. Please wait for that email before you come in: nothing is set aside until then. You pay at the counter.`
       : p.status === "paid" ? `Paid. Your receipt is on its way to ${esc(o.email)}. ${o.method === "pickup" ? "We email you again when it is ready." : o.service === "Local delivery" ? "Our driver calls before coming." : "The tracking number follows when it ships."}`
       : p.slow ? `Your payment is still being confirmed. The receipt comes to ${esc(o.email)} as soon as it is.`
       : "Confirming your payment. This page updates by itself.",
@@ -1182,15 +1196,16 @@ const viewPrivacy = () => doc("Privacy", "What we collect, why, who else handles
     "When you order: your name, your email, your phone number (needed for local delivery so the driver can reach you, otherwise up to you), the delivery address if we deliver or ship it, and any note you add. We also keep what you bought, what you paid and how you chose to get it. We use these to fill your order, email you about it and answer your questions.",
     "When you pay by card: you type your card details on Stripe's payment page, not ours. We never see or store your card number. Stripe tells us only whether the payment went through.",
     "When you check delivery: the postal code you enter, and for local delivery your street address, are used to work out whether we deliver to you and what it costs.",
-    "To stop abuse, when you place an order we keep a coded form of your internet address, scrambled with a secret key so it cannot be turned back into the address, only to limit how many orders and unpaid pickups held at once can come from one place. For orders it is deleted after 30 days. When you ask for a sign-in code we keep a scrambled form of your internet address and of your email, only to count codes asked for and wrong codes typed, and delete them after a day.",
+    "To stop abuse, when you place an order we keep a coded form of your internet address, scrambled with a secret key so it cannot be turned back into the address, only to limit how many orders and open pickup requests can come from one place. For orders it is deleted after 30 days. When you ask for a sign-in code we keep a coded form of your internet address and of your email, made the same way with a secret key so it cannot be turned back, only to count codes asked for and wrong codes typed, and delete them after a day.",
     "We collect only what we need for these jobs. We do not use your details for anything else unless you agree first.",
   ]],
   ["How you found us", ["When you place an order, we save with it where your first visit in the last 30 days came from: a short code from our business card or a link we posted, the name of the site that sent you (like Google or Instagram), and the first page you opened. It stays on your device until you order. We use it only to count which of our cards, posts and listings bring orders. It is not used to follow you around the web, and we never share it."]],
   ["Cookies and storage on your device", [
-    "We use no advertising, analytics or social media trackers, and no other company's scripts run on our pages. We use three small cookies, each needed for the site to work:",
+    "We use no advertising, analytics or social media trackers, and no other company's scripts run on our pages. We use four small cookies, each needed for the site to work:",
     "oss_c keeps you signed in to your account, for up to 30 days. You only get it if you sign in.",
     "oss-ask holds a single yes or no: whether the shop pages should still ask how you want your order, so they open the right way. It holds no answer, postal code, address or name, and lasts a year.",
     "oss_admin is for shop staff only. It keeps them signed in to the back office for up to 12 hours.",
+    "oss_dev is for shop staff only. It marks a shop phone or computer that has signed in to the back office before, for up to 400 days, so a stranger's wrong guesses never lock staff out. It holds a random number, no name.",
     "Your browser also keeps a few things on your device: your cart, the postal code you entered, how you want your order (pickup, delivery or shipping), your order note, where your first visit came from, and a few settings for how the site behaves, like a note you closed or an animation you have already seen. They are sent to us only when you use them: the postal code when you check delivery, the rest when you place an order. While you check out, what you typed, and then your order's details for its confirmation page, are kept until you close the tab, so they are still there if you come back from the payment page. You can clear all of this in your browser's settings. The shop still works, but your cart will be empty.",
     "Like any web host, Cloudflare, which runs this site, sees your internet address and the pages you ask for, to deliver them and protect the site from attacks.",
   ]],
@@ -1236,7 +1251,7 @@ const viewTerms = () => doc("Terms of sale", "The plain rules for buying from us
   ...(PICKUP_ONLY ? [["For now", ["Online orders are picked up at 760 Wyandotte St E and paid at the counter. Local delivery and shipping open once we take card payment online; the rules for them are below."]]] : []),
   ["Shipping", ["We ship within Canada, except to Quebec for now: the site is in English only, and we will ship there once it is also in French. Anyone can pick up in Windsor. The price at checkout is the price you pay for shipping. Delivery times are the carrier's estimates. Cologne ships by ground only."]],
   ["Local delivery", ["We deliver within 25 km by road of our Windsor shop: $10 up to 10 km and $15 from there to 25 km, per order, plus tax. Orders with $200 or more in items before tax deliver free. Arrival times are estimates. Local delivery is paid online when you order."]],
-  ["Pickup", ["Pickup at 760 Wyandotte St E, Windsor, ON N9A 3J4 is free. We email you when the order is ready and hold it for 14 days."]],
+  ["Pickup", ["Pickup at 760 Wyandotte St E, Windsor, ON N9A 3J4 is free. An order you pay for at the counter is a request: we check the shelf and email you when it is ready, and nothing is set aside before that email, so please wait for it before you come in. From then we hold it for 14 days."]],
   ["Charcoal", [`Charcoal is sold for pickup${PICKUP_ONLY ? "" : " or local delivery"} only. It is not shipped by Canada Post or any other carrier.`]],
   ["Returns", ["All sales are final, except faulty, wrong, damaged or undelivered items. We do not take back an item because you changed your mind."]],
   ["Faulty, wrong or damaged", ["If an item is faulty, is not what you ordered, or arrives broken, call 519-255-2222 or bring it to 760 Wyandotte St E and talk to the store manager. We will repair it, replace it or refund it. Nothing here takes away your rights under Ontario's Consumer Protection Act."]],

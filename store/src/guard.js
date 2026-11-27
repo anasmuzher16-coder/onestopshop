@@ -4,8 +4,9 @@
 //    counts as one visitor per /56, and a shop-wide lock counts how many different places tried by /48.
 //    Only a keyed hash of that is ever stored, never the address.
 //  - Placing an order: per visitor and per email, a cap on orders in 10 minutes and in a day, and on orders still holding
-//    stock unpaid; per order, caps on lines and units that a real counter order never reaches (lower for an unpaid pickup);
-//    per item, a ceiling on how much of it unpaid pickups may hold together. The shop-wide brake in checkout.js is set for a
+//    open unpaid; per order, caps on lines and units that a real counter order never reaches (lower for an unpaid pickup).
+//    An unpaid pickup holds no stock until the shop confirms it (2026-11-27), so these limits now guard staff time and
+//    inboxes, not the shelf. The shop-wide brake in checkout.js is set for a
 //    real flood (SHOP_BRAKE_PER_MIN), far above what one person's few networks can place, and never stops a signed-in shopper.
 const sha = async s => [...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)))].map(b => b.toString(16).padStart(2, "0")).join("");
 
@@ -24,6 +25,10 @@ export function sourceBlock(raw, bits = 56) {
   return n.map(g => g.toString(16)).join(":") + "::/" + bits;
 }
 export const sourceOf = (request, bits = 56) => sourceBlock(request.headers.get("CF-Connecting-IP"), bits);
+// The one keyed hash for anything that would otherwise store who someone is (an address, an email): SHA-256 over the label, a Worker
+// secret (PIN_PEPPER, falling back to ADMIN_KEY) and the value, so a copy of the tables alone cannot be turned back by trying every
+// IPv4 address or a list of emails. Used for orders, customer sign-in codes, staff sign-in and the questionnaire (2026-11-27).
+export const keyedHash = (env, label, value) => sha(`${label}|${env.PIN_PEPPER || env.ADMIN_KEY || ""}|${value}`);
 
 // ---------- the name on an order ----------
 // It goes into "Thank you, {name}" in mail sent from the shop to whatever address was typed, so it must never be able to
@@ -41,16 +46,12 @@ export const ORDER_CAPS = { lines: 20, perLine: 20, units: 40 };   // perLine ma
 // item or 15 in all is past any counter order seen. A paid (card) order keeps ORDER_CAPS. The cart stops at 5 of an item while
 // card payment is off (public/app.js), so a shopper meets this number in the cart, not at the last step.
 export const PICKUP_CAPS = { lines: 15, perLine: 5, units: 15 };
-// All unpaid pickup orders together hold at most this share of an item's units (on the shelf plus already held), and always at
-// least 1, so a handful of addresses can never empty an item: the rest stays buyable. More is a phone call.
-// HOLD_DIV 2: half. checkout.js repeats it inside the stock statement as "/ 2" (SQLite integer division), so change both together.
-export const HOLD_DIV = 2;
-export const holdMax = units => Math.max(1, Math.floor(units / HOLD_DIV));
-// How many of each item unpaid pickup orders hold now (excluding one order, when given). One fragment, used for the check before
-// an order is written and, the same, inside the statement that takes the stock, so simultaneous orders cannot pass it together.
-// Only orders that have really taken their stock count (a 'sale' move): an order still on its way through checkout, or one written
-// but never stocked, holds nothing yet, so it never makes the ceiling stricter for a real shopper (breaker, 2026-11-27).
-export const HELD_SQL = (sku, notOrder) => `(SELECT COALESCE(SUM(hi.qty),0) FROM order_items hi JOIN orders ho ON ho.id = hi.order_id WHERE hi.sku = ${sku} AND ho.id != ${notOrder} AND ho.pay_status = 'pay_at_pickup' AND ho.status IN ('pending','ready') AND ho.release_op IS NULL AND EXISTS (SELECT 1 FROM stock_moves hm WHERE hm.ref = ho.id AND hm.sku = hi.sku AND hm.reason = 'sale'))`;
+// A pay-at-the-counter pickup RESERVES NOTHING when it is placed (2026-11-27, owner-vetoable, DECISIONS.md): it is a request the
+// shop confirms. Stock is taken only when staff mark it ready (src/admin.js takeForReady), checked there in one transaction, so
+// no number of requests can make an item unorderable for anyone else. The old "at most half an item" ceiling is gone.
+// Whether an order has really taken stock: its own 'sale' moves less its put-backs, per item. One fragment, used wherever
+// a put-back must give back exactly what was taken (cancel, expiry), never what the order merely asked for.
+export const TAKEN_SQL = (ref) => `(SELECT sku, -SUM(delta) AS qty FROM stock_moves WHERE ref = ${ref} AND reason IN ('sale','released') GROUP BY sku HAVING -SUM(delta) > 0)`;
 // The shop-wide brake: a real flood only. Per-visitor caps (below) bound one network to 3 unpaid orders at once (6 for an IPv6
 // /48) and 5 orders in 10 minutes, so reaching 60 orders in one minute takes 20 or more separate networks at once. A shopper
 // signed in with the order's own email has proven the inbox is theirs and is never braked. (breaker, 2026-11-27: at 12 a minute,
@@ -76,16 +77,18 @@ export const READY_HOLD_DAYS = 14;
 // A phone number: digits with the usual separators, and an extension. Never letters, so never a link.
 export const phoneOk = s => typeof s === "string" && s.length <= 30 && /^\+?[\d\s().\-]{7,24}(?:\s*(?:x|ext\.?)\s*\d{1,6})?$/i.test(s) && s.replace(/\D/g, "").length >= 7 && !/^\d{1,3}(?:\.\d{1,3}){3}/.test(s.trim());
 export const ORDER_LIMITS = { per10min: 5, perDay: 15, openHolds: 3 };
-// How long an unpaid pay-at-the-counter order holds its stock (owner-vetoable, inventory-2026-11-23/DECISIONS.md beside the repo): PICKUP_HOLD_HOURS, 1 to 336, default 48.
-export const pickupHoldHours = env => { const n = Number(env.PICKUP_HOLD_HOURS); return Number.isInteger(n) && n >= 1 && n <= 336 ? n : 48; };
+// How long a pickup request waits for the shop to confirm it (owner-vetoable, inventory-2026-11-23/DECISIONS.md beside the repo):
+// PICKUP_REQUEST_HOURS, 1 to 720, default 168 (7 days). Past it, a request never confirmed cancels itself; it held nothing, so no
+// stock moves. Once the shop marks it ready it is held READY_HOLD_DAYS from then, as the ready email says.
+export const pickupRequestHours = env => { const n = Number(env.PICKUP_REQUEST_HOURS); return Number.isInteger(n) && n >= 1 && n <= 720 ? n : 168; };
 // The visitor's key for the order_attempts table: a hash keyed with a Worker secret, so the table alone cannot be turned back into addresses.
 // bits 48: the wider IPv6 block (one tunnel or one site), for a second, looser count, so one /48 cannot act as 256 visitors.
 export const orderWho = async (env, request, bits = 56) => (bits === 56 ? "o:" : "g:") + await sha(`order|${env.PIN_PEPPER || env.ADMIN_KEY || ""}|${sourceOf(request, bits)}`);
 // A whole /48 at most 10 orders in 10 minutes, 30 a day and 6 held at once: below the shop-wide brake, and room for a family or an office.
 export const GROUP_LIMITS = { per10min: 10, perDay: 30, openHolds: 6 };
 
-// Still holding stock unpaid: a counter order not paid yet (also once the shop has got it ready) and, for a visitor, a card
-// page not paid yet. An email's count leaves card pages out: they let their stock go by themselves within 35 minutes.
+// Still open unpaid: a counter order not paid yet (a request waiting for the shop, or one the shop got ready) and, for a
+// visitor, a card page not paid yet. Requests hold no stock, but each one is staff time and an email, so they still count. An email's count leaves card pages out: they let their stock go by themselves within 35 minutes.
 const OPEN = "o.release_op IS NULL AND o.pay_status = 'pay_at_pickup' AND o.status IN ('pending','ready')";
 const OPEN_VISITOR = "o.release_op IS NULL AND ((o.pay_status = 'pay_at_pickup' AND o.status IN ('pending','ready')) OR (o.pay_status = 'awaiting' AND o.status = 'pending'))";
 // One read: how many orders this visitor and this email placed lately, and how many of each still hold stock unpaid.

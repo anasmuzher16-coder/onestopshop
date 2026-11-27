@@ -46,6 +46,9 @@ ok(/Pickup at the counter/.test(sa.html) && /To pay at pickup/.test(sa.html), "i
 ok(sa.text.includes("Mail O'Tester") && sa.text.includes(who.phone) && sa.text.includes(who.email), "the plain text names the customer as typed, with phone and email");
 ok(sa.reply_to === who.email && custA[0]?.reply_to === SHOP, "a reply to the note reaches the customer; a reply to the receipt reaches the shop inbox");
 ok(!/\bID\b|\bage\b|19\+/i.test((custA[0]?.text || "")), "the customer's receipt says nothing about ID or age");
+// a counter pickup is a request until the shop marks it ready (2026-11-27): the receipt says so plainly, the note says to confirm
+ok(/order request/.test(custA[0]?.text || "") && /wait for that email before you come in/.test(custA[0]?.text || "") && !/We hold it/.test(custA[0]?.text || ""), "the receipt says the shop confirms it is ready before they come in, and promises no hold");
+ok(/to confirm/.test(sa.subject) && /To confirm/.test(sa.text) && /mark it ready/.test(sa.text), "the shop's note shows it as to confirm: " + sa.subject);
 const em = (await admin("/orders/" + A.id)).data.emails;
 ok(em.filter(e => e.kind === "new_order").length === 1 && em.filter(e => ["new_order", "order_placed"].includes(e.kind)).every(e => e.status === "sent"), "the back office shows both as sent");
 const keys = (await mail()).calls.map(c => c.key);

@@ -40,7 +40,8 @@ if (!CARD) {
   ok((await stockOf("OSS-2001")) === s2001 && (await stockOf(coalSku)) === c0, "no keys: refused orders hold no stock");
   const pu = await post({ ...who, ...at, method: "pickup", lines: [{ sku: "OSS-8004", qty: 2 }, { sku: "OSS-2001", qty: 1 }] });
   ok(pu.status === 201 && pu.data.order.shipping_cents === 0 && pu.data.order.tax_cents === Math.round(pu.data.order.subtotal_cents * 0.13) && pu.data.order.subtotal_cents === 2 * (await (await fetch(B + "/api/catalog")).json()).products.find(p => p.sku === "OSS-8004").price_cents + 30900, "no keys: a pickup paid at the counter is free, Ontario tax, the database's prices: " + pu.status + " " + (pu.data.error || JSON.stringify(pu.data.order?.subtotal_cents)));
-  ok(pu.status === 201 && (await stockOf("OSS-2001")) === s2001 - 1, "no keys: the counter order holds its stock");
+  // rewritten 2026-11-27: a counter pickup is a request; it takes no stock until the shop marks it ready (checked below)
+  ok(pu.status === 201 && pu.data.order.request === true && (await stockOf("OSS-2001")) === s2001, "no keys: the counter order is a request and takes no stock when placed");
   ok((await post({ ...who, ...at, method: "pickup", lines: [] })).status === 400, "empty cart refused");
   ok((await post({ ...who, ...at, method: "pickup", lines: [{ sku: "NOPE", qty: 1 }] })).status === 409, "unknown item refused");
   ok((await post({ ...who, ...at, method: "pickup", lines: [{ sku: "OSS-8004", qty: -2 }] })).status === 400, "negative quantity refused");
@@ -50,9 +51,13 @@ if (!CARD) {
   ok((await post({ ...who, ...at, method: "pickup", lines: [{ sku: "OSS-7008", qty: 1 }] })).status === 409, "sold-out item refused");
   ok((await post({ ...who, ...at, method: "ship", service: "cp-exp", ...to, lines: [{ sku: "OSS-8004", qty: 1 }] })).status === 400, "paying at the counter is for pickup only");
   ok((await fetch(B + "/api/orders")).status === 405, "orders cannot be listed by the public");
-  const last = await stockOf("OSS-7006"), race = await Promise.all([1, 2, 3].map(() => post({ ...who, ...at, method: "pickup", lines: [{ sku: "OSS-7006", qty: last }] })));
-  ok(race.filter(r => r.status === 201).length === 1 && (await stockOf("OSS-7006")) === 0, `three shoppers after the last ${last}: exactly one gets it (${race.map(r => r.status).join(",")})`);
+  // three shoppers after the last ones: each request is taken (none blocks another); when the shop marks them ready at the same
+  // moment, exactly one gets the stock and the other two are reported short, never oversold (rewritten 2026-11-27 for requests)
   const login = await fetch(B + "/api/admin/login", { method: "POST", headers: { "Content-Type": "application/json", "X-OSS-Admin": "1" }, body: JSON.stringify({ passcode: KEY }) }), cookie = (login.headers.get("set-cookie") || "").split(";")[0];
+  const last = await stockOf("OSS-7006"), race = await Promise.all([1, 2, 3].map((_, i) => post({ ...who, email: `last${i}-${Date.now()}@example.com`, ...at, method: "pickup", lines: [{ sku: "OSS-7006", qty: last }] })));
+  ok(race.every(r => r.status === 201) && (await stockOf("OSS-7006")) === last, `three shoppers after the last ${last}: all three requests are taken, nothing held (${race.map(r => r.status).join(",")})`);
+  const readies = await Promise.all(race.map(r => fetch(`${B}/api/admin/orders/${r.data.order.id}/status`, { method: "POST", headers: { "Content-Type": "application/json", "X-OSS-Admin": "1", Cookie: cookie }, body: JSON.stringify({ status: "ready" }) }).then(async x => ({ status: x.status, data: await x.json().catch(() => ({})) }))));
+  ok(readies.filter(r => r.status === 200).length === 1 && readies.filter(r => r.status === 409 && r.data.shortfall).length === 2 && (await stockOf("OSS-7006")) === 0, `marked ready at once, exactly one gets the last ${last}, two are reported short (${readies.map(r => r.status).join(",")})`);
   const orders = (await (await fetch(B + "/api/admin/orders", { headers: { Cookie: cookie } })).json()).orders;
   ok(pu.status === 201 && orders.some(o => o.id === pu.data.order.id && o.pay_status === "pay_at_pickup"), "the back office has the counter order, to be paid at pickup");
   const cat = await (await fetch(B + "/api/catalog")).json(), coal = cat.products.filter(p => p.category_id === "charcoal" && JSON.parse(p.details).charcoal === true);
