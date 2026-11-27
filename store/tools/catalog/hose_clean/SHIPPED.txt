@@ -1,0 +1,7 @@
+Wall cleared through the bag (owner 2026-11-27), shipped after a design review rated each clearly better:
+  matte.py defaults:            IMG_0543 IMG_0549 IMG_0552 IMG_0553 IMG_0555 IMG_0558 IMG_0561 IMG_0566
+  clean-cfg.json (card ink):    IMG_0572 (Alwan cards) IMG_0575 IMG_0576 IMG_0578 (Platinum navy card)
+Kept as shipped: white or whitish product eaten by the wall test (IMG_0545 white Simba hose, IMG_0557 white Zanobia hose,
+IMG_0568 Sager white header), or no clear gain (0544 0547 0548 0550 0551 0556 0559 0560 0562 0563 0564 0565 0569 0571 0577 0579).
+Paths in the scripts point at the session scratchpad where the photos were; the shop photos stay outside the repo.
+Run: CLEAN_TAG=-f with clean-cfg-f.json for the four card photos, plain for the rest; then photos_hoses.py MASTERS_DIR.
