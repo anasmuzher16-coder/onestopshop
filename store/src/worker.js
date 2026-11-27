@@ -29,7 +29,7 @@ function describe(path, cat, site) {
   // the home line follows the hero (owner, 2026-11-26): shipping is promised only once something that can ship is on sale
   const ships = cat.products.some(p => sellable(p) && p.stock > 0 && !counterRow(p) && !counterPayRow(p));
   const base = ships ? { title: `${site} | Hookahs and accessories, Windsor, shipped across Canada`, desc: "Hookahs, charcoal, shisha and foil from our Windsor counter. Pickup, local delivery, and shipping across Canada except Quebec, for now.", index: true }
-    : { title: `${site} | Hookahs and accessories, Windsor`, desc: "Hookahs, charcoal, shisha and foil from our Windsor counter. Pickup in Windsor and local delivery from $10. Shipping across Canada once prices are in.", index: true };
+    : { title: `${site} | Hookahs and accessories, Windsor`, desc: "Hookahs, charcoal, shisha and foil from our Windsor counter. Free pickup in Windsor, or local delivery near Windsor from $10.", index: true };   // the home page's own line (public/app.js SAY.local)
   if (!a) return base;
   if (extra) return null;
   if (a === "shop") {

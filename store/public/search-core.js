@@ -42,7 +42,7 @@ export const PAGES = [
   { words: ["address", "where", "direction", "location", "map", "visit"], label: "Visit the counter", sub: "760 Wyandotte St E, Windsor", href: "/#visit-h" },
   { words: ["delivery", "deliver", "local", "driver"], label: "Local delivery", sub: "From $10 near Windsor", href: "/shipping" },
   { words: ["pickup", "pick", "collect"], label: "Pickup", sub: "Free at the counter, same day", href: "/shipping" },
-  { words: ["ship", "shipping", "post", "canada post", "mail"], label: "Shipping across Canada", sub: "Everywhere but Quebec for now. How we pack and what it costs", href: "/shipping" },
+  { words: ["ship", "shipping", "post", "canada post", "mail"], label: "Shipping across Canada", sub: "Everywhere but Quebec for now. How we pack and what it costs", href: "/shipping" },
   { words: ["return", "refund", "exchange", "broken"], label: "Returns and broken items", sub: "Shipping and returns", href: "/shipping" },
   { words: ["term", "condition"], label: "Terms of sale", sub: "", href: "/terms" },
   { words: ["privacy"], label: "Privacy", sub: "", href: "/privacy" },

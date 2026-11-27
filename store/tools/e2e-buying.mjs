@@ -31,7 +31,8 @@ try {
     t("C2 a shisha + charcoal cart is one pickup story", /Pickup only, paid in the shop/.test(m) && /this order is a pickup/.test(m) && !/Choose local delivery|ship the rest|Leave the charcoal out/.test(m) && await p.locator(".pickline").count() === 1 && !(await p.locator('input[name="ship"]').count()), m.slice(0, 600));
     await go(p, "/p/OSS-100024"); m = await main(p);
     const tbds = await p.locator("#main .spec .tbd").count();
-    t("C3 an unpriced hookah names its unknowns once, in one row", tbds === 1 && /Still to come/.test(m) && /Price TBD|PRICE TBD/i.test(m), "spec TBDs " + tbds);
+    // design review 2026-11-26: the shopper sees "Price TBD" and the facts the shop has given; the list of details still to come is the shop's, not shown
+    t("C3 an unpriced hookah says Price TBD and lists no pending details", tbds === 0 && !/Still to come/.test(m) && /Price TBD|PRICE TBD/i.test(m) && /Colours/.test(m), "spec TBDs " + tbds);
     t("C3 the colour line names the colour without its own TBD", !(await p.locator(".swatches__n .tbd").count()));
     t("C3 one Ask the counter on a phone", (await p.locator('a:visible:has-text("Ask the counter")').count()) === 1);
     // a section that never ships does not ask how to send it (design review, 2026-11-26)
@@ -61,7 +62,7 @@ try {
   { // 2 and 3 stock limits; a sold-out flavour cannot be bought from any saved cart (the sample Resin Bishop was retired 2026-11-24)
     const { c, p } = await open({ cart: [{ sku: "OSS-9616", qty: 2 }, { sku: "OSS-8004", qty: 1 }, { sku: "OSS-7008", qty: 1 }, { sku: "OSS-7006", qty: 5 }], postal: "M5V 2T6" });
     await go(p, "/cart"); const body = await main(p), saved = await cart(p);
-    t("3 a saved sold-out flavour is taken out", !saved.some(l => l.sku === "OSS-9616") && !/English Master, 250 g\s*\n\s*OSS/.test(body), JSON.stringify(saved));
+    t("3 a saved sold-out flavour is taken out", !saved.some(l => l.sku === "OSS-9616") && !/English Master, 250\sg\s*\n\s*OSS/.test(body), JSON.stringify(saved));
     t("3 the cart says the flavour has sold", /English Master, 250 g has sold/.test(await p.locator("[data-cart-news]").innerText()));
     t("2 a sold-out line is taken out", !saved.some(l => l.sku === "OSS-7008"));
     const one = saved.find(l => l.sku === "OSS-7006");
