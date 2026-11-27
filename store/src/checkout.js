@@ -8,7 +8,7 @@
 //    which takes the stock in one transaction (src/admin.js); the customer is told to wait for that email before coming in.
 import * as rates from "../public/rates-core.js";
 import { loadCatalog, toStorefront, isCharcoal } from "./catalog.js";
-import { deliveryQuote } from "./delivery.js";
+import { deliveryQuote, deliveryGate } from "./delivery.js";
 import { cardReady, openCheckout, releaseHeld, receipt, HOLD_MIN, LATE_SESSION_MS } from "./pay.js";
 import { customerFrom } from "./account.js";
 import { orderLoyalty, orderLoyaltyStatements } from "./loyalty.js";
@@ -169,7 +169,7 @@ export async function placeOrder(request, env, url) {
     if (!city) return json({ error: "Enter the city or town.", field: "city" }, 400);
     if (body.service === "local") {   // the fee comes only from the road distance worked out here
       if (!phone || String(phone).replace(/\D/g, "").length < 10) return json({ error: "Enter a phone number so the driver can reach you.", field: "phone" }, 400);
-      const d = await deliveryQuote(env, { line1, city, postal: dest.full }, request.headers.get("CF-Connecting-IP") || "local");
+      const d = await deliveryQuote(env, { line1, city, postal: dest.full }, request.headers.get("CF-Connecting-IP") || "local", await deliveryGate(env, request));   // the same per-visitor lookup count as the delivery check
       const other = lines.some(l => l.product.ship === "pickup_only" || isCharcoal(l.product)) ? "You can still pick it up free." : "You can still ship it or pick it up free.";
       if (d.status !== "ok") return json({ error: d.status === "far" ? `${dest.full} is past our 25 km delivery area. ${other}` : d.status === "down" ? `Delivery cannot be checked right now. ${other}` : "We could not confirm that address. Check the street number and postal code.", field: "line1", delivery: d.status }, 409);
       const due = rates.localDue(d.fee_cents, subtotal);   // $200.00 of items before tax delivers free

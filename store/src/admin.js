@@ -31,7 +31,7 @@ export async function signedIn(request, env) {
 const LOCKED = "Too many wrong tries. Wait 15 minutes and try again.";
 const NAME_DAY_CAP = 20;   // wrong tries on one staff name in a day from unfamiliar devices and places (docs/BACKEND-NOTES.md)
 const NAME_LOCKED = "Too many wrong tries for this name today. Sign in from a phone or computer that has signed in here before, or ask the owner.";
-const DEVICE_WRONG_CAP = 10;   // wrong tries in a day after which a familiar device is treated as unfamiliar
+const DEVICE_WRONG_CAP = 10, PLACE_WRONG_CAP = 10;   // wrong tries in a day after which a familiar device is treated as unfamiliar
 // The known-device cookie (2026-11-27): a random id and an HMAC of it keyed with the Worker secret, set at every correct sign-in and
 // recorded then (login_attempts, who = "d:" + keyed hash, ok = 1, staff_id). It counts as familiar only while that record is under
 // 400 days old and the person who signed in there is still on the staff list (or it was the owner). It never signs anyone in.
@@ -117,10 +117,13 @@ export async function admin(request, env, url) {
     //    puts the expected time to guess one PIN at about 68 years. Only names on the staff list count against a name: a name that
     //    does not exist is counted under its own separate key with the same rules (so the answers never show who works here), and
     //    a staff member added later starts clean, so a common first name cannot be locked in advance.
-    //  - familiar devices and places are not held by the name's count at all: a phone or computer that signed in correctly before
-    //    (a signed oss_dev cookie, recorded at that sign-in, while the person who signed in there is still on the staff list), or
-    //    an address that signed in correctly in the last 30 days. A familiar device with 10 wrong tries in a day loses that pass.
-    //    So a stranger hammering a name never locks the real person out at their own phone or the counter.
+    //  - familiar devices and places are not held by the name's count: a phone or computer where THIS person signed in correctly
+    //    before (a signed oss_dev cookie, recorded at that sign-in with their staff id, while they are still on the staff list; for
+    //    the owner, a device the owner signed in on), or an address where someone still on the staff list (or the owner) signed in
+    //    correctly in the last 30 days. Each has its own ceiling: 10 wrong tries in a day from that device, or from that address,
+    //    and it is treated as unfamiliar for the rest of the day. So a stranger hammering a name never locks the real person out at
+    //    their own phone or the counter, and neither a device nor a place is a way round the day's ceiling (breaker, 2026-11-27).
+    //    Not covered: anyone sharing the counter's public address can still use up that address's 5 tries in 15 minutes.
     //  - the owner's passcode: no shop-wide lock. Past 20 wrong tries shop-wide, each try from an unfamiliar device and place is
     //    slowed (doubling, up to 8 s). The passcode (ADMIN_KEY) must be long and random.
     // Addresses, names and devices are stored only as keyed hashes (src/guard.js keyedHash). Signed-in sessions are never touched.
@@ -128,24 +131,28 @@ export async function admin(request, env, url) {
     const nameKey = (staff ? "n:" : "u:") + await keyedHash(env, "name", (name || String(body.name || "")).toLowerCase());
     const who = await keyedHash(env, "who", sourceOf(request)), side = (staffLogin ? "s:" : "p:") + await keyedHash(env, "from", sourceOf(request, 48));   // the /48, its own count
     const dev = await deviceFrom(request, env), devKey = dev ? "d:" + await keyedHash(env, "dev", dev) : null, devWrong = dev ? "e:" + await keyedHash(env, "dev", dev) : null;
-    const count = () => db.prepare(`SELECT COALESCE(SUM(ok = 0 AND who = ?1 AND at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-15 minutes')),0) AS mine, COALESCE(SUM(ok = 0 AND who = ?2),0) AS name_day,
+    const count = () => db.prepare(`SELECT COALESCE(SUM(ok = 0 AND who = ?1 AND at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-15 minutes')),0) AS mine, COALESCE(SUM(ok = 0 AND who = ?1),0) AS mine_day, COALESCE(SUM(ok = 0 AND who = ?2),0) AS name_day,
       COALESCE(SUM(ok = 0 AND who = ?3 AND at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-15 minutes')),0) AS place, COALESCE(SUM(ok = 0 AND who = ?4),0) AS dev_wrong,
       COALESCE(SUM(ok = 0 AND who LIKE 'p:%' AND at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-15 minutes')),0) AS owner_all FROM login_attempts WHERE at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 day') AND ok = 0`).bind(who, nameKey, side, devWrong || "-").first();
-    const [placeKnown, devKnown] = await db.batch([db.prepare("SELECT 1 AS x FROM login_attempts WHERE who = ? AND ok = 1 AND at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-30 days') LIMIT 1").bind(who),
-      db.prepare("SELECT 1 AS x FROM login_attempts a LEFT JOIN staff st ON st.id = a.staff_id WHERE a.who = ? AND a.ok = 1 AND a.at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-400 days') AND (a.staff_id IS NULL OR st.active = 1) LIMIT 1").bind(devKey || "-")]);
+    // a place: someone still on the staff list (or the owner) signed in there; a device: this very person (or, for the passcode, the owner)
+    const [placeKnown, devKnown] = await db.batch([db.prepare("SELECT 1 AS x FROM login_attempts a LEFT JOIN staff st ON st.id = a.staff_id WHERE a.who = ? AND a.ok = 1 AND a.at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-30 days') AND (a.staff_id IS NULL OR st.active = 1) LIMIT 1").bind(who),
+      db.prepare("SELECT 1 AS x FROM login_attempts a LEFT JOIN staff st ON st.id = a.staff_id WHERE a.who = ?1 AND a.ok = 1 AND a.at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-400 days') AND ((?2 = 0 AND a.staff_id IS NULL) OR (?2 = 1 AND a.staff_id = ?3 AND st.active = 1)) LIMIT 1").bind(devKey || "-", staffLogin ? 1 : 0, staff ? staff.id : -1)]);
     let tries = await count();
-    const familiar = t => placeKnown.results.length > 0 || (devKnown.results.length > 0 && t.dev_wrong < DEVICE_WRONG_CAP);
+    const familiar = t => (placeKnown.results.length > 0 && t.mine_day < PLACE_WRONG_CAP) || (devKnown.results.length > 0 && t.dev_wrong < DEVICE_WRONG_CAP);
     const locked = t => t.mine > 5 || t.place > 5 || (staffLogin && !familiar(t) && t.name_day >= NAME_DAY_CAP);
     const lockWords = t => t.mine > 5 || t.place > 5 ? LOCKED : NAME_LOCKED;
     if (locked(tries)) { log("login_locked", { staff: staffLogin }); return json({ error: lockWords(tries) }, 429); }
+    // the device's own wrong-try row is written with the others, before the PIN is checked (and taken back on success), so tries
+    // at the same moment from many addresses are counted in full against the device's ceiling
     const mark = await db.batch([db.prepare("INSERT INTO login_attempts (who, ok) VALUES (?, 0)").bind(who), db.prepare("INSERT INTO login_attempts (who, ok) VALUES (?, 0)").bind(side),
-      db.prepare("DELETE FROM login_attempts WHERE ok = 0 AND at < strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 day')")]);
-    tries = await count();
+      db.prepare("DELETE FROM login_attempts WHERE ok = 0 AND at < strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 day')"), db.prepare("INSERT INTO login_attempts (who, ok) VALUES (?, 0)").bind(devWrong || "e:none")]);
+    const own = t => ({ ...t, mine_day: t.mine_day - 1, dev_wrong: t.dev_wrong - (devWrong ? 1 : 0) });   // from here this try's own rows are in the count
+    tries = own(await count());
     if (locked(tries)) { log("login_locked", { staff: staffLogin }); return json({ error: lockWords(tries) }, 429); }
     // the name's own row only once this address is through its own limit, so one address's burst cannot use up a name; a familiar
     // device or place writes none, so the real person signing in from their own phone never adds to a stranger's count
     let nameRow = null;
-    if (staffLogin && !familiar(tries)) { nameRow = await db.prepare("INSERT INTO login_attempts (who, ok) VALUES (?, 0)").bind(nameKey).run(); tries = await count(); if (locked({ ...tries, name_day: tries.name_day - 1 })) { log("login_locked", { staff: true }); return json({ error: NAME_LOCKED }, 429); } }
+    if (staffLogin && !familiar(tries)) { nameRow = await db.prepare("INSERT INTO login_attempts (who, ok) VALUES (?, 0)").bind(nameKey).run(); tries = own(await count()); if (locked({ ...tries, name_day: tries.name_day - 1 })) { log("login_locked", { staff: true }); return json({ error: NAME_LOCKED }, 429); } }
     const slow = familiar(tries) ? 0 : staffLogin ? (tries.name_day > 3 ? Math.min(8000, 500 * 2 ** (tries.name_day - 4)) : 0) : (tries.owner_all > 20 ? Math.min(8000, 250 * 2 ** Math.floor((tries.owner_all - 21) / 10)) : 0);
     if (slow) await new Promise(r => setTimeout(r, slow));
     if (!staffLogin && env.LIVE === "1" && String(env.ADMIN_KEY).length < 16) console.error(JSON.stringify({ at: "admin", problem: "ADMIN_KEY is shorter than 16 characters: set a long random passcode (docs/BACKEND-NOTES.md)" }));
@@ -153,14 +160,15 @@ export async function admin(request, env, url) {
     if (staffLogin) right = await checkPin(env, typeof body.pin === "string" ? body.pin : "", staff && staff.pin_hash) && !!staff;   // the same work whether or not the name exists
     else right = typeof body.passcode === "string" && await sameSecret(body.passcode, env.ADMIN_KEY);
     if (!right) {
-      if (staff) await db.prepare("UPDATE login_attempts SET staff_id = ? WHERE id = ?").bind(staff.id, mark[0].meta.last_row_id).run();
-      if (devWrong) await db.prepare("INSERT INTO login_attempts (who, ok) VALUES (?, 0)").bind(devWrong).run();   // a familiar device's own wrong tries, so its pass has a ceiling
+      // the same write whether or not the name exists, so the answer's timing does not show who works here
+      await db.prepare("UPDATE login_attempts SET staff_id = ? WHERE id = ?").bind(staff ? staff.id : null, mark[0].meta.last_row_id).run();
       log("login_failed", { staff: staffLogin }); return json({ error: staffLogin ? "That name and PIN do not match." : "That passcode is not right." }, 401);
     }
     if (!staffLogin) staff = null;
     const device = dev || hex(crypto.getRandomValues(new Uint8Array(16))), deviceKey = "d:" + await keyedHash(env, "dev", device);
-    await db.batch([db.prepare("UPDATE login_attempts SET ok = 1, staff_id = ? WHERE id = ?").bind(staff ? staff.id : null, mark[0].meta.last_row_id), db.prepare("DELETE FROM login_attempts WHERE id = ?").bind(mark[1].meta.last_row_id), ...(nameRow ? [db.prepare("DELETE FROM login_attempts WHERE id = ?").bind(nameRow.meta.last_row_id)] : []),
-      db.prepare("INSERT INTO login_attempts (who, ok, staff_id) VALUES (?, 1, ?)").bind(deviceKey, staff ? staff.id : null)]);   // this device is now familiar (src: deviceFrom)
+    await db.batch([db.prepare("UPDATE login_attempts SET ok = 1, staff_id = ? WHERE id = ?").bind(staff ? staff.id : null, mark[0].meta.last_row_id), db.prepare("DELETE FROM login_attempts WHERE id IN (?, ?)").bind(mark[1].meta.last_row_id, mark[3].meta.last_row_id), ...(nameRow ? [db.prepare("DELETE FROM login_attempts WHERE id = ?").bind(nameRow.meta.last_row_id)] : []),
+      // this device is now familiar for this person (deviceFrom); one row per device and person a day, so rows do not pile up
+      db.prepare("INSERT INTO login_attempts (who, ok, staff_id) SELECT ?1, 1, ?2 WHERE NOT EXISTS (SELECT 1 FROM login_attempts WHERE who = ?1 AND ok = 1 AND staff_id IS ?2 AND at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 day'))").bind(deviceKey, staff ? staff.id : null)]);
     const actor = staff ? `${staff.name} #${staff.id}` : "owner", t = hex(crypto.getRandomValues(new Uint8Array(32)));
     await db.batch([
       db.prepare(`INSERT INTO sessions (token_hash, expires_at, actor, staff_id, last_seen) VALUES (?, strftime('%Y-%m-%dT%H:%M:%SZ','now','+12 hours'), ?, ?, ${NOW})`).bind(await sha(t), actor, staff ? staff.id : null),

@@ -211,12 +211,12 @@ else {
   const plusD = await from(shopper(), counter(dom, "OSS-8004"));
   ok(plusA.every(r => r.status === 201) && plusD.status === 429, "+tags on any mail service count as one inbox: " + plusA.map(r => r.status) + "," + plusD.status);
 
-  // a request waits 7 days for the shop to confirm it, holding nothing; the receipt never promises a hold (2026-11-27)
+  // a request waits 3 days for the shop to confirm it, holding nothing; the receipt never promises a hold (2026-11-27)
   const stock = async sku => (await (await fetch(B + "/api/catalog")).json()).products.find(p => p.sku === sku)?.stock;
   const before = await stock("OSS-8001"), hold = await from(shopper(), counter(`hold-${run}@example.com`, "OSS-8001"));
   ok(hold.status === 201 && (await stock("OSS-8001")) === before, "the counter request takes no stock: " + hold.status);
   const row = sql(`SELECT CAST((julianday(pay_expires_at) - julianday(created_at)) * 24 + 0.5 AS INTEGER) AS h FROM orders WHERE id = '${hold.data.order.id}'`)[0];
-  ok(row && row.h === 168, "the request stays open 7 days for the shop to confirm: " + JSON.stringify(row));
+  ok(row && row.h === 72, "the request stays open 3 days for the shop to confirm: " + JSON.stringify(row));
   const mails = sql(`SELECT kind, subject, body FROM emails WHERE order_id = '${hold.data.order.id}'`), rcpt = mails.find(m => m.kind === "order_placed"), note = mails.find(m => m.kind === "new_order");
   ok(rcpt && /order request/.test(rcpt.body) && /wait for that email before you come in/.test(rcpt.body) && /nothing is set aside for you until then/.test(rcpt.body) && !/We hold it/.test(rcpt.body), "the receipt says plainly the shop confirms it is ready before they come in, and promises no hold");
   ok(note && /To confirm/.test(note.body) && /nothing is held yet/.test(note.body) && /mark it ready/.test(note.body) && /to confirm/.test(note.subject) && !/Held until/.test(note.body), "the shop's new-order note shows it as to confirm");

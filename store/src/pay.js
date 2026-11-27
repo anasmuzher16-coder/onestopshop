@@ -203,7 +203,7 @@ export async function payStatus(request, env, url) {
 
 // ---------- 6. the safety net ----------
 // A pay-at-the-counter pickup is a request until the shop marks it ready (2026-11-27): one never confirmed within
-// PICKUP_REQUEST_HOURS (7 days by default, src/guard.js) closes as cancelled, payment 'expired'. It took no stock, so none moves
+// PICKUP_REQUEST_HOURS (3 days by default, src/guard.js) closes as cancelled, payment 'expired'. It took no stock, so none moves
 // (releaseHeld gives back only what an order's own stock moves show it took; an order placed before 2026-11-27 that took
 // stock at placement gets exactly that back, once). One the shop marked ready took its stock then and is held as the ready
 // email says, 14 days from ready, then let go the same way. Paid or cancelled ends it. Orders with no pay_expires_at never expire.

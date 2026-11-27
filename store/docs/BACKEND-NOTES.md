@@ -39,13 +39,17 @@ the place in the code that follows it. "Follow-up" items are known gaps left for
   - only names on the staff list count against a name (`n:` rows). A name that does not exist is counted under its own key (`u:`)
     with the same rules, so the answers never show who works here, and a staff member added later starts clean: a common first
     name cannot be locked in advance.
-  - familiar devices and places are held by neither the delay nor the name cap: a phone or computer that signed in correctly before
-    (the `oss_dev` cookie: a random id plus an HMAC of it keyed with the Worker secret, HttpOnly, SameSite=Strict, Secure on https,
-    400 days; recorded at that sign-in as a `login_attempts` row `d:` + keyed hash, ok = 1, with the staff id; it counts only while
-    that row is under 400 days old and the person who signed in there is still on the staff list, or it was the owner), or an
-    address that signed in correctly in the last 30 days. A familiar device with 10 wrong tries in a day (`e:` rows) loses its pass
-    for the day. The cookie never signs anyone in; it only skips the name's slowdown. A staff member on a new device AND a new
-    network while their name is being hammered waits until the next day, signs in at the counter, or asks the owner.
+  - familiar devices and places are held by neither the delay nor the name cap: a phone or computer where THIS person signed in
+    correctly before (the `oss_dev` cookie: a random id plus an HMAC of it keyed with the Worker secret, HttpOnly, SameSite=Strict,
+    Secure on https, 400 days; recorded at that sign-in as a `login_attempts` row `d:` + keyed hash, ok = 1, with their staff id, at
+    most one a day per device and person, pruned after 400 days; it counts for that name only, while they are still on the staff
+    list; for the passcode, a device the owner signed in on), or an address where someone still on the staff list (or the owner)
+    signed in correctly in the last 30 days. Each has its own ceiling: 10 wrong tries in a day from that device (`e:` rows, written
+    before the PIN is checked so a burst is counted in full) or from that address, and it is unfamiliar for the rest of the day. So a
+    removed staff member keeps no pass, a staff member's own cookies give no extra guesses at colleagues' names, and neither a device
+    nor a place gets round the day's ceiling (breaker, 2026-11-27). The cookie never signs anyone in. A staff member on a new device
+    AND a new network while their name is being hammered waits until the next day, signs in at the counter, or asks the owner. Not
+    covered: anyone sharing the counter's public address can still use up that address's 5 tries in 15 minutes.
   - the owner's passcode (`ADMIN_KEY`): only the per-address limits; past 20 wrong owner tries shop-wide in 15 minutes, each try
     from an unfamiliar device and place is slowed (doubling, up to 8 s). Nothing locks the owner out. The passcode must be long and
     random (16 characters or more; the Worker log warns on the live site when it is shorter).
@@ -85,7 +89,7 @@ All numbers here are owner-vetoable defaults; they live in src/guard.js (and DEC
   - it cannot be marked paid before it is ready (marking ready is what checks the shelf); collected and paid completes as before.
   - cancelling gives back exactly what the order's own stock moves show it took, once (`TAKEN_SQL`): a request never confirmed gives
     back nothing, a ready order gives back what readying took. Card orders still get back what they ordered, unchanged.
-  - a request never confirmed cancels itself after `PICKUP_REQUEST_HOURS` (default 168, 7 days; 1 to 720), payment `expired`, with
+  - a request never confirmed cancels itself after `PICKUP_REQUEST_HOURS` (default 72, 3 days; 1 to 720; kept short because an open request also fills one of its email's and visitor's 3 open slots), payment `expired`, with
     no stock effect. A ready order is held 14 days from ready (as the ready email says), then let go the same way, its stock back once.
   - card orders (when card payment is on) are unchanged: stock is taken when the order is placed and held for the 35-minute payment
     page, and given back once if it is not paid.
@@ -127,7 +131,9 @@ All numbers here are owner-vetoable defaults; they live in src/guard.js (and DEC
 ## The public delivery check (2026-11-27)
 - While card payment is off, `/api/delivery` answers `{ status: "down", pickup_only: true }` with no Geoapify lookup (delivery cannot
   be ordered). With card on, each visitor (IPv6 by /56, keyed hash, `v:` rows in `login_attempts`, deleted after a day) gets 30 real
-  map lookups an hour across every Worker; a cached address is free. The per-instance speed bump stays behind it.
+  map lookups an hour across every Worker, counted and written in one statement so a burst cannot pass it; checkout's local-delivery
+  quote uses the same count (breaker, 2026-11-27: a wrong fee made checkout a free lookup). A cached address is free. The
+  per-instance speed bump stays behind it.
 
 ## Card payment off: every promise follows the switch (2026-11-27)
 - One switch: card payment is on when `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` are set (src/pay.js `cardReady`). The

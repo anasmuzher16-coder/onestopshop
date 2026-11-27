@@ -78,9 +78,9 @@ export const READY_HOLD_DAYS = 14;
 export const phoneOk = s => typeof s === "string" && s.length <= 30 && /^\+?[\d\s().\-]{7,24}(?:\s*(?:x|ext\.?)\s*\d{1,6})?$/i.test(s) && s.replace(/\D/g, "").length >= 7 && !/^\d{1,3}(?:\.\d{1,3}){3}/.test(s.trim());
 export const ORDER_LIMITS = { per10min: 5, perDay: 15, openHolds: 3 };
 // How long a pickup request waits for the shop to confirm it (owner-vetoable, inventory-2026-11-23/DECISIONS.md beside the repo):
-// PICKUP_REQUEST_HOURS, 1 to 720, default 168 (7 days). Past it, a request never confirmed cancels itself; it held nothing, so no
+// PICKUP_REQUEST_HOURS, 1 to 720, default 72 (3 days; an open request also fills one of the email's 3 open slots, so not longer). Past it, a request never confirmed cancels itself; it held nothing, so no
 // stock moves. Once the shop marks it ready it is held READY_HOLD_DAYS from then, as the ready email says.
-export const pickupRequestHours = env => { const n = Number(env.PICKUP_REQUEST_HOURS); return Number.isInteger(n) && n >= 1 && n <= 720 ? n : 168; };
+export const pickupRequestHours = env => { const n = Number(env.PICKUP_REQUEST_HOURS); return Number.isInteger(n) && n >= 1 && n <= 720 ? n : 72; };
 // The visitor's key for the order_attempts table: a hash keyed with a Worker secret, so the table alone cannot be turned back into addresses.
 // bits 48: the wider IPv6 block (one tunnel or one site), for a second, looser count, so one /48 cannot act as 256 visitors.
 export const orderWho = async (env, request, bits = 56) => (bits === 56 ? "o:" : "g:") + await sha(`order|${env.PIN_PEPPER || env.ADMIN_KEY || ""}|${sourceOf(request, bits)}`);
@@ -125,6 +125,8 @@ export const orderAttempt = (db, who, id) => db.prepare("INSERT INTO order_attem
 export async function pruneGuards(env) {
   const db = env.DB;
   await db.prepare("DELETE FROM login_attempts WHERE ok = 0 AND at < strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 day')").run();
+  // known-device records past the 400 days they count for (src/admin.js oss_dev)
+  await db.prepare("DELETE FROM login_attempts WHERE ok = 1 AND who LIKE 'd:%' AND at < strftime('%Y-%m-%dT%H:%M:%SZ','now','-400 days')").run();
   // a customer's sign-in code counts (hashes of the address and of the email) go after a day, as the privacy page says, even in a quiet week
   await db.prepare("DELETE FROM account_attempts WHERE at < strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 day')").run().catch(err => { if (!/no such table/i.test(String(err && err.message))) throw err; });
   await db.prepare("DELETE FROM sign_in_codes WHERE created_at < strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 day')").run().catch(err => { if (!/no such table/i.test(String(err && err.message))) throw err; });

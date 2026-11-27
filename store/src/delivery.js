@@ -123,7 +123,13 @@ export async function deliveryQuote(env, { line1, city, postal }, ip = "local", 
   return out;
 }
 
-const DELIVERY_LOOKUPS = 30;   // real map lookups per visitor per hour from the public delivery check (owner-vetoable)
+const DELIVERY_LOOKUPS = 30;   // real map lookups per visitor per hour, from the delivery check and from checkout together (owner-vetoable)
+// The shared, database-backed count: one statement counts and writes together (one D1 transaction), so a burst at the same moment
+// cannot all read "under 30" and all go through (breaker, 2026-11-27). A refused try writes nothing.
+export async function deliveryGate(env, request) {
+  const key = "v:" + await keyedHash(env, "delivery", sourceOf(request)), db = env.DB;
+  return async () => !!(await db.prepare("INSERT INTO login_attempts (who, ok) SELECT ?1, 0 WHERE (SELECT COUNT(*) FROM login_attempts WHERE who = ?1 AND ok = 0 AND at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 hour')) < ?2").bind(key, DELIVERY_LOOKUPS).run()).meta.changes;
+}
 // A brake on one visitor burning the day's free lookups. Per Worker instance, so it is a speed bump and not a wall.
 const seen = new Map();
 function tooFast(ip) {
@@ -144,13 +150,7 @@ export async function deliveryRoute(request, env, url) {
   const clean = (v, max) => typeof v === "string" && v.trim() && v.trim().length <= max ? v.trim() : null;
   // Card on: each visitor (IPv6 by its /56, a keyed hash) gets DELIVERY_LOOKUPS real map lookups an hour across every Worker, counted
   // in login_attempts under "v:" (deleted after a day by the sweep). A cached address costs nothing and is never counted.
-  const key = "v:" + await keyedHash(env, "delivery", sourceOf(request)), db = env.DB;
-  const gate = async () => {
-    const n = await db.prepare("SELECT COUNT(*) AS n FROM login_attempts WHERE who = ? AND ok = 0 AND at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 hour')").bind(key).first("n");
-    if (n >= DELIVERY_LOOKUPS) return false;
-    await db.prepare("INSERT INTO login_attempts (who, ok) VALUES (?, 0)").bind(key).run();
-    return true;
-  };
+  const gate = await deliveryGate(env, request);
   const q = await deliveryQuote(env, { line1: clean(b && b.line1, 120), city: clean(b && b.city, 60), postal: b && b.postal }, request.headers.get("CF-Connecting-IP") || "local", gate);
   return send(q.status === "ok" ? { status: "ok", fee_cents: q.fee_cents } : { status: q.status, ...(q.limited ? { limited: true } : {}) });
 }
