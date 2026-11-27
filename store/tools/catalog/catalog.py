@@ -20,6 +20,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import catlib as C  # noqa: E402
+from shop_photos import SHOP_PHOTOS  # noqa: E402
 
 SUPPLIER_META = {
     "ace": {"id": "ace", "name": "Ace Hookah", "sku_block": "OSS-10NNNN",
@@ -81,12 +82,18 @@ def build_ace(reg, pdf: Path, photos_manifest, day):
             colour = C.cell(ph["colour"], f"photo:{ph['out']} (p{ph['page']} xref {ph['xref']}), dominant colour; human-confirm") \
                 if ph and ph.get("colour") else C.cell(None, None)
             img = ph["out"] if ph else hero.get(f["family_id"])
+            status = ph["status"] if ph else ("family_hero_only" if img else "none")
+            psrc = "photo manifest store/catalog/suppliers/ace/photos.json" if img else None
+            own = SHOP_PHOTOS.get(key)
+            if own and (C.STORE / "public" / "img" / "pc" / (own[0] + ".webp")).exists():
+                # the shop's own photo of this very piece replaces a low-resolution or missing catalogue photo (shop_photos.py)
+                img, status, psrc = own[0], "shop", f"photo:{own[2]} (the shop's own photo, cut out); {own[3]}"
+                colour = C.cell(own[1], f"photo:{own[2]} (the shop's own photo); human-confirm")
             variants.append({
                 "sku": sku, "key": key,
                 "swatch_hex": C.cell(hx, f"{p}:colour square {i + 1} fill (chip colour only; never a colour name)" if hx else None),
                 "colour": colour,
-                "photo": {"img": img, "status": (ph["status"] if ph else ("family_hero_only" if img else "none")),
-                          "src": f"photo manifest store/catalog/suppliers/ace/photos.json" if img else None},
+                "photo": {"img": img, "status": status, "src": psrc},
                 "shop": C.blank_shop(),
             })
         f["variants"] = variants
@@ -344,7 +351,7 @@ def public_group(f):
     return src_ace.group_for(f["supplier_ref"]["v"], None, tags)[0]
 
 
-USABLE_PHOTO = ("ready", "CHECK", "needs_original", "hand_crop")   # gallery-only images are never a main photo
+USABLE_PHOTO = ("ready", "CHECK", "needs_original", "hand_crop", "shop")   # gallery-only images are never a main photo; shop = the shop's own photo (shop_photos.py)
 # owner, 2026-11-24: blurry or over-enlarged (CHECK), held (needs_original) and hand-crop photos go up labelled "Photo to be upscaled"
 UPSCALE_PHOTO = ("CHECK", "needs_original", "hand_crop")
 

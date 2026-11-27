@@ -11,7 +11,7 @@ Rules (same model as the shop's hoses, src_shop_hoses.py):
 - every bowl is in the shop (photographed there), Price TBD, stock not counted, weight unknown (pickup or local delivery
   once priced); the shop fills price and stock in the item editor;
 - bowls with no readable brand, and the ones that match an item already on the site, are listed in the report, not added.
-The photo is the shop's own, cut off the sweep (720x900 frame, accessory framing, store/public/img/pc/bowl/).
+The photo is the shop's own, cut off the sweep with rembg (birefnet-general-lite) and framed by frame_cutouts.py --kind bowl\n(720x900, accessory framing, store/public/img/pc/bowl/).
 """
 from __future__ import annotations
 
@@ -32,15 +32,13 @@ HIDDEN = "the brand is turned away in this photo; shape and finish match the fam
 
 # (name, brand, where the brand is printed, [(photo, colour, confirm reason or None)], family confirm reason or None)
 BOWLS = [
-    # IMG_0589 (green), IMG_0616 (yellow) and IMG_0618 (sage) are left out: their grey clay stems and the pale band where
-    # glaze meets clay could not be cut off the sweep cleanly
     ("Oblako Bowl", "Oblako", "ОБЛАКО stamped on the clay stem",
-     [("IMG_0608", "Black", None), ("IMG_0617", "Orange", None)],
+     [("IMG_0589", "Green", None), ("IMG_0618", "Sage", None), ("IMG_0608", "Black", None), ("IMG_0616", "Yellow", None), ("IMG_0617", "Orange", None)],
      "named from the stamp on the stem (ОБЛАКО, written Oblako): check the name"),
-    # IMG_0606 (red and white), IMG_0610 (brown) and the short VON bowls IMG_0591 (orange) and IMG_0592 (blue) are left out:
-    # their pale necks, white glaze edges and the sweep showing between tag and body could not be cut cleanly
     ("VON Funnel Bowl", "VON", "VON swing tag",
-     [("IMG_0607", "Orange", None), ("IMG_0614", "Blue", None), ("IMG_0609", "Green", HIDDEN)], SHAPE),
+     [("IMG_0606", "Red and white", None), ("IMG_0607", "Orange", None), ("IMG_0610", "Brown", None), ("IMG_0614", "Blue", None),
+      ("IMG_0609", "Green", HIDDEN)], SHAPE),
+    ("VON Short Bowl", "VON", "VON swing tag", [("IMG_0591", "Orange", None), ("IMG_0592", "Blue", None)], SHAPE),
     ("VON Ribbed Bowl", "VON", "VON swing tag", [("IMG_0596", "Green", None)], SHAPE),
     ("VON Speckled Bowl", "VON", "VON swing tag", [("IMG_0615", "Yellow", None)], SHAPE),
     ("TAS Bowl", "TAS", "TA$ stamped on the foot",

@@ -1,8 +1,10 @@
 """Publish the shop's bowl photos: each cut-out (CROPS_DIR/IMG_xxxx.webp, -m, -s and, where the source carried the
 detail, -l; already framed at 720x900 like the Ace accessories: product up to 580 tall / 560 wide, centred, transparent)
--> store/public/img/pc/bowl/<name>-<colour>{,-l,-m,-s}.webp. The cut-outs are made outside the repo (the shop's photos are
-4032x3024 HEIC; only the web sizes are kept here). The cutting method is written up in store/catalog/SCHEMA.md.
+-> store/public/img/pc/bowl/<name>-<colour>{,-l,-m,-s}.webp. The shop's photos are 3024x4032 HEIC: they are converted and cut
+out (rembg, birefnet-general-lite) outside the repo; only the web sizes are kept here.
 
+  rembg p -m birefnet-general-lite FULL_JPEG_DIR CUTOUT_DIR
+  python store/tools/catalog/frame_cutouts.py CUTOUT_DIR CROPS_DIR --kind bowl IMG_0589 ...
   python store/tools/catalog/photos_shop_bowls.py CROPS_DIR
   node store/tools/photo-versions.mjs          then, so each photo gets its version
 """

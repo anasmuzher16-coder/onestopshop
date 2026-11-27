@@ -609,8 +609,8 @@ class TestShopBowls(Base):
 
     def test_master_validates_and_counts(self):
         C.validate_master(self.bowls, self.reg)
-        self.assertEqual(len(self.bowls["families"]), 9)
-        self.assertEqual(sum(len(f["variants"]) for f in self.bowls["families"]), 21)
+        self.assertEqual(len(self.bowls["families"]), 10)
+        self.assertEqual(sum(len(f["variants"]) for f in self.bowls["families"]), 28)
         self.assertTrue(all(re.fullmatch(r"OSS-13\d{4}", v["sku"]) for _, v in C.iter_variants(self.bowls)))
 
     def test_rebuild_is_stable(self):
@@ -623,7 +623,7 @@ class TestShopBowls(Base):
 
     def test_rows_on_view_tbd_flagged(self):
         rows = K.desired_rows("shop-bowls", self.bowls)
-        self.assertEqual(len(rows), 21)
+        self.assertEqual(len(rows), 28)
         for r in rows:
             s, f = r["shop"], json.loads(r["sup"]["facts_known"])
             self.assertEqual((s["price_cents"], s["active"], s["listed"], s["stock"], s["category_id"], s["availability"]),
@@ -651,7 +651,7 @@ class TestShopBowls(Base):
 
     def test_apply_twice_is_stable(self):
         p1 = K.apply_supplier(self.con, "shop-bowls", self.bowls)
-        self.assertEqual(len(p1["added"]), 21)
+        self.assertEqual(len(p1["added"]), 28)
         p2 = K.apply_supplier(self.con, "shop-bowls", self.bowls)
         self.assertEqual((len(p2["added"]), len(p2["changed"]), len(p2["retired"])), (0, 0, 0))
 
