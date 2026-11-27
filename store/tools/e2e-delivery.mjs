@@ -9,8 +9,8 @@ await samplesOn(B, ["OSS-8004"]);
 // Card orders go to Stripe's page (the local stand-in, tools/fake-stripe.mjs): pay there, come back, wait for the signed webhook.
 const payThrough = async (p, timeout = 15000) => { await p.waitForURL(u => /\/pay\/cs_/.test(String(u)) || /\/order\/W[A-Z0-9]{6}$/.test(String(u)), { timeout }); if (/\/pay\/cs_/.test(p.url())) { await p.locator("[data-fake-pay]").click(); await p.waitForURL(/\/order\/W[A-Z0-9]{6}$/, { timeout }); await p.waitForSelector('[data-pay-state="paid"]', { timeout }); } };
 let n = 0, f = 0; const t = (name, c, extra = "") => { n++; if (!c) { f++; console.log("FAIL", name, extra); } };
-// With no card keys (the live demo) delivery and shipping cannot be ordered: the page says so with the shop's number, and a
-// pickup is ordered and paid at the counter instead
+// With no card keys (the live demo) every order is a pickup paid at the counter and nothing offers delivery (2026-11-27): that
+// mode has its own journey below; the delivery journey runs in card mode (the card shard, .github/workflows/store-tests.yml)
 const CARD = /<meta name="oss-pay" content="card">/.test(await (await fetch(B + "/")).text());
 let run = Date.now() % 100000;
 // Each engine buys five of the test piece, so make sure the sample shelf has enough before starting.
@@ -27,7 +27,39 @@ for (const [engine, w, h, mobile] of [["chromium", 390, 844, true], ["webkit", 3
     // 83 hookah families since 2026-11-24) is captured to the first screen instead of failing the journey
     const snap = async name => { if (!shots) return; try { await p.screenshot({ path: `${shots}/${tag}-${name}.png`, fullPage: true }); } catch (e) { if (!/32767/.test(String(e))) throw e; await p.screenshot({ path: `${shots}/${tag}-${name}.png` }); } };
     const press = l => l.click();
-    // the chooser: first arrival on the hookah page, no layout shift, nothing covered, X and both answers remembered
+    if (!CARD) {
+      // CARD PAYMENT OFF (the live demo's mode; breaker, 2026-11-27): every order is a pickup paid at the counter, so no page
+      // offers local delivery or shipping, there is no delivery bar, and the cart holds 5 of one item at most
+      const words = async () => (await p.locator("#main").innerText()) + " " + (await p.locator(".foot__en").innerText().catch(() => ""));
+      for (const path of ["/shop/hookahs", "/shop", "/shop/charcoal", "/"]) {
+        await p.goto(B + path, { waitUntil: "networkidle" }); await p.waitForTimeout(400);
+        const w = await words();
+        t(`${tag} card off ${path}: no delivery bar, nothing promises local delivery or shipping`, await p.locator("[data-delivery-strip]").isHidden() && !/local delivery|nationwide|across Canada|How we ship glass/i.test(w), w.match(/.{0,60}(local delivery|nationwide|across Canada|How we ship glass).{0,40}/i)?.[0] || "");
+        if (path === "/") t(`${tag} card off: home and footer say pickup at the counter`, /Free pickup at our Windsor counter/.test(w) && /Pickup at our Windsor counter/.test(await p.locator(".foot__en").innerText()));
+        if (path === "/shop/charcoal") t(`${tag} card off: charcoal says pickup only`, /Pickup only/.test(w));
+      }
+      await p.goto(B + "/p/OSS-8004", { waitUntil: "networkidle" });
+      { const w = await words(); t(`${tag} card off: a product page offers pickup at the counter only`, /Pickup at the Windsor counter/.test(w) && /Paid in the shop/.test(w) && !/Delivery, shipping and pickup|local delivery|Ships across|Canada Post/i.test(w), w.slice(0, 300)); }
+      await p.evaluate(() => localStorage.setItem("oss:cart", JSON.stringify([{ sku: "OSS-8004", qty: 9 }]))); await p.goto(B + "/cart", { waitUntil: "networkidle" });
+      { const w = await p.locator("#main").innerText();
+        t(`${tag} card off: the cart is a pickup, with no delivery or shipping choice`, await p.locator('input[name="ship"]').count() === 0 && await p.locator(".pickline").isVisible() && /picked up and paid at our Windsor counter/.test(w) && !/local delivery|Canada Post|postal code/i.test(w), w.slice(0, 300));
+        t(`${tag} card off: the cart holds 5 of one item and says why`, /hold up to 5 of one item online/.test(w) && (await p.locator(".qty .num").first().innerText()).trim() === "5", w.slice(0, 200)); }
+      await p.goto(B + "/checkout", { waitUntil: "networkidle" }); await p.waitForSelector("[data-checkout]");
+      const go = p.locator('[data-checkout] button[type="submit"]');
+      t(`${tag} card off: checkout is paid at the counter`, /At the counter when you pick it up/.test(await p.locator(".co__pay").innerText()) && await go.isEnabled() && await p.locator("#co-line1").count() === 0);
+      await p.fill("#co-name", "Dee Livery"); await p.fill("#co-email", `dee-${run}@example.com`);
+      await press(go); await p.waitForURL(/\/order\/W[A-Z0-9]{6}$/, { timeout: 15000 }); await p.waitForTimeout(600);
+      t(`${tag} card off: the pickup order is placed, to pay at the counter`, /counter/i.test(await p.locator("#main").innerText()));
+      await p.goto(B + "/shipping", { waitUntil: "networkidle" });
+      { const w = await p.locator("#main").innerText(); t(`${tag} card off: the shipping page says pickup for now, delivery and shipping once card payment is on, and keeps its rules`, /For now, online orders are picked up and paid at our Windsor counter/.test(w) && /once we take card payment online/.test(w) && /talk to the store manager/.test(w) && /All sales are final/.test(w) && await p.locator("#main [data-open-postal]").count() === 0); }
+      await p.goto(B + "/terms", { waitUntil: "networkidle" });
+      { const w = await p.locator("#main").innerText(); t(`${tag} card off: terms say pickup for now and keep final sale and Quebec`, /Online orders are picked up/.test(w) && /All sales are final, except faulty, wrong, damaged or undelivered items/.test(w) && /except (to )?Quebec/.test(w) && /Charcoal is sold for pickup only/.test(w)); }
+      await p.goto(B + "/privacy", { waitUntil: "networkidle" });
+      { const w = await p.locator("#main").innerText();
+        t(`${tag} card off: privacy is dated, names the coded address kept for orders (30 days) and sign-in codes (a day), no stray ",."`, /Updated November 27, 2026/.test(w) && /when you place an order we keep a coded form of your internet address/.test(w) && /When you ask for a sign-in code we keep a scrambled form/.test(w) && /For orders it is deleted after 30 days/.test(w) && !/,\./.test(w) && /For now we sell for pickup in Windsor/.test(w)
+          && ["Stripe", "Resend", "Geoapify", "Cloudflare", "oss_c", "oss-ask", "United States", "within 30 days", "10 business days", "unsubscribe", "Delete", "store manager", "519-255-2222", "Privacy Commissioner of Canada"].every(s => w.includes(s)) && !/\bID\b|\bage\b|\b19\+|\bminimum age/i.test(w), w.slice(0, 160)); }
+      await ctx.close(); t(`${tag} no page errors`, !errs.length, errs.slice(0, 2).join(" | ")); continue;   // the browser closes in finally
+    }    // the chooser: first arrival on the hookah page, no layout shift, nothing covered, X and both answers remembered
     await p.addInitScript(() => { window.__cls = 0; try { new PerformanceObserver(l => { for (const e of l.getEntries()) if (!e.hadRecentInput) window.__cls += e.value; }).observe({ type: "layout-shift", buffered: true }); } catch {} });
     await p.goto(B + "/shop/hookahs", { waitUntil: "networkidle" }); await p.waitForTimeout(600);
     const opts = p.locator(".dchoose__opt");
@@ -89,7 +121,7 @@ for (const [engine, w, h, mobile] of [["chromium", 390, 844, true], ["webkit", 3
       t(`${tag} terms and shipping: final sale keeps the legal carve-outs, no Quebec shipping yet, nothing about ID or age`, /All sales are final, except faulty, wrong, damaged or undelivered items/.test(words) && /except (to )?Quebec/.test(words) && !/\bID\b|\bage\b|\b19\+|\bminimum age/i.test(words)); }
     await p.goto(B + "/privacy", { waitUntil: "networkidle" });
     { const words = await p.locator("#main").innerText();   // final (owner, 2026-11-26): no draft tag, each element PIPEDA and CASL ask for, nothing about ID or age
-      t(`${tag} privacy: no draft tag, updated date, every processor and right named, nothing about ID or age`, !/for the shop to review|\bDraft\b/i.test(words) && /Updated November 26, 2026/.test(words)
+      t(`${tag} privacy: no draft tag, updated date, every processor and right named, nothing about ID or age`, !/for the shop to review|\bDraft\b/i.test(words) && /Updated November 27, 2026/.test(words)
         && ["Stripe", "Resend", "Geoapify", "Cloudflare", "oss_c", "oss-ask", "United States", "within 30 days", "10 business days", "unsubscribe", "Delete", "store manager", "519-255-2222", "Privacy Commissioner of Canada"].every(s => words.includes(s))
         && !/\bID\b|\bage\b|\b19\+|\bminimum age/i.test(words), words.slice(0, 160)); }
     await p.evaluate(() => { localStorage.clear(); localStorage.setItem("oss:strip-off", "true"); });

@@ -764,7 +764,7 @@ button.dline:active{background:var(--color-line)}
 }
 .dstrip__btn[hidden],.dchoose[hidden]{display:none}
 /* The chooser: in the page flow under the header, so it can never sit on a product. Two coal plates on the teal band. */
-.dstrip[data-mode="choose"] .dstrip__x{top:var(--s-1);margin-top:0}
+/* the close X sits centred on the bar in both modes (design review, 2026-11-27: it was pinned to the top of the question) */
 .dchoose{padding:var(--s-3) var(--gutter) var(--s-4)}
 .dchoose__h{min-height:36px;margin:0 var(--s-8) var(--s-2) 0;font-size:var(--t-16);font-weight:600;line-height:36px}
 .dchoose__row{display:grid;grid-template-columns:1fr 1fr;gap:var(--s-2)}
@@ -788,6 +788,11 @@ button.dline:active{background:var(--color-line)}
   .dchoose__opt{flex-direction:row;align-items:center;min-height:64px;padding:var(--s-2) var(--s-4)}
   .dchoose__name{font-size:var(--t-22)}
   .dchoose__sub{font-size:var(--t-14);line-height:20px;text-align:right}
+  /* each answer's name on one line: NATIONWIDE DELIVERY wrapped while LOCAL DELIVERY fit (design review, 2026-11-27). The name keeps
+     its line and shrinks with the window; the note under it takes what is left. */
+  .dchoose__opt{flex-direction:column;align-items:flex-start;justify-content:center;gap:2px}
+  .dchoose__name{white-space:nowrap;font-size:clamp(16px,1.45vw,22px)}
+  .dchoose__sub{text-align:left}
 }
 /* ========== END DELIVERY STRIP AND PRODUCT LINE ========== */
 /* Back and Forward land exactly: for one frame every card is really drawn */

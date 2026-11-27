@@ -171,7 +171,7 @@ function editSheet(p) {
       <label class="field"><span>Warn me at</span><input class="input num" name="low_stock_at" inputmode="numeric" value="${esc(p.low_stock_at)}"></label></div>
     ${isNew ? `<label class="field"><span>How many on the shelf now</span><input class="input num" name="stock" inputmode="numeric" value="0"></label>` : ""}
     <label class="check"><input type="checkbox" name="glass" ${p.glass ? "checked" : ""}> Glass, pack with care</label>
-    <label class="check"><input type="checkbox" name="active" ${p.active ? "checked" : ""}> Show in the store</label>${p.sample ? `<p class="fineprint">A made-up sample from the demo, not the shop's stock. Leave it hidden; add the real item as a new product.</p>` : ""}
+    ${p.sample ? `<p class="fineprint">A made-up sample from the demo, not the shop's stock, so it stays hidden from the store. Add the real item as a new product.</p>` : `<label class="check"><input type="checkbox" name="active" ${p.active ? "checked" : ""}> Show in the store</label>`}
     <p class="err" role="alert" data-err></p>
     <div class="sheet__act"><button class="btn" type="submit">${isNew ? "Add product" : "Save"}</button><button class="btn btn--ghost" type="button" data-close>Cancel</button></div>
     ${isNew ? "" : `<section><h3 class="meta" style="margin-bottom:var(--s-2)">Stock history</h3><div class="hist" data-hist><div><span>Loading</span></div></div></section><section><h3 class="meta" style="margin-bottom:var(--s-2)">Edits</h3><div class="hist" data-changes><div><span>None yet.</span></div></div></section>`}</form>`;
@@ -188,7 +188,7 @@ document.addEventListener("submit", async e => {
   if (price === null || price < 0) return err.textContent = "Enter the price as dollars, like 49.99.";
   if (!(parseInt(f.weight_g.value, 10) > 0)) return err.textContent = "Enter the weight in grams. A kitchen scale is fine.";
   const body = { name: f.name.value, category_id: f.category_id.value, price_cents: price, cost_cents: f.cost.value.trim() === "" ? null : cents(f.cost.value), weight_g: parseInt(f.weight_g.value, 10), box_id: f.box_id.value,
-    ship_class: f.ship_class.value, note: f.note.value, ...(f.variant_label ? { variant_label: f.variant_label.value } : {}), low_stock_at: parseInt(f.low_stock_at.value, 10) || 0, glass: f.glass.checked, active: f.active.checked,
+    ship_class: f.ship_class.value, note: f.note.value, ...(f.variant_label ? { variant_label: f.variant_label.value } : {}), low_stock_at: parseInt(f.low_stock_at.value, 10) || 0, glass: f.glass.checked, ...(f.active ? { active: f.active.checked } : {}),   // a sample has no switch (it stays off)
     details: f.category_id.value === "cologne" ? { ml: parseInt(f.ml.value, 10) || null, kind: f.kind.value, notes: f.notes.value } : {} };
   if (!sku) body.stock = parseInt(f.stock.value, 10) || 0;
   const btn = $('button[type="submit"]', f); btn.disabled = true;
@@ -420,7 +420,14 @@ function intakeView(q) {
   if (!q.sends.length) return `<section class="wide"><h2 class="h2">Shop answers</h2><p class="empty">No answers sent yet.</p></section>`;
   // what was stored is never trusted: a row that is not a plain object with a text key is skipped, never allowed to break the tab
   const rows = (q.latest && Array.isArray(q.latest.rows) ? q.latest.rows : []).filter(r => r && typeof r === "object" && typeof r.key === "string").slice(0, 500).map(r => { const k = r.key.slice(0, 80), v = Array.isArray(r.value) ? r.value.map(String).join(", ") : r.value === true ? "yes" : String(r.value ?? ""); return `<tr><td>${esc(typeof r.item === "string" ? r.item.slice(0, 120) + " (" + k.replace(/-OSS-\d+$/, "") + ")" : k)}</td><td>${esc(v.slice(0, 2000))}</td></tr>`; }).join("");
-  return `<section class="wide"><h2 class="h2">Shop answers</h2><p class="fineprint">${q.sends.filter(x => x.key !== "intake/latest.json").length} sends. Newest${q.latest?.receivedAt ? ", " + when(q.latest.receivedAt) : ""}:</p>
+  // every send is listed by when it came and the place it came from (a short tag, never the address), so a stranger's send can
+  // never pass for the shop's: a place seen once, or a new country, reads differently from the counter's usual one
+  const list = q.sends.filter(x => x.key !== "intake/latest.json"), shown = q.shownKey || q.sends[0].newest || list[0]?.key, cur = list.find(x => x.key === shown) || list[0];
+  // the oldest kept send with a tag is most likely the shop's own: a send from that same place says so, so a stranger's cannot pass for it
+  const first = [...list].reverse().find(s => s.from)?.from;
+  const label = s => `${when(s.at)}${s.from ? `, from place ${s.from}${s.country ? " (" + s.country + ")" : ""}${s.from === first ? ", the same place as the first send" : ", a different place from the first send"}, ${s.from_n === 1 ? "its only send" : s.from_n + " sends from there"}` : ", place not recorded"}`;
+  return `<section class="wide"><h2 class="h2">Shop answers</h2><p class="fineprint">${list.length} sends. Showing ${cur && cur.key === list[0].key ? "the newest" : "an earlier one"}: ${cur ? esc(label(cur)) : ""}.</p>
+    ${list.length > 1 ? `<label class="field"><span>Read another send</span><select class="input" data-intake>${list.slice(0, 300).map(s => `<option value="${esc(s.key)}" ${cur && s.key === cur.key ? "selected" : ""}>${esc(label(s))}</option>`).join("")}</select></label>` : ""}
     <table class="ledger"><thead><tr><th scope="col">Question</th><th scope="col">Answer</th></tr></thead><tbody>${rows || `<tr><td colspan="2">The newest send could not be read.</td></tr>`}</tbody></table></section>`;
 }
 // ---------- shell ----------
@@ -434,7 +441,7 @@ async function render() {
   chrome();
   if (state.tab === "stock") main.innerHTML = viewStock();
   else if (state.tab === "orders") main.innerHTML = viewOrders();
-  else if (state.tab === "office" && state.me.owner) { const [r, st, se, iq] = await Promise.all([api("/report?month=" + (state.month || "")), api("/staff"), api("/settings"), api("/intake").catch(() => null)]); const latest = iq?.sends?.some(x => x.key === "intake/latest.json") ? await api("/intake?key=intake/latest.json").catch(() => null) : null; state.month = r.month; if (state.tab === "office") { let extra = iq && { ...iq, latest }; try { intakeView(extra); } catch { extra = null; } main.innerHTML = viewOffice(r, st.staff, se.settings, extra); } }
+  else if (state.tab === "office" && state.me.owner) { const [r, st, se, iq] = await Promise.all([api("/report?month=" + (state.month || "")), api("/staff"), api("/settings"), api("/intake").catch(() => null)]); const pick = iq?.sends?.some(x => x.key === state.intakeKey) ? state.intakeKey : iq?.sends?.[0]?.newest, latest = pick ? await api("/intake?key=" + encodeURIComponent(pick)).catch(() => null) : null; state.month = r.month; if (state.tab === "office") { let extra = iq && { ...iq, latest, shownKey: pick }; try { intakeView(extra); } catch { extra = null; } main.innerHTML = viewOffice(r, st.staff, se.settings, extra); } }
   else { const s = await api("/summary"); if (state.tab === "home") main.innerHTML = viewHome(s); }
 }
 async function boot() {
@@ -490,6 +497,7 @@ document.addEventListener("keydown", async e => {
 document.addEventListener("focusout", e => { if (e.target.matches("[data-tally]") && e.target.value.trim() && !e.target.dataset.busy) saveTally(e.target); });
 document.addEventListener("change", async e => {
   if (e.target.id === "recvref") { state.recvRef = e.target.value.trim(); return; }
+  if (e.target.matches("[data-intake]")) { state.intakeKey = e.target.value; render(); return; }
   if (e.target.matches("[data-basis]")) { const b = $("[data-savebasis]"); if (b) b.hidden = false; return; }
   if (!e.target.matches("[data-idcheck]")) return;
   const id = e.target.closest("[data-ordersheet]").dataset.ordersheet, on = e.target.checked; e.target.disabled = true;

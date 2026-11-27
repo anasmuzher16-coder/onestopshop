@@ -77,7 +77,8 @@ async function runOnce(t) {
   const [name, ...flags] = t.split("+");
   rmSync(STATE, { recursive: true, force: true }); cpSync(GOLD, STATE, { recursive: true });
   if (await listening(PORT)) console.log(`   !! port ${PORT} is taken before ${t} starts: ${workerds()}`);
-  const vars = ["ADMIN_KEY:int-local-only", "GEOAPIFY_KEY:test", "GEOAPIFY_BASE:http://127.0.0.1:4499", ...(CARD ? CARD_VARS : []), ...(MAIL.has(name) ? MAIL_VARS : []), ...(flags.includes("tobacco") ? ["STRIPE_TOBACCO_OK:1"] : [])];
+  // SAMPLES_TEST_ONLY: the fixtures may switch demo samples on in this throwaway local database (src/admin.js samplesForTests)
+  const vars = ["ADMIN_KEY:int-local-only", "GEOAPIFY_KEY:test", "GEOAPIFY_BASE:http://127.0.0.1:4499", "SAMPLES_TEST_ONLY:1", ...(CARD ? CARD_VARS : []), ...(MAIL.has(name) ? MAIL_VARS : []), ...(flags.includes("tobacco") ? ["STRIPE_TOBACCO_OK:1"] : [])];
   // the stand-ins keep their state in memory, so each suite gets fresh ones (webhooks go to this suite's store)
   const fake = (file, env) => spawn(process.execPath, [join(STORE, "tools", file)], { stdio: "ignore", detached: !WIN, env: { ...process.env, ...env } });
   const fs = CARD ? fake("fake-stripe.mjs", { PORT: "4498", STORE: `http://127.0.0.1:${PORT}` }) : null, fr = MAIL.has(name) ? fake("fake-resend.mjs", {}) : null;

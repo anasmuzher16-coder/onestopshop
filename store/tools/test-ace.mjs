@@ -61,17 +61,19 @@ ok(/og:description" content="[^"]*Price TBD/.test(page) && /og:image" content="[
 ok((await fetch(B + "/sitemap.xml")).status === 404, "no sitemap while the shop is not live");
 
 const foilPage = await (await fetch(B + "/p/OSS-9301")).text(), coalPage = await (await fetch(B + "/shop/charcoal")).text(), heatPage = await (await fetch(B + "/shop/heat")).text();
-ok(/og:description" content="[^"]*Not shipped/.test(foilPage) && !/Shipped across Canada/.test(foilPage), "a foil page says pickup or local delivery, never shipped, while its weight is TBD");
+// every promise follows the card switch (2026-11-27): card off, every order is a pickup paid at the counter, so pages say pickup only
+const payOn = /<meta name="oss-pay" content="card">/.test(foilPage), counterWords = "Pickup in Windsor, paid in the shop";
+ok((payOn ? /og:description" content="[^"]*Not shipped/.test(foilPage) : /og:description" content="[^"]*Pickup in Windsor, paid in the shop/.test(foilPage) && !/og:description" content="[^"]*local delivery/.test(foilPage)) && !/Shipped across Canada/.test(foilPage), "a foil page says pickup or local delivery (card off: pickup only), never shipped, while its weight is TBD");
 // shisha is paid at the counter until card payment for it is approved, so its page, search results and the feed say pickup (council, 2026-11-25)
 const shishaPage = await (await fetch(B + "/p/OSS-9601")).text();
 ok(/og:description" content="[^"]*Pickup in Windsor, paid in the shop/.test(shishaPage) && !/Shipped across Canada/.test(shishaPage) && !/ParcelService/.test(shishaPage), "a shisha page says pickup, paid in the shop, never shipped");
 ok(feed.products.filter(p => /^OSS-96/.test(p.sku)).every(p => p.ship_class === "pickup_only"), "the feed says shisha is pickup while it is paid at the counter");
 const shishaSec = await (await fetch(B + "/shop/shisha")).text();
 ok(/name="description" content="[^"]*Pickup, paid in the shop/.test(shishaSec) && !/shipped across Canada/i.test(shishaSec.match(/name="description" content="[^"]*/)?.[0] || ""), "the Shisha section says pickup, paid in the shop");
-ok(/name="description" content="69 kinds of hookah charcoal[^"]*Pickup or local delivery only/.test(coalPage), "the Charcoal section says pickup or local delivery only");
+ok(new RegExp(`name="description" content="69 kinds of hookah charcoal[^"]*${payOn ? "Pickup or local delivery only" : counterWords}`).test(coalPage), "the Charcoal section says pickup or local delivery only (card off: pickup, paid in the shop)");
 // Heat holds the 15 foil packs and 18 Ace accessories (2026-11-26); every weight is TBD, so the section is
 // pickup or local delivery, and says so. It says "shipped" again once anything in it can ship.
-ok(/name="description" content="33 foil and heat items at our Windsor counter\. Pickup or local delivery only/.test(heatPage), "Heat (foil and accessories, weight TBD) says pickup or local delivery only");
+ok(new RegExp(`name="description" content="33 foil and heat items at our Windsor counter\\. ${payOn ? "Pickup or local delivery only" : counterWords}`).test(heatPage), "Heat (foil and accessories, weight TBD) says pickup or local delivery only (card off: pickup, paid in the shop)");
 const shPage = await (await fetch(B + "/shop/shisha")).text(); ok(/content="47 shisha/.test(shPage), "the shisha section counts its 47 flavours");
 // 3 the sample hookahs are gone, their links land on the section
 const r1 = await fetch(B + "/p/OSS-1001", { redirect: "manual" });

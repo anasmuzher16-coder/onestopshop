@@ -55,11 +55,13 @@ function backInStockMail(site, origin, p, token) {
   const foot = `You asked for this one email when it sold out. <a href="${esc(stop)}" style="color:#6b6357">Stop all emails like this</a>. ${SHOP_LINE}`;
   return { kind: "back_in_stock", subject: `${p.name} is back at ${site}`, html: frame(site, heading, intro, [], foot), body: plain(heading, `You asked us to tell you. It is on the counter again: ${url}`, [], `Stop all emails like this: ${stop}\n${SHOP_LINE}`) };
 }
-function reminderMail(site, origin, c, items) {
+// card: card payment on (src/pay.js cardReady). Off, every order is a pickup paid at the counter, so the email never offers local delivery (breaker, 2026-11-27).
+function reminderMail(site, origin, c, items, card = true) {
+  const ways = card ? "for pickup or local delivery" : "for pickup at the counter";
   const stop = `${origin}/account?stop=${c.unsub_token}`, acct = `${origin}/account`, weeks = Math.round(c.remind_days / 7);
   const heading = "Time to restock your charcoal?", rows = items.map(i => [esc(i.name), `${i.qty} last time`]);
-  const intro = items.length ? `It has been about ${weeks} ${weeks === 1 ? "week" : "weeks"} since your last charcoal order. <a href="${esc(acct)}" style="color:#1b1713;font-weight:700">Buy it again</a> in one tap, for pickup or local delivery.`
-    : `You asked for a charcoal reminder every ${weeks} ${weeks === 1 ? "week" : "weeks"}. <a href="${esc(origin + "/shop/" + CHARCOAL)}" style="color:#1b1713;font-weight:700">See the charcoal</a>, for pickup or local delivery.`;
+  const intro = items.length ? `It has been about ${weeks} ${weeks === 1 ? "week" : "weeks"} since your last charcoal order. <a href="${esc(acct)}" style="color:#1b1713;font-weight:700">Buy it again</a> in one tap, ${ways}.`
+    : `You asked for a charcoal reminder every ${weeks} ${weeks === 1 ? "week" : "weeks"}. <a href="${esc(origin + "/shop/" + CHARCOAL)}" style="color:#1b1713;font-weight:700">See the charcoal</a>, ${ways}.`;
   const foot = `You get this because you turned on charcoal reminders in your account. <a href="${esc(stop)}" style="color:#6b6357">Unsubscribe</a> or change how often in <a href="${esc(acct)}" style="color:#6b6357">your account</a>. ${SHOP_LINE}`;
   return { kind: "restock_reminder", subject: "Time to restock your charcoal?", html: frame(site, heading, intro, rows, foot), body: plain(heading, intro.replace(/<[^>]+>/g, ""), rows, `Unsubscribe: ${stop}\n${SHOP_LINE}`) };
 }
@@ -280,7 +282,7 @@ export async function restockReminders(env, origin = siteOrigin(env)) {
       const claim = await db.prepare(`UPDATE customers SET remind_last_at = ${NOW} WHERE id = ? AND remind_days IS NOT NULL AND COALESCE(remind_last_at, '') = ?`).bind(c.id, c.remind_last_at || "").run();
       if (!claim.meta.changes) continue;
       const items = c.last_coal ? (await db.prepare("SELECT i.name, i.qty FROM orders o JOIN order_items i ON i.order_id = o.id JOIN products p ON p.sku = i.sku WHERE o.customer_id = ? AND o.created_at = ? AND p.category_id = ? ORDER BY i.name").bind(c.id, c.last_coal, CHARCOAL).all()).results : [];
-      await writeEmail(env, null, c.email, reminderMail(site, origin, c, items)); sent++;
+      await writeEmail(env, null, c.email, reminderMail(site, origin, c, items, !!(env.STRIPE_SECRET_KEY && env.STRIPE_WEBHOOK_SECRET))); sent++;
     }
   } catch (e) { console.error(JSON.stringify({ at: "restock-reminders", message: String(e && e.message || e) })); }
   return sent;

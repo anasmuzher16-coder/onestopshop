@@ -22,6 +22,18 @@ const price = cents(await p.locator("[data-stage] .sticker__v").innerText());
 await p.locator(".dock__buy").tap(); await p.waitForTimeout(100);
 t("dock shows in cart", (await p.locator(".dock__buy").innerText()).includes("View cart"));
 t("one unit after add", JSON.parse(await p.evaluate(() => localStorage.getItem("oss:cart")))[0].qty === 1);
+// card payment on or off (2026-11-27): off (the live demo), every order is a pickup paid at the counter, so there is no shipping
+// estimate to check; the estimate walk runs with card on (the card shard)
+const CARD = /<meta name="oss-pay" content="card">/.test(await (await fetch(base)).text());
+if (!CARD) {
+  t("card off: the product page offers no shipping estimate or postal code", await p.locator("#main [data-open-postal]").count() === 0 && await p.locator(".ledger").count() === 0 && /Pickup at the Windsor counter/.test(await p.locator("#main").innerText()));
+  await p.goto(base + "cart"); await p.waitForTimeout(150);
+  const rows = await p.locator(".totals dd").allInnerTexts();
+  t("card off: the cart is items plus free pickup", cents(rows[0]) === price && /Free/.test(rows[1]) && cents(rows[2]) === price && await p.locator('input[name="ship"]').count() === 0, rows.join(" | "));
+  await p.locator('[data-qty][aria-label^="One more"]').tap(); await p.waitForTimeout(100);
+  const r2 = await p.locator(".totals dd").allInnerTexts();
+  t("card off: qty 2 doubles items and the total", cents(r2[0]) === price * 2 && cents(r2[2]) === price * 2, r2.join(" | "));
+} else {
 await p.locator("[data-open-postal]").first().tap();
 await p.fill("#postal", "zzz"); await p.locator('.sheet button[type="submit"]').tap();
 t("bad code shows error", await p.locator("#postal-err").isVisible());
@@ -42,6 +54,7 @@ t("qty 2 doubles items", cents(r2[0]) === price * 2); t("qty 2 total adds up", c
 await p.locator('input[name="ship"]').nth(2).check(); await p.waitForTimeout(100);
 const r3 = await p.locator(".totals dd").allInnerTexts();
 t("second option changes shipping and still adds up", cents(r3[1]) > cents(r2[1]) && cents(r3[0]) + cents(r3[1]) === cents(r3[2]));
+}
 for (const bad of ["null", "{}", '"x"', '[{"sku":"OSS-9601","qty":-3}]', '[{"sku":"NOPE","qty":2}]', '[{"sku":"OSS-9601","qty":1e9}]']) {
   await p.evaluate(v => localStorage.setItem("oss:cart", v), bad); await p.reload({ waitUntil: "networkidle" });
   t("survives cart=" + bad, (await p.locator("h1").count()) === 1 && !(await p.locator("#main").innerText()).includes("NaN") && !(await p.locator("#main").innerText()).includes("-$"));
