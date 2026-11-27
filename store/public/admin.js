@@ -237,7 +237,7 @@ function infoSheet(p) {
     <label class="field"><span>Name</span><input class="input" name="name" value="${esc(p.name)}" maxlength="80" autocomplete="off" required></label>
     <fieldset class="cols-pick"><legend class="field__l">Colours <span class="num" data-colcount></span></legend>
       <p class="fineprint">${hookahRow ? "This is one colour of this hookah. Pick its colour; for two tones, pick both." : "Tap every colour the shop has of this item."}</p>
-      <div class="sw-grid" data-swgrid>${PALETTE.map(([n, h]) => swatch(n, h, had.some(x => x.toLowerCase() === n.toLowerCase()), false)).join("")}${custom.map(n => swatch(n, hexes[n] || "", true, true)).join("")}</div>
+      <div class="sw-grid" data-swgrid>${PALETTE.map(([n, h]) => swatch(n, h, had.some(x => x.toLowerCase() === n.toLowerCase()), false)).join("")}${custom.map(n => swatch(n, Object.hasOwn(hexes, n) && /^#[0-9a-f]{6}$/i.test(hexes[n]) ? hexes[n] : "", true, true)).join("")}</div>
       <button class="bar__link" type="button" data-addcol aria-expanded="false" aria-controls="newcol">Add another colour</button>
       <div class="newcol" id="newcol" data-newcol hidden><label class="field"><span>Colour name</span><input class="input" name="newcol" maxlength="24" autocomplete="off" placeholder="Teal"></label>
         <label class="field newcol__pick"><span>Swatch</span><input class="newcol__hex" name="newhex" type="color" value="#808080"></label><button class="btn btn--ghost" type="button" data-addcol-go>Add</button></div></fieldset>
@@ -283,7 +283,8 @@ document.addEventListener("submit", async e => {
     infoSheet(q);
     const s2 = $("[data-saved]", sheet); s2.className = "tally__say ok"; s2.textContent = `Saved${r.on_sale && body.price_cents ? ", now on sale" : ""}. The store is updated.`;
   } catch (er) {
-    if (er.data && er.data.changed) { await loadProducts(); render(); infoSheet(state.products.find(x => x.sku === sku)); $("[data-err]", sheet).textContent = er.message; return; }
+    // an order changed the stock while counting: nothing was saved. The typed fields stay; only the number counted against is new
+    if (er.data && er.data.changed) { await loadProducts(); render(); const q = state.products.find(x => x.sku === sku); f.stock.dataset.seen = q.stock; f.stock.value = ""; $("#stock-was", f).innerHTML = `On record now: <b class="num">${q.stock}</b> on the shelf.`; err.textContent = er.message; said.textContent = ""; btns.forEach(b => b.disabled = false); f.stock.focus(); return; }
     err.textContent = er.message; said.textContent = ""; btns.forEach(b => b.disabled = false);
   }
 });
@@ -443,7 +444,7 @@ document.addEventListener("click", async e => {
   const t = e.target;
   let el;
   if ((el = t.closest("[data-tab]"))) { state.tab = el.dataset.tab; await render(); scrollTo(0, 0); return; }
-  if ((el = t.closest("[data-go]"))) { const [tab, f] = el.dataset.go.split(":"); state.tab = tab; if (tab === "stock") state.cat = f; else state.oflt = f; await render(); scrollTo(0, 0); return; }
+  if ((el = t.closest("[data-go]"))) { const [tab, f] = el.dataset.go.split(":"); state.tab = tab; if (tab === "stock") { state.cat = f; state.smode = "adjust"; } else state.oflt = f; await render(); scrollTo(0, 0); return; }
   if ((el = t.closest("[data-cat]"))) { state.cat = el.dataset.cat; return render(); }
   if ((el = t.closest("[data-oflt]"))) { state.oflt = el.dataset.oflt; return render(); }
   if (t.closest("[data-new]")) return editSheet(null);

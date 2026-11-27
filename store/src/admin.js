@@ -70,7 +70,7 @@ export function needsInfo(p) {
   const ace = ["ace", "ace-acc"].includes(p.supplier_id);
   const onView = (p.active === 1 || p.listed === 1) && p.availability !== "dropped" && !(ace && f.stamp === "none") && !isSample(p.sku);
   if (!onView) return [];
-  return [!(p.price_cents > 0) && "price", ace && !(Array.isArray(d.colours) && d.colours.length) && "colours", ["in_store_uncounted", "special_order"].includes(p.availability) && "stock"].filter(Boolean);
+  return [!(p.price_cents > 0) && "price", ace && !(Array.isArray(d.colours) && d.colours.length) && !(String(p.family || "").startsWith("ace-") && d.colour) && "colours", ["in_store_uncounted", "special_order"].includes(p.availability) && "stock"].filter(Boolean);
 }
 
 export async function admin(request, env, url) {
@@ -258,33 +258,47 @@ export async function admin(request, env, url) {
       const d = { ...had }; delete d.colours; delete d.colour_hex;
       const hex = Object.fromEntries(colours.filter(c => c.hex).map(c => [c.name, c.hex]));
       if (colours.length) { d.colours = colours.map(c => c.name); if (Object.keys(hex).length) d.colour_hex = hex; }
-      // a hookah family's row is one colour of that hookah: its colours are its name on the chip ("Black and gold")
-      if (String(before.family || "").startsWith("ace-")) { if (colours.length) d.colour = joinColours(d.colours); else delete d.colour; }
+      // A hookah family's row is one colour of that hookah: its colours become its chip name ("Black and Gold"), unless the
+      // shop already typed a name for it in the full form (that name is kept; only a name this editor wrote is replaced).
+      if (String(before.family || "").startsWith("ace-")) {
+        const ours = !had.colour || (Array.isArray(had.colours) && had.colour === joinColours(had.colours));
+        if (ours) { if (colours.length) d.colour = joinColours(d.colours); else delete d.colour; }
+        if (ours && colours.length && d.colour.length > 40) return json({ error: "Check: colours (a hookah colour's name is up to 40 letters; pick fewer)." }, 400);
+      }
       if (JSON.stringify(d) !== JSON.stringify(had)) out.details = JSON.stringify(d);
     }
     if (out.details && (had.charcoal || String(before.family || "").startsWith("charcoal-"))) charcoalRules(out, JSON.parse(out.details));   // charcoal stays pickup or local only
-    // A price set on an item that is on view with "Price TBD" puts it on sale, so it can be bought as soon as the shop has priced it.
-    // Only an item already on view: never a made-up sample, an unticked catalogue page or a colour the supplier dropped.
+    // A first price on an item on view with "Price TBD" puts it on sale, so it can be bought as soon as the shop has priced it.
+    // Only an item that had no price (an item priced and switched off stays off), already on view: never a made-up sample,
+    // an unticked catalogue page or a colour the supplier dropped.
     const ticked = !["ace", "ace-acc"].includes(before.supplier_id) || (() => { try { return (JSON.parse(before.facts_known || "{}") || {}).stamp !== "none"; } catch { return false; } })();
-    if ("price_cents" in out && before.active === 0 && before.listed === 1 && before.availability !== "dropped" && ticked && !isSample(before.sku)) out.active = 1;
-    const stmts = [], cols = Object.keys(out);
+    if ("price_cents" in out && !(before.price_cents > 0) && before.active === 0 && before.listed === 1 && before.availability !== "dropped" && ticked && !isSample(before.sku)) out.active = 1;
+    const cols = Object.keys(out);
     const was = {}; for (const k of cols) was[k] = before[k];
-    if (count && count.seen !== before.stock) return json({ error: `An order changed this to ${before.stock} while you were counting. Check the shelf again.`, stock: before.stock, changed: true }, 409);
-    if (cols.length) stmts.push(db.prepare(`UPDATE products SET ${cols.map(k => k + " = ?").join(", ")}, updated_at = ${NOW} WHERE sku = ?`).bind(...cols.map(k => out[k]), m[1]));
+    const STALE = "An order changed this to %n while you were counting. Nothing was saved: check the shelf, then save again.";
+    if (count && count.seen !== before.stock) return json({ error: STALE.replace("%n", before.stock), stock: before.stock, changed: true }, 409);
+    const logged = { ...out }; if (logged.details) { logged.colours = colours.map(c => c.name); delete logged.details; }
+    if (count) logged.stock = count.counted;
+    if (!cols.length && !count) return json({ ok: true, changed: false, stock: before.stock });
+    // One transaction. With a count, every statement holds only while the stock is still the number the screen showed, so an
+    // order landing mid-save leaves the whole save unwritten (never half of it, never a log line for a count that did not happen).
+    const seen = count ? count.seen : null, still = "(?9 IS NULL OR stock = ?9)";
+    const stmts = [];
+    if (cols.length) stmts.push(db.prepare(`UPDATE products SET ${cols.map((k, i) => `${k} = ?${i + 1}`).join(", ")}, updated_at = ${NOW} WHERE sku = ?8 AND ${still}`).bind(...cols.map(k => out[k]), ...Array(7 - cols.length).fill(null), m[1], seen));
+    stmts.push(db.prepare(`INSERT INTO audit_log (actor, action, target, before, after) SELECT ?1, 'product.info', ?2, ?3, ?4 WHERE EXISTS (SELECT 1 FROM products WHERE sku = ?2 AND (?5 IS NULL OR stock = ?5))`)
+      .bind(actor, m[1], JSON.stringify(count ? { ...was, stock: before.stock } : was), JSON.stringify(logged), seen));
+    let countAt = -1;
     if (count) {   // the shelf count, written as a count move like Count mode, and the item marked as counted
+      countAt = stmts.length;
       stmts.push(db.prepare(`INSERT INTO stock_moves (sku, delta, reason, ref, actor) SELECT sku, ?2 - stock, 'count', ?4, ?3 FROM products WHERE sku = ?1 AND stock = ?5`).bind(m[1], count.counted, actor, "counted " + count.counted, count.seen));
       stmts.push(db.prepare(`UPDATE products SET stock = ?2, availability = CASE WHEN availability = 'dropped' THEN availability ELSE 'counted' END, updated_at = ${NOW} WHERE sku = ?1 AND changes() = 1`).bind(m[1], count.counted));
     }
-    const logged = { ...out }; if (logged.details) { logged.colours = colours.map(c => c.name); delete logged.details; delete logged.ship_class; }
-    if (count) logged.stock = count.counted;
-    if (!stmts.length) return json({ ok: true, changed: false, stock: before.stock });
-    stmts.push(audit("product.info", m[1], count ? { ...was, stock: before.stock } : was, logged));
     stmts.push(db.prepare("SELECT stock, price_cents, active, availability FROM products WHERE sku = ?").bind(m[1]));
     let res;
     try { res = await db.batch(stmts); }
     catch (e) { if (/Set the shop price/.test(String(e && e.message))) return json({ error: "Set the shop price before turning this item on." }, 409); throw e; }
     const now = res.at(-1).results[0];
-    if (count && now.stock !== count.counted) return json({ error: `An order changed this to ${now.stock} while you were counting. The rest is saved; check the shelf again.`, stock: now.stock, changed: true }, 409);
+    if (count && !res[countAt].meta.changes) return json({ error: STALE.replace("%n", now.stock), stock: now.stock, changed: true }, 409);
     return json({ ok: true, changed: true, stock: now.stock, price_cents: now.price_cents, on_sale: now.active === 1 && now.price_cents > 0, counted: now.availability === "counted" });
   }
   // Stock changes. Each is one database transaction (a D1 batch): the move is written only if the count changed, the

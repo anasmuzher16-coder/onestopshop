@@ -122,11 +122,20 @@ if (paid) {
   ok(!sp2.weightTbd || sp2.ship === "pickup_only", "an item with no known weight is pickup or local only once on sale");
   // clearing colours takes the item back to "colours unknown"; an unchanged save writes nothing
   ok((await info(hk.sku, { colours: [] })).status === 200 && !JSON.parse((await row(hk.sku)).details || "{}").colour && (await row(hk.sku)).needs?.includes("colours"), "clearing the colours puts them back on the needs list");
+  // a name the shop typed in the full form is kept; a priced item that is switched off stays off when its price changes
+  ok((await call(`/products/${hk.sku}`, { method: "PUT", body: { variant_label: "Midnight Blue" } })).status === 200 && (await info(hk.sku, { colours: ["Blue"] })).status === 200, "a hookah row named in the full form takes colours");
+  const hk2 = JSON.parse((await row(hk.sku)).details); ok(hk2.colour === "Midnight Blue" && JSON.stringify(hk2.colours) === '["Blue"]' && !(await row(hk.sku)).needs?.includes("colours"), "the full form's colour name is kept: " + hk2.colour);
+  ok((await info(hk.sku, { colours: [] })).status === 200 && JSON.parse((await row(hk.sku)).details).colour === "Midnight Blue", "clearing the editor's colours keeps the shop's typed name");
+  const soon = (await call("/products")).data.products.find(x => x.needs?.includes("price") && x.listed === 1 && x.active === 0 && x.sku !== t.sku && x.sku !== hk.sku);
+  ok(soon && (await call(`/products/${soon.sku}`, { method: "PUT", body: { price_cents: 3000 } })).status === 200 && (await row(soon.sku)).active === 0, "an item priced in the full form and left off is off (coming soon)");
+  const re = await info(soon.sku, { price_cents: 3200 }); ok(re.status === 200 && re.data.on_sale === false && (await row(soon.sku)).active === 0, "changing the price of a priced, switched-off item never switches it on");
+  const sample = (await call("/products")).data.products.find(x => x.sample && x.active === 0);
+  ok(sample && (await info(sample.sku, { price_cents: 1234 })).status === 200 && (await row(sample.sku)).active === 0, "a made-up sample is never switched on by a price");
   const nothing = await info(t.sku, { name: t.name + " (shop)", price_cents: 2499 }); ok(nothing.status === 200 && nothing.data.changed === false, "a save with nothing new writes nothing");
   // charcoal stays pickup or local only whatever the editor saves
   const coal = all.find(x => x.category_id === "charcoal" && /"charcoal":true/.test(x.details || ""));
   ok(coal && (await info(coal.sku, { colours: ["Black"] })).status === 200, "a charcoal item takes colours");
-  const cr = coal && await row(coal.sku); ok(cr && cr.ship_class === "pickup_only" && JSON.parse(cr.details).charcoal === true, "charcoal keeps its pickup-only rule after an editor save");
+  const cr = coal && await row(coal.sku); ok(cr && cr.ship_class === "pickup_only" && JSON.parse(cr.details).charcoal === true, "charcoal keeps its pickup-only rule and its mark after an editor save");
 }
 ok((await call("/logout", { method: "POST", body: {} })).status === 200, "sign out");
 console.log(f ? `FAIL ${f} of ${n} checks` : `PASS ${n} checks`); process.exit(f ? 1 : 0);
