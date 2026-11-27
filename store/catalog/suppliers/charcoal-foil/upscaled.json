@@ -1,0 +1,22 @@
+{
+ "schema": "oss-upscaled/1",
+ "why": "owner 2026-11-27: upscale the photos that need it. These shop photos are hand-made files (no rebuild script draws them); each kept upscale adds only the 1440 -l file beside the unchanged 720/540/360 files. A record only (no tool reads it); the hashes let a person check: if a file here no longer matches, set img_lw = NULL for its SKU in the database or ship a new -l with it.",
+ "images": {
+  "oss-9301": {
+   "sku": "OSS-9301",
+   "method": "RealESRGAN_General_x4_v3 4x of the live 720 crop, shrunk to the 1440 frame",
+   "date": "2026-11-27",
+   "lw": 1440,
+   "review": "design review BETTER at 870/1170 px vs live: text crisper, no letter changes, no halos",
+   "files": {
+    "oss-9301.webp": "eb48b9aa44a38bc41f65410bd022ab12769a5baf5cecc872e8f18c61b41b9b24",
+    "oss-9301-m.webp": "91e615514a87f2ad8e9285bb42ef599a58598bd11ffeaf1e925ee5e2f6436043",
+    "oss-9301-s.webp": "624cf891333cfb888802c6f52c9837e6c3f4b96e324c83a4b309496c5f648c0e",
+    "oss-9301-l.webp": "216a0d30e71bf688def3fd135620b72c0f8cbb80a567fb2640c542de21856844"
+   }
+  }
+ },
+ "rejected_after_review": {
+  "oss-9304-r12": "breaker 2026-11-27: the v3 -l re-drew the small print ('None' -> 'Nono', 'Size' -> 'Sizo', a broken M in 'Mic'); not shipped"
+ }
+}

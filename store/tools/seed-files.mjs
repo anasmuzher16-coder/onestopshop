@@ -26,6 +26,7 @@ export const SEED_FILES = [
   "catalog/live/upscaled-photos-2026-11-27.sql", // the upscaled photo: its label off, its 1440 photo on
   "catalog/live/reverse-search-facts-2026-11-27.sql", // makers' names for 4 stand-ins, facts from the exact reverse-search rows (no-op over this seed: proves it is safe twice)
   "catalog/live/web-photos-2026-11-27.sql",     // sharper web photos of the same products: their source kept, labels off where now crisp
+  "catalog/live/upscaled-photos-2-2026-11-27.sql", // one foil photo upscaled (1440 -l on, 'upscale' -> 'approved'); guarded on img, safe twice
 ];
 export const seedPath = f => fileURLToPath(new URL(f, STORE));
 
