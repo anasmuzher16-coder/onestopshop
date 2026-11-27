@@ -423,9 +423,11 @@ function intakeView(q) {
   // every send is listed by when it came and the place it came from (a short tag, never the address), so a stranger's send can
   // never pass for the shop's: a place seen once, or a new country, reads differently from the counter's usual one
   const list = q.sends.filter(x => x.key !== "intake/latest.json"), shown = q.shownKey || q.sends[0].newest || list[0]?.key, cur = list.find(x => x.key === shown) || list[0];
-  const label = s => `${when(s.at)}${s.from ? `, from place ${s.from}${s.country ? " (" + s.country + ")" : ""}, ${s.from_n === 1 ? "its only send" : s.from_n + " sends from there"}` : ", place not recorded"}`;
+  // the oldest kept send with a tag is most likely the shop's own: a send from that same place says so, so a stranger's cannot pass for it
+  const first = [...list].reverse().find(s => s.from)?.from;
+  const label = s => `${when(s.at)}${s.from ? `, from place ${s.from}${s.country ? " (" + s.country + ")" : ""}${s.from === first ? ", the same place as the first send" : ", a different place from the first send"}, ${s.from_n === 1 ? "its only send" : s.from_n + " sends from there"}` : ", place not recorded"}`;
   return `<section class="wide"><h2 class="h2">Shop answers</h2><p class="fineprint">${list.length} sends. Showing ${cur && cur.key === list[0].key ? "the newest" : "an earlier one"}: ${cur ? esc(label(cur)) : ""}.</p>
-    ${list.length > 1 ? `<label class="field"><span>Read another send</span><select class="input" data-intake>${list.slice(0, 200).map(s => `<option value="${esc(s.key)}" ${cur && s.key === cur.key ? "selected" : ""}>${esc(label(s))}</option>`).join("")}</select></label>` : ""}
+    ${list.length > 1 ? `<label class="field"><span>Read another send</span><select class="input" data-intake>${list.slice(0, 300).map(s => `<option value="${esc(s.key)}" ${cur && s.key === cur.key ? "selected" : ""}>${esc(label(s))}</option>`).join("")}</select></label>` : ""}
     <table class="ledger"><thead><tr><th scope="col">Question</th><th scope="col">Answer</th></tr></thead><tbody>${rows || `<tr><td colspan="2">The newest send could not be read.</td></tr>`}</tbody></table></section>`;
 }
 // ---------- shell ----------

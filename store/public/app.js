@@ -85,7 +85,7 @@ function fitCart(cart) {
     const p = bySku[l.sku], max = stockFor(p);
     if (!forSale(p)) { news.push(p.state === "tbd" ? `${p.name} has no shop price yet, so we took it out of your cart.` : `${p.name} is not on sale yet, so we took it out of your cart.`); continue; }
     if (!max) { news.push(`${p.name} has sold out, so we took it out of your cart.`); continue; }
-    if (l.qty > max) news.push(stockShort(p, max) || max < LINE_MAX ? `We only have ${max} of ${p.name}, so your cart now has ${max}.` : `Pickup orders hold up to ${max} of one item online, so your cart now has ${max} of ${p.name}. Call 519-255-2222 to hold more.`);
+    if (l.qty > max) news.push(stockShort(p, max) || max < LINE_MAX || !PICKUP_ONLY ? `We only have ${max} of ${p.name}, so your cart now has ${max}.` : `Pickup orders hold up to ${max} of one item online, so your cart now has ${max} of ${p.name}. Call 519-255-2222 to hold more.`);
     kept.push({ sku: l.sku, qty: Math.min(max, l.qty) });
   }
   return { kept, news };
@@ -531,7 +531,7 @@ function viewProduct(sku) {
 
 // ---------- build a set ----------
 // The heat section is charcoal now: pickup or local delivery only, so it is an optional pick, never put in a set by default.
-const SLOTS = [["hookah", "hookahs", "The hookah"], ["bowl", "bowls", "A bowl"], ["heat", "charcoal", "Charcoal, pickup or local delivery only"], ["hose", "hoses", "A hose"]];
+const SLOTS = [["hookah", "hookahs", "The hookah"], ["bowl", "bowls", "A bowl"], ["heat", "charcoal", PICKUP_ONLY ? "Charcoal, pickup only" : "Charcoal, pickup or local delivery only"], ["hose", "hoses", "A hose"]];
 const OPTIONAL = new Set(["heat"]);
 const setOpts = c => inCat(c).filter(p => forSale(p) && !isSold(p));   // a set is never offered, or defaulted to, something the shop cannot sell (a hookah with "Price TBD" included)
 const canSet = p => forSale(p) && !isSold(p) ? p : null;
@@ -619,7 +619,7 @@ async function priceLocal() {
 }
 // What we can honestly say about delivery right now. The strip and the product line both read this, so they never disagree.
 function deliveryNow(subCents = cartCents()) {
-  const d = state.dest, from = "Local delivery from $10 near Windsor", either = "It ships across Canada except Quebec, or pickup is free";
+  const d = state.dest, from = "Local delivery from $10 near Windsor", either = shipsNow() ? "It ships across Canada except Quebec, or pickup is free" : "Pickup is free";   // nothing that ships is on sale: never promise shipping (breaker, 2026-11-27)
   if (!d) return { key: "none", msg: from, sub: "", act: "Check your postal code" };
   const far = { key: "far", msg: `${d.full} is past our delivery area`, sub: either, act: "Change" };
   if (localArea(d) && !d.complete) return { key: "partial", msg: from, sub: "", act: "Add your full postal code" };
@@ -632,7 +632,7 @@ function deliveryNow(subCents = cartCents()) {
     return { key: "later", msg: `Delivery to ${d.full} is priced at checkout`, sub: "", act: "Change" };
   }
   if (d.complete && d.prov === "ON" && /^N[089]/.test(d.fsa)) return far;
-  return { key: "ship", msg: `We ship to ${d.full}`, sub: "", act: "Change" };
+  return shipsNow() ? { key: "ship", msg: `We ship to ${d.full}`, sub: "", act: "Change" } : { key: "far", msg: `${d.full} is past our delivery area`, sub: either, act: "Change" };
 }
 function deliveryLine(p, opts) {
   if (isSold(p) || !forSale(p)) return "";
@@ -817,7 +817,7 @@ function syncChrome() {
   const count = `<span data-cart-count>${cartCount()}</span>`, dock = $(".dock");
   dock.classList.toggle("dock--buy", !!prod);
   const lines = cartLines(), sub = lines.reduce((a, l) => a + l.product.price * l.qty, 0);
-  const sc = ra === "cart" && lines.length ? shipChoice(lines) : null, ship = sc && sc.chosen, canPay = !!sc && (sc.pickup || sc.local || !!ship);
+  const sc = ra === "cart" && lines.length ? shipChoice(lines) : null, ship = sc && sc.chosen, canPay = !!sc && !(PICKUP_ONLY && cartCount() > PICKUP_UNITS) && (sc.pickup || sc.local || !!ship);
   dock.classList.toggle("dock--buy", !!prod || ra === "set" || (ra === "cart" && lines.length > 0));
   dock.innerHTML = prod
     ? `<a class="dock__side" href="/shop/${prod.cat}" data-back>Back</a>${state.cart.some(l => l.sku === prod.sku)
@@ -1172,7 +1172,7 @@ const viewPrivacy = () => doc("Privacy", "What we collect, why, who else handles
     "When you order: your name, your email, your phone number (needed for local delivery so the driver can reach you, otherwise up to you), the delivery address if we deliver or ship it, and any note you add. We also keep what you bought, what you paid and how you chose to get it. We use these to fill your order, email you about it and answer your questions.",
     "When you pay by card: you type your card details on Stripe's payment page, not ours. We never see or store your card number. Stripe tells us only whether the payment went through.",
     "When you check delivery: the postal code you enter, and for local delivery your street address, are used to work out whether we deliver to you and what it costs.",
-    "To stop abuse, when you place an order or ask for a sign-in code, we keep a coded form of your internet address, scrambled with a secret key so it cannot be turned back into the address. We use it only to limit how many orders, unpaid pickups held at once, codes or tries can come from one place. For orders it is deleted after 30 days, and for sign-in codes after a day.",
+    "To stop abuse, when you place an order we keep a coded form of your internet address, scrambled with a secret key so it cannot be turned back into the address, only to limit how many orders and unpaid pickups held at once can come from one place. For orders it is deleted after 30 days. When you ask for a sign-in code we keep a scrambled form of your internet address and of your email, only to count codes asked for and wrong codes typed, and delete them after a day.",
     "We collect only what we need for these jobs. We do not use your details for anything else unless you agree first.",
   ]],
   ["How you found us", ["When you place an order, we save with it where your first visit in the last 30 days came from: a short code from our business card or a link we posted, the name of the site that sent you (like Google or Instagram), and the first page you opened. It stays on your device until you order. We use it only to count which of our cards, posts and listings bring orders. It is not used to follow you around the web, and we never share it."]],

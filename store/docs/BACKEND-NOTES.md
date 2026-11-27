@@ -82,7 +82,8 @@ All numbers here are owner-vetoable defaults; they live in src/guard.js (and DEC
   (charcoal by the box, foil by the pack, shisha by the tub, hookahs one at a time); while card payment is off the cart
   stops at 5 of an item and asks for a call past 15. A quantity must be a whole number sent as a number.
 - Per item (2026-11-27): all unpaid pickups together hold at most half of an item's units (on the shelf plus already held),
-  and always at least 1 (`holdMax`). Checked before the order is written for a plain answer, and again inside the very
+  and always at least 1 (`holdMax`; so an item with a single unit can be held whole, by design). Only orders that have
+  really taken their stock count, so an order still going through checkout never makes the ceiling stricter. Checked before the order is written for a plain answer, and again inside the very
   statement that takes the stock (one D1 transaction), so orders at the same moment cannot pass it together. Card orders
   are not held to it. So a handful of addresses can hold at most 3 x 15 units each and never more than half of any item.
 - What a blocked shopper sees (all with the counter's number, 519-255-2222): too many held: "You already have N orders
@@ -123,11 +124,12 @@ All numbers here are owner-vetoable defaults; they live in src/guard.js (and DEC
   never with LIVE=1.
 
 ## The questionnaire link (2026-11-27)
-- `/api/intake/<link>` takes at most 5 sends a day from one place and 30 a day in all (rows in `login_attempts` under
-  `k:` and a keyed hash of the address, deleted after a day), at most 200 KB each, and stops taking sends once 300 are kept.
+- `/api/intake/<link>` takes at most 5 sends a day from one place, 10 from one IPv6 /48 and 30 a day in all (rows in
+  `login_attempts` under `k:` and `q:` with keyed hashes of the address, deleted after a day), at most 200 KB each, and stops taking sends once 300 are kept.
   Each send is its own file labelled with its time, a short place tag (keyed hash, never the address) and its country;
-  the back office lists every send that way and the owner picks which to read, so a stranger's newer send cannot pass for
-  the shop's.
+  the back office lists every send that way, says whether each came from the same place as the first send, and the
+  owner picks which to read, so a stranger's newer send cannot pass for the shop's. Known limits: 30 sends a day from
+  many addresses can still fill a day, and 300 kept sends stop the link until some are removed from the backups bucket by hand.
 ## Writes from another site (CSRF)
 - Every admin write needs JSON, the `X-OSS-Admin: 1` header (a custom header a form cannot send), a same-site
   cookie, a matching `Origin` when present, and is refused when the browser marks it `Sec-Fetch-Site` other than

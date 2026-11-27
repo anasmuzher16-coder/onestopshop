@@ -48,7 +48,9 @@ export const HOLD_DIV = 2;
 export const holdMax = units => Math.max(1, Math.floor(units / HOLD_DIV));
 // How many of each item unpaid pickup orders hold now (excluding one order, when given). One fragment, used for the check before
 // an order is written and, the same, inside the statement that takes the stock, so simultaneous orders cannot pass it together.
-export const HELD_SQL = (sku, notOrder) => `(SELECT COALESCE(SUM(hi.qty),0) FROM order_items hi JOIN orders ho ON ho.id = hi.order_id WHERE hi.sku = ${sku} AND ho.id != ${notOrder} AND ho.pay_status = 'pay_at_pickup' AND ho.status IN ('pending','ready') AND ho.release_op IS NULL)`;
+// Only orders that have really taken their stock count (a 'sale' move): an order still on its way through checkout, or one written
+// but never stocked, holds nothing yet, so it never makes the ceiling stricter for a real shopper (breaker, 2026-11-27).
+export const HELD_SQL = (sku, notOrder) => `(SELECT COALESCE(SUM(hi.qty),0) FROM order_items hi JOIN orders ho ON ho.id = hi.order_id WHERE hi.sku = ${sku} AND ho.id != ${notOrder} AND ho.pay_status = 'pay_at_pickup' AND ho.status IN ('pending','ready') AND ho.release_op IS NULL AND EXISTS (SELECT 1 FROM stock_moves hm WHERE hm.ref = ho.id AND hm.sku = hi.sku AND hm.reason = 'sale'))`;
 // The shop-wide brake: a real flood only. Per-visitor caps (below) bound one network to 3 unpaid orders at once (6 for an IPv6
 // /48) and 5 orders in 10 minutes, so reaching 60 orders in one minute takes 20 or more separate networks at once. A shopper
 // signed in with the order's own email has proven the inbox is theirs and is never braked. (breaker, 2026-11-27: at 12 a minute,
@@ -120,5 +122,8 @@ export const orderAttempt = (db, who, id) => db.prepare("INSERT INTO order_attem
 export async function pruneGuards(env) {
   const db = env.DB;
   await db.prepare("DELETE FROM login_attempts WHERE ok = 0 AND at < strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 day')").run();
+  // a customer's sign-in code counts (hashes of the address and of the email) go after a day, as the privacy page says, even in a quiet week
+  await db.prepare("DELETE FROM account_attempts WHERE at < strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 day')").run().catch(err => { if (!/no such table/i.test(String(err && err.message))) throw err; });
+  await db.prepare("DELETE FROM sign_in_codes WHERE created_at < strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 day')").run().catch(err => { if (!/no such table/i.test(String(err && err.message))) throw err; });
   await db.prepare("DELETE FROM order_attempts WHERE at < strftime('%Y-%m-%dT%H:%M:%SZ','now','-30 days')").run().catch(err => { if (!/no such table/i.test(String(err && err.message))) throw err; });
 }

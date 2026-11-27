@@ -108,7 +108,7 @@ export function searchOut(q) {
   return `${said}${soon.length ? `<p class="meant">${X.esc(soonNames)}: coming soon to the site. See ${soonLink}, or call <a class="link" href="tel:+15192552222">519-255-2222</a>.</p>` : ""}${pages}${js.length ? `<ul class="jumps">${js.map(jumpRow).join("")}</ul>` : ""}
     <p class="sr" role="status">${hits.length} ${hits.length === 1 ? "match" : "matches"}</p>
     ${groups.map(g => { const more = g.items.length > 4, coal = g.cat.id === "charcoal";
-      return `<section class="rgroup" data-tone="${g.cat.tone}"><div class="rgroup__h"><h2>${X.esc(g.cat.name)}</h2><span class="num">${g.items.length}</span></div>${coal ? `<p class="rgroup__note">Charcoal is pickup or local delivery only.</p>` : ""}
+      return `<section class="rgroup" data-tone="${g.cat.tone}"><div class="rgroup__h"><h2>${X.esc(g.cat.name)}</h2><span class="num">${g.items.length}</span></div>${coal ? `<p class="rgroup__note">${document.querySelector('meta[name="oss-pay"]')?.content === "card" ? "Charcoal is pickup or local delivery only." : "Charcoal is pickup only."}</p>` : ""}
       <ul class="rows">${g.items.slice(0, 4).map(p => row(p, words)).join("")}</ul>${more ? `<a class="link rgroup__all" href="/search?q=${encodeURIComponent(q)}&in=${g.cat.id}" data-s-all="${g.cat.id}">See all ${g.items.length} in ${X.esc(g.cat.name)}</a>` : ""}</section>`; }).join("")}`;
 }
 // "See all": the same search, one section, every match

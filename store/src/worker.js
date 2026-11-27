@@ -201,12 +201,12 @@ function demoNoindex(r, env, request) {
 }
 const INTAKE = "ij9A2jg3vBRk";   // the questionnaire's private link: /intake/ij9A2jg3vBRk
 // The questionnaire is the shop's own form, filled in by the owner or the counter a few times at most. Its link is private but
-// cannot be secret forever, so (breaker, 2026-11-27): each address may send 5 times a day and all addresses together 30 a day
+// cannot be secret forever, so (breaker, 2026-11-27): each address may send 5 times a day, one IPv6 /48 10, and all together 30 a day
 // (counted in login_attempts under "k:" plus a keyed hash of the address, deleted after a day by the same sweep), and once 300
 // sends are kept no more are taken until the owner clears some. Each send is labelled with when it came and a short tag for the
 // place it came from (a keyed hash, never the address) and its country, so the back office can tell a stranger's send from the
 // shop's own; the owner picks which send to read.
-const INTAKE_LIMITS = { perPlace: 5, perDay: 30, kept: 300 };
+const INTAKE_LIMITS = { perPlace: 5, perBlock: 10, perDay: 30, kept: 300 };   // perBlock: one IPv6 /48 (a free tunnel holds 256 /56s)
 const keyedTag = async (env, s) => [...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`intake|${env.PIN_PEPPER || env.ADMIN_KEY || ""}|${s}`)))].map(b => b.toString(16).padStart(2, "0")).join("");
 async function intakeSave(request, env) {
   if (request.method !== "POST") return json({ error: "Method not allowed" }, 405);
@@ -214,11 +214,12 @@ async function intakeSave(request, env) {
   if ((site && site !== "same-origin") || (origin && origin !== new URL(request.url).origin)) return json({ error: "Wrong origin." }, 403);
   if (!(request.headers.get("Content-Type") || "").startsWith("application/json")) return json({ error: "Send it from the questionnaire page." }, 415);
   if (+(request.headers.get("content-length") || 0) > 200000) return json({ error: "That is too long to send" }, 413);
-  const tag = await keyedTag(env, sourceOf(request)), who = "k:" + tag, db = env.DB;
-  const counted = () => db.prepare("SELECT COALESCE(SUM(who = ?1),0) AS mine, COUNT(*) AS day FROM login_attempts WHERE who LIKE 'k:%' AND at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 day')").bind(who).first();
-  const over = c => c.mine > INTAKE_LIMITS.perPlace || c.day > INTAKE_LIMITS.perDay;
+  const tag = await keyedTag(env, sourceOf(request)), who = "k:" + tag, db = env.DB, block = "q:" + await keyedTag(env, "block|" + sourceOf(request, 48));
+  // the /48 row ("q:") is written beside the place row ("k:"); "day" counts sends (place rows) only
+  const counted = () => db.prepare("SELECT COALESCE(SUM(who = ?1),0) AS mine, COALESCE(SUM(who = ?2),0) AS blk, COALESCE(SUM(who LIKE 'k:%'),0) AS day FROM login_attempts WHERE (who LIKE 'k:%' OR who = ?2) AND at >= strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 day')").bind(who, block).first();
+  const over = c => c.mine > INTAKE_LIMITS.perPlace || c.blk > INTAKE_LIMITS.perBlock || c.day > INTAKE_LIMITS.perDay;
   const busy = () => json({ error: "That is a lot of sends today. Your earlier sends are kept. Try again tomorrow, or call the counter at 519-255-2222." }, 429);
-  { const c = await counted(); if (c.mine >= INTAKE_LIMITS.perPlace || c.day >= INTAKE_LIMITS.perDay) return busy(); }
+  { const c = await counted(); if (c.mine >= INTAKE_LIMITS.perPlace || c.blk >= INTAKE_LIMITS.perBlock || c.day >= INTAKE_LIMITS.perDay) return busy(); }
   // read at most 200 KB whatever the headers say (a body sent in chunks has no length to check)
   const reader = request.body?.getReader(), parts = []; let size = 0;
   if (!reader) return json({ error: "Nothing to save" }, 400);
@@ -229,15 +230,16 @@ async function intakeSave(request, env) {
   { let n = 0, cursor; do { const l = await env.BACKUPS.list({ prefix: "intake/", cursor, limit: 1000 }); n += l.objects.length; cursor = l.truncated && n < INTAKE_LIMITS.kept ? l.cursor : undefined; } while (cursor);
     if (n >= INTAKE_LIMITS.kept) return json({ error: "The shop's answers are full for now. Call the counter at 519-255-2222." }, 507); }
   // counted now, then counted again with this send in, so sends at the same moment get no further than the limit
-  const row = await db.prepare("INSERT INTO login_attempts (who, ok) VALUES (?, 0)").bind(who).run(), mine = row.meta.last_row_id;
-  if (over(await counted())) { await db.prepare("DELETE FROM login_attempts WHERE id = ?").bind(mine).run(); return busy(); }
+  const marks = await db.batch([db.prepare("INSERT INTO login_attempts (who, ok) VALUES (?, 0)").bind(who), db.prepare("INSERT INTO login_attempts (who, ok) VALUES (?, 0)").bind(block)]), mine = marks[0].meta.last_row_id, mineB = marks[1].meta.last_row_id;
+  const unmark = () => db.prepare("DELETE FROM login_attempts WHERE id IN (?, ?)").bind(mine, mineB).run();
+  if (over(await counted())) { await unmark(); return busy(); }
   const plain = v => typeof v === "string" ? v.slice(0, 20000) : v === true ? true : Array.isArray(v) ? v.slice(0, 50).map(x => String(x).slice(0, 120)) : String(v ?? "").slice(0, 2000);
   const answers = Object.fromEntries(Object.entries(body.answers).slice(0, 600).filter(([k]) => /^[\w-]{1,60}$/.test(k)).map(([k, v]) => [k, plain(v)]));
   const rows = (Array.isArray(body.rows) ? body.rows : []).filter(r => r && typeof r === "object" && typeof r.key === "string" && /^[\w-]{1,60}$/.test(r.key)).slice(0, 600).map(r => ({ key: r.key, ...(typeof r.item === "string" ? { item: r.item.slice(0, 120) } : {}), value: plain(r.value) }));
   const at = new Date().toISOString(), country = String(request.cf?.country || request.headers.get("CF-IPCountry") || "").replace(/[^A-Z]/g, "").slice(0, 2);
   const text = JSON.stringify({ answers, rows, sentAt: typeof body.sentAt === "string" ? body.sentAt.slice(0, 40) : null, receivedAt: at, from: tag.slice(0, 8), country });
   try { await env.BACKUPS.put(`intake/${at.replace(/[:.]/g, "-")}-${crypto.randomUUID().slice(0, 8)}.json`, text, { httpMetadata: { contentType: "application/json" }, customMetadata: { from: tag.slice(0, 8), country } }); }
-  catch (e) { await db.prepare("DELETE FROM login_attempts WHERE id = ?").bind(mine).run(); throw e; }
+  catch (e) { await unmark(); throw e; }
   // no fixed "latest" file: anyone holding the link could overwrite it. Each send is its own new file, and the back office
   // lists them all with their time and place tag (admin.js /intake), so an earlier send can never be replaced or hidden.
   return json({ ok: true });
