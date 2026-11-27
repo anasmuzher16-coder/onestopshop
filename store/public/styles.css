@@ -785,6 +785,7 @@ html.restoring .grid--shop .card{content-visibility:visible}
 @media (min-width:960px){
   /* one line; when the window is narrow the links that do not fit move behind "More" (app.js fitNav), never cut or scrolled away */
   .top__nav{position:relative;min-width:0;padding-block:2px;padding-inline:7px;margin-inline:-7px;overflow:visible;white-space:nowrap}   /* room for the links' 7 px of extra target at both ends of the row */
+  .top__nav{min-height:48px}   /* a link's 44 px and the 2 px above and below, held while the row is still empty: the server-drawn section band below never moves when the links come in */
   .top__nav a{flex:none}
   .top__more{position:relative;flex:none}
   .top__more > summary{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 7px;margin:0 -7px;list-style:none;cursor:pointer;color:var(--color-text)}

@@ -6,6 +6,8 @@
 // reached any other way (the workers.dev demo address) keep noindex and point their canonical at SITE_ORIGIN.
 import { sellable, counterRow, counterPayRow, toStorefront, IMG_VERSIONS } from "./catalog.js";
 import { SHOP_HOURS } from "../public/rates-core.js";
+import { shopBand } from "../public/band.js";
+import { shelfOf } from "../public/picks.js";
 
 const SHOP = { phone: "+1-519-255-2222", street: "760 Wyandotte St E", city: "Windsor", region: "ON", postal: "N9A 3J4", country: "CA",
   geo: { latitude: 42.3179407, longitude: -83.0263116 }, sameAs: ["https://www.instagram.com/one1_stop_shop/", "https://www.tiktok.com/@onestopshop6"] };
@@ -49,6 +51,10 @@ export const canonicalSku = (cat, sku) => {
 };
 // What a shopper sees as one item in a section: one per hookah family, every other item on its own.
 const shelf = (cat, list) => list.filter(p => { const f = view(cat).front.get(p.sku); return !f || !f.family || f.lead; });
+// A shop page's band (public/band.js), visible from the first paint: the page draws the same markup and keeps this node, so
+// the band is coloured, titled and its full height before the script runs, and nothing moves when it takes over. Its h1 is
+// the page's heading, so the hidden copy below carries none of its own.
+const bandFor = (cat, c) => { const sf = shelfOf([...view(cat).front.values()]); return shopBand(c && { id: c.id, name: c.name, tone: c.tone }, c ? sf.filter(p => p.cat === c.id) : sf); };
 
 const photoUrl = (origin, p) => p.photo_ver ? `${origin}/api/photo/${p.sku}?v=${p.photo_ver}` : p.img ? `${origin}/img/pc/${p.img}.webp${IMG_VERSIONS[p.img] ? "?v=" + IMG_VERSIONS[p.img] : ""}` : null;
 const smallUrl = p => p.photo_ver ? `/api/photo/${p.sku}?v=${p.photo_ver}` : p.img ? `/img/pc/${p.img}${p.img_dark ? "" : "-s"}.webp${IMG_VERSIONS[p.img] ? "?v=" + IMG_VERSIONS[p.img] : ""}` : null;
@@ -106,8 +112,9 @@ export function crumbsLd(trail) {
 // The page draws itself with JavaScript. This block carries the same content in the HTML for crawlers that do not run
 // scripts and for anyone without JavaScript. It sits inside <main>, hidden by a style in the head; the page replaces it
 // the moment it draws, so nobody with JavaScript ever sees it. Without JavaScript the <noscript> style shows it.
-// (#main keeps the full-screen height it has while empty, styles.css #main:empty, so the footer never jumps.)
-export const SSR_STYLE = `<style>.ssr{display:none}#main:has(>.ssr:only-child){min-height:100svh}</style><noscript><style>.ssr{display:block;padding:var(--s-6,24px) var(--gutter,16px) var(--s-12,48px)}.ssr h1{font:400 var(--t-d1,2rem)/1 var(--font-display,sans-serif);margin:var(--s-4,16px) 0}.ssr p{max-width:65ch}`
+// (#main keeps the full-screen height it has while empty, styles.css #main:empty, so the footer never jumps; a shop page's
+// band, bandFor above, is the one part shown to everyone from the first paint.)
+export const SSR_STYLE = `<style>.ssr{display:none}#main:has(>.ssr){min-height:100svh}</style><noscript><style>.ssr{display:block;padding:var(--s-6,24px) var(--gutter,16px) var(--s-12,48px)}.ssr h1{font:400 var(--t-d1,2rem)/1 var(--font-display,sans-serif);margin:var(--s-4,16px) 0}.ssr p{max-width:65ch}`
   + `.ssr ol{display:flex;flex-wrap:wrap;gap:var(--s-2,8px);list-style:none;padding:0;margin:0;font-size:var(--t-14,.875rem)}.ssr ol li+li::before{content:"/";margin-right:var(--s-2,8px);color:var(--color-muted,#999)}.ssr ol li{white-space:nowrap}.ssr ol a{display:inline;padding:0;margin:0;min-height:0;min-width:0}`
   + `.ssr ul{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:var(--s-6,24px) var(--s-4,16px);list-style:none;padding:0}.ssr li a{display:block}.ssr li img{display:block;width:100%;height:auto;background:var(--bonelt,#eee);margin-bottom:var(--s-2,8px)}article.ssr>img{display:block;width:100%;max-width:360px;height:auto;background:var(--bonelt,#eee)}body:has(#main>.ssr) .nojs>h1{display:none}</style></noscript>`;
 const crumbNav = trail => `<nav aria-label="Breadcrumb"><ol>${trail.map(([name, href], i) => `<li>${i === trail.length - 1 ? `<span aria-current="page">${esc(name)}</span>` : `<a href="${esc(href)}">${esc(name)}</a>`}</li>`).join("")}</ol></nav>`;
@@ -127,12 +134,12 @@ export function seoFor({ env, url, cat, meta, site }) {
   } else if (a === "shop" && !b) {
     const secs = cat.categories.map(c => [c, shelf(cat, cat.products.filter(p => p.category_id === c.id))]).filter(([, l]) => l.length);
     out.head.push(ld(crumbsLd([...home, shopCrumb])));
-    out.body = `<section class="ssr">${crumbNav([["Home", "/"], ["Shop", "/shop"]])}<h1>Shop</h1><p>${esc(meta.desc)}</p>${secs.map(([c, l]) => `<h2><a href="/shop/${esc(c.id)}">${esc(c.name)}</a></h2><ul>${l.slice(0, 12).map(item).join("")}</ul>`).join("")}</section>`;
+    out.body = bandFor(cat, null) + `<section class="ssr">${crumbNav([["Home", "/"], ["Shop", "/shop"]])}<p>${esc(meta.desc)}</p>${secs.map(([c, l]) => `<h2><a href="/shop/${esc(c.id)}">${esc(c.name)}</a></h2><ul>${l.slice(0, 12).map(item).join("")}</ul>`).join("")}</section>`;
   } else if (a === "shop") {
     const c = cat.categories.find(x => x.id === b); if (!c) return out;
     const list = shelf(cat, cat.products.filter(p => p.category_id === c.id));
     out.head.push(ld(crumbsLd([...home, shopCrumb, [c.name, `${origin}/shop/${c.id}`]])));
-    out.body = `<section class="ssr">${crumbNav([["Home", "/"], ["Shop", "/shop"], [c.name, `/shop/${c.id}`]])}<h1>${esc(c.name)}</h1><p>${esc(meta.desc)}</p>${list.length ? `<ul>${list.map(item).join("")}</ul>` : `<p><a href="tel:+15192552222">519-255-2222</a></p>`}</section>`;
+    out.body = bandFor(cat, c) + `<section class="ssr">${crumbNav([["Home", "/"], ["Shop", "/shop"], [c.name, `/shop/${c.id}`]])}<p>${esc(meta.desc)}</p>${list.length ? `<ul>${list.map(item).join("")}</ul>` : `<p><a href="tel:+15192552222">519-255-2222</a></p>`}</section>`;
   } else if (a === "p" && meta.product) {
     const p = meta.product, c = cat.categories.find(x => x.id === p.category_id), sku = canonicalSku(cat, p.sku), canon = `${origin}/p/${sku}`;
     out.canonical = canon; out.share = shareImage(origin, p, site);

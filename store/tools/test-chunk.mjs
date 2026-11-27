@@ -54,6 +54,43 @@ for (const eng of [chromium, webkit]) {
   const rail = await p.evaluate(() => window.__atLeave);
   ok(rail === null || rail > 0, "1440: the filter rail is in before the wave leaves (" + rail + " options)");
   await b.close(); }
+// A cold load of a shop page (2026-11-26: the band was an empty dark slot until the script ran): the Worker writes the band into
+// the HTML, so it is coloured, titled and its full height on the first paint, before the script (held back here, as on a slow
+// phone) runs. The page then keeps that same node, in the same box, with no layout shift. Every section and Everything at 390,
+// a few at 1440 and in WebKit, and a returning visitor who has answered the delivery question (no question drawn, none shown).
+{ const CATS = (await import("data:text/javascript;base64," + Buffer.from(await (await fetch(B + "/api/catalog-module")).text()).toString("base64"))).CATEGORIES.map(c => c.id);
+  const cold = async (eng, b, path, w, h, cookie) => {
+    const ctx = await b.newContext({ viewport: { width: w, height: h } }); if (cookie) { await ctx.addCookies([{ name: "oss-ask", value: "0", url: B }]); await ctx.addInitScript(() => localStorage.setItem("oss:reach", '"local"')); }   // answered: the page's own record and the cookie it keeps from it
+    const p = await ctx.newPage(), errs = []; p.on("pageerror", e => errs.push(e.message));
+    await p.addInitScript(() => { window.__box = () => { const s = document.querySelector("#main > .shophead"); if (!s) return null; const r = s.getBoundingClientRect(); return { top: Math.round(r.top), h: Math.round(r.height), w: Math.round(r.width), bg: getComputedStyle(s).backgroundColor, title: s.querySelector("h1")?.textContent || "" }; };
+      window.__cls = 0; try { new PerformanceObserver(l => { for (const e of l.getEntries()) if (!e.hadRecentInput) window.__cls += e.value; }).observe({ type: "layout-shift", buffered: true }); } catch { window.__cls = -1; } });
+    await p.route(/\/app\.js(\?|$)/, r => setTimeout(() => r.continue(), 400));
+    await p.goto(B + path, { waitUntil: "commit" });
+    const before = await p.waitForFunction(() => { const s = document.querySelector("#main > .shophead"); if (!s || !document.body || document.body.dataset.route) return false; const bg = getComputedStyle(s).backgroundColor; if (!bg || bg === "rgba(0, 0, 0, 0)") return false; window.__band = s; return window.__box(); }, null, { timeout: 10000, polling: "raf" }).then(x => x.jsonValue(), () => null);
+    await p.waitForFunction(() => document.body.dataset.route && !document.querySelector("#main [data-later]") && !document.querySelector("#main[aria-busy]"), null, { timeout: 15000 }).catch(() => {});
+    await p.waitForTimeout(1200);   // the band's act lands its object
+    const after = await p.evaluate(() => ({ ...window.__box(), same: document.querySelector("#main > .shophead") === window.__band, cls: +window.__cls.toFixed(4), strip: !document.querySelector("[data-delivery-strip]").hidden }));
+    await ctx.close(); return { before, after, errs };
+  };
+  const bad = [];
+  const one = async (eng, b, path, w, h, cookie = false) => {
+    const { before, after, errs } = await cold(eng, b, path, w, h, cookie), tag = `${eng.name()} ${w} ${path}${cookie ? " (answered)" : ""}`;
+    if (!before) { bad.push(`${tag}: no coloured band before the script ran`); return; }
+    if (!after.same || before.top !== after.top || before.h !== after.h || before.w !== after.w || before.title !== after.title || before.bg !== after.bg) bad.push(`${tag}: band ${JSON.stringify(before)} -> ${JSON.stringify(after)}`);
+    if (after.cls > 0.001) bad.push(`${tag}: layout shift ${after.cls}`);
+    if (cookie && after.strip) bad.push(`${tag}: the delivery question shows for a visitor who answered it`);
+    if (errs.length) bad.push(`${tag}: page error ${errs[0]}`);
+  };
+  const b = await chromium.launch();
+  for (const id of [...CATS, ""]) await one(chromium, b, "/shop" + (id ? "/" + id : ""), 390, 844);
+  for (const id of ["hookahs", "charcoal", "misc"]) await one(chromium, b, "/shop/" + id, 1440, 900);
+  await one(chromium, b, "/shop/hookahs", 390, 844, true);
+  await b.close();
+  const wb = await webkit.launch();
+  for (const [id, w, h] of [["shisha", 390, 844], ["hookahs", 390, 844], ["heat", 1440, 900]]) await one(webkit, wb, "/shop/" + id, w, h);
+  await wb.close();
+  ok(bad.length === 0, `cold load: every shop page's band is painted from the HTML and kept by the page, same node and box, no layout shift (${CATS.length + 1} pages at 390, 3 at 1440, 3 in WebKit, 1 answered): ${bad.slice(0, 3).join("; ")}`);
+}
 // A single item's photo marked to be upscaled (charcoal, foil, shisha carry it as details.photo) shows the same quiet label as
 // the Ace colours, on its card and its page; a photo state the page has no use for never reaches the storefront.
 if (process.env.PERSIST) {

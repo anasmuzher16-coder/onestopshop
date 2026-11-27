@@ -6,6 +6,7 @@ import { visitSource } from "./source.js";   // where the visit came from, sent 
 import { shelfOf, ticked, heroPicks } from "./picks.js";
 import * as find from "./find.js";
 import * as finder from "./search.js";
+import { shopBand, soonBand, openLine, nowInWindsor, h12, DAYS } from "./band.js";   // the section band, the same markup the Worker writes into the HTML
 
 // ---------- state (everything read from storage is validated) ----------
 const bySku = Object.assign(Object.create(null), Object.fromEntries(PRODUCTS.map(p => [p.sku, p])));   // no inherited keys: "constructor" in a saved cart or an address is not a product
@@ -105,19 +106,7 @@ const inCat = c => SHELF.filter(p => p.cat === c && !p.dark);
 const liveCat = c => inCat(c).filter(p => forSale(p) && !isSold(p));   // what we can suggest: nothing is promoted that cannot be bought
 const SHOP_STREET = "760 Wyandotte St E", SHOP_ADDRESS = "760 Wyandotte St E, Windsor, ON N9A 3J4", SHOP_MAP = "https://www.google.com/maps/search/?api=1&query=One%20Stop%20Shop%2C%20760%20Wyandotte%20St%20E%2C%20Windsor%2C%20ON%20N9A%203J4";
 const directions = (label = "Get directions") => `<a class="link" href="${SHOP_MAP}" target="_blank" rel="noopener">${label}</a>`;
-const HOURS = SHOP_HOURS, DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-const h12 = h => (h % 12 || 12) + (h < 12 ? " am" : " pm");
-// one formatter, made once: building an Intl.DateTimeFormat is slow, and the home page asks for the time once per row of its hours table, inside the wave's swap
-let WINDSOR = null;
-function nowInWindsor() {
-  WINDSOR ||= new Intl.DateTimeFormat("en-CA", { timeZone: "America/Toronto", weekday: "long", hour: "numeric", minute: "numeric", hour12: false });
-  const parts = Object.fromEntries(WINDSOR.formatToParts(new Date()).map(x => [x.type, x.value]));
-  return { day: DAYS.indexOf(parts.weekday), t: (+parts.hour % 24) + +parts.minute / 60 };
-}
-function openLine() {
-  const { day, t } = nowInWindsor(), [o, c] = HOURS[day], next = HOURS[(day + 1) % 7];
-  return t >= o && t < c ? `Open now until ${h12(c)}` : t < o ? `Opens today at ${h12(o)}` : `Closed now. Opens ${DAYS[(day + 1) % 7]} at ${h12(next[0])}`;
-}
+const HOURS = SHOP_HOURS;   // DAYS, h12, nowInWindsor and openLine live in band.js: the Worker writes the band's open line too
 
 const pickupDay = () => { const { day, t } = nowInWindsor(); return t >= HOURS[day][1] ? "Tomorrow" : "Today"; };   // after closing, the counter's next chance is tomorrow
 const pickupReady = () => pickupDay() === "Today" ? "Ready the same day" : "Ready tomorrow";
@@ -287,7 +276,6 @@ const band = (fx, tone, title, note = "") => `<section class="shophead shophead-
 // is drawn as a dashed empty slot on the coal, and the section's own drawn object (the one its band plays with) stands in it,
 // still. Beside it one claim, one sentence and the one action, the counter's phone; beside that, what is on the shelf now,
 // counted, as a ledger. No form: the shop answers the phone.
-const soonBand = () => `${openLine()}. <a class="tel" href="tel:+15192552222">Call 519-255-2222</a>`;   // the band line of every coming-soon page
 const SOON_NOUN = { parts: "parts and care pieces", misc: "odds and ends", heat: "heat pieces", cologne: "colognes" };
 const shelfNow = c => { const l = SHELF.filter(p => p.cat === c.id), sale = l.filter(forSale).length; return [c, l.length, sale]; };
 // the drawings are the band's own (fx-objects.js, already fetched by the effects); a slot is filled once they are here
@@ -397,32 +385,11 @@ function shopGrid(cat) {
     <div class="grid grid--shop">${gs.map(([name, items]) => `<h2 class="series">${name} <span class="num">${items.length} ${items.length === 1 ? "hookah" : "hookahs"}</span></h2>` + items.map(card).join("")).join("")}</div></section>`).join("")
   : `<div class="grid grid--shop">${groups.map(([name, items]) => (name ? `<h2 class="series" data-tone="${SERIES[name] || ""}">${name} <span class="num">${items.length} pieces${range(items)}</span></h2>` : "") + items.map(card).join("")).join("")}</div>`}`;
 }
-// The band's line under a section name, from the section's own items, counted: Heat says how many are charcoal and how
-// many foil; Hookahs counts hookahs, Shisha flavours; the pickup line only when every item in the section is pickup or local.
-const plural = (n, one, many) => `<span class="num">${n}</span> ${n === 1 ? one : many}`;
-function bandNote(c, list) {
-  if (!c) return plural(list.length, "piece", "pieces");
-  const local = list.length && list.every(localOnly) ? ".<br>Pickup or local delivery only." : "";
-  if (c.id === "charcoal") {   // its own section since 2026-11-24: boxes and the single rolls cut from them
-    const rolls = list.filter(p => p.details?.box_sku).length, boxes = list.length - rolls;
-    return [boxes ? plural(boxes, "box of charcoal", "boxes of charcoal") : "", rolls ? plural(rolls, "single roll", "single rolls") : ""].filter(Boolean).join(" and ") + local;
-  }
-  if (c.id === "heat") {   // foil, and the heat management pieces back on the shelf
-    const foil = list.filter(p => /foil/i.test(p.name)).length, other = list.length - foil;
-    return [foil ? plural(foil, "foil pack", "foil packs") : "", other ? plural(other, "heat piece", "heat pieces") : ""].filter(Boolean).join(" and ") + local;
-  }
-  if (c.id === "hookahs") return plural(list.length, "hookah", "hookahs") + local;
-  if (c.id === "shisha") return plural(list.length, "flavour", "flavours") + local;
-  return plural(list.length, "piece", "pieces") + local;
-}
+// The band (band.js): the Worker writes the same markup into the HTML, so a cold load paints it before this script runs
 function viewShop(cat) {
   const c = catById[cat] || null, list = c ? SHELF.filter(p => p.cat === c.id) : SHELF;
   const empty = !!c && !list.length, f = c && !empty && find.findShop(c.id);   // section filters (find.js); null when a section has nothing to filter by
-  return `
-  <section class="shophead" data-tone="${c ? c.tone : "bone"}" ${c ? `data-cat="${c.id}"` : `data-fx="all"`}>
-    <h1 class="shophead__h">${c ? c.name : "Everything"}</h1>
-    <p class="shophead__n">${empty ? soonBand() : bandNote(c, list)}</p>
-  </section>
+  return `${shopBand(c, list)}
   <nav class="chips" aria-label="Categories"><a href="/shop" ${!c ? 'aria-current="page"' : ""}>All</a>${CATEGORIES.map(x => `<a href="/shop/${x.id}" ${c && c.id === x.id ? 'aria-current="page"' : ""}>${x.name}</a>`).join("")}</nav>
   ${empty ? soonSection(c) : f ? f.html(() => shopGrid(cat)) : shopGrid(cat)}`;
 }
@@ -653,6 +620,10 @@ function syncDelivery() {
     neverShips = on === "shop" && forSec.length > 0 && forSec.every(p => localOnly(p) || ((p.cat === "shisha" || p.details?.tobacco) && !card)),
     choosing = on === "shop" && !neverShips && !answered && !store.get("choose-off"), show = !neverShips &&choosing || (!["cart", "checkout", "order", "shop", "p"].includes(on) && !answered && !store.get("strip-off"));   // gone once we have their answer, or once they close it. The product page and cart can still take one
   box.hidden = !show; box.dataset.mode = choosing ? "choose" : "slim"; btn.hidden = choosing; $(".dchoose", box).hidden = !choosing;
+  // the Worker draws the shop pages' question already open from this, so a cold load's band is where it stays (worker.js asksHow).
+  // Whether to ask, nothing more: no answer, postal code or address goes in it.
+  const ask = !answered && !store.get("choose-off") ? "1" : "0";
+  if (!document.cookie.split("; ").includes("oss-ask=" + ask)) document.cookie = `oss-ask=${ask}; Path=/; Max-Age=31536000; SameSite=Lax${location.protocol === "https:" ? "; Secure" : ""}`;   // the Worker renews it on every page load
   btn.toggleAttribute("data-open-postal", show && !choosing);   // a hidden strip must never be the control that opens the sheet
   if (!show || choosing) return;
   const s = deliveryNow(), line = [s.msg, s.sub, s.act].filter(Boolean).join(". ");
@@ -1186,6 +1157,21 @@ function pageTitle(a, b, real) {
 // the section you are in sits centred in the chip row. Reading its place lays the page out, so at a wave's swap it is read in the
 // frame after (route.js afterSwap), still under the wave's cover, once that layout is done anyway
 const centreChip = afterSwap(() => { const chip = $(".chips [aria-current]"); if (chip) chip.parentNode.scrollLeft = chip.offsetLeft - (chip.parentNode.clientWidth - chip.offsetWidth) / 2; });
+// The first draw of a cold load: the Worker has already painted the section band (band.js). When the page's band is the same
+// node for node, the server's stays in place and only what is around it is swapped, so the band never blinks, moves or redraws.
+let served = true;
+function putMain(html) {
+  const main = $("#main"), old = served && main.querySelector(":scope > .shophead"); served = false;
+  if (old) {
+    const t = document.createElement("template"); t.innerHTML = html;
+    const kids = [...t.content.childNodes], at = kids.findIndex(n => n.nodeType === 1);
+    if (at >= 0 && kids[at].isEqualNode(old)) {
+      for (const n of [...main.childNodes]) if (n !== old) n.remove();
+      old.before(...kids.slice(0, at)); old.after(...kids.slice(at + 1)); return;
+    }
+  }
+  main.innerHTML = html;
+}
 function render({ chunk = false } = {}) {
   const keep = focusKey(document.activeElement);
   const [a, b, more] = route().replace(/^#\/?/, "").split("/").filter(Boolean), real = realPage(a, b, more);
@@ -1199,7 +1185,7 @@ function render({ chunk = false } = {}) {
   // (wide: the tiles, a part, are drawn before the cards and still under the wave's cover, so nothing pops in on screen)
   if (chunk && real && !a && navInfo().cause === "wave") queue = { q: [], first: 1, wide: true };   // only under a wave: a crossfade to Home draws it whole
   let html, q; try { html = !real ? viewMissing() : a === "shop" ? viewShop(b) : a === "p" ? viewProduct(b) : a === "cart" ? viewCart() : a === "shipping" ? viewShipping() : a === "set" ? viewSet() : a === "search" ? viewSearch() : a === "privacy" ? viewPrivacy() : a === "terms" ? viewTerms() : a === "checkout" ? viewCheckout() : a === "order" ? viewOrder(b) : a === "account" ? accountView(band) : !a ? viewHome() : viewMissing(); } finally { q = queue; queue = null; }
-  $("#main").innerHTML = html; laterStart(q);
+  putMain(html); laterStart(q);
   document.body.dataset.route = a || "home";
   syncChrome();
   centreChip();

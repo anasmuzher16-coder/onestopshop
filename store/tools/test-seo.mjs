@@ -131,6 +131,32 @@ ok(canonWrong.length === 0, "canonical: absolute, and a hookah colour points at 
 ok(shareWrong.length === 0, "share image: absolute, the item's uploaded photo, else its own photo, else the shop's card (no new cards): " + shareWrong.slice(0, 3).join("; "));
 
 // ---------- 4 section pages ----------
+// Every shop page opens with its band in the HTML, shown from the first paint, exactly the markup the page draws (public/band.js),
+// so the page keeps it in place: its tone, its name as the page's only h1, and its counted line. The hidden copy carries no h1.
+{ const { shopBand, openLine } = await import(new URL("../public/band.js", import.meta.url));
+  const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  const wrong = [];
+  for (const c of [...C, null]) {
+    const at = openLine(), g = await get(c ? "/shop/" + c.id : "/shop"), m = mainOf(g.t);
+    const want = shopBand(c, c ? shelf.filter(p => p.cat === c.id) : shelf), head = m.slice(0, want.length);
+    const tone = c ? c.tone : "bone", name = c ? esc(c.name) : "Everything";
+    if (head !== want && openLine() === at) wrong.push(`${c ? c.id : "shop"}: ${JSON.stringify(head.slice(0, 160))}`);   // a minute turning over mid-check is not a failure
+    if (!head.includes(`class="shophead" data-tone="${tone}"`) || !head.includes(`<h1 class="shophead__h">${name}</h1>`) || (m.match(/<h1[\s>]/g) || []).length !== 1) wrong.push(`${c ? c.id : "shop"}: tone ${tone}, h1 ${name}`);
+    if (/<section class="ssr"[^>]*>[^]*?<h1/.test(m)) wrong.push(`${c ? c.id : "shop"}: a second h1 in the hidden copy`);
+  }
+  ok(wrong.length === 0, `every shop page (${C.length} sections and Everything) has the page's own band in its HTML, with its tone and title: ${wrong.slice(0, 3).join("; ")}`);
+  ok(/<style>\.ssr\{display:none\}#main:has\(>\.ssr\)\{min-height:100svh\}/.test((await get("/shop/" + C[0].id)).t), "a shop page holds the full screen under its band until the page draws, so the footer never jumps");
+  // the delivery question above the band is drawn open when the page will open it (a first visit to a section that ships), so the band never moves down
+  const strip = t => { const s = (t.match(/<div class="dstrip"[^>]*>/) || [""])[0]; return { open: !/\shidden/.test(s) && /data-mode="choose"/.test(s), btnHidden: /<button class="dstrip__btn"[^>]*\shidden/.test(t), chooseOpen: /<div class="dchoose"(?![^>]*\shidden)/.test(t) }; };
+  const card = /<meta name="oss-shisha-card" content="1">/.test((await get("/shop")).t);
+  const never = c => { const l = P.filter(p => p.cat === c.id && p.state === "sale"); return l.length > 0 && l.every(p => p.ship === "pickup_only" || p.details?.charcoal || ((p.cat === "shisha" || p.details?.tobacco) && !card)); };   // app.js syncDelivery's rule
+  const renew = (await get("/shop/" + C[0].id, B, { headers: { Cookie: "oss-ask=0" } })).r.headers.get("set-cookie") || "";
+  ok(/^oss-ask=0; Path=\/; Max-Age=31536000; SameSite=Lax/.test(renew) && !(await get("/shop/" + C[0].id)).r.headers.get("set-cookie"), "the Worker renews the page's oss-ask as it came (Safari drops script cookies after 7 days), and sets none of its own: " + renew);
+  const ships = C.find(c => !never(c));
+  const first = strip((await get("/shop/" + ships.id)).t), back = strip((await get("/shop/" + ships.id, B, { headers: { Cookie: "a=1; oss-ask=0" } })).t), coal = strip((await get("/shop/charcoal")).t), home = strip((await get("/")).t);
+  ok(first.open && first.btnHidden && first.chooseOpen, `/shop/${ships.id}, first visit: the delivery question is drawn open, as the page draws it: ${JSON.stringify(first)}`);
+  ok(!back.open && !back.chooseOpen && !coal.open && !home.open, `drawn closed once answered (oss-ask=0), in a section that never ships, and off the shop pages: ${JSON.stringify({ back, coal, home })}`);
+}
 for (const c of C) {
   const g = await get("/shop/" + c.id), m = mainOf(g.t);
   ok(!/in stock/i.test(m + (g.t.match(/<meta name="description" content="([^"]*)"/) || ["", ""])[1]), `/shop/${c.id}: the section never claims its items are in stock (some may be sold out)`);

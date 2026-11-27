@@ -9,7 +9,7 @@ for (const [tag, type, ctx] of [["webkit390", webkit, { viewport: { width: 390, 
   const b = await type.launch();
   try {
     const c = await b.newContext(ctx), p = await c.newPage(), errs = []; p.on("pageerror", e => errs.push(e.message));
-    const open = async u => { await p.goto(B + u, { waitUntil: "domcontentloaded" }); await p.waitForSelector("#main > *"); await wait(350); };
+    const open = async u => { await p.goto(B + u, { waitUntil: "domcontentloaded" }); await p.waitForSelector("body[data-route]", { state: "attached" }); await wait(350); };
     const y = () => p.evaluate(() => Math.round(scrollY));
     const tapCard = () => p.evaluate(() => { const a = [...document.querySelectorAll("#main a[data-piece]")].find(x => { const r = x.getBoundingClientRect(); return r.top > 160 && r.bottom < innerHeight - 90; }); a.click(); return a.dataset.piece; });
     // 14 back and forward keep the place
@@ -52,20 +52,20 @@ for (const [tag, type, ctx] of [["webkit390", webkit, { viewport: { width: 390, 
     await open("/search?q=bowl"); t(`${tag} 20 a search for bowl finds the ticked Ace bowls`, await p.locator("[data-search-out] a[data-piece]").count() > 0);
     for (const w of ["misc", "cologne"]) { await open("/search?q=" + w); t(`${tag} 20 a search naming a section with no stock online says it is coming soon (${w})`, /coming soon to the site/i.test(await p.locator("[data-search-out]").innerText()) && await p.locator('[data-search-out] a[href="tel:+15192552222"]').count() > 0); }
     await p.fill("#q", "zzzqqq"); await wait(200); t(`${tag} 20 no results offers a way on`, await p.locator('[data-search-out] a[href="/shop"]').count() === 1);
-    const lower = await p.goto(B + "/p/oss-100024", { waitUntil: "domcontentloaded" }); await p.waitForSelector("#main > *"); t(`${tag} 20 a lowercase item number opens the item`, lower.status() === 200 && /\/p\/OSS-100024$/.test(p.url()) && /DMX Hookah/.test(await p.locator("h1").innerText()), p.url());
-    for (const u of ["/cart/extra", "/set/extra", "/shop/hookahs/extra", "/order/nope", "/search/x"]) { const r = await p.goto(B + u, { waitUntil: "domcontentloaded" }); await p.waitForSelector("#main > *"); await wait(120); t(`${tag} 20 ${u} is a real 404`, r.status() === 404 && /Nothing at this address/.test(await p.locator("h1").innerText()) && /^Page not found/.test(await p.title()), r.status() + " " + await p.locator("h1").innerText()); }
+    const lower = await p.goto(B + "/p/oss-100024", { waitUntil: "domcontentloaded" }); await p.waitForSelector("body[data-route]", { state: "attached" }); t(`${tag} 20 a lowercase item number opens the item`, lower.status() === 200 && /\/p\/OSS-100024$/.test(p.url()) && /DMX Hookah/.test(await p.locator("h1").innerText()), p.url());
+    for (const u of ["/cart/extra", "/set/extra", "/shop/hookahs/extra", "/order/nope", "/search/x"]) { const r = await p.goto(B + u, { waitUntil: "domcontentloaded" }); await p.waitForSelector("body[data-route]", { state: "attached" }); await wait(120); t(`${tag} 20 ${u} is a real 404`, r.status() === 404 && /Nothing at this address/.test(await p.locator("h1").innerText()) && /^Page not found/.test(await p.title()), r.status() + " " + await p.locator("h1").innerText()); }
     t(`${tag} no script errors`, !errs.length, errs[0] || "");
     await c.close();
     // the air draws in a worker where the engine can (2026-11-25): it starts, follows a change of section, and leaves one canvas
     {
       const c2 = await b.newContext({ viewport: { width: 390, height: 844 } }), q = await c2.newPage();
-      await q.goto(B + "/shop/heat", { waitUntil: "domcontentloaded" }); await q.waitForSelector("#main > *"); await wait(1500);
+      await q.goto(B + "/shop/heat", { waitUntil: "domcontentloaded" }); await q.waitForSelector("body[data-route]", { state: "attached" }); await wait(1500);
       const a1 = await q.evaluate(() => ({ kind: window.__air?.kind, worker: window.__air?.worker, n: document.querySelectorAll("canvas.pour--air").length }));
       t(`${tag} air: heat air is up in a worker`, a1.kind === "heat" && a1.n === 1 && (type !== chromium || a1.worker === true), JSON.stringify(a1));
       await q.evaluate(() => document.querySelector('a[href="/shop/bowls"]')?.click()); await wait(2600);
       const a2 = await q.evaluate(() => ({ at: location.pathname, kind: window.__air?.kind, n: document.querySelectorAll("canvas.pour--air").length }));
       t(`${tag} air: a change of section brings that section's air`, a2.at === "/shop/bowls" && a2.kind === "bowls" && a2.n === 1, JSON.stringify(a2));
-      await q.goto(B + "/shop/hookahs", { waitUntil: "domcontentloaded" }); await q.waitForSelector("#main > *"); await wait(900);
+      await q.goto(B + "/shop/hookahs", { waitUntil: "domcontentloaded" }); await q.waitForSelector("body[data-route]", { state: "attached" }); await wait(900);
       t(`${tag} air: the hookah page has no air canvas (its smoke is its own)`, await q.evaluate(() => !document.querySelector("canvas.pour--air") && !window.__air?.kind));
       await c2.close();
     }

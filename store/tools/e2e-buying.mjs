@@ -18,7 +18,7 @@ const open = async (seed = {}, clock) => {
   await p.evaluate(s => { for (const [k, v] of Object.entries(s)) localStorage.setItem("oss:" + k, typeof v === "string" && v.startsWith("RAW:") ? v.slice(4) : JSON.stringify(v)); }, seed);
   return { c, p };
 };
-const go = async (p, path) => { await p.goto(B + path, { waitUntil: "domcontentloaded" }); await p.waitForSelector("#main > *"); await p.waitForTimeout(450); };
+const go = async (p, path) => { await p.goto(B + path, { waitUntil: "domcontentloaded" }); await p.waitForSelector("body[data-route]", { state: "attached" }); await p.waitForTimeout(450); };
 const main = p => p.locator("#main").innerText();
 const cart = p => p.evaluate(() => JSON.parse(localStorage.getItem("oss:cart") || "[]"));
 try {

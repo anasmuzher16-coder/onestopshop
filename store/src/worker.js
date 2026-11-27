@@ -85,6 +85,18 @@ function charcoalMoved(url) {
   if (coalType.length) out.set("type", coalType.join(","));   // "box,foil" keeps its charcoal half
   const s = out.toString(); return "/shop/charcoal" + (s ? "?" + s.replace(/%2C/gi, ",") : "");
 }
+// The "How should we get it to you?" strip above a shop page's band (public/app.js syncDelivery): drawn already open when the
+// page will open it, so the band below is in its final place from the first paint. The page keeps the cookie oss-ask ("0" once
+// the visitor has answered or closed it); without it this is a first visit, which is asked. A section whose items for sale
+// never ship (all pickup or local, or shisha while it is paid at the counter) never asks, the same rule as the page.
+const askCookie = request => ((request.headers.get("Cookie") || "").match(/(?:^|;\s*)oss-ask=([01])(?:;|$)/) || [])[1];
+function asksHow(request, env, url, cat) {
+  const [, a, sec = ""] = url.pathname.replace(/\/+$/, "").split("/");   // read the way the page reads it (route.js, app.js syncDelivery): /shop//x is section ""
+  if (a !== "shop" || askCookie(request) === "0") return false;
+  const card = env.STRIPE_TOBACCO_OK === "1", forSec = [...view(cat).front.values()].filter(p => p.cat === sec && p.state === "sale");
+  const local = p => p.ship === "pickup_only" || !!(p.details && p.details.charcoal);
+  return !(forSec.length > 0 && forSec.every(p => local(p) || ((p.cat === "shisha" || (p.details && p.details.tobacco)) && !card)));
+}
 async function page(request, env, url, ctx) {
   const cat = await shopCatalog(env, ctx);
   const site = env.SITE_NAME || "One Stop Shop";
@@ -103,7 +115,11 @@ async function page(request, env, url, ctx) {
     ...(img.w ? [`<meta property="og:image:width" content="${img.w}">`, `<meta property="og:image:height" content="${img.h}">`] : []), `<meta property="og:image:alt" content="${esc(img.alt)}">`,
     `<meta name="twitter:card" content="summary_large_image">`, ...seo.head, SSR_STYLE];
   if (url.pathname === "/") { const hero = heroFirst(cat); if (hero) extra.push(heroPreload(hero)); }   // the picture the first screen is waiting for
+  const ask = !!d && asksHow(request, env, url, cat);
   const out = new HTMLRewriter()
+    .on("[data-delivery-strip]", { element(e) { if (ask) { e.removeAttribute("hidden"); e.setAttribute("data-mode", "choose"); } } })
+    .on("[data-delivery-strip] .dstrip__btn", { element(e) { if (ask) e.setAttribute("hidden", ""); } })
+    .on("[data-delivery-strip] .dchoose", { element(e) { if (ask) e.removeAttribute("hidden"); } })
     .on("title", { element(e) { e.setInnerContent(meta.title); } })
     .on('meta[name="description"]', { element(e) { e.setAttribute("content", meta.desc); } })
     .on('meta[name="robots"]', { element(e) { if (live && meta.index) e.remove(); else e.setAttribute("content", "noindex, nofollow"); } })
@@ -116,6 +132,8 @@ async function page(request, env, url, ctx) {
   headers.set("Cache-Control", "no-cache");
   if (url.pathname.startsWith("/account")) headers.set("Referrer-Policy", "no-referrer");   // sign-in and unsubscribe links never leak onward
   if (!(live && meta.index)) headers.set("X-Robots-Tag", "noindex, nofollow"); else headers.delete("X-Robots-Tag");   // the shell came from the static files: a live, indexable page must never carry a copied noindex
+  // the page's oss-ask handed back as it came, its year renewed: Safari keeps a cookie written by script for 7 days only
+  { const k = askCookie(request); if (k) headers.append("Set-Cookie", `oss-ask=${k}; Path=/; Max-Age=31536000; SameSite=Lax${url.protocol === "https:" ? "; Secure" : ""}`); }
   return new Response(out.body, { status: d ? 200 : 404, headers });
 }
 // The public catalogue feed: what a shopper can already see, nothing more. Research notes, photo rights, source lines
