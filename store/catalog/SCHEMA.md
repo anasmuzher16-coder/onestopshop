@@ -81,6 +81,10 @@ site, who owns the image, source and product size, the Ace cut it stands for, sh
 keeps its files and gives it the status recorded there (`ready`, or `CHECK` when even the web original is enlarged past
 1.25x). The page URL goes to `photo.web_src` in the master and `facts_known.photo_src` in the row, so any photo can be swapped
 later. First batch: 13 Ace photos, 2026-11-27 (`catalog/live/web-photos-2026-11-27.sql`).
+The shop rows without a supplier photo pipeline (charcoal, foil, shisha: `OSS-9NNN`) record a web photo the same way in
+`suppliers/charcoal-foil/web-photos.json` (or `shisha/`), with its page URL in `details.photo_src` (private: the feed allowlist
+and the storefront drop it). Owner 2026-11-27: "if we can find a better photo of the product online we are going to use that
+photo even if it's from another shop". Web sweep: `catalog/live/web-sweep-2026-11-27.sql`.
 
 ## SKUs: OSS-SSNNNN
 

@@ -1,0 +1,183 @@
+{
+ "schema": "oss-web-photos/1",
+ "images": {
+  "oss-9116-r12": {
+   "skus": [
+    "OSS-9116"
+   ],
+   "image_url": "https://www.zanobiaonline.com/wp-content/uploads/2026/01/Quick-Light-38mm-1.jpg",
+   "page_url": "https://www.zanobiaonline.com/product/quick-light-charcoal-38mm/",
+   "site": "zanobiaonline.com (maker)",
+   "match": "Zanobia red quick-light box, \"38mm\" printed, same shot as current. The 100-tablet count is not printed on the front",
+   "src_px": [
+    1500,
+    1500
+   ],
+   "product_px": [
+    972,
+    774
+   ],
+   "scale_720": 0.637,
+   "lw": null,
+   "date": "2026-11-27",
+   "files": {
+    "oss-9116-r12.webp": "e1d6a70694dcf29fdd17017468b009710e00490ae270b52bcc265f95cbd12c05",
+    "oss-9116-r12-m.webp": "150c197f1dbf3e53c2943450ac6425499e64afa219c9b90d3848176088d8edf8",
+    "oss-9116-r12-s.webp": "d778d234bb19920fa111862dcfe298c6ff91cdfcbc306208b210ec04134af05e"
+   }
+  },
+  "oss-9127": {
+   "skus": [
+    "OSS-9127"
+   ],
+   "image_url": "https://cdn.shopify.com/s/files/1/1293/6917/files/cubettes.png",
+   "page_url": "https://hookahjohn.com/products/cubettes-by-titanium-coconut-charcoal",
+   "site": "hookahjohn.com (maker)",
+   "match": "Titanium Cubettes, \"120 cubettes per box\" printed, same black/orange box and angle as current",
+   "src_px": [
+    1024,
+    1024
+   ],
+   "product_px": [
+    911,
+    496
+   ],
+   "scale_720": 0.679,
+   "lw": null,
+   "date": "2026-11-27",
+   "files": {
+    "oss-9127.webp": "873acffd1dec45b5183a7ac600b3c9ca40608f054e0d5ca0f2f16f202a22b372",
+    "oss-9127-m.webp": "d122d03057a7bf14e20bf7eafce907a9a6a9592e91e9089abf05c16fdb1325fd",
+    "oss-9127-s.webp": "f1aa1aabfde499f6f9b433c0cdda6774943d91eae412d7aec879a741ab752a8b"
+   }
+  },
+  "oss-9128": {
+   "skus": [
+    "OSS-9128"
+   ],
+   "image_url": "https://cdn.shopify.com/s/files/1/1293/6917/files/flats.png",
+   "page_url": "https://hookahjohn.com/products/titanium-coconut-coal-108ct-1kg-box-flats",
+   "site": "hookahjohn.com (maker)",
+   "match": "Titanium Flats, \"108 coals per box\" and \"25mm x 25mm x 17mm\" printed, same black/green box. Image URL found on the maker CDN by filename (product JSON was rate-limited)",
+   "src_px": [
+    1024,
+    1024
+   ],
+   "product_px": [
+    892,
+    559
+   ],
+   "scale_720": 0.694,
+   "lw": null,
+   "date": "2026-11-27",
+   "files": {
+    "oss-9128.webp": "7407f7650c807a6b13b6cdcedf59eb72cf8c006159613eee11b8bd40b99b0cde",
+    "oss-9128-m.webp": "29dcbf2d111a71127ff6e8551149468bd8e941fcf2aa247b836800d48b8552a6",
+    "oss-9128-s.webp": "2737e353be9ef3d4f8b755393f60f6efff06103a9fc1e7495677abd4245fb6b1"
+   }
+  },
+  "oss-9129": {
+   "skus": [
+    "OSS-9129"
+   ],
+   "image_url": "https://cdn.shopify.com/s/files/1/1293/6917/files/cubes.png",
+   "page_url": "https://hookahjohn.com/products/titanium-coconut-coal-the-cube-72ct-1kg-box",
+   "site": "hookahjohn.com (maker)",
+   "match": "Titanium Cubes, \"72 coals per box\", \"1 kg\" printed, same black/red box. Image URL found on the maker CDN by filename (product JSON was rate-limited)",
+   "src_px": [
+    1024,
+    1024
+   ],
+   "product_px": [
+    907,
+    574
+   ],
+   "scale_720": 0.682,
+   "lw": null,
+   "date": "2026-11-27",
+   "files": {
+    "oss-9129.webp": "c657409f2097c441d9070865f16c80e97ca3c40f713d00d9e0d89ddc55c021b6",
+    "oss-9129-m.webp": "70096f57aeeea7b5ad3210e2e20754f7d402d8bd77b9a9a870fc3df98fdbbf11",
+    "oss-9129-s.webp": "636082befd747612eb9998ce8efb501fdab2700988f97724c677c4c54cf6569a"
+   }
+  },
+  "oss-9154": {
+   "skus": [
+    "OSS-9154"
+   ],
+   "image_url": "https://www.zanobiaonline.com/wp-content/uploads/2024/08/Coco-Army-90-angle-1500_6.jpg",
+   "page_url": "https://www.zanobiaonline.com/product/coco-army-charcoal-90/",
+   "site": "zanobiaonline.com (maker)",
+   "match": "Coco Army camo box, \"90 pieces\" printed, same angle and design as current. A straight-front shot is at Coco-Army-90-1500_6.jpg",
+   "src_px": [
+    1500,
+    1500
+   ],
+   "product_px": [
+    1211,
+    642
+   ],
+   "scale_720": 0.511,
+   "lw": 1440,
+   "date": "2026-11-27",
+   "files": {
+    "oss-9154.webp": "3d057a502dc3a1c2f6583e22c8b1b1aa48a2f9b4e759bfa3f0fba89b09cce4a6",
+    "oss-9154-m.webp": "460c977ab98e662fbc29afc86a427635280e98c0731455686e14d62628cc70de",
+    "oss-9154-s.webp": "b0339bc1825ceb75abacb38cae91c6438589bffd10905c84affe911f93e63442",
+    "oss-9154-l.webp": "32377ab68c66325cf3e0c3c2bc9e412a7f3ac406a4b21c4d6028fd931dc5ec8b"
+   }
+  },
+  "oss-9158": {
+   "skus": [
+    "OSS-9158"
+   ],
+   "image_url": "https://thehookahshop.com/wp-content/uploads/2023/08/Coco-Fuego-Big-Boss-Cubes.webp",
+   "page_url": "https://thehookahshop.com/shop/charcoal/charcoal-by-brand/coco-fuego-charcoal/coco-fuego-big-boss-cubes-2/",
+   "site": "thehookahshop.com",
+   "match": "Coco Fuego Boss Cubes orange box, \"1kg - 64 pcs - 26x26x26 mm\" printed, same render as current. Background is a grey gradient with a floor reflection, so it needs a cutout",
+   "src_px": [
+    1280,
+    1280
+   ],
+   "product_px": [
+    838,
+    755
+   ],
+   "scale_720": 0.739,
+   "lw": null,
+   "date": "2026-11-27",
+   "files": {
+    "oss-9158.webp": "5e56c3501b83db9e8e2a3e2562c8b205528ebaddf9311059bf165235a52bc2d3",
+    "oss-9158-m.webp": "09c46650a6b4f10e380a2673454cfe7ee65bbce13fe6ba1a1f902241ac34ade7",
+    "oss-9158-s.webp": "a5ee21387c2904fd6e0c60a4d7dde1d346826cde0ea99d8a57b6a4cc10e65743"
+   }
+  },
+  "oss-9162": {
+   "skus": [
+    "OSS-9162"
+   ],
+   "image_url": "https://thehookahshop.com/wp-content/uploads/2023/08/Bermuda-Fuego.jpg",
+   "page_url": "https://thehookahshop.com/shop/charcoal/charcoal-by-brand/coco-fuego-charcoal/coco-fuego-bermuda-triangle-2/",
+   "site": "thehookahshop.com",
+   "match": "Coco Fuego Bermuda blue box, \"1kg - 60 pcs - 27x50 mm\" printed, same photo as current",
+   "src_px": [
+    960,
+    1280
+   ],
+   "product_px": [
+    679,
+    836
+   ],
+   "scale_720": 0.912,
+   "lw": null,
+   "date": "2026-11-27",
+   "files": {
+    "oss-9162.webp": "f4538f1841541020ab5817220c9fb13899c7cf47002d3a6c31ba2e231f8f5fc4",
+    "oss-9162-m.webp": "1f9ec2519d996e0679cf8c3b5b5fd873ad58352bbb1384f39fcef37ac98e0365",
+    "oss-9162-s.webp": "77146b9696f66c853f8ace62ddaae4ea7c70086e89b19cf2cdc82a3cfb5e9fbe"
+   }
+  }
+ },
+ "why": "owner 2026-11-27: \"if we can find a better photo of the product online we are going to use that photo even if it's from another shop it doesn't matter, we need the shop functional asap\"",
+ "rules": "the exact product (brand, model, flavour, count, size, colour, pack generation) checked side by side against the photo it replaces; largest clean shot, no watermark; cut off its plain background or its own transparency and framed like the photo it replaces; the page URL is the photo's source"
+}
