@@ -28,7 +28,7 @@ jobs:
           - shard: buying
             suites: ci-warm e2e e2e-buying e2e-delivery e2e-flow e2e-buying+openitems e2e-flow+openitems
           - shard: pages
-            suites: ci-warm e2e-nav webkit-check phone-audit whitebox test-chunk test-stick
+            suites: ci-warm e2e-nav webkit-check phone-audit whitebox test-chunk test-stick e2e-gallery
           - shard: motion
             suites: ci-warm fx-robust allwaves
     name: ${{ matrix.shard }}

@@ -1117,3 +1117,49 @@ a[href^="tel:"]{white-space:nowrap}
   .cart > .cart__sum{grid-column:2;grid-row:1 / span 8;position:sticky;top:96px;margin-top:var(--s-6)}   /* its first line level with the cart's first line (.lines) */
   .cart__sum .totals{margin-top:0}
 }
+/* ---------- more photos of one item (products.img_more; owner-approved stills 2026-11-28) ----------
+   A touch phone: "1 / 3" on the photo, a sideways swipe moves (app.js; the browser keeps vertical panning). A wide screen, or any
+   screen with a mouse: the photos as small tiles on a coal plate inside the photo, the chosen one in the colour chip's ring
+   (.swatch[aria-checked]). On a touch phone the plate's buttons stay for a screen reader and a keyboard, and the plate shows while
+   one of them has the focus. Server-drawn only with two or more photos, so nothing moves when the page settles. */
+.pdp__tile[data-gal]{touch-action:pan-y pinch-zoom;--gal-b:var(--s-4);--gal-h:96px}
+.pdp__tile[data-gal].is-pinched{touch-action:auto}   /* pinched in: sideways panning goes back to the browser */
+@media (min-width:960px){.pdp__tile[data-gal]{--gal-b:var(--s-8)} body:has(.pvbar) .pdp__tile[data-gal]{--gal-b:calc(var(--s-8) + 30px)}}   /* the preview's edit bar (gone at launch) pushes the sticky photo 30 px past the fold at rest */
+.gal__n{display:none;position:absolute;right:var(--s-4);bottom:var(--s-4);z-index:3;padding:var(--s-1) var(--s-2);border-radius:var(--radius);background:oklch(0.155 0.012 50 / .82);color:var(--color-strong);font:600 var(--t-12)/1.4 var(--font-ui);letter-spacing:.04em;pointer-events:none}
+.gal{display:flex;align-items:center;position:absolute;z-index:3;left:var(--gutter);bottom:var(--gal-b);max-width:calc(100% - var(--gutter) * 2);border-radius:calc(var(--radius) * 3);background:oklch(0.155 0.012 50 / .86)}
+.gal__row{display:flex;gap:var(--s-3);min-width:0;padding:var(--s-2);overflow-x:auto;scrollbar-width:none;overscroll-behavior-x:contain;scroll-snap-type:x mandatory;scroll-padding-inline:var(--s-2)}
+.gal__row::-webkit-scrollbar{display:none}
+.gal__t{flex:none;position:relative;width:64px;height:80px;padding:0;border:0;border-radius:var(--radius);background:var(--tile,var(--color-raised));cursor:pointer;scroll-snap-align:start;transition:box-shadow var(--dur-micro) var(--ease-state)}
+.gal__t img{display:block;width:100%;height:100%;object-fit:contain;padding:var(--s-1)}
+/* the photos not shown sit under a coal veil, never faded into the tile: a faded purple on orange would read as another colour */
+.gal__t::after{content:"";position:absolute;inset:0;border-radius:inherit;background:oklch(0.155 0.012 50 / .42);transition:opacity var(--dur-micro) var(--ease-state)}
+.gal__t--photo{background:#000} .gal__t--photo img{object-fit:cover;padding:0}
+.gal__t[aria-current="true"]{box-shadow:0 0 0 2px var(--coal-0),0 0 0 4px var(--color-strong)}
+.gal__t[aria-current="true"]::after{opacity:0}
+.gal__t:focus-visible{outline:2px solid var(--color-focus);outline-offset:-2px}
+@media (hover:hover){.gal__t:hover::after{opacity:0}}
+/* a row longer than the plate: a fade on the side that has more, and the arrows */
+.gal[data-more-on] .gal__row{-webkit-mask-image:linear-gradient(to right,#000 calc(100% - 24px),transparent);mask-image:linear-gradient(to right,#000 calc(100% - 24px),transparent)}
+.gal[data-more-back] .gal__row{-webkit-mask-image:linear-gradient(to right,transparent,#000 24px);mask-image:linear-gradient(to right,transparent,#000 24px)}
+.gal[data-more-back][data-more-on] .gal__row{-webkit-mask-image:linear-gradient(to right,transparent,#000 24px,#000 calc(100% - 24px),transparent);mask-image:linear-gradient(to right,transparent,#000 24px,#000 calc(100% - 24px),transparent)}
+.gal__go{display:none}
+.gal[data-over] .gal__go{display:grid;place-items:center;flex:none;width:var(--s-6);height:var(--gal-h);padding:0;border:0;background:none;color:var(--color-strong);cursor:pointer;transition:opacity var(--dur-micro) var(--ease-state)}
+.gal__go::before{content:"";width:8px;height:8px;border:solid currentColor;border-width:0 0 2px 2px;transform:translateX(2px) rotate(45deg)}
+.gal__go--on::before{transform:translateX(-2px) rotate(-135deg)}
+.gal[data-over]:not([data-more-back]) .gal__go--back,.gal[data-over]:not([data-more-on]) .gal__go--on{opacity:.3;pointer-events:none}
+/* the label sits above the plate, and a cut-out stands clear of both */
+.pdp__tile[data-gal] > .shot__tag--tbd{left:var(--gutter);right:auto;bottom:calc(var(--gal-b) + var(--gal-h) + var(--s-3));text-align:left}
+.pdp__tile[data-gal] > .shot:not(.shot--photo){padding-bottom:calc(var(--gal-b) + var(--gal-h) + var(--s-4))}
+.pdp__tile[data-gal]:has(> .shot__tag) > .shot:not(.shot--photo){padding-bottom:calc(var(--gal-b) + var(--gal-h) + var(--s-12))}
+/* a narrow window with a mouse: the plate on the gutter, and only the plate's own height kept clear under the product */
+@media (max-width:959px){.pdp__tile[data-gal]{--gal-b:var(--gutter)}
+  .pdp__tile[data-gal] > .shot:not(.shot--photo){padding-bottom:calc(var(--gal-h) + var(--s-4))}
+  .pdp__tile[data-gal]:has(> .shot__tag) > .shot:not(.shot--photo){padding-bottom:calc(var(--gal-h) + var(--s-12))}}
+/* a touch phone: the count, and the plate kept for a screen reader or a keyboard until one of its buttons has the focus */
+@media (max-width:959px) and (hover:none),(max-width:959px) and (pointer:coarse){
+  .gal__n{display:block}
+  .gal:not(:focus-within){width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+  .pdp__tile[data-gal] > .shot__tag--tbd{left:auto;right:var(--s-4);bottom:calc(var(--s-4) + var(--s-8));text-align:right}   /* "Photo to be replaced" climbs above the count */
+  .pdp__tile[data-gal] > .shot:not(.shot--photo){padding-bottom:5%}
+  .pdp__tile[data-gal]:has(> .shot__tag) > .shot:not(.shot--photo){padding-bottom:max(5%,76px)}
+}

@@ -316,3 +316,16 @@ def iter_variants(m):
     for f in m.get("families", []):
         for v in f["variants"]:
             yield f, v
+
+
+def more_photo_files(folder: str) -> set[str]:
+    """Files of the extra photos (products.img_more) under img/pc/<folder>/, from every catalog/live/img-more-*.sql: a publisher
+    that clears photos no longer on its own list keeps these. Each extra photo's four sizes, by file name."""
+    keep: set[str] = set()
+    for f in (STORE / "catalog" / "live").glob("img-more-*.sql"):
+        if f.name.endswith("-rollback.sql"):
+            continue
+        for stem in re.findall(r'"img":"' + re.escape(folder) + r'/([a-z0-9_-]+)"', f.read_text(encoding="utf-8")):
+            keep.update(f"{stem}{suf}.webp" for suf in ("", "-s", "-m", "-l"))
+    return keep
+
