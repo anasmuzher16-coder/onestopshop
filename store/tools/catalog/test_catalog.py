@@ -864,7 +864,8 @@ class TestShopHookahs(Base):
         import src_shop_hookahs as S
         for out, photos, day in L.FILES:
             self.assertEqual(out.read_text(encoding="utf-8"), L.sql(self.hk, photos, day), out.name)
-        self.assertFalse(S.CLEANED_FIRST & S.CLEANED_A)          # each cleaned photo goes live in one file only
+        sets = [p for _, p, _ in L.FILES]                         # each cleaned photo goes live in one file only
+        self.assertEqual(sum(len(p) for p in sets), len(set().union(*sets)))
         self.assertEqual(set().union(*[p for _, p, _ in L.FILES]), S.CLEANED)   # and every one has its file
 
     def test_live_clean_file_moves_only_photo_keys_and_is_safe_twice(self):

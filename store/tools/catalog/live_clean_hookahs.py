@@ -2,7 +2,8 @@
 
   python store/tools/catalog/live_clean_hookahs.py      writes store/catalog/live/hookah-clean-2026-11-27.sql (the first
                                                          cleaned photos, src_shop_hookahs.CLEANED_FIRST) and
-                                                         hookah-clean-a-2026-11-28.sql (group A, CLEANED_A)
+                                                         hookah-clean-a-2026-11-28.sql (group A, CLEANED_A) and
+                                                         hookah-clean-a2-2026-11-28.sql (group A second pass, CLEANED_A2)
 
 A cleaned photo (src_shop_hookahs.CLEANED, clear_glass2.py) goes in under the same file name as the original it replaces,
 so img does not change: only the photo keys of facts_known move. photo stays 'own'; photo_label ('replace') and
@@ -24,7 +25,9 @@ import src_shop_hookahs as S  # noqa: E402
 
 OUT = C.CATALOG / "live" / "hookah-clean-2026-11-27.sql"
 OUT_A = C.CATALOG / "live" / "hookah-clean-a-2026-11-28.sql"
-FILES = [(OUT, S.CLEANED_FIRST, "2026-11-27"), (OUT_A, S.CLEANED_A, "2026-11-28")]   # in the order they run
+OUT_A2 = C.CATALOG / "live" / "hookah-clean-a2-2026-11-28.sql"
+FILES = [(OUT, S.CLEANED_FIRST, "2026-11-27"), (OUT_A, S.CLEANED_A, "2026-11-28"),
+         (OUT_A2, S.CLEANED_A2, "2026-11-28, second pass")]   # in the order they run
 FK = "CASE WHEN json_valid(facts_known) THEN facts_known ELSE '{}' END"
 NOW = "strftime('%Y-%m-%dT%H:%M:%SZ','now')"
 
@@ -54,7 +57,8 @@ def rollback(r):
 def sql(m, photos=None, day="2026-11-27"):
     rows = cleaned_rows(m, S.CLEANED_FIRST if photos is None else photos)
     names = ", ".join(f"{r['sku']} ({r['shop']['name']}, {r['sup']['variant_label']})" for r in rows)
-    after = "" if day == "2026-11-27" else " and hookah-clean-2026-11-27.sql"
+    after = {"2026-11-27": "", "2026-11-28": " and hookah-clean-2026-11-27.sql",      # a new file needs its own entry
+             "2026-11-28, second pass": ", hookah-clean-2026-11-27.sql and hookah-clean-a-2026-11-28.sql"}[day]
     head = [
         f"-- The shop's hookahs whose photo has been cleaned ({day}): \"Photo to be replaced\" comes off. Not applied live yet.",
         "-- Owner: \"we really need to clean up these hookah photos, I know we can erase the mat and make these photos clean\".",

@@ -71,6 +71,28 @@ Each PHOTOS entry (pixels of the 2600 px tall photo):
   keep_colour list of [x0, y0, x1, y1, C(, cx, cy, rx, ry)]: in that box, the coloured glass (one channel C above the
            other two) stays as cut, as one solid smooth piece (holes filled; below cy only inside the ellipse); the clear
            glass round it is drawn.
+  keep_band list of [cx, cy, rx, ry, t, x0, x1]: between the ellipse's lower arc and the same arc t px lower, in
+           columns x0..x1 (its ends rounded), stays as cut (a rubber ring seen through the neck: one clean band, its own
+           highlights kept).
+  rim      [a, d(, b)]: the outline's darker rim, a * exp(-dist / d) + b * exp(-dist / 20) (default [0.50, 3.5, 0.12];
+           smooth thin glass wants far less, or it reads as an inked line).
+  tex_to   y: with texture off, the texture is still read above row y (the wall behind the upper glass) and fades out
+           over 80 rows above it, so the mat below gives none.
+  arcs     list of [cx, cy, rx, ry, a0, a1, s, w]: a glass edge the photo shows but the method cannot read over the mat
+           (a thick foot's inner ring), measured off the photo: an elliptical arc from angle a0 to a1 (degrees, 0 right,
+           90 front; a1 - a0 >= 360 for the whole ring) drawn as a soft dark line of strength s and width w with a
+           highlight just inside it where the photo shows the ring bright; the ends fade over 18 degrees.
+           A ninth value is the angle the light comes from: the edge is strongest there, a third as strong opposite.
+  inner    the thin highlight just inside the outline (default 0.18). body [dark, white]: the even tint of the glass
+           (default [0.05, 0]; clear glass reads clearer a touch lighter than the tile than darker).
+  streaks  [y0, y1, t]: in rows y0..y1 (over the plain wall), thin vertical streaks brighter than their surround by
+           more than t are kept as highlights (the glass's own reflections, fainter than a specular).
+  tex_median px: the median that takes noise out of the texture before its band is read (default 3); cut glass wants
+           about 7, so its facets read as flat planes with crisp edges, not crinkled cellophane.
+  spec_off list of [x0, y0, x1, y1]: no highlight kept there (one that reads as a printed mark).
+  spec_min px: highlights in pieces smaller than this are dropped (lone specks read as noise, not as glass).
+  thick    list of [cx, cy, rx, ry, y0, s]: glass outside the ellipse and below row y0 (eased over 30 rows) gets s more
+           body (the thick foot's front face).
   keep_above [cx, cy, rx, ry]: above this ellipse's lower arc (a metal flange's curved lower edge) stays as cut.
   keep_below [cx, cy, rx, ry]: below this ellipse's upper arc (a water line, a base seen through the glass) the glass
            stays as cut, and beside the ellipse everything below cy - ry - 60 does; the change eases over 10 px.
@@ -109,17 +131,24 @@ PHOTOS = {
                  "band": [995, 2320, 302, 142, 57, 1.8], "plate": [[917, 2464, 1027, 2524], [900, 1688, 1070, 1731]], "texture": False,
                  "mat": [[998, 2290, 320, 250], [998, 2470, 320, 95]], "mat_fine": [[1015, 2335, 170, 55]]},
     # cut-glass (faceted) clear base on the mat, clear collar under the stem's metal
-    "IMG_0687": {"foot": [993, 2320, [308, 312], 205, 2.3, 60, 60], "fill": True, "glass": [1690, 2600], "stem": [972, 1745, 1012, 2290],
-                 "mat": [[993, 2450, 330, 150]], "tex": [16, 2.6], "borrow": [2300, 170]},
+    "IMG_0687": {"foot": [993, 2320, [308, 312], 205, 2.3, 60, 60], "fill": True, "glass": [1650, 2600], "stem": [972, 1690, 1012, 2290],
+                 "keep_above": [995, 1656, 130, 43], "mat": [[993, 2450, 330, 150]], "tex": [28, 3.4], "tex_median": 7, "borrow": [2300, 170],
+                 "rim": [0.0, 2.0, 0.08], "inner": 0.14, "body": [0.0, 0.03], "spec_min": 25},
     # smooth clear bulb standing in a wide clear dish, both on the mat
     "IMG_0690": {"foot": [1044, 2150, [200, 200], 90, 2.4, 110, 80], "fill": True, "disc": [1042, 2293, 318, 204, 22], "glass": [1722, 2600], "stem": [1017, 1735, 1078, 2185],
                  "plate": [955, 1690, 1140, 1736], "texture": False},
     # smooth clear vase on the mat (MOZE seen through its bottom)
-    "IMG_0695": {"foot": [1000, 2320, [269, 271], 210, 2.2, 60, 60], "fill": True, "glass": [1735, 2600], "stem": [958, 1745, 1018, 2188],
-                 "plate": [895, 1690, 1075, 1741], "texture": False},
+    "IMG_0695": {"foot": [1000, 2320, [269, 271], 210, 2.2, 60, 60], "fill": True, "glass": [1700, 2600], "stem": [958, 1745, 1018, 2188],
+                 "keep_above": [988, 1703, 100, 42], "texture": False, "tex_to": 2030, "rim": [0.0, 2.0, 0.06], "inner": 0.14, "body": [0.0, 0.04], "spec_min": 80, "tex": [20, 2.4], "streaks": [1750, 2250, 10],
+                 "spec_off": [[955, 2190, 1000, 2255]],
+                 "arcs": [[997, 2396, 163, 116, 350, 550, 0.07, 3.2], [997, 2396, 163, 116, 170, 370, 0.04, 3.2]],
+                 "thick": [[997, 2396, 163, 116, 2470, 0.12]]},
     # smooth clear bell base on the mat (MOZE seen through it); thick glass lip and a black grommet under the gold top
-    "IMG_0700": {"foot": [938, 2325, [345, 345], 212, 2.0, 60, 60], "fill": True, "glass": [1520, 2600], "stem": [912, 1600, 965, 2185],
-                 "keep_above": [958, 1530, 140, 38], "keep_dark": [[852, 1585, 1058, 1645, 75]], "texture": False},
+    "IMG_0700": {"foot": [940, 2340, [355, 352], 197, 2.0, 0, 60], "fill": True, "glass": [1520, 2600], "stem": [912, 1600, 965, 2185],
+                 "keep_above": [958, 1530, 140, 38], "keep_band": [[958, 1560, 150, 36, 41, 848, 1062]], "texture": False,
+                 "tex_to": 2080, "rim": [0.0, 2.0, 0.06], "inner": 0.14, "body": [0.0, 0.04], "spec_min": 80, "tex": [20, 2.4], "streaks": [1650, 2080, 10], "spec_off": [[945, 2200, 970, 2240], [955, 2415, 1005, 2455]],
+                 "arcs": [[940, 2340, 343, 187, 15, 165, 0.07, 3.0]], "thick": [[940, 2340, 343, 187, 2470, 0.08]],
+                 "bridge": [[1990, 2100, "left"], [2140, 2300, "right"]]},
     # blue swirl glass bell on a wide clear foot, on the mat
     "IMG_0698": {"foot": [1011, 2320, [282, 281], 195, 2.5, 0, 60], "fill": True, "glass": [2040, 2600], "holes": True,
                  "erase": [[845, 2030, 896, 2095], [1122, 2030, 1200, 2098]], "keep_above": [998, 2060, 120, 50],
@@ -396,6 +425,13 @@ def masks(photo, cut_a, cfg):
         if k > 1:                                   # the one big piece: loose bits of coloured reflection are glass
             sizes = nd.sum(d, lab, range(1, k + 1)); d = lab == (1 + int(np.argmax(sizes)))
         opaque = np.maximum(opaque, nd.gaussian_filter(d.astype(float), 1.2))
+    for cx, cy, rx, ry, t, x0, x1 in cfg.get("keep_band", []):   # a rubber ring seen through the neck, as one clean band
+        y, x = np.mgrid[0:h, 0:w].astype(float)
+        arc = cy + ry * np.sqrt(np.clip(1 - ((x - cx) / rx) ** 2, 0, 1))
+        xm, hw = (x0 + x1) / 2, (x1 - x0) / 2          # rounded ends, the way a ring bends away round the neck
+        r = np.abs((x - xm) / hw) ** 8 + np.abs((y - arc - t / 2) / (t / 2)) ** 2
+        b = np.clip((1 - r) * t / 4 + 0.5, 0, 1)
+        opaque = np.maximum(opaque, b)
     if "keep_above" in cfg:
         cx, cy, rx, ry = cfg["keep_above"]
         y, x = np.mgrid[0:h, 0:w].astype(float)
@@ -440,12 +476,33 @@ def masks(photo, cut_a, cfg):
     return sil, glass, opaque, mat, fine, parts
 
 
-def glass_layers(photo, glass, sil, mat, fine, lama, texture=True, rim_from=None, tex=(7, 2.2), borrow=None, parts=()):
+def glass_layers(photo, glass, sil, mat, fine, lama, texture=True, rim_from=None, tex=(7, 2.2), borrow=None, parts=(),
+                 rim=(0.50, 3.5), tex_to=None, inner_s=0.18, body=(0.05, 0.0), spec_min=0, streaks=None, spec_off=(), tex_median=3):
     """Returns (dark alpha, highlight alpha) for the glass pixels of a window of the photo."""
     L = lum(photo)
     h, w = L.shape
     sat = photo.max(2) - photo.min(2)
     spec = np.clip((L - 228) / 22, 0, 1) * np.clip((45 - sat) / 15, 0, 1)
+    for x0, y0, x1, y1 in spec_off:    # a highlight that reads as a printed mark, not a reflection
+        spec[max(y0, 0):max(y1, 0), max(x0, 0):max(x1, 0)] = 0
+    if spec_min:                       # lone specks are not highlights: keep only pieces of spec_min px or more, the rest
+        lab, k = nd.label(spec > 0.25)  # blurred along with their surround into nothing
+        if k:
+            sizes = nd.sum(np.ones_like(spec), lab, range(1, k + 1))
+            keep = np.concatenate([[False], sizes >= spec_min])[lab]
+            spec = spec * nd.gaussian_filter(nd.binary_dilation(keep, iterations=2).astype(float), 1.0)
+    if streaks is not None:            # the glass's own thin bright streaks over the plain wall (fainter than a specular)
+        y0s, y1s, thr = streaks
+        th = L - nd.grey_opening(L, size=(1, 11))       # thin along x: the streaks run down the glass
+        st = np.clip((th - thr) / 30, 0, 1) * np.clip((45 - sat) / 15, 0, 1)
+        rows = np.arange(h)[:, None]
+        st = st * np.clip((rows - y0s) / 30, 0, 1) * np.clip((y1s - rows) / 60, 0, 1)
+        lab, n_ = nd.label(nd.binary_closing(st > 0.15, structure=np.ones((15, 3))))   # only long streaks (40 px or more
+        # down the glass, gaps under 15 px bridged): short fragments read as scratches
+        if n_:
+            tall = np.array([0] + [sl[0].stop - sl[0].start for sl in nd.find_objects(lab)])
+            st = st * nd.gaussian_filter((tall[lab] >= 40).astype(float), 1.0)
+        spec = np.maximum(spec, 0.8 * nd.gaussian_filter(st, 0.8))
     f = np.zeros((h, w))
     wm = 0.0
     if texture:
@@ -478,11 +535,13 @@ def glass_layers(photo, glass, sil, mat, fine, lama, texture=True, rim_from=None
             # a highlight is only one where it is brighter than the ink behind it (the pale ink is near-white)
             spec = spec * np.where(mat, np.clip((L - Bl - 18) / 15, 0, 1), 1)
         f = np.clip(f - 0.04, 0, None)
-        f = nd.median_filter(f, size=3)                             # single-pixel noise is not texture
+        f = nd.median_filter(f, size=tex_median)                    # single-pixel noise is not texture (cut glass: crinkle)
         # detail only: broad patches are misread backdrop. Over the mat the band stays narrow (7 px) whatever `tex` says
         narrow = np.clip(f - nd.gaussian_filter(f, 7) - 0.02, 0, None) * 2.2
         f = narrow if tuple(tex) == (7, 2.2) else (1 - wm) * np.clip(f - nd.gaussian_filter(f, tex[0]) - 0.02, 0, None) * tex[1] + wm * narrow
         f = np.clip(f, 0, 1)
+        if tex_to is not None:             # texture read only above this row (the wall behind); below it the mat: none
+            f = f * np.clip((tex_to - np.arange(h)) / 80, 0, 1)[:, None]
         if borrow is not None:
             yb, dy = borrow
             assert dy > 0, "borrow: dy must be at least 1"
@@ -506,16 +565,57 @@ def glass_layers(photo, glass, sil, mat, fine, lama, texture=True, rim_from=None
             low = (np.arange(h) >= rim_from)[:, None]
             f = np.where(low, q * f + (1 - q) * borrowed, f)
     # outline: a darker rim where the glass is seen at a slant, a thin inner highlight just inside it
-    rim, inner = np.zeros((h, w)), np.zeros((h, w))
+    rim_, inner = np.zeros((h, w)), np.zeros((h, w))
     for k_, m in enumerate([sil] + list(parts)):      # each piece's outline, also where it lies inside another
         inside = m > 0.5
         dist = nd.distance_transform_edt(inside)
-        rim = np.maximum(rim, np.where(inside | (k_ == 0), 0.50 * np.exp(-dist / 3.5) + 0.12 * np.exp(-dist / 20.0), 0))
-        inner = np.maximum(inner, np.where(inside | (k_ == 0), 0.18 * np.exp(-((dist - 6.0) ** 2) / 5.0), 0))
-    body = 0.05
-    a_d = 1 - (1 - 0.55 * f) * (1 - rim) * (1 - body)
-    hi = 1 - (1 - spec) * (1 - 0.22 * nd.gaussian_filter(f, 1.0)) * (1 - inner)
+        rim_ = np.maximum(rim_, np.where(inside | (k_ == 0), rim[0] * np.exp(-dist / rim[1]) + (rim[2] if len(rim) > 2 else 0.12) * np.exp(-dist / 20.0), 0))
+        inner = np.maximum(inner, np.where(inside | (k_ == 0), inner_s * np.exp(-((dist - 6.0) ** 2) / 5.0), 0))
+    a_d = 1 - (1 - 0.55 * f) * (1 - rim_) * (1 - body[0])
+    hi = 1 - (1 - spec) * (1 - 0.22 * nd.gaussian_filter(f, 1.0)) * (1 - inner) * (1 - body[1])
+    if spec_min:                       # and on the finished layer: any bright piece still under spec_min px is toned down
+        lab, k = nd.label((hi > 0.45) & glass)
+        if k:
+            small = np.concatenate([[False], nd.sum(np.ones_like(hi), lab, range(1, k + 1)) < spec_min])[lab]
+            small = nd.gaussian_filter(nd.binary_dilation(small, iterations=2).astype(float), 1.0)
+            hi = hi * (1 - small) + np.minimum(hi, 0.25) * small
     return np.where(glass, a_d, 0), np.where(glass, hi, 0)
+
+
+def ell_dist(h, w, cx, cy, rx, ry):
+    """Signed distance in px to the ellipse (negative inside) and the angle round it (degrees, 0 right, 90 front)."""
+    y, x = np.mgrid[0:h, 0:w].astype(float)
+    dx, dy = x - cx, y - cy
+    r = np.sqrt((dx / rx) ** 2 + (dy / ry) ** 2)
+    g = np.sqrt((dx / rx ** 2) ** 2 + (dy / ry ** 2) ** 2) / np.maximum(r, 1e-6)
+    return (r - 1) / np.maximum(g, 1e-6), np.degrees(np.arctan2(dy / ry, dx / rx)) % 360
+
+
+def drawn_edges(h, w, cfg, photo=None):
+    """Glass edges the photo shows but the method cannot read over the mat (the thick foot's inner ring, read off the
+    photo where it crosses plain ink): `arcs` drawn like the outline, `thick` glass given more body."""
+    d_, h_ = np.zeros((h, w)), np.zeros((h, w))
+    for arc in cfg.get("arcs", []):
+        cx, cy, rx, ry, a0, a1, s, wd = arc[:8]
+        dist, ang = ell_dist(h, w, cx, cy, rx, ry)
+        if len(arc) > 8:                                 # lit from angle arc[8]: strongest there, a third as strong opposite
+            s = s * (0.67 + 0.33 * np.cos(np.radians(ang - arc[8])))
+        span = (ang - a0) % 360
+        len_ = a1 - a0                                   # 360 or more: the whole ring, no ends
+        fade = np.ones((h, w)) if len_ >= 360 else np.clip(np.minimum(span, len_ - span) / 18, 0, 1) * (span <= len_)
+        fade = fade * fade * (3 - 2 * fade)
+        d_ = 1 - (1 - d_) * (1 - s * fade * np.exp(-(dist / wd) ** 2))
+        if photo is not None:            # the ring's highlight only where the photo shows it bright (near-white, not the ink)
+            Lm = nd.gaussian_filter(nd.grey_dilation(lum(photo), size=5), 2)
+            lit = np.clip((Lm - 205) / 40, 0, 1) * np.clip(1 - np.abs(dist) / (3 * wd), 0, 1)
+            h_ = 1 - (1 - h_) * (1 - 0.7 * fade * lit * np.exp(-((dist + 1.2 * wd) / wd) ** 2))
+        else:
+            h_ = 1 - (1 - h_) * (1 - 0.6 * s * fade * np.exp(-((dist + 1.6 * wd) / (0.7 * wd)) ** 2))
+    for cx, cy, rx, ry, y0, s in cfg.get("thick", []):
+        dist, _ = ell_dist(h, w, cx, cy, rx, ry)
+        q = np.clip((np.arange(h) - y0) / 30, 0, 1)[:, None] * np.clip(dist / 3, 0, 1)
+        d_ = 1 - (1 - d_) * (1 - s * q)
+    return d_, h_
 
 
 def compose(cut, sil, glass, opaque, a_d, hi, rows=None):
@@ -577,10 +677,18 @@ def run_one(src, cut_p, cfg, method, lama, tile=None, matting=None):
         x0, x1 = max(0, xs.min() - 90), min(glass.shape[1], xs.max() + 90)
         w = (slice(y0, y1), slice(x0, x1))
         rim_from = int(cfg["foot"][1]) - y0 if cfg.get("fill") and "glass" in cfg else None
-        a_d[w], hi[w] = glass_layers(photo[w], glass[w], sil[w], mat[w], fine[w], lama, texture=(method == "ratio" and cfg.get("texture", True)),
+        a_d[w], hi[w] = glass_layers(photo[w], glass[w], sil[w], mat[w], fine[w], lama, texture=(method == "ratio" and (cfg.get("texture", True) or "tex_to" in cfg)),
                                      rim_from=rim_from, tex=cfg.get("tex", (7, 2.2)),
                                      borrow=(cfg["borrow"][0] - y0, cfg["borrow"][1]) if "borrow" in cfg else None,
-                                     parts=[p_[w] for p_ in parts])
+                                     parts=[p_[w] for p_ in parts], rim=cfg.get("rim", (0.50, 3.5)),
+                                     tex_to=cfg["tex_to"] - y0 if "tex_to" in cfg else None,
+                                     inner_s=cfg.get("inner", 0.18), body=cfg.get("body", (0.05, 0.0)), spec_min=cfg.get("spec_min", 0),
+                                     streaks=(cfg["streaks"][0] - y0, cfg["streaks"][1] - y0, cfg["streaks"][2]) if "streaks" in cfg else None,
+                                     spec_off=[(a - x0, b - y0, c - x0, d - y0) for a, b, c, d in cfg.get("spec_off", [])],
+                                     tex_median=cfg.get("tex_median", 3))
+        if "arcs" in cfg or "thick" in cfg:
+            e_d, e_h = drawn_edges(*glass.shape, cfg, photo)
+            a_d = np.where(glass, 1 - (1 - a_d) * (1 - e_d), 0); hi = np.where(glass, 1 - (1 - hi) * (1 - e_h), 0)
     return compose(cut, sil, glass, opaque, a_d, hi, cfg.get("glass"))
 
 
