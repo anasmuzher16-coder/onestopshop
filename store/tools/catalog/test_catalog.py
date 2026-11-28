@@ -536,7 +536,7 @@ class TestShopHoses(Base):
     def test_master_validates_and_counts(self):
         C.validate_master(self.hoses, self.reg)
         self.assertEqual(len(self.hoses["families"]), 21)
-        self.assertEqual(sum(len(f["variants"]) for f in self.hoses["families"]), 31)
+        self.assertEqual(sum(len(f["variants"]) for f in self.hoses["families"]), 32)   # 31 on the rack + Starbuzz light blue
         self.assertTrue(all(re.fullmatch(r"OSS-12\d{4}", v["sku"]) for _, v in C.iter_variants(self.hoses)))
 
     def test_rebuild_is_stable(self):
@@ -559,7 +559,7 @@ class TestShopHoses(Base):
 
     def test_rows_on_view_tbd_not_ace(self):
         rows = K.desired_rows("shop-hoses", self.hoses)
-        self.assertEqual(len(rows), 31)
+        self.assertEqual(len(rows), 32)
         unsure = 0
         for r in rows:
             s, f = r["shop"], json.loads(r["sup"]["facts_known"])
@@ -569,23 +569,27 @@ class TestShopHoses(Base):
             self.assertTrue(r["sup"]["family"].startswith("hose-"))
             self.assertIsNone(f["weight_g"])
             self.assertIn("length", f)
-            self.assertTrue(r["sup"]["img"].startswith("hose/"))
+            # the light blue (OSS-120032) has no photo of its own yet: "Photo coming soon" until the shop uploads one
+            self.assertTrue(r["sup"]["img"].startswith("hose/") or (r["sku"] == "OSS-120032" and r["sup"]["img"] == "" and f["photo"] == "none"), r["sku"])
             unsure += bool(f.get("needs_confirm"))
             self.assertEqual(bool(f.get("needs_confirm")), bool(f.get("confirm_why")), r["sku"])
-        self.assertEqual(unsure, 19)   # 12 captioned for sure, 19 marked for the shop to check (medium matches, Babylon, no caption)
+        self.assertEqual(unsure, 20)   # 12 captioned for sure, 20 marked for the shop to check (medium matches, Babylon, no caption, the light blue from a counter photo)
 
     def test_photos_exist(self):
+        self.assertEqual([v["sku"] for _, v in C.iter_variants(self.hoses) if v["photo"]["status"] == "none"], ["OSS-120032"])
         for f, v in C.iter_variants(self.hoses):
+            if v["photo"]["status"] == "none":
+                continue
             for suf in ("", "-m", "-s"):
                 self.assertTrue((C.STORE / "public" / "img" / "pc" / (v["photo"]["img"] + suf + ".webp")).exists(), v["photo"]["img"])
 
     def test_live_file_matches_master(self):
         # hoses-2026-11-27.sql is the first upload (kept as it was applied); the newest live file carries the current seed
-        self.assertEqual(live_sections(LIVE_SHOP)["shop-hoses"], K.seed_sql("shop-hoses", self.hoses))
+        self.assertEqual(live_sections(LIVE_MISSING)["shop-hoses"], K.seed_sql("shop-hoses", self.hoses))
 
     def test_apply_twice_is_stable(self):
         p1 = K.apply_supplier(self.con, "shop-hoses", self.hoses)
-        self.assertEqual(len(p1["added"]), 31)
+        self.assertEqual(len(p1["added"]), 32)
         p2 = K.apply_supplier(self.con, "shop-hoses", self.hoses)
         self.assertEqual((len(p2["added"]), len(p2["changed"]), len(p2["retired"])), (0, 0, 0))
 
@@ -657,6 +661,7 @@ class TestReverseSearch(Base):
                 self.assertEqual(got[1], r["shop"]["name"], r["sku"])
 
 LIVE_SHOP = "shop-photos-2026-11-27.sql"
+LIVE_MISSING = "missing-items-2026-11-27.sql"   # the newest live file carrying the current bowl and hose seeds
 
 
 class TestShopPhotosForAce(Base):
@@ -737,7 +742,7 @@ def live_sections(name):
 
 
 class TestShopBowls(Base):
-    """The shop's own bowls (2026-11-27): only those with a brand printed on them, Price TBD, in the shop, own photo."""
+    """The shop's own bowls (2026-11-27): 28 branded + 37 with no brand under plain names, Price TBD, in the shop, own photo."""
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -745,8 +750,16 @@ class TestShopBowls(Base):
 
     def test_master_validates_and_counts(self):
         C.validate_master(self.bowls, self.reg)
-        self.assertEqual(len(self.bowls["families"]), 10)
-        self.assertEqual(sum(len(f["variants"]) for f in self.bowls["families"]), 28)
+        self.assertEqual(len(self.bowls["families"]), 28)
+        self.assertEqual(sum(len(f["variants"]) for f in self.bowls["families"]), 65)
+        plain = [f for f in self.bowls["families"] if f["facts"]["brand"]["v"] is None]
+        self.assertEqual((len(plain), sum(len(f["variants"]) for f in plain)), (18, 37))
+        for f in plain:   # a plain name never claims a brand, a model or what comes with it
+            self.assertNotRegex(f["name"]["v"].lower(), r"\b(zanobia|oblako|von|tas|yahya|ace)\b|includ|\bset\b")
+            self.assertTrue(f["supplier_ref"]["v"].startswith("No brand ("), f["family_id"])
+        # the first 28 keep their numbers: the new bowls only add SKUs after them
+        skus = sorted(v["sku"] for _, v in C.iter_variants(self.bowls))
+        self.assertEqual(skus, [f"OSS-13{n:04d}" for n in range(1, 66)])
         self.assertTrue(all(re.fullmatch(r"OSS-13\d{4}", v["sku"]) for _, v in C.iter_variants(self.bowls)))
 
     def test_rebuild_is_stable(self):
@@ -759,7 +772,7 @@ class TestShopBowls(Base):
 
     def test_rows_on_view_tbd_flagged(self):
         rows = K.desired_rows("shop-bowls", self.bowls)
-        self.assertEqual(len(rows), 28)
+        self.assertEqual(len(rows), 65)
         for r in rows:
             s, f = r["shop"], json.loads(r["sup"]["facts_known"])
             self.assertEqual((s["price_cents"], s["active"], s["listed"], s["stock"], s["category_id"], s["availability"]),
@@ -783,11 +796,11 @@ class TestShopBowls(Base):
                     self.assertEqual(im.getpixel((0, 0))[3], 0, p)   # transparent round the product, never a white box
 
     def test_live_file_matches_master(self):
-        self.assertEqual(live_sections(LIVE_SHOP)["shop-bowls"], K.seed_sql("shop-bowls", self.bowls))
+        self.assertEqual(live_sections(LIVE_MISSING)["shop-bowls"], K.seed_sql("shop-bowls", self.bowls))
 
     def test_apply_twice_is_stable(self):
         p1 = K.apply_supplier(self.con, "shop-bowls", self.bowls)
-        self.assertEqual(len(p1["added"]), 28)
+        self.assertEqual(len(p1["added"]), 65)
         p2 = K.apply_supplier(self.con, "shop-bowls", self.bowls)
         self.assertEqual((len(p2["added"]), len(p2["changed"]), len(p2["retired"])), (0, 0, 0))
 

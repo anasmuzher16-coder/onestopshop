@@ -185,10 +185,11 @@ def build_bowls(reg, day):
     retired = C.retire_missing(reg, "shop-bowls", live, day, "not on the shop's bowl list any more")
     m = {"schema": C.SCHEMA_ID, "supplier": SUPPLIER_META["shop-bowls"],
          "sources": [{"id": src_shop_bowls.SRC_ID, "kind": "shop photos", "file": "IMG_0584..IMG_0665 (bowls on a white sweep)",
-                      "sha256": C.sha256_text(json.dumps(src_shop_bowls.BOWLS, ensure_ascii=False)), "products": len(live),
+                      "sha256": C.sha256_text(json.dumps(src_shop_bowls.ALL_BOWLS, ensure_ascii=False)), "products": len(live),
                       "edition": src_shop_bowls.EDITION, "received": src_shop_bowls.RECEIVED}],
          "rulings": ["owner 2026-11-27: put the photographed bowls on the site",
                      "only a bowl whose brand is printed on it goes up, named from that brand; the shape word is ours and flagged to confirm",
+                     "owner 2026-11-27 (all of the store's items on the site): a bowl with no brand goes up under a plain name describing its photo, flagged to confirm; one already on the site (Ace accessories) is not added twice",
                      "in the shop, Price TBD, stock not counted; the shop fills price and stock in the item editor",
                      "pickup or local delivery once priced, until each bowl's weight is known (same rule as the Ace accessories)"],
          "families": fams,

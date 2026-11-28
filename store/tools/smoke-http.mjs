@@ -47,12 +47,12 @@ const { SAMPLE_SKUS } = await import("../src/samples.js");
 // ones left with nothing say "stock arriving soon".
 const coal = m.PRODUCTS.filter(p => p.cat === "charcoal"), heat = m.PRODUCTS.filter(p => p.cat === "heat"), foil = heat.filter(p => /foil/i.test(p.name));
 const acc = m.PRODUCTS.filter(p => p.acc), accBy = id => acc.filter(p => p.cat === id).length;
-ok(m.PRODUCTS.length === 69 + 15 + 47 + 91 + 39 + 31 + 28 && m.CATEGORIES.length === ref.CATEGORIES.length + 4, `catalogue size ${m.PRODUCTS.length}/${69 + 15 + 47 + 91 + 39 + 31 + 28}, sections ${m.CATEGORIES.length}`);
-// the shop's own bowls (2026-11-27): 28 colours in 10 families (one card each, colours as chips), all in Bowls, Price TBD, the
+ok(m.PRODUCTS.length === 69 + 15 + 47 + 91 + 39 + 32 + 65 && m.CATEGORIES.length === ref.CATEGORIES.length + 4, `catalogue size ${m.PRODUCTS.length}/${69 + 15 + 47 + 91 + 39 + 32 + 65}, sections ${m.CATEGORIES.length}`);
+// the shop's own bowls (2026-11-27): 65 colours in 28 families (28 branded, 37 under plain names) (one card each, colours as chips), all in Bowls, Price TBD, the
 // shop's own photo; the back office's check-the-name notes never reach the storefront
 { const bowl = m.PRODUCTS.filter(p => /^bowl-/.test(p.family || ""));
-  ok(bowl.length === 28 && new Set(bowl.map(p => p.family)).size === 10 && bowl.filter(p => p.lead).length === 10 && bowl.every(p => p.cat === "bowls" && p.state === "tbd" && p.price === null && p.stock === 0 && p.named && p.colour && p.facts.stamp === "shelf" && p.facts.photo === "own" && /^bowl\//.test(p.img) && p.lw === 1440 && !("needs_confirm" in p.facts) && !("confirm_why" in p.facts)),
-    `28 bowls in 10 families, Price TBD, own photos, no internal notes: ${bowl.length}`);
+  ok(bowl.length === 65 && new Set(bowl.map(p => p.family)).size === 28 && bowl.filter(p => p.lead).length === 28 && bowl.every(p => p.cat === "bowls" && p.state === "tbd" && p.price === null && p.stock === 0 && p.named && p.colour && p.facts.stamp === "shelf" && p.facts.photo === "own" && /^bowl\//.test(p.img) && p.lw === 1440 && !("needs_confirm" in p.facts) && !("confirm_why" in p.facts)),
+    `65 bowls in 28 families, Price TBD, own photos, no internal notes: ${bowl.length}`);
   for (const p of bowl) for (const suf of ["-s", "-l"]) { const r = await fetch(B + `/img/pc/${p.img}${suf}.webp`); ok(r.status === 200, `photo ${p.img}${suf}.webp: ${r.status}`); }
   const rose = m.PRODUCTS.find(p => p.sku === "OSS-100150");
   ok(rose && rose.img === "shop/ace-rose-red" && rose.facts.photo === "own" && !rose.facts.photo_label, `the Rose hookah shows the shop's own photo, no upscale label: ${rose && rose.img}`);
@@ -62,13 +62,13 @@ ok(m.PRODUCTS.length === 69 + 15 + 47 + 91 + 39 + 31 + 28 && m.CATEGORIES.length
      && ["OSS-100080", "OSS-100083"].every(s => tsar[s]?.img === "shop/ace-tsar-molotov-blue" && tsar[s].facts.shown_in === "blue"),
     `the Tsar Molotov shows the shop's own green and blue photos: ${Object.values(tsar).map(p => p.sku + "=" + p.img).join(" ")}`);
   for (const n of ["green", "blue"]) for (const suf of ["", "-s", "-m"]) { const r = await fetch(B + `/img/pc/shop/ace-tsar-molotov-${n}${suf}.webp`); ok(r.status === 200, `photo shop/ace-tsar-molotov-${n}${suf}.webp: ${r.status}`); } }
-// the shop's own hanging hoses (2026-11-27): 31 colours in 21 families (one card each, colours as chips), all in Hoses, Price TBD,
+// the shop's own hanging hoses (2026-11-27): 32 colours in 21 families (one card each, colours as chips), all in Hoses, Price TBD,
 // nothing to sell yet; the back office's unsure-match notes never reach the storefront
 { const hose = m.PRODUCTS.filter(p => /^hose-/.test(p.family || ""));
-  ok(hose.length === 31 && new Set(hose.map(p => p.family)).size === 21 && hose.filter(p => p.lead).length === 21 && hose.every(p => p.cat === "hoses" && p.state === "tbd" && p.price === null && p.stock === 0 && p.named && p.colour && p.facts.stamp === "shelf" && "length" in p.facts && /^hose\//.test(p.img) && !("needs_confirm" in p.facts) && !("confirm_why" in p.facts)),
-    `31 hoses in 21 families, Price TBD, own photos, no internal notes: ${hose.length}`);
+  ok(hose.length === 32 && new Set(hose.map(p => p.family)).size === 21 && hose.filter(p => p.lead).length === 21 && hose.every(p => p.cat === "hoses" && p.state === "tbd" && p.price === null && p.stock === 0 && p.named && p.colour && p.facts.stamp === "shelf" && "length" in p.facts && (/^hose\//.test(p.img) || (p.sku === "OSS-120032" && !p.img)) && !("needs_confirm" in p.facts) && !("confirm_why" in p.facts)),
+    `32 hoses in 21 families, Price TBD, own photos, no internal notes: ${hose.length}`);
   const pl = await get("/p/OSS-120011"); ok(pl.r.status === 200 && /<title>Platinum Disposable Hose \| One Stop Shop<\/title>/.test(pl.t) && /Price TBD/.test(pl.t) && !/"offers"/.test(pl.t) && !/Ace Hookah/.test(pl.t), "a hose page: its name, Price TBD, no offer, never Ace");
-  for (const p of hose) { const r = await fetch(B + `/img/pc/${p.img}-s.webp`); ok(r.status === 200, `photo ${p.img}-s.webp: ${r.status}`); } }
+  for (const p of hose.filter(p => p.img)) { const r = await fetch(B + `/img/pc/${p.img}-s.webp`); ok(r.status === 200, `photo ${p.img}-s.webp: ${r.status}`); } }
 ok(m.PRODUCTS.filter(p => p.family || p.acc).every(p => p.facts && p.facts.stamp && p.facts.stamp !== "none"), "no unticked Ace page is on view (hookahs and accessories)");
 ok(acc.length === 39 && accBy("heat") === 18 && accBy("bowls") === 8 && accBy("hoses") === 5 && accBy("bases") === 5 && accBy("parts") === 3 && accBy("charcoal") === 0,
   `39 Ace accessories in their sections, none in Charcoal: ${["heat", "bowls", "hoses", "bases", "parts", "charcoal"].map(id => id + " " + accBy(id)).join(", ")}`);
