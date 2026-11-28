@@ -1239,9 +1239,9 @@
      },
      "photo": {
       "img": "hookah/hookah-cut-glass-base-resin-stem-blue-and-yellow",
-      "status": "replace",
+      "status": "shop",
       "large": true,
-      "src": "photo:IMG_0687 (the shop's own photo, as taken: to be replaced)"
+      "src": "photo:IMG_0687 (the shop's own photo, cut out, the mat cleared: clear_glass2.py)"
      },
      "shop": {
       "price_cents": {

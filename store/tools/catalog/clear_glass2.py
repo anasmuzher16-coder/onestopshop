@@ -46,6 +46,9 @@ Each PHOTOS entry (pixels of the 2600 px tall photo):
            inner edge t px in (optional) are each drawn, so the base reads as standing in the dish.
   glass    [y_top, y_bot]: rows holding clear glass; the glass is the cut-out within them, minus the opaque parts.
   stem     [x0, y0, x1, y1]: the downstem seen through the glass, kept opaque (round end at y1).
+  stem_collar [x0, y0, x1, y1, a]: the stem behind a thick clear collar (the photo shows only the collar's glint there):
+           the tube's own colour across its width (its median a little below y1) eased into the box and 20 rows below, fading from strength a at y1 to nothing at
+           y0, the sides tapered (the glass drawn over the rest), so the stem runs up to the metal without a pasted-in block.
   band     [cx, cy, rx, ry, t, k]: a band between a superellipse's lower arc (exponent k, default 2) and the same arc
            t px lower, kept opaque; its light pixels (the glass's rim, a mat tooth) take the band's own dark colour. plate [x0, y0, x1, y1]: a logo plate kept opaque.
   dark     [L, y0, y1]: pixels darker than L in rows y0..y1, in pieces at least 150 px wide, stay opaque (a black
@@ -90,7 +93,7 @@ Each PHOTOS entry (pixels of the 2600 px tall photo):
   tex_median px: the median that takes noise out of the texture before its band is read (default 3); cut glass wants
            about 7, so its facets read as flat planes with crisp edges, not crinkled cellophane.
   mat_gain the strength of the texture read over the mat (default 1): below 1 where the print still shows as blotches.
-  spec_off list of [x0, y0, x1, y1]: no highlight kept there (one that reads as a printed mark).
+  spec_off list of [x0, y0, x1, y1]: no highlight or texture kept there (one that reads as a printed mark).
   spec_min px: highlights in pieces smaller than this are dropped (lone specks read as noise, not as glass).
   thick    list of [cx, cy, rx, ry, y0, s]: glass outside the ellipse and below row y0 (eased over 30 rows) gets s more
            body (the thick foot's front face); a negative s makes it that much lighter instead.
@@ -132,8 +135,9 @@ PHOTOS = {
                  "band": [995, 2320, 302, 142, 57, 1.8], "plate": [[917, 2464, 1027, 2524], [900, 1688, 1070, 1731]], "texture": False,
                  "mat": [[998, 2290, 320, 250], [998, 2470, 320, 95]], "mat_fine": [[1015, 2335, 170, 55]]},
     # cut-glass (faceted) clear base on the mat, clear collar under the stem's metal
-    "IMG_0687": {"foot": [993, 2320, [308, 312], 205, 3.2, 60, 60], "fill": True, "glass": [1650, 2600], "stem": [972, 1752, 1012, 2290],
+    "IMG_0687": {"foot": [993, 2320, [308, 312], 205, 3.2, 60, 60], "fill": True, "glass": [1650, 2600], "stem": [972, 1768, 1012, 2290],
                  "keep_above": [995, 1656, 130, 43], "mat": [[993, 2490, 330, 110]], "tex": [20, 2.6], "tex_to": 2410, "mat_gain": 0.0,
+                 "stem_collar": [972, 1700, 1012, 1768, 1.0], "spec_off": [[955, 1692, 1035, 1714], [955, 1735, 1035, 1770]],
                  "bridge": [[2040, 2140, "left"], [2040, 2140, "right"]],
                  "rim": [0.0, 2.0, 0.08], "inner": 0.14, "body": [0.0, 0.03], "spec_min": 25},
     # smooth clear bulb standing in a wide clear dish, both on the mat
@@ -402,6 +406,12 @@ def masks(photo, cut_a, cfg):
         opaque = np.maximum(opaque, stem_alpha(h, w, cfg["stem"]))
     if "band" in cfg:
         opaque = np.maximum(opaque, band_alpha(h, w, cfg["band"]))
+    if "stem_collar" in cfg:                 # the stem seen through a thick collar: the photo's own pixels, half covered
+        x0, y0, x1, y1, a = cfg["stem_collar"]
+        p = np.zeros((h, w))                 # fading up into the collar, the sides tapered into the glass
+        ramp = np.concatenate([np.linspace(0, 1, y1 + 1 - y0) ** 1.5, np.ones(10)])         # held 10 rows into the tube: no dip
+        p[y0:y1 + 11, x0:x1] = a * ramp[:, None] * np.sin(np.linspace(0.15, np.pi - 0.15, x1 - x0))[None, :] ** 0.5
+        opaque = np.maximum(opaque, nd.gaussian_filter(p, 1.5))
     if "keep_below" in cfg:
         cx, cy, rx, ry = cfg["keep_below"]
         y, x = np.mgrid[0:h, 0:w].astype(float)
@@ -545,6 +555,8 @@ def glass_layers(photo, glass, sil, mat, fine, lama, texture=True, rim_from=None
         f = np.clip(f, 0, 1)
         if tex_to is not None:             # texture read only above this row (the wall behind); below it the mat: none
             f = f * np.clip((tex_to - np.arange(h)) / 80, 0, 1)[:, None]
+        for x0, y0, x1, y1 in spec_off:    # nor any texture there
+            f[max(y0, 0):max(y1, 0), max(x0, 0):max(x1, 0)] = 0
         if borrow is not None:
             yb, dy = borrow
             assert dy > 0, "borrow: dy must be at least 1"
@@ -659,6 +671,11 @@ def run_one(src, cut_p, cfg, method, lama, tile=None, matting=None):
         photo = fill
         cut[..., :3] = np.where(m[..., None], fill, cut[..., :3]).astype(np.uint8)
     sil, glass, opaque, mat, fine, parts = masks(photo, cut[..., 3], cfg)
+    if "stem_collar" in cfg:                # the collar's pixels are its glint, not the stem: the stem's own pixels from just
+        x0, y0, x1, y1, _ = cfg["stem_collar"]   # below the collar, cloned upward (mirrored, so the seam at y1 matches)
+        tone = np.median(cut[y1 + 30:y1 + 130, x0:x1, :3].astype(float), axis=0)          # the tube's own cross-section
+        wgt = np.clip((y1 + 20 - np.arange(y0, y1 + 20)) / 20, 0, 1)[:, None, None]          # eased into the tube below
+        cut[y0:y1 + 20, x0:x1, :3] = (wgt * tone[None] + (1 - wgt) * cut[y0:y1 + 20, x0:x1, :3]).astype(np.uint8)
     if "band" in cfg:                       # the band is black rubber: light bits caught in its outline (the glass's rim,
         h, w = sil.shape                    # a mat tooth) take the band's own dark colour
         ba = band_alpha(h, w, cfg["band"]) > 0.5
