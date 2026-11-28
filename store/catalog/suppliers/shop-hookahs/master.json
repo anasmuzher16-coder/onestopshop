@@ -4211,9 +4211,9 @@
      },
      "photo": {
       "img": "hookah/hookah-fluted-teardrop-stem-lime",
-      "status": "replace",
+      "status": "shop",
       "large": true,
-      "src": "photo:PXL_20261128_011030855 (the shop's own photo, as taken: to be replaced)"
+      "src": "photo:PXL_20261128_011030855 (the shop's own photo, cut out, the mat cleared: clear_glass2.py)"
      },
      "shop": {
       "price_cents": {

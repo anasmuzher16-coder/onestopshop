@@ -526,6 +526,34 @@ PHOTOS_CREW9 = {
 }
 PHOTOS.update(PHOTOS_CREW9)
 
+# Crew 10 (2026-11-28): Drive-batch shop hookahs, crew 9's 140058/140061/140064 finished, then OSS-140044..140050 (1958 x 2600).
+PHOTOS_CREW10 = {
+    # OSS-140058 (crew 10: bowl given body and its own bright detail, right edge out 6 px to the glass) black faceted glass base, opaque as shot, on the mat's black ring: the outline (read off the glass's grey
+    # lip) cuts the ring off; the clear bowl on top drawn as glass, its green swirl's hue kept (iris)
+    "PXL_20261128_011030855": {"photo_rgb": True, "foot": [955, 2320, [310, 310], 212, 2.6, 0, 60], "fill": True, "glass_extra": [[478, 657]], "fade": 3, "retouch": [[688, 2424, 714, 2452]], "iris": [1.0, 1.0, 0.06], "rim": [0.2, 2.5, 0.06], "body": [0.10, 0.22], "tex": [7, 4.2], "tex_light": 0.45, "inner": 0.30,
+                               "outline": [[2100, 962.5, 204.5], [2120, 962.5, 221.5], [2140, 963.5, 241], [2160, 964, 261], [2200, 963, 288], [2240, 962.5, 305.5], [2280, 963.5, 312.5], [2320, 963.5, 313.5],
+                                           [2360, 963, 308], [2400, 963, 296], [2430, 966, 279], [2463, 967.5, 252.5], [2480, 970, 235], [2497, 965, 205], [2513, 961, 164], [2525, 955, 116]]},
+    # OSS-140061 MattPear, smooth clear base on the marble (no mat): drawn by the ratio method over the clean plate
+    "IMG_0745": {"foot": [1022, 2310, [304, 304], 211, 2.4, 0, 60], "fill": True, "glass": [1640, 2560], "fade": 3,
+                 # the grey rubber grommet in the mouth, the steel downstem and its diffuser kept as shot
+                 "keep_quad": [[1744, 2200, 989, 1003, 1043, 1058], [2193, 2203, 1003, 997, 1067, 1073], [2197, 2256, 997, 997, 1073, 1073], [2252, 2257, 997, 998, 1073, 1072], [2254, 2259, 997, 1000, 1073, 1070], [2256, 2261, 998, 1002, 1072, 1068], [2258, 2263, 1000, 1005, 1070, 1065], [2260, 2265, 1002, 1010, 1068, 1060], [2262, 2267, 1005, 1017, 1065, 1053], [2264, 2269, 1010, 1035, 1060, 1035], [2266, 2271, 1017, 1035, 1053, 1035]],
+                 "keep_above": [1005, 1640, 110, 40], "keep_dark": [[945, 1686, 1072, 1746, 115]], "rim": [0.2, 2.5, 0.10], "body": [0.10, 0.12], "tex": [7, 4.5], "inner": 0.10,
+                 "thick": [[1022, 2300, 268, 182, 2380, 0.25]], "spec_min": 30},
+    # OSS-140064 (crew 10: the gold ring's curved lower edge kept, the stand's left edge 7 px in off the mat ring) clear bulb standing in a black dish stand (on the mat): bulb drawn as glass over the wall, the dish seen
+    # through its lower part kept as cut, the stand's outline a superellipse that cuts the mat ring off
+    "PXL_20261128_010217372": {"foot": [972, 2275, [344, 351], 239, 2.2, 120, 60], "fill": True, "glass": [1786, 2240], "glass_x": [796, 1152], "fade": 3, "keep_above": [972, 1785, 92, 30], "bridge": [[2125, 2215, "left"]],
+                               "stem": [948, 1805, 990, 2075], "keep_below": [972, 2214, 300, 200, 8], "rim": [0.3, 3.0, 0.06]},
+    # OSS-140044 cut-crystal base, wood-look teardrop stem, on the mat: crystal kept as shot (as crew 7's 140042), the mat
+    # ring cut off by the foot, the black print seen through the bottom lifted out by unmat, the cyan cast taken out
+    "PXL_20261128_004922986": {"foot": [1005, 2360, [227, 227], 204, 2.0, 0, 60], "fill": True, "glass": [1830, 2575], "fade": 3,
+                               "stem": [985, 1830, 1015, 2245], "tex_median": 5, "tex": [14, 5.5], "tex_light": 0.45, "body": [0.08, 0.06], "mat": [[1008, 2480, 290, 190]], "mat_gain": 0.35, "rim": [0.3, 3.0, 0.08]},
+    # OSS-140045 smooth clear base, bronze stem, on the mat: ratio method (the mat's two inks as the backdrop), the
+    # mat's centre lettering classed finely
+    "PXL_20261128_005022344": {"foot": [1010, 2340, [280, 281], 222, 4.0, 120, 60], "fill": True, "glass": [1772, 2565], "fade": 3,
+                               "stem": [985, 1790, 1022, 2292], "texture": False, "tex_to": 2150, "rim": [0.3, 3.0, 0.08]},
+}
+PHOTOS.update(PHOTOS_CREW10)
+
 DARK = np.array([36, 44, 50], float)     # the glass's dark layer: a cool grey, as clear soda glass reads at a slant
 
 
