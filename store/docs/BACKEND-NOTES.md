@@ -147,6 +147,10 @@ All numbers here are owner-vetoable defaults; they live in src/guard.js (and DEC
   link-shaped, then is escaped.
 - Turnstile is not wired anywhere on the site yet (ACCOUNTS-LOYALTY.md lists it as a next step), so orders do not ask for it.
 - Migration 0012 stays the last one; nothing new for 2026-11-27.
+- 2026-11-28: migration 0013 adds `products.img_more` (more photos of one item: a JSON list of {img, lw}). Apply it on the live
+  database before or with the deploy (`wrangler d1 migrations apply onestopshop --remote`), then
+  `catalog/live/img-more-2026-11-28.sql`. Code that lands first still works: `loadCatalog` falls back to reading without the
+  column (src/catalog.js), so the shop shows main photos only until the migration runs.
 
 ## Mail connected or not: one switch (2026-11-27, branch fleet/guard4)
 - Mail is on when `RESEND_API_KEY` and `EMAIL_FROM` are set (src/email.js `mailReady`), the same way card payment follows its keys.

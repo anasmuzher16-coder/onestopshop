@@ -7,13 +7,32 @@ export { IMG_VERSIONS };
 // never shows, even priced and switched on. One fragment, over products as p, used by the storefront and by anything that
 // must agree with it (account.js: favourites and back-in-stock alerts), so a hidden row can never be reached another way.
 export const TICKED = "NOT (COALESCE(p.supplier_id, '') IN ('ace', 'ace-acc') AND COALESCE(json_extract(p.facts_known, '$.stamp'), '') = 'none')";
+// products.img_more (migration 0013): a JSON list of {img, lw} for the extra photos of one SKU, each processed like its main
+// photo (img/pc/<img>-s/-m/.webp, and -l at lw wide when lw is set). Anything malformed, or a file the build does not have
+// (img-versions.json lists every photo on disk), is dropped, never shown broken.
+const MORE_IMG = /^[a-z0-9][a-z0-9_-]*(?:\/[a-z0-9][a-z0-9_-]*)*$/;
+export function morePhotos(p) {
+  if (!p || !p.img_more || !p.img || p.photo_ver) return [];   // the shop's own upload replaces the photo the angles were framed against
+  let l; try { l = JSON.parse(p.img_more); } catch { return []; }
+  if (!Array.isArray(l)) return [];
+  const seen = new Set([p.img]);
+  return l.filter(m => m && typeof m.img === "string" && MORE_IMG.test(m.img) && IMG_VERSIONS[m.img] && !seen.has(m.img) && seen.add(m.img)).slice(0, 12)
+    .map(m => ({ img: m.img, ...(m.lw === 1440 ? { lw: 1440 } : {}), ...(IMG_VERSIONS[m.img] ? { iv: IMG_VERSIONS[m.img] } : {}) }));
+}
 export async function loadCatalog(db) {
+  try { return await readCatalog(db, "p.img_more"); }
+  catch (e) {   // code deployed before migration 0013: the shop keeps working on the main photos alone until it runs
+    if (!/no such column: p?\.?img_more/i.test(String(e && e.message))) throw e;
+    return readCatalog(db, "NULL AS img_more");
+  }
+}
+async function readCatalog(db, more) {
   const [cats, boxes, prods] = await db.batch([
     db.prepare("SELECT id, name, tone FROM categories WHERE active = 1 ORDER BY sort, name"),
     db.prepare("SELECT id, label, l_cm, w_cm, h_cm, tare_g FROM boxes ORDER BY id"),
     // Sold items (active) and items on view before they can be sold (listed: "Price TBD", "Coming soon"). Columns are
     // named one by one: the supplier's price and name never leave the database this way.
-    db.prepare(`SELECT p.sku, p.name, p.category_id, p.price_cents, p.weight_g, p.box_id, p.glass, p.ship_class, p.height_cm, p.note, p.img, p.img_dark, p.img_lw, p.photo_ver, p.details, p.stock, p.active, p.listed, p.family, p.variant_label, p.swatch_hex, p.availability, p.facts_known FROM products p JOIN categories c ON c.id = p.category_id WHERE (p.active = 1 OR (p.listed = 1 AND p.availability != 'dropped')) AND c.active = 1 AND ${TICKED} ORDER BY p.sort, p.sku`),   // a colour Ace has dropped leaves the shop's view; an unticked catalogue page never shows, even priced and on (owner, 2026-11-26: a tick means in the shop)
+    db.prepare(`SELECT p.sku, p.name, p.category_id, p.price_cents, p.weight_g, p.box_id, p.glass, p.ship_class, p.height_cm, p.note, p.img, p.img_dark, p.img_lw, ${more}, p.photo_ver, p.details, p.stock, p.active, p.listed, p.family, p.variant_label, p.swatch_hex, p.availability, p.facts_known FROM products p JOIN categories c ON c.id = p.category_id WHERE (p.active = 1 OR (p.listed = 1 AND p.availability != 'dropped')) AND c.active = 1 AND ${TICKED} ORDER BY p.sort, p.sku`),   // a colour Ace has dropped leaves the shop's view; an unticked catalogue page never shows, even priced and on (owner, 2026-11-26: a tick means in the shop)
   ]);
   return { categories: cats.results, boxes: boxes.results, products: prods.results };
 }
@@ -116,6 +135,8 @@ export function toStorefront(cat) {
       // a weight set later in the master file (facts) replaces the import's 1 g placeholder, and shipping switches on by itself
       kg: (!weighed && p.weight_g <= 1 && facts.weight_g > 0 ? facts.weight_g : p.weight_g) / 1000, box: p.box_id, glass: !!p.glass,
       height: p.height_cm, note: p.note, ...(p.photo_ver ? { img: `/api/photo/${p.sku}?v=${p.photo_ver}`, photo: true, dark: false } : { img: p.img, dark: !!p.img_dark, lw: p.img_lw ?? undefined, ...(IMG_VERSIONS[p.img] ? { iv: IMG_VERSIONS[p.img] } : {}) }),
+      // more photos of this item (products.img_more, 2026-11-28): the extra angles shot for this colour, after the main photo; only with a main photo
+      ...(morePhotos(p).length ? { more: morePhotos(p) } : {}),
       // an unpriced hookah is not sold at all, so it carries no "pickup only" line; once priced without a weight, it is pickup or local only
       // an unpriced Ace accessory is the same: shown, not sold, so no pickup line until it is priced (then pickup or local until weighed)
       ship: coal || (weightTbd && (sale || !(grouped(p) || p.family.startsWith("acc-")))) ? "pickup_only" : p.ship_class, stock: sale ? p.stock : 0, details,

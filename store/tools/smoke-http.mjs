@@ -143,6 +143,13 @@ for (const [id, a] of Object.entries(ref.BOXES)) { const b = m.BOXES[id]; ok(b &
 // an item on sale whose weight is not known yet (foil; an Ace hookah once priced) is pickup or local delivery until it is (2026-11-24)
 ok(m.PRODUCTS.every(p => (p.cat === "cologne" ? p.ship === "ground_only" : p.cat === "charcoal" || (p.weightTbd && p.state === "sale") ? p.ship === "pickup_only" : p.ship === "standard") && Number.isInteger(p.stock) && p.stock >= 0), "ship class and stock come through");
 
+// more photos of one item (products.img_more, 2026-11-28): every SKU the seed gives extra photos carries them, in order, each
+// served at the main photo's sizes (-s, -m, the 720 and the 1440 -l when lw says so); never on an item without a main photo
+{ const want = new Map(SEED_FILES.flatMap(f => [...readFileSync(seedPath(f), "utf8").matchAll(/^UPDATE products SET img_more = '([^']*)' WHERE sku = '(OSS-\d+)'/gm)].map(x => [x[2], JSON.parse(x[1])])));
+  const g = m.PRODUCTS.filter(p => "more" in p);
+  ok(g.every(p => p.img && Array.isArray(p.more) && p.more.length && p.more.every(x => typeof x.img === "string" && x.img !== p.img && (x.lw === undefined || x.lw === 1440))), "img_more only on items with a main photo, never the main photo twice");
+  ok([...want].every(([sku, l]) => { const p = m.PRODUCTS.find(x => x.sku === sku); return p && JSON.stringify((p.more || []).map(x => x.img)) === JSON.stringify(l.map(x => x.img)); }), "the seed's extra photos come through in order");
+  for (const p of g) for (const x of p.more) for (const suf of ["", "-s", "-m", ...(x.lw ? ["-l"] : [])]) { const r = await fetch(B + `/img/pc/${x.img}${suf}.webp`, { signal: AbortSignal.timeout(15000) }); ok(r.status === 200 && r.headers.get("content-type") === "image/webp", `extra photo ${x.img}${suf}.webp of ${p.sku}: ${r.status}`); await r.arrayBuffer(); } }
 const post = await fetch(B + "/api/catalog", { method: "POST" }); ok(post.status === 405, "POST /api/catalog gave " + post.status);
 console.log(f ? `FAIL ${f} of ${n} checks` : `PASS ${n} checks`);
 process.exit(f ? 1 : 0);

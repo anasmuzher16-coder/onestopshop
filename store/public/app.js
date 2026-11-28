@@ -519,9 +519,10 @@ function viewProduct(sku) {
   const chips = fam.length > 1 ? `<p class="swatches__n" id="colour-h">Colour <b data-colour-name ${p.named ? "" : "hidden"}>${esc(p.named ? p.colour : "")}</b> <span class="num">${fam.indexOf(p) + 1} of ${fam.length}</span></p>
       ${swatchGroup(fam, p, { label: "Colour" })}` : "";
   const sold = isSold(p);
+  const gi = galIndex(p), gn = photosOf(p).length, gp = photosOf(p)[gi];   // the photo shown (more photos of one item: products.img_more)
   return `
   <article class="pdp" data-tone="${toneOf(p)}" data-cat="${p.cat}">
-    <div data-stage="${p.sku}" class="pdp__tile tile ${fullTile(p) ? "tile--photo" : ""}">${p.family ? colourShot(p, { eager: true, alt: p.named && p.colour && !p.name.toLowerCase().endsWith(p.colour.toLowerCase()) ? `${p.name}, ${p.colour}` : p.name }) : colourShot(p, { eager: true, alt: p.name })}${sticker(p, { big: true })}</div>
+    <div data-stage="${p.sku}" class="pdp__tile tile ${fullTile(gp) ? "tile--photo" : ""}"${gn > 1 ? ` data-gal="${gi}"` : ""}>${colourShot(gp, { eager: true, alt: gi ? `${photoAlt(p)}, photo ${gi + 1} of ${gn}` : photoAlt(p) })}${sticker(p, { big: true })}${galleryHtml(p, gi)}</div>
     <div class="pdp__info">
       <p class="crumb"><a href="/shop/${p.cat}">${c.name}</a></p>
       <h1 class="pdp__name${p.name.length > 30 ? " pdp__name--long" : ""}">${escN(p.name)}</h1>
@@ -908,13 +909,20 @@ document.addEventListener("click", e => {
 // A colour swaps the photo where it was chosen (the product page or its card). The new picture is decoded before it shows,
 // so there is no blank frame, and it lands in the same box, so nothing moves.
 function paintColour(tile, v, alt) {
-  const old = tile.querySelector(":scope > .shot"); if (!old) return;
+  if (!tile.querySelector(":scope > .shot")) return;
   const frag = document.createElement("template"); frag.innerHTML = colourShot(v, { eager: true, small: !tile.matches("[data-stage]"), alt });
   const img = frag.content.querySelector(".shot"), tag = frag.content.querySelector(".shot__tag");
+  // the newest pick wins: a quicker second tap (a colour, or a photo of the gallery) never leaves an older picture on top
+  const token = tile._paint = {};
   // the old label stays until the new picture is in: a tile with a label keeps its photo clear of it (styles.css), so taking the
   // label off early would resize the old photo while the new one decodes
-  const done = () => { if (!old.isConnected) return; tile.querySelectorAll(":scope > .shot__tag").forEach(t => t.remove()); tile.classList.toggle("tile--photo", fullTile(v)); img.classList.add("shot--in"); old.after(img); if (tag) img.after(tag);
-    requestAnimationFrame(() => { img.classList.add("is-on"); const end = () => { old.remove(); img.classList.remove("shot--in", "is-on"); }; if (matchMedia("(prefers-reduced-motion: reduce)").matches) end(); else setTimeout(end, 280); }); };
+  const done = () => { if (tile._paint !== token || !tile.isConnected) return;
+    const olds = [...tile.querySelectorAll(":scope > .shot")], last = olds[olds.length - 1], had = olds.includes(document.activeElement);
+    tile.querySelectorAll(":scope > .shot__tag").forEach(t => t.remove()); tile.classList.toggle("tile--photo", fullTile(v)); img.classList.add("shot--in"); last.after(img); if (tag) img.after(tag);
+    // the product photo is the zoom's button (fx-zoom.js arm): the new one keeps that, and keeps the keyboard's place
+    if (last.hasAttribute("tabindex")) { img.tabIndex = 0; img.setAttribute("role", "button"); img.setAttribute("aria-label", "Enlarge photo: " + img.alt); }
+    if (had) img.focus({ preventScroll: true });
+    requestAnimationFrame(() => { img.classList.add("is-on"); const end = () => { olds.forEach(o => o.remove()); img.classList.remove("shot--in", "is-on"); }; if (matchMedia("(prefers-reduced-motion: reduce)").matches) end(); else setTimeout(end, 280); }); };
   (img.decode ? img.decode() : Promise.resolve()).then(done, done);
 }
 function pickColour(btn, focus) {
@@ -933,6 +941,7 @@ function pickColour(btn, focus) {
   if (forSale(v) || forSale(was)) { render(); const b = $(`[data-swatch="${v.sku}"]`); if (b && focus) b.focus(); return; }
   stage.dataset.stage = v.sku;
   paintColour(stage, v, v.colour ? `${v.name}, ${v.colour}` : v.name);
+  setGallery(stage, v);   // the extra angles belong to the colour they were shot for: the new colour's own, from its first photo
   const name = $("[data-colour-name]"); if (name) { name.textContent = v.named ? v.colour : ""; name.hidden = !v.named;   /* a colour the shop has not confirmed is never named as fact */ name.nextElementSibling.textContent = `${familyOf(v).indexOf(v) + 1} of ${familyOf(v).length}`; }
   // the address and the share link name the colour (set above); the page itself is the same piece, so history gets no new entry
 }
@@ -953,6 +962,106 @@ function preloadColours() {
   const g = $(".pdp [role=radiogroup]"); if (g) ["pointerenter", "touchstart", "focusin"].forEach(t => g.addEventListener(t, once, { once: true, passive: true }));
   setTimeout(() => { if (window.requestIdleCallback) requestIdleCallback(once, { timeout: 2000 }); else once(); }, 3500);
 }
+// ---------- more photos of one item (products.img_more, 2026-11-28, owner-approved stills) ----------
+// The main photo first, then the extra angles shot for this SKU. A phone shows "1 / 3" on the photo and takes a sideways swipe;
+// a wide screen shows the photos as small tiles on a coal plate inside the photo. Every change goes through paintColour (decoded
+// first, then a crossfade; none with reduced motion), into the same box, so nothing moves. Cards and lists keep the main photo.
+// (function declarations: the first render can run before this part of the module has been reached)
+function photosOf(p) {
+  return !p || !p.img || !Array.isArray(p.more) || !p.more.length ? [p]
+    : [p, ...p.more.map(m => ({ ...p, img: m.img, lw: m.lw, iv: m.iv, photo: false, dark: false,
+        facts: { ...(p.facts || {}), photo: "extra", photo_label: "", photo_full: false }, details: { ...(p.details || {}), photo: "", box_sku: "" } }))];
+}
+function photoAlt(p) { return p.family && p.named && p.colour && !p.name.toLowerCase().endsWith(p.colour.toLowerCase()) ? `${p.name}, ${p.colour}` : p.name; }
+// the photo shown stays through a redraw of the same page (add to cart, a quantity, the cart changed in another tab); another
+// product, or another colour, starts from its first photo
+var galAt = { sku: null, i: 0 };
+function galIndex(p) { if (galAt.sku !== p.sku) galAt = { sku: p.sku, i: 0 }; return Math.min(galAt.i, photosOf(p).length - 1); }
+function galleryHtml(p, at = 0) {
+  const all = photosOf(p), n = all.length; if (n < 2) return "";
+  return `<span class="gal__n num" data-gal-n aria-hidden="true">${at + 1} / ${n}</span><p class="sr" data-gal-say aria-live="polite"></p>
+    <div class="gal" role="group" aria-label="Photos, ${n}">
+      <button class="gal__go gal__go--back" type="button" data-gal-go="-1" tabindex="-1" aria-label="Scroll the photos back"></button>
+      <div class="gal__row">${all.map((v, i) => `<button class="gal__t${fullTile(v) ? " gal__t--photo" : ""}" type="button" data-gal-to="${i}" aria-label="Photo ${i + 1} of ${n}" aria-current="${i === at}"><img src="${imgSrc(v, true)}" alt="" width="360" height="450" loading="lazy" decoding="async"></button>`).join("")}</div>
+      <button class="gal__go gal__go--on" type="button" data-gal-go="1" tabindex="-1" aria-label="Scroll the photos on"></button>
+    </div>`;
+}
+// a colour picked without a full redraw: its own photos, from the first
+function setGallery(stage, v) {
+  stage.querySelectorAll(":scope > .gal, :scope > [data-gal-n], :scope > [data-gal-say]").forEach(el => el.remove());
+  galAt = { sku: v.sku, i: 0 };
+  const n = photosOf(v).length; if (n < 2) { delete stage.dataset.gal; return; }
+  stage.dataset.gal = "0"; stage.insertAdjacentHTML("beforeend", galleryHtml(v)); galInit();
+}
+function showPhoto(stage, i) {
+  const p = bySku[stage.dataset.stage], all = photosOf(p), n = all.length; if (n < 2) return;
+  i = (i % n + n) % n; if (i === +(stage.dataset.gal || 0)) return;
+  stage.dataset.gal = String(i); galAt = { sku: p.sku, i };
+  // the photo keeps the keyboard and its new name is read out; only a swipe or a photo button needs the count said
+  const say = !document.activeElement?.matches?.("[data-stage] > .shot");
+  paintColour(stage, all[i], i ? `${photoAlt(p)}, photo ${i + 1} of ${n}` : photoAlt(p));
+  $$(".gal__t", stage).forEach((b, k) => b.setAttribute("aria-current", String(k === i)));
+  const c = $("[data-gal-n]", stage); if (c) c.textContent = `${i + 1} / ${n}`;
+  const s = $("[data-gal-say]", stage); if (s && say) s.textContent = `Photo ${i + 1} of ${n}`;
+  const row = $(".gal__row", stage), t = $(`[data-gal-to="${i}"]`, stage);
+  if (row && t && row.scrollWidth > row.clientWidth) { const l = t.offsetLeft - row.offsetLeft, r = l + t.offsetWidth;
+    if (l < row.scrollLeft || r > row.scrollLeft + row.clientWidth) row.scrollTo({ left: l - (row.clientWidth - t.offsetWidth) / 2, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); }
+}
+// a long row (6 or more photos, or a narrow plate): a fade at the edge that has more, and the arrows, only while it overflows
+function galEdges(row) {
+  const g = row.parentNode, over = row.scrollWidth > row.clientWidth + 1;
+  g.toggleAttribute("data-over", over);
+  g.toggleAttribute("data-more-back", over && row.scrollLeft > 1);
+  g.toggleAttribute("data-more-on", over && row.scrollLeft + row.clientWidth < row.scrollWidth - 1);
+}
+function galInit() {
+  const stage = $("[data-stage][data-gal]"); if (!stage) return;
+  const row = $(".gal__row", stage); if (row && !row._edges) { row._edges = true; row.addEventListener("scroll", () => galEdges(row), { passive: true }); }
+  if (row) galEdges(row);
+  // the extra photos are fetched quietly once a hand or a key reaches the photo, or once the page has settled
+  const p = bySku[stage.dataset.stage]; let done = false;
+  const go = () => { if (done) return; done = true; photosOf(p).slice(1).forEach(x => { const im = new Image(); im.decoding = "async"; im.src = `img/pc/${x.img}-m.webp${vq(x)}`; }); };
+  ["pointerenter", "touchstart", "focusin"].forEach(t => stage.addEventListener(t, go, { once: true, passive: true }));
+  setTimeout(() => { if (!stage.isConnected) return; if (window.requestIdleCallback) requestIdleCallback(go, { timeout: 2000 }); else go(); }, 3500);
+}
+addEventListener("resize", () => { const row = $("[data-stage][data-gal] .gal__row"); if (row) galEdges(row); }, { passive: true });
+document.addEventListener("click", e => {
+  const t = e.target.closest?.("[data-gal-to]"); if (t) { showPhoto(t.closest("[data-stage]"), +t.dataset.galTo); return; }
+  const g = e.target.closest?.("[data-gal-go]"); if (g) { const row = $(".gal__row", g.parentNode); row.scrollBy({ left: +g.dataset.galGo * row.clientWidth * .8, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); }
+});
+// arrow keys on the photo or on its tiles move through the photos; Home and End jump to the ends
+document.addEventListener("keydown", e => {
+  if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;   // Alt+Left is the browser's Back
+  const el = e.target.closest?.("[data-stage][data-gal] > .shot, [data-stage][data-gal] .gal__t"); if (!el) return;
+  const stage = el.closest("[data-stage]"), n = photosOf(bySku[stage.dataset.stage]).length, i = +stage.dataset.gal;
+  const to = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: n - 1 }[e.key]; if (to === undefined) return;
+  e.preventDefault(); showPhoto(stage, to);
+  if (el.classList.contains("gal__t")) { const t = $(`[data-gal-to="${(to % n + n) % n}"]`, stage); if (t) t.focus(); }
+});
+// a sideways swipe on a phone's photo: only a clearly sideways move counts, so the page still scrolls under an upward thumb
+// (the tile leaves vertical panning to the browser: touch-action pan-y in styles.css)
+var swipe = null, swiped = 0;
+document.addEventListener("pointerdown", e => {
+  if (e.pointerType === "mouse" || !e.isPrimary || (window.visualViewport && visualViewport.scale > 1.01)) return;   // pinched in: a sideways move pans the page
+  const stage = e.target.closest?.("[data-stage][data-gal]"); if (!stage || e.target.closest(".gal, .sticker")) return;
+  swipe = { stage, x: e.clientX, y: e.clientY, id: e.pointerId, way: "" };
+}, { passive: true });
+document.addEventListener("pointermove", e => {
+  if (!swipe || e.pointerId !== swipe.id || swipe.way) return;
+  const dx = e.clientX - swipe.x, dy = e.clientY - swipe.y;
+  if (Math.abs(dy) > 10 && Math.abs(dy) >= Math.abs(dx)) swipe.way = "y";
+  else if (Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy) * 1.2) swipe.way = "x";
+}, { passive: true });
+document.addEventListener("pointerup", e => {
+  const s = swipe; swipe = null; if (!s || e.pointerId !== s.id || s.way !== "x") return;
+  const dx = e.clientX - s.x; if (Math.abs(dx) < 40) return;
+  swiped = performance.now(); showPhoto(s.stage, +s.stage.dataset.gal + (dx < 0 ? 1 : -1));
+}, { passive: true });
+document.addEventListener("pointercancel", () => { swipe = null; }, { passive: true });
+// pinched in, the photo gives sideways panning back to the browser (styles.css: .pdp__tile.is-pinched)
+if (window.visualViewport) visualViewport.addEventListener("resize", () => { const s = $("[data-stage][data-gal]"); if (s) s.classList.toggle("is-pinched", visualViewport.scale > 1.01); }, { passive: true });
+// the tap at the end of a swipe never opens the zoom
+document.addEventListener("click", e => { if (performance.now() - swiped < 450 && e.target.closest?.("[data-stage]")) { e.stopPropagation(); e.preventDefault(); } }, true);
 document.addEventListener("input", e => {
   if (e.target.id === "q") { state.q = e.target.value; setQuery(state.q.trim()); $("[data-search-out]").innerHTML = searchResults(); }
   if (e.target.matches("[data-note]")) { state.note = e.target.value; store.set("note", state.note); }
@@ -994,6 +1103,8 @@ function focusKey(el) {
   if (!el || el === document.body) return null;
   for (const k of ["data-qty", "data-add"]) if (el.hasAttribute(k)) return `[${k}="${el.getAttribute(k)}"]` + (el.dataset.n ? `[aria-label="${el.getAttribute("aria-label")}"]` : "");
   if (el.name === "ship" || el.name === "pay") return `input[name="${el.name}"][value="${el.value}"]`;
+  if (el.matches?.("[data-stage] > .shot")) return "[data-stage] > .shot";   // the product photo (the zoom's button) and its gallery
+  if (el.dataset?.galTo) return `[data-gal-to="${el.dataset.galTo}"]`;
   return null;
 }
 // ---------- checkout and confirmation ----------
@@ -1450,9 +1561,10 @@ function render({ chunk = false } = {}) {
   document.body.dataset.route = a || "home";
   syncChrome();
   centreChip();
-  if (keep) { const el = document.querySelector(keep); if (el) el.focus({ preventScroll: true }); }
+  if (keep) { const el = document.querySelector(keep); if (el) { if (el.matches(".shot") && !el.hasAttribute("tabindex")) el.tabIndex = 0; el.focus({ preventScroll: true }); } }   // the photo: fx-zoom.js arms it a moment later
   priceLocal();
   preloadColours();
+  galInit();
   find.afterRender();
   if (real) afterRender(a, b);   // the account pieces: Save on a product, prefill and points at checkout
 }

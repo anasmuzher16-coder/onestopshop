@@ -107,6 +107,7 @@ def main(full: Path, web: Path, clean: Path | None = None):
                 base.resize(size, Image.LANCZOS).save(out, "WEBP", quality=82 if suf != "-l" else 78, method=6)
                 want.add(out.name)
             done += 1
+    want |= C.more_photo_files("hookah")   # the extra angles of an item (products.img_more) stay
     for old in (pc / "hookah").glob("*.webp"):   # a photo no longer on the list goes
         if old.name not in want:
             old.unlink()
