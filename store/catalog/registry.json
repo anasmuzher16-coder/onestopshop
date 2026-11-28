@@ -8,7 +8,8 @@
   "11": "ace-acc",
   "12": "shop-hoses",
   "13": "shop-bowls",
-  "14": "shop-hookahs"
+  "14": "shop-hookahs",
+  "15": "shop-charcoal"
  },
  "next": {
   "10": 297,
@@ -17,7 +18,8 @@
   "11": 40,
   "12": 33,
   "13": 66,
-  "14": 28
+  "14": 28,
+  "15": 2
  },
  "skus": {
   "OSS-100001": {
@@ -3737,6 +3739,12 @@
   "OSS-120032": {
    "supplier": "shop-hoses",
    "key": "hose-starbuzz-ribbed-hose#light-blue",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-150001": {
+   "supplier": "shop-charcoal",
+   "key": "charcoal-shop-duracubes-coconut-charcoal-cubes-72-cubes",
    "status": "active",
    "assigned": "2026-11-27"
   }

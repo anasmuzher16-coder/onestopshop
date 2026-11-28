@@ -5,6 +5,9 @@ import { SEED_FILES, seedPath } from "./seed-files.mjs";
 const B = process.env.BASE || "http://127.0.0.1:4420";
 // hoses whose drawn-bag photo is approved (store/catalog/live/hose-drawnbag-2026-11-27.sql): those lose the "to be replaced" tag
 const DRAWN = new Set(((await import("node:fs")).readFileSync(new URL("../catalog/live/hose-drawnbag-2026-11-27.sql", import.meta.url), "utf8").match(/^UPDATE products SET details[^\n]*WHERE sku IN \(([^)]*)\)/m)?.[1] || "").match(/OSS-\d+/g) || []);
+// the shop hookahs whose cleaned photo the seed puts in (the hookah-clean files): no tag, framed like the Ace hookahs
+const CLEANED = new Set(SEED_FILES.filter(f => /\/hookah-clean/.test(f))
+  .flatMap(f => [...readFileSync(seedPath(f), "utf8").matchAll(/^UPDATE products .* WHERE sku = '(OSS-14\d{4})'/gm)].map(m => m[1])));
 let n = 0, f = 0;
 const ok = (cond, msg) => { n++; if (!cond) { f++; console.log("FAIL", msg); } };
 const get = async p => { const r = await fetch(B + p, { redirect: "manual", signal: AbortSignal.timeout(15000) }); return { r, t: await r.text() }; };
@@ -45,29 +48,25 @@ const m = await import("data:text/javascript;base64," + Buffer.from(mod.t).toStr
 const ref = await import("../../site/catalog.js");
 const { SAMPLE_SKUS } = await import("../src/samples.js");
 // Every made-up sample is off since 2026-11-24 (owner: "Hide samples, show coming soon"). What is on view is the real stock:
-// 69 charcoal items, 15 foil packs (Heat), 47 shisha flavours, 91 Ace colours (Price TBD): only the colours on pages the shop
+// 69 charcoal items on the shop's list + the Duracubes 72 box (Price TBD), 15 foil packs (Heat), 47 shisha flavours, 91 Ace colours (Price TBD): only the colours on pages the shop
 // ticked (86 stamped, 5 with an unclear tick); the 205 on unticked pages are off view (owner, 2026-11-26: a tick means in the
 // shop, in stock; nothing is ordered in). Plus the 39 Ace accessories the shop ticked (Price TBD). All ten sections stay; the
 // ones left with nothing say "stock arriving soon".
 const coal = m.PRODUCTS.filter(p => p.cat === "charcoal"), heat = m.PRODUCTS.filter(p => p.cat === "heat"), foil = heat.filter(p => /foil/i.test(p.name));
 const acc = m.PRODUCTS.filter(p => p.acc), accBy = id => acc.filter(p => p.cat === id).length;
-ok(m.PRODUCTS.length === 69 + 15 + 47 + 91 + 39 + 32 + 65 + 27 && m.CATEGORIES.length === ref.CATEGORIES.length + 4, `catalogue size ${m.PRODUCTS.length}/${69 + 15 + 47 + 91 + 39 + 32 + 65 + 27}, sections ${m.CATEGORIES.length}`);
+ok(m.PRODUCTS.length === 69 + 1 + 15 + 47 + 91 + 39 + 32 + 65 + 27 && m.CATEGORIES.length === ref.CATEGORIES.length + 4, `catalogue size ${m.PRODUCTS.length}/${69 + 1 + 15 + 47 + 91 + 39 + 32 + 65 + 27}, sections ${m.CATEGORIES.length}`);
 // the shop's own hookahs (2026-11-27): 27 colours (26 in 21 hookah-... families, the blue Ace Rose in the Ace Rose's family), all
 // in Hookahs, Price TBD; the four Steamulations on the maker's photo, untagged; the other 23 on the shop's original photo, full
-// tile, tagged "to be replaced" (facts.photo_label 'replace'); every hose carries the same tag; no approved or catalogue photo
+// tile, tagged "to be replaced" (facts.photo_label 'replace') unless a hookah-clean file has put its cleaned photo in; every hose carries the same tag; no approved or catalogue photo
 // ever does; the back office's notes never reach the storefront
 { const hk = m.PRODUCTS.filter(p => /^OSS-14\d{4}$/.test(p.sku)), fams = new Set(hk.map(p => p.family));
-  // the cleaned photos (hookah-clean*.sql in the seed: clear_glass2.py cut-outs, framed, no tag) are counted from those files
-  const cleanSkus = new Set(SEED_FILES.filter(f => /\/hookah-clean[^/]*\.sql$/.test(f)).flatMap(f => [...readFileSync(seedPath(f), "utf8")
-    .split("\n").filter(l => l.startsWith("UPDATE products")).join("\n").matchAll(/sku = '(OSS-14\d{4})'/g)].map(x => x[1])));
-  const web = hk.filter(p => !p.facts.photo_label && !cleanSkus.has(p.sku)), orig = hk.filter(p => p.facts.photo_label === "replace");
-  const clean = hk.filter(p => cleanSkus.has(p.sku));
-  ok(cleanSkus.size >= 8 && clean.length === cleanSkus.size && clean.every(p => !p.facts.photo_label && !p.facts.photo_full),
-    `the cleaned hookah photos are untagged and framed: ${clean.filter(p => !p.facts.photo_label && !p.facts.photo_full).length}/${cleanSkus.size}`);
+  const clean = hk.filter(p => CLEANED.has(p.sku)), web = hk.filter(p => !p.facts.photo_label && !CLEANED.has(p.sku)), orig = hk.filter(p => p.facts.photo_label === "replace");
   ok(hk.length === 27 && fams.size === 22 && hk.every(p => p.cat === "hookahs" && p.state === "tbd" && p.price === null && p.stock === 0 && p.glass && p.colour && p.facts.stamp === "shelf" && p.facts.photo === "own" && /^hookah\//.test(p.img) && !("needs_confirm" in p.facts) && !("confirm_why" in p.facts) && !("photo_src" in p.facts) && p.height == null),
     `27 shop hookahs, Price TBD, own photos, no internal notes: ${hk.length} in ${fams.size} families`);
-  ok(web.length === 4 && web.every(p => /^Steamulation /.test(p.name) && !p.facts.photo_full) && orig.length === 23 - cleanSkus.size && orig.every(p => p.facts.photo_full === true),
-    `4 Steamulations on the maker's photo, untagged; ${23 - cleanSkus.size} originals full tile and tagged: ${web.length}/${orig.length}`);
+  ok(web.length === 4 && web.every(p => /^Steamulation /.test(p.name) && !p.facts.photo_full) && orig.length === 23 - CLEANED.size && orig.every(p => p.facts.photo_full === true),
+    `4 Steamulations on the maker's photo, untagged; ${23 - CLEANED.size} originals full tile and tagged: ${web.length}/${orig.length}`);
+  ok(CLEANED.size > 0 && clean.length === CLEANED.size && clean.every(p => !p.facts.photo_label && !p.facts.photo_full),
+    `the ${CLEANED.size} cleaned shop photos carry no tag and are framed: ${clean.length}`);
   ok(hk.filter(p => p.lead).length === 21 && hk.find(p => p.family === "ace-rose")?.lead === false, "one card per shop hookah family; the blue Rose is a chip on the red Rose's card");
   for (const p of hk) for (const suf of ["", "-s"]) { const r = await fetch(B + `/img/pc/${p.img}${suf}.webp`); ok(r.status === 200, `photo ${p.img}${suf}.webp: ${r.status}`); }
   const hose = m.PRODUCTS.filter(p => /^hose-/.test(p.family || ""));
@@ -77,7 +76,7 @@ ok(m.PRODUCTS.length === 69 + 15 + 47 + 91 + 39 + 32 + 65 + 27 && m.CATEGORIES.l
   ok(DRAWN.size > 0 && hose.length === 32 && hose.every(p => DRAWN.has(p.sku) ? !p.facts.photo_label : p.img ? p.facts.photo_label === "replace" : p.sku === "OSS-120032" && !p.facts.photo_label),
     `every photographed hose is tagged "to be replaced" until its drawn-bag photo is approved: ${waiting.filter(p => p.facts.photo_label === "replace").length}/${waiting.length} tagged, ${DRAWN.size} approved, of ${hose.length}`);
   const tagged = m.PRODUCTS.filter(p => p.facts?.photo_label === "replace").map(p => p.sku);
-  ok(tagged.length === 23 - cleanSkus.size + waiting.length && tagged.every(s => /^OSS-1[24]\d{4}$/.test(s)), `only the shop hookahs and hoses carry the tag: ${tagged.length}`); }
+  ok(tagged.length === 23 - CLEANED.size + waiting.length && tagged.every(s => /^OSS-1[24]\d{4}$/.test(s)), `only the shop hookahs and hoses carry the tag: ${tagged.length}`); }
 // the shop's own bowls (2026-11-27): 65 colours in 28 families (28 branded, 37 under plain names) (one card each, colours as chips), all in Bowls, Price TBD, the
 // shop's own photo; the back office's check-the-name notes never reach the storefront
 { const bowl = m.PRODUCTS.filter(p => /^bowl-/.test(p.family || ""));
@@ -110,7 +109,7 @@ ok(m.CATEGORIES.map(c => c.id).join(",") === "hookahs,shisha,charcoal,heat,bowls
 ok(foil.length === 15 && foil.every(p => p.state === "sale" && p.ship === "pickup_only" && p.weightTbd), "15 foil packs: on sale, pickup or local delivery while their weight is TBD");
 ok(!m.PRODUCTS.some(p => SAMPLE_SKUS.has(p.sku)) && SAMPLE_SKUS.size === 100 && !SAMPLE_SKUS.has("OSS-7009"), "no made-up sample is left in the catalogue (100 sample numbers, never 7009, the back office's next cologne; 98 are in this database, kept and switched off)");
 ok(ref.PRODUCTS.every(a => SAMPLE_SKUS.has(a.sku)), "every row of the mockup's sample file is in the samples list");
-ok(coal.length === 69 && heat.length === 15 + 18 && foil.length === 15 && !heat.some(p => p.details.charcoal), `Charcoal holds the 69 charcoal items; Heat holds the 15 foil packs, 18 accessories and no charcoal: ${coal.length}/${heat.length}`);
+ok(coal.length === 70 && heat.length === 15 + 18 && foil.length === 15 && !heat.some(p => p.details.charcoal), `Charcoal holds the 69 listed charcoal items and the Duracubes 72 box; Heat holds the 15 foil packs, 18 accessories and no charcoal: ${coal.length}/${heat.length}`);
 // the sections the samples leave empty: still there, answering 200, saying the stock is on its way and the phone, kept out of search
 const empty = m.CATEGORIES.filter(c => !m.PRODUCTS.some(p => p.cat === c.id)).map(c => c.id);
 ok(["cologne", "misc"].every(id => empty.includes(id)) && empty.length === 2, "two sections wait for their stock (Bases, Bowls, Hoses and Parts have Ace accessories since 2026-11-26): " + empty.join(","));
@@ -120,8 +119,12 @@ for (const id of empty) { const s = await get("/shop/" + id); ok(s.r.status === 
   for (const sku of all) { const r = await fetch(B + "/p/" + sku, { redirect: "manual" }); if (["OSS-7005", "OSS-7007"].includes(sku)) { if (r.status !== 404) wrong.push(`${sku}:${r.status}`); continue; }   // listed in case a database kept them; this one never had them
     const sec = ref.PRODUCTS.find(a => a.sku === sku)?.cat || { 7: "cologne", 8: "misc" }[sku[4]]; if (r.status !== 301 || !(r.headers.get("location") || "").endsWith("/shop/" + sec)) wrong.push(`${sku}:${r.status}`); }
   ok(!wrong.length, `every sample's old address redirects to its section (${all.length}): ${wrong.slice(0, 5).join(" ")}`); }
-ok(coal.every(p => p.ship === "pickup_only" && p.details.charcoal === true && p.stock === 10), "every charcoal item is pickup only and starts at 10 in stock");
-ok(coal.filter(p => p.img).length === 28 && coal.every(p => p.img ? p.details.photo === "approved" : p.details.photo === "coming"), "28 charcoal photos, the rest carry photo status coming");
+// the Duracubes 72-cube box (OSS-150001, 2026-11-27) is in the shop's photo but not on its price list: Price TBD, not counted
+const listed = coal.filter(p => p.sku !== "OSS-150001"), dura = coal.find(p => p.sku === "OSS-150001");
+ok(coal.every(p => p.ship === "pickup_only" && p.details.charcoal === true) && listed.every(p => p.stock === 10), "every charcoal item is pickup only; the listed ones start at 10 in stock");
+ok(dura && dura.state === "tbd" && dura.price === null && dura.stock === 0 && dura.ship === "pickup_only" && dura.img === "shop/duracubes-coconut-charcoal-cubes-72-cubes" && dura.facts.photo === "own" && !("needs_confirm" in dura.facts) && !("confirm_why" in dura.facts),
+  `the Duracubes 72 box: Price TBD, not counted, pickup only, the shop's photo, no internal notes: ${JSON.stringify(dura && { s: dura.state, p: dura.price, st: dura.stock, img: dura.img })}`);
+ok(listed.filter(p => p.img).length === 28 && listed.every(p => p.img ? p.details.photo === "approved" : p.details.photo === "coming"), "28 charcoal photos on the listed items, the rest carry photo status coming");
 for (const p of coal.filter(x => x.img)) { const r = await fetch(B + `/img/pc/${p.img}-s.webp`); ok(r.status === 200, `photo ${p.img}-s.webp: ${r.status}`); }
 ok((await fetch(B + "/img/pc/coming-charcoal.svg")).status === 200, "the drawn stand-in is served");
 // every promise follows the card switch (2026-11-27): with card payment off (this suite's mode, the live demo's) every order is a

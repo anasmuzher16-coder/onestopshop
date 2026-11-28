@@ -38,6 +38,8 @@ SUPPLIER_META = {
     "shop-bowls": {"id": "shop-bowls", "name": "The shop's own bowls", "sku_block": "OSS-13NNNN", "credit": "No supplier credit needed."},
     # The shop's own hookahs (2026-11-27): its photos of each hookah on the counter, shown as taken until cleaned photos replace them.
     "shop-hookahs": {"id": "shop-hookahs", "name": "The shop's own hookahs", "sku_block": "OSS-14NNNN", "credit": "No supplier credit needed."},
+    # Charcoal seen in the shop's photos but not on its price list (2026-11-27): Price TBD, pickup or local delivery only.
+    "shop-charcoal": {"id": "shop-charcoal", "name": "The shop's charcoal not on its price list", "sku_block": "OSS-15NNNN", "credit": "No supplier credit needed."},
 }
 SHISHA_SECTION = "INSERT OR IGNORE INTO categories (id, name, tone, sort, active) VALUES ('shisha', 'Shisha', 'emerald', 8, 0)"
 # Charcoal, its own section after Heat (shop request, 2026-11-24): the sections from place 4 on move down one, once.
@@ -201,6 +203,37 @@ def build_bowls(reg, day):
     return m, retired
 
 
+def build_shop_charcoal(reg, day):
+    """Charcoal boxes seen only in the shop's photos: one family and one item per box. Every photo must be published already."""
+    import src_shop_charcoal
+    fams = src_shop_charcoal.families()
+    live = set()
+    pc = C.STORE / "public" / "img" / "pc"
+    for f in fams:
+        f["variants"] = []
+        for v in f.pop("variants_src"):
+            live.add(v["key"])
+            img = v.pop("img")
+            have = (pc / (img + ".webp")).exists()
+            f["variants"].append({"sku": C.sku_for(reg, "shop-charcoal", v["key"], day), "key": v["key"], "confirm": v["confirm"],
+                                  "photo": {"img": img if have else None, "status": "ready" if have else "none",
+                                            "large": have and (pc / (img + "-l.webp")).exists(),
+                                            "src": f"photo:{v['photo_file']} (the shop's own photo, cut out)" if have else None},
+                                  "shop": C.blank_shop()})
+    retired = C.retire_missing(reg, "shop-charcoal", live, day, "not in the shop's photos any more")
+    m = {"schema": C.SCHEMA_ID, "supplier": SUPPLIER_META["shop-charcoal"],
+         "sources": [{"id": src_shop_charcoal.SRC_ID, "kind": "shop photos", "file": "IMG_0524 (box on the shop's shelf)",
+                      "sha256": C.sha256_text(json.dumps(src_shop_charcoal.BOXES, ensure_ascii=False)), "products": len(live),
+                      "edition": src_shop_charcoal.EDITION, "received": src_shop_charcoal.RECEIVED}],
+         "rulings": ["owner 2026-11-27: every item the shop carries goes up, no skipping",
+                     "named only from the box; flagged to confirm in the back office",
+                     "in the shop, Price TBD, stock not counted; the shop fills price and stock in the item editor",
+                     "charcoal: pickup or local delivery only, never shipped by a carrier"],
+         "families": fams,
+         "retired": {s: reg["skus"][s] for s in sorted(reg["skus"]) if reg["skus"][s]["supplier"] == "shop-charcoal" and reg["skus"][s]["status"] == "retired"}}
+    return m, retired
+
+
 def build_hookahs(reg, day):
     """The shop's hookahs: one family per hookah model, one variant per colour photographed. The photo is the shop's
     original, framed by photos_shop_hookahs.py, with status 'replace' ("Photo to be replaced") until a cleaned photo goes in."""
@@ -260,6 +293,13 @@ def build(args):
     C.validate_master(m, reg)
     summary["shop-hookahs"] = {"families": len(m["families"]), "variants": sum(len(f["variants"]) for f in m["families"]),
                                "newly_retired": retired, "written": C.write_json(C.master_path("shop-hookahs"), m)}
+    # The shop's charcoal not on its price list (no outside source: always built)
+    old = C.load_master("shop-charcoal")
+    m, retired = build_shop_charcoal(reg, day)
+    C.carry_shop(old, m)
+    C.validate_master(m, reg)
+    summary["shop-charcoal"] = {"families": len(m["families"]), "variants": sum(len(f["variants"]) for f in m["families"]),
+                                "newly_retired": retired, "written": C.write_json(C.master_path("shop-charcoal"), m)}
     # The shop's hoses (no outside source: always built)
     old = C.load_master("shop-hoses")
     m, retired = build_hoses(reg, day)
@@ -560,6 +600,22 @@ def desired_rows(supplier: str, m):
                         "note": "", "stock": shop["stock"]["v"] or 0, "low_stock_at": 1,
                         "active": 1 if (shop["active"]["v"] and shop["price_cents"]["v"]) else 0,
                         "sort": 4100 + i, "availability": "in_store_uncounted", "listed": 1}
+        elif supplier == "shop-charcoal":
+            # a charcoal box the shop carries but has not priced: Price TBD, stock not counted, section Charcoal, family
+            # charcoal-... so it is charcoal wherever it is moved (pickup or local delivery only, never a carrier).
+            st = v["photo"]["status"]
+            facts.update({"stamp": "shelf", "photo": "own" if st in USABLE_PHOTO and v["photo"]["img"] else "none"})
+            if v["confirm"]["v"]:
+                facts.update({"needs_confirm": True, "confirm_why": v["confirm"]["v"]})
+            sup = {"supplier_id": "shop-charcoal", "supplier_ref": f["supplier_ref"]["v"], "supplier_price_cents": None,
+                   "family": f["family_id"], "variant_label": "", "swatch_hex": None,
+                   "img": v["photo"]["img"] or "", "img_lw": 1440 if v["photo"].get("large") else None, "height_cm": None,
+                   "facts_known": json.dumps(facts, sort_keys=True, ensure_ascii=False)}
+            shopcols = {"name": shop["display_name"]["v"] or f["name"]["v"], "category_id": "charcoal",
+                        "price_cents": shop["price_cents"]["v"] or 0, "weight_g": 1, "box_id": "XS", "glass": 0, "ship_class": "pickup_only",
+                        "note": "", "stock": shop["stock"]["v"] or 0, "low_stock_at": 1,
+                        "active": 1 if (shop["active"]["v"] and shop["price_cents"]["v"]) else 0,
+                        "sort": 3500 + i, "availability": "in_store_uncounted", "listed": 1}
         elif supplier == "shop-hookahs":
             # one family per hookah model, a colour per photo (one card, colour chips, like the bowls; the blue Ace Rose joins the
             # Ace Rose family). In the shop, Price TBD, stock not counted, weight unknown (1 g placeholder + facts.weight_g = null:
@@ -750,7 +806,7 @@ def apply_supplier(con, supplier, m, shop_fill=False, actor="catalog-import"):
                     (supplier, meta["name"], meta["sku_block"], meta["credit"]))
         if supplier == "shisha":   # its section is made switched off; turning it on is the shop's call
             con.execute(SHISHA_SECTION)
-        if supplier == "charcoal-foil":   # charcoal has its own section since 2026-11-24 (made if missing, after Heat)
+        if supplier in ("charcoal-foil", "shop-charcoal"):   # charcoal has its own section since 2026-11-24 (made if missing, after Heat)
             for s in CHARCOAL_SECTION:
                 con.execute(s)
         for sku in p["added"]:
@@ -853,7 +909,7 @@ def seed_sql(supplier, m, category=None):
            f"INSERT OR IGNORE INTO suppliers (id, name, sku_block, note) VALUES ({q(supplier)}, {q(meta['name'])}, {q(meta['sku_block'])}, {q(meta['credit'])});"]
     if supplier == "shisha":
         out.append(SHISHA_SECTION + ";")
-    if supplier == "charcoal-foil" and any(r["shop"]["category_id"] == "charcoal" for r in rows):
+    if supplier in ("charcoal-foil", "shop-charcoal") and any(r["shop"]["category_id"] == "charcoal" for r in rows):
         out.extend(s + ";" for s in CHARCOAL_SECTION)
     for r in rows:
         cols = {**r["shop"], **r["sup"]}

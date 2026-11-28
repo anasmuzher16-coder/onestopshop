@@ -1089,8 +1089,8 @@
        "src": null
       },
       "display_name": {
-       "v": null,
-       "src": null
+       "v": "MOB Cloud King Supreme",
+       "src": "shop:ruling 2026-11-27 (owner, via the coordinator); web: Yandex visual match, https://shishaking.ca/product/mob-cloud-king-supreme/"
       },
       "stock": {
        "v": null,
@@ -1159,9 +1159,9 @@
      },
      "photo": {
       "img": "hookah/hookah-green-glass-base-black-stem-green-and-black",
-      "status": "replace",
+      "status": "shop",
       "large": true,
-      "src": "photo:IMG_0683 (the shop's own photo, as taken: to be replaced)"
+      "src": "photo:IMG_0683 (the shop's own photo, cut out, the mat cleared: clear_glass2.py)"
      },
      "shop": {
       "price_cents": {
@@ -1409,8 +1409,8 @@
        "src": null
       },
       "display_name": {
-       "v": null,
-       "src": null
+       "v": "Smokah Professional",
+       "src": "shop:ruling 2026-11-27 (owner, via the coordinator); web: Yandex visual match, https://myhookahusa.com/smokah-professional-hookah/"
       },
       "stock": {
        "v": null,
