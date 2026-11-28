@@ -843,9 +843,21 @@ class TestShopHookahs(Base):
         cls.hk = C.load_master("shop-hookahs")
         cls.cleaned = {v["sku"] for _, v in C.iter_variants(cls.hk) if v["photo"]["status"] == "shop"}
 
+    # names found later by an exact visual match (Yandex, LENS.csv; renamed in missing-items-2-2026-11-27.sql): the files
+    # made before carry the plain name the hookah was first given
+    RENAMED = {"OSS-140015": ("MOB Cloud King Supreme", "Hookah, frosted white base, red stripes"),
+               "OSS-140019": ("Smokah Professional", "Hookah, clear base, brown stem")}
+
+    def as_named_before(self):
+        m = copy.deepcopy(self.hk)
+        for _, v in C.iter_variants(m):
+            if v["sku"] in self.RENAMED:
+                v["shop"]["display_name"] = {"v": None, "src": None}
+        return m
+
     def as_first_uploaded(self):
         """The master as shop-hookahs-2026-11-27.sql was made from it: every cleaned photo back to the tagged original."""
-        m = copy.deepcopy(self.hk)
+        m = self.as_named_before()
         for _, v in C.iter_variants(m):
             if v["photo"]["status"] == "shop":
                 v["photo"]["status"] = "replace"
@@ -863,7 +875,18 @@ class TestShopHookahs(Base):
 
     def test_live_clean_file_matches_master(self):
         import live_clean_hookahs as L
-        self.assertEqual(L.OUT.read_text(encoding="utf-8"), L.sql(self.hk))
+        self.assertEqual(L.OUT.read_text(encoding="utf-8"), L.sql(self.as_named_before()))
+
+    def test_renamed_from_the_visual_match(self):
+        rows = {r["sku"]: r for r in K.desired_rows("shop-hookahs", self.hk)}
+        for sku, (new, old) in self.RENAMED.items():
+            v = next(v for _, v in C.iter_variants(self.hk) if v["sku"] == sku)
+            self.assertEqual(rows[sku]["shop"]["name"], new)
+            self.assertIn("web: Yandex visual match, https://", v["shop"]["display_name"]["src"])   # shop: prefix so a rebuild keeps it (carry_shop)
+        live = (C.CATALOG / "live" / "missing-items-2-2026-11-27.sql").read_text(encoding="utf-8")
+        for sku, (new, old) in self.RENAMED.items():   # guarded on the plain name: a name the shop typed is never overwritten
+            self.assertIn(f"UPDATE products SET name = {K.q(new)}, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') "
+                          f"WHERE sku = '{sku}' AND supplier_id = 'shop-hookahs' AND name = {K.q(old)};", live)
 
     def test_live_clean_file_moves_only_photo_keys_and_is_safe_twice(self):
         import live_clean_hookahs as L
@@ -996,7 +1019,8 @@ class TestShopCharcoal(Base):
 
     def test_live_file_matches_and_adds_only(self):
         text = (C.CATALOG / "live" / "missing-items-2-2026-11-27.sql").read_text(encoding="utf-8")
-        self.assertEqual(live_sections("missing-items-2-2026-11-27.sql")["shop-charcoal"], K.seed_sql("shop-charcoal", self.coal))
+        part1 = live_sections("missing-items-2-2026-11-27.sql")["shop-charcoal"].split("-- Two of the shop's hookahs")[0]   # part 2: hookah names
+        self.assertEqual(part1, K.seed_sql("shop-charcoal", self.coal))
         self.assertNotIn("DELETE", chr(10).join(l for l in text.splitlines() if not l.startswith("--")))
 
     def test_apply_twice_is_stable(self):
