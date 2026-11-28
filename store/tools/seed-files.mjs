@@ -43,6 +43,7 @@ export const SEED_FILES = [
   "catalog/live/web-sweep-2026-11-27.sql",      // sharper web photos of 6 charcoal packs and the Ace Ice Hose: source kept (private), labels off; guarded on img, safe twice
   "catalog/live/hose-drawnbag-2026-11-27.sql",   // hoses on the drawn clear bag: photo 'approved', the "Photo to be replaced" tag off (after shop-hookahs); safe twice
   "catalog/live/drive2-2026-11-28.sql",          // the Drive folder's new items: 75 hookah colours + the green Simba hose, new rows only; last, as live: the earlier hookah and hose files' sweeps drop these rows and this file's guard lines bring them back
+  "catalog/live/hookah-clean-crew3-2026-11-28.sql", // crew 3's cleaned hookah photos from the standing batch, the same way (after drive2: its rows come from that file)
   "catalog/live/img-more-2026-11-28.sql",        // more photos of one item: the extra angles (products.img_more, migration 0013), guarded on img
   "catalog/live/img-more-2026-11-28.sql",        // run twice: proves it is safe twice
   "catalog/live/hookah-clean-crew1-2026-11-28.sql", // crew 1's cleaned Drive-batch hookah photos: "Photo to be replaced" off (after drive2, which resets those rows' facts; guarded on img, safe twice)

@@ -3207,9 +3207,9 @@
      },
      "photo": {
       "img": "hookah/contraband-hookah-resin-stem-orange-and-purple",
-      "status": "replace",
+      "status": "shop",
       "large": true,
-      "src": "photo:PXL_20261128_004629722 (the shop's own photo, as taken: to be replaced)"
+      "src": "photo:PXL_20261128_004629722 (the shop's own photo, cut out, the mat cleared: clear_glass2.py)"
      },
      "shop": {
       "price_cents": {
@@ -7427,9 +7427,9 @@
      },
      "photo": {
       "img": "hookah/hookah-lion-head-glass-base-black-stem-smoky-and-black",
-      "status": "replace",
+      "status": "shop",
       "large": true,
-      "src": "photo:IMG_0758 (the shop's own photo, as taken: to be replaced)"
+      "src": "photo:IMG_0758 (the shop's own photo, cut out, the mat cleared: clear_glass2.py)"
      },
      "shop": {
       "price_cents": {
