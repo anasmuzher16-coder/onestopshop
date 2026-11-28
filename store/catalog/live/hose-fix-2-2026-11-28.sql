@@ -1,0 +1,11 @@
+-- The light-blue Starbuzz ribbed hose (OSS-120032) has no photo of its own: it shows "Photo coming soon" until the shop
+-- photographs it. Owner rule 2026-11-28: never use the counter shots (hoses photographed on top of the glass counter); the
+-- recoloured photo that was sampled from one ('hose/starbuzz-ribbed-hose-light-blue', withdrawn with the old
+-- hose-fix-2026-11-27.sql) is removed from the site's files.
+-- On the live database today this changes nothing (the row already has img ''). It only acts if an old copy of
+-- hose-fix-2026-11-27.sql is run and puts that withdrawn photo back: img '' and facts_known.photo 'none' (as
+-- missing-items-2026-11-27.sql set it), details.photo removed, and the stock-check note gets back its "no photo of its own
+-- yet" clause. The guard is the withdrawn file's own name plus the note it wrote, so a real photo of this hose published
+-- later, whatever its file name, is never touched. A re-seed cannot bring it back: photos_hoses.py never publishes a
+-- counter shot, so the file does not exist for catalog.py to pick up. Safe to run twice.
+UPDATE products SET img = '', facts_known = CASE WHEN json_extract(facts_known, '$.confirm_why') IS NULL THEN json_set(facts_known, '$.photo', 'none') ELSE json_set(facts_known, '$.photo', 'none', '$.confirm_why', replace(json_extract(facts_known, '$.confirm_why'), '; its photo is the teal one recoloured to its shade from that counter photo', '; no photo of its own yet (in that photo it lies in a group, cut off at the edge)')) END, details = CASE WHEN json_valid(details) THEN json_remove(details, '$.photo') ELSE details END, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE sku = 'OSS-120032' AND supplier_id = 'shop-hoses' AND json_valid(facts_known) AND json_type(facts_known) = 'object' AND img = 'hose/starbuzz-ribbed-hose-light-blue' AND instr(json_extract(facts_known, '$.confirm_why'), 'recoloured to its shade from that counter photo') > 0;

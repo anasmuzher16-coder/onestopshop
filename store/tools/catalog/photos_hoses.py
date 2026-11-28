@@ -25,8 +25,8 @@ def main(crops: Path, only: set[str] | None = None):
         for photo, colour, _ in shots:
             if only and photo not in only:
                 continue
-            if not (crops / f"{photo}.png").exists() and not photo.startswith("IMG_"):
-                print(f"skipped {name} {colour}: no cut-out of {photo} (no photo of its own yet)")
+            if not photo.startswith("IMG_"):   # owner rule 2026-11-28: never a counter shot (hoses on top of the glass counter)
+                print(f"skipped {name} {colour}: {photo} is a counter shot, never published (no photo of its own yet)")
                 continue
             im = Image.open(crops / f"{photo}.png").convert("RGBA")
             if im.size != (photos.W, photos.H):

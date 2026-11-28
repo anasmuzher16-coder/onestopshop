@@ -5,6 +5,7 @@ Classes, all against the wall plate from plate.py (full resolution, in the bag-c
   ink     : dark print (black text, outlines)
   white   : opaque white/pale print, only inside cfg 'white' boxes: bright, smooth (opened), holes filled
   band    : pale hoses, inside cfg 'band' polylines: brighter than the wall
+  dark_band: dark hoses over dark foil, inside cfg 'dark_band' corridors: near-black neutral pixels, closed over the ribs
   fill    : cfg polygons taken whole (opaque)
   clear   : cfg polygons of clear plastic parts: known-background alpha, colour un-mixed (translucent)
   drop    : cfg polygons removed
@@ -51,6 +52,29 @@ def cut(name):
     I, B, inside, g = load(name, c.get("bagspec"))   # bagspec: {top, bottom, l:[t,b], r:[t,b]} as bags.json, for a photo not in it
     x0, y0, x1, y1 = c["crop"]
     I, B, inside = I[y0:y1, x0:x1], B[y0:y1, x0:x1], inside[y0:y1, x0:x1]
+    for ip in c.get("inpaint", []):   # shop background seen through a tinted print (a shadow, the wall rail): filled from the tint around it
+        Li = lab(I); Ci = np.hypot(Li[..., 1] - 128, Li[..., 2] - 128); Hi = np.degrees(np.arctan2(Li[..., 2] - 128, Li[..., 1] - 128)) % 360
+        z = poly_mask(I.shape[:2], [ip["poly"]])
+        z &= (Li[..., 0] >= ip.get("Lmin", 0)) & (Li[..., 0] <= ip.get("Lmax", 255)) & (Ci <= ip.get("Cmax", 255))
+        if ip.get("keep_red"):   # the red hose behind stays
+            z &= ~((Ci > ip["keep_red"]) & ((Hi < 45) | (Hi > 330)))
+        z = cv2.dilate(z.astype(np.uint8), disk(ip.get("grow", 3)))
+        if ip.get("flat"):   # a clean tint: the median colour of the tinted film around it, with the film's own fine grain kept
+            w = (~(cv2.dilate(z, disk(4)) > 0) & (Ci > ip["flat"]) & (Li[..., 0] > 90)).astype(np.float32)   # tinted film only
+            sg = ip.get("sigma", 35)
+            base = cv2.GaussianBlur(I * w[..., None], (0, 0), sg) / np.maximum(cv2.GaussianBlur(w, (0, 0), sg), 1e-3)[..., None]
+            grain = I - cv2.GaussianBlur(I, (0, 0), 3)
+            k = cv2.GaussianBlur((z > 0).astype(np.float32), (0, 0), ip.get("soft", 3))[..., None]
+            I = I * (1 - k) + (base + 0.5 * grain) * k
+        elif ip.get("ink_L"):   # next to black print: fill as if the print were not there, then put the print back
+            z = (z > 0) & ~(cv2.dilate((Li[..., 0] < ip["ink_L"] * 0.4).astype(np.uint8), disk(1)) > 0) & ~(Li[..., 0] > 200)
+            z = z.astype(np.uint8)
+            near = (cv2.dilate(z, disk(40)) > 0) & (Li[..., 0] < ip["ink_L"]) & ~(z > 0)
+            near = cv2.dilate(near.astype(np.uint8), disk(2)) > 0
+            J = cv2.inpaint(np.clip(I, 0, 255).astype(np.uint8), ((z > 0) | near).astype(np.uint8), ip.get("r", 15), cv2.INPAINT_TELEA).astype(np.float32)
+            I = np.where((z > 0)[..., None], J, I)
+        else:
+            I = cv2.inpaint(np.clip(I, 0, 255).astype(np.uint8), z, ip.get("r", 15), cv2.INPAINT_TELEA).astype(np.float32)
     LI, LB = lab(I), lab(B)
     L = LI[..., 0]; dL = L - LB[..., 0]
     chI = np.hypot(LI[..., 1] - 128, LI[..., 2] - 128); chB = np.hypot(LB[..., 1] - 128, LB[..., 2] - 128)
@@ -89,14 +113,40 @@ def cut(name):
     ink = big | (small_cc(ink, 12) & near)
     for ie in c.get("ink_extra", []):   # print over a shadowed stretch of wall: plain darkness test
         z = poly_mask(sh, [ie["poly"]])
-        ik = (cv2.GaussianBlur(L, (0, 0), 0.8) < ie.get("L", 110)) & z & (chI < ie.get("C", 30))
-        ink |= small_cc(cv2.morphologyEx(ik.astype(np.uint8), cv2.MORPH_OPEN, disk(1)) > 0, ie.get("min", 60))
+        Ls = cv2.GaussianBlur(L, (0, 0), 0.8)
+        if ie.get("adapt"):   # glare over the print: a letter is darker than the film right around it, not dark outright
+            sg, k = ie["adapt"]
+            ik = (Ls < cv2.GaussianBlur(L, (0, 0), sg) - k) & z & (chI < ie.get("C", 30))
+        else:
+            ik = (Ls < ie.get("L", 110)) & z & (chI < ie.get("C", 30))
+        ik = cv2.morphologyEx(ik.astype(np.uint8), cv2.MORPH_OPEN, disk(1)) > 0
+        if ie.get("close"):   # glare breaks a letter's stroke into specks: join them back (inside the zone only)
+            ik = (cv2.morphologyEx(ik.astype(np.uint8), cv2.MORPH_CLOSE, disk(ie["close"])) > 0) & z
+        ink |= small_cc(ik, ie.get("min", 60))
     if c.get("ink_within"):
         ink &= poly_mask(sh, c["ink_within"])
     if c.get("ink_thin"):   # only pen-width ink here (a broad dark patch is shadow, not print)
         z = poly_mask(sh, c["ink_thin"])
         thick = cv2.dilate(cv2.morphologyEx(ink.astype(np.uint8), cv2.MORPH_OPEN, disk(9)), disk(1)) > 0
         ink &= ~(thick & z)
+
+    for pt in c.get("patch", []):   # stray print on the film over a ribbed hose: the hose's own ribs from just above, feathered
+        a0, b0, a1, b1 = pt["box"]; dy = pt.get("dy", -40)
+        k = np.zeros(sh, np.float32); k[b0:b1, a0:a1] = 1; k = cv2.GaussianBlur(k, (0, 0), 4)[..., None]
+        I = I * (1 - k) + np.roll(I, -dy, axis=0) * k
+    for g in c.get("glyph_copy", []):   # a letter lost under glare, restored from the same letter printed on the same line
+        if g.get("clear"):
+            a0, b0, a1, b1 = g["clear"]; ink[b0:b1, a0:a1] = False
+        a0, b0, a1, b1 = g["src"]; dx, dy = g["to"]
+        m = ink[b0:b1, a0:a1].copy()
+        dst = np.s_[b0 + dy:b1 + dy, a0 + dx:a1 + dx]
+        ink[dst] |= m
+        I[dst] = np.where(m[..., None], I[b0:b1, a0:a1], I[dst])
+    for z in c.get("ink_holes", []):   # a solid printed shape (a teardrop) whose middle is lost under glare
+        zm = poly_mask(sh, [z["poly"]])
+        ink |= (cv2.morphologyEx((ink & zm).astype(np.uint8), cv2.MORPH_CLOSE, disk(z.get("close", 6))) > 0) & zm
+        hl = nd.binary_fill_holes(ink & zm) & ~ink & zm
+        ink |= hl & ~small_cc(hl, z.get("max", 3000))
 
     white = np.zeros(sh, bool)
     for box in c.get("white", []):
@@ -233,13 +283,31 @@ def cut(name):
             print("tube widths", [round(w) for w in c["_w"]], "->", round(W_))
         band |= m
 
+    if c.get("dark_band"):   # dark hose over a dark printed/foil backing: hand corridors, only the near-black neutral pixels in them
+        o = c.get("dark_band_opts", {})
+        Lb, Cb = cv2.GaussianBlur(L, (0, 0), 1.5), cv2.GaussianBlur(chI, (0, 0), 2)
+        cor = np.zeros(sh, bool); dk = np.zeros(sh, bool)
+        for b in c["dark_band"]:
+            z = poly_mask(sh, [b["pts"]], width=int(b["w"])); cor |= z
+            dk |= z & (Lb < b.get("L", 45)) & (Cb < b.get("C", 8))
+        dk = cv2.morphologyEx(dk.astype(np.uint8), cv2.MORPH_CLOSE, disk(o.get("close", 9))) > 0
+        hl = nd.binary_fill_holes(dk) & ~dk
+        dk |= hl & ~small_cc(hl, o.get("hole", 6000))
+        dk = cv2.morphologyEx(dk.astype(np.uint8), cv2.MORPH_OPEN, disk(o.get("open", 6))) > 0
+        dk = small_cc(dk, o.get("min", 4000)) & cor
+        band |= cv2.GaussianBlur(dk.astype(np.float32), (0, 0), 3) > 0.5
+
     fill = poly_mask(sh, c["fill"]) if c.get("fill") else np.zeros(sh, bool)
     drop = poly_mask(sh, c["drop"]) if c.get("drop") else np.zeros(sh, bool)
     for db in c.get("drop_bright", []):   # wall/film seen through the bag next to a dark hose: drop only what is bright
         z = poly_mask(sh, [db["poly"]])
         br = cv2.GaussianBlur(L, (0, 0), db.get("blur", 3)) > db.get("L", 140)
+        if "C" in db:   # clear film only: the tinted print and a pale hose keep their colour
+            br &= cv2.GaussianBlur(chI, (0, 0), db.get("blur", 3)) < db["C"]
         br = cv2.morphologyEx(br.astype(np.uint8), cv2.MORPH_OPEN, disk(db.get("open", 4))) > 0
         drop |= z & br
+    for dt in c.get("drop_tint", []):   # dark foil showing beside a black hose: whatever carries its tint goes
+        drop |= poly_mask(sh, [dt["poly"]]) & (cv2.GaussianBlur(chI, (0, 0), 2) > dt["C"])
     if c.get("fill_noborder") and c.get("fill"):   # the bag's own orange border is redrawn; keep it out of hose fills
         fill &= ~((chI > 40) & (hue > 45) & (hue < 68))
     solid = (colour | ink | white | band | fill) & area & ~drop
@@ -336,6 +404,9 @@ def cut(name):
         keep = small_cc(rgba[..., 3] > 60, c["min_cc"])
         keep = cv2.dilate(keep.astype(np.uint8), disk(3)) > 0
         rgba[~keep, 3] = 0
+    for mz in c.get("speck_zones", []):   # loose specks in one area only (letters elsewhere can be small)
+        z = poly_mask(rgba.shape[:2], [mz["poly"]]); a = rgba[..., 3] > 60
+        rgba[z & a & ~small_cc(a, mz["min"]), 3] = 0
     for dp in c.get("drop_final", []):   # final-frame polygons removed (after any warp)
         rgba[poly_mask(rgba.shape[:2], [dp]), 3] = 0
     Image.fromarray(rgba, "RGBA").save(OUT / f"{name}.png")

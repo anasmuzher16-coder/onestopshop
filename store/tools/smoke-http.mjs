@@ -71,7 +71,7 @@ ok(m.PRODUCTS.length === 69 + 1 + 15 + 47 + 91 + 39 + 32 + 65 + 27 && m.CATEGORI
   for (const p of hk) for (const suf of ["", "-s"]) { const r = await fetch(B + `/img/pc/${p.img}${suf}.webp`); ok(r.status === 200, `photo ${p.img}${suf}.webp: ${r.status}`); }
   const hose = m.PRODUCTS.filter(p => /^hose-/.test(p.family || ""));
   // 32 hoses: each photographed one carries the tag until its drawn-bag photo is approved (DRAWN); the light blue Starbuzz
-  // (OSS-120032) has no photo until its drawn-bag cut-out goes in ("Photo coming soon"), so it never carries the tag
+  // (OSS-120032) has no photo until the shop photographs it; counter shots are never used ("Photo coming soon"), so it never carries the tag
   const shot = hose.filter(p => p.img), waiting = shot.filter(p => !DRAWN.has(p.sku));
   ok(DRAWN.size > 0 && hose.length === 32 && hose.every(p => DRAWN.has(p.sku) ? !p.facts.photo_label : p.img ? p.facts.photo_label === "replace" : p.sku === "OSS-120032" && !p.facts.photo_label),
     `every photographed hose is tagged "to be replaced" until its drawn-bag photo is approved: ${waiting.filter(p => p.facts.photo_label === "replace").length}/${waiting.length} tagged, ${DRAWN.size} approved, of ${hose.length}`);

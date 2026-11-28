@@ -19,6 +19,17 @@ fitting; the white top slab was clear bag over the wall and is gone, the eagles'
 (left edge follows the stem; the print runs up under the top seal and fades into the bottom seal: compose.py top_cut,
 seal_fade), IMG_0569 Zanobia (old-bag film beside the card and inside the bottom loop removed: cut.py drop_bright).
 New cut.py keys: ink_extra, area_add, drop_bright, drop_final, min_cc. compose.py writes out/<IMG>-map.json (render -> cut).
-OSS-120032 light blue Starbuzz: recolour_lb.py (the teal sibling IMG_0549 recoloured to the shop photo's light-blue shade;
-card kept), published as Star_buzz_are_76.5_inches; live state in store/catalog/live/hose-fix-2026-11-27.sql.
+OSS-120032 light blue Starbuzz: no photo ("Photo coming soon"). Owner rule 2026-11-28: never use the counter shots (hoses
+on top of the glass counter), not even to sample a colour; the recolour of the teal sibling (recolour_lb.py) was withdrawn
+with its files; store/catalog/live/hose-fix-2-2026-11-28.sql takes it off again if it ever comes back.
+Second fixes after the owner's note (2026-11-28), branch fleet/hose-fix2:
+  IMG_0547 Super Al Ameer: the gold foil backing is film, not print, and is gone. Kept: the handle (fill, edge traced on the
+  photo), the black coil (cut.py dark_band: hand corridors, only the near-black neutral pixels in them, closed over the ribs),
+  the bag's black print (ink_extra zones; adapt = darker than the film around it, for print under glare): SUPER AL AMEER,
+  HEALTHY HOOKAH HOSE, both wavy lines, the warning lines, MADE IN JORDAN. The fine print inside the coil is dropped (on the
+  foil's shadow it cannot be told from the foil), and so is the dim left run of the coil (it read as foil scraps).
+  IMG_0568 Sager: the card is now the photo itself (the bag's real translucent tint over the real hose: fitting, sleeve,
+  handle, bend, mouthpiece); the flat redrawn panel and border strips are gone. Shop background seen through the tint is
+  filled from the tint around it (cut.py inpaint: the wall rail's shadow, the dark strip at the left fold); the clear band
+  above the bottom border is see-through (drop_bright with C).
 Still not shipped: the Zanobia ICE red/black (0552 0553), ICE green (0548) and white (0557): see the branch report.
