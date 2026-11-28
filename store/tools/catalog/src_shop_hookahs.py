@@ -90,7 +90,7 @@ HOOKAHS = [
 # framed like the Ace hookahs (frame_cutouts.py --kind hookah --glass). Each passed an atelier:design-reviewer check at 200%
 # on two tile colours before it went in. They replace the original under the same file name, without the tag.
 CLEANED = {"IMG_0715", "IMG_0673", "IMG_0681", "IMG_0674", "IMG_0678", "IMG_0697", "IMG_0699", "IMG_0670",
-           "IMG_0705", "IMG_0706", "IMG_0712", "IMG_0714"}
+           "IMG_0705", "IMG_0706", "IMG_0712", "IMG_0714", "IMG_0679", "IMG_0709", "IMG_0710"}
 
 
 def photo_name(name: str, colour: str) -> str:

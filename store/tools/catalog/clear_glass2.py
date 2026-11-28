@@ -104,7 +104,7 @@ PHOTOS = {
     # Panda, drip-textured clear glass on the mat; the downstem runs down to the mat
     "IMG_0689": {"foot": [1013, 2310, 314, 205, 2.6, 40], "fill": True,
                  "bridge": [[2060, 2180, "left", "fill"], [2230, 2370, "left", "fill"], [2200, 2320, "right", "fill"]],
-                 "notex": [[1265, 2420, 1300, 2452]], "retouch": [[936, 470, 1030, 532]], "stem_glass": 0.8, "stem_seen": 0.78, "fade": 3, "tex_mat": 0.6, "edge_clear": 45, "glass": [1612, 2600], "stem": [984, 1612, 1035, 2228],
+                 "notex": [[1265, 2420, 1300, 2452]], "retouch": [[936, 470, 1030, 532]], "stem_glass": 1.0, "stem_seen": 1.0, "fade": 3, "tex_mat": 0.6, "edge_clear": 45, "glass": [1612, 2600], "stem": [984, 1612, 1035, 2228],
                  "mat": [[1015, 2330, 335, 225]], "mat_fine": [[1010, 2305, 140, 45]]},
     # painted opaque base, off the mat
     "IMG_0670": {"foot": [1028, 2400, [174, 176], 112, 2.0], "fill": True},

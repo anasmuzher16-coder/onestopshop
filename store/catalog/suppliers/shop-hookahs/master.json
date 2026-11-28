@@ -839,9 +839,9 @@
      },
      "photo": {
       "img": "hookah/performance-smoke-hookah-silver",
-      "status": "replace",
+      "status": "shop",
       "large": true,
-      "src": "photo:IMG_0709 (the shop's own photo, as taken: to be replaced)"
+      "src": "photo:IMG_0709 (the shop's own photo, cut out, the mat cleared: clear_glass2.py)"
      },
      "shop": {
       "price_cents": {
@@ -999,9 +999,9 @@
      },
      "photo": {
       "img": "hookah/hookah-clear-base-black-and-red-stem-black-and-red",
-      "status": "replace",
+      "status": "shop",
       "large": true,
-      "src": "photo:IMG_0679 (the shop's own photo, as taken: to be replaced)"
+      "src": "photo:IMG_0679 (the shop's own photo, cut out, the mat cleared: clear_glass2.py)"
      },
      "shop": {
       "price_cents": {
@@ -1851,9 +1851,9 @@
      },
      "photo": {
       "img": "hookah/hookah-frosted-base-black-and-silver-stem-black-and-silver",
-      "status": "replace",
+      "status": "shop",
       "large": true,
-      "src": "photo:IMG_0710 (the shop's own photo, as taken: to be replaced)"
+      "src": "photo:IMG_0710 (the shop's own photo, cut out, the mat cleared: clear_glass2.py)"
      },
      "shop": {
       "price_cents": {
