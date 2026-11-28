@@ -122,6 +122,8 @@ Each PHOTOS entry (pixels of the 2600 px tall photo):
   spec_min px: highlights in pieces smaller than this are dropped (lone specks read as noise, not as glass).
   tex_median px: the median that takes noise out of the texture before its band is read (default 3); cut glass wants
            about 7, so its facets read as flat planes with crisp edges, not crinkled cellophane.
+  facets   [alpha, floor]: cut crystal over the mat: its facet edges (pixels brighter than `floor`, than their 31 px
+           median and neutral) are drawn white at up to alpha, over the mat zones only; pair with a low mat_gain.
   mat_gain the strength of the texture read over the mat (default 1): below 1 where the print still shows as blotches.
   thick    list of [cx, cy, rx, ry, y0, s]: glass outside the ellipse and below row y0 (eased over 30 rows) gets s more
            body (the thick foot's front face); a negative s makes it that much lighter instead.
@@ -289,6 +291,16 @@ PHOTOS = {
                  "fade": 3, "tex_mat": 0.25, "edge_clear": 60, "glass": [1655, 2600], "stem": [965, 1655, 1035, 2195],
                  "mat": [[1005, 2300, 350, 280]], "mat_fine": [[1005, 2280, 160, 90]]},
 }
+
+# Crew 4 (2026-11-28): the second batch's shop hookahs (Drive photos, 1958 x 2600 after the resize), claimed from OSS-140071 up.
+PHOTOS_CREW4 = {
+    # OSS-140071 cut-crystal clear base (gold and blue stem), on the mat
+    "PXL_20261128_011052595": {"foot": [990, 2360, [280, 280], 200, 2.4, 60, 60], "fill": True, "glass": [1805, 2600],
+                               "stem": [977, 1805, 1004, 2210], "fade": 3, "mat": [[990, 2420, 330, 210]],
+                               "tex": [20, 3.0], "tex_median": 7, "mat_gain": 0.5, "facets": [1.0, 140],
+                               "rim": [0.0, 2.0, 0.08], "inner": 0.14, "body": [0.0, 0.03], "spec_min": 25},
+}
+PHOTOS.update(PHOTOS_CREW4)
 
 DARK = np.array([36, 44, 50], float)     # the glass's dark layer: a cool grey, as clear soda glass reads at a slant
 
@@ -670,7 +682,7 @@ def masks(photo, cut_a, cfg):
 def glass_layers(photo, glass, sil, mat, fine, lama, texture=True, rim_from=None, body=0.05, frost=None, tex_mat=1.0,
                  edge_clear=0, body_edge=None, spec_mat=1.0, notex=None, tex=(7, 2.2), borrow=None, parts=(),
                  rim_k=(0.50, 3.5, 0.12, 20.0, 0.18), ring=0.0, tex_to=None, inner_s=None, body_w=0.0, spec_min=0,
-                 streaks=None, spec_off=(), tex_median=3, mat_gain=1.0):
+                 streaks=None, spec_off=(), tex_median=3, mat_gain=1.0, facets=None):
     """Returns (dark alpha, highlight alpha) for the glass pixels of a window of the photo."""
     L = lum(photo)
     h, w = L.shape
@@ -741,6 +753,12 @@ def glass_layers(photo, glass, sil, mat, fine, lama, texture=True, rim_from=None
             f = wm * f_mat * tex_mat + (1 - wm) * f_plate
             # a highlight is only one where it is brighter than the ink behind it (the pale ink is near-white)
             spec = spec * np.where(mat, np.clip((L - Bl - 18) / 15, 0, 1) * spec_mat, 1)
+            if facets is not None:     # cut crystal over the mat: its facet edges are the bright, neutral lines, brighter
+                fa, flo = facets       # than both the pale ink (absolute floor flo) and their own surround (local median)
+                Lmd = nd.median_filter(L, size=31)
+                e = np.clip((L - flo) / 40, 0, 1) * np.clip((L - Lmd - 8) / 25, 0, 1) * np.clip((40 - sat) / 15, 0, 1)
+                e = nd.gaussian_filter(nd.median_filter(e, size=3), 0.7)
+                spec = np.maximum(spec, fa * e * wm)
         f = np.clip(f - 0.04, 0, None)
         f = nd.median_filter(f, size=tex_median)                    # single-pixel noise is not texture (cut glass: crinkle)
         # detail only: broad patches are misread backdrop. Over the mat the band stays narrow (7 px) whatever `tex` says
@@ -955,7 +973,8 @@ def run_one(src, cut_p, cfg, method, lama, tile=None, matting=None):
                               body_w=cfg["body"][1] if "body" in cfg else 0.0, spec_min=cfg.get("spec_min", 0),
                               streaks=(cfg["streaks"][0] - y0, cfg["streaks"][1] - y0, cfg["streaks"][2]) if "streaks" in cfg else None,
                               spec_off=[(a - x0, b - y0, c - x0, d - y0) for a, b, c, d in cfg.get("spec_off", [])],
-                              tex_median=cfg.get("tex_median", 3), mat_gain=cfg.get("mat_gain", 1.0))
+                              tex_median=cfg.get("tex_median", 3), mat_gain=cfg.get("mat_gain", 1.0),
+                              facets=cfg.get("facets"))
         a_d[w] = np.where(part[w], da, a_d[w]); hi[w] = np.where(part[w], ha, hi[w])
     if "arcs" in cfg or "thick" in cfg:
         e_d, e_h = drawn_edges(*glass.shape, cfg, photo)
