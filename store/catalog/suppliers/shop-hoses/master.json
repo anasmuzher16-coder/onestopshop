@@ -11,8 +11,8 @@
    "id": "shop-hoses-2026-11-25",
    "kind": "shop photos and recording",
    "file": "IMG_0543..IMG_0579 (hanging rack) + recording captions",
-   "sha256": "1378bbfbf9fffb2e61d152eca2b18663c292f86e8cd93727b89a8a67c5d9f286",
-   "products": 31,
+   "sha256": "2d7f4538a7ee69a5c64343716ce3eecd71b67501f8cb1a957f0311fc40b7bf8c",
+   "products": 32,
    "edition": "Shop shelf photos and recording captions, 2026-11-25",
    "received": "2026-11-25"
   }
@@ -1501,7 +1501,8 @@
     }
    },
    "flags": [
-    "NEEDS SHOP: not in the recording: name read from the bag (Starbuzz Tobacco); length from the shop's photo caption"
+    "NEEDS SHOP: not in the recording: name read from the bag (Starbuzz Tobacco); length from the shop's photo caption",
+    "NEEDS SHOP: Light blue: not in the recording: name read from the bag (Starbuzz Tobacco); length from the shop's photo caption; only in the shop's counter photo 'Star buzz are 76.5 inches' (fifth bag), not on the hanging rack: check it is still in stock; no photo of its own yet (in that photo it lies in a group, cut off at the edge)"
    ],
    "variants": [
     {
@@ -1676,6 +1677,57 @@
       "img": "hose/starbuzz-ribbed-hose-grey",
       "status": "replace",
       "src": "photo:IMG_0555 (the shop's shelf photo, cut out, bag kept as film)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-120032",
+     "key": "hose-starbuzz-ribbed-hose#light-blue",
+     "swatch_hex": {
+      "v": "#8fc3e6",
+      "src": "rule: chip colour for 'Light blue'"
+     },
+     "colour": {
+      "v": "Light blue",
+      "src": "photo:Star_buzz_are_76.5_inches (the shop's shelf photo)"
+     },
+     "confirm": {
+      "v": "not in the recording: name read from the bag (Starbuzz Tobacco); length from the shop's photo caption; only in the shop's counter photo 'Star buzz are 76.5 inches' (fifth bag), not on the hanging rack: check it is still in stock; no photo of its own yet (in that photo it lies in a group, cut off at the edge)",
+      "src": "rule 2026-11-27 (owner: match them up to the best of your ability)"
+     },
+     "photo": {
+      "img": null,
+      "status": "none",
+      "src": null
      },
      "shop": {
       "price_cents": {

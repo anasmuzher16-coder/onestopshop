@@ -23,6 +23,9 @@ def main(crops: Path):
     done = 0
     for name, _cap, _len, _brand, shots, _why in src_shop_hoses.HOSES:
         for photo, colour, _ in shots:
+            if not (crops / f"{photo}.png").exists() and not photo.startswith("IMG_"):
+                print(f"skipped {name} {colour}: no cut-out of {photo} (no photo of its own yet)")
+                continue
             im = Image.open(crops / f"{photo}.png").convert("RGBA")
             if im.size != (photos.W, photos.H):
                 raise SystemExit(f"{photo}.png is {im.size}, not the {photos.W}x{photos.H} frame")

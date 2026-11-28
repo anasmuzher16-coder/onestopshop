@@ -11,8 +11,8 @@
    "id": "shop-bowls-2026-11-27",
    "kind": "shop photos",
    "file": "IMG_0584..IMG_0665 (bowls on a white sweep)",
-   "sha256": "41de95e665fc6e2e2f4bc1cc1505df0fc95a79980cd4b70afaeacd7d77454884",
-   "products": 28,
+   "sha256": "cae87ffa2ec04a92331ff16427f9d082f91113abed0b76df7744a1b01d6b4690",
+   "products": 65,
    "edition": "Shop bowl photos on a white sweep, Google Drive 2026-11-27",
    "received": "2026-11-27"
   }
@@ -20,6 +20,7 @@
  "rulings": [
   "owner 2026-11-27: put the photographed bowls on the site",
   "only a bowl whose brand is printed on it goes up, named from that brand; the shape word is ours and flagged to confirm",
+  "owner 2026-11-27 (all of the store's items on the site): a bowl with no brand goes up under a plain name describing its photo, flagged to confirm; one already on the site (Ace accessories) is not added twice",
   "in the shop, Price TBD, stock not counted; the shop fills price and stock in the item editor",
   "pickup or local delivery once priced, until each bowl's weight is known (same rule as the Ace accessories)"
  ],
@@ -1728,6 +1729,2436 @@
       "status": "ready",
       "large": true,
       "src": "photo:IMG_0644 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "bowl-hexagon-bowl",
+   "order": 10,
+   "category": "bowls",
+   "name": {
+    "v": "Hexagon Bowl",
+    "src": "photo:IMG_0587 (six-sided glazed top on a six-sided clay stem); rule 2026-11-27 (owner: all of the store's items on the site; a bowl with no brand gets a plain descriptive name)"
+   },
+   "supplier_ref": {
+    "v": "No brand (six-sided glazed top on a six-sided clay stem)",
+    "src": "photo:IMG_0587"
+   },
+   "facts": {
+    "brand": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: no brand on the bowl: the name only describes what the shop's photo shows; check the name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-130029",
+     "key": "bowl-hexagon-bowl#red",
+     "swatch_hex": {
+      "v": "#c8372d",
+      "src": "rule: chip colour for 'Red'"
+     },
+     "colour": {
+      "v": "Red",
+      "src": "photo:IMG_0587 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "no brand on the bowl: the name only describes what the shop's photo shows; check the name",
+      "src": "rule 2026-11-27 (owner: all of the store's items on the site; a bowl with no brand gets a plain descriptive name)"
+     },
+     "photo": {
+      "img": "bowl/hexagon-bowl-red",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0587 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-130030",
+     "key": "bowl-hexagon-bowl#black",
+     "swatch_hex": {
+      "v": "#141414",
+      "src": "rule: chip colour for 'Black'"
+     },
+     "colour": {
+      "v": "Black",
+      "src": "photo:IMG_0588 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "no brand on the bowl: the name only describes what the shop's photo shows; check the name",
+      "src": "rule 2026-11-27 (owner: all of the store's items on the site; a bowl with no brand gets a plain descriptive name)"
+     },
+     "photo": {
+      "img": "bowl/hexagon-bowl-black",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0588 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "bowl-two-tone-funnel-bowl",
+   "order": 11,
+   "category": "bowls",
+   "name": {
+    "v": "Two-tone Funnel Bowl",
+    "src": "photo:IMG_0590 (glazed funnel top on a plain brown clay stem); rule 2026-11-27 (owner: all of the store's items on the site; a bowl with no brand gets a plain descriptive name)"
+   },
+   "supplier_ref": {
+    "v": "No brand (glazed funnel top on a plain brown clay stem)",
+    "src": "photo:IMG_0590"
+   },
+   "facts": {
+    "brand": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: no brand on the bowl: the name only describes what the shop's photo shows; check the name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-130031",
+     "key": "bowl-two-tone-funnel-bowl#red-and-white",
+     "swatch_hex": {
+      "v": "#c8423a",
+      "src": "rule: chip colour for 'Red and white'"
+     },
+     "colour": {
+      "v": "Red and white",
+      "src": "photo:IMG_0590 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "no brand on the bowl: the name only describes what the shop's photo shows; check the name",
+      "src": "rule 2026-11-27 (owner: all of the store's items on the site; a bowl with no brand gets a plain descriptive name)"
+     },
+     "photo": {
+      "img": "bowl/two-tone-funnel-bowl-red-and-white",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0590 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-130032",
+     "key": "bowl-two-tone-funnel-bowl#yellow",
+     "swatch_hex": {
+      "v": "#e3d21f",
+      "src": "rule: chip colour for 'Yellow'"
+     },
+     "colour": {
+      "v": "Yellow",
+      "src": "photo:IMG_0600 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "no brand on the bowl: the name only describes what the shop's photo shows; check the name",
+      "src": "rule 2026-11-27 (owner: all of the store's items on the site; a bowl with no brand gets a plain descriptive name)"
+     },
+     "photo": {
+      "img": "bowl/two-tone-funnel-bowl-yellow",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0600 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-130033",
+     "key": "bowl-two-tone-funnel-bowl#blue",
+     "swatch_hex": {
+      "v": "#22409a",
+      "src": "rule: chip colour for 'Blue'"
+     },
+     "colour": {
+      "v": "Blue",
+      "src": "photo:IMG_0601 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "no brand on the bowl: the name only describes what the shop's photo shows; check the name",
+      "src": "rule 2026-11-27 (owner: all of the store's items on the site; a bowl with no brand gets a plain descriptive name)"
+     },
+     "photo": {
+      "img": "bowl/two-tone-funnel-bowl-blue",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0601 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "bowl-speckled-funnel-bowl",
+   "order": 12,
+   "category": "bowls",
+   "name": {
+    "v": "Speckled Funnel Bowl",
+    "src": "photo:IMG_0597 (speckled glaze, funnel top on a waisted stem); rule 2026-11-27 (owner: all of the store's items on the site; a bowl with no brand gets a plain descriptive name)"
+   },
+   "supplier_ref": {
+    "v": "No brand (speckled glaze, funnel top on a waisted stem)",
+    "src": "photo:IMG_0597"
+   },
+   "facts": {
+    "brand": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: no brand on the bowl: the name only describes what the shop's photo shows; check the name; its shape is close to the VON Speckled Bowl (IMG_0615) but no tag shows: check whether it is a VON"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-130034",
+     "key": "bowl-speckled-funnel-bowl#purple",
+     "swatch_hex": {
+      "v": "#5b3a8c",
+      "src": "rule: chip colour for 'Purple'"
+     },
+     "colour": {
+      "v": "Purple",
+      "src": "photo:IMG_0597 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "no brand on the bowl: the name only describes what the shop's photo shows; check the name; its shape is close to the VON Speckled Bowl (IMG_0615) but no tag shows: check whether it is a VON",
+      "src": "rule 2026-11-27 (owner: all of the store's items on the site; a bowl with no brand gets a plain descriptive name)"
+     },
+     "photo": {
+      "img": "bowl/speckled-funnel-bowl-purple",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0597 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "bowl-hexagon-stem-funnel-bowl",
+   "order": 13,
+   "category": "bowls",
+   "name": {
+    "v": "Hexagon-stem Funnel Bowl",
+    "src": "photo:IMG_0598 (glazed funnel top on a six-sided brown stem with an Arabic stamp); rule 2026-11-27 (owner: all of the store's items on the site; a bowl with no brand gets a plain descriptive name)"
+   },
+   "supplier_ref": {
+    "v": "No brand (glazed funnel top on a six-sided brown stem with an Arabic stamp)",
+    "src": "photo:IMG_0598"
+   },
+   "facts": {
+    "brand": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: an Arabic word is stamped on the stem (not read here): the name only describes the bowl; check the name and brand"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-130035",
+     "key": "bowl-hexagon-stem-funnel-bowl#green",
+     "swatch_hex": {
+      "v": "#2f6b2a",
+      "src": "rule: chip colour for 'Green'"
+     },
+     "colour": {
+      "v": "Green",
+      "src": "photo:IMG_0598 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "an Arabic word is stamped on the stem (not read here): the name only describes the bowl; check the name and brand",
+      "src": "rule 2026-11-27 (owner: all of the store's items on the site; a bowl with no brand gets a plain descriptive name)"
+     },
+     "photo": {
+      "img": "bowl/hexagon-stem-funnel-bowl-green",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0598 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "bowl-glazed-multi-hole-bowl",
+   "order": 14,
+   "category": "bowls",
+   "name": {
+    "v": "Glazed Multi-hole Bowl",
+    "src": "photo:IMG_0630 (glazed multi-hole top on a fluted brown stem with an Arabic stamp); rule 2026-11-27 (owner: all of the store's items on the site; a bowl with no brand gets a plain descriptive name)"
+   },
+   "supplier_ref": {
+    "v": "No brand (glazed multi-hole top on a fluted brown stem with an Arabic stamp)",
+    "src": "photo:IMG_0630"
+   },
+   "facts": {
+    "brand": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: an Arabic word is stamped on the stem (not read here): the name only describes the bowl; check the name and brand"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-130036",
+     "key": "bowl-glazed-multi-hole-bowl#red",
+     "swatch_hex": {
+      "v": "#c8372d",
+      "src": "rule: chip colour for 'Red'"
+     },
+     "colour": {
+      "v": "Red",
+      "src": "photo:IMG_0630 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "an Arabic word is stamped on the stem (not read here): the name only describes the bowl; check the name and brand",
+      "src": "rule 2026-11-27 (owner: all of the store's items on the site; a bowl with no brand gets a plain descriptive name)"
+     },
+     "photo": {
+      "img": "bowl/glazed-multi-hole-bowl-red",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0630 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-130037",
+     "key": "bowl-glazed-multi-hole-bowl#blue",
+     "swatch_hex": {
+      "v": "#22409a",
+      "src": "rule: chip colour for 'Blue'"
+     },
+     "colour": {
+      "v": "Blue",
+      "src": "photo:IMG_0637 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "an Arabic word is stamped on the stem (not read here): the name only describes the bowl; check the name and brand",
+      "src": "rule 2026-11-27 (owner: all of the store's items on the site; a bowl with no brand gets a plain descriptive name)"
+     },
+     "photo": {
+      "img": "bowl/glazed-multi-hole-bowl-blue",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0637 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "bowl-matte-clay-bowl",
+   "order": 15,
+   "category": "bowls",
+   "name": {
+    "v": "Matte Clay Bowl",
+    "src": "photo:IMG_0631 (unglazed clay, multi-hole top on a patterned stem); rule 2026-11-27 (owner: all of the store's items on the site; a bowl with no brand gets a plain descriptive name)"
+   },
+   "supplier_ref": {
+    "v": "No brand (unglazed clay, multi-hole top on a patterned stem)",
+    "src": "photo:IMG_0631"
+   },
+   "facts": {
+    "brand": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: no brand on the bowl: the name only describes what the shop's photo shows; check the name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-130038",
+     "key": "bowl-matte-clay-bowl#brown",
+     "swatch_hex": {
+      "v": "#8a5a2b",
+      "src": "rule: chip colour for 'Brown'"
+     },
+     "colour": {
+      "v": "Brown",
+      "src": "photo:IMG_0631 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "no brand on the bowl: the name only describes what the shop's photo shows; check the name",
+      "src": "rule 2026-11-27 (owner: all of the store's items on the site; a bowl with no brand gets a plain descriptive name)"
+     },
+     "photo": {
+      "img": "bowl/matte-clay-bowl-brown",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0631 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-130039",
+     "key": "bowl-matte-clay-bowl#grey",
+     "swatch_hex": {
+      "v": "#6e6e6e",
+      "src": "rule: chip colour for 'Grey'"
+     },
+     "colour": {
+      "v": "Grey",
+      "src": "photo:IMG_0636 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "no brand on the bowl: the name only describes what the shop's photo shows; check the name",
+      "src": "rule 2026-11-27 (owner: all of the store's items on the site; a bowl with no brand gets a plain descriptive name)"
+     },
+     "photo": {
+      "img": "bowl/matte-clay-bowl-grey",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0636 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "bowl-horned-head-bowl-with-glass-top",
+   "order": 16,
+   "category": "bowls",
+   "name": {
+    "v": "Horned Head Bowl with Glass Top",
+    "src": "photo:IMG_0619 (cut-glass bowl on a sculpted horned head); rule 2026-11-27 (owner: all of the store's items on the site; a bowl with no brand gets a plain descriptive name)"
+   },
+   "supplier_ref": {
+    "v": "No brand (cut-glass bowl on a sculpted horned head)",
+    "src": "photo:IMG_0619"
+   },
+   "facts": {
+    "brand": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: no brand on the bowl: the name only describes what the shop's photo shows; check the name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-130040",
+     "key": "bowl-horned-head-bowl-with-glass-top#silver",
+     "swatch_hex": {
+      "v": "#b8b8b8",
+      "src": "rule: chip colour for 'Silver'"
+     },
+     "colour": {
+      "v": "Silver",
+      "src": "photo:IMG_0619 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "no brand on the bowl: the name only describes what the shop's photo shows; check the name",
+      "src": "rule 2026-11-27 (owner: all of the store's items on the site; a bowl with no brand gets a plain descriptive name)"
+     },
+     "photo": {
+      "img": "bowl/horned-head-bowl-with-glass-top-silver",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0619 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-130041",
+     "key": "bowl-horned-head-bowl-with-glass-top#purple",
+     "swatch_hex": {
+      "v": "#5b3a8c",
+      "src": "rule: chip colour for 'Purple'"
+     },
+     "colour": {
+      "v": "Purple",
+      "src": "photo:IMG_0621 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "no brand on the bowl: the name only describes what the shop's photo shows; check the name",
+      "src": "rule 2026-11-27 (owner: all of the store's items on the site; a bowl with no brand gets a plain descriptive name)"
+     },
+     "photo": {
+      "img": "bowl/horned-head-bowl-with-glass-top-purple",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0621 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-130042",
+     "key": "bowl-horned-head-bowl-with-glass-top#bronze",
+     "swatch_hex": {
+      "v": "#8c6a3a",
+      "src": "rule: chip colour for 'Bronze'"
+     },
+     "colour": {
+      "v": "Bronze",
+      "src": "photo:IMG_0623 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "no brand on the bowl: the name only describes what the shop's photo shows; check the name",
+      "src": "rule 2026-11-27 (owner: all of the store's items on the site; a bowl with no brand gets a plain descriptive name)"
+     },
+     "photo": {
+      "img": "bowl/horned-head-bowl-with-glass-top-bronze",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0623 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-130043",
+     "key": "bowl-horned-head-bowl-with-glass-top#blue",
+     "swatch_hex": {
+      "v": "#22409a",
+      "src": "rule: chip colour for 'Blue'"
+     },
+     "colour": {
+      "v": "Blue",
+      "src": "photo:IMG_0625 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "no brand on the bowl: the name only describes what the shop's photo shows; check the name",
+      "src": "rule 2026-11-27 (owner: all of the store's items on the site; a bowl with no brand gets a plain descriptive name)"
+     },
+     "photo": {
+      "img": "bowl/horned-head-bowl-with-glass-top-blue",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0625 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "bowl-glass-bowl-on-silicone-base",
+   "order": 17,
+   "category": "bowls",
+   "name": {
+    "v": "Glass Bowl on Silicone Base",
+    "src": "photo:IMG_0627 (clear glass funnel bowl seated in a silicone base); rule 2026-11-27 (owner: all of the store's items on the site; a bowl with no brand gets a plain descriptive name)"
+   },
+   "supplier_ref": {
+    "v": "No brand (clear glass funnel bowl seated in a silicone base)",
+    "src": "photo:IMG_0627"
+   },
+   "facts": {
+    "brand": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: no brand on the bowl: the name only describes what the shop's photo shows; check the name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-130044",
+     "key": "bowl-glass-bowl-on-silicone-base#orange",
+     "swatch_hex": {
+      "v": "#e0662a",
+      "src": "rule: chip colour for 'Orange'"
+     },
+     "colour": {
+      "v": "Orange",
+      "src": "photo:IMG_0627 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "no brand on the bowl: the name only describes what the shop's photo shows; check the name",
+      "src": "rule 2026-11-27 (owner: all of the store's items on the site; a bowl with no brand gets a plain descriptive name)"
+     },
+     "photo": {
+      "img": "bowl/glass-bowl-on-silicone-base-orange",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0627 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-130045",
+     "key": "bowl-glass-bowl-on-silicone-base#blue",
+     "swatch_hex": {
+      "v": "#22409a",
+      "src": "rule: chip colour for 'Blue'"
+     },
+     "colour": {
+      "v": "Blue",
+      "src": "photo:IMG_0628 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "no brand on the bowl: the name only describes what the shop's photo shows; check the name",
+      "src": "rule 2026-11-27 (owner: all of the store's items on the site; a bowl with no brand gets a plain descriptive name)"
+     },
+     "photo": {
+      "img": "bowl/glass-bowl-on-silicone-base-blue",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0628 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-130046",
+     "key": "bowl-glass-bowl-on-silicone-base#green",
+     "swatch_hex": {
+      "v": "#2f6b2a",
+      "src": "rule: chip colour for 'Green'"
+     },
+     "colour": {
+      "v": "Green",
+      "src": "photo:IMG_0629 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "no brand on the bowl: the name only describes what the shop's photo shows; check the name",
+      "src": "rule 2026-11-27 (owner: all of the store's items on the site; a bowl with no brand gets a plain descriptive name)"
+     },
+     "photo": {
+      "img": "bowl/glass-bowl-on-silicone-base-green",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0629 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "bowl-glass-bowl-on-painted-base",
+   "order": 18,
+   "category": "bowls",
+   "name": {
+    "v": "Glass Bowl on Painted Base",
+    "src": "photo:IMG_0640 (clear glass funnel bowl on a white base painted with coloured lines); rule 2026-11-27 (owner: all of the store's items on the site; a bowl with no brand gets a plain descriptive name)"
+   },
+   "supplier_ref": {
+    "v": "No brand (clear glass funnel bowl on a white base painted with coloured lines)",
+    "src": "photo:IMG_0640"
+   },
+   "facts": {
+    "brand": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: no brand on the bowl: the name only describes what the shop's photo shows; check the name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-130047",
+     "key": "bowl-glass-bowl-on-painted-base#multicolour",
+     "swatch_hex": {
+      "v": "#d8d2c4",
+      "src": "rule: chip colour for 'Multicolour'"
+     },
+     "colour": {
+      "v": "Multicolour",
+      "src": "photo:IMG_0640 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "no brand on the bowl: the name only describes what the shop's photo shows; check the name",
+      "src": "rule 2026-11-27 (owner: all of the store's items on the site; a bowl with no brand gets a plain descriptive name)"
+     },
+     "photo": {
+      "img": "bowl/glass-bowl-on-painted-base-multicolour",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0640 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "bowl-silicone-bowl-with-clay-insert",
+   "order": 19,
+   "category": "bowls",
+   "name": {
+    "v": "Silicone Bowl with Clay Insert",
+    "src": "photo:IMG_0635 (ribbed silicone body holding a clay multi-hole insert); rule 2026-11-27 (owner: all of the store's items on the site; a bowl with no brand gets a plain descriptive name)"
+   },
+   "supplier_ref": {
+    "v": "No brand (ribbed silicone body holding a clay multi-hole insert)",
+    "src": "photo:IMG_0635"
+   },
+   "facts": {
+    "brand": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: no brand on the bowl: the name only describes what the shop's photo shows; check the name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-130048",
+     "key": "bowl-silicone-bowl-with-clay-insert#blue",
+     "swatch_hex": {
+      "v": "#22409a",
+      "src": "rule: chip colour for 'Blue'"
+     },
+     "colour": {
+      "v": "Blue",
+      "src": "photo:IMG_0635 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "no brand on the bowl: the name only describes what the shop's photo shows; check the name",
+      "src": "rule 2026-11-27 (owner: all of the store's items on the site; a bowl with no brand gets a plain descriptive name)"
+     },
+     "photo": {
+      "img": "bowl/silicone-bowl-with-clay-insert-blue",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0635 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-130049",
+     "key": "bowl-silicone-bowl-with-clay-insert#red",
+     "swatch_hex": {
+      "v": "#c8372d",
+      "src": "rule: chip colour for 'Red'"
+     },
+     "colour": {
+      "v": "Red",
+      "src": "photo:IMG_0639 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "no brand on the bowl: the name only describes what the shop's photo shows; check the name",
+      "src": "rule 2026-11-27 (owner: all of the store's items on the site; a bowl with no brand gets a plain descriptive name)"
+     },
+     "photo": {
+      "img": "bowl/silicone-bowl-with-clay-insert-red",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0639 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-130050",
+     "key": "bowl-silicone-bowl-with-clay-insert#green",
+     "swatch_hex": {
+      "v": "#2f6b2a",
+      "src": "rule: chip colour for 'Green'"
+     },
+     "colour": {
+      "v": "Green",
+      "src": "photo:IMG_0646 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "no brand on the bowl: the name only describes what the shop's photo shows; check the name",
+      "src": "rule 2026-11-27 (owner: all of the store's items on the site; a bowl with no brand gets a plain descriptive name)"
+     },
+     "photo": {
+      "img": "bowl/silicone-bowl-with-clay-insert-green",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0646 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "bowl-glazed-flower-bowl",
+   "order": 20,
+   "category": "bowls",
+   "name": {
+    "v": "Glazed Flower Bowl",
+    "src": "photo:IMG_0633 (wavy, petal-like rim in a running glaze); rule 2026-11-27 (owner: all of the store's items on the site; a bowl with no brand gets a plain descriptive name)"
+   },
+   "supplier_ref": {
+    "v": "No brand (wavy, petal-like rim in a running glaze)",
+    "src": "photo:IMG_0633"
+   },
+   "facts": {
+    "brand": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: no brand on the bowl: the name only describes what the shop's photo shows; check the name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-130051",
+     "key": "bowl-glazed-flower-bowl#light-blue",
+     "swatch_hex": {
+      "v": "#7fa7cf",
+      "src": "rule: chip colour for 'Light blue'"
+     },
+     "colour": {
+      "v": "Light blue",
+      "src": "photo:IMG_0633 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "no brand on the bowl: the name only describes what the shop's photo shows; check the name",
+      "src": "rule 2026-11-27 (owner: all of the store's items on the site; a bowl with no brand gets a plain descriptive name)"
+     },
+     "photo": {
+      "img": "bowl/glazed-flower-bowl-light-blue",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0633 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-130052",
+     "key": "bowl-glazed-flower-bowl#red",
+     "swatch_hex": {
+      "v": "#c8372d",
+      "src": "rule: chip colour for 'Red'"
+     },
+     "colour": {
+      "v": "Red",
+      "src": "photo:IMG_0634 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "no brand on the bowl: the name only describes what the shop's photo shows; check the name",
+      "src": "rule 2026-11-27 (owner: all of the store's items on the site; a bowl with no brand gets a plain descriptive name)"
+     },
+     "photo": {
+      "img": "bowl/glazed-flower-bowl-red",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0634 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-130053",
+     "key": "bowl-glazed-flower-bowl#olive",
+     "swatch_hex": {
+      "v": "#6b6a2e",
+      "src": "rule: chip colour for 'Olive'"
+     },
+     "colour": {
+      "v": "Olive",
+      "src": "photo:IMG_0647 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "no brand on the bowl: the name only describes what the shop's photo shows; check the name",
+      "src": "rule 2026-11-27 (owner: all of the store's items on the site; a bowl with no brand gets a plain descriptive name)"
+     },
+     "photo": {
+      "img": "bowl/glazed-flower-bowl-olive",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0647 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-130054",
+     "key": "bowl-glazed-flower-bowl#brown-and-cream",
+     "swatch_hex": {
+      "v": "#8a5f3a",
+      "src": "rule: chip colour for 'Brown and cream'"
+     },
+     "colour": {
+      "v": "Brown and cream",
+      "src": "photo:IMG_0652 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "no brand on the bowl: the name only describes what the shop's photo shows; check the name",
+      "src": "rule 2026-11-27 (owner: all of the store's items on the site; a bowl with no brand gets a plain descriptive name)"
+     },
+     "photo": {
+      "img": "bowl/glazed-flower-bowl-brown-and-cream",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0652 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "bowl-glazed-tiered-bowl",
+   "order": 21,
+   "category": "bowls",
+   "name": {
+    "v": "Glazed Tiered Bowl",
+    "src": "photo:IMG_0654 (wide stepped rim in a running glaze on a short foot); rule 2026-11-27 (owner: all of the store's items on the site; a bowl with no brand gets a plain descriptive name)"
+   },
+   "supplier_ref": {
+    "v": "No brand (wide stepped rim in a running glaze on a short foot)",
+    "src": "photo:IMG_0654"
+   },
+   "facts": {
+    "brand": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: no brand on the bowl: the name only describes what the shop's photo shows; check the name",
+    "NEEDS SHOP: Amber: no brand on the bowl: the name only describes what the shop's photo shows; check the name; IMG_0654 and IMG_0655 look much alike: check they are two different bowls before both are sold",
+    "NEEDS SHOP: Brown: no brand on the bowl: the name only describes what the shop's photo shows; check the name; IMG_0654 and IMG_0655 look much alike: check they are two different bowls before both are sold"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-130055",
+     "key": "bowl-glazed-tiered-bowl#amber",
+     "swatch_hex": {
+      "v": "#b8822e",
+      "src": "rule: chip colour for 'Amber'"
+     },
+     "colour": {
+      "v": "Amber",
+      "src": "photo:IMG_0654 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "no brand on the bowl: the name only describes what the shop's photo shows; check the name; IMG_0654 and IMG_0655 look much alike: check they are two different bowls before both are sold",
+      "src": "rule 2026-11-27 (owner: all of the store's items on the site; a bowl with no brand gets a plain descriptive name)"
+     },
+     "photo": {
+      "img": "bowl/glazed-tiered-bowl-amber",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0654 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-130056",
+     "key": "bowl-glazed-tiered-bowl#brown",
+     "swatch_hex": {
+      "v": "#8a5a2b",
+      "src": "rule: chip colour for 'Brown'"
+     },
+     "colour": {
+      "v": "Brown",
+      "src": "photo:IMG_0655 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "no brand on the bowl: the name only describes what the shop's photo shows; check the name; IMG_0654 and IMG_0655 look much alike: check they are two different bowls before both are sold",
+      "src": "rule 2026-11-27 (owner: all of the store's items on the site; a bowl with no brand gets a plain descriptive name)"
+     },
+     "photo": {
+      "img": "bowl/glazed-tiered-bowl-brown",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0655 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-130057",
+     "key": "bowl-glazed-tiered-bowl#grey",
+     "swatch_hex": {
+      "v": "#6e6e6e",
+      "src": "rule: chip colour for 'Grey'"
+     },
+     "colour": {
+      "v": "Grey",
+      "src": "photo:IMG_0656 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "no brand on the bowl: the name only describes what the shop's photo shows; check the name",
+      "src": "rule 2026-11-27 (owner: all of the store's items on the site; a bowl with no brand gets a plain descriptive name)"
+     },
+     "photo": {
+      "img": "bowl/glazed-tiered-bowl-grey",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0656 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-130058",
+     "key": "bowl-glazed-tiered-bowl#dark-brown",
+     "swatch_hex": {
+      "v": "#4e3420",
+      "src": "rule: chip colour for 'Dark brown'"
+     },
+     "colour": {
+      "v": "Dark brown",
+      "src": "photo:IMG_0657 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "no brand on the bowl: the name only describes what the shop's photo shows; check the name",
+      "src": "rule 2026-11-27 (owner: all of the store's items on the site; a bowl with no brand gets a plain descriptive name)"
+     },
+     "photo": {
+      "img": "bowl/glazed-tiered-bowl-dark-brown",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0657 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "bowl-faceted-bowl",
+   "order": 22,
+   "category": "bowls",
+   "name": {
+    "v": "Faceted Bowl",
+    "src": "photo:IMG_0653 (glossy faceted top on a slim stem); rule 2026-11-27 (owner: all of the store's items on the site; a bowl with no brand gets a plain descriptive name)"
+   },
+   "supplier_ref": {
+    "v": "No brand (glossy faceted top on a slim stem)",
+    "src": "photo:IMG_0653"
+   },
+   "facts": {
+    "brand": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: no brand on the bowl: the name only describes what the shop's photo shows; check the name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-130059",
+     "key": "bowl-faceted-bowl#black",
+     "swatch_hex": {
+      "v": "#141414",
+      "src": "rule: chip colour for 'Black'"
+     },
+     "colour": {
+      "v": "Black",
+      "src": "photo:IMG_0653 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "no brand on the bowl: the name only describes what the shop's photo shows; check the name",
+      "src": "rule 2026-11-27 (owner: all of the store's items on the site; a bowl with no brand gets a plain descriptive name)"
+     },
+     "photo": {
+      "img": "bowl/faceted-bowl-black",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0653 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "bowl-metallic-rim-bowl",
+   "order": 23,
+   "category": "bowls",
+   "name": {
+    "v": "Metallic-rim Bowl",
+    "src": "photo:IMG_0658 (metallic glazed top on a rounded glazed stem); rule 2026-11-27 (owner: all of the store's items on the site; a bowl with no brand gets a plain descriptive name)"
+   },
+   "supplier_ref": {
+    "v": "No brand (metallic glazed top on a rounded glazed stem)",
+    "src": "photo:IMG_0658"
+   },
+   "facts": {
+    "brand": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: no brand on the bowl: the name only describes what the shop's photo shows; check the name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-130060",
+     "key": "bowl-metallic-rim-bowl#light-blue",
+     "swatch_hex": {
+      "v": "#7fa7cf",
+      "src": "rule: chip colour for 'Light blue'"
+     },
+     "colour": {
+      "v": "Light blue",
+      "src": "photo:IMG_0658 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "no brand on the bowl: the name only describes what the shop's photo shows; check the name",
+      "src": "rule 2026-11-27 (owner: all of the store's items on the site; a bowl with no brand gets a plain descriptive name)"
+     },
+     "photo": {
+      "img": "bowl/metallic-rim-bowl-light-blue",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0658 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-130061",
+     "key": "bowl-metallic-rim-bowl#blue",
+     "swatch_hex": {
+      "v": "#22409a",
+      "src": "rule: chip colour for 'Blue'"
+     },
+     "colour": {
+      "v": "Blue",
+      "src": "photo:IMG_0659 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "no brand on the bowl: the name only describes what the shop's photo shows; check the name",
+      "src": "rule 2026-11-27 (owner: all of the store's items on the site; a bowl with no brand gets a plain descriptive name)"
+     },
+     "photo": {
+      "img": "bowl/metallic-rim-bowl-blue",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0659 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "bowl-carved-face-bowl",
+   "order": 24,
+   "category": "bowls",
+   "name": {
+    "v": "Carved Face Bowl",
+    "src": "photo:IMG_0660 (glazed multi-hole top on a carved face); rule 2026-11-27 (owner: all of the store's items on the site; a bowl with no brand gets a plain descriptive name)"
+   },
+   "supplier_ref": {
+    "v": "No brand (glazed multi-hole top on a carved face)",
+    "src": "photo:IMG_0660"
+   },
+   "facts": {
+    "brand": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: no brand on the bowl: the name only describes what the shop's photo shows; check the name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-130062",
+     "key": "bowl-carved-face-bowl#brown",
+     "swatch_hex": {
+      "v": "#8a5a2b",
+      "src": "rule: chip colour for 'Brown'"
+     },
+     "colour": {
+      "v": "Brown",
+      "src": "photo:IMG_0660 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "no brand on the bowl: the name only describes what the shop's photo shows; check the name",
+      "src": "rule 2026-11-27 (owner: all of the store's items on the site; a bowl with no brand gets a plain descriptive name)"
+     },
+     "photo": {
+      "img": "bowl/carved-face-bowl-brown",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0660 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "bowl-pirate-head-bowl",
+   "order": 25,
+   "category": "bowls",
+   "name": {
+    "v": "Pirate Head Bowl",
+    "src": "photo:IMG_0662 (bowl set in a sculpted pirate's head and hat); rule 2026-11-27 (owner: all of the store's items on the site; a bowl with no brand gets a plain descriptive name)"
+   },
+   "supplier_ref": {
+    "v": "No brand (bowl set in a sculpted pirate's head and hat)",
+    "src": "photo:IMG_0662"
+   },
+   "facts": {
+    "brand": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: no brand on the bowl: the name only describes what the shop's photo shows; check the name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-130063",
+     "key": "bowl-pirate-head-bowl#blue",
+     "swatch_hex": {
+      "v": "#22409a",
+      "src": "rule: chip colour for 'Blue'"
+     },
+     "colour": {
+      "v": "Blue",
+      "src": "photo:IMG_0662 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "no brand on the bowl: the name only describes what the shop's photo shows; check the name",
+      "src": "rule 2026-11-27 (owner: all of the store's items on the site; a bowl with no brand gets a plain descriptive name)"
+     },
+     "photo": {
+      "img": "bowl/pirate-head-bowl-blue",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0662 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "bowl-glass-bowl-with-screen",
+   "order": 26,
+   "category": "bowls",
+   "name": {
+    "v": "Glass Bowl with Screen",
+    "src": "photo:IMG_0664 (cut-glass cup with a metal screen on top); rule 2026-11-27 (owner: all of the store's items on the site; a bowl with no brand gets a plain descriptive name)"
+   },
+   "supplier_ref": {
+    "v": "No brand (cut-glass cup with a metal screen on top)",
+    "src": "photo:IMG_0664"
+   },
+   "facts": {
+    "brand": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: no brand on the bowl: the name only describes what the shop's photo shows; check the name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-130064",
+     "key": "bowl-glass-bowl-with-screen#clear",
+     "swatch_hex": {
+      "v": "#dfe8ec",
+      "src": "rule: chip colour for 'Clear'"
+     },
+     "colour": {
+      "v": "Clear",
+      "src": "photo:IMG_0664 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "no brand on the bowl: the name only describes what the shop's photo shows; check the name",
+      "src": "rule 2026-11-27 (owner: all of the store's items on the site; a bowl with no brand gets a plain descriptive name)"
+     },
+     "photo": {
+      "img": "bowl/glass-bowl-with-screen-clear",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0664 (the shop's own photo, cut off the white sweep)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "bowl-silicone-bowl-with-metal-insert",
+   "order": 27,
+   "category": "bowls",
+   "name": {
+    "v": "Silicone Bowl with Metal Insert",
+    "src": "photo:IMG_0665 (silicone body holding a metal insert with a centre spike); rule 2026-11-27 (owner: all of the store's items on the site; a bowl with no brand gets a plain descriptive name)"
+   },
+   "supplier_ref": {
+    "v": "No brand (silicone body holding a metal insert with a centre spike)",
+    "src": "photo:IMG_0665"
+   },
+   "facts": {
+    "brand": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: no brand on the bowl: the name only describes what the shop's photo shows; check the name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-130065",
+     "key": "bowl-silicone-bowl-with-metal-insert#blue",
+     "swatch_hex": {
+      "v": "#22409a",
+      "src": "rule: chip colour for 'Blue'"
+     },
+     "colour": {
+      "v": "Blue",
+      "src": "photo:IMG_0665 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "no brand on the bowl: the name only describes what the shop's photo shows; check the name",
+      "src": "rule 2026-11-27 (owner: all of the store's items on the site; a bowl with no brand gets a plain descriptive name)"
+     },
+     "photo": {
+      "img": "bowl/silicone-bowl-with-metal-insert-blue",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0665 (the shop's own photo, cut off the white sweep)"
      },
      "shop": {
       "price_cents": {

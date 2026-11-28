@@ -27,7 +27,7 @@ def main(crops: Path):
     pc = C.STORE / "public" / "img" / "pc"
     done = large = 0
     want = set()
-    for name, _brand, _where, shots, _why in src_shop_bowls.BOWLS:
+    for name, _brand, _where, shots, _why in src_shop_bowls.ALL_BOWLS:
         for photo, colour, _ in shots:
             dst = pc / src_shop_bowls.photo_name(name, colour)
             dst.parent.mkdir(parents=True, exist_ok=True)

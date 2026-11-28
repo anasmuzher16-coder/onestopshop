@@ -15,8 +15,8 @@
   "20": 1,
   "30": 1,
   "11": 40,
-  "12": 32,
-  "13": 29,
+  "12": 33,
+  "13": 66,
   "14": 28
  },
  "skus": {
@@ -3509,6 +3509,234 @@
   "OSS-140027": {
    "supplier": "shop-hookahs",
    "key": "ace-rose#blue",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130029": {
+   "supplier": "shop-bowls",
+   "key": "bowl-hexagon-bowl#red",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130030": {
+   "supplier": "shop-bowls",
+   "key": "bowl-hexagon-bowl#black",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130031": {
+   "supplier": "shop-bowls",
+   "key": "bowl-two-tone-funnel-bowl#red-and-white",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130032": {
+   "supplier": "shop-bowls",
+   "key": "bowl-two-tone-funnel-bowl#yellow",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130033": {
+   "supplier": "shop-bowls",
+   "key": "bowl-two-tone-funnel-bowl#blue",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130034": {
+   "supplier": "shop-bowls",
+   "key": "bowl-speckled-funnel-bowl#purple",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130035": {
+   "supplier": "shop-bowls",
+   "key": "bowl-hexagon-stem-funnel-bowl#green",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130036": {
+   "supplier": "shop-bowls",
+   "key": "bowl-glazed-multi-hole-bowl#red",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130037": {
+   "supplier": "shop-bowls",
+   "key": "bowl-glazed-multi-hole-bowl#blue",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130038": {
+   "supplier": "shop-bowls",
+   "key": "bowl-matte-clay-bowl#brown",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130039": {
+   "supplier": "shop-bowls",
+   "key": "bowl-matte-clay-bowl#grey",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130040": {
+   "supplier": "shop-bowls",
+   "key": "bowl-horned-head-bowl-with-glass-top#silver",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130041": {
+   "supplier": "shop-bowls",
+   "key": "bowl-horned-head-bowl-with-glass-top#purple",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130042": {
+   "supplier": "shop-bowls",
+   "key": "bowl-horned-head-bowl-with-glass-top#bronze",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130043": {
+   "supplier": "shop-bowls",
+   "key": "bowl-horned-head-bowl-with-glass-top#blue",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130044": {
+   "supplier": "shop-bowls",
+   "key": "bowl-glass-bowl-on-silicone-base#orange",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130045": {
+   "supplier": "shop-bowls",
+   "key": "bowl-glass-bowl-on-silicone-base#blue",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130046": {
+   "supplier": "shop-bowls",
+   "key": "bowl-glass-bowl-on-silicone-base#green",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130047": {
+   "supplier": "shop-bowls",
+   "key": "bowl-glass-bowl-on-painted-base#multicolour",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130048": {
+   "supplier": "shop-bowls",
+   "key": "bowl-silicone-bowl-with-clay-insert#blue",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130049": {
+   "supplier": "shop-bowls",
+   "key": "bowl-silicone-bowl-with-clay-insert#red",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130050": {
+   "supplier": "shop-bowls",
+   "key": "bowl-silicone-bowl-with-clay-insert#green",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130051": {
+   "supplier": "shop-bowls",
+   "key": "bowl-glazed-flower-bowl#light-blue",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130052": {
+   "supplier": "shop-bowls",
+   "key": "bowl-glazed-flower-bowl#red",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130053": {
+   "supplier": "shop-bowls",
+   "key": "bowl-glazed-flower-bowl#olive",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130054": {
+   "supplier": "shop-bowls",
+   "key": "bowl-glazed-flower-bowl#brown-and-cream",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130055": {
+   "supplier": "shop-bowls",
+   "key": "bowl-glazed-tiered-bowl#amber",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130056": {
+   "supplier": "shop-bowls",
+   "key": "bowl-glazed-tiered-bowl#brown",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130057": {
+   "supplier": "shop-bowls",
+   "key": "bowl-glazed-tiered-bowl#grey",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130058": {
+   "supplier": "shop-bowls",
+   "key": "bowl-glazed-tiered-bowl#dark-brown",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130059": {
+   "supplier": "shop-bowls",
+   "key": "bowl-faceted-bowl#black",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130060": {
+   "supplier": "shop-bowls",
+   "key": "bowl-metallic-rim-bowl#light-blue",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130061": {
+   "supplier": "shop-bowls",
+   "key": "bowl-metallic-rim-bowl#blue",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130062": {
+   "supplier": "shop-bowls",
+   "key": "bowl-carved-face-bowl#brown",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130063": {
+   "supplier": "shop-bowls",
+   "key": "bowl-pirate-head-bowl#blue",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130064": {
+   "supplier": "shop-bowls",
+   "key": "bowl-glass-bowl-with-screen#clear",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-130065": {
+   "supplier": "shop-bowls",
+   "key": "bowl-silicone-bowl-with-metal-insert#blue",
+   "status": "active",
+   "assigned": "2026-11-27"
+  },
+  "OSS-120032": {
+   "supplier": "shop-hoses",
+   "key": "hose-starbuzz-ribbed-hose#light-blue",
    "status": "active",
    "assigned": "2026-11-27"
   }

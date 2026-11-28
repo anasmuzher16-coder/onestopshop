@@ -25,7 +25,8 @@ RULE = "rule 2026-11-27 (owner: match them up to the best of your ability)"
 
 # Plain colour names (seen on the shop's own photo) and the chip colour each one draws.
 HEX = {"Orange": "#e8742a", "Pink": "#e58bb4", "Red": "#c2262e", "Bronze": "#8a5a2b", "Yellow": "#f2d21b", "Black": "#141414",
-       "Purple": "#6c3fa6", "White": "#f3f1ea", "Green": "#2e8b57", "Teal": "#3fbfa8", "Grey": "#9a9a9a", "Blue": "#2b59c3"}
+       "Purple": "#6c3fa6", "White": "#f3f1ea", "Green": "#2e8b57", "Teal": "#3fbfa8", "Grey": "#9a9a9a", "Blue": "#2b59c3",
+       "Light blue": "#8fc3e6"}
 
 MEDIUM = "matched to the caption by the order of the recording's messages, not by print on the bag"
 UNCAPTIONED = "not in the recording: name read from the bag, length not known"
@@ -57,7 +58,9 @@ HOSES = [
     # not in the recording: named from the bag
     # length from the shop's later photo of these bags, captioned "Star buzz are 76.5 inches" (LENGTH_FROM_PHOTO below)
     ("Starbuzz Ribbed Hose", None, None, "Starbuzz",
-     [("IMG_0543", "Red", None), ("IMG_0549", "Teal", None), ("IMG_0551", "Pink", None), ("IMG_0555", "Grey", None)],
+     [("IMG_0543", "Red", None), ("IMG_0549", "Teal", None), ("IMG_0551", "Pink", None), ("IMG_0555", "Grey", None),
+      # owner 2026-11-27: all of the store's items on the site. Only in the shop's counter photo of five Starbuzz bags.
+      ("Star_buzz_are_76.5_inches", "Light blue", "only in the shop's counter photo 'Star buzz are 76.5 inches' (fifth bag), not on the hanging rack: check it is still in stock; no photo of its own yet (in that photo it lies in a group, cut off at the edge)")],
      "not in the recording: name read from the bag (Starbuzz Tobacco); length from the shop's photo caption"),
     ("Al Ataa Disposable Hose", None, None, "Al Ataa", [("IMG_0544", "Black", None)], UNCAPTIONED + " (bag: Alataa, disposable)"),
     ("Zanobia Washable Hose", None, None, "Zanobia", [("IMG_0559", "Yellow", None), ("IMG_0560", "Green", None)], UNCAPTIONED + " (bag: Zanobia, Washable)"),
@@ -70,7 +73,7 @@ HOSES = [
 
 # Lengths the shop gave later as the file name of a photo (Google Drive, 2026-11-27), written exactly as the file name says.
 # "Star buzz are 76.5 inches" shows the Starbuzz Tobacco ribbed hoses in grey, red, teal, pink and light blue (the light blue
-# one is not on the site). "All disposable are 60.5 inches" shows only Platinum, Simba and Crown hoses, which already carry
+# one was added later from that photo, 2026-11-27). "All disposable are 60.5 inches" shows only Platinum, Simba and Crown hoses, which already carry
 # 60.5 from the recording, so it sets no new length.
 LENGTH_FROM_PHOTO = {"Starbuzz Ribbed Hose": ("76.5 inches", "shop:photo file name 'Star buzz are 76.5 inches' (Drive, 2026-11-27)")}
 
