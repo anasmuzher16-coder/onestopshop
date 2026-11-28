@@ -2171,9 +2171,9 @@
      },
      "photo": {
       "img": "hookah/hookah-bubble-glass-base-yellow-and-red-stem-yellow-and-red",
-      "status": "replace",
+      "status": "shop",
       "large": true,
-      "src": "photo:PXL_20261128_000711649 (the shop's own photo, as taken: to be replaced)"
+      "src": "photo:PXL_20261128_000711649 (the shop's own photo, cut out, the mat cleared: clear_glass2.py)"
      },
      "shop": {
       "price_cents": {
@@ -2331,9 +2331,9 @@
      },
      "photo": {
       "img": "hookah/hookah-champagne-glass-base-gold-stem-gold",
-      "status": "replace",
+      "status": "shop",
       "large": true,
-      "src": "photo:PXL_20261128_001048012 (the shop's own photo, as taken: to be replaced)"
+      "src": "photo:PXL_20261128_001048012 (the shop's own photo, cut out, the mat cleared: clear_glass2.py)"
      },
      "shop": {
       "price_cents": {
@@ -2543,9 +2543,9 @@
      },
      "photo": {
       "img": "hookah/hookah-stone-mosaic-stem-and-base-cream-and-gold",
-      "status": "replace",
+      "status": "shop",
       "large": true,
-      "src": "photo:PXL_20261128_001542699 (the shop's own photo, as taken: to be replaced)"
+      "src": "photo:PXL_20261128_001542699 (the shop's own photo, cut out, the mat cleared: clear_glass2.py)"
      },
      "shop": {
       "price_cents": {

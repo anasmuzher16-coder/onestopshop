@@ -1117,6 +1117,37 @@ class TestDrive2(Base):
         con.executescript(text)
         self.assertEqual(con.total_changes - n, 0)
 
+    def test_clean_files_after_drive2_take_only_the_tag_off(self):
+        """A hookah-clean file for Drive items runs after this file (seed-files.mjs): on the rows it inserted, the cleaned
+        ones end with the tag off and every other key as inserted, the rest untouched; safe twice."""
+        import live_clean_hookahs as L
+        con = self.con
+        con.executescript(live_sections(LIVE_HOOKAHS)["shop-hookahs"])
+        con.executescript(live_sections(LIVE_MISSING)["shop-hoses"])
+        con.executescript((C.CATALOG / "live" / self.LIVE).read_text(encoding="utf-8"))
+        hk = C.load_master("shop-hookahs")
+        seeds = (C.STORE / "tools" / "seed-files.mjs").read_text(encoding="utf-8")
+        for out, photos, _d in L.FILES:
+            mine = {r["sku"] for r in L.cleaned_rows(hk, photos)} & DRIVE2_SKUS
+            if not mine:
+                continue
+            self.assertGreater(seeds.index(out.name), seeds.index(self.LIVE), out.name)
+            before = {r[0]: json.loads(r[1]) for r in con.execute("SELECT sku, facts_known FROM products")}
+            con.executescript(out.read_text(encoding="utf-8"))
+            after = {r[0]: json.loads(r[1]) for r in con.execute("SELECT sku, facts_known FROM products")}
+            for s in after:
+                if s in mine:
+                    self.assertEqual(after[s].get("photo"), "own", s)
+                    self.assertNotIn("photo_label", after[s], s)
+                    self.assertNotIn("photo_full", after[s], s)
+                    self.assertEqual({k: v for k, v in after[s].items() if k not in L.PHOTO_KEYS},
+                                     {k: v for k, v in before[s].items() if k not in L.PHOTO_KEYS}, s)
+                else:
+                    self.assertEqual(after[s], before[s], s)
+            n = con.total_changes
+            con.executescript(out.read_text(encoding="utf-8"))
+            self.assertEqual(con.total_changes - n, 0, out.name)
+
     def test_green_simba_joins_the_simba_card(self):
         h = C.load_master("shop-hoses")
         f, v = next((f, v) for f, v in C.iter_variants(h) if v["sku"] == "OSS-120033")
