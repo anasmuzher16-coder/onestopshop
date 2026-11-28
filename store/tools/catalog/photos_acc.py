@@ -3,7 +3,8 @@
   python store/tools/catalog/photos_acc.py [--pdf PATH] [--work DIR] [--publish]
 
 One photo per ticked page: the page's cut-out with its own soft mask (no background removal, no AI upscaling here; a
-kept upscale in suppliers/ace-acc/upscaled.json stays as it is, see photos.upscaled_kept). A group
+kept upscale in suppliers/ace-acc/upscaled.json stays as it is, see photos.upscaled_kept; so does a web photo in
+suppliers/ace-acc/web-photos.json, see photos.web_kept). A group
 shot (rope bowls, D-61, silicone and ice cream bowls, brushes, connectors) stays one photo of the group. Loose specks under
 1% of the mask (a stray watermark, a fleck) are left out. Framed at 720x900 (product 810 px tall, 45 px foot, centred;
 -m and -s), status by enlargement: ready up to 1.25x, CHECK past it, needs_original past 2x (both go up labelled
@@ -71,6 +72,7 @@ def run(pdf: Path, work: Path, publish: bool):
     framed.mkdir(parents=True, exist_ok=True)
     images = []
     kept = P.upscaled_kept("ace-acc", PUBLIC, pdf)
+    web = P.web_kept("ace-acc", PUBLIC)   # sharper web photos of the same piece (suppliers/ace-acc/web-photos.json, owner 2026-11-27)
     for r in pages:
         fid = f"acc-p{r['page']}"
         ph = r["photo"]
@@ -109,6 +111,7 @@ def run(pdf: Path, work: Path, publish: bool):
               "crop": list(bb), "scale": round(s, 3), "status": status, "out": f"acc/{fid}", "note": note,
               "tmp": str(tmp), "file": str(tmp) + "-s.webp"}
         P.apply_upscaled(it, kept)
+        P.apply_web(it, web)
         images.append(it)
     if publish:
         PUBLIC.mkdir(parents=True, exist_ok=True)
@@ -116,8 +119,8 @@ def run(pdf: Path, work: Path, publish: bool):
         for im in images:
             if not im.get("tmp"):
                 continue
-            if im.get("upscaled"):   # its upscaled files (with the 1440 -l) stay exactly as they are
-                want.update(im["upscaled"])
+            if im.get("upscaled") or im.get("web"):   # its upscaled or web files (with the 1440 -l) stay exactly as they are
+                want.update(im.get("upscaled") or im["web"])
                 continue
             for suf, _, _ in P.SIZES:
                 src = Path(im["tmp"] + suf + ".webp")
@@ -132,7 +135,8 @@ def run(pdf: Path, work: Path, publish: bool):
                 "frame": {"w": P.W, "h": P.H, "product_h": P.PROD_H, "foot": P.FOOT, "max_w": P.MAXW, "resample": "Lanczos",
                           "webp_method": 4, "check_above_scale": P.CHECK_SCALE, "hold_above_scale": P.HOLD_SCALE, "ai_upscaling": False},
                 "published_dir": "store/public/img/pc/acc",
-                "images": [{k: im.get(k) for k in ("page", "family_id", "xref", "src_px", "crop", "scale", "status", "out", "note")} for im in images]}
+                "images": [{k: im.get(k) for k in ("page", "family_id", "xref", "src_px", "crop", "scale", "status", "out", "note")}
+                           | ({"photo_src": im["photo_src"]} if im.get("photo_src") else {}) for im in images]}
     C.write_json(C.SUPPLIERS / "ace-acc" / "photos.json", manifest)
     pal_bg, pal = P.tokens()
     pal["coal"] = pal_bg["coal"]

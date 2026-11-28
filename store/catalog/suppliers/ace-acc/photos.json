@@ -192,9 +192,10 @@
     188
    ],
    "scale": 3.412,
-   "status": "needs_original",
+   "status": "ready",
    "out": "acc/acc-p24",
-   "note": "single cut-out; enlarged 3.41x from a small source: needs Ace's original"
+   "note": "single cut-out; enlarged 3.41x from a small source: needs Ace's original; replaced 2026-11-27 by a web photo (shishazone.ca, 0.468x), was needs_original 3.412x",
+   "photo_src": "https://shishazone.ca/product/hookah-ice-hose-handle-freezable/"
   },
   {
    "page": 30,
@@ -689,9 +690,10 @@
     379
    ],
    "scale": 1.796,
-   "status": "CHECK",
+   "status": "ready",
    "out": "acc/acc-p99",
-   "note": "single cut-out"
+   "note": "single cut-out; replaced 2026-11-27 by a web photo (shishazone.ca, 0.48x), was CHECK 1.796x",
+   "photo_src": "https://shishazone.ca/product/crystal-drip-black/"
   },
   {
    "page": 101,

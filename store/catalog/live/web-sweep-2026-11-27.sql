@@ -1,14 +1,20 @@
 -- Web sweep (2026-11-27, owner: "if we can find a better photo of the product online we are going to use that photo even if
--- it's from another shop it doesn't matter, we need the shop functional asap"). Weak charcoal photos replaced by a sharper photo
--- of the exact same pack found online (maker or retailer packshot; brand, count, size and box design checked side by side with
--- the photo it replaces). Each was cut off its plain background and framed like the shop's own cut-outs (720x900, 619 wide /
--- 810 tall, 71 px foot), with a 1440 -l only when the source needs no enlargement past 1.2x. The photo files keep their names;
--- store/src/img-versions.json gives each its new version, so browsers fetch the new file. Photo columns only, per row:
--- img_lw (1440 with a -l file, else NULL), details.photo -> 'approved' (the "upscale" to-do is done), details.photo_src = the
--- page the photo came from (private: the feed allowlist and the storefront both drop it). Sources and file hashes:
--- store/catalog/suppliers/charcoal-foil/web-photos.json. Needs store/public/img/pc/* and store/src/img-versions.json deployed
--- first. Every UPDATE is guarded on the row still showing the same photo (img) and on there being something to change: safe to
--- run twice. The photo files are rolled back with git; rollback for the rows (updated_at moves on):
+-- it's from another shop it doesn't matter, we need the shop functional asap"). Weak photos replaced by a sharper photo of the
+-- exact same product found online (maker or retailer packshot; brand, count, size, colour and pack design checked side by side
+-- with the photo it replaces): 7 charcoal packs and 2 Ace accessories (Ice Hose, Crystal Drip base: Ace's own shots, hosted
+-- by shishazone.ca). Each was cut off its plain background or its own transparency and framed like the photo it replaces, with
+-- a 1440 -l only when the source needs no enlargement past 1.2x. The photo files keep their names; store/src/img-versions.json
+-- gives each its new version, so browsers fetch the new file. Photo columns only, per row:
+--   charcoal (OSS-9NNN): img_lw (1440 with a -l file, else NULL), details.photo -> 'approved', details.photo_src = the page
+--     the photo came from (private: the feed allowlist and the storefront both drop it);
+--   accessories (OSS-11NNNN): img_lw = 1440, facts_known.photo_label ('upscale') removed, facts_known.photo_src = the page
+--     (as the catalogue seed now builds them: suppliers/ace-acc/web-photos.json, kept by photos_acc.py on a rebuild).
+-- Sources and file hashes: store/catalog/suppliers/charcoal-foil/web-photos.json and ace-acc/web-photos.json. Needs
+-- store/public/img/pc/** and store/src/img-versions.json deployed first. Every UPDATE is guarded on the row still showing the
+-- same photo (img) and on there being something to change: safe to run twice. The photo files are rolled back with git;
+-- rollback for the rows (updated_at moves on):
+--   UPDATE products SET img_lw = NULL, facts_known = json_remove(json_set(facts_known, '$.photo_label', 'upscale'), '$.photo_src') WHERE sku = 'OSS-110011';
+--   UPDATE products SET img_lw = NULL, facts_known = json_remove(json_set(facts_known, '$.photo_label', 'upscale'), '$.photo_src') WHERE sku = 'OSS-110038';
 --   UPDATE products SET img = 'oss-9116-r12', img_lw = NULL, details = json_remove(json_set(details, '$.photo', 'upscale'), '$.photo_src') WHERE sku = 'OSS-9116';
 --   UPDATE products SET img = 'oss-9127', img_lw = NULL, details = json_remove(json_set(details, '$.photo', 'approved'), '$.photo_src') WHERE sku = 'OSS-9127';
 --   UPDATE products SET img = 'oss-9128', img_lw = NULL, details = json_remove(json_set(details, '$.photo', 'approved'), '$.photo_src') WHERE sku = 'OSS-9128';
@@ -16,6 +22,12 @@
 --   UPDATE products SET img = 'oss-9154', img_lw = NULL, details = json_remove(json_set(details, '$.photo', 'approved'), '$.photo_src') WHERE sku = 'OSS-9154';
 --   UPDATE products SET img = 'oss-9158', img_lw = NULL, details = json_remove(json_set(details, '$.photo', 'upscale'), '$.photo_src') WHERE sku = 'OSS-9158';
 --   UPDATE products SET img = 'oss-9162', img_lw = NULL, details = json_remove(json_set(details, '$.photo', 'upscale'), '$.photo_src') WHERE sku = 'OSS-9162';
+UPDATE products SET img_lw = 1440, facts_known = json_set(json_remove(facts_known, '$.photo_label'), '$.photo_src', 'https://shishazone.ca/product/hookah-ice-hose-handle-freezable/'), updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now')
+ WHERE sku = 'OSS-110011' AND img = 'acc/acc-p24' AND json_valid(facts_known)
+   AND (img_lw IS NOT 1440 OR json_extract(facts_known, '$.photo_src') IS NOT 'https://shishazone.ca/product/hookah-ice-hose-handle-freezable/' OR json_extract(facts_known, '$.photo_label') IS NOT NULL);
+UPDATE products SET img_lw = 1440, facts_known = json_set(json_remove(facts_known, '$.photo_label'), '$.photo_src', 'https://shishazone.ca/product/crystal-drip-black/'), updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now')
+ WHERE sku = 'OSS-110038' AND img = 'acc/acc-p99' AND json_valid(facts_known)
+   AND (img_lw IS NOT 1440 OR json_extract(facts_known, '$.photo_src') IS NOT 'https://shishazone.ca/product/crystal-drip-black/' OR json_extract(facts_known, '$.photo_label') IS NOT NULL);
 UPDATE products SET img = 'oss-9116-r12', img_lw = NULL, details = json_set(CASE WHEN json_valid(details) THEN details ELSE '{}' END, '$.photo', 'approved', '$.photo_src', 'https://www.zanobiaonline.com/product/quick-light-charcoal-38mm/'), updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now')
  WHERE sku = 'OSS-9116' AND img = 'oss-9116-r12'
    AND (img IS NOT 'oss-9116-r12' OR img_lw IS NOT NULL OR NOT json_valid(details) OR json_extract(details, '$.photo') IS NOT 'approved' OR json_extract(details, '$.photo_src') IS NOT 'https://www.zanobiaonline.com/product/quick-light-charcoal-38mm/');

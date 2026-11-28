@@ -126,7 +126,8 @@ def build_acc(reg, pdf: Path, photos_manifest, day):
         ok = ph and ph.get("status") in USABLE_PHOTO and ph.get("out")
         f["variants"] = [{"sku": C.sku_for(reg, "ace-acc", key, day), "key": key,
                           "photo": {"img": ph["out"] if ok else None, "status": ph["status"] if ph else "none",
-                                    "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json" if ok else None},
+                                    "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json" if ok else None,
+                                    **({"web_src": ph["photo_src"]} if ok and ph.get("photo_src") else {})},
                           "shop": C.blank_shop()}]
     fams.sort(key=lambda f: (f["stamp"]["v"] == "none", f["page"]))   # ticked first, then catalogue order
     retired = C.retire_missing(reg, "ace-acc", live, day, "not in the catalogue any more")
@@ -510,6 +511,8 @@ def desired_rows(supplier: str, m):
                           "photo": "own" if st in USABLE_PHOTO and v["photo"]["img"] else "none"})
             if facts["photo"] == "own" and st in UPSCALE_PHOTO:
                 facts["photo_label"] = "upscale"
+            if facts["photo"] == "own" and v["photo"].get("web_src"):   # the page a web photo came from (owner 2026-11-27)
+                facts["photo_src"] = v["photo"]["web_src"]
             facts.pop("glass", None)
             # another maker's brand on the page: the name waits until the shop confirms the piece is genuine (hookah rule)
             name = f["withheld_name"]["v"] or f["name"]["v"]
