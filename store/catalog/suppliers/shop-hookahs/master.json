@@ -759,9 +759,9 @@
      },
      "photo": {
       "img": "hookah/hookah-monarchy-hookah-yellow-and-black",
-      "status": "replace",
+      "status": "shop",
       "large": true,
-      "src": "photo:IMG_0697 (the shop's own photo, as taken: to be replaced)"
+      "src": "photo:IMG_0697 (the shop's own photo, cut out, the mat cleared: clear_glass2.py)"
      },
      "shop": {
       "price_cents": {
@@ -919,9 +919,9 @@
      },
      "photo": {
       "img": "hookah/hookah-purple-glass-base-pink-stem-purple-and-pink",
-      "status": "replace",
+      "status": "shop",
       "large": true,
-      "src": "photo:IMG_0670 (the shop's own photo, as taken: to be replaced)"
+      "src": "photo:IMG_0670 (the shop's own photo, cut out, the mat cleared: clear_glass2.py)"
      },
      "shop": {
       "price_cents": {
@@ -1611,9 +1611,9 @@
      },
      "photo": {
       "img": "hookah/hookah-swirl-glass-base-silver-stem-yellow",
-      "status": "replace",
+      "status": "shop",
       "large": true,
-      "src": "photo:IMG_0699 (the shop's own photo, as taken: to be replaced)"
+      "src": "photo:IMG_0699 (the shop's own photo, cut out, the mat cleared: clear_glass2.py)"
      },
      "shop": {
       "price_cents": {
