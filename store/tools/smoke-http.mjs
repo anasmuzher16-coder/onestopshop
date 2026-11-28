@@ -92,11 +92,11 @@ ok(m.PRODUCTS.length === 69 + 1 + 15 + 47 + 91 + 39 + 33 + 65 + 102 && m.CATEGOR
      && ["OSS-100080", "OSS-100083"].every(s => tsar[s]?.img === "shop/ace-tsar-molotov-blue" && tsar[s].facts.shown_in === "blue"),
     `the Tsar Molotov shows the shop's own green and blue photos: ${Object.values(tsar).map(p => p.sku + "=" + p.img).join(" ")}`);
   for (const n of ["green", "blue"]) for (const suf of ["", "-s", "-m"]) { const r = await fetch(B + `/img/pc/shop/ace-tsar-molotov-${n}${suf}.webp`); ok(r.status === 200, `photo shop/ace-tsar-molotov-${n}${suf}.webp: ${r.status}`); } }
-// the shop's own hanging hoses (2026-11-27): 32 colours in 21 families (one card each, colours as chips), all in Hoses, Price TBD,
+// the shop's own hanging hoses (2026-11-27): 33 colours in 21 families (the green Simba from the Drive folder, 2026-11-28) (one card each, colours as chips), all in Hoses, Price TBD,
 // nothing to sell yet; the back office's unsure-match notes never reach the storefront
 { const hose = m.PRODUCTS.filter(p => /^hose-/.test(p.family || ""));
-  ok(hose.length === 32 && new Set(hose.map(p => p.family)).size === 21 && hose.filter(p => p.lead).length === 21 && hose.every(p => p.cat === "hoses" && p.state === "tbd" && p.price === null && p.stock === 0 && p.named && p.colour && p.facts.stamp === "shelf" && "length" in p.facts && (/^hose\//.test(p.img) || (p.sku === "OSS-120032" && !p.img)) && !("needs_confirm" in p.facts) && !("confirm_why" in p.facts)),
-    `32 hoses in 21 families, Price TBD, own photos, no internal notes: ${hose.length}`);
+  ok(hose.length === 33 && new Set(hose.map(p => p.family)).size === 21 && hose.filter(p => p.lead).length === 21 && hose.every(p => p.cat === "hoses" && p.state === "tbd" && p.price === null && p.stock === 0 && p.named && p.colour && p.facts.stamp === "shelf" && "length" in p.facts && (/^hose\//.test(p.img) || (["OSS-120032", "OSS-120033"].includes(p.sku) && !p.img)) && !("needs_confirm" in p.facts) && !("confirm_why" in p.facts)),
+    `33 hoses in 21 families, Price TBD, own photos, no internal notes: ${hose.length}`);
   const pl = await get("/p/OSS-120011"); ok(pl.r.status === 200 && /<title>Platinum Disposable Hose \| One Stop Shop<\/title>/.test(pl.t) && /Price TBD/.test(pl.t) && !/"offers"/.test(pl.t) && !/Ace Hookah/.test(pl.t), "a hose page: its name, Price TBD, no offer, never Ace");
   for (const p of hose.filter(p => p.img)) { const r = await fetch(B + `/img/pc/${p.img}-s.webp`); ok(r.status === 200, `photo ${p.img}-s.webp: ${r.status}`); } }
 ok(m.PRODUCTS.filter(p => p.family || p.acc).every(p => p.facts && p.facts.stamp && p.facts.stamp !== "none"), "no unticked Ace page is on view (hookahs and accessories)");
