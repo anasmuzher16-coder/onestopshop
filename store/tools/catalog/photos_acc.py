@@ -133,6 +133,7 @@ def run(pdf: Path, work: Path, publish: bool):
                 want.add(dst.name)
                 if not dst.exists() or dst.read_bytes() != src.read_bytes():
                     shutil.copyfile(src, dst)
+        want |= C.more_photo_files(PUBLIC.name)   # the extra angles of an item (products.img_more) stay
         for old in PUBLIC.glob("*.webp"):
             if old.name not in want:
                 old.unlink()

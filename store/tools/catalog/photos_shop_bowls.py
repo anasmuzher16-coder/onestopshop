@@ -45,6 +45,7 @@ def main(crops: Path):
                 shutil.copyfile(src, out)
                 large += suf == "-l"
             done += 1
+    want |= C.more_photo_files("bowl")   # the extra angles of an item (products.img_more) stay
     for old in (pc / "bowl").glob("*.webp"):   # a photo no longer on the list goes
         if old.name not in want:
             old.unlink()
