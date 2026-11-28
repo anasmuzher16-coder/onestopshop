@@ -120,6 +120,8 @@ Each PHOTOS entry (pixels of the 2600 px tall photo):
            more than t are kept as highlights (the glass's own reflections, fainter than a specular).
   spec_off list of [x0, y0, x1, y1]: no highlight or texture kept there (one that reads as a printed mark).
   spec_min px: highlights in pieces smaller than this are dropped (lone specks read as noise, not as glass).
+  spec_soft [sigma, peak]: the kept highlights blurred by sigma px and capped at peak (below 1): blown specular blobs
+           with hard edges roll off instead of reading as pasted white.
   tex_median px: the median that takes noise out of the texture before its band is read (default 3); cut glass wants
            about 7, so its facets read as flat planes with crisp edges, not crinkled cellophane.
   mat_gain the strength of the texture read over the mat (default 1): below 1 where the print still shows as blotches.
@@ -533,24 +535,39 @@ PHOTOS_CREW10 = {
     "PXL_20261128_011030855": {"photo_rgb": True, "foot": [955, 2320, [310, 310], 212, 2.6, 0, 60], "fill": True, "glass_extra": [[478, 657]], "fade": 3, "retouch": [[688, 2424, 714, 2452]], "iris": [1.0, 1.0, 0.06], "rim": [0.2, 2.5, 0.06], "body": [0.10, 0.22], "tex": [7, 4.2], "tex_light": 0.45, "inner": 0.30,
                                "outline": [[2100, 962.5, 204.5], [2120, 962.5, 221.5], [2140, 963.5, 241], [2160, 964, 261], [2200, 963, 288], [2240, 962.5, 305.5], [2280, 963.5, 312.5], [2320, 963.5, 313.5],
                                            [2360, 963, 308], [2400, 963, 296], [2430, 966, 279], [2463, 967.5, 252.5], [2480, 970, 235], [2497, 965, 205], [2513, 961, 164], [2525, 955, 116]]},
-    # OSS-140061 MattPear, smooth clear base on the marble (no mat): drawn by the ratio method over the clean plate
+    # OSS-140061 MattPear, smooth clear base on the marble (no mat): drawn by the ratio method over the clean plate (crew 10:
+    # the grommet's dark rubber kept, more body, blown highlights softened)
     "IMG_0745": {"foot": [1022, 2310, [304, 304], 211, 2.4, 0, 60], "fill": True, "glass": [1640, 2560], "fade": 3,
                  # the grey rubber grommet in the mouth, the steel downstem and its diffuser kept as shot
                  "keep_quad": [[1744, 2200, 989, 1003, 1043, 1058], [2193, 2203, 1003, 997, 1067, 1073], [2197, 2256, 997, 997, 1073, 1073], [2252, 2257, 997, 998, 1073, 1072], [2254, 2259, 997, 1000, 1073, 1070], [2256, 2261, 998, 1002, 1072, 1068], [2258, 2263, 1000, 1005, 1070, 1065], [2260, 2265, 1002, 1010, 1068, 1060], [2262, 2267, 1005, 1017, 1065, 1053], [2264, 2269, 1010, 1035, 1060, 1035], [2266, 2271, 1017, 1035, 1053, 1035]],
                  "keep_above": [1005, 1640, 110, 40], "keep_dark": [[945, 1686, 1072, 1746, 115]], "rim": [0.2, 2.5, 0.10], "body": [0.10, 0.12], "tex": [7, 4.5], "inner": 0.10,
-                 "thick": [[1022, 2300, 268, 182, 2380, 0.25]], "spec_min": 30},
+                 "thick": [[1022, 2300, 268, 182, 2380, 0.25]], "spec_min": 30, "spec_soft": [2.5, 0.75]},
     # OSS-140064 (crew 10: the gold ring's curved lower edge kept, the stand's left edge 7 px in off the mat ring) clear bulb standing in a black dish stand (on the mat): bulb drawn as glass over the wall, the dish seen
     # through its lower part kept as cut, the stand's outline a superellipse that cuts the mat ring off
     "PXL_20261128_010217372": {"foot": [972, 2275, [344, 351], 239, 2.2, 120, 60], "fill": True, "glass": [1786, 2240], "glass_x": [796, 1152], "fade": 3, "keep_above": [972, 1785, 92, 30], "bridge": [[2125, 2215, "left"]],
                                "stem": [948, 1805, 990, 2075], "keep_below": [972, 2214, 300, 200, 8], "rim": [0.3, 3.0, 0.06]},
-    # OSS-140044 cut-crystal base, wood-look teardrop stem, on the mat: crystal kept as shot (as crew 7's 140042), the mat
-    # ring cut off by the foot, the black print seen through the bottom lifted out by unmat, the cyan cast taken out
+    # OSS-140044 cut-crystal base, wood-look teardrop stem, on the mat: ratio method, the cut facets on a wider band
+    # (tex_median 7), the print's texture damped over the mat (mat ellipse, mat_gain), the gold rod kept as cut
     "PXL_20261128_004922986": {"foot": [1005, 2360, [227, 227], 204, 2.0, 0, 60], "fill": True, "glass": [1830, 2575], "fade": 3,
-                               "stem": [985, 1830, 1015, 2245], "tex_median": 5, "tex": [14, 5.5], "tex_light": 0.45, "body": [0.08, 0.06], "mat": [[1008, 2480, 290, 190]], "mat_gain": 0.35, "rim": [0.3, 3.0, 0.08]},
-    # OSS-140045 smooth clear base, bronze stem, on the mat: ratio method (the mat's two inks as the backdrop), the
-    # mat's centre lettering classed finely
+                               "stem": [991, 1830, 1010, 2245], "tex_median": 3, "tex": [8, 6.5], "tex_light": 0.6, "body": [0.10, 0.0], "mat": [[1008, 2480, 290, 190]], "mat_gain": 0.35, "rim": [0.3, 3.0, 0.08]},
+    # OSS-140045 smooth clear base, bronze stem, on the mat: drawn as smooth glass (no texture read over the mat, so no
+    # print), body and the thick foot ring, blown highlights softened
     "PXL_20261128_005022344": {"foot": [1010, 2340, [280, 281], 222, 4.0, 120, 60], "fill": True, "glass": [1772, 2565], "fade": 3,
-                               "stem": [985, 1790, 1022, 2292], "texture": False, "tex_to": 2150, "rim": [0.3, 3.0, 0.08]},
+                               "stem": [985, 1790, 1022, 2292], "texture": False, "tex_to": 2150, "rim": [0.2, 2.5, 0.10], "inner": 0.10,
+                               "body": [0.10, 0.12], "thick": [[1010, 2345, 252, 190, 2370, 0.25]], "spec_min": 30, "spec_soft": [2.5, 0.75]},
+    # OSS-140046 cut-crystal base, red spring stem, on the mat: ratio method as 140044 (cut facets on a wider band, the
+    # print's texture damped over the mat), the frosted collar under the black joint kept as cut
+    "PXL_20261128_005129760": {"foot": [997, 2237, [300, 301], 207, 4.5, 0, 60], "fill": True,
+                               "outline": [[1985, 993, 107], [2010, 996, 115], [2030, 1001, 132], [2045, 1000, 155], [2060, 993, 200], [2080, 996.5, 236.5], [2100, 1000, 257], [2150, 998.5, 288.5], [2200, 997, 300], [2237, 997.5, 300.5]], "glass": [1650, 2450], "fade": 3,
+                               "keep_above": [990, 1650, 135, 22], "stem": [975, 1660, 1012, 2125],
+                               "tex_median": 3, "tex": [8, 6.5], "tex_light": 0.6, "body": [0.10, 0.0],
+                               "mat": [[985, 2253, 366, 259]], "mat_gain": 0.35, "rim": [0.3, 3.0, 0.08]},
+    # OSS-140047 the same cut-crystal base, blue spring stem, on the mat: as 140046
+    "PXL_20261128_005343131": {"foot": [928.5, 2350, [301.5, 301.5], 206, 4.5, 0, 60], "fill": True,
+                               "outline": [[2080, 932, 110], [2100, 932.5, 120.5], [2150, 933.5, 143.5], [2175, 936.5, 186.5], [2200, 933, 230], [2225, 932, 255], [2250, 930, 273], [2300, 930, 293], [2350, 928.5, 301.5]],
+                               "glass": [1765, 2560], "fade": 3, "keep_above": [932, 1765, 135, 22], "stem": [912, 1775, 946, 2215],
+                               "tex_median": 3, "tex": [8, 6.5], "tex_light": 0.6, "body": [0.10, 0.0],
+                               "mat": [[950, 2380, 370, 250]], "mat_gain": 0.35, "rim": [0.3, 3.0, 0.08]},
 }
 PHOTOS.update(PHOTOS_CREW10)
 
@@ -1002,7 +1019,7 @@ def masks(photo, cut_a, cfg):
 
 def glass_layers(photo, glass, sil, mat, fine, lama, texture=True, rim_from=None, body=0.05, frost=None, tex_mat=1.0,
                  edge_clear=0, body_edge=None, spec_mat=1.0, notex=None, tex=(7, 2.2), borrow=None, parts=(),
-                 rim_k=(0.50, 3.5, 0.12, 20.0, 0.18), ring=0.0, tex_to=None, inner_s=None, body_w=0.0, spec_min=0,
+                 rim_k=(0.50, 3.5, 0.12, 20.0, 0.18), ring=0.0, tex_to=None, inner_s=None, body_w=0.0, spec_min=0, spec_soft=None,
                  streaks=None, spec_off=(), tex_median=3, mat_gain=1.0, tex_light=0.0):
     """Returns (dark alpha, highlight alpha) for the glass pixels of a window of the photo."""
     L = lum(photo)
@@ -1017,6 +1034,8 @@ def glass_layers(photo, glass, sil, mat, fine, lama, texture=True, rim_from=None
             sizes = nd.sum(np.ones_like(spec), lab, range(1, k + 1))
             keep = np.concatenate([[False], sizes >= spec_min])[lab]
             spec = spec * nd.gaussian_filter(nd.binary_dilation(keep, iterations=2).astype(float), 1.0)
+    if spec_soft is not None:          # hard-edged blown highlights: edges softened, cores rolled off below white
+        spec = np.minimum(nd.gaussian_filter(spec, spec_soft[0]) * spec_soft[1], spec_soft[1])
     if streaks is not None:            # the glass's own thin bright streaks over the plain wall (fainter than a specular)
         y0s, y1s, thr = streaks
         th = L - nd.grey_opening(L, size=(1, 11))       # thin along x: the streaks run down the glass
@@ -1309,7 +1328,7 @@ def run_one(src, cut_p, cfg, method, lama, tile=None, matting=None):
                               rim_k=tuple(list(cfg.get("rim", [])) + [0.50, 3.5, 0.12, 20.0, 0.18][len(cfg.get("rim", [])):]),
                               ring=cfg["disc"][5] if len(cfg.get("disc", [])) > 5 else 0.0,
                               tex_to=cfg["tex_to"] - y0 if "tex_to" in cfg else None, inner_s=cfg.get("inner"),
-                              body_w=cfg["body"][1] if "body" in cfg else 0.0, spec_min=cfg.get("spec_min", 0),
+                              body_w=cfg["body"][1] if "body" in cfg else 0.0, spec_min=cfg.get("spec_min", 0), spec_soft=cfg.get("spec_soft"),
                               streaks=(cfg["streaks"][0] - y0, cfg["streaks"][1] - y0, cfg["streaks"][2]) if "streaks" in cfg else None,
                               spec_off=[(a - x0, b - y0, c - x0, d - y0) for a, b, c, d in cfg.get("spec_off", [])],
                               tex_median=cfg.get("tex_median", 3), mat_gain=cfg.get("mat_gain", 1.0))
