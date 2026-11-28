@@ -24,6 +24,8 @@ export const SEED_FILES = [
   "catalog/out/seed-charcoal-foil-foil.sql",    // foil only (catalog.py seed --supplier charcoal-foil --category foil)
   "catalog/out/seed-charcoal-foil-charcoal.sql", // charcoal's catalogue facts (shape, material, brand) onto the rows already in seed.sql;
                                                  // also the 3 unpriced Titanium rolls, kept off (catalog.py seed ... --category charcoal)
+  "catalog/out/seed-shop-charcoal.sql",          // charcoal the shop carries but has not priced (after the charcoal list, which makes the Charcoal section)
+  "catalog/live/missing-items-2-2026-11-27.sql", // the Duracubes 72-cube box, as the live database gets it (run twice)
   "catalog/live/on-view-2026-11-24.sql",        // the on-view switch: samples off, shisha and foil on
   "catalog/out/descriptions.sql",               // the writer's descriptions
   "catalog/live/charcoal-section-2026-11-24.sql", // Charcoal its own section; Heat keeps foil and gets its old pieces back
