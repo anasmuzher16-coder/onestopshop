@@ -878,11 +878,53 @@ class TestShopHookahs(Base):
         import src_shop_hookahs as S
         for out, photos, day in L.FILES:
             self.assertEqual(out.read_text(encoding="utf-8"), L.sql(self.as_named_before(), photos, day), out.name)
-        sets = [p for _, p, _ in L.FILES]                          # each cleaned photo goes live in one file only
+        sets = [p for _, p, _ in L.FILES] + [S.CLEANED_B]          # each cleaned photo goes live in one file only
         for i, a in enumerate(sets):
             for b in sets[i + 1:]:
                 self.assertFalse(a & b, sorted(a & b))
-        self.assertEqual(set().union(*[p for _, p, _ in L.FILES]), S.CLEANED)   # and every one has its file
+        self.assertEqual(set().union(*[p for _, p, _ in L.FILES]) | S.CLEANED_B, S.CLEANED)   # and every one has its file (B: OUT_B)
+        self.assertEqual(L.OUT_B.read_text(encoding="utf-8"), L.sql_b(self.hk, C.load_master("ace") if L.PANDA_READY else None))
+
+    def test_live_clean_b_puts_the_panda_photo_on_its_empty_ace_row_only(self):
+        import live_clean_hookahs as L
+        if not L.PANDA_READY:
+            self.skipTest("the Panda's photo is not wired yet")
+        want = L.panda_row(C.load_master("ace"))["sup"]
+        db = sqlite3.connect(":memory:")
+        db.execute("CREATE TABLE products (sku TEXT, supplier_id TEXT, img TEXT, variant_label TEXT, facts_known TEXT, updated_at TEXT)")
+        before = {"acrylic": None, "group": "full_size", "page": 25, "photo": "none", "stamp": "stamped"}
+        db.execute("INSERT INTO products VALUES (?, 'ace', '', '', ?, NULL)", (L.PANDA, json.dumps(before)))
+        # bystanders: another Ace row, and the Panda already showing a photo (never overwritten)
+        db.execute("INSERT INTO products VALUES ('OSS-100078', 'ace', '', '', '{\"photo\": \"none\"}', NULL)")
+        sql = L.OUT_B.read_text(encoding="utf-8")
+        panda = [ln for ln in sql.splitlines() if ln.startswith("UPDATE") and L.PANDA in ln]
+        self.assertEqual(len(panda), 1)
+        db.executescript("\n".join(panda))
+        img, label, fk = db.execute("SELECT img, variant_label, facts_known FROM products WHERE sku = ?", (L.PANDA,)).fetchone()
+        self.assertEqual((img, label), (want["img"], want["variant_label"]))
+        got, desired = json.loads(fk), json.loads(want["facts_known"])
+        for k in L.PHOTO_KEYS:
+            self.assertEqual(got.get(k), desired.get(k), k)
+        self.assertEqual({k: v for k, v in got.items() if k not in L.PHOTO_KEYS}, {k: v for k, v in before.items() if k not in L.PHOTO_KEYS})
+        self.assertEqual(db.execute("SELECT img FROM products WHERE sku = 'OSS-100078'").fetchone(), ("",))
+        n = db.total_changes
+        db.executescript("\n".join(panda))
+        self.assertEqual(db.total_changes, n)          # safe twice: the row has its img now
+        # the rollback in the header puts the live values back
+        rb = [ln[4:] for ln in sql.splitlines() if ln.startswith("--   UPDATE") and L.PANDA in ln]
+        self.assertEqual(len(rb), 1)
+        db.executescript(rb[0])
+        img, label, fk = db.execute("SELECT img, variant_label, facts_known FROM products WHERE sku = ?", (L.PANDA,)).fetchone()
+        self.assertEqual((img, label, json.loads(fk)), ("", "", before))
+
+    def test_live_clean_b_holds_only_group_b(self):
+        import live_clean_hookahs as L
+        import src_shop_hookahs as S
+        self.assertFalse(S.CLEANED_B & (S.CLEANED_FIRST | S.CLEANED_A | S.CLEANED_A3))   # group B goes live in its own file only
+        b = {r["sku"] for r in L.cleaned_rows(self.hk, S.CLEANED_B)}
+        others = set().union(*[{r["sku"] for r in L.cleaned_rows(self.hk, p)} for _, p, _ in L.FILES])
+        self.assertFalse(b & others)
+        self.assertEqual(b | others, self.cleaned)
 
     def test_renamed_from_the_visual_match(self):
         rows = {r["sku"]: r for r in K.desired_rows("shop-hookahs", self.hk)}
@@ -903,6 +945,7 @@ class TestShopHookahs(Base):
         before = {r[0]: r[1:] for r in con.execute(f"SELECT {cols} FROM products WHERE supplier_id = 'shop-hookahs'")}
         for out, _, _ in L.FILES:
             con.executescript(out.read_text(encoding="utf-8"))
+        con.executescript(L.OUT_B.read_text(encoding="utf-8"))
         after = {r[0]: r[1:] for r in con.execute(f"SELECT {cols} FROM products WHERE supplier_id = 'shop-hookahs'")}
         want = {r["sku"]: json.loads(r["sup"]["facts_known"]) for r in K.desired_rows("shop-hookahs", self.hk)}
         for s in before:
@@ -915,6 +958,7 @@ class TestShopHookahs(Base):
         n = con.total_changes
         for out, _, _ in L.FILES:
             con.executescript(out.read_text(encoding="utf-8"))
+        con.executescript(L.OUT_B.read_text(encoding="utf-8"))
         self.assertEqual(con.total_changes - n, 0)
 
     def test_master_validates_and_counts(self):
