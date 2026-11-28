@@ -217,9 +217,13 @@ def build_hookahs(reg, day):
                                   "colour": v["colour"], "confirm": v["confirm"],
                                   # an EXACT hookah: the web photo of that model and colour, no label; else the shop's original
                                   # as taken, full tile, "Photo to be replaced"
-                                  "photo": {"img": img if have else None, "status": ("ready" if v["web"] else "replace") if have else "none",
+                                  # a cleaned shop photo (clear_glass2.py): own photo, cut out, no label
+                                  "photo": {"img": img if have else None,
+                                            "status": ("ready" if v["web"] else "shop" if v["clean"] else "replace") if have else "none",
                                             "large": have and (pc / (img + "-l.webp")).exists(),
                                             "src": (f"web:{v['web']} (cut out, framed like the Ace hookahs)" if v["web"] else
+                                                    f"photo:{v['photo_file']} (the shop's own photo, cut out, the mat cleared: clear_glass2.py)"
+                                                    if v["clean"] else
                                                     f"photo:{v['photo_file']} (the shop's own photo, as taken: to be replaced)") if have else None,
                                             **({"web_src": v["web"]} if have and v["web"] else {})},
                                   "shop": C.blank_shop()})

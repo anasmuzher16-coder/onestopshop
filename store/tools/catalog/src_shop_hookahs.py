@@ -86,6 +86,12 @@ HOOKAHS = [
 ]
 
 
+# Cleaned photos (clear_glass2.py, 2026-11-27): the shop's own photo cut out, the mat under and through the glass cleared,
+# framed like the Ace hookahs (frame_cutouts.py --kind hookah --glass). Each passed an atelier:design-reviewer check at 200%
+# on two tile colours before it went in. They replace the original under the same file name, without the tag.
+CLEANED = {"IMG_0715", "IMG_0673", "IMG_0681", "IMG_0674", "IMG_0678"}
+
+
 def photo_name(name: str, colour: str) -> str:
     """The photo's address under store/public/img/pc/ (no extension). A cleaned photo later goes in under the same name."""
     return f"hookah/{slug(name)}-{slug(colour)}"
@@ -99,7 +105,7 @@ def families():
         variants = []
         for photo, colour, web in shots:
             reason = why
-            variants.append({"key": f"{fid}#{slug(colour)}", "photo_file": photo, "web": web,
+            variants.append({"key": f"{fid}#{slug(colour)}", "photo_file": photo, "web": web, "clean": photo in CLEANED,
                              "colour": cell(colour, f"photo:{photo} (the shop's own photo)" + (f"; web:{web}" if web else "")),
                              "swatch_hex": cell(HEX[colour], f"rule: chip colour for '{colour}'"),
                              "confirm": cell(reason, RULE if reason else None),
