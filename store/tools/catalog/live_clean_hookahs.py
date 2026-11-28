@@ -36,7 +36,7 @@ OUT_A2 = C.CATALOG / "live" / "hookah-clean-a2-2026-11-28.sql"
 OUT_CREW3 = C.CATALOG / "live" / "hookah-clean-crew3-2026-11-28.sql"
 FILES = [(OUT, S.CLEANED_FIRST, "2026-11-27"), (OUT_A, S.CLEANED_A, "2026-11-28"),
          (OUT_A3, S.CLEANED_A3, "2026-11-28"), (OUT_A2, S.CLEANED_A2, "2026-11-28"),
-         (OUT_CREW3, S.CLEANED_CREW3, "2026-11-28")]   # each in its own file; seed order: hookah-clean, -a, then OUT_B, then -a3, then -a2
+         (OUT_CREW3, S.CLEANED_CREW3, "2026-11-28")]   # each in its own file; seed order: hookah-clean, -a, then OUT_B, then -a3, then -a2, then drive2, then -crew3
 BATCH_12 = S.CLEANED_FIRST
 GROUP_B = S.CLEANED_B          # group B's cleaned photos (hookah-clean-b); the Panda: PANDA below
 PANDA = "OSS-100077"   # Ace "Panda Hookah", live with no photo: the cleaned IMG_0689 (shop_photos.py) goes on it

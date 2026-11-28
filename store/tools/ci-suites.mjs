@@ -21,7 +21,7 @@ const STORE = fileURLToPath(new URL("../", import.meta.url)), WORK = join(proces
 const GOLD = join(WORK, "gold"), STATE = join(WORK, "state"), OUT = process.env.CI_OUT || join(STORE, ".ci", "out"), WIN = process.platform === "win32";
 const GH = process.env.GITHUB_ACTIONS === "true";   // on GitHub's machines (the laptop runs every suite as before)
 // suites that take the store's base URL with a trailing slash, and those that take an output folder argument (as suites.ps1)
-const SLASH = new Set(["e2e", "phone-audit", "whitebox", "fx-robust"]), NOARG = new Set(["smoke-http", "phone-audit", "test-ace", "test-account", "test-payments", "test-pay-card", "test-emails", "test-golive", "whitebox", "fx-robust", "ci-warm"]);
+const SLASH = new Set(["e2e", "phone-audit", "whitebox", "fx-robust"]), NOARG = new Set(["smoke-http", "phone-audit", "test-ace", "test-account", "test-payments", "test-pay-card", "test-emails", "test-golive", "whitebox", "fx-robust", "ci-warm", "e2e-gallery"]);
 // On GitHub, e2e-flow runs without its screenshot folder (the folder only feeds its screenshots; every check runs either way).
 // A full-page screenshot resizes the page while the checkout's page-change animation (a view transition, app.js
 // document.startViewTransition) is still running on these slow machines; Chrome aborts the transition ("Transition was aborted

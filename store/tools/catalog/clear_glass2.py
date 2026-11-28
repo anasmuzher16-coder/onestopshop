@@ -139,6 +139,7 @@ Each PHOTOS entry (pixels of the 2600 px tall photo):
   retouch_in px: the retouch boxes stay this far inside the outline (the rim keeps its own pixels).
   see_through [L0, amax, wall]: tinted glass kept as cut: pixels brighter than L0 (thin glass, the wall seen through it)
            let up to amax of the tile through, their colour solved so that over a wall of grey level `wall` they are the photo.
+           It acts on every opaque pixel, glass or not: only for a photo whose bright opaque parts are all tinted glass.
   edge_ease [n, a]: the outer n px of the outline eased to alpha a (tinted glass kept as cut, so its thin rim is not a sticker).
   iris     [s, a(, s0)]: an iridescent coating (see iris()): the drawn glass takes the photo's own hue, raised to power s, and
            the coloured sheen brighter than s0 saturation is laid over it at alpha a.
@@ -309,7 +310,7 @@ PHOTOS.update({
                  "bridge": [[2030, 2130, "right"]],
                  "erase_light": [[140, 872, 1745, 906, 1826], [140, 1056, 1745, 1088, 1826]]},
     # smoky olive moulded lion-head glass, kept as photographed (OSS-140101): the marble seen through its lower left
-    # painted out from the glass round it, and the outer 4 px eased to 75% so a little tile shows at the thin rim
+    # painted out from the glass round it, the thin bright glass letting some tile through, the outer 6 px eased to 65%
     "IMG_0758": {"retouch": [[640, 2195, 790, 2335]], "retouch_in": 6, "edge_ease": [6, 0.65], "see_through": [120, 0.35, 225]},
 })
 
