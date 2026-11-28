@@ -1137,8 +1137,9 @@
      "key": "acc-p24",
      "photo": {
       "img": "acc/acc-p24",
-      "status": "needs_original",
-      "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
+      "status": "ready",
+      "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json",
+      "web_src": "https://shishazone.ca/product/hookah-ice-hose-handle-freezable/"
      },
      "shop": {
       "price_cents": {

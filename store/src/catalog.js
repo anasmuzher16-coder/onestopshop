@@ -98,7 +98,7 @@ export function toStorefront(cat) {
     // charcoal by its flag, or by its section: anything in Charcoal is charcoal, so moving an item into Charcoal in the
     // back office can never leave it shippable by a carrier (breaker, 2026-11-24)
     if (isCharcoalRow(p)) details.charcoal = true;   // also an item from the charcoal list, wherever the back office puts it
-    const coal = !!details.charcoal; delete details.photo_rights; delete details.photo_rejected; delete details.source_lines;   // shop-only notes stay in the back office
+    const coal = !!details.charcoal; delete details.photo_rights; delete details.photo_rejected; delete details.source_lines; delete details.photo_src;   // shop-only notes stay in the back office (photo_src: the web page a photo came from)
     if ("photo" in details && !PUBLIC_PHOTO.includes(details.photo)) delete details.photo;   // only the photo states a page shows; any other note on a photo stays in the back office
     const sale = sellable(p), facts = p.family ? shownFacts(p) : {};
     // a length the shop typed in the item editor (details.length, a shop column) replaces the catalogue's; the check tick stays in the back office
