@@ -22,6 +22,7 @@ export const SEED_FILES = [
   "catalog/live/hookah-clean-b-2026-11-28.sql", // group B's cleaned hookah photos (after hookah-clean-a), and the Ace Panda's photo (guarded on its empty img)
   "catalog/live/hookah-clean-a3-2026-11-28.sql", // group A's held photos, reworked and cleaned, the same way (after hookah-clean-b)
   "catalog/live/hookah-clean-a2-2026-11-28.sql", // group A's second pass, the same way (after hookah-clean-a3)
+  "catalog/live/hookah-clean-c2-2026-11-28.sql", // crew 2's cleaned photos from the second batch, the same way (after hookah-clean-a2)
   "catalog/out/seed-shisha.sql",                // shisha flavours
   "catalog/out/seed-charcoal-foil-foil.sql",    // foil only (catalog.py seed --supplier charcoal-foil --category foil)
   "catalog/out/seed-charcoal-foil-charcoal.sql", // charcoal's catalogue facts (shape, material, brand) onto the rows already in seed.sql;

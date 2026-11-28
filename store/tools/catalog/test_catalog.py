@@ -941,7 +941,7 @@ class TestShopHookahs(Base):
     def test_live_clean_b_holds_only_group_b(self):
         import live_clean_hookahs as L
         import src_shop_hookahs as S
-        self.assertFalse(S.CLEANED_B & (S.CLEANED_FIRST | S.CLEANED_A | S.CLEANED_A3 | S.CLEANED_A2))   # group B goes live in its own file only
+        self.assertFalse(S.CLEANED_B & (S.CLEANED_FIRST | S.CLEANED_A | S.CLEANED_A3 | S.CLEANED_A2 | S.CLEANED_C2))   # group B goes live in its own file only
         b = {r["sku"] for r in L.cleaned_rows(self.hk, S.CLEANED_B)}
         others = set().union(*[{r["sku"] for r in L.cleaned_rows(self.hk, p)} for _, p, _ in L.FILES])
         self.assertFalse(b & others)
@@ -1080,7 +1080,8 @@ class TestDrive2(Base):
         self.assertEqual((len(new), len({f["family_id"] for f, _ in new})), (75, 57))
         self.assertEqual(len(S.UPRIGHT), 75)
         for f, v in new:
-            self.assertEqual(v["photo"]["status"], "replace", v["sku"])   # the shop's original, "Photo to be replaced"
+            cleaned = any(f"photo:{p} " in v["photo"]["src"] for p in S.CLEANED)
+            self.assertEqual(v["photo"]["status"], "shop" if cleaned else "replace", v["sku"])   # the shop's original, "Photo to be replaced", until cleaned
             self.assertTrue(any(f"photo:{p} " in v["photo"]["src"] for p in S.UPRIGHT), v["sku"])
             self.assertTrue(f["family_id"].startswith("hookah-"), f["family_id"])
         # the ones already on the site never get a second card
