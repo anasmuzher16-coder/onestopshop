@@ -175,6 +175,8 @@ Each PHOTOS entry (pixels of the 2600 px tall photo):
            (and below row cy outside it): a metal part's reflection on the table under its round bottom edge.
   choke    list of [x0, y0, x1, y1, px]: in that box the outline is pulled in by px (alpha eroded): the wall's light halo
            round a bright metal part, which defringe cannot tell from the metal.
+  keep_poly list of polygons [[x, y], ...]: inside, the photo stays as cut (opaque) (a steel tube
+           seen through clear glass, traced off the photo where a stem box would be too wide).
   keep_print list of [x0, y0, x1, y1, S]: in that box, the pixels whose chroma (strongest minus weakest channel) is above S
            (a gold or coloured print on clear glass, every letter) stay as cut, in pieces of at least 40 px, softened by 1 px.
   tex_light alpha of the glass's own bright detail (finer than tex's sigma, brighter than its surround), drawn white,
@@ -439,7 +441,7 @@ PHOTOS_CREW8 = {
                  "outline": [[2200, 1020.5, 262.5], [2215, 1020.5, 270.6], [2230, 1020.5, 280.0], [2245, 1020.5, 286.7], [2260, 1020.5, 291.8], [2275, 1020.5, 298.2], [2290, 1020.5, 299.4], [2300, 1020.5, 299.8]]},
     # OSS-140099 clear glass etched white all over, with blue glass at the neck and blue painted bands and dragon: kept as
     # shot (the etching covers the body, so the wall behind it reads only as the frost's own white)
-    "IMG_0756": {"photo_rgb": True, "defringe": [4, 25]},
+    "IMG_0756": {"photo_rgb": True, "defringe": [4, 25]},   # held (see hk-claims OSS-140099 HELD.txt)
     # OSS-140093 brushed steel stem and caged tripod base, kept as shot; its clear glass bowl (raised dots) drawn as glass;
     # the steel cage's reflection on the marble under its bottom edge cleared
     "IMG_0748": {"photo_rgb": True, "defringe": [4, 25], "glass_extra": [[160, 468]], "fade": 3, "tex_light": 0.6,
@@ -470,8 +472,10 @@ PHOTOS_CREW8 = {
     "IMG_0753": {"photo_rgb": True, "fill": True, "defringe": [4, 25], "foot": [1020.0, 2320, [215.6, 215.6], 247, 2.1, 0, 4],
                  "outline": [[2240, 1020.0, 202.0], [2255, 1020.0, 205.3], [2270, 1020.0, 208.5], [2285, 1020.0, 211.3], [2300, 1020.0, 214.1], [2315, 1020.0, 215.5], [2320, 1020.0, 215.6]]},
     # OSS-140082 Amir's: clear square glass base on the marble (ratio method over the wall/marble plate), its gold print
-    # (the lotus and AMIR'S in front, the same seen backwards through the back face) kept as cut
-    "IMG_0726": {"glass": [1554, 2350], "fade": 3, "stem": [935, 1588, 1010, 1925], "keep_dark": [[790, 1530, 1130, 1595, 60]], "tex": [12, 3.0], "streaks": [1592, 1722, 6], "arcs": [[965, 1712, 140, 14, 0, 180, 0.25, 3.0]],
+    # (the lotus and AMIR'S in front, the same seen backwards through the back face) kept as cut; the steel tube and its
+    # nozzle traced off the photo (wider low down, seen through the cube)
+    "IMG_0726": {"glass": [1538, 2350], "fade": 3, "keep_poly": [[[928, 1588], [991, 1588], [991, 1700], [1000, 1800], [1004, 1866], [1012, 1870], [1014, 1905], [1004, 1926],
+                                [934, 1926], [924, 1905], [925, 1870], [928, 1866]]], "keep_dark": [[790, 1530, 1130, 1595, 60]], "tex": [12, 3.0], "streaks": [1592, 1722, 6], "arcs": [[965, 1712, 140, 14, 0, 180, 0.25, 3.0]],
                  "keep_print": [[700, 1950, 1200, 2230, 45], [640, 1780, 1260, 1910, 32]]},
 }
 PHOTOS.update(PHOTOS_CREW8)
@@ -854,6 +858,12 @@ def masks(photo, cut_a, cfg):
         if k > 1:                                   # the one big piece: loose bits of coloured reflection are glass
             sizes = nd.sum(d, lab, range(1, k + 1)); d = lab == (1 + int(np.argmax(sizes)))
         opaque = np.maximum(opaque, nd.gaussian_filter(d.astype(float), 1.2))
+    if cfg.get("keep_poly"):                # a part seen through the glass whose outline no box fits (a tube widening as the
+        from PIL import ImageDraw            # glass in front magnifies it): opaque inside the polygon
+        pm = Image.new("L", (w, h), 0)
+        for poly in cfg["keep_poly"]:
+            ImageDraw.Draw(pm).polygon([tuple(p_) for p_ in poly], fill=255)
+        opaque = np.maximum(opaque, nd.gaussian_filter(np.asarray(pm, float) / 255, 0.8))
     for x0, y0, x1, y1, sv in cfg.get("keep_print", []):   # printed lettering on the glass: every coloured stroke as cut
         d = np.zeros((h, w), bool)
         box = photo[y0:y1, x0:x1]
