@@ -1486,7 +1486,11 @@ function putScroll(spot) {
   drawThrough(spot.sku); root.classList.add("restoring"); land();
   // cards off screen fall back to a guessed height once drawing stops (WebKit keeps no remembered size): the guess is set to a real card's
   // height first, so leaving the restoring state cannot move the page
-  requestAnimationFrame(() => { land(); const c = document.querySelector("#main .grid--shop .card"); if (c && c.offsetHeight) root.style.setProperty("--card-h", c.offsetHeight + "px"); root.classList.remove("restoring"); });
+  // The restoring state is kept through one painted frame, so Chromium records each card's real size (contain-intrinsic-size
+  // auto) before the off-screen cards fall back to a guess: cards of mixed heights (two-line names, the shop's hookahs
+  // 2026-11-27) would otherwise each take the first card's height and move the page. Landed once more after it lifts.
+  requestAnimationFrame(() => { land(); const c = document.querySelector("#main .grid--shop .card"); if (c && c.offsetHeight) root.style.setProperty("--card-h", c.offsetHeight + "px");
+    requestAnimationFrame(() => { root.classList.remove("restoring"); land(); }); });
 }
 function go() {
   if (state.newsSeen && !/^#\/cart/.test(route())) { state.cartNews = []; state.newsSeen = false; state.dropped = null; }
