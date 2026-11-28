@@ -27,7 +27,7 @@ OUT = C.CATALOG / "live" / "hookah-clean-2026-11-27.sql"
 OUT_A = C.CATALOG / "live" / "hookah-clean-a-2026-11-28.sql"
 OUT_A2 = C.CATALOG / "live" / "hookah-clean-a2-2026-11-28.sql"
 FILES = [(OUT, S.CLEANED_FIRST, "2026-11-27"), (OUT_A, S.CLEANED_A, "2026-11-28"),
-         (OUT_A2, S.CLEANED_A2, "2026-11-28, second pass")]   # in the order they run
+         (OUT_A2, S.CLEANED_A2, "2026-11-28")]   # in the order they run
 FK = "CASE WHEN json_valid(facts_known) THEN facts_known ELSE '{}' END"
 NOW = "strftime('%Y-%m-%dT%H:%M:%SZ','now')"
 
@@ -57,8 +57,9 @@ def rollback(r):
 def sql(m, photos=None, day="2026-11-27"):
     rows = cleaned_rows(m, S.CLEANED_FIRST if photos is None else photos)
     names = ", ".join(f"{r['sku']} ({r['shop']['name']}, {r['sup']['variant_label']})" for r in rows)
-    after = {"2026-11-27": "", "2026-11-28": " and hookah-clean-2026-11-27.sql",      # a new file needs its own entry
-             "2026-11-28, second pass": ", hookah-clean-2026-11-27.sql and hookah-clean-a-2026-11-28.sql"}[day]
+    ps = S.CLEANED_FIRST if photos is None else photos
+    earlier = next([f.name for f, _, _ in FILES[:i]] for i, (_, p_, _) in enumerate(FILES) if p_ == ps)   # the files run before it
+    after = "" if not earlier else " and " + earlier[0] if len(earlier) == 1 else ", " + ", ".join(earlier[:-1]) + " and " + earlier[-1]
     head = [
         f"-- The shop's hookahs whose photo has been cleaned ({day}): \"Photo to be replaced\" comes off. Not applied live yet.",
         "-- Owner: \"we really need to clean up these hookah photos, I know we can erase the mat and make these photos clean\".",

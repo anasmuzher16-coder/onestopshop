@@ -1,4 +1,4 @@
--- The shop's hookahs whose photo has been cleaned (2026-11-28, second pass): "Photo to be replaced" comes off. Not applied live yet.
+-- The shop's hookahs whose photo has been cleaned (2026-11-28): "Photo to be replaced" comes off. Not applied live yet.
 -- Owner: "we really need to clean up these hookah photos, I know we can erase the mat and make these photos clean".
 -- store/tools/catalog/clear_glass2.py cut each one out of the shop's photo and cleared the patterned mat seen under and
 -- through the glass; frame_cutouts.py framed it like the Ace hookahs; it went in under the original's file name
