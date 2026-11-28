@@ -316,6 +316,32 @@ PHOTOS_CREW2 = {
 }
 PHOTOS.update(PHOTOS_CREW2)
 
+# Crew 5 (2026-11-28): Drive-batch shop hookahs, OSS-140035 upward (1958 x 2600 after the resize).
+PHOTOS_CREW5 = {
+    # OSS-140038 MISHAISMYSHISHA blue: smoked black embossed glass, opaque as shot, on the mat: the foot cuts the mat off
+    "PXL_20261128_003327263": {"photo_rgb": True, "foot": [1021, 2336, [256, 256], 146, 2.6, 0, 60], "fill": True,
+                               "inset": [[2340, 2440, 10, "right"]], "erase_light": [[150, 1225, 2380, 1290, 2450],
+                               # the mask charm's eye and mouth holes and the gap between tray and charm show the wall
+                               [175, 1054, 1017, 1072, 1034], [175, 1078, 1017, 1096, 1034], [175, 1064, 1040, 1087, 1056],
+                               [185, 1052, 986, 1106, 995], [140, 1052, 984, 1067, 997], [140, 1078, 984, 1106, 997]]},
+    # OSS-140039 MISHAISMYSHISHA pink: black and white swirl glass, opaque, on the mat
+    "PXL_20261128_003758009": {"photo_rgb": True, "foot": [975, 2400, [252, 246], 185, 2.1, 0, 60], "fill": True,
+                               "bridge": [[2170, 2390, "left"]],
+                               # the charm's ring and its eye and mouth holes show the wall
+                               "erase_light": [[180, 1169, 1067, 1178, 1079], [180, 1157, 1108, 1170, 1123],
+                                               [180, 1176, 1106, 1189, 1122], [180, 1164, 1127, 1181, 1145],
+                                               [180, 1145, 1066, 1167, 1085], [180, 1179, 1066, 1196, 1082]]},
+    # OSS-140040 MYA green: deep green moulded glass kept as shot, on the mat: outline read off the photo (two tiers), mat cut off
+    "PXL_20261128_004255952": {"photo_rgb": True, "foot": [996, 2330, [256, 256], 182, 2.2, 0, 60], "fill": True,
+                               "outline": [[2060, 997, 190], [2100, 998, 204], [2130, 998, 202], [2165, 998, 186], [2200, 998, 199],
+                                           [2240, 998, 234], [2280, 997, 253], [2330, 996, 256]]},
+    # OSS-140043 Contraband: black embossed glass, opaque as shot, on the mat
+    "PXL_20261128_004629722": {"photo_rgb": True, "foot": [970, 2330, [261, 261], 161, 2.1, 0, 60], "fill": True,
+                               "outline": [[2140, 972, 160], [2160, 971, 176], [2200, 972, 210], [2240, 968, 240], [2280, 968, 253],
+                                           [2330, 970, 261]]},
+}
+PHOTOS.update(PHOTOS_CREW5)
+
 DARK = np.array([36, 44, 50], float)     # the glass's dark layer: a cool grey, as clear soda glass reads at a slant
 
 
