@@ -3,6 +3,8 @@
 import { readFileSync } from "node:fs";
 import { SEED_FILES, seedPath } from "./seed-files.mjs";
 const B = process.env.BASE || "http://127.0.0.1:4420";
+// hoses whose drawn-bag photo is approved (store/catalog/live/hose-drawnbag-2026-11-27.sql): those lose the "to be replaced" tag
+const DRAWN = new Set(((await import("node:fs")).readFileSync(new URL("../catalog/live/hose-drawnbag-2026-11-27.sql", import.meta.url), "utf8").match(/^UPDATE products SET details[^\n]*WHERE sku IN \(([^)]*)\)/m)?.[1] || "").match(/OSS-\d+/g) || []);
 let n = 0, f = 0;
 const ok = (cond, msg) => { n++; if (!cond) { f++; console.log("FAIL", msg); } };
 const get = async p => { const r = await fetch(B + p, { redirect: "manual", signal: AbortSignal.timeout(15000) }); return { r, t: await r.text() }; };
@@ -69,12 +71,13 @@ ok(m.PRODUCTS.length === 69 + 15 + 47 + 91 + 39 + 32 + 65 + 27 && m.CATEGORIES.l
   ok(hk.filter(p => p.lead).length === 21 && hk.find(p => p.family === "ace-rose")?.lead === false, "one card per shop hookah family; the blue Rose is a chip on the red Rose's card");
   for (const p of hk) for (const suf of ["", "-s"]) { const r = await fetch(B + `/img/pc/${p.img}${suf}.webp`); ok(r.status === 200, `photo ${p.img}${suf}.webp: ${r.status}`); }
   const hose = m.PRODUCTS.filter(p => /^hose-/.test(p.family || ""));
-  // 32 hoses: the 31 photographed ones carry the tag; the light blue Starbuzz (OSS-120032) has no photo yet ("Photo coming soon"), so no tag
-  const shot = hose.filter(p => p.img);
-  ok(hose.length === 32 && shot.length === 31 && shot.every(p => p.facts.photo_label === "replace") && hose.find(p => p.sku === "OSS-120032" && !p.img && !p.facts.photo_label),
-    `every photographed hose is tagged "to be replaced": ${shot.filter(p => p.facts.photo_label === "replace").length}/${shot.length} of ${hose.length}`);
+  // 32 hoses: each photographed one carries the tag until its drawn-bag photo is approved (DRAWN); the light blue Starbuzz
+  // (OSS-120032) has no photo until its drawn-bag cut-out goes in ("Photo coming soon"), so it never carries the tag
+  const shot = hose.filter(p => p.img), waiting = shot.filter(p => !DRAWN.has(p.sku));
+  ok(DRAWN.size > 0 && hose.length === 32 && hose.every(p => DRAWN.has(p.sku) ? !p.facts.photo_label : p.img ? p.facts.photo_label === "replace" : p.sku === "OSS-120032" && !p.facts.photo_label),
+    `every photographed hose is tagged "to be replaced" until its drawn-bag photo is approved: ${waiting.filter(p => p.facts.photo_label === "replace").length}/${waiting.length} tagged, ${DRAWN.size} approved, of ${hose.length}`);
   const tagged = m.PRODUCTS.filter(p => p.facts?.photo_label === "replace").map(p => p.sku);
-  ok(tagged.length === 23 - cleanSkus.size + 31 && tagged.every(s => /^OSS-1[24]\d{4}$/.test(s)), `only the shop hookahs and hoses carry the tag: ${tagged.length}`); }
+  ok(tagged.length === 23 - cleanSkus.size + waiting.length && tagged.every(s => /^OSS-1[24]\d{4}$/.test(s)), `only the shop hookahs and hoses carry the tag: ${tagged.length}`); }
 // the shop's own bowls (2026-11-27): 65 colours in 28 families (28 branded, 37 under plain names) (one card each, colours as chips), all in Bowls, Price TBD, the
 // shop's own photo; the back office's check-the-name notes never reach the storefront
 { const bowl = m.PRODUCTS.filter(p => /^bowl-/.test(p.family || ""));
