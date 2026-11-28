@@ -57,6 +57,8 @@ def cut(name):
     dC = chI - chB
     sh = L.shape
     area = poly_mask(sh, [c["area"]]) if "area" in c else inside
+    if c.get("area_add"):   # print that runs past the hand-read bag edge (onto the fold)
+        area = area | poly_mask(sh, c["area_add"])
 
     colour = (dC > c.get("chroma", 16))
     hue = np.degrees(np.arctan2(LI[..., 2] - 128, LI[..., 1] - 128)) % 360
@@ -85,6 +87,10 @@ def cut(name):
     big = small_cc(ink, c.get("ink_big", 200))
     near = cv2.dilate(big.astype(np.uint8), disk(45)) > 0
     ink = big | (small_cc(ink, 12) & near)
+    for ie in c.get("ink_extra", []):   # print over a shadowed stretch of wall: plain darkness test
+        z = poly_mask(sh, [ie["poly"]])
+        ik = (cv2.GaussianBlur(L, (0, 0), 0.8) < ie.get("L", 110)) & z & (chI < ie.get("C", 30))
+        ink |= small_cc(cv2.morphologyEx(ik.astype(np.uint8), cv2.MORPH_OPEN, disk(1)) > 0, ie.get("min", 60))
     if c.get("ink_within"):
         ink &= poly_mask(sh, c["ink_within"])
     if c.get("ink_thin"):   # only pen-width ink here (a broad dark patch is shadow, not print)
@@ -229,6 +235,11 @@ def cut(name):
 
     fill = poly_mask(sh, c["fill"]) if c.get("fill") else np.zeros(sh, bool)
     drop = poly_mask(sh, c["drop"]) if c.get("drop") else np.zeros(sh, bool)
+    for db in c.get("drop_bright", []):   # wall/film seen through the bag next to a dark hose: drop only what is bright
+        z = poly_mask(sh, [db["poly"]])
+        br = cv2.GaussianBlur(L, (0, 0), db.get("blur", 3)) > db.get("L", 140)
+        br = cv2.morphologyEx(br.astype(np.uint8), cv2.MORPH_OPEN, disk(db.get("open", 4))) > 0
+        drop |= z & br
     if c.get("fill_noborder") and c.get("fill"):   # the bag's own orange border is redrawn; keep it out of hose fills
         fill &= ~((chI > 40) & (hue > 45) & (hue < 68))
     solid = (colour | ink | white | band | fill) & area & ~drop
@@ -321,6 +332,12 @@ def cut(name):
             alpha = rgba[..., 3].astype(np.float32) / 255
         if c["warp"].get("clip_x"):
             x0_, x1_ = c["warp"]["clip_x"]; rgba[:, :x0_] = 0; rgba[:, x1_:] = 0; alpha = rgba[..., 3].astype(np.float32) / 255
+    if c.get("min_cc"):   # stray specks (shadow, wall glints) that are not part of the product
+        keep = small_cc(rgba[..., 3] > 60, c["min_cc"])
+        keep = cv2.dilate(keep.astype(np.uint8), disk(3)) > 0
+        rgba[~keep, 3] = 0
+    for dp in c.get("drop_final", []):   # final-frame polygons removed (after any warp)
+        rgba[poly_mask(rgba.shape[:2], [dp]), 3] = 0
     Image.fromarray(rgba, "RGBA").save(OUT / f"{name}.png")
     if c.get("band") or c.get("gc"):   # overlay of the tube outlines on the photo
         ov = Image.fromarray(I.astype(np.uint8)); dr = ImageDraw.Draw(ov)

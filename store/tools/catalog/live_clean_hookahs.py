@@ -2,8 +2,10 @@
 
   python store/tools/catalog/live_clean_hookahs.py      writes store/catalog/live/hookah-clean-2026-11-27.sql (the first
                                                          cleaned photos, src_shop_hookahs.CLEANED_FIRST),
-                                                         hookah-clean-a-2026-11-28.sql (group A, CLEANED_A) and
-                                                         hookah-clean-b-2026-11-28.sql (group B, CLEANED_B, and the Panda)
+                                                         hookah-clean-a-2026-11-28.sql (group A, CLEANED_A),
+                                                         hookah-clean-b-2026-11-28.sql (group B, CLEANED_B, and the Panda),
+                                                         hookah-clean-a3-2026-11-28.sql (group A reworked, CLEANED_A3) and
+                                                         hookah-clean-a2-2026-11-28.sql (group A second pass, CLEANED_A2)
 
 A cleaned photo (src_shop_hookahs.CLEANED, clear_glass2.py) goes in under the same file name as the original it replaces,
 so img does not change: only the photo keys of facts_known move. photo stays 'own'; photo_label ('replace') and
@@ -28,7 +30,10 @@ import src_shop_hookahs as S  # noqa: E402
 OUT = C.CATALOG / "live" / "hookah-clean-2026-11-27.sql"
 OUT_A = C.CATALOG / "live" / "hookah-clean-a-2026-11-28.sql"
 OUT_B = C.CATALOG / "live" / "hookah-clean-b-2026-11-28.sql"
-FILES = [(OUT, S.CLEANED_FIRST, "2026-11-27"), (OUT_A, S.CLEANED_A, "2026-11-28")]   # in the order they run (then OUT_B)
+OUT_A3 = C.CATALOG / "live" / "hookah-clean-a3-2026-11-28.sql"
+OUT_A2 = C.CATALOG / "live" / "hookah-clean-a2-2026-11-28.sql"
+FILES = [(OUT, S.CLEANED_FIRST, "2026-11-27"), (OUT_A, S.CLEANED_A, "2026-11-28"),
+         (OUT_A3, S.CLEANED_A3, "2026-11-28"), (OUT_A2, S.CLEANED_A2, "2026-11-28")]   # each in its own file; seed order: hookah-clean, -a, then OUT_B, then -a3, then -a2
 BATCH_12 = S.CLEANED_FIRST
 GROUP_B = S.CLEANED_B          # group B's cleaned photos (hookah-clean-b); the Panda: PANDA below
 PANDA = "OSS-100077"   # Ace "Panda Hookah", live with no photo: the cleaned IMG_0689 (shop_photos.py) goes on it
@@ -62,7 +67,11 @@ def rollback(r):
 def sql(m, photos=None, day="2026-11-27"):
     rows = cleaned_rows(m, S.CLEANED_FIRST if photos is None else photos)
     names = ", ".join(f"{r['sku']} ({r['shop']['name']}, {r['sup']['variant_label']})" for r in rows)
-    after = "" if day == "2026-11-27" else " and hookah-clean-2026-11-27.sql"
+    photos = S.CLEANED_FIRST if photos is None else photos
+    at = next((i for i, (_, ph, _d) in enumerate(FILES) if ph is photos or ph == photos), 0)
+    after = "".join(f" and {o.name}" for o, _, _d in FILES[:at])          # the hookah-clean files that run before this one
+    if photos is S.CLEANED_A3 or photos is S.CLEANED_A2:                  # seeded after group B's file too
+        after += f" and {OUT_B.name}"
     head = [
         f"-- The shop's hookahs whose photo has been cleaned ({day}): \"Photo to be replaced\" comes off. Not applied live yet.",
         "-- Owner: \"we really need to clean up these hookah photos, I know we can erase the mat and make these photos clean\".",
