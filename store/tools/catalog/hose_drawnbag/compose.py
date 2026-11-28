@@ -23,6 +23,7 @@ LOOK = dict(fill=0.06, fill_side=0.17, side_w=0.06, edge=0.62, hair=0.10, radius
             seal_h=0.040, seal=0.15, seal_line=0.42, crimp=0.07, bot_seal_h=0.022, bot_seal=0.15,
             shadow=0.16, shadow_blur=8, shadow_off=(3, 6),
             streaks=[(0.15, 0.050, 0.14), (0.235, 0.0065, 0.32), (0.205, 0.016, 0.10), (0.865, 0.022, 0.13)])
+BASE_LOOK = dict(LOOK)
 BAG_W, BAG_H = 385 * K, 810 * K          # one bag for every hose
 M_SIDE, M_TOP, M_BOT = 0.035, 0.022, 0.032  # product inset inside the bag (fractions of bag size; top is below the seal)
 
@@ -60,6 +61,10 @@ def bag_rect(name, cut):
 
 def compose(name):
     c = CFG[name]
+    global LOOK
+    LOOK = {**BASE_LOOK, **c.get("look", {})}   # per-photo override, e.g. a shine streak moved off the print ("streak_dx")
+    if "streak_dx" in c:
+        LOOK["streaks"] = [(x + c["streak_dx"].get(str(i), 0), w, a) for i, (x, w, a) in enumerate(BASE_LOOK["streaks"])]
     cut = Image.open(WD / "cut" / f"{name}.png")
     if c.get("rotate"):
         cut = cut.rotate(c["rotate"], resample=Image.BICUBIC, expand=True)
