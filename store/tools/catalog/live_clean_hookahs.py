@@ -27,7 +27,7 @@ OUT_B = C.CATALOG / "live" / "hookah-clean-b-2026-11-28.sql"
 BATCH_12 = {"IMG_0715", "IMG_0673", "IMG_0681", "IMG_0674", "IMG_0678", "IMG_0697", "IMG_0699", "IMG_0670"}
 GROUP_B = {"IMG_0679", "IMG_0705", "IMG_0706", "IMG_0709", "IMG_0710", "IMG_0712", "IMG_0714"}   # the Panda: PANDA below
 PANDA = "OSS-100077"   # Ace "Panda Hookah", live with no photo: the cleaned IMG_0689 (shop_photos.py) goes on it
-PANDA_READY = False    # True once the Panda's photo has passed review and is wired (then the B file carries its line)
+PANDA_READY = True     # True once the Panda's photo has passed review and is wired (then the B file carries its line)
 FK = "CASE WHEN json_valid(facts_known) THEN facts_known ELSE '{}' END"
 NOW = "strftime('%Y-%m-%dT%H:%M:%SZ','now')"
 

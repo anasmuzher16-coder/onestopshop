@@ -864,6 +864,38 @@ class TestShopHookahs(Base):
         self.assertEqual(L.OUT.read_text(encoding="utf-8"), L.sql(self.hk))
         self.assertEqual(L.OUT_B.read_text(encoding="utf-8"), L.sql_b(self.hk, C.load_master("ace") if L.PANDA_READY else None))
 
+    def test_live_clean_b_puts_the_panda_photo_on_its_empty_ace_row_only(self):
+        import live_clean_hookahs as L
+        if not L.PANDA_READY:
+            self.skipTest("the Panda's photo is not wired yet")
+        want = L.panda_row(C.load_master("ace"))["sup"]
+        db = sqlite3.connect(":memory:")
+        db.execute("CREATE TABLE products (sku TEXT, supplier_id TEXT, img TEXT, variant_label TEXT, facts_known TEXT, updated_at TEXT)")
+        before = {"acrylic": None, "group": "full_size", "page": 25, "photo": "none", "stamp": "stamped"}
+        db.execute("INSERT INTO products VALUES (?, 'ace', '', '', ?, NULL)", (L.PANDA, json.dumps(before)))
+        # bystanders: another Ace row, and the Panda already showing a photo (never overwritten)
+        db.execute("INSERT INTO products VALUES ('OSS-100078', 'ace', '', '', '{\"photo\": \"none\"}', NULL)")
+        sql = L.OUT_B.read_text(encoding="utf-8")
+        panda = [ln for ln in sql.splitlines() if ln.startswith("UPDATE") and L.PANDA in ln]
+        self.assertEqual(len(panda), 1)
+        db.executescript("\n".join(panda))
+        img, label, fk = db.execute("SELECT img, variant_label, facts_known FROM products WHERE sku = ?", (L.PANDA,)).fetchone()
+        self.assertEqual((img, label), (want["img"], want["variant_label"]))
+        got, desired = json.loads(fk), json.loads(want["facts_known"])
+        for k in L.PHOTO_KEYS:
+            self.assertEqual(got.get(k), desired.get(k), k)
+        self.assertEqual({k: v for k, v in got.items() if k not in L.PHOTO_KEYS}, {k: v for k, v in before.items() if k not in L.PHOTO_KEYS})
+        self.assertEqual(db.execute("SELECT img FROM products WHERE sku = 'OSS-100078'").fetchone(), ("",))
+        n = db.total_changes
+        db.executescript("\n".join(panda))
+        self.assertEqual(db.total_changes, n)          # safe twice: the row has its img now
+        # the rollback in the header puts the live values back
+        rb = [ln[4:] for ln in sql.splitlines() if ln.startswith("--   UPDATE") and L.PANDA in ln]
+        self.assertEqual(len(rb), 1)
+        db.executescript(rb[0])
+        img, label, fk = db.execute("SELECT img, variant_label, facts_known FROM products WHERE sku = ?", (L.PANDA,)).fetchone()
+        self.assertEqual((img, label, json.loads(fk)), ("", "", before))
+
     def test_live_clean_files_split_the_cleaned_photos(self):
         import live_clean_hookahs as L
         import src_shop_hookahs as S
