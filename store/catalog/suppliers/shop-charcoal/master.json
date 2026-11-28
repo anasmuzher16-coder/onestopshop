@@ -1,0 +1,115 @@
+{
+ "schema": "oss-catalog/1",
+ "supplier": {
+  "id": "shop-charcoal",
+  "name": "The shop's charcoal not on its price list",
+  "sku_block": "OSS-15NNNN",
+  "credit": "No supplier credit needed."
+ },
+ "sources": [
+  {
+   "id": "shop-charcoal-2026-11-27",
+   "kind": "shop photos",
+   "file": "IMG_0524 (box on the shop's shelf)",
+   "sha256": "c9f56d7fad8477b2eac6ef925d6ff89821629ee8164340578493f729a16172d2",
+   "products": 1,
+   "edition": "Shop photos of charcoal not on the shop's price list, Google Drive 2026-11-27",
+   "received": "2026-11-27"
+  }
+ ],
+ "rulings": [
+  "owner 2026-11-27: every item the shop carries goes up, no skipping",
+  "named only from the box; flagged to confirm in the back office",
+  "in the shop, Price TBD, stock not counted; the shop fills price and stock in the item editor",
+  "charcoal: pickup or local delivery only, never shipped by a carrier"
+ ],
+ "families": [
+  {
+   "family_id": "charcoal-shop-duracubes-coconut-charcoal-cubes-72-cubes",
+   "order": 0,
+   "category": "charcoal",
+   "name": {
+    "v": "Duracubes Coconut Charcoal Cubes, 72 cubes",
+    "src": "photo:IMG_0524 (box print: DURACUBES, All natural coconut charcoal, 72 CUBES); rule 2026-11-27 (owner: every item the shop carries goes up; named only from the box)"
+   },
+   "supplier_ref": {
+    "v": "DURACUBES, All natural coconut charcoal, 72 CUBES",
+    "src": "photo:IMG_0524"
+   },
+   "facts": {
+    "brand": {
+     "v": "Duracubes",
+     "src": "photo:IMG_0524 (box print: DURACUBES, All natural coconut charcoal, 72 CUBES); rule 2026-11-27 (owner: every item the shop carries goes up; named only from the box)"
+    },
+    "count": {
+     "v": 72,
+     "src": "photo:IMG_0524 (box print)"
+    },
+    "shape": {
+     "v": "Cube",
+     "src": "photo:IMG_0524 (box print: CUBES)"
+    },
+    "material": {
+     "v": "Coconut",
+     "src": "photo:IMG_0524 (box print: ALL NATURAL COCONUT CHARCOAL)"
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: seen only in the shop's photo IMG_0524, not on the shop's price list (the list has the 62-piece hexagon box, OSS-9102): check the name and that the shop sells it"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-150001",
+     "key": "charcoal-shop-duracubes-coconut-charcoal-cubes-72-cubes",
+     "confirm": {
+      "v": "seen only in the shop's photo IMG_0524, not on the shop's price list (the list has the 62-piece hexagon box, OSS-9102): check the name and that the shop sells it",
+      "src": "rule 2026-11-27 (owner: every item the shop carries goes up; named only from the box)"
+     },
+     "photo": {
+      "img": "shop/duracubes-coconut-charcoal-cubes-72-cubes",
+      "status": "ready",
+      "large": true,
+      "src": "photo:IMG_0524 (the shop's own photo, cut out)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  }
+ ],
+ "retired": {},
+ "shop_answers": [],
+ "retired_shop": {}
+}

@@ -94,7 +94,7 @@ if (!CARD) {
     const bad = await fetch(`${B}/api/order-status?id=${o.id}&k=${k}`, { method: "POST" });
     ok(bad.status === 405, "the status link only reads"); }
   const cat = await (await fetch(B + "/api/catalog")).json(), coal = cat.products.filter(p => p.category_id === "charcoal" && JSON.parse(p.details).charcoal === true);
-  ok(coal.length === 69 && coal.every(p => p.ship_class === "pickup_only"), "the Charcoal section holds the shop's 69 charcoal items, all pickup or local delivery only: " + coal.length);
+  ok(coal.length === 70 && coal.every(p => p.ship_class === "pickup_only"), "the Charcoal section holds the shop's 69 listed charcoal items and the Duracubes 72 box (OSS-150001, Price TBD), all pickup or local delivery only: " + coal.length);
   const coalOk = await post({ ...who, ...at, method: "pickup", lines: [{ sku: coalSku, qty: 1 }, { sku: "OSS-8003", qty: 1 }] });
   ok(coalOk.status === 201 && coalOk.data.order.subtotal_cents === 1199 + 2195 && !/\bage\b|photo id|legal age|age_/i.test(JSON.stringify(coalOk.data)), "charcoal picked up and paid at the counter, at the shop's price, no age step: " + coalOk.status + " " + (coalOk.data.error || ""));
   if (coalOk.status === 201) {
@@ -171,14 +171,14 @@ const lost = orders.filter(o => o.status === "pending" && !["awaiting", "pay_at_
 // step anywhere a customer can see (staff check ID in person).
 const cat = await (await fetch(B + "/api/catalog")).json(), coal = cat.products.filter(p => p.category_id === "charcoal" && JSON.parse(p.details).charcoal === true), foilFeed = cat.products.filter(p => p.category_id === "heat" && /foil/i.test(p.name));
 const coalSku = "OSS-9104", c0 = await stockOf(coalSku);
-ok(coal.length === 69 && coal.every(p => p.ship_class === "pickup_only"), "the Charcoal section holds the shop's 69 charcoal items, all pickup or local delivery only: " + coal.length);
+ok(coal.length === 70 && coal.every(p => p.ship_class === "pickup_only"), "the Charcoal section holds the shop's 69 listed charcoal items and the Duracubes 72 box (OSS-150001, Price TBD), all pickup or local delivery only: " + coal.length);
 ok(foilFeed.length === 15 && foilFeed.every(p => p.for_sale), "and Heat its 15 foil packs (since 2026-11-24): " + foilFeed.length);
 // the Heat pieces hidden when charcoal moved in are made-up samples: kept in Heat in the database, shippable and not charcoal,
 // and switched off with every other sample (owner, 2026-11-24: "Hide samples, show coming soon"), so the shop never shows them
 { const all = (await (await fetch(B + "/api/admin/products", { headers: { Cookie: cookie } })).json()).products, back = all.filter(p => /^OSS-40\d\d$/.test(p.sku));
   ok(back.length === 9 && back.every(p => p.category_id === "heat" && p.ship_class === "standard" && !JSON.parse(p.details || "{}").charcoal && p.active === 0), "the sample Heat pieces stay in Heat, shippable, not charcoal, and switched off: " + back.map(p => p.sku + ":" + p.active).join(","));
   ok(!cat.products.some(p => /^OSS-40\d\d$/.test(p.sku)), "and none of them is in the shop's catalogue"); }
-ok(coal.every(p => p.stock === 10), "every charcoal item starts at 10 in stock");
+ok(coal.every(p => p.sku === "OSS-150001" ? p.stock === 0 : p.stock === 10), "every listed charcoal item starts at 10 in stock; the unpriced Duracubes 72 box is not counted");
 // regression: no carrier service, on its own or mixed in, ever turns charcoal into a shipped order
 const carrierIds = [...new Set(quote(parsePostal("M5V 2T6"), pack([{ product: PRODUCTS.find(p => p.sku === "OSS-1001"), qty: 1 }]), fuelOn().pct).map(o => o.id))];
 ok(carrierIds.length >= 2, "the carrier services to try: " + carrierIds.join(","));
