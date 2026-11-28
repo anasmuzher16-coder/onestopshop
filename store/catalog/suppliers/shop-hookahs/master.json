@@ -3287,9 +3287,9 @@
      },
      "photo": {
       "img": "hookah/hookah-cut-crystal-base-wood-look-teardrop-stem-wood-and-gold",
-      "status": "replace",
+      "status": "shop",
       "large": true,
-      "src": "photo:PXL_20261128_004922986 (the shop's own photo, as taken: to be replaced)"
+      "src": "photo:PXL_20261128_004922986 (the shop's own photo, cut out, the mat cleared: clear_glass2.py)"
      },
      "shop": {
       "price_cents": {
@@ -3367,9 +3367,9 @@
      },
      "photo": {
       "img": "hookah/hookah-clear-base-bronze-stem-bronze",
-      "status": "replace",
+      "status": "shop",
       "large": true,
-      "src": "photo:PXL_20261128_005022344 (the shop's own photo, as taken: to be replaced)"
+      "src": "photo:PXL_20261128_005022344 (the shop's own photo, cut out, the mat cleared: clear_glass2.py)"
      },
      "shop": {
       "price_cents": {
@@ -4211,9 +4211,9 @@
      },
      "photo": {
       "img": "hookah/hookah-fluted-teardrop-stem-lime",
-      "status": "replace",
+      "status": "shop",
       "large": true,
-      "src": "photo:PXL_20261128_011030855 (the shop's own photo, as taken: to be replaced)"
+      "src": "photo:PXL_20261128_011030855 (the shop's own photo, cut out, the mat cleared: clear_glass2.py)"
      },
      "shop": {
       "price_cents": {
@@ -4343,9 +4343,9 @@
      },
      "photo": {
       "img": "hookah/mattpear-hookah-black-crackle-base",
-      "status": "replace",
+      "status": "shop",
       "large": true,
-      "src": "photo:PXL_20261128_005851370 (the shop's own photo, as taken: to be replaced)"
+      "src": "photo:PXL_20261128_005851370 (the shop's own photo, cut out, the mat cleared: clear_glass2.py)"
      },
      "shop": {
       "price_cents": {
@@ -4395,9 +4395,9 @@
      },
      "photo": {
       "img": "hookah/mattpear-hookah-black-clear-base",
-      "status": "replace",
+      "status": "shop",
       "large": true,
-      "src": "photo:IMG_0745 (the shop's own photo, as taken: to be replaced)"
+      "src": "photo:IMG_0745 (the shop's own photo, cut out, the mat cleared: clear_glass2.py)"
      },
      "shop": {
       "price_cents": {
@@ -4635,9 +4635,9 @@
      },
      "photo": {
       "img": "hookah/hookah-bulb-vase-on-a-black-stand-black-and-gold",
-      "status": "replace",
+      "status": "shop",
       "large": true,
-      "src": "photo:PXL_20261128_010217372 (the shop's own photo, as taken: to be replaced)"
+      "src": "photo:PXL_20261128_010217372 (the shop's own photo, cut out, the mat cleared: clear_glass2.py)"
      },
      "shop": {
       "price_cents": {
