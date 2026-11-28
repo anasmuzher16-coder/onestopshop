@@ -839,6 +839,49 @@ class TestShopHookahs(Base):
     def setUpClass(cls):
         super().setUpClass()
         cls.hk = C.load_master("shop-hookahs")
+        cls.cleaned = {v["sku"] for _, v in C.iter_variants(cls.hk) if v["photo"]["status"] == "shop"}
+
+    def as_first_uploaded(self):
+        """The master as shop-hookahs-2026-11-27.sql was made from it: every cleaned photo back to the tagged original."""
+        m = copy.deepcopy(self.hk)
+        for _, v in C.iter_variants(m):
+            if v["photo"]["status"] == "shop":
+                v["photo"]["status"] = "replace"
+                v["photo"]["src"] = v["photo"]["src"].replace("cut out, the mat cleared: clear_glass2.py", "as taken: to be replaced")
+        return m
+
+    def test_cleaned_photos_match_the_list(self):
+        import src_shop_hookahs as S
+        self.assertTrue(self.cleaned)
+        for _, v in C.iter_variants(self.hk):
+            if v["sku"] in self.cleaned:
+                self.assertIn("clear_glass2.py", v["photo"]["src"])
+                self.assertTrue(any(f"photo:{p} " in v["photo"]["src"] for p in S.CLEANED), v["sku"])
+        self.assertEqual(len(self.cleaned), len(S.CLEANED))
+
+    def test_live_clean_file_matches_master(self):
+        import live_clean_hookahs as L
+        self.assertEqual(L.OUT.read_text(encoding="utf-8"), L.sql(self.hk))
+
+    def test_live_clean_file_moves_only_photo_keys_and_is_safe_twice(self):
+        import live_clean_hookahs as L
+        con = self.con
+        con.executescript(live_sections(LIVE_HOOKAHS)["shop-hookahs"])
+        cols = "sku, name, price_cents, stock, active, listed, img, family, variant_label, facts_known"
+        before = {r[0]: r[1:] for r in con.execute(f"SELECT {cols} FROM products WHERE supplier_id = 'shop-hookahs'")}
+        con.executescript(L.OUT.read_text(encoding="utf-8"))
+        after = {r[0]: r[1:] for r in con.execute(f"SELECT {cols} FROM products WHERE supplier_id = 'shop-hookahs'")}
+        want = {r["sku"]: json.loads(r["sup"]["facts_known"]) for r in K.desired_rows("shop-hookahs", self.hk)}
+        for s in before:
+            self.assertEqual(before[s][:-1], after[s][:-1], s)
+            if s in self.cleaned:
+                self.assertEqual(json.loads(after[s][-1]), want[s], s)
+                self.assertEqual(json.loads(before[s][-1]), {**want[s], "photo_label": "replace", "photo_full": True}, s)
+            else:
+                self.assertEqual(before[s][-1], after[s][-1], s)
+        n = con.total_changes
+        con.executescript(L.OUT.read_text(encoding="utf-8"))
+        self.assertEqual(con.total_changes - n, 0)
 
     def test_master_validates_and_counts(self):
         C.validate_master(self.hk, self.reg)
@@ -870,6 +913,9 @@ class TestShopHookahs(Base):
                 self.assertEqual((f["photo"], f["stamp"]), ("own", "shelf"), r["sku"])
                 self.assertNotIn("photo_label", f); self.assertNotIn("photo_full", f)
                 self.assertTrue(f["photo_src"].startswith("https://"), r["sku"])
+            elif r["sku"] in self.cleaned:   # a cleaned shop photo (clear_glass2.py): cut out and framed, no tag
+                self.assertEqual((f["photo"], f["stamp"]), ("own", "shelf"), r["sku"])
+                self.assertNotIn("photo_label", f); self.assertNotIn("photo_full", f); self.assertNotIn("photo_src", f)
             else:          # the shop's original: full tile, "Photo to be replaced"
                 self.assertEqual((f["photo"], f["photo_label"], f["photo_full"], f["stamp"]), ("own", "replace", True, "shelf"), r["sku"])
             self.assertIsNone(f["weight_g"])
@@ -894,11 +940,12 @@ class TestShopHookahs(Base):
                 self.assertTrue(p.exists(), p)
                 with Image.open(p) as im:
                     self.assertEqual(im.size, size, p)
-                    if web:   # a cut-out: transparent round the product, never a white box
+                    if web or v["photo"]["status"] == "shop":   # a cut-out: transparent round the product, never a white box
                         self.assertEqual((im.mode, im.getpixel((0, 0))[3]), ("RGBA", 0), p)
 
     def test_live_file_matches_master(self):
-        self.assertEqual(live_sections(LIVE_HOOKAHS)["shop-hookahs"], K.seed_sql("shop-hookahs", self.hk))
+        # the first upload, as made (cleaned photos since then: hookah-clean-2026-11-27.sql, tested above)
+        self.assertEqual(live_sections(LIVE_HOOKAHS)["shop-hookahs"], K.seed_sql("shop-hookahs", self.as_first_uploaded()))
 
     def test_live_file_touches_only_new_rows(self):
         sql = live_sections(LIVE_HOOKAHS)["shop-hookahs"]

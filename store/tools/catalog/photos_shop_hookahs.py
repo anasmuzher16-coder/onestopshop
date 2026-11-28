@@ -7,7 +7,12 @@ store/public/img/pc/hookah/<name>-<colour>{,-l,-m,-s}.webp. Counter and mat stay
 An EXACT hookah's web photo is cut out (rembg p -m birefnet-general-lite WEB_DIR CUT_DIR) and framed like the Ace hookahs
 (frame_cutouts.py CUT_DIR WEB_FRAMED --kind hookah IMG_xxxx ...); this copies WEB_FRAMED/IMG_xxxx{,-m,-s,-l}.webp in.
 
-  python store/tools/catalog/photos_shop_hookahs.py FULL_DIR WEB_FRAMED
+A cleaned shop photo (src_shop_hookahs.CLEANED: clear_glass2.py, then frame_cutouts.py CUT CLEAN_FRAMED --kind hookah
+--glass IMG_xxxx ...) is copied in from CLEAN_FRAMED/IMG_xxxx{,-m,-s,-l}.webp in place of the original, same file name.
+--clean-only copies just those (FULL_DIR and WEB_FRAMED are then not read) and leaves every other photo as it is.
+
+  python store/tools/catalog/photos_shop_hookahs.py FULL_DIR WEB_FRAMED [CLEAN_FRAMED]
+  python store/tools/catalog/photos_shop_hookahs.py --clean-only CLEAN_FRAMED
   node store/tools/photo-versions.mjs          then, so each photo gets its version
 """
 from __future__ import annotations
@@ -41,13 +46,46 @@ def frame(src: Path) -> Image.Image:
     return up.crop((0, y, w, y + ch))
 
 
-def main(full: Path, web: Path):
+def copy_framed(folder: Path, photo: str, dst: Path, want: set):
+    """Copy a framed cut-out (RGBA, 720x900 and the other sizes; the large one only if made) in under dst's name."""
+    for suf, size in SIZES.items():
+        src = folder / f"{photo}{suf}.webp"
+        if not src.exists():
+            if suf == "-l":
+                continue
+            raise SystemExit(f"missing {src}")
+        with Image.open(src) as im:
+            if im.size != size or im.mode != "RGBA":
+                raise SystemExit(f"{src.name} is {im.size} {im.mode}, not {size} RGBA")
+        out = dst.with_name(dst.name + suf + ".webp")
+        shutil.copyfile(src, out)
+        want.add(out.name)
+
+
+def clean_only(clean: Path):
+    pc = C.STORE / "public" / "img" / "pc"
+    n = 0
+    for name, _fam, _where, shots, _why, _group in src_shop_hookahs.HOOKAHS:
+        for photo, colour, page in shots:
+            if photo in src_shop_hookahs.CLEANED and not page:
+                copy_framed(clean, photo, pc / src_shop_hookahs.photo_name(name, colour), set())
+                n += 1
+    print(f"{n} cleaned hookah photos copied to store/public/img/pc/hookah/")
+
+
+def main(full: Path, web: Path, clean: Path | None = None):
     pc = C.STORE / "public" / "img" / "pc"
     want, done, webs = set(), 0, 0
     for name, _fam, _where, shots, _why, _group in src_shop_hookahs.HOOKAHS:
         for photo, colour, page in shots:
             dst = pc / src_shop_hookahs.photo_name(name, colour)
             dst.parent.mkdir(parents=True, exist_ok=True)
+            if photo in src_shop_hookahs.CLEANED and not page:
+                if clean is None:
+                    raise SystemExit(f"{photo} is cleaned: give CLEAN_FRAMED")
+                copy_framed(clean, photo, dst, want)
+                done += 1
+                continue
             if page:   # the web photo, already cut out and framed (RGBA, 720x900 and the other sizes)
                 for suf, size in SIZES.items():
                     src = web / f"{photo}{suf}.webp"
@@ -76,4 +114,7 @@ def main(full: Path, web: Path):
 
 
 if __name__ == "__main__":
-    main(Path(sys.argv[1]), Path(sys.argv[2]))
+    if sys.argv[1] == "--clean-only":
+        clean_only(Path(sys.argv[2]))
+    else:
+        main(Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3]) if len(sys.argv) > 3 else None)
