@@ -3367,9 +3367,9 @@
      },
      "photo": {
       "img": "hookah/hookah-clear-base-bronze-stem-bronze",
-      "status": "replace",
+      "status": "shop",
       "large": true,
-      "src": "photo:PXL_20261128_005022344 (the shop's own photo, as taken: to be replaced)"
+      "src": "photo:PXL_20261128_005022344 (the shop's own photo, cut out, the mat cleared: clear_glass2.py)"
      },
      "shop": {
       "price_cents": {

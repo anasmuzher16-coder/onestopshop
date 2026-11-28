@@ -120,8 +120,8 @@ Each PHOTOS entry (pixels of the 2600 px tall photo):
            more than t are kept as highlights (the glass's own reflections, fainter than a specular).
   spec_off list of [x0, y0, x1, y1]: no highlight or texture kept there (one that reads as a printed mark).
   spec_min px: highlights in pieces smaller than this are dropped (lone specks read as noise, not as glass).
-  spec_soft [sigma, peak]: the kept highlights blurred by sigma px and capped at peak (below 1): blown specular blobs
-           with hard edges roll off instead of reading as pasted white.
+  spec_soft [sigma, peak]: the kept highlights blurred by sigma px and scaled by peak (below 1, so none reaches full
+           white): blown specular blobs with hard edges roll off instead of reading as pasted white.
   tex_median px: the median that takes noise out of the texture before its band is read (default 3); cut glass wants
            about 7, so its facets read as flat planes with crisp edges, not crinkled cellophane.
   mat_gain the strength of the texture read over the mat (default 1): below 1 where the print still shows as blotches.
@@ -553,21 +553,34 @@ PHOTOS_CREW10 = {
     # OSS-140045 smooth clear base, bronze stem, on the mat: drawn as smooth glass (no texture read over the mat, so no
     # print), body and the thick foot ring, blown highlights softened
     "PXL_20261128_005022344": {"foot": [1010, 2340, [280, 281], 222, 4.0, 120, 60], "fill": True, "glass": [1772, 2565], "fade": 3,
-                               "stem": [985, 1790, 1022, 2292], "texture": False, "tex_to": 2150, "rim": [0.2, 2.5, 0.10], "inner": 0.10,
-                               "body": [0.10, 0.12], "thick": [[1010, 2345, 252, 190, 2370, 0.25]], "spec_min": 30, "spec_soft": [2.5, 0.75]},
-    # OSS-140046 cut-crystal base, red spring stem, on the mat: ratio method as 140044 (cut facets on a wider band, the
+                               "stem": [985, 1790, 1022, 2292], "texture": "wall", "mat": [[1010, 2420, 330, 260]], "rim": [0.2, 2.5, 0.10], "inner": 0.16,
+                               "body": [0.06, 0.06], "thick": [[1010, 2345, 252, 190, 2370, -0.10]], "spec_min": 12, "spec_soft": [1.5, 0.8]},
+    # OSS-140046 (HELD: the mat's triangles refracted through the lower facets read as print) cut-crystal base, red spring stem, on the mat: ratio method as 140044 (cut facets on a wider band, the
     # print's texture damped over the mat), the frosted collar under the black joint kept as cut
     "PXL_20261128_005129760": {"foot": [997, 2237, [300, 301], 207, 4.5, 0, 60], "fill": True,
                                "outline": [[1985, 993, 107], [2010, 996, 115], [2030, 1001, 132], [2045, 1000, 155], [2060, 993, 200], [2080, 996.5, 236.5], [2100, 1000, 257], [2150, 998.5, 288.5], [2200, 997, 300], [2237, 997.5, 300.5]], "glass": [1650, 2450], "fade": 3,
                                "keep_above": [990, 1650, 135, 22], "stem": [975, 1660, 1012, 2125],
-                               "tex_median": 3, "tex": [8, 6.5], "tex_light": 0.6, "body": [0.10, 0.0],
-                               "mat": [[985, 2253, 366, 259]], "mat_gain": 0.35, "rim": [0.3, 3.0, 0.08]},
-    # OSS-140047 the same cut-crystal base, blue spring stem, on the mat: as 140046
+                               "tex_median": 3, "tex": [8, 6.5], "body": [0.10, 0.0],
+                               "mat": [[985, 2253, 366, 259]], "texture": "wall", "spec_mat": 0.3, "rim": [0.3, 3.0, 0.08]},
+    # OSS-140047 (HELD, as 140046) the same cut-crystal base, blue spring stem, on the mat: as 140046
     "PXL_20261128_005343131": {"foot": [928.5, 2350, [301.5, 301.5], 206, 4.5, 0, 60], "fill": True,
                                "outline": [[2080, 932, 110], [2100, 932.5, 120.5], [2150, 933.5, 143.5], [2175, 936.5, 186.5], [2200, 933, 230], [2225, 932, 255], [2250, 930, 273], [2300, 930, 293], [2350, 928.5, 301.5]],
                                "glass": [1765, 2560], "fade": 3, "keep_above": [932, 1765, 135, 22], "stem": [912, 1775, 946, 2215],
-                               "tex_median": 3, "tex": [8, 6.5], "tex_light": 0.6, "body": [0.10, 0.0],
-                               "mat": [[950, 2380, 370, 250]], "mat_gain": 0.35, "rim": [0.3, 3.0, 0.08]},
+                               "tex_median": 3, "tex": [8, 6.5], "body": [0.10, 0.0],
+                               "mat": [[950, 2380, 370, 250]], "texture": "wall", "spec_mat": 0.3, "rim": [0.3, 3.0, 0.08]},
+    # OSS-140048 (HELD: the mat seen through the floor as a starburst) cut-crystal base (diamond band, fluted flare), lavender spring stem, on the mat: as 140046
+    "PXL_20261128_011555355": {"foot": [1003, 2280, [293, 293], 225, 3.5, 0, 60], "fill": True,
+                               "outline": [[2000, 998, 95], [2050, 1001.5, 111.5], [2100, 1007, 150], [2125, 1005, 188], [2150, 1001.5, 231.5], [2175, 996.5, 256.5], [2200, 996.5, 276.5], [2250, 998.5, 288.5], [2280, 1003, 293]],
+                               "glass": [1690, 2510], "fade": 3, "keep_above": [1000, 1690, 110, 10], "stem": [975, 1700, 1020, 2215],
+                               "tex_median": 3, "tex": [8, 6.5], "body": [0.10, 0.0],
+                               "mat": [[1003, 2300, 360, 230]], "texture": "wall", "spec_mat": 0.3, "rim": [0.3, 3.0, 0.08]},
+    # OSS-140049 (HELD, and 140050 the same base: the floor's dense multicolour frit over the mat print; keep_print kept only
+    # the chromatic flecks as sparse chips) smooth clear dome base, blue stem, on the mat
+    "PXL_20261128_005212636": {"foot": [979, 2430, [294, 294], 131, 3.0, 0, 60], "fill": True,
+                               "outline": [[2060, 981, 69], [2090, 981, 120], [2120, 980, 190], [2150, 978, 234], [2200, 977, 262], [2250, 975, 275], [2300, 977, 285], [2350, 978, 291], [2430, 979, 294]],
+                               "glass": [1752, 2565], "fade": 3, "stem": [958, 1752, 1004, 2240], "texture": "wall",
+                               "keep_print": [[685, 2180, 1275, 2565, 60]], "mat": [[980, 2440, 330, 220]], "spec_mat": 0.3,
+                               "rim": [0.2, 2.5, 0.10], "inner": 0.16, "body": [0.06, 0.06], "spec_min": 12, "spec_soft": [1.5, 0.8]},
 }
 PHOTOS.update(PHOTOS_CREW10)
 
