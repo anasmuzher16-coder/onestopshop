@@ -42,11 +42,12 @@ export function weightGrams(v) {
 export const sellable = p => !!p && p.active === 1 && p.price_cents > 0;
 const parse = s => { try { const v = JSON.parse(s || "{}"); return v && typeof v === "object" ? v : {}; } catch { return {}; } };
 // One card per family, colours as chips: an Ace hookah family (ace-...) and the shop's own hoses (hose-..., 2026-11-27: one
-// family per hose, a colour per photo) and the shop's own bowls (bowl-..., 2026-11-27, the same). Shisha flavours, charcoal
+// family per hose, a colour per photo), the shop's own bowls (bowl-..., 2026-11-27, the same) and its own hookahs (hookah-...,
+// 2026-11-27, the same; its blue Ace Rose joins ace-rose). Shisha flavours, charcoal
 // and the Ace accessories stay one card each.
-export const groupedFamily = f => /^(ace|hose|bowl)-/.test(String(f || ""));
+export const groupedFamily = f => /^(ace|hose|bowl|hookah)-/.test(String(f || ""));
 // What a shopper may see of a catalogue item's facts. Unknown stays null and is shown as "TBD", never guessed.
-const FACT_KEYS = ["includes_base", "height_cm", "length", "acrylic", "includes", "group", "stamp", "photo", "photo_hex", "colour_confirmed", "photo_label", "shown_in", "photo_upscale", "count", "size", "brand", "shape", "material", "weight_g", "item_weight_g", "features"];   // item_weight_g: the piece's own weight from a maker's page, shown only; never the pack weight shipping uses (weight_g)
+const FACT_KEYS = ["includes_base", "height_cm", "length", "acrylic", "includes", "group", "stamp", "photo", "photo_hex", "colour_confirmed", "photo_label", "photo_full", "shown_in", "photo_upscale", "count", "size", "brand", "shape", "material", "weight_g", "item_weight_g", "features"];   // item_weight_g: the piece's own weight from a maker's page, shown only; never the pack weight shipping uses (weight_g)
 function shownFacts(p) {
   const f = parse(p.facts_known), out = {};
   for (const k of FACT_KEYS) if (k in f) out[k] = f[k];

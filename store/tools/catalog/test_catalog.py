@@ -581,7 +581,33 @@ class TestShopHoses(Base):
 
     def test_live_file_matches_master(self):
         # hoses-2026-11-27.sql is the first upload (kept as it was applied); the newest live file carries the current seed
-        self.assertEqual(live_sections(LIVE_SHOP)["shop-hoses"], K.seed_sql("shop-hoses", self.hoses))
+        self.assertEqual(live_sections(LIVE_HOOKAHS)["shop-hoses"], K.seed_sql("shop-hoses", self.hoses))
+
+    def test_every_hose_photo_to_be_replaced(self):
+        # owner 2026-11-27: "put a photo to be changed tag on all the hoses"; the photos themselves stay as they are
+        rows = K.desired_rows("shop-hoses", self.hoses)
+        self.assertEqual(len(rows), 31)
+        for r in rows:
+            f = json.loads(r["sup"]["facts_known"])
+            self.assertEqual((f["photo"], f.get("photo_label")), ("own", "replace"), r["sku"])
+
+    def test_live_tag_over_applied_hoses_changes_only_the_label(self):
+        """Over hoses as shop-photos-2026-11-27.sql left them, the new live file changes facts_known only (the tag), and a
+        second run changes nothing."""
+        con = self.con
+        con.executescript(live_sections(LIVE_SHOP)["shop-hoses"])
+        before = {r[0]: r[1:] for r in con.execute("SELECT sku, name, price_cents, stock, active, listed, img, family, variant_label, facts_known FROM products WHERE supplier_id = 'shop-hoses'")}
+        con.executescript(live_sections(LIVE_HOOKAHS)["shop-hoses"])
+        after = {r[0]: r[1:] for r in con.execute("SELECT sku, name, price_cents, stock, active, listed, img, family, variant_label, facts_known FROM products WHERE supplier_id = 'shop-hoses'")}
+        self.assertEqual(sorted(before), sorted(after))
+        for s in before:
+            self.assertEqual(before[s][:-1], after[s][:-1], s)
+            old, new = json.loads(before[s][-1]), json.loads(after[s][-1])
+            self.assertNotIn("photo_label", old)
+            self.assertEqual({**old, "photo_label": "replace"}, new, s)
+        n = con.total_changes
+        con.executescript(live_sections(LIVE_HOOKAHS)["shop-hoses"])
+        self.assertEqual(con.total_changes - n, 0)
 
     def test_apply_twice_is_stable(self):
         p1 = K.apply_supplier(self.con, "shop-hoses", self.hoses)
@@ -657,6 +683,7 @@ class TestReverseSearch(Base):
                 self.assertEqual(got[1], r["shop"]["name"], r["sku"])
 
 LIVE_SHOP = "shop-photos-2026-11-27.sql"
+LIVE_HOOKAHS = "shop-hookahs-2026-11-27.sql"
 
 
 class TestShopPhotosForAce(Base):
@@ -789,6 +816,90 @@ class TestShopBowls(Base):
         p1 = K.apply_supplier(self.con, "shop-bowls", self.bowls)
         self.assertEqual(len(p1["added"]), 28)
         p2 = K.apply_supplier(self.con, "shop-bowls", self.bowls)
+        self.assertEqual((len(p2["added"]), len(p2["changed"]), len(p2["retired"])), (0, 0, 0))
+
+
+class TestShopHookahs(Base):
+    """The shop's own hookahs (2026-11-27): on view, Price TBD, in the shop, the original photo tagged to be replaced, every
+    name flagged for the shop; no size, height or contents claimed."""
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.hk = C.load_master("shop-hookahs")
+
+    def test_master_validates_and_counts(self):
+        C.validate_master(self.hk, self.reg)
+        self.assertEqual(len(self.hk["families"]), 22)
+        skus = [v["sku"] for _, v in C.iter_variants(self.hk)]
+        self.assertEqual(skus, [f"OSS-14{n:04d}" for n in range(1, 28)])
+        self.assertNotIn("IMG_0689", json.dumps(self.hk))   # the Panda is OSS-100077 already: never a second card
+
+    def test_rebuild_is_stable(self):
+        reg = copy.deepcopy(self.reg)
+        m, retired = K.build_hookahs(reg, "2099-01-01")
+        C.carry_shop(self.hk, m)
+        self.assertEqual(retired, [])
+        self.assertEqual(C.dumps(m), C.dumps(self.hk))
+        self.assertEqual(reg, self.reg)
+
+    def test_rows_on_view_tbd_flagged_tagged(self):
+        rows = K.desired_rows("shop-hookahs", self.hk)
+        self.assertEqual(len(rows), 27)
+        web = [r for r in rows if "photo_src" in json.loads(r["sup"]["facts_known"])]
+        self.assertEqual([r["sku"] for r in web], ["OSS-140001", "OSS-140002", "OSS-140003", "OSS-140004"])   # the Steamulations
+        for r in rows:
+            s, f = r["shop"], json.loads(r["sup"]["facts_known"])
+            self.assertEqual((s["price_cents"], s["active"], s["listed"], s["stock"], s["category_id"], s["availability"], s["glass"], s["weight_g"]),
+                             (0, 0, 1, 0, "hookahs", "in_store_uncounted", 1, 1), r["sku"])
+            self.assertEqual(r["sup"]["supplier_id"], "shop-hookahs")
+            self.assertTrue(r["sup"]["img"].startswith("hookah/"))
+            if r in web:   # an exact model's web photo: no tag, framed like the Ace hookahs
+                self.assertEqual((f["photo"], f["stamp"]), ("own", "shelf"), r["sku"])
+                self.assertNotIn("photo_label", f); self.assertNotIn("photo_full", f)
+                self.assertTrue(f["photo_src"].startswith("https://"), r["sku"])
+            else:          # the shop's original: full tile, "Photo to be replaced"
+                self.assertEqual((f["photo"], f["photo_label"], f["photo_full"], f["stamp"]), ("own", "replace", True, "shelf"), r["sku"])
+            self.assertIsNone(f["weight_g"])
+            self.assertIsNone(r["sup"]["height_cm"])
+            self.assertTrue(f["needs_confirm"] and f["confirm_why"], r["sku"])
+            for k in ("height_cm", "includes", "includes_base", "size", "length"):
+                self.assertNotIn(k, f, r["sku"])
+            self.assertNotRegex(s["name"].lower(), r"hose|include|bowl|tong|cm\b|inch")
+            fam = r["sup"]["family"]
+            self.assertTrue(fam.startswith("hookah-") or (fam == "ace-rose" and r["sup"]["variant_label"] == "Blue"), fam)
+
+    def test_family_prefix_is_grouped_on_the_site(self):
+        js = (C.STORE / "src" / "catalog.js").read_text(encoding="utf-8")
+        self.assertIn("/^(ace|hose|bowl|hookah)-/", js)
+
+    def test_photos_exist_framed(self):
+        from PIL import Image
+        for f, v in C.iter_variants(self.hk):
+            web = v["photo"]["status"] == "ready"
+            for suf, size in (("", (720, 900)), ("-m", (540, 675)), ("-s", (360, 450))) + (() if web else (("-l", (1440, 1800)),)):
+                p = C.STORE / "public" / "img" / "pc" / (v["photo"]["img"] + suf + ".webp")
+                self.assertTrue(p.exists(), p)
+                with Image.open(p) as im:
+                    self.assertEqual(im.size, size, p)
+                    if web:   # a cut-out: transparent round the product, never a white box
+                        self.assertEqual((im.mode, im.getpixel((0, 0))[3]), ("RGBA", 0), p)
+
+    def test_live_file_matches_master(self):
+        self.assertEqual(live_sections(LIVE_HOOKAHS)["shop-hookahs"], K.seed_sql("shop-hookahs", self.hk))
+
+    def test_live_file_touches_only_new_rows(self):
+        sql = live_sections(LIVE_HOOKAHS)["shop-hookahs"]
+        for line in sql.splitlines():
+            if line.startswith("UPDATE products"):
+                self.assertTrue("supplier_id = 'shop-hookahs'" in line, line[:120])
+            m = re.search(r"WHERE sku = '([^']+)'", line)
+            if m:
+                self.assertRegex(m.group(1), r"^OSS-14\d{4}$")
+
+    def test_apply_twice_is_stable(self):
+        p1 = K.apply_supplier(self.con, "shop-hookahs", self.hk)
+        self.assertEqual(len(p1["added"]), 27)
+        p2 = K.apply_supplier(self.con, "shop-hookahs", self.hk)
         self.assertEqual((len(p2["added"]), len(p2["changed"]), len(p2["retired"])), (0, 0, 0))
 
 

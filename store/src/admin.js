@@ -195,7 +195,7 @@ async function itemInfo(db, sku, request, session, path, parsed) {
       if (colours.length) { d.colours = colours.map(c => c.name); if (Object.keys(hex).length) d.colour_hex = hex; }
       // A hookah family's row is one colour of that hookah: its colours become its chip name ("Black and Gold"), unless the
       // shop already typed a name for it in the full form (that name is kept; only a name this editor wrote is replaced).
-      if (/^(ace|hose|bowl)-/.test(String(before.family || ""))) {   // a hookah colour, or a colour of one of the shop's hoses or bowls
+      if (/^(ace|hose|bowl|hookah)-/.test(String(before.family || ""))) {   // a hookah colour, or a colour of one of the shop's hoses, bowls or hookahs
         const ours = !had.colour || (Array.isArray(had.colours) && had.colour === joinColours(had.colours));
         if (ours) { if (colours.length) d.colour = joinColours(d.colours); else delete d.colour; }
         if (ours && colours.length && d.colour.length > 40) return json({ error: "Check: colours (a colour's name is up to 40 letters; pick fewer)." }, 400);
@@ -254,7 +254,7 @@ const OPEN_COLS = "sku, name, category_id, price_cents, weight_g, stock, active,
 // what its page shows (details.colour, or the family chip name), so the panel matches the page.
 function ownColours(d, p) {
   const saved = (Array.isArray(d.colours) ? d.colours : []).filter(n => typeof n === "string");
-  if (saved.length || !/^(ace|hose)-/.test(String(p.family || ""))) return saved;
+  if (saved.length || !/^(ace|hose|hookah)-/.test(String(p.family || ""))) return saved;
   const own = String(d.colour || p.variant_label || "").split(/,| and /).map(s => s.replace(/\s+/g, " ").trim()).filter(s => /^[\p{L}][\p{L} &/'-]{0,23}$/u.test(s));
   return [...new Set(own)].slice(0, 4);
 }
@@ -298,7 +298,7 @@ export async function openEdit(request, env, url, onShop) {
   const hex = d.colour_hex && typeof d.colour_hex === "object" ? d.colour_hex : {};
   return json({ sku: p.sku, editable: true, name: p.name, price_cents: p.price_cents > 0 ? p.price_cents : null, stock: p.stock, counted: p.availability === "counted", on_sale: p.active === 1 && p.price_cents > 0,
     colours: ownColours(d, p).map(n => Object.hasOwn(hex, n) && /^#[0-9a-f]{6}$/i.test(hex[n]) ? { name: n, hex: hex[n] } : { name: n }),
-    hookah_row: String(p.family || "").startsWith("ace-"), family_row: /^(ace|hose)-/.test(String(p.family || "")), needs, weight_g: knownWeightG(p), ...(isCharcoalRow(p) || d.charcoal === true ? { charcoal: true } : {}), ...(hasLen ? { length: curLen || "", has_length: true } : {}), ...(needs.includes("check") ? { check: true } : {}), next: next ? next.sku : null, left, scope: openScope(env) });
+    hookah_row: /^(ace|hookah)-/.test(String(p.family || "")), family_row: /^(ace|hose|hookah)-/.test(String(p.family || "")), needs, weight_g: knownWeightG(p), ...(isCharcoalRow(p) || d.charcoal === true ? { charcoal: true } : {}), ...(hasLen ? { length: curLen || "", has_length: true } : {}), ...(needs.includes("check") ? { check: true } : {}), next: next ? next.sku : null, left, scope: openScope(env) });
 }
 // why an unsure item needs its name and length checked (back office only; the storefront never sees facts_known's notes)
 const checkWhy = s => { try { const w = (JSON.parse(s || "{}") || {}).confirm_why; return typeof w === "string" ? w.slice(0, 300) : ""; } catch { return ""; } };

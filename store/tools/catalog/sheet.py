@@ -31,7 +31,8 @@ WRITE_COLS = {"Your price ($, before tax)", "Stock count", "Colour name (correct
 GROUP_NAMES = {"full_size": "Full size", "stem_set": "Stem set (no base)", "compact_travel": "Compact and travel",
                "statement": "Statement piece"}
 PHOTO_WORDS = {"ready": "Ready", "CHECK": "Ready, enlarged: check it", "hand_crop": "Needs a hand crop",
-               "family_hero_only": "Uses the main photo only", "none": "No photo", "needs_store_photo": "Shop to photograph"}
+               "family_hero_only": "Uses the main photo only", "none": "No photo", "needs_store_photo": "Shop to photograph",
+               "replace": "On the site with 'Photo to be replaced': send a cleaner photo"}
 
 # Suppliers whose items come from a printed catalogue (a page, Ace's printed name, the shop's tick)
 CATALOGUES = ("ace", "ace-acc")
@@ -118,7 +119,7 @@ def write_workbook(path: Path, masters: dict):
     for s, m in live.items():
         vs = [v for _, v in C.iter_variants(m)]
         priced = sum(1 for v in vs if v["shop"]["price_cents"]["v"])
-        photos = sum(1 for v in vs if v["photo"]["status"] in ("ready", "CHECK"))
+        photos = sum(1 for v in vs if v["photo"]["status"] in ("ready", "CHECK", "shop", "replace"))
         ws.cell(row=r, column=1, value=m["supplier"]["name"]).font = S["head"]
         ws.cell(row=r, column=1).border = S["head_rule"]
         r += 1

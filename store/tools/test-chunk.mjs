@@ -130,6 +130,21 @@ if (process.env.PERSIST) {
   await p.goto(B + "/p/" + up.sku, { waitUntil: "load" }); await p.waitForTimeout(600);
   const afterPage = await p.evaluate(() => document.querySelector("[data-stage] .shot__tag--tbd")?.textContent || "");
   ok(upl.status === 200 && afterCard === "" && afterPage === "", `after the shop uploads its own photo the label is gone: ${upl.status} "${afterCard}" "${afterPage}"`);
+  // the shop's original hookah photos and every hose (owner 2026-11-27): "Photo to be replaced" on the card and the page; an
+  // approved photo (the red Ace Rose, the shop's own cleaned photo) never carries it
+  { const tagOf = async (path, sel) => { await p.goto(B + path, { waitUntil: "load" }); await p.waitForTimeout(800); return p.evaluate(s => document.querySelector(s)?.textContent || "", sel); };
+    const hk = P1.find(x => x.sku === "OSS-140012"), web = P1.find(x => x.sku === "OSS-140001"), hose = P1.find(x => x.sku === "OSS-120011");
+    const hkCard = await tagOf("/shop/hookahs", `#main a[data-piece="${hk.sku}"] .shot__tag--tbd`), hkPage = await tagOf("/p/" + hk.sku, "[data-stage] .shot__tag--tbd");
+    const hkFull = await p.evaluate(() => !!document.querySelector("[data-stage].tile--photo > img.shot--photo"));
+    ok(hkCard === "Photo to be replaced" && hkPage === "Photo to be replaced" && hkFull, `a shop hookah's original photo fills its tile and is tagged on its card and page: "${hkCard}" "${hkPage}" ${hkFull}`);
+    const webPage = await tagOf("/p/" + web.sku, "[data-stage] .shot__tag--tbd"), webCut = await p.evaluate(() => !!document.querySelector("[data-stage]:not(.tile--photo) > img.shot:not(.shot--photo)"));
+    ok(webPage === "" && webCut, `an exact model's web photo is a cut-out with no tag: "${webPage}" ${webCut}`);
+    const hoseCards = await (async () => { await p.goto(B + "/shop/hoses", { waitUntil: "load" }); await p.waitForTimeout(900); return p.evaluate(() => [...document.querySelectorAll("#main .card")].filter(c => /^OSS-12\d{4}$/.test(c.querySelector("[data-piece]")?.dataset.piece || "")).map(c => c.querySelector(".shot__tag--tbd")?.textContent || "")); })();
+    ok(hoseCards.length === 21 && hoseCards.every(t => t === "Photo to be replaced"), `every hose card is tagged: ${hoseCards.filter(t => t === "Photo to be replaced").length}/${hoseCards.length}`);
+    const hosePage = await tagOf("/p/" + hose.sku, "[data-stage] .shot__tag--tbd");
+    ok(hosePage === "Photo to be replaced", `a hose's page is tagged: "${hosePage}"`);
+    const rosePage = await tagOf("/p/OSS-100150", "[data-stage] .shot__tag--tbd"), roseCard = await tagOf("/shop/hookahs", `#main a[data-piece="OSS-100150"] .shot__tag--tbd`);
+    ok(rosePage === "" && roseCard === "", `an approved photo carries no tag: "${roseCard}" "${rosePage}"`); }
   // an item waiting for the shop's price is "in the shop": its page never offers a back-in-stock email, a sold-out item for sale does
   const tbd = P1.find(p => p.state === "tbd" && p.stock === 0), gone = P1.find(p => p.state === "sale" && p.stock === 0);
   if (tbd) { await p.goto(B + "/p/" + tbd.sku, { waitUntil: "load" }); await p.waitForSelector(".keep__b", { timeout: 8000 }).catch(() => {});
