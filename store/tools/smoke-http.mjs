@@ -149,7 +149,14 @@ ok(m.PRODUCTS.every(p => (p.cat === "cologne" ? p.ship === "ground_only" : p.cat
 // more photos of one item (products.img_more, 2026-11-28): every SKU the seed gives extra photos carries them, in order, each
 // served at the main photo's sizes (-s, -m, the 720 and the 1440 -l when lw says so); never on an item without a main photo
 // (each line is guarded on the main photo it was framed beside: where the seed's row has another main photo, it gets none)
-{ const guard = new Map(), want = new Map(SEED_FILES.flatMap(f => [...readFileSync(seedPath(f), "utf8").matchAll(/^UPDATE products SET img_more = '([^']*)' WHERE sku = '(OSS-\d+)'(?: AND img = '([^']*)')?/gm)].map(x => { guard.set(x[2], x[3]); return [x[2], JSON.parse(x[1])]; })));
+// A later file that moves the extra photo to the main photo and empties img_more (catalog/live/pack-photos-2026-11-28.sql:
+// "UPDATE products SET img = '<new main>', img_lw = ..., img_more = NULL ... WHERE sku = ...") takes that SKU off the list, in seed order,
+// and the SKU must then show the new main photo with no gallery.
+{ const guard = new Map(), want = new Map(), cleared = new Map();
+  for (const f of SEED_FILES) for (const x of readFileSync(seedPath(f), "utf8").matchAll(/^UPDATE products SET (?:img_more = '([^']*)' WHERE sku = '(OSS-\d+)'(?: AND img = '([^']*)')?|img = '([^']*)', img_lw = [^,]+, img_more = NULL[^\n]*\n WHERE sku = '(OSS-\d+)')/gm)) {
+    if (x[2]) { guard.set(x[2], x[3]); want.set(x[2], JSON.parse(x[1])); cleared.delete(x[2]); } else { guard.delete(x[5]); want.delete(x[5]); cleared.set(x[5], x[4]); } }
+  const notCleared = [...cleared].filter(([sku, img]) => { const p = m.PRODUCTS.find(x => x.sku === sku); return !p || p.img !== img || "more" in p; }).map(([sku]) => sku);
+  ok(cleared.size && !notCleared.length, `an extra photo made the main photo shows as the main photo, with no gallery left (${cleared.size}): ` + notCleared.join(" "));
   const g = m.PRODUCTS.filter(p => "more" in p);
   ok(g.every(p => p.img && Array.isArray(p.more) && p.more.length && p.more.every(x => typeof x.img === "string" && x.img !== p.img && (x.lw === undefined || x.lw === 1440))), "img_more only on items with a main photo, never the main photo twice");
   const off = [...want].filter(([sku, l]) => { const p = m.PRODUCTS.find(x => x.sku === sku); if (!p) return false; const applies = guard.get(sku) === undefined || guard.get(sku) === p.img;
