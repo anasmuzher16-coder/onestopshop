@@ -941,7 +941,7 @@ class TestShopHookahs(Base):
     def test_live_clean_b_holds_only_group_b(self):
         import live_clean_hookahs as L
         import src_shop_hookahs as S
-        self.assertFalse(S.CLEANED_B & (S.CLEANED_FIRST | S.CLEANED_A | S.CLEANED_A3))   # group B goes live in its own file only
+        self.assertFalse(S.CLEANED_B & (S.CLEANED_FIRST | S.CLEANED_A | S.CLEANED_A3 | S.CLEANED_A2))   # group B goes live in its own file only
         b = {r["sku"] for r in L.cleaned_rows(self.hk, S.CLEANED_B)}
         others = set().union(*[{r["sku"] for r in L.cleaned_rows(self.hk, p)} for _, p, _ in L.FILES])
         self.assertFalse(b & others)
