@@ -5,7 +5,10 @@
                                                          hookah-clean-a-2026-11-28.sql (group A, CLEANED_A),
                                                          hookah-clean-b-2026-11-28.sql (group B, CLEANED_B, and the Panda),
                                                          hookah-clean-a3-2026-11-28.sql (group A reworked, CLEANED_A3) and
-                                                         hookah-clean-a2-2026-11-28.sql (group A second pass, CLEANED_A2)
+                                                         hookah-clean-a2-2026-11-28.sql (group A second pass, CLEANED_A2),
+                                                         hookah-clean-crew1-2026-11-28.sql (crew 1, the Drive batch,
+                                                         CLEANED_C1: seeded after drive2-2026-11-28.sql, which resets
+                                                         those rows' facts_known)
 
 A cleaned photo (src_shop_hookahs.CLEANED, clear_glass2.py) goes in under the same file name as the original it replaces,
 so img does not change: only the photo keys of facts_known move. photo stays 'own'; photo_label ('replace') and
@@ -32,8 +35,11 @@ OUT_A = C.CATALOG / "live" / "hookah-clean-a-2026-11-28.sql"
 OUT_B = C.CATALOG / "live" / "hookah-clean-b-2026-11-28.sql"
 OUT_A3 = C.CATALOG / "live" / "hookah-clean-a3-2026-11-28.sql"
 OUT_A2 = C.CATALOG / "live" / "hookah-clean-a2-2026-11-28.sql"
+OUT_C1 = C.CATALOG / "live" / "hookah-clean-crew1-2026-11-28.sql"
+DRIVE2 = "drive2-2026-11-28.sql"   # inserts the Drive batch with the tag and resets facts_known while it differs: run it first
 FILES = [(OUT, S.CLEANED_FIRST, "2026-11-27"), (OUT_A, S.CLEANED_A, "2026-11-28"),
-         (OUT_A3, S.CLEANED_A3, "2026-11-28"), (OUT_A2, S.CLEANED_A2, "2026-11-28")]   # each in its own file; seed order: hookah-clean, -a, then OUT_B, then -a3, then -a2
+         (OUT_A3, S.CLEANED_A3, "2026-11-28"), (OUT_A2, S.CLEANED_A2, "2026-11-28"),
+         (OUT_C1, S.CLEANED_C1, "2026-11-28")]   # each in its own file; seed order: hookah-clean, -a, then OUT_B, then -a3, then -a2, then (after drive2) -crew1
 BATCH_12 = S.CLEANED_FIRST
 GROUP_B = S.CLEANED_B          # group B's cleaned photos (hookah-clean-b); the Panda: PANDA below
 PANDA = "OSS-100077"   # Ace "Panda Hookah", live with no photo: the cleaned IMG_0689 (shop_photos.py) goes on it
@@ -70,8 +76,10 @@ def sql(m, photos=None, day="2026-11-27"):
     photos = S.CLEANED_FIRST if photos is None else photos
     at = next((i for i, (_, ph, _d) in enumerate(FILES) if ph is photos or ph == photos), 0)
     after = "".join(f" and {o.name}" for o, _, _d in FILES[:at])          # the hookah-clean files that run before this one
-    if photos is S.CLEANED_A3 or photos is S.CLEANED_A2:                  # seeded after group B's file too
+    if photos is S.CLEANED_A3 or photos is S.CLEANED_A2 or photos is S.CLEANED_C1:   # seeded after group B's file too
         after += f" and {OUT_B.name}"
+    if photos is S.CLEANED_C1:                                            # and after the Drive batch's own file
+        after += f" and {DRIVE2}"
     head = [
         f"-- The shop's hookahs whose photo has been cleaned ({day}): \"Photo to be replaced\" comes off. Not applied live yet.",
         "-- Owner: \"we really need to clean up these hookah photos, I know we can erase the mat and make these photos clean\".",
