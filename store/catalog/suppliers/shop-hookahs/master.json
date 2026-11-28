@@ -7427,9 +7427,9 @@
      },
      "photo": {
       "img": "hookah/hookah-lion-head-glass-base-black-stem-smoky-and-black",
-      "status": "replace",
+      "status": "shop",
       "large": true,
-      "src": "photo:IMG_0758 (the shop's own photo, as taken: to be replaced)"
+      "src": "photo:IMG_0758 (the shop's own photo, cut out, the mat cleared: clear_glass2.py)"
      },
      "shop": {
       "price_cents": {

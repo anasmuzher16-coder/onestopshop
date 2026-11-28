@@ -1080,7 +1080,8 @@ class TestDrive2(Base):
         self.assertEqual((len(new), len({f["family_id"] for f, _ in new})), (75, 57))
         self.assertEqual(len(S.UPRIGHT), 75)
         for f, v in new:
-            self.assertEqual(v["photo"]["status"], "replace", v["sku"])   # the shop's original, "Photo to be replaced"
+            cleaned = any(f"photo:{p} " in v["photo"]["src"] for p in S.CLEANED)   # cleaned since (clear_glass2.py): tag off
+            self.assertEqual(v["photo"]["status"], "shop" if cleaned else "replace", v["sku"])   # else the shop's original, "Photo to be replaced"
             self.assertTrue(any(f"photo:{p} " in v["photo"]["src"] for p in S.UPRIGHT), v["sku"])
             self.assertTrue(f["family_id"].startswith("hookah-"), f["family_id"])
         # the ones already on the site never get a second card

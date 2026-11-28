@@ -202,7 +202,8 @@ CLEANED_A = {"IMG_0683"}
 CLEANED_B = {"IMG_0705", "IMG_0706", "IMG_0712", "IMG_0714", "IMG_0679", "IMG_0709", "IMG_0710"}
 CLEANED_A3 = {"IMG_0688", "IMG_0698", "IMG_0701"}   # group A's held photos, reworked (2026-11-28): hookah-clean-a3-2026-11-28.sql
 CLEANED_A2 = {"IMG_0695", "IMG_0700", "IMG_0687"}                 # group A, second pass (2026-11-28): hookah-clean-a2-2026-11-28.sql
-CLEANED = CLEANED_FIRST | CLEANED_A | CLEANED_B | CLEANED_A3 | CLEANED_A2
+CLEANED_CREW3 = {"IMG_0758"}                                       # crew 3, the standing batch (2026-11-28): hookah-clean-crew3-2026-11-28.sql
+CLEANED = CLEANED_FIRST | CLEANED_A | CLEANED_B | CLEANED_A3 | CLEANED_A2 | CLEANED_CREW3
 
 
 def photo_name(name: str, colour: str) -> str:

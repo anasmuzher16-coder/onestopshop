@@ -136,6 +136,12 @@ Each PHOTOS entry (pixels of the 2600 px tall photo):
            (and its mirror where the mat hides one side): centre cx and half-width hw at each knot, joined by a
            monotone cubic (PCHIP), so the glass keeps its real curve where the cut-out guessed one. Below y_last the
            foot (if any) takes over; give its rx the profile's last half-width.
+  retouch_in px: the retouch boxes stay this far inside the outline (the rim keeps its own pixels).
+  see_through [L0, amax, wall]: tinted glass kept as cut: pixels brighter than L0 (thin glass, the wall seen through it)
+           let up to amax of the tile through, their colour solved so that over a wall of grey level `wall` they are the photo.
+  edge_ease [n, a]: the outer n px of the outline eased to alpha a (tinted glass kept as cut, so its thin rim is not a sticker).
+  iris     [s, a(, s0)]: an iridescent coating (see iris()): the drawn glass takes the photo's own hue, raised to power s, and
+           the coloured sheen brighter than s0 saturation is laid over it at alpha a.
   glass_profile list of [y, cx, hw]: in those rows the glass is only the part within |x - cx| <= hw (PCHIP between
            knots): a clear bulb standing in an opaque base whose outline the cut-out joins to the bulb's.
   rim      [strength, decay(, broad, broad_decay, inner)]: the outline's dark rim, default [0.50, 3.5, 0.12, 20, 0.18]: a
@@ -289,6 +295,23 @@ PHOTOS = {
                  "fade": 3, "tex_mat": 0.25, "edge_clear": 60, "glass": [1655, 2600], "stem": [965, 1655, 1035, 2195],
                  "mat": [[1005, 2300, 350, 280]], "mat_fine": [[1005, 2280, 160, 90]]},
 }
+
+# crew 3 (2026-11-28): the standing batch, on the marble table (no mat)
+PHOTOS.update({
+    # iridescent clear glass on marble, chrome neck (OSS-140102)
+    "IMG_0759": {"foot": [942, 2315, [283, 283], 205, 2.6, 0, 60], "fill": True, "glass": [1826, 2530], "fade": 3,
+                 "stem": [905, 1838, 948, 2283], "iris": [1.4, 0.9, 0.05], "thick": [[942, 2315, 255, 168, 2290, 0.25]],
+                 "keep_above": [928, 1825, 80, 14], "rim": [0.10, 3.0, 0.02], "inner": 0.3, "tex": [7, 1.4], "bridge": [[2230, 2345, "left"]],
+                 "tint": [55, 105, 115, 0.06, 0.5], "notex": [[950, 1840, 1010, 2030], [880, 1840, 905, 1880]]},
+    # smooth clear glass on marble, gold collar (OSS-140100)
+    "IMG_0757": {"foot": [970, 2330, [280, 280], 182, 2.4, 0, 60], "fill": True, "glass": [1765, 2520], "fade": 3,
+                 "stem": [963, 1800, 992, 2268], "keep_above": [970, 1792, 100, 28], "rim": [0.3, 3.0, 0.06], "thick": [[970, 2330, 258, 152, 2300, 0.10]],
+                 "bridge": [[2030, 2130, "right"]],
+                 "erase_light": [[140, 872, 1745, 906, 1826], [140, 1056, 1745, 1088, 1826]]},
+    # smoky olive moulded lion-head glass, kept as photographed (OSS-140101): the marble seen through its lower left
+    # painted out from the glass round it, and the outer 4 px eased to 75% so a little tile shows at the thin rim
+    "IMG_0758": {"retouch": [[640, 2195, 790, 2335]], "retouch_in": 6, "edge_ease": [6, 0.65], "see_through": [120, 0.35, 225]},
+})
 
 DARK = np.array([36, 44, 50], float)     # the glass's dark layer: a cool grey, as clear soda glass reads at a slant
 
@@ -892,6 +915,8 @@ def run_one(src, cut_p, cfg, method, lama, tile=None, matting=None):
             d[y0:y1, x0:x1] = lum(photo[y0:y1, x0:x1]) < lv
             m |= nd.binary_dilation(d, iterations=5)
         m &= cut[..., 3] > 127
+        if cfg.get("retouch_in"):           # keep the outline's own rim: the retouch stays this many px inside it
+            m &= nd.binary_erosion(cut[..., 3] > 127, iterations=cfg["retouch_in"])
         fill = lama_fill(photo.astype(np.uint8), m, lama)
         photo = fill
         cut[..., :3] = np.where(m[..., None], fill, cut[..., :3]).astype(np.uint8)
@@ -961,8 +986,48 @@ def run_one(src, cut_p, cfg, method, lama, tile=None, matting=None):
         e_d, e_h = drawn_edges(*glass.shape, cfg, photo)
         a_d = np.where(glass, 1 - (1 - a_d) * (1 - e_d), 0); hi = np.where(glass, 1 - (1 - hi) * (1 - e_h), 0)
     runs = ([cfg["glass"]] if "glass" in cfg else []) + cfg.get("glass_extra", [])
-    return compose(cut, sil, glass, opaque, a_d, hi, runs, cfg["tint"][:3] if "tint" in cfg else DARK, cfg.get("fade", 16),
-                   cfg.get("stem_glass", 0.0))
+    out = compose(cut, sil, glass, opaque, a_d, hi, runs, cfg["tint"][:3] if "tint" in cfg else DARK, cfg.get("fade", 16),
+                  cfg.get("stem_glass", 0.0))
+    if "edge_ease" in cfg:                  # tinted glass kept as cut: its thin outer rim lets a little tile through
+        n, a0 = cfg["edge_ease"]
+        d = nd.distance_transform_edt(out[..., 3] > 127)
+        out[..., 3] = (out[..., 3] * np.where(d < n, a0 + (1 - a0) * d / n, 1.0)).astype(np.uint8)
+    if "see_through" in cfg:                # tinted glass kept as cut: where it is thin (bright: the wall seen through it) some
+        L0, amax, wall = cfg["see_through"]  # tile shows, the colour solved so that over the wall it is the photo again
+        P = out[..., :3].astype(float); A = out[..., 3].astype(float) / 255
+        wgt = amax * np.clip((nd.gaussian_filter(lum(P), 2) - L0) / 60, 0, 1) * (A > 0.99)
+        a = 1 - wgt
+        C = (P - (1 - a)[..., None] * wall) / np.maximum(a, 1e-3)[..., None]
+        out[..., :3] = C.clip(0, 255).astype(np.uint8); out[..., 3] = (A * a * 255).clip(0, 255).astype(np.uint8)
+    if "iris" in cfg:
+        out = iris(out, photo, glass, opaque, runs, cfg["iris"], cfg.get("fade", 16))
+    return out
+
+
+def iris(out, photo, glass, opaque, runs, ir, fade_px):
+    """An iridescent coating: the glass drawn neutral by the ratio takes the photo's own hue (it stands over a near-neutral
+    wall and marble, so the photo's colour there is the coating's), and the coloured sheen is laid over it at its own
+    saturation. ir = [s, a(, s0)]: s the power the hue is raised to on the drawn glass (1: as photographed, 2-3 for a coating that reads at product size), a the sheen's alpha, s0 the saturation it starts at."""
+    s, a = ir[0], ir[1]
+    s0 = ir[2] if len(ir) > 2 else 0.14
+    P = nd.gaussian_filter(photo, (1.2, 1.2, 0))
+    L = lum(P)[..., None]
+    ch = P / np.maximum(L, 1.0)                                    # 1,1,1 where the photo is grey
+    mx, mn = P.max(2), P.min(2)
+    sat = (mx - mn) / np.maximum(mx, 1.0)
+    g = glass.astype(float) * (1 - opaque)
+    yy = np.arange(g.shape[0], dtype=float)[:, None]
+    fade = np.zeros_like(yy)
+    for r0, r1 in runs:
+        fade = np.maximum(fade, np.clip((yy - r0) / fade_px, 0, 1) * (1.0 if r1 >= g.shape[0] else np.clip((r1 - yy) / fade_px, 0, 1)))
+    if runs:
+        g = g * fade
+    rgb = out[..., :3].astype(float); A = out[..., 3].astype(float) / 255
+    rgb = rgb * (1 - g[..., None]) + (rgb * ch ** s).clip(0, 255) * g[..., None]   # hue pushed by power s
+    ai = a * np.clip((sat - s0) / 0.12, 0, 1) * np.clip((L[..., 0] - 110) / 60, 0, 1) * g   # bright coloured sheen only
+    A2 = A + ai * (1 - A)
+    rgb = (rgb * (A * (1 - ai))[..., None] + P * ai[..., None]) / np.maximum(A2, 1e-4)[..., None]
+    return np.dstack([rgb.clip(0, 255), (A2 * 255).clip(0, 255)]).astype(np.uint8)
 
 
 def lama_tile(photo, cut, sil, glass, opaque, lama, tile):
