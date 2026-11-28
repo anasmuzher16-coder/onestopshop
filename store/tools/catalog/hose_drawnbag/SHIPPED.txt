@@ -21,4 +21,9 @@ seal_fade), IMG_0569 Zanobia (old-bag film beside the card and inside the bottom
 New cut.py keys: ink_extra, area_add, drop_bright, drop_final, min_cc. compose.py writes out/<IMG>-map.json (render -> cut).
 OSS-120032 light blue Starbuzz: recolour_lb.py (the teal sibling IMG_0549 recoloured to the shop photo's light-blue shade;
 card kept), published as Star_buzz_are_76.5_inches; live state in store/catalog/live/hose-fix-2026-11-27.sql.
-Still not shipped: the Zanobia ICE red/black (0552 0553), ICE green (0548) and white (0557): see the branch report.
+OSS-120015 Zanobia ICE red (IMG_0552) and OSS-120018 Zanobia green (IMG_0548), 2026-11-28: tube.py (each visible strand
+traced by hand and re-drawn as a tube along that path, coloured from the same photo; card/print/mouthpiece cut from the photo;
+the photo's own film sheen over the drawn tubes), settings in tube.d/. 0548's print comes from an earlier cut.py run:
+put tube.d/IMG_0548.prevcut.json in place as cfg.d/IMG_0548.json, run cut.py IMG_0548, move HOSE_WORK/hose-drawnbag/cut/IMG_0548.png
+to HOSE_WORK/hose-fix/wd/cut/IMG_0548.png (where tube.d/IMG_0548.json reads it), then restore cfg.d/IMG_0548.json ({"crop": ...}). Live state in store/catalog/live/hose-zanobia-2026-11-28.sql.
+Still not shipped: Zanobia ICE black (0553: the hose is not visible in the hanging shot, only gold handle parts) and white (0557).

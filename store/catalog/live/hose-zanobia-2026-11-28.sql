@@ -1,0 +1,19 @@
+-- Zanobia hoses on the drawn clear bag (2026-11-28). Their hose is buried under crinkled film in the shop's photo, so a
+-- colour cut-out came out torn. Instead each visible strand is traced by hand and re-drawn as a tube along that path, coloured
+-- and textured from the same photo's own pixels; the printed card is cut from the photo; laid in the same drawn bag as every
+-- other hose (store/tools/catalog/hose_drawnbag/tube.py, settings in tube.d/). The photo files are
+-- store/public/img/pc/hose/<name>{,-m,-s}.webp, replaced in the same commit (versions in store/src/img-versions.json).
+-- Not applied live yet. Same shape as hose-drawnbag-2026-11-27.sql: details.photo becomes 'approved' and the "Photo to be
+-- replaced" tag (facts_known.photo_label 'replace') is taken off. No other key and no other column moves (updated_at is
+-- stamped on a changed row).
+-- 2 hoses: OSS-120015 (Zanobia premium ice hose, red, IMG_0552), OSS-120018 (Zanobia disposable hose, green, IMG_0548).
+-- Run after shop-hookahs-2026-11-27.sql and missing-items-2026-11-27.sql (both re-seed the hose rows with the tag); if either,
+-- or any later re-seed of shop-hoses, is run again afterwards, run this file again after it. Safe to run twice: a row already
+-- approved and untagged is not touched. A row whose details is something other than a JSON object (none live) is left alone.
+-- Rollback (live before this change, 2026-11-28: details '{}' with no photo key on these hoses):
+--   UPDATE products SET details = json_remove(details, '$.photo'), updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now')
+--     WHERE sku IN ('OSS-120015', 'OSS-120018') AND supplier_id = 'shop-hoses' AND json_valid(details) AND json_extract(details, '$.photo') = 'approved';
+--   and, only if shop-hookahs-2026-11-27.sql had been applied before this file, put its tag back:
+--   UPDATE products SET facts_known = json_set(facts_known, '$.photo_label', 'replace'), updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now')
+--     WHERE sku IN ('OSS-120015', 'OSS-120018') AND supplier_id = 'shop-hoses' AND json_valid(facts_known);
+UPDATE products SET details = json_set(CASE WHEN json_valid(details) THEN details ELSE '{}' END, '$.photo', 'approved'), facts_known = CASE WHEN json_valid(facts_known) AND json_extract(facts_known, '$.photo_label') = 'replace' THEN json_remove(facts_known, '$.photo_label') ELSE facts_known END, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE sku IN ('OSS-120015', 'OSS-120018') AND supplier_id = 'shop-hoses' AND (details IS NULL OR details = '' OR (json_valid(details) AND json_type(details) = 'object')) AND (json_extract(CASE WHEN json_valid(details) THEN details ELSE '{}' END, '$.photo') IS NOT 'approved' OR json_extract(CASE WHEN json_valid(facts_known) THEN facts_known ELSE '{}' END, '$.photo_label') IS 'replace');

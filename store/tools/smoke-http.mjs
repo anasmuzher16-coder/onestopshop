@@ -3,8 +3,8 @@
 import { readFileSync } from "node:fs";
 import { SEED_FILES, seedPath } from "./seed-files.mjs";
 const B = process.env.BASE || "http://127.0.0.1:4420";
-// hoses whose drawn-bag photo is approved (store/catalog/live/hose-drawnbag-2026-11-27.sql): those lose the "to be replaced" tag
-const DRAWN = new Set(((await import("node:fs")).readFileSync(new URL("../catalog/live/hose-drawnbag-2026-11-27.sql", import.meta.url), "utf8").match(/^UPDATE products SET details[^\n]*WHERE sku IN \(([^)]*)\)/m)?.[1] || "").match(/OSS-\d+/g) || []);
+// hoses whose drawn-bag photo is approved (store/catalog/live/hose-drawnbag-2026-11-27.sql, hose-zanobia-2026-11-28.sql): those lose the "to be replaced" tag
+const DRAWN = new Set(await (async () => { const fs = await import("node:fs"); return ["hose-drawnbag-2026-11-27.sql", "hose-zanobia-2026-11-28.sql"].flatMap(f => (fs.readFileSync(new URL("../catalog/live/" + f, import.meta.url), "utf8").match(/^UPDATE products SET details[^\n]*WHERE sku IN \(([^)]*)\)/m)?.[1] || "").match(/OSS-\d+/g) || []); })());
 // the shop hookahs whose cleaned photo the seed puts in (the hookah-clean files): no tag, framed like the Ace hookahs
 const CLEANED = new Set(SEED_FILES.filter(f => /\/hookah-clean/.test(f))
   .flatMap(f => [...readFileSync(seedPath(f), "utf8").matchAll(/^UPDATE products .* WHERE sku = '(OSS-14\d{4})'/gm)].map(m => m[1])));

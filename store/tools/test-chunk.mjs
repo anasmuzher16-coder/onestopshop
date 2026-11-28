@@ -6,8 +6,8 @@
 import { createRequire } from "node:module";
 const { chromium, webkit } = createRequire(process.env.PW_FROM || "C:/dev/puckempire-arena/package.json")("playwright");
 const B = (process.env.BASE || "http://127.0.0.1:4420").replace(/\/$/, "");
-// hoses whose drawn-bag photo is approved (store/catalog/live/hose-drawnbag-2026-11-27.sql): those lose the "to be replaced" tag
-const DRAWN = new Set(((await import("node:fs")).readFileSync(new URL("../catalog/live/hose-drawnbag-2026-11-27.sql", import.meta.url), "utf8").match(/^UPDATE products SET details[^\n]*WHERE sku IN \(([^)]*)\)/m)?.[1] || "").match(/OSS-\d+/g) || []);
+// hoses whose drawn-bag photo is approved (store/catalog/live/hose-drawnbag-2026-11-27.sql, hose-zanobia-2026-11-28.sql): those lose the "to be replaced" tag
+const DRAWN = new Set(await (async () => { const fs = await import("node:fs"); return ["hose-drawnbag-2026-11-27.sql", "hose-zanobia-2026-11-28.sql"].flatMap(f => (fs.readFileSync(new URL("../catalog/live/" + f, import.meta.url), "utf8").match(/^UPDATE products SET details[^\n]*WHERE sku IN \(([^)]*)\)/m)?.[1] || "").match(/OSS-\d+/g) || []); })());
 let n = 0, f = 0; const ok = (c, msg) => { n++; if (!c) { f++; console.log("FAIL", msg); } };
 // the local server drops idle kept-alive connections while a database command runs beside it: a reset before any answer is retried (as test-backoffice does)
 const fetch = async (u, o) => { for (let i = 0; ; i++) try { return await globalThis.fetch(u, o); } catch (e) { if (i >= 2 || e?.cause?.code !== "ECONNRESET") throw e; } };
