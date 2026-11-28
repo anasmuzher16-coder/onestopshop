@@ -112,6 +112,11 @@ def run(pdf: Path, work: Path, publish: bool):
               "tmp": str(tmp), "file": str(tmp) + "-s.webp"}
         P.apply_upscaled(it, kept)
         P.apply_web(it, web)
+        if it["out"] in web and not it.get("web"):   # kept on its hashes, but the Ace cut it stood for moved (new xref or crop)
+            r = web[it["out"]]
+            print(f"WARNING: web photo {it['out']} ({', '.join(r.get('skus', []))}) stood for another Ace cut (xref/crop changed): "
+                  f"it is rebuilt from the PDF. Re-check the match, update web-photos.json, put the old photo_label back and clear "
+                  f"photo_src in the database" + (" and set img_lw = NULL (its -l file goes)." if r.get("lw") else "."))
         images.append(it)
     if publish:
         PUBLIC.mkdir(parents=True, exist_ok=True)

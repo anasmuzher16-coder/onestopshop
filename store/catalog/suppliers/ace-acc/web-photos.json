@@ -39,43 +39,6 @@
     "acc-p24-s.webp": "96192064d8abb1173a2e893ffe05edef861108d0efcba980d48df426406b3a9d",
     "acc-p24-l.webp": "7847e0f021b8c9469f179e806e92334942fd6e916d8358f09f3cdd96d95d57b8"
    }
-  },
-  "acc/acc-p99": {
-   "skus": [
-    "OSS-110038"
-   ],
-   "image_url": "https://shishazone.ca/wp-content/uploads/2023/02/ACE-hookah-8.png",
-   "page_url": "https://shishazone.ca/product/crystal-drip-black/",
-   "site": "shishazone.ca",
-   "owner": "retailer (Ace Hookah's own product shot)",
-   "match": "Same cone vase, same shard-cut crystal pattern, smoky clear glass darkening to black at the foot (listed CRYSTAL DRIP Grey BIG SIZE, slug crystal-drip-black)",
-   "src_px": [
-    1280,
-    1280
-   ],
-   "product_px": [
-    994,
-    1209
-   ],
-   "scale_720": 0.48,
-   "lw": 1440,
-   "status": "ready",
-   "date": "2026-11-27",
-   "was": "CHECK",
-   "was_scale": 1.796,
-   "xref": 3178,
-   "crop": [
-    87,
-    56,
-    327,
-    379
-   ],
-   "files": {
-    "acc-p99.webp": "9a0d5058170e43579c2958707ce6d32cb334572a3305b01e42ff612d0a9d880b",
-    "acc-p99-m.webp": "2bcb907993b053e8f00de5df26b2131559522575ee532dc23735555aec6b5b8a",
-    "acc-p99-s.webp": "2b46fdfb94b88c166a110eb4b7daacf03835b8cb25372ed9a4d2d9c9af45637e",
-    "acc-p99-l.webp": "0ed161720b68f8dc01d8caf6afe3e880eaf6201680cb76aef60acbe35fd44863"
-   }
   }
  }
 }

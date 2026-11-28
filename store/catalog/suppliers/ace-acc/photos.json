@@ -690,10 +690,9 @@
     379
    ],
    "scale": 1.796,
-   "status": "ready",
+   "status": "CHECK",
    "out": "acc/acc-p99",
-   "note": "single cut-out; replaced 2026-11-27 by a web photo (shishazone.ca, 0.48x), was CHECK 1.796x",
-   "photo_src": "https://shishazone.ca/product/crystal-drip-black/"
+   "note": "single cut-out"
   },
   {
    "page": 101,

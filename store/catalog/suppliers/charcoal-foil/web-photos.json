@@ -1,31 +1,6 @@
 {
  "schema": "oss-web-photos/1",
  "images": {
-  "oss-9116-r12": {
-   "skus": [
-    "OSS-9116"
-   ],
-   "image_url": "https://www.zanobiaonline.com/wp-content/uploads/2026/01/Quick-Light-38mm-1.jpg",
-   "page_url": "https://www.zanobiaonline.com/product/quick-light-charcoal-38mm/",
-   "site": "zanobiaonline.com (maker)",
-   "match": "Zanobia red quick-light box, \"38mm\" printed, same shot as current. The 100-tablet count is not printed on the front",
-   "src_px": [
-    1500,
-    1500
-   ],
-   "product_px": [
-    972,
-    774
-   ],
-   "scale_720": 0.637,
-   "lw": null,
-   "date": "2026-11-27",
-   "files": {
-    "oss-9116-r12.webp": "e1d6a70694dcf29fdd17017468b009710e00490ae270b52bcc265f95cbd12c05",
-    "oss-9116-r12-m.webp": "150c197f1dbf3e53c2943450ac6425499e64afa219c9b90d3848176088d8edf8",
-    "oss-9116-r12-s.webp": "d778d234bb19920fa111862dcfe298c6ff91cdfcbc306208b210ec04134af05e"
-   }
-  },
   "oss-9127": {
    "skus": [
     "OSS-9127"
@@ -175,58 +150,6 @@
     "oss-9162.webp": "f4538f1841541020ab5817220c9fb13899c7cf47002d3a6c31ba2e231f8f5fc4",
     "oss-9162-m.webp": "1f9ec2519d996e0679cf8c3b5b5fd873ad58352bbb1384f39fcef37ac98e0365",
     "oss-9162-s.webp": "77146b9696f66c853f8ace62ddaae4ea7c70086e89b19cf2cdc82a3cfb5e9fbe"
-   }
-  },
-  "oss-9306": {
-   "skus": [
-    "OSS-9306"
-   ],
-   "image_url": "https://www.zanobiaonline.com/wp-content/uploads/2026/02/Foil-35_mic.jpg",
-   "page_url": "https://www.zanobiaonline.com/product/zanobia-foil/",
-   "site": "zanobiaonline.com (maker)",
-   "match": "Brown camo Zanobia ALUMINIUM FOIL roll box, white FOIL lettering, 35 MIC printed on the end flap (read zoomed); same pack as the current stand-in",
-   "src_px": [
-    1500,
-    1500
-   ],
-   "product_px": [
-    1135,
-    433
-   ],
-   "scale_720": 0.545,
-   "lw": 1440,
-   "date": "2026-11-27",
-   "files": {
-    "oss-9306.webp": "7753fa606cfe6a7a89d8a26cf3b199648544e3d4e2ea0d2abc5380fb72fe8caa",
-    "oss-9306-m.webp": "4bc5194b36f0c338bd9f935d7fe3cab6e7eec1bc5559b2c42d541d52ccf0460f",
-    "oss-9306-s.webp": "4ef5e84ce3e20e7c5011254fbeafe559d24a140c22231bd3fb10b51180999c53",
-    "oss-9306-l.webp": "325768e5ab6bacfd69458dbdf5953fce417cbe795227026740124fbbc3aa5a67"
-   }
-  },
-  "oss-9307": {
-   "skus": [
-    "OSS-9307"
-   ],
-   "image_url": "https://www.zanobiaonline.com/wp-content/uploads/2026/02/Foil-30_mic.jpg",
-   "page_url": "https://www.zanobiaonline.com/product/zanobia-foil/",
-   "site": "zanobiaonline.com (maker)",
-   "match": "Green camo Zanobia ALUMINIUM FOIL roll box, yellow FOIL lettering, 30 MIC printed on the yellow corner (read zoomed); same pack as the current stand-in",
-   "src_px": [
-    1500,
-    1500
-   ],
-   "product_px": [
-    1141,
-    453
-   ],
-   "scale_720": 0.543,
-   "lw": 1440,
-   "date": "2026-11-27",
-   "files": {
-    "oss-9307.webp": "b96d234feff0e0c71172309ffd1f7c805540f7db897c4b4a4412d5fa73efb5a3",
-    "oss-9307-m.webp": "8227e97f20a766e472a0d2096c452b0ca465381a7bc41740b69b25c529fa96b0",
-    "oss-9307-s.webp": "9273628ac4ce02d0cea12502bf972a3b034fdd70232c11f809ab12256f8610de",
-    "oss-9307-l.webp": "9019c09304c718d8bcd0768a588fcaa4564195124ec4a18fa9d015e13fc1fcd6"
    }
   }
  },

@@ -195,7 +195,8 @@ def web_kept(supplier: str, public: Path) -> dict:
             kept[out] = r
         else:
             print(f"WARNING: web photo {out} ({', '.join(r.get('skus', []))}) no longer matches web-photos.json (files changed): "
-                  f"it is rebuilt from the PDF. Remove it from web-photos.json and put its old photo_label back in the database.")
+                  f"it is rebuilt from the PDF. Remove it from web-photos.json and put its old photo_label back in the database"
+                  + (" (and set img_lw = NULL: its -l file goes)." if r.get("lw") else "."))
     return kept
 
 

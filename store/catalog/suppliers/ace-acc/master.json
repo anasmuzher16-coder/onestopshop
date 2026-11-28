@@ -3948,9 +3948,8 @@
      "key": "acc-p99",
      "photo": {
       "img": "acc/acc-p99",
-      "status": "ready",
-      "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json",
-      "web_src": "https://shishazone.ca/product/crystal-drip-black/"
+      "status": "CHECK",
+      "src": "photo manifest store/catalog/suppliers/ace-acc/photos.json"
      },
      "shop": {
       "price_cents": {
