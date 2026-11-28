@@ -1559,9 +1559,9 @@
      },
      "photo": {
       "img": "hookah/hookah-swirl-glass-base-silver-stem-blue",
-      "status": "replace",
+      "status": "shop",
       "large": true,
-      "src": "photo:IMG_0698 (the shop's own photo, as taken: to be replaced)"
+      "src": "photo:IMG_0698 (the shop's own photo, cut out, the mat cleared: clear_glass2.py)"
      },
      "shop": {
       "price_cents": {
