@@ -70,6 +70,10 @@ if (MODE) {
   const g = await req(`/api/open-edit/${t.sku}`);
   ok(g.status === 200 && g.data.sku === t.sku && g.data.name === t.name && g.data.price_cents === null && Array.isArray(g.data.colours) && JSON.stringify(g.data.needs) === '["price","colours","stock"]' && /^OSS-\d+$/.test(g.data.next || "") && g.data.next !== t.sku && g.data.left > 1, `${MODE}: the editor's fields for an item`, JSON.stringify(g.data));
   ok(!["supplier_id", "facts_known", "cost_cents", "details"].some(k => k in g.data), `${MODE}: no supplier, cost or private details in the answer`);
+  // the shop's own hookahs (2026-11-27): the panel asks for price, stock and a name check, starts on the photo's colour, weighs in kg
+  { const hk = await req("/api/open-edit/OSS-140001");
+    ok(hk.status === 200 && hk.data.editable && JSON.stringify(hk.data.needs) === '["price","stock","check"]' && hk.data.check === true && hk.data.hookah_row === true && hk.data.family_row === true
+       && JSON.stringify(hk.data.colours.map(c => c.name)) === '["Silver Metallic"]' && hk.data.weight_g === null && !("confirm_why" in hk.data), `${MODE}: a shop hookah's panel shows what it still needs`, JSON.stringify(hk.data)); }
   ok((await req("/api/open-edit/OSS-999999")).status === 404 && (await req(`/api/open-edit/${t.sku}/x`)).status === 404 && (await req("/api/open-edit/oss-1001")).status === 404, `${MODE}: only a real item number`);
   // every write needs same site, JSON and the marker
   ok((await req(`/api/open-edit/${t.sku}`, { method: "PUT", body: { name: "X" }, marker: false })).status === 400, `${MODE}: a write without the marker is refused`);

@@ -76,6 +76,8 @@ function photoLabel(v) {
   // "to be upscaled" is the shop's own work list, never a shopper's business (design review, 2026-11-26): it stays in the
   // catalogue data, and the storefront shows the photo without it
   if (f.photo === "family") return `Shown in ${f.shown_in || "another colour"}`;
+  // the shop's original photo standing in until a cleaned one goes up (owner 2026-11-27: the shop's hookahs, and every hose)
+  if (f.photo === "own" && f.photo_label === "replace") return "Photo to be replaced";
   if (v.details?.photo === "replace") return "Photo to be replaced";   // a stand-in photo of a similar pack (owner, 2026-11-24)
   return "";
 }
@@ -185,6 +187,9 @@ const bestFor = p => cpQuote([{ product: p, qty: 1 }])[0] || null;
 // ---------- images ----------
 const V = "?v=1794615693"; // bumped on every photo rebuild so no phone keeps an old copy
 const vq = p => p.iv ? "?v=" + p.iv : V;   // each photo's own version (store/src/img-versions.json): changing one photo re-downloads only that one
+// a photo that fills its tile (no cut-out): a resin piece's dark photo, the shop's own upload, or a shop hookah's original photo
+// standing in until a cleaned one goes up (facts.photo_full, 2026-11-27)
+const fullTile = p => !!(p.dark || p.photo || (p.facts && p.facts.photo_full === true));
 const imgSrc = (p, small) => p.photo ? (p.img[0] === "/" ? p.img : `img/${p.img}.webp`) : `img/pc/${p.img}${small && !p.dark ? "-s" : ""}.webp${vq(p)}`;
 const SIZES = { card: "(min-width:1500px) 18vw, (min-width:960px) 22vw, (min-width:640px) 30vw, 46vw", pdp: "(min-width:960px) 50vw, 100vw",
   thumb: "96px", slab: "(min-width:960px) 42vw, 58vw", lineup: "(min-width:960px) 370px, 240px", cat: "(min-width:960px) 24vw, 44vw", cat1: "(min-width:960px) 42vw, 44vw", resin: "(min-width:960px) 28vw, (min-width:640px) 40vw, 72vw" };
@@ -203,7 +208,7 @@ function shot(p, { small = false, eager = false, use = small ? "card" : "pdp", c
   const drawn = !p.img && (p.cat === "hookahs" ? "coming-hookah" : p.cat === "shisha" ? "coming-shisha" : "");
   if (drawn) return `<img class="shot shot--drawn ${cls}" src="img/pc/${drawn}.svg" alt="${esc(alt ? alt + ", drawing until the photo is ready" : "")}" width="720" height="900" ${eager ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async"><span class="shot__tag" aria-hidden="true">Photo coming</span>`;
   if (!p.img) return `<span class="shot shot--none ${cls}" role="img" aria-label="${esc(alt || "Photo coming soon")}">Photo coming soon</span>`; // added in the back office, no photo yet
-  const plain = p.dark || p.photo;
+  const plain = fullTile(p);
   return `<img class="${plain ? "shot shot--photo" : "shot"} ${cls}" src="${imgSrc(p, small)}" ${srcset(p)} ${p.photo ? "" : `sizes="${SIZES[use]}"`} alt="${esc(alt)}" width="${p.dark ? 1080 : 720}" height="${p.dark ? 1080 : 900}" ${eager ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async">`;
 }
 
@@ -295,7 +300,7 @@ function cardHTML(p, i = 9) {
   return `
   <article class="card" data-tone="${tone}" ${p.family ? `data-family="${p.sku}"` : ""}>
     <a class="card__a" href="/p/${p.sku}" data-piece="${p.sku}">
-      <div class="tile ${p.dark || p.photo ? "tile--photo" : ""}">${colourShot(p, { small: true, eager: i < 2 })}${sticker(p)}</div>
+      <div class="tile ${fullTile(p) ? "tile--photo" : ""}">${colourShot(p, { small: true, eager: i < 2 })}${sticker(p)}</div>
       <h3 class="card__name">${sh ? `${esc(sh.flavour)}<span class="sr">, ${escN(sh.line)}</span>` : escN(p.name)}</h3>${sh ? `<p class="card__maker" aria-hidden="true">${escN(sh.line)}</p>` : ""}
     </a>
     ${cardMeta(p)}${localOnly(p) && !PICKUP_ONLY ? `<p class="card__pick">Pickup or local delivery only</p>` : ""}
@@ -516,7 +521,7 @@ function viewProduct(sku) {
   const sold = isSold(p);
   return `
   <article class="pdp" data-tone="${toneOf(p)}" data-cat="${p.cat}">
-    <div data-stage="${p.sku}" class="pdp__tile tile ${p.dark || p.photo ? "tile--photo" : ""}">${p.family ? colourShot(p, { eager: true, alt: p.named && p.colour && !p.name.toLowerCase().endsWith(p.colour.toLowerCase()) ? `${p.name}, ${p.colour}` : p.name }) : colourShot(p, { eager: true, alt: p.name })}${sticker(p, { big: true })}</div>
+    <div data-stage="${p.sku}" class="pdp__tile tile ${fullTile(p) ? "tile--photo" : ""}">${p.family ? colourShot(p, { eager: true, alt: p.named && p.colour && !p.name.toLowerCase().endsWith(p.colour.toLowerCase()) ? `${p.name}, ${p.colour}` : p.name }) : colourShot(p, { eager: true, alt: p.name })}${sticker(p, { big: true })}</div>
     <div class="pdp__info">
       <p class="crumb"><a href="/shop/${p.cat}">${c.name}</a></p>
       <h1 class="pdp__name${p.name.length > 30 ? " pdp__name--long" : ""}">${escN(p.name)}</h1>
@@ -747,7 +752,7 @@ function viewCart() {
     ${news}
     <ul class="lines">${lines.map(({ product: p, qty }) => `
       <li class="line" data-tone="${toneOf(p)}">
-        <a class="line__tile tile ${p.dark || p.photo ? "tile--photo" : ""}" href="/p/${p.sku}" aria-label="${esc(p.name)}">${shot(p, { small: true, use: "thumb" })}</a>
+        <a class="line__tile tile ${fullTile(p) ? "tile--photo" : ""}" href="/p/${p.sku}" aria-label="${esc(p.name)}">${shot(p, { small: true, use: "thumb" })}</a>
         <div class="line__body"><a class="line__name" href="/p/${p.sku}">${esc(p.name)}</a><p class="line__meta num">${p.sku}${PICKUP_ONLY ? "" : ` &middot; ${counterPay(p) ? `<b class="line__pick">Pickup only, paid in the shop</b>` : localOnly(p) ? `<b class="line__pick">${atCounter ? "Pickup with this order" : "Pickup or local delivery only"}</b>` : `${p.kg} kg`}`}${stockShort(p, qty) ? ` &middot; only ${stockFor(p)} in stock` : qty >= LINE_MAX && PICKUP_ONLY ? ` &middot; ${LINE_MAX} is the most for one online order` : ""}</p>
           <div class="qty"><button type="button" aria-label="One less ${esc(p.name)}" data-qty="${p.sku}" data-n="${qty - 1}">&minus;</button><span class="num" aria-live="polite">${qty}</span><button type="button" aria-label="One more ${esc(p.name)}" data-qty="${p.sku}" data-n="${qty + 1}" ${qty >= stockFor(p) ? "disabled" : ""}>+</button></div></div>
         <p class="line__price num">${money(p.price * qty)}</p>
@@ -908,7 +913,7 @@ function paintColour(tile, v, alt) {
   const img = frag.content.querySelector(".shot"), tag = frag.content.querySelector(".shot__tag");
   // the old label stays until the new picture is in: a tile with a label keeps its photo clear of it (styles.css), so taking the
   // label off early would resize the old photo while the new one decodes
-  const done = () => { if (!old.isConnected) return; tile.querySelectorAll(":scope > .shot__tag").forEach(t => t.remove()); img.classList.add("shot--in"); old.after(img); if (tag) img.after(tag);
+  const done = () => { if (!old.isConnected) return; tile.querySelectorAll(":scope > .shot__tag").forEach(t => t.remove()); tile.classList.toggle("tile--photo", fullTile(v)); img.classList.add("shot--in"); old.after(img); if (tag) img.after(tag);
     requestAnimationFrame(() => { img.classList.add("is-on"); const end = () => { old.remove(); img.classList.remove("shot--in", "is-on"); }; if (matchMedia("(prefers-reduced-motion: reduce)").matches) end(); else setTimeout(end, 280); }); };
   (img.decode ? img.decode() : Promise.resolve()).then(done, done);
 }

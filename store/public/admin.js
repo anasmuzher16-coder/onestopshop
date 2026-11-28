@@ -250,7 +250,7 @@ function infoSheet(p) {
   const d = pj(p.details), had = Array.isArray(d.colours) ? d.colours : [], hexes = d.colour_hex || {}, c = catOf(p.category_id), owner = state.me.owner;
   const known = new Set(PALETTE.map(x => x[0].toLowerCase())), custom = had.filter(n => !known.has(n.toLowerCase()));
   const queue = state.products.filter(x => x.needs), at = queue.findIndex(x => x.sku === p.sku), counted = p.availability === "counted";
-  const hookahRow = /^(ace|hose|bowl)-/.test(p.family || "");   // one colour of a hookah, or of one of the shop's hoses or bowls
+  const hookahRow = /^(ace|hose|bowl|hookah)-/.test(p.family || "");   // one colour of a hookah, or of one of the shop's hoses or bowls
   const check = (p.needs || []).includes("check"), d0 = pj(p.details), lenRow = (p.needs || []).includes("length") || typeof d0.length === "string";
   sheet.innerHTML = `<form class="sheet__in info" data-info-form="${p.sku}" data-orig="${esc(JSON.stringify(had))}" novalidate>
     <div class="sheet__top"><div><p class="meta">${p.sku}${at >= 0 ? ` &middot; ${at + 1} of ${queue.length} to fill in` : ""}</p><h2 class="h2" style="margin:0">${esc(p.name)}</h2></div><button class="sheet__x" type="button" data-close>Close</button></div>
@@ -265,7 +265,7 @@ function infoSheet(p) {
       <button class="bar__link" type="button" data-addcol aria-expanded="false" aria-controls="newcol">Add another colour</button>
       <div class="newcol" id="newcol" data-newcol hidden><label class="field"><span>Colour name</span><input class="input" name="newcol" maxlength="24" autocomplete="off"></label>
         <label class="field newcol__pick"><span>Swatch</span><input class="newcol__hex" name="newhex" type="color" value="#808080"></label><button class="btn btn--ghost" type="button" data-addcol-go>Add</button></div></fieldset>
-    ${(() => { const g = p.weight_known_g || 0, unit = g >= 1000 || (!g && /^ace-/.test(p.family || "")) ? "kg" : "g", v = !g ? "" : unit === "kg" ? String(+(g / 1000).toFixed(3)) : String(g), need = (p.needs || []).includes("weight");
+    ${(() => { const g = p.weight_known_g || 0, unit = g >= 1000 || (!g && /^(ace|hookah)-/.test(p.family || "")) ? "kg" : "g", v = !g ? "" : unit === "kg" ? String(+(g / 1000).toFixed(3)) : String(g), need = (p.needs || []).includes("weight");
       return `<div class="field"><label class="field" for="info-weight"><span>Weight</span></label><div class="wrow"><input class="input num" id="info-weight" name="weight" inputmode="decimal" autocomplete="off" value="${v}" placeholder="${unit === "kg" ? "1.2" : "250"}" data-was="${g || ""}" aria-describedby="weight-say">
         <div class="wunit" role="radiogroup" aria-label="Weight unit">${["g", "kg"].map(u => `<label><input type="radio" name="wunit" value="${u}"${u === unit ? " checked" : ""}><span>${u}</span></label>`).join("")}</div></div>
         <p class="fineprint" id="weight-say">${isCoal(p) ? "Charcoal is never shipped, whatever it weighs. This is for the record." : need ? "Needed before it can ship. Weigh the item on its own; the box is added for you." : g ? "Weighed. Type a new weight to change it." : "Weigh the item on its own; the box is added for you. Up to 30 kg."}</p></div>`; })()}

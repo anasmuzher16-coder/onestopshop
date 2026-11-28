@@ -36,6 +36,8 @@ SUPPLIER_META = {
     "shop-hoses": {"id": "shop-hoses", "name": "The shop's own hoses", "sku_block": "OSS-12NNNN", "credit": "No supplier credit needed."},
     # The shop's own bowls (2026-11-27): no supplier catalogue, its own photos of each bowl; named from the brand on the bowl.
     "shop-bowls": {"id": "shop-bowls", "name": "The shop's own bowls", "sku_block": "OSS-13NNNN", "credit": "No supplier credit needed."},
+    # The shop's own hookahs (2026-11-27): its photos of each hookah on the counter, shown as taken until cleaned photos replace them.
+    "shop-hookahs": {"id": "shop-hookahs", "name": "The shop's own hookahs", "sku_block": "OSS-14NNNN", "credit": "No supplier credit needed."},
 }
 SHISHA_SECTION = "INSERT OR IGNORE INTO categories (id, name, tone, sort, active) VALUES ('shisha', 'Shisha', 'emerald', 8, 0)"
 # Charcoal, its own section after Heat (shop request, 2026-11-24): the sections from place 4 on move down one, once.
@@ -146,7 +148,8 @@ def build_hoses(reg, day):
             have = (C.STORE / "public" / "img" / "pc" / (img + ".webp")).exists()
             f["variants"].append({"sku": C.sku_for(reg, "shop-hoses", v["key"], day), "key": v["key"], "swatch_hex": v["swatch_hex"],
                                   "colour": v["colour"], "confirm": v["confirm"],
-                                  "photo": {"img": img if have else None, "status": "ready" if have else "none",
+                                  # owner 2026-11-27: "put a photo to be changed tag on all the hoses": status replace
+                                  "photo": {"img": img if have else None, "status": "replace" if have else "none",
                                             "src": f"photo:{v['photo_file']} (the shop's shelf photo, cut out, bag kept as film)" if have else None},
                                   "shop": C.blank_shop()})
     retired = C.retire_missing(reg, "shop-hoses", live, day, "not on the shop's hose list any more")
@@ -196,6 +199,43 @@ def build_bowls(reg, day):
     return m, retired
 
 
+def build_hookahs(reg, day):
+    """The shop's hookahs: one family per hookah model, one variant per colour photographed. The photo is the shop's
+    original, framed by photos_shop_hookahs.py, with status 'replace' ("Photo to be replaced") until a cleaned photo goes in."""
+    import src_shop_hookahs
+    fams = src_shop_hookahs.families()
+    live = set()
+    pc = C.STORE / "public" / "img" / "pc"
+    for f in fams:
+        f["variants"] = []
+        for v in f.pop("variants_src"):
+            live.add(v["key"])
+            img = v.pop("img")
+            have = (pc / (img + ".webp")).exists()
+            f["variants"].append({"sku": C.sku_for(reg, "shop-hookahs", v["key"], day), "key": v["key"], "swatch_hex": v["swatch_hex"],
+                                  "colour": v["colour"], "confirm": v["confirm"],
+                                  # an EXACT hookah: the web photo of that model and colour, no label; else the shop's original
+                                  # as taken, full tile, "Photo to be replaced"
+                                  "photo": {"img": img if have else None, "status": ("ready" if v["web"] else "replace") if have else "none",
+                                            "large": have and (pc / (img + "-l.webp")).exists(),
+                                            "src": (f"web:{v['web']} (cut out, framed like the Ace hookahs)" if v["web"] else
+                                                    f"photo:{v['photo_file']} (the shop's own photo, as taken: to be replaced)") if have else None,
+                                            **({"web_src": v["web"]} if have and v["web"] else {})},
+                                  "shop": C.blank_shop()})
+    retired = C.retire_missing(reg, "shop-hookahs", live, day, "not on the shop's hookah list any more")
+    m = {"schema": C.SCHEMA_ID, "supplier": SUPPLIER_META["shop-hookahs"],
+         "sources": [{"id": src_shop_hookahs.SRC_ID, "kind": "shop photos", "file": "IMG_0670..IMG_0715 (hookahs on the counter)",
+                      "sha256": C.sha256_text(json.dumps(src_shop_hookahs.HOOKAHS, ensure_ascii=False)), "products": len(live),
+                      "edition": src_shop_hookahs.EDITION, "received": src_shop_hookahs.RECEIVED}],
+         "rulings": ["owner 2026-11-27: whatever is ready goes on the site now so the shop can add the details",
+                     "owner 2026-11-27: the original photos go up with a 'Photo to be replaced' tag",
+                     "brand and model only where printed on the piece; otherwise a plain description, flagged for the shop to rename",
+                     "in the shop, Price TBD, stock not counted, weight unknown; no size, height or contents claimed"],
+         "families": fams,
+         "retired": {s: reg["skus"][s] for s in sorted(reg["skus"]) if reg["skus"][s]["supplier"] == "shop-hookahs" and reg["skus"][s]["status"] == "retired"}}
+    return m, retired
+
+
 def build(args):
     day = today()
     reg = C.load_registry()
@@ -207,6 +247,13 @@ def build(args):
     C.validate_master(m, reg)
     summary["shop-bowls"] = {"families": len(m["families"]), "variants": sum(len(f["variants"]) for f in m["families"]),
                              "newly_retired": retired, "written": C.write_json(C.master_path("shop-bowls"), m)}
+    # The shop's hookahs (no outside source: always built)
+    old = C.load_master("shop-hookahs")
+    m, retired = build_hookahs(reg, day)
+    C.carry_shop(old, m)
+    C.validate_master(m, reg)
+    summary["shop-hookahs"] = {"families": len(m["families"]), "variants": sum(len(f["variants"]) for f in m["families"]),
+                               "newly_retired": retired, "written": C.write_json(C.master_path("shop-hookahs"), m)}
     # The shop's hoses (no outside source: always built)
     old = C.load_master("shop-hoses")
     m, retired = build_hoses(reg, day)
@@ -361,9 +408,12 @@ def public_group(f):
     return src_ace.group_for(f["supplier_ref"]["v"], None, tags)[0]
 
 
-USABLE_PHOTO = ("ready", "CHECK", "needs_original", "hand_crop", "shop")   # gallery-only images are never a main photo; shop = the shop's own photo (shop_photos.py)
+USABLE_PHOTO = ("ready", "CHECK", "needs_original", "hand_crop", "shop", "replace")   # gallery-only images are never a main photo; shop = the shop's own photo (shop_photos.py)
 # owner, 2026-11-24: blurry or over-enlarged (CHECK), held (needs_original) and hand-crop photos go up labelled "Photo to be upscaled"
 UPSCALE_PHOTO = ("CHECK", "needs_original", "hand_crop")
+# a stand-in photo the shop will replace (owner 2026-11-27: the shop's original hookah photos, and every hose): the storefront
+# shows "Photo to be replaced" on it (facts photo_label 'replace'), unlike 'upscale', which shoppers never see
+REPLACE_PHOTO = ("replace",)
 
 
 def hero_colour(f):
@@ -473,6 +523,8 @@ def desired_rows(supplier: str, m):
             # only (catalog.js never sends them to the storefront).
             st = v["photo"]["status"]
             facts.update({"stamp": "shelf", "photo": "own" if st in USABLE_PHOTO and v["photo"]["img"] else "none", "colour_confirmed": True})
+            if facts["photo"] == "own" and st in REPLACE_PHOTO:
+                facts["photo_label"] = "replace"
             if v["confirm"]["v"]:
                 facts.update({"needs_confirm": True, "confirm_why": v["confirm"]["v"]})
             sup = {"supplier_id": "shop-hoses", "supplier_ref": f["supplier_ref"]["v"], "supplier_price_cents": None,
@@ -502,6 +554,29 @@ def desired_rows(supplier: str, m):
                         "note": "", "stock": shop["stock"]["v"] or 0, "low_stock_at": 1,
                         "active": 1 if (shop["active"]["v"] and shop["price_cents"]["v"]) else 0,
                         "sort": 4100 + i, "availability": "in_store_uncounted", "listed": 1}
+        elif supplier == "shop-hookahs":
+            # one family per hookah model, a colour per photo (one card, colour chips, like the bowls; the blue Ace Rose joins the
+            # Ace Rose family). In the shop, Price TBD, stock not counted, weight unknown (1 g placeholder + facts.weight_g = null:
+            # pickup or local delivery once priced), glass, tall box like the Ace hookahs. The shop's original photo carries
+            # "Photo to be replaced". needs_confirm (every name) is for the back office only.
+            st = v["photo"]["status"]
+            facts = {k: c["v"] for k, c in f["facts"].items() if c["v"] is not None or k == "weight_g"}
+            facts.update({"stamp": "shelf", "photo": "own" if st in USABLE_PHOTO and v["photo"]["img"] else "none", "colour_confirmed": True})
+            if facts["photo"] == "own" and st in REPLACE_PHOTO:
+                facts.update({"photo_label": "replace", "photo_full": True})   # the original fills the tile (not a cut-out)
+            if facts["photo"] == "own" and v["photo"].get("web_src"):
+                facts["photo_src"] = v["photo"]["web_src"]
+            if v["confirm"]["v"]:
+                facts.update({"needs_confirm": True, "confirm_why": v["confirm"]["v"]})
+            sup = {"supplier_id": "shop-hookahs", "supplier_ref": f["supplier_ref"]["v"], "supplier_price_cents": None,
+                   "family": f["family_id"], "variant_label": v["colour"]["v"], "swatch_hex": v["swatch_hex"]["v"],
+                   "img": v["photo"]["img"] or "", "img_lw": 1440 if v["photo"].get("large") else None, "height_cm": None,
+                   "facts_known": json.dumps(facts, sort_keys=True, ensure_ascii=False)}
+            shopcols = {"name": shop["display_name"]["v"] or f["name"]["v"], "category_id": "hookahs",
+                        "price_cents": shop["price_cents"]["v"] or 0, "weight_g": 1, "box_id": "T", "glass": 1, "ship_class": "standard",
+                        "note": "", "stock": shop["stock"]["v"] or 0, "low_stock_at": 1,
+                        "active": 1 if (shop["active"]["v"] and shop["price_cents"]["v"]) else 0,
+                        "sort": 5600 + i, "availability": "in_store_uncounted", "listed": 1}
         elif supplier == "ace-acc":
             # one card per item (family acc-..., never grouped like hookahs); on view with "Price TBD" until the shop's price.
             # Weight unknown: the 1 g placeholder plus facts.weight_g = null keep it pickup or local delivery once priced.
