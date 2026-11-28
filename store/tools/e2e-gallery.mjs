@@ -83,7 +83,11 @@ for (const [tag, type, ctx, touch] of [
       await p.evaluate(() => { document.querySelector("[data-stage] .gal").style.maxWidth = ""; dispatchEvent(new Event("resize")); }); await wait(100);
     }
     // the arrow keys on the photo itself (the zoom's button)
-    await p.focus("[data-stage] > .shot"); await p.keyboard.press("ArrowRight"); await settle(p); const k1 = await state(p);
+    // the photo must be reachable by the keyboard whenever the zoom armed it (even if it armed a picture that was fading out)
+    await p.waitForFunction(() => { const l = document.querySelectorAll("[data-stage] > .shot"); return l.length === 1 && l[0].tabIndex === 0; }, null, { timeout: 5000 }).catch(() => {});
+    await p.focus("[data-stage] > .shot");
+    t(`${tag} the photo takes the keyboard focus`, await p.evaluate(() => document.activeElement?.matches("[data-stage] > .shot") && document.activeElement.getAttribute("role") === "button"), await p.evaluate(() => document.activeElement?.outerHTML.slice(0, 120)));
+    await p.keyboard.press("ArrowRight"); await settle(p); const k1 = await state(p);
     t(`${tag} the right arrow on the photo shows photo 2 and keeps the focus on the photo`, k1.gal === "1" && k1.src === extra && await p.evaluate(() => document.activeElement?.matches("[data-stage] > .shot")), JSON.stringify(k1));
     // a redraw of the page (the cart changed in another tab) keeps the photo shown and the focus on it
     await p.evaluate(() => dispatchEvent(new StorageEvent("storage", { key: "oss:cart" }))); await wait(500); const rd = await state(p);

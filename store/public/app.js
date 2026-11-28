@@ -922,7 +922,11 @@ function paintColour(tile, v, alt) {
     // the product photo is the zoom's button (fx-zoom.js arm): the new one keeps that, and keeps the keyboard's place
     if (last.hasAttribute("tabindex")) { img.tabIndex = 0; img.setAttribute("role", "button"); img.setAttribute("aria-label", "Enlarge photo: " + img.alt); }
     if (had) img.focus({ preventScroll: true });
-    requestAnimationFrame(() => { img.classList.add("is-on"); const end = () => { olds.forEach(o => o.remove()); img.classList.remove("shot--in", "is-on"); }; if (matchMedia("(prefers-reduced-motion: reduce)").matches) end(); else setTimeout(end, 280); }); };
+    // the zoom may arm an old picture while the new one fades in (fx-zoom.js loads late): its button role and the focus move on with it
+    requestAnimationFrame(() => { img.classList.add("is-on"); const end = () => { const armed = olds.find(o => o.hasAttribute("tabindex")), focused = olds.includes(document.activeElement);
+      olds.forEach(o => o.remove()); img.classList.remove("shot--in", "is-on");
+      if (armed && img.isConnected && !img.hasAttribute("tabindex")) { img.tabIndex = 0; img.setAttribute("role", "button"); img.setAttribute("aria-label", "Enlarge photo: " + img.alt); }
+      if (focused && img.isConnected) img.focus({ preventScroll: true }); }; if (matchMedia("(prefers-reduced-motion: reduce)").matches) end(); else setTimeout(end, 280); }); };
   (img.decode ? img.decode() : Promise.resolve()).then(done, done);
 }
 function pickColour(btn, focus) {
