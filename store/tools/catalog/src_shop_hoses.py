@@ -43,7 +43,10 @@ HOSES = [
     ("Starbuzz Fabric Disposable Hose", "Starbuzz fabric disposable hose 66.5 inches", "66.5 inches", "Starbuzz", [("IMG_0550", "Black", None)],
      "the recording's photo shows a tan handle, partly hidden in the hanging shot: check it is this hose"),
     ("Simba Disposable Hose", "Simba disposable hose 60.5 inches", "60.5 inches", "Simba",
-     [("IMG_0579", "Purple", None), ("IMG_0545", "White", "the white hose is in a differently printed Simba bag and is not in the recording's photo: check the caption covers it")], None),
+     [("IMG_0579", "Purple", None), ("IMG_0545", "White", "the white hose is in a differently printed Simba bag and is not in the recording's photo: check the caption covers it"),
+      # owner 2026-11-28: every item the shop carries goes up. Only in the shop's counter photo of 2026-11-25 (Drive), beside
+      # the purple one in the same Simba bag; no photo of its own yet ("Photo coming soon"), like the light blue Starbuzz
+      ("IMG_20261125_213739_415", "Green", "only in the shop's counter photo IMG_20261125_213739_415 (Drive, 2026-11-28 manifest), beside the purple: check it is still in stock; no photo of its own yet")], None),
     ("Crown Disposable Hose", "Crown disposable hose 60.5 inches", "60.5 inches", "Crown", [("IMG_0577", "Orange", None)], None),
     ("Platinum Disposable Hose", "Platinum disposable hose 60.5 inch", "60.5 inch", "Platinum",
      [("IMG_0575", "Yellow", None), ("IMG_0576", "Black", None), ("IMG_0578", "Green", None)], None),

@@ -13,6 +13,8 @@ A cleaned shop photo (src_shop_hookahs.CLEANED: clear_glass2.py, then frame_cuto
 
   python store/tools/catalog/photos_shop_hookahs.py FULL_DIR WEB_FRAMED [CLEAN_FRAMED]
   python store/tools/catalog/photos_shop_hookahs.py --clean-only CLEAN_FRAMED
+  python store/tools/catalog/photos_shop_hookahs.py --add FULL_DIR PHOTO ...   only these originals (the 2026-11-28 batch,
+                                                       shot upright: src_shop_hookahs.UPRIGHT), every other photo untouched
   node store/tools/photo-versions.mjs          then, so each photo gets its version
 """
 from __future__ import annotations
@@ -34,8 +36,11 @@ def frame(src: Path) -> Image.Image:
     with Image.open(src) as im:
         im = im.convert("RGB")
         if im.width < im.height:
-            raise SystemExit(f"{src.name} is portrait: expected the hookah lying base-left")
-        up = im.rotate(90, expand=True)            # base (left) to the bottom
+            if src.stem not in src_shop_hookahs.UPRIGHT:
+                raise SystemExit(f"{src.name} is portrait: expected the hookah lying base-left")
+            up = im                                # the 2026-11-28 batch: shot upright, base down, only cropped
+        else:
+            up = im.rotate(90, expand=True)        # base (left) to the bottom
     w, h = up.size
     ch = round(w * 5 / 4)
     if ch > h:
@@ -113,8 +118,33 @@ def main(full: Path, web: Path, clean: Path | None = None):
     print(f"{done} original and {webs} web hookah photos published to store/public/img/pc/hookah/")
 
 
+def add_only(full: Path, photos: list[str]):
+    """Publish only the listed originals (the 2026-11-28 batch), leaving every other hookah photo as it is."""
+    pc = C.STORE / "public" / "img" / "pc"
+    want, n = set(photos), 0
+    for name, _fam, _where, shots, _why, _group in src_shop_hookahs.HOOKAHS:
+        for photo, colour, page in shots:
+            if photo not in want:
+                continue
+            if page or photo in src_shop_hookahs.CLEANED:
+                raise SystemExit(f"{photo} is a web or cleaned photo: --add publishes originals only")
+            dst = pc / src_shop_hookahs.photo_name(name, colour)
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            base = frame(full / f"{photo}.jpg")
+            for suf, size in SIZES.items():
+                base.resize(size, Image.LANCZOS).save(dst.with_name(dst.name + suf + ".webp"), "WEBP",
+                                                      quality=82 if suf != "-l" else 78, method=6)
+            want.discard(photo)
+            n += 1
+    if want:
+        raise SystemExit(f"not on the hookah list: {sorted(want)}")
+    print(f"{n} original hookah photos published to store/public/img/pc/hookah/")
+
+
 if __name__ == "__main__":
     if sys.argv[1] == "--clean-only":
         clean_only(Path(sys.argv[2]))
+    elif sys.argv[1] == "--add":
+        add_only(Path(sys.argv[2]), sys.argv[3:])
     else:
         main(Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3]) if len(sys.argv) > 3 else None)

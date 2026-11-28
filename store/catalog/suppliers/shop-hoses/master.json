@@ -11,8 +11,8 @@
    "id": "shop-hoses-2026-11-25",
    "kind": "shop photos and recording",
    "file": "IMG_0543..IMG_0579 (hanging rack) + recording captions",
-   "sha256": "2d7f4538a7ee69a5c64343716ce3eecd71b67501f8cb1a957f0311fc40b7bf8c",
-   "products": 32,
+   "sha256": "1f070532a61583642a13a381ce51791e79a4742020ec9d584997acffb563cffc",
+   "products": 33,
    "edition": "Shop shelf photos and recording captions, 2026-11-25",
    "received": "2026-11-25"
   }
@@ -620,7 +620,8 @@
     }
    },
    "flags": [
-    "NEEDS SHOP: White: the white hose is in a differently printed Simba bag and is not in the recording's photo: check the caption covers it"
+    "NEEDS SHOP: White: the white hose is in a differently printed Simba bag and is not in the recording's photo: check the caption covers it",
+    "NEEDS SHOP: Green: only in the shop's counter photo IMG_20261125_213739_415 (Drive, 2026-11-28 manifest), beside the purple: check it is still in stock; no photo of its own yet"
    ],
    "variants": [
     {
@@ -693,6 +694,57 @@
       "img": "hose/simba-disposable-hose-white",
       "status": "replace",
       "src": "photo:IMG_0545 (the shop's shelf photo, cut out, bag kept as film)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-120033",
+     "key": "hose-simba-disposable-hose#green",
+     "swatch_hex": {
+      "v": "#2e8b57",
+      "src": "rule: chip colour for 'Green'"
+     },
+     "colour": {
+      "v": "Green",
+      "src": "photo:IMG_20261125_213739_415 (the shop's shelf photo)"
+     },
+     "confirm": {
+      "v": "only in the shop's counter photo IMG_20261125_213739_415 (Drive, 2026-11-28 manifest), beside the purple: check it is still in stock; no photo of its own yet",
+      "src": "rule 2026-11-27 (owner: match them up to the best of your ability)"
+     },
+     "photo": {
+      "img": null,
+      "status": "none",
+      "src": null
      },
      "shop": {
       "price_cents": {

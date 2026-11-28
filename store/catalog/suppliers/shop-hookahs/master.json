@@ -10,9 +10,9 @@
   {
    "id": "shop-hookahs-2026-11-27",
    "kind": "shop photos",
-   "file": "IMG_0670..IMG_0715 (hookahs on the counter)",
-   "sha256": "4c9f270d50d0f4695bb513323d4768a30d982f9536c79c83a67b808872535aa9",
-   "products": 27,
+   "file": "IMG_0670..IMG_0715 (hookahs on the counter) + the 2026-11-28 batch (IMG_0672..IMG_0759, PXL_20261128_*, standing)",
+   "sha256": "17f242af3839627279e098a556101e8eabdf97c7a5caddb4eeab1a8b39383296",
+   "products": 102,
    "edition": "Shop hookah photos on the counter, Google Drive 2026-11-27",
    "received": "2026-11-27"
   }
@@ -2014,6 +2014,5502 @@
       "status": "shop",
       "large": true,
       "src": "photo:IMG_0715 (the shop's own photo, cut out, the mat cleared: clear_glass2.py)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-hookah-smoky-teardrop-base-black-stem",
+   "order": 22,
+   "category": "hookahs",
+   "name": {
+    "v": "Hookah, smoky teardrop base, black stem",
+    "src": "photo:PXL_20261128_000402468 (the shop's photo); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "Hookah, smoky teardrop base, black stem (the shop's photo)",
+    "src": "photo:PXL_20261128_000402468"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: named by what the photo shows (no brand or model readable on the piece): give it its real name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140028",
+     "key": "hookah-hookah-smoky-teardrop-base-black-stem#black",
+     "swatch_hex": {
+      "v": "#141414",
+      "src": "rule: chip colour for 'Black'"
+     },
+     "colour": {
+      "v": "Black",
+      "src": "photo:PXL_20261128_000402468 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/hookah-smoky-teardrop-base-black-stem-black",
+      "status": "replace",
+      "large": true,
+      "src": "photo:PXL_20261128_000402468 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-hookah-bubble-glass-base-yellow-and-red-stem",
+   "order": 23,
+   "category": "hookahs",
+   "name": {
+    "v": "Hookah, bubble glass base, yellow and red stem",
+    "src": "photo:PXL_20261128_000711649 (the shop's photo); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "Hookah, bubble glass base, yellow and red stem (the shop's photo)",
+    "src": "photo:PXL_20261128_000711649"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: named by what the photo shows (no brand or model readable on the piece): give it its real name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140029",
+     "key": "hookah-hookah-bubble-glass-base-yellow-and-red-stem#yellow-and-red",
+     "swatch_hex": {
+      "v": "#e3a52a",
+      "src": "rule: chip colour for 'Yellow and red'"
+     },
+     "colour": {
+      "v": "Yellow and red",
+      "src": "photo:PXL_20261128_000711649 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/hookah-bubble-glass-base-yellow-and-red-stem-yellow-and-red",
+      "status": "replace",
+      "large": true,
+      "src": "photo:PXL_20261128_000711649 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-hookah-blue-cut-glass-base-gold-stem",
+   "order": 24,
+   "category": "hookahs",
+   "name": {
+    "v": "Hookah, blue cut-glass base, gold stem",
+    "src": "photo:PXL_20261128_000920111 (the shop's photo); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "Hookah, blue cut-glass base, gold stem (the shop's photo)",
+    "src": "photo:PXL_20261128_000920111"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: named by what the photo shows (no brand or model readable on the piece): give it its real name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140030",
+     "key": "hookah-hookah-blue-cut-glass-base-gold-stem#gold-and-blue",
+     "swatch_hex": {
+      "v": "#c9a54a",
+      "src": "rule: chip colour for 'Gold and blue'"
+     },
+     "colour": {
+      "v": "Gold and blue",
+      "src": "photo:PXL_20261128_000920111 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/hookah-blue-cut-glass-base-gold-stem-gold-and-blue",
+      "status": "replace",
+      "large": true,
+      "src": "photo:PXL_20261128_000920111 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-hookah-champagne-glass-base-gold-stem",
+   "order": 25,
+   "category": "hookahs",
+   "name": {
+    "v": "Hookah, champagne glass base, gold stem",
+    "src": "photo:PXL_20261128_001048012 (the shop's photo); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "Hookah, champagne glass base, gold stem (the shop's photo)",
+    "src": "photo:PXL_20261128_001048012"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: named by what the photo shows (no brand or model readable on the piece): give it its real name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140031",
+     "key": "hookah-hookah-champagne-glass-base-gold-stem#gold",
+     "swatch_hex": {
+      "v": "#c9a54a",
+      "src": "rule: chip colour for 'Gold'"
+     },
+     "colour": {
+      "v": "Gold",
+      "src": "photo:PXL_20261128_001048012 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/hookah-champagne-glass-base-gold-stem-gold",
+      "status": "replace",
+      "large": true,
+      "src": "photo:PXL_20261128_001048012 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-led-hookah-acrylic-frame",
+   "order": 26,
+   "category": "hookahs",
+   "name": {
+    "v": "LED Hookah, acrylic frame",
+    "src": "photo:PXL_20261128_001131337 (the shop's photo); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "LED Hookah, acrylic frame (the shop's photo)",
+    "src": "photo:PXL_20261128_001131337"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: named by what the photo shows (no brand or model readable on the piece): give it its real name; the colours look like one model: check"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140032",
+     "key": "hookah-led-hookah-acrylic-frame#yellow",
+     "swatch_hex": {
+      "v": "#e3c52a",
+      "src": "rule: chip colour for 'Yellow'"
+     },
+     "colour": {
+      "v": "Yellow",
+      "src": "photo:PXL_20261128_001131337 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name; the colours look like one model: check",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/led-hookah-acrylic-frame-yellow",
+      "status": "replace",
+      "large": true,
+      "src": "photo:PXL_20261128_001131337 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-140033",
+     "key": "hookah-led-hookah-acrylic-frame#blue",
+     "swatch_hex": {
+      "v": "#2f5fc0",
+      "src": "rule: chip colour for 'Blue'"
+     },
+     "colour": {
+      "v": "Blue",
+      "src": "photo:IMG_0735 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name; the colours look like one model: check",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/led-hookah-acrylic-frame-blue",
+      "status": "replace",
+      "large": true,
+      "src": "photo:IMG_0735 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-hookah-stone-mosaic-stem-and-base",
+   "order": 27,
+   "category": "hookahs",
+   "name": {
+    "v": "Hookah, stone mosaic stem and base",
+    "src": "photo:PXL_20261128_001542699 (the shop's photo); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "Hookah, stone mosaic stem and base (the shop's photo)",
+    "src": "photo:PXL_20261128_001542699"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: named by what the photo shows (no brand or model readable on the piece): give it its real name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140034",
+     "key": "hookah-hookah-stone-mosaic-stem-and-base#cream-and-gold",
+     "swatch_hex": {
+      "v": "#e6dcc0",
+      "src": "rule: chip colour for 'Cream and gold'"
+     },
+     "colour": {
+      "v": "Cream and gold",
+      "src": "photo:PXL_20261128_001542699 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/hookah-stone-mosaic-stem-and-base-cream-and-gold",
+      "status": "replace",
+      "large": true,
+      "src": "photo:PXL_20261128_001542699 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-hookah-black-base-rifle-stem",
+   "order": 28,
+   "category": "hookahs",
+   "name": {
+    "v": "Hookah, black base, rifle stem",
+    "src": "photo:PXL_20261128_001650238 (the shop's photo); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "Hookah, black base, rifle stem (the shop's photo)",
+    "src": "photo:PXL_20261128_001650238"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: named by what the photo shows (no brand or model readable on the piece): give it its real name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140035",
+     "key": "hookah-hookah-black-base-rifle-stem#black-and-gold",
+     "swatch_hex": {
+      "v": "#141414",
+      "src": "rule: chip colour for 'Black and gold'"
+     },
+     "colour": {
+      "v": "Black and gold",
+      "src": "photo:PXL_20261128_001650238 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/hookah-black-base-rifle-stem-black-and-gold",
+      "status": "replace",
+      "large": true,
+      "src": "photo:PXL_20261128_001650238 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-mob-hookah-rifle-stem",
+   "order": 29,
+   "category": "hookahs",
+   "name": {
+    "v": "MOB Hookah, rifle stem",
+    "src": "photo:PXL_20261128_001954528 (MOB HOOKAH crown logo on the glass base); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "MOB Hookah, rifle stem (MOB HOOKAH crown logo on the glass base)",
+    "src": "photo:PXL_20261128_001954528"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: brand read off the piece, model not found: give it its full name; the colours look like one model: check"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140036",
+     "key": "hookah-mob-hookah-rifle-stem#rose-gold",
+     "swatch_hex": {
+      "v": "#c99a8a",
+      "src": "rule: chip colour for 'Rose gold'"
+     },
+     "colour": {
+      "v": "Rose gold",
+      "src": "photo:PXL_20261128_001954528 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "brand read off the piece, model not found: give it its full name; the colours look like one model: check",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/mob-hookah-rifle-stem-rose-gold",
+      "status": "replace",
+      "large": true,
+      "src": "photo:PXL_20261128_001954528 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-140037",
+     "key": "hookah-mob-hookah-rifle-stem#magenta",
+     "swatch_hex": {
+      "v": "#c2187a",
+      "src": "rule: chip colour for 'Magenta'"
+     },
+     "colour": {
+      "v": "Magenta",
+      "src": "photo:PXL_20261128_002137729 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "brand read off the piece, model not found: give it its full name; the colours look like one model: check",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/mob-hookah-rifle-stem-magenta",
+      "status": "replace",
+      "large": true,
+      "src": "photo:PXL_20261128_002137729 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-mishaismyshisha-hookah",
+   "order": 30,
+   "category": "hookahs",
+   "name": {
+    "v": "MISHAISMYSHISHA Hookah",
+    "src": "photo:PXL_20261128_003327263 (MISHAISMYSHISHA. printed on the stem); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "MISHAISMYSHISHA Hookah (MISHAISMYSHISHA. printed on the stem)",
+    "src": "photo:PXL_20261128_003327263"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: brand read off the piece, model not found: give it its full name; the colours look like one model: check"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140038",
+     "key": "hookah-mishaismyshisha-hookah#blue",
+     "swatch_hex": {
+      "v": "#2f5fc0",
+      "src": "rule: chip colour for 'Blue'"
+     },
+     "colour": {
+      "v": "Blue",
+      "src": "photo:PXL_20261128_003327263 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "brand read off the piece, model not found: give it its full name; the colours look like one model: check",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/mishaismyshisha-hookah-blue",
+      "status": "replace",
+      "large": true,
+      "src": "photo:PXL_20261128_003327263 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-140039",
+     "key": "hookah-mishaismyshisha-hookah#pink",
+     "swatch_hex": {
+      "v": "#e0628a",
+      "src": "rule: chip colour for 'Pink'"
+     },
+     "colour": {
+      "v": "Pink",
+      "src": "photo:PXL_20261128_003758009 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "brand read off the piece, model not found: give it its full name; the colours look like one model: check",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/mishaismyshisha-hookah-pink",
+      "status": "replace",
+      "large": true,
+      "src": "photo:PXL_20261128_003758009 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-mya-hookah",
+   "order": 31,
+   "category": "hookahs",
+   "name": {
+    "v": "MYA Hookah",
+    "src": "photo:PXL_20261128_004255952 (MYA on the collar); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "MYA Hookah (MYA on the collar)",
+    "src": "photo:PXL_20261128_004255952"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: brand read off the piece, model not found: give it its full name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140040",
+     "key": "hookah-mya-hookah#green",
+     "swatch_hex": {
+      "v": "#3f8f2a",
+      "src": "rule: chip colour for 'Green'"
+     },
+     "colour": {
+      "v": "Green",
+      "src": "photo:PXL_20261128_004255952 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "brand read off the piece, model not found: give it its full name",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/mya-hookah-green",
+      "status": "replace",
+      "large": true,
+      "src": "photo:PXL_20261128_004255952 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-hookah-smoky-base-steel-stem-in-a-clear-column",
+   "order": 32,
+   "category": "hookahs",
+   "name": {
+    "v": "Hookah, smoky base, steel stem in a clear column",
+    "src": "photo:PXL_20261128_004355270 (the shop's photo); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "Hookah, smoky base, steel stem in a clear column (the shop's photo)",
+    "src": "photo:PXL_20261128_004355270"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: named by what the photo shows (no brand or model readable on the piece): give it its real name; MOZE shows in the base glass only (a base can come from another maker)"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140041",
+     "key": "hookah-hookah-smoky-base-steel-stem-in-a-clear-column#silver",
+     "swatch_hex": {
+      "v": "#b8bcc0",
+      "src": "rule: chip colour for 'Silver'"
+     },
+     "colour": {
+      "v": "Silver",
+      "src": "photo:PXL_20261128_004355270 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name; MOZE shows in the base glass only (a base can come from another maker)",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/hookah-smoky-base-steel-stem-in-a-clear-column-silver",
+      "status": "replace",
+      "large": true,
+      "src": "photo:PXL_20261128_004355270 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-hookah-cut-crystal-base-steel-stem",
+   "order": 33,
+   "category": "hookahs",
+   "name": {
+    "v": "Hookah, cut-crystal base, steel stem",
+    "src": "photo:PXL_20261128_004452376 (the shop's photo); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "Hookah, cut-crystal base, steel stem (the shop's photo)",
+    "src": "photo:PXL_20261128_004452376"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: named by what the photo shows (no brand or model readable on the piece): give it its real name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140042",
+     "key": "hookah-hookah-cut-crystal-base-steel-stem#silver",
+     "swatch_hex": {
+      "v": "#b8bcc0",
+      "src": "rule: chip colour for 'Silver'"
+     },
+     "colour": {
+      "v": "Silver",
+      "src": "photo:PXL_20261128_004452376 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/hookah-cut-crystal-base-steel-stem-silver",
+      "status": "replace",
+      "large": true,
+      "src": "photo:PXL_20261128_004452376 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-contraband-hookah-resin-stem",
+   "order": 34,
+   "category": "hookahs",
+   "name": {
+    "v": "Contraband Hookah, resin stem",
+    "src": "photo:PXL_20261128_004629722 (CONTRABAND engraved on the collar); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "Contraband Hookah, resin stem (CONTRABAND engraved on the collar)",
+    "src": "photo:PXL_20261128_004629722"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: brand read off the piece, model not found: give it its full name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140043",
+     "key": "hookah-contraband-hookah-resin-stem#orange-and-purple",
+     "swatch_hex": {
+      "v": "#e0662a",
+      "src": "rule: chip colour for 'Orange and purple'"
+     },
+     "colour": {
+      "v": "Orange and purple",
+      "src": "photo:PXL_20261128_004629722 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "brand read off the piece, model not found: give it its full name",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/contraband-hookah-resin-stem-orange-and-purple",
+      "status": "replace",
+      "large": true,
+      "src": "photo:PXL_20261128_004629722 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-hookah-cut-crystal-base-wood-look-teardrop-stem",
+   "order": 35,
+   "category": "hookahs",
+   "name": {
+    "v": "Hookah, cut-crystal base, wood-look teardrop stem",
+    "src": "photo:PXL_20261128_004922986 (the shop's photo); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "Hookah, cut-crystal base, wood-look teardrop stem (the shop's photo)",
+    "src": "photo:PXL_20261128_004922986"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: named by what the photo shows (no brand or model readable on the piece): give it its real name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140044",
+     "key": "hookah-hookah-cut-crystal-base-wood-look-teardrop-stem#wood-and-gold",
+     "swatch_hex": {
+      "v": "#9a6a32",
+      "src": "rule: chip colour for 'Wood and gold'"
+     },
+     "colour": {
+      "v": "Wood and gold",
+      "src": "photo:PXL_20261128_004922986 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/hookah-cut-crystal-base-wood-look-teardrop-stem-wood-and-gold",
+      "status": "replace",
+      "large": true,
+      "src": "photo:PXL_20261128_004922986 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-hookah-clear-base-bronze-stem",
+   "order": 36,
+   "category": "hookahs",
+   "name": {
+    "v": "Hookah, clear base, bronze stem",
+    "src": "photo:PXL_20261128_005022344 (the shop's photo); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "Hookah, clear base, bronze stem (the shop's photo)",
+    "src": "photo:PXL_20261128_005022344"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: named by what the photo shows (no brand or model readable on the piece): give it its real name; MOZE shows in the base glass only (a base can come from another maker)"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140045",
+     "key": "hookah-hookah-clear-base-bronze-stem#bronze",
+     "swatch_hex": {
+      "v": "#8a5a2b",
+      "src": "rule: chip colour for 'Bronze'"
+     },
+     "colour": {
+      "v": "Bronze",
+      "src": "photo:PXL_20261128_005022344 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name; MOZE shows in the base glass only (a base can come from another maker)",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/hookah-clear-base-bronze-stem-bronze",
+      "status": "replace",
+      "large": true,
+      "src": "photo:PXL_20261128_005022344 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-hookah-cut-crystal-base-spring-stem",
+   "order": 37,
+   "category": "hookahs",
+   "name": {
+    "v": "Hookah, cut-crystal base, spring stem",
+    "src": "photo:PXL_20261128_005129760 (the shop's photo); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "Hookah, cut-crystal base, spring stem (the shop's photo)",
+    "src": "photo:PXL_20261128_005129760"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: named by what the photo shows (no brand or model readable on the piece): give it its real name; the colours look like one model: check"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140046",
+     "key": "hookah-hookah-cut-crystal-base-spring-stem#red",
+     "swatch_hex": {
+      "v": "#a3262a",
+      "src": "rule: chip colour for 'Red'"
+     },
+     "colour": {
+      "v": "Red",
+      "src": "photo:PXL_20261128_005129760 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name; the colours look like one model: check",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/hookah-cut-crystal-base-spring-stem-red",
+      "status": "replace",
+      "large": true,
+      "src": "photo:PXL_20261128_005129760 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-140047",
+     "key": "hookah-hookah-cut-crystal-base-spring-stem#blue",
+     "swatch_hex": {
+      "v": "#2f5fc0",
+      "src": "rule: chip colour for 'Blue'"
+     },
+     "colour": {
+      "v": "Blue",
+      "src": "photo:PXL_20261128_005343131 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name; the colours look like one model: check",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/hookah-cut-crystal-base-spring-stem-blue",
+      "status": "replace",
+      "large": true,
+      "src": "photo:PXL_20261128_005343131 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-140048",
+     "key": "hookah-hookah-cut-crystal-base-spring-stem#lavender",
+     "swatch_hex": {
+      "v": "#a58fd0",
+      "src": "rule: chip colour for 'Lavender'"
+     },
+     "colour": {
+      "v": "Lavender",
+      "src": "photo:PXL_20261128_011555355 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name; the colours look like one model: check",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/hookah-cut-crystal-base-spring-stem-lavender",
+      "status": "replace",
+      "large": true,
+      "src": "photo:PXL_20261128_011555355 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-hookah-camel-engraved-stem",
+   "order": 38,
+   "category": "hookahs",
+   "name": {
+    "v": "Hookah, camel-engraved stem",
+    "src": "photo:PXL_20261128_005212636 (the shop's photo); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "Hookah, camel-engraved stem (the shop's photo)",
+    "src": "photo:PXL_20261128_005212636"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: named by what the photo shows (no brand or model readable on the piece): give it its real name; the colours look like one model: check"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140049",
+     "key": "hookah-hookah-camel-engraved-stem#blue",
+     "swatch_hex": {
+      "v": "#2f5fc0",
+      "src": "rule: chip colour for 'Blue'"
+     },
+     "colour": {
+      "v": "Blue",
+      "src": "photo:PXL_20261128_005212636 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name; the colours look like one model: check",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/hookah-camel-engraved-stem-blue",
+      "status": "replace",
+      "large": true,
+      "src": "photo:PXL_20261128_005212636 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-140050",
+     "key": "hookah-hookah-camel-engraved-stem#lime",
+     "swatch_hex": {
+      "v": "#a6c83a",
+      "src": "rule: chip colour for 'Lime'"
+     },
+     "colour": {
+      "v": "Lime",
+      "src": "photo:PXL_20261128_010441354 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name; the colours look like one model: check",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/hookah-camel-engraved-stem-lime",
+      "status": "replace",
+      "large": true,
+      "src": "photo:PXL_20261128_010441354 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-hookah-quilted-glass-base-steel-stem",
+   "order": 39,
+   "category": "hookahs",
+   "name": {
+    "v": "Hookah, quilted glass base, steel stem",
+    "src": "photo:PXL_20261128_005254462 (the shop's photo); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "Hookah, quilted glass base, steel stem (the shop's photo)",
+    "src": "photo:PXL_20261128_005254462"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: named by what the photo shows (no brand or model readable on the piece): give it its real name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140051",
+     "key": "hookah-hookah-quilted-glass-base-steel-stem#silver",
+     "swatch_hex": {
+      "v": "#b8bcc0",
+      "src": "rule: chip colour for 'Silver'"
+     },
+     "colour": {
+      "v": "Silver",
+      "src": "photo:PXL_20261128_005254462 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/hookah-quilted-glass-base-steel-stem-silver",
+      "status": "replace",
+      "large": true,
+      "src": "photo:PXL_20261128_005254462 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-hookah-fluted-base-steel-and-resin-stem",
+   "order": 40,
+   "category": "hookahs",
+   "name": {
+    "v": "Hookah, fluted base, steel and resin stem",
+    "src": "photo:PXL_20261128_005523706 (the shop's photo); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "Hookah, fluted base, steel and resin stem (the shop's photo)",
+    "src": "photo:PXL_20261128_005523706"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: named by what the photo shows (no brand or model readable on the piece): give it its real name; the colours look like one model: check"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140052",
+     "key": "hookah-hookah-fluted-base-steel-and-resin-stem#red",
+     "swatch_hex": {
+      "v": "#a3262a",
+      "src": "rule: chip colour for 'Red'"
+     },
+     "colour": {
+      "v": "Red",
+      "src": "photo:PXL_20261128_005523706 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name; the colours look like one model: check",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/hookah-fluted-base-steel-and-resin-stem-red",
+      "status": "replace",
+      "large": true,
+      "src": "photo:PXL_20261128_005523706 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-140053",
+     "key": "hookah-hookah-fluted-base-steel-and-resin-stem#burgundy",
+     "swatch_hex": {
+      "v": "#6b1f2a",
+      "src": "rule: chip colour for 'Burgundy'"
+     },
+     "colour": {
+      "v": "Burgundy",
+      "src": "photo:PXL_20261128_011247784.MP (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name; the colours look like one model: check",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/hookah-fluted-base-steel-and-resin-stem-burgundy",
+      "status": "replace",
+      "large": true,
+      "src": "photo:PXL_20261128_011247784.MP (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-140054",
+     "key": "hookah-hookah-fluted-base-steel-and-resin-stem#yellow",
+     "swatch_hex": {
+      "v": "#e3c52a",
+      "src": "rule: chip colour for 'Yellow'"
+     },
+     "colour": {
+      "v": "Yellow",
+      "src": "photo:PXL_20261128_011750125 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name; the colours look like one model: check",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/hookah-fluted-base-steel-and-resin-stem-yellow",
+      "status": "replace",
+      "large": true,
+      "src": "photo:PXL_20261128_011750125 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-hookah-green-ribbed-base-chrome-stem",
+   "order": 41,
+   "category": "hookahs",
+   "name": {
+    "v": "Hookah, green ribbed base, chrome stem",
+    "src": "photo:PXL_20261128_005618124 (the shop's photo); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "Hookah, green ribbed base, chrome stem (the shop's photo)",
+    "src": "photo:PXL_20261128_005618124"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: named by what the photo shows (no brand or model readable on the piece): give it its real name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140055",
+     "key": "hookah-hookah-green-ribbed-base-chrome-stem#green",
+     "swatch_hex": {
+      "v": "#3f8f2a",
+      "src": "rule: chip colour for 'Green'"
+     },
+     "colour": {
+      "v": "Green",
+      "src": "photo:PXL_20261128_005618124 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/hookah-green-ribbed-base-chrome-stem-green",
+      "status": "replace",
+      "large": true,
+      "src": "photo:PXL_20261128_005618124 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-hookah-fluted-teardrop-stem",
+   "order": 42,
+   "category": "hookahs",
+   "name": {
+    "v": "Hookah, fluted teardrop stem",
+    "src": "photo:PXL_20261128_005704432 (the shop's photo); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "Hookah, fluted teardrop stem (the shop's photo)",
+    "src": "photo:PXL_20261128_005704432"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: named by what the photo shows (no brand or model readable on the piece): give it its real name; the colours look like one model: check; MOZE shows in the base glass only (a base can come from another maker)"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140056",
+     "key": "hookah-hookah-fluted-teardrop-stem#red",
+     "swatch_hex": {
+      "v": "#a3262a",
+      "src": "rule: chip colour for 'Red'"
+     },
+     "colour": {
+      "v": "Red",
+      "src": "photo:PXL_20261128_005704432 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name; the colours look like one model: check; MOZE shows in the base glass only (a base can come from another maker)",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/hookah-fluted-teardrop-stem-red",
+      "status": "replace",
+      "large": true,
+      "src": "photo:PXL_20261128_005704432 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-140057",
+     "key": "hookah-hookah-fluted-teardrop-stem#blue",
+     "swatch_hex": {
+      "v": "#2f5fc0",
+      "src": "rule: chip colour for 'Blue'"
+     },
+     "colour": {
+      "v": "Blue",
+      "src": "photo:PXL_20261128_010051374 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name; the colours look like one model: check; MOZE shows in the base glass only (a base can come from another maker)",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/hookah-fluted-teardrop-stem-blue",
+      "status": "replace",
+      "large": true,
+      "src": "photo:PXL_20261128_010051374 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-140058",
+     "key": "hookah-hookah-fluted-teardrop-stem#lime",
+     "swatch_hex": {
+      "v": "#a6c83a",
+      "src": "rule: chip colour for 'Lime'"
+     },
+     "colour": {
+      "v": "Lime",
+      "src": "photo:PXL_20261128_011030855 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name; the colours look like one model: check; MOZE shows in the base glass only (a base can come from another maker)",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/hookah-fluted-teardrop-stem-lime",
+      "status": "replace",
+      "large": true,
+      "src": "photo:PXL_20261128_011030855 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-140059",
+     "key": "hookah-hookah-fluted-teardrop-stem#steel-blue",
+     "swatch_hex": {
+      "v": "#5a7a96",
+      "src": "rule: chip colour for 'Steel blue'"
+     },
+     "colour": {
+      "v": "Steel blue",
+      "src": "photo:PXL_20261128_011934455 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name; the colours look like one model: check; MOZE shows in the base glass only (a base can come from another maker)",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/hookah-fluted-teardrop-stem-steel-blue",
+      "status": "replace",
+      "large": true,
+      "src": "photo:PXL_20261128_011934455 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-mattpear-hookah",
+   "order": 43,
+   "category": "hookahs",
+   "name": {
+    "v": "MattPear Hookah",
+    "src": "photo:PXL_20261128_005851370 (MattPear and Simple on the collar); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "MattPear Hookah (MattPear and Simple on the collar)",
+    "src": "photo:PXL_20261128_005851370"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: brand read off the piece, model not found: give it its full name; the colours look like one model: check"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140060",
+     "key": "hookah-mattpear-hookah#black-crackle-base",
+     "swatch_hex": {
+      "v": "#141414",
+      "src": "rule: chip colour for 'Black, crackle base'"
+     },
+     "colour": {
+      "v": "Black, crackle base",
+      "src": "photo:PXL_20261128_005851370 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "brand read off the piece, model not found: give it its full name; the colours look like one model: check",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/mattpear-hookah-black-crackle-base",
+      "status": "replace",
+      "large": true,
+      "src": "photo:PXL_20261128_005851370 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-140061",
+     "key": "hookah-mattpear-hookah#black-clear-base",
+     "swatch_hex": {
+      "v": "#141414",
+      "src": "rule: chip colour for 'Black, clear base'"
+     },
+     "colour": {
+      "v": "Black, clear base",
+      "src": "photo:IMG_0745 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "brand read off the piece, model not found: give it its full name; the colours look like one model: check",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/mattpear-hookah-black-clear-base",
+      "status": "replace",
+      "large": true,
+      "src": "photo:IMG_0745 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-hookah-clear-base-black-textured-stem",
+   "order": 44,
+   "category": "hookahs",
+   "name": {
+    "v": "Hookah, clear base, black textured stem",
+    "src": "photo:PXL_20261128_005930716 (the shop's photo); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "Hookah, clear base, black textured stem (the shop's photo)",
+    "src": "photo:PXL_20261128_005930716"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: named by what the photo shows (no brand or model readable on the piece): give it its real name; MOZE shows in the base glass only (a base can come from another maker)"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140062",
+     "key": "hookah-hookah-clear-base-black-textured-stem#black",
+     "swatch_hex": {
+      "v": "#141414",
+      "src": "rule: chip colour for 'Black'"
+     },
+     "colour": {
+      "v": "Black",
+      "src": "photo:PXL_20261128_005930716 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name; MOZE shows in the base glass only (a base can come from another maker)",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/hookah-clear-base-black-textured-stem-black",
+      "status": "replace",
+      "large": true,
+      "src": "photo:PXL_20261128_005930716 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-moze-hookah-resin-stem",
+   "order": 45,
+   "category": "hookahs",
+   "name": {
+    "v": "Moze Hookah, resin stem",
+    "src": "photo:PXL_20261128_010014453 (MOZE on the collar); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "Moze Hookah, resin stem (MOZE on the collar)",
+    "src": "photo:PXL_20261128_010014453"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: brand read off the piece, model not found: give it its full name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140063",
+     "key": "hookah-moze-hookah-resin-stem#purple",
+     "swatch_hex": {
+      "v": "#6b3fa0",
+      "src": "rule: chip colour for 'Purple'"
+     },
+     "colour": {
+      "v": "Purple",
+      "src": "photo:PXL_20261128_010014453 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "brand read off the piece, model not found: give it its full name",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/moze-hookah-resin-stem-purple",
+      "status": "replace",
+      "large": true,
+      "src": "photo:PXL_20261128_010014453 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-hookah-bulb-vase-on-a-black-stand",
+   "order": 46,
+   "category": "hookahs",
+   "name": {
+    "v": "Hookah, bulb vase on a black stand",
+    "src": "photo:PXL_20261128_010217372 (the shop's photo); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "Hookah, bulb vase on a black stand (the shop's photo)",
+    "src": "photo:PXL_20261128_010217372"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: named by what the photo shows (no brand or model readable on the piece): give it its real name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140064",
+     "key": "hookah-hookah-bulb-vase-on-a-black-stand#black-and-gold",
+     "swatch_hex": {
+      "v": "#141414",
+      "src": "rule: chip colour for 'Black and gold'"
+     },
+     "colour": {
+      "v": "Black and gold",
+      "src": "photo:PXL_20261128_010217372 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/hookah-bulb-vase-on-a-black-stand-black-and-gold",
+      "status": "replace",
+      "large": true,
+      "src": "photo:PXL_20261128_010217372 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-hookah-teardrop-base-steel-stem",
+   "order": 47,
+   "category": "hookahs",
+   "name": {
+    "v": "Hookah, teardrop base, steel stem",
+    "src": "photo:PXL_20261128_010247337 (the shop's photo); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "Hookah, teardrop base, steel stem (the shop's photo)",
+    "src": "photo:PXL_20261128_010247337"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: named by what the photo shows (no brand or model readable on the piece): give it its real name; the colours look like one model: check; the smoky grey may be the champagne one with another bowl fitted: check it is a second hookah"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140065",
+     "key": "hookah-hookah-teardrop-base-steel-stem#champagne",
+     "swatch_hex": {
+      "v": "#c8b07a",
+      "src": "rule: chip colour for 'Champagne'"
+     },
+     "colour": {
+      "v": "Champagne",
+      "src": "photo:PXL_20261128_010247337 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name; the colours look like one model: check; the smoky grey may be the champagne one with another bowl fitted: check it is a second hookah",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/hookah-teardrop-base-steel-stem-champagne",
+      "status": "replace",
+      "large": true,
+      "src": "photo:PXL_20261128_010247337 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-140066",
+     "key": "hookah-hookah-teardrop-base-steel-stem#smoky-grey",
+     "swatch_hex": {
+      "v": "#6e6e68",
+      "src": "rule: chip colour for 'Smoky grey'"
+     },
+     "colour": {
+      "v": "Smoky grey",
+      "src": "photo:PXL_20261128_010659855 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name; the colours look like one model: check; the smoky grey may be the champagne one with another bowl fitted: check it is a second hookah",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/hookah-teardrop-base-steel-stem-smoky-grey",
+      "status": "replace",
+      "large": true,
+      "src": "photo:PXL_20261128_010659855 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-hookah-smoky-teardrop-base-red-stem",
+   "order": 48,
+   "category": "hookahs",
+   "name": {
+    "v": "Hookah, smoky teardrop base, red stem",
+    "src": "photo:PXL_20261128_010607074 (the shop's photo); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "Hookah, smoky teardrop base, red stem (the shop's photo)",
+    "src": "photo:PXL_20261128_010607074"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: named by what the photo shows (no brand or model readable on the piece): give it its real name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140067",
+     "key": "hookah-hookah-smoky-teardrop-base-red-stem#red",
+     "swatch_hex": {
+      "v": "#a3262a",
+      "src": "rule: chip colour for 'Red'"
+     },
+     "colour": {
+      "v": "Red",
+      "src": "photo:PXL_20261128_010607074 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/hookah-smoky-teardrop-base-red-stem-red",
+      "status": "replace",
+      "large": true,
+      "src": "photo:PXL_20261128_010607074 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-hookah-iridescent-base-gold-stem",
+   "order": 49,
+   "category": "hookahs",
+   "name": {
+    "v": "Hookah, iridescent base, gold stem",
+    "src": "photo:PXL_20261128_010629514 (the shop's photo); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "Hookah, iridescent base, gold stem (the shop's photo)",
+    "src": "photo:PXL_20261128_010629514"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: named by what the photo shows (no brand or model readable on the piece): give it its real name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140068",
+     "key": "hookah-hookah-iridescent-base-gold-stem#gold",
+     "swatch_hex": {
+      "v": "#c9a54a",
+      "src": "rule: chip colour for 'Gold'"
+     },
+     "colour": {
+      "v": "Gold",
+      "src": "photo:PXL_20261128_010629514 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/hookah-iridescent-base-gold-stem-gold",
+      "status": "replace",
+      "large": true,
+      "src": "photo:PXL_20261128_010629514 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-hookah-chrome-stem-acrylic-base",
+   "order": 50,
+   "category": "hookahs",
+   "name": {
+    "v": "Hookah, chrome stem, acrylic base",
+    "src": "photo:PXL_20261128_010735826 (the shop's photo); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "Hookah, chrome stem, acrylic base (the shop's photo)",
+    "src": "photo:PXL_20261128_010735826"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: named by what the photo shows (no brand or model readable on the piece): give it its real name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140069",
+     "key": "hookah-hookah-chrome-stem-acrylic-base#chrome",
+     "swatch_hex": {
+      "v": "#c4c8cc",
+      "src": "rule: chip colour for 'Chrome'"
+     },
+     "colour": {
+      "v": "Chrome",
+      "src": "photo:PXL_20261128_010735826 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/hookah-chrome-stem-acrylic-base-chrome",
+      "status": "replace",
+      "large": true,
+      "src": "photo:PXL_20261128_010735826 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-hookah-clear-base-slim-bronze-stem",
+   "order": 51,
+   "category": "hookahs",
+   "name": {
+    "v": "Hookah, clear base, slim bronze stem",
+    "src": "photo:PXL_20261128_010859808 (the shop's photo); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "Hookah, clear base, slim bronze stem (the shop's photo)",
+    "src": "photo:PXL_20261128_010859808"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: named by what the photo shows (no brand or model readable on the piece): give it its real name; MOZE shows in the base glass only (a base can come from another maker)"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140070",
+     "key": "hookah-hookah-clear-base-slim-bronze-stem#bronze",
+     "swatch_hex": {
+      "v": "#8a5a2b",
+      "src": "rule: chip colour for 'Bronze'"
+     },
+     "colour": {
+      "v": "Bronze",
+      "src": "photo:PXL_20261128_010859808 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name; MOZE shows in the base glass only (a base can come from another maker)",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/hookah-clear-base-slim-bronze-stem-bronze",
+      "status": "replace",
+      "large": true,
+      "src": "photo:PXL_20261128_010859808 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-hookah-cut-crystal-base-gold-and-blue-stem",
+   "order": 52,
+   "category": "hookahs",
+   "name": {
+    "v": "Hookah, cut-crystal base, gold and blue stem",
+    "src": "photo:PXL_20261128_011052595 (the shop's photo); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "Hookah, cut-crystal base, gold and blue stem (the shop's photo)",
+    "src": "photo:PXL_20261128_011052595"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: named by what the photo shows (no brand or model readable on the piece): give it its real name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140071",
+     "key": "hookah-hookah-cut-crystal-base-gold-and-blue-stem#gold-and-blue",
+     "swatch_hex": {
+      "v": "#c9a54a",
+      "src": "rule: chip colour for 'Gold and blue'"
+     },
+     "colour": {
+      "v": "Gold and blue",
+      "src": "photo:PXL_20261128_011052595 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/hookah-cut-crystal-base-gold-and-blue-stem-gold-and-blue",
+      "status": "replace",
+      "large": true,
+      "src": "photo:PXL_20261128_011052595 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-hookah-hexagonal-base-cream-stem",
+   "order": 53,
+   "category": "hookahs",
+   "name": {
+    "v": "Hookah, hexagonal base, cream stem",
+    "src": "photo:PXL_20261128_011508060 (the shop's photo); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "Hookah, hexagonal base, cream stem (the shop's photo)",
+    "src": "photo:PXL_20261128_011508060"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: named by what the photo shows (no brand or model readable on the piece): give it its real name; MOZE shows in the base glass only (a base can come from another maker)"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140072",
+     "key": "hookah-hookah-hexagonal-base-cream-stem#cream",
+     "swatch_hex": {
+      "v": "#ece4d0",
+      "src": "rule: chip colour for 'Cream'"
+     },
+     "colour": {
+      "v": "Cream",
+      "src": "photo:PXL_20261128_011508060 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name; MOZE shows in the base glass only (a base can come from another maker)",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/hookah-hexagonal-base-cream-stem-cream",
+      "status": "replace",
+      "large": true,
+      "src": "photo:PXL_20261128_011508060 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-hookah-amber-pyramid-base-gunmetal-stem",
+   "order": 54,
+   "category": "hookahs",
+   "name": {
+    "v": "Hookah, amber pyramid base, gunmetal stem",
+    "src": "photo:PXL_20261128_012145739 (the shop's photo); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "Hookah, amber pyramid base, gunmetal stem (the shop's photo)",
+    "src": "photo:PXL_20261128_012145739"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: named by what the photo shows (no brand or model readable on the piece): give it its real name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140073",
+     "key": "hookah-hookah-amber-pyramid-base-gunmetal-stem#gunmetal",
+     "swatch_hex": {
+      "v": "#4a4d52",
+      "src": "rule: chip colour for 'Gunmetal'"
+     },
+     "colour": {
+      "v": "Gunmetal",
+      "src": "photo:PXL_20261128_012145739 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/hookah-amber-pyramid-base-gunmetal-stem-gunmetal",
+      "status": "replace",
+      "large": true,
+      "src": "photo:PXL_20261128_012145739 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-hookah-cut-glass-base-gold-and-silver-stem",
+   "order": 55,
+   "category": "hookahs",
+   "name": {
+    "v": "Hookah, cut-glass base, gold and silver stem",
+    "src": "photo:IMG_0672 (the shop's photo); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "Hookah, cut-glass base, gold and silver stem (the shop's photo)",
+    "src": "photo:IMG_0672"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: named by what the photo shows (no brand or model readable on the piece): give it its real name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140074",
+     "key": "hookah-hookah-cut-glass-base-gold-and-silver-stem#gold-and-silver",
+     "swatch_hex": {
+      "v": "#c9a54a",
+      "src": "rule: chip colour for 'Gold and silver'"
+     },
+     "colour": {
+      "v": "Gold and silver",
+      "src": "photo:IMG_0672 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/hookah-cut-glass-base-gold-and-silver-stem-gold-and-silver",
+      "status": "replace",
+      "large": true,
+      "src": "photo:IMG_0672 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-hookah-cut-glass-base-black-and-gold-fleck-stem",
+   "order": 56,
+   "category": "hookahs",
+   "name": {
+    "v": "Hookah, cut-glass base, black and gold-fleck stem",
+    "src": "photo:IMG_0675 (the shop's photo); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "Hookah, cut-glass base, black and gold-fleck stem (the shop's photo)",
+    "src": "photo:IMG_0675"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: named by what the photo shows (no brand or model readable on the piece): give it its real name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140075",
+     "key": "hookah-hookah-cut-glass-base-black-and-gold-fleck-stem#black-and-gold",
+     "swatch_hex": {
+      "v": "#141414",
+      "src": "rule: chip colour for 'Black and gold'"
+     },
+     "colour": {
+      "v": "Black and gold",
+      "src": "photo:IMG_0675 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/hookah-cut-glass-base-black-and-gold-fleck-stem-black-and-gold",
+      "status": "replace",
+      "large": true,
+      "src": "photo:IMG_0675 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-amy-deluxe-hookah-gold-rocket-stem",
+   "order": 57,
+   "category": "hookahs",
+   "name": {
+    "v": "Amy Deluxe Hookah, gold rocket stem",
+    "src": "photo:IMG_0680 (AMY DELUXE on the collar); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "Amy Deluxe Hookah, gold rocket stem (AMY DELUXE on the collar)",
+    "src": "photo:IMG_0680"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: brand read off the piece, model not found: give it its full name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140076",
+     "key": "hookah-amy-deluxe-hookah-gold-rocket-stem#gold",
+     "swatch_hex": {
+      "v": "#c9a54a",
+      "src": "rule: chip colour for 'Gold'"
+     },
+     "colour": {
+      "v": "Gold",
+      "src": "photo:IMG_0680 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "brand read off the piece, model not found: give it its full name",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/amy-deluxe-hookah-gold-rocket-stem-gold",
+      "status": "replace",
+      "large": true,
+      "src": "photo:IMG_0680 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-hookah-cut-glass-base-black-and-gold-stem",
+   "order": 58,
+   "category": "hookahs",
+   "name": {
+    "v": "Hookah, cut-glass base, black and gold stem",
+    "src": "photo:IMG_0682 (the shop's photo); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "Hookah, cut-glass base, black and gold stem (the shop's photo)",
+    "src": "photo:IMG_0682"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: named by what the photo shows (no brand or model readable on the piece): give it its real name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140077",
+     "key": "hookah-hookah-cut-glass-base-black-and-gold-stem#black-and-gold",
+     "swatch_hex": {
+      "v": "#141414",
+      "src": "rule: chip colour for 'Black and gold'"
+     },
+     "colour": {
+      "v": "Black and gold",
+      "src": "photo:IMG_0682 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/hookah-cut-glass-base-black-and-gold-stem-black-and-gold",
+      "status": "replace",
+      "large": true,
+      "src": "photo:IMG_0682 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-mr-eds-hookah",
+   "order": 59,
+   "category": "hookahs",
+   "name": {
+    "v": "MR EDS Hookah",
+    "src": "photo:IMG_0692 (MR EDS badge on the collar and the side knob); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "MR EDS Hookah (MR EDS badge on the collar and the side knob)",
+    "src": "photo:IMG_0692"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: brand read off the piece, model not found: give it its full name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140078",
+     "key": "hookah-mr-eds-hookah#gold-and-silver",
+     "swatch_hex": {
+      "v": "#c9a54a",
+      "src": "rule: chip colour for 'Gold and silver'"
+     },
+     "colour": {
+      "v": "Gold and silver",
+      "src": "photo:IMG_0692 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "brand read off the piece, model not found: give it its full name",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/mr-eds-hookah-gold-and-silver",
+      "status": "replace",
+      "large": true,
+      "src": "photo:IMG_0692 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-smokah-hookah",
+   "order": 60,
+   "category": "hookahs",
+   "name": {
+    "v": "Smokah Hookah",
+    "src": "photo:IMG_0704 (smokah on the collar); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "Smokah Hookah (smokah on the collar)",
+    "src": "photo:IMG_0704"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: brand read off the piece, model not found: give it its full name; the colours look like one model: check"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140079",
+     "key": "hookah-smokah-hookah#frosted-print-base",
+     "swatch_hex": {
+      "v": "#e9ecef",
+      "src": "rule: chip colour for 'Frosted print base'"
+     },
+     "colour": {
+      "v": "Frosted print base",
+      "src": "photo:IMG_0704 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "brand read off the piece, model not found: give it its full name; the colours look like one model: check",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/smokah-hookah-frosted-print-base",
+      "status": "replace",
+      "large": true,
+      "src": "photo:IMG_0704 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-140080",
+     "key": "hookah-smokah-hookah#bubble-glass-base",
+     "swatch_hex": {
+      "v": "#e6ecef",
+      "src": "rule: chip colour for 'Bubble glass base'"
+     },
+     "colour": {
+      "v": "Bubble glass base",
+      "src": "photo:IMG_0734 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "brand read off the piece, model not found: give it its full name; the colours look like one model: check",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/smokah-hookah-bubble-glass-base",
+      "status": "replace",
+      "large": true,
+      "src": "photo:IMG_0734 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-hookah-clear-teardrop-base-black-stem-with-clear-tube",
+   "order": 61,
+   "category": "hookahs",
+   "name": {
+    "v": "Hookah, clear teardrop base, black stem with clear tube",
+    "src": "photo:IMG_0725 (the shop's photo); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "Hookah, clear teardrop base, black stem with clear tube (the shop's photo)",
+    "src": "photo:IMG_0725"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: named by what the photo shows (no brand or model readable on the piece): give it its real name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140081",
+     "key": "hookah-hookah-clear-teardrop-base-black-stem-with-clear-tube#black",
+     "swatch_hex": {
+      "v": "#141414",
+      "src": "rule: chip colour for 'Black'"
+     },
+     "colour": {
+      "v": "Black",
+      "src": "photo:IMG_0725 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/hookah-clear-teardrop-base-black-stem-with-clear-tube-black",
+      "status": "replace",
+      "large": true,
+      "src": "photo:IMG_0725 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-amir-s-hookah-square-glass-base",
+   "order": 62,
+   "category": "hookahs",
+   "name": {
+    "v": "Amir's Hookah, square glass base",
+    "src": "photo:IMG_0726 (AMIR'S printed on the glass base); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "Amir's Hookah, square glass base (AMIR'S printed on the glass base)",
+    "src": "photo:IMG_0726"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: brand read off the piece, model not found: give it its full name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140082",
+     "key": "hookah-amir-s-hookah-square-glass-base#wood-and-clear",
+     "swatch_hex": {
+      "v": "#8a5a2b",
+      "src": "rule: chip colour for 'Wood and clear'"
+     },
+     "colour": {
+      "v": "Wood and clear",
+      "src": "photo:IMG_0726 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "brand read off the piece, model not found: give it its full name",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/amir-s-hookah-square-glass-base-wood-and-clear",
+      "status": "replace",
+      "large": true,
+      "src": "photo:IMG_0726 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-hookah-football-base-gold-trophy-stem",
+   "order": 63,
+   "category": "hookahs",
+   "name": {
+    "v": "Hookah, football base, gold trophy stem",
+    "src": "photo:IMG_0727 (the shop's photo); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "Hookah, football base, gold trophy stem (the shop's photo)",
+    "src": "photo:IMG_0727"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: named by what the photo shows (no brand or model readable on the piece): give it its real name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140083",
+     "key": "hookah-hookah-football-base-gold-trophy-stem#gold",
+     "swatch_hex": {
+      "v": "#c9a54a",
+      "src": "rule: chip colour for 'Gold'"
+     },
+     "colour": {
+      "v": "Gold",
+      "src": "photo:IMG_0727 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/hookah-football-base-gold-trophy-stem-gold",
+      "status": "replace",
+      "large": true,
+      "src": "photo:IMG_0727 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-hookah-red-glass-base-rifle-rail-stem",
+   "order": 64,
+   "category": "hookahs",
+   "name": {
+    "v": "Hookah, red glass base, rifle-rail stem",
+    "src": "photo:IMG_0728 (the shop's photo); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "Hookah, red glass base, rifle-rail stem (the shop's photo)",
+    "src": "photo:IMG_0728"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: named by what the photo shows (no brand or model readable on the piece): give it its real name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140084",
+     "key": "hookah-hookah-red-glass-base-rifle-rail-stem#red-and-copper",
+     "swatch_hex": {
+      "v": "#a3262a",
+      "src": "rule: chip colour for 'Red and copper'"
+     },
+     "colour": {
+      "v": "Red and copper",
+      "src": "photo:IMG_0728 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/hookah-red-glass-base-rifle-rail-stem-red-and-copper",
+      "status": "replace",
+      "large": true,
+      "src": "photo:IMG_0728 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-hookah-clear-tube-on-a-lit-black-base",
+   "order": 65,
+   "category": "hookahs",
+   "name": {
+    "v": "Hookah, clear tube on a lit black base",
+    "src": "photo:IMG_0737 (the shop's photo); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "Hookah, clear tube on a lit black base (the shop's photo)",
+    "src": "photo:IMG_0737"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: named by what the photo shows (no brand or model readable on the piece): give it its real name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140085",
+     "key": "hookah-hookah-clear-tube-on-a-lit-black-base#black",
+     "swatch_hex": {
+      "v": "#141414",
+      "src": "rule: chip colour for 'Black'"
+     },
+     "colour": {
+      "v": "Black",
+      "src": "photo:IMG_0737 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/hookah-clear-tube-on-a-lit-black-base-black",
+      "status": "replace",
+      "large": true,
+      "src": "photo:IMG_0737 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-hookah-tinted-base-wood-and-resin-stem",
+   "order": 66,
+   "category": "hookahs",
+   "name": {
+    "v": "Hookah, tinted base, wood and resin stem",
+    "src": "photo:IMG_0739 (the shop's photo); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "Hookah, tinted base, wood and resin stem (the shop's photo)",
+    "src": "photo:IMG_0739"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: named by what the photo shows (no brand or model readable on the piece): give it its real name; the colours look like one model: check; the stems look like the HG Hookah's (OSS-140008/140009, IMG_0674/0678) on other bases: check these are not the same hookahs"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140086",
+     "key": "hookah-hookah-tinted-base-wood-and-resin-stem#wood-and-green",
+     "swatch_hex": {
+      "v": "#2f7a3a",
+      "src": "rule: chip colour for 'Wood and green'"
+     },
+     "colour": {
+      "v": "Wood and green",
+      "src": "photo:IMG_0739 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name; the colours look like one model: check; the stems look like the HG Hookah's (OSS-140008/140009, IMG_0674/0678) on other bases: check these are not the same hookahs",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/hookah-tinted-base-wood-and-resin-stem-wood-and-green",
+      "status": "replace",
+      "large": true,
+      "src": "photo:IMG_0739 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-140087",
+     "key": "hookah-hookah-tinted-base-wood-and-resin-stem#wood-and-blue",
+     "swatch_hex": {
+      "v": "#2f5fb0",
+      "src": "rule: chip colour for 'Wood and blue'"
+     },
+     "colour": {
+      "v": "Wood and blue",
+      "src": "photo:IMG_0741 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name; the colours look like one model: check; the stems look like the HG Hookah's (OSS-140008/140009, IMG_0674/0678) on other bases: check these are not the same hookahs",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/hookah-tinted-base-wood-and-resin-stem-wood-and-blue",
+      "status": "replace",
+      "large": true,
+      "src": "photo:IMG_0741 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-koress-k3-hookah",
+   "order": 67,
+   "category": "hookahs",
+   "name": {
+    "v": "Koress K3 Hookah",
+    "src": "photo:IMG_0742 (KORESS K3 on the stem); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "Koress K3 Hookah (KORESS K3 on the stem)",
+    "src": "photo:IMG_0742"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: brand read off the piece, model not found: give it its full name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140088",
+     "key": "hookah-koress-k3-hookah#red-and-yellow",
+     "swatch_hex": {
+      "v": "#c8372d",
+      "src": "rule: chip colour for 'Red and yellow'"
+     },
+     "colour": {
+      "v": "Red and yellow",
+      "src": "photo:IMG_0742 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "brand read off the piece, model not found: give it its full name",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/koress-k3-hookah-red-and-yellow",
+      "status": "replace",
+      "large": true,
+      "src": "photo:IMG_0742 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-hookah-cut-glass-base-comic-print-stem",
+   "order": 68,
+   "category": "hookahs",
+   "name": {
+    "v": "Hookah, cut-glass base, comic-print stem",
+    "src": "photo:IMG_0743 (the shop's photo); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "Hookah, cut-glass base, comic-print stem (the shop's photo)",
+    "src": "photo:IMG_0743"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: named by what the photo shows (no brand or model readable on the piece): give it its real name; the colours look like one model: check"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140089",
+     "key": "hookah-hookah-cut-glass-base-comic-print-stem#purple",
+     "swatch_hex": {
+      "v": "#6b3fa0",
+      "src": "rule: chip colour for 'Purple'"
+     },
+     "colour": {
+      "v": "Purple",
+      "src": "photo:IMG_0743 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name; the colours look like one model: check",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/hookah-cut-glass-base-comic-print-stem-purple",
+      "status": "replace",
+      "large": true,
+      "src": "photo:IMG_0743 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-140090",
+     "key": "hookah-hookah-cut-glass-base-comic-print-stem#red",
+     "swatch_hex": {
+      "v": "#a3262a",
+      "src": "rule: chip colour for 'Red'"
+     },
+     "colour": {
+      "v": "Red",
+      "src": "photo:IMG_0744 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name; the colours look like one model: check",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/hookah-cut-glass-base-comic-print-stem-red",
+      "status": "replace",
+      "large": true,
+      "src": "photo:IMG_0744 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-hookah-egg-shaped-base-on-tripod-legs",
+   "order": 69,
+   "category": "hookahs",
+   "name": {
+    "v": "Hookah, egg-shaped base on tripod legs",
+    "src": "photo:IMG_0746 (the shop's photo); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "Hookah, egg-shaped base on tripod legs (the shop's photo)",
+    "src": "photo:IMG_0746"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: named by what the photo shows (no brand or model readable on the piece): give it its real name; the colours look like one model: check"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140091",
+     "key": "hookah-hookah-egg-shaped-base-on-tripod-legs#black",
+     "swatch_hex": {
+      "v": "#141414",
+      "src": "rule: chip colour for 'Black'"
+     },
+     "colour": {
+      "v": "Black",
+      "src": "photo:IMG_0746 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name; the colours look like one model: check",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/hookah-egg-shaped-base-on-tripod-legs-black",
+      "status": "replace",
+      "large": true,
+      "src": "photo:IMG_0746 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-140092",
+     "key": "hookah-hookah-egg-shaped-base-on-tripod-legs#green",
+     "swatch_hex": {
+      "v": "#3f8f2a",
+      "src": "rule: chip colour for 'Green'"
+     },
+     "colour": {
+      "v": "Green",
+      "src": "photo:IMG_0747 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name; the colours look like one model: check",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/hookah-egg-shaped-base-on-tripod-legs-green",
+      "status": "replace",
+      "large": true,
+      "src": "photo:IMG_0747 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-hookah-canister-base-on-tripod-legs",
+   "order": 70,
+   "category": "hookahs",
+   "name": {
+    "v": "Hookah, canister base on tripod legs",
+    "src": "photo:IMG_0748 (the shop's photo); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "Hookah, canister base on tripod legs (the shop's photo)",
+    "src": "photo:IMG_0748"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: named by what the photo shows (no brand or model readable on the piece): give it its real name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140093",
+     "key": "hookah-hookah-canister-base-on-tripod-legs#silver",
+     "swatch_hex": {
+      "v": "#b8bcc0",
+      "src": "rule: chip colour for 'Silver'"
+     },
+     "colour": {
+      "v": "Silver",
+      "src": "photo:IMG_0748 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/hookah-canister-base-on-tripod-legs-silver",
+      "status": "replace",
+      "large": true,
+      "src": "photo:IMG_0748 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-amy-deluxe-hookah-gunmetal-stem",
+   "order": 71,
+   "category": "hookahs",
+   "name": {
+    "v": "Amy Deluxe Hookah, gunmetal stem",
+    "src": "photo:IMG_0749 (AMY DELUXE on the collar); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "Amy Deluxe Hookah, gunmetal stem (AMY DELUXE on the collar)",
+    "src": "photo:IMG_0749"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: brand read off the piece, model not found: give it its full name; the colours look like one model: check"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140094",
+     "key": "hookah-amy-deluxe-hookah-gunmetal-stem#black-and-green",
+     "swatch_hex": {
+      "v": "#141414",
+      "src": "rule: chip colour for 'Black and green'"
+     },
+     "colour": {
+      "v": "Black and green",
+      "src": "photo:IMG_0749 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "brand read off the piece, model not found: give it its full name; the colours look like one model: check",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/amy-deluxe-hookah-gunmetal-stem-black-and-green",
+      "status": "replace",
+      "large": true,
+      "src": "photo:IMG_0749 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    },
+    {
+     "sku": "OSS-140095",
+     "key": "hookah-amy-deluxe-hookah-gunmetal-stem#black-and-gold",
+     "swatch_hex": {
+      "v": "#141414",
+      "src": "rule: chip colour for 'Black and gold'"
+     },
+     "colour": {
+      "v": "Black and gold",
+      "src": "photo:IMG_0750 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "brand read off the piece, model not found: give it its full name; the colours look like one model: check",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/amy-deluxe-hookah-gunmetal-stem-black-and-gold",
+      "status": "replace",
+      "large": true,
+      "src": "photo:IMG_0750 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-hookah-cobalt-tiered-base-chrome-stem",
+   "order": 72,
+   "category": "hookahs",
+   "name": {
+    "v": "Hookah, cobalt tiered base, chrome stem",
+    "src": "photo:IMG_0753 (the shop's photo); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "Hookah, cobalt tiered base, chrome stem (the shop's photo)",
+    "src": "photo:IMG_0753"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: named by what the photo shows (no brand or model readable on the piece): give it its real name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140096",
+     "key": "hookah-hookah-cobalt-tiered-base-chrome-stem#cobalt-blue",
+     "swatch_hex": {
+      "v": "#1f3f9f",
+      "src": "rule: chip colour for 'Cobalt blue'"
+     },
+     "colour": {
+      "v": "Cobalt blue",
+      "src": "photo:IMG_0753 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/hookah-cobalt-tiered-base-chrome-stem-cobalt-blue",
+      "status": "replace",
+      "large": true,
+      "src": "photo:IMG_0753 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-amy-deluxe-hookah-blue-marble-stem",
+   "order": 73,
+   "category": "hookahs",
+   "name": {
+    "v": "Amy Deluxe Hookah, blue marble stem",
+    "src": "photo:IMG_0754 (AMY DELUXE on the collar and its hang tag); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "Amy Deluxe Hookah, blue marble stem (AMY DELUXE on the collar and its hang tag)",
+    "src": "photo:IMG_0754"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: brand read off the piece, model not found: give it its full name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140097",
+     "key": "hookah-amy-deluxe-hookah-blue-marble-stem#blue",
+     "swatch_hex": {
+      "v": "#2f5fc0",
+      "src": "rule: chip colour for 'Blue'"
+     },
+     "colour": {
+      "v": "Blue",
+      "src": "photo:IMG_0754 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "brand read off the piece, model not found: give it its full name",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/amy-deluxe-hookah-blue-marble-stem-blue",
+      "status": "replace",
+      "large": true,
+      "src": "photo:IMG_0754 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-hookah-clear-base-brushed-steel-stem",
+   "order": 74,
+   "category": "hookahs",
+   "name": {
+    "v": "Hookah, clear base, brushed steel stem",
+    "src": "photo:IMG_0755 (the shop's photo); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "Hookah, clear base, brushed steel stem (the shop's photo)",
+    "src": "photo:IMG_0755"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: named by what the photo shows (no brand or model readable on the piece): give it its real name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140098",
+     "key": "hookah-hookah-clear-base-brushed-steel-stem#silver",
+     "swatch_hex": {
+      "v": "#b8bcc0",
+      "src": "rule: chip colour for 'Silver'"
+     },
+     "colour": {
+      "v": "Silver",
+      "src": "photo:IMG_0755 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/hookah-clear-base-brushed-steel-stem-silver",
+      "status": "replace",
+      "large": true,
+      "src": "photo:IMG_0755 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-starbuzz-hookah",
+   "order": 75,
+   "category": "hookahs",
+   "name": {
+    "v": "Starbuzz Hookah",
+    "src": "photo:IMG_0756 (STARBUZZ TOBACCO logo on the base neck); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "Starbuzz Hookah (STARBUZZ TOBACCO logo on the base neck)",
+    "src": "photo:IMG_0756"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: brand read off the piece, model not found: give it its full name; same stem, tray and base shape as OSS-140025 (black): check whether that one is a Starbuzz too"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140099",
+     "key": "hookah-starbuzz-hookah#blue",
+     "swatch_hex": {
+      "v": "#2f5fc0",
+      "src": "rule: chip colour for 'Blue'"
+     },
+     "colour": {
+      "v": "Blue",
+      "src": "photo:IMG_0756 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "brand read off the piece, model not found: give it its full name; same stem, tray and base shape as OSS-140025 (black): check whether that one is a Starbuzz too",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/starbuzz-hookah-blue",
+      "status": "replace",
+      "large": true,
+      "src": "photo:IMG_0756 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-hookah-clear-base-blue-and-gold-stem",
+   "order": 76,
+   "category": "hookahs",
+   "name": {
+    "v": "Hookah, clear base, blue and gold stem",
+    "src": "photo:IMG_0757 (the shop's photo); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "Hookah, clear base, blue and gold stem (the shop's photo)",
+    "src": "photo:IMG_0757"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: named by what the photo shows (no brand or model readable on the piece): give it its real name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140100",
+     "key": "hookah-hookah-clear-base-blue-and-gold-stem#blue-and-gold",
+     "swatch_hex": {
+      "v": "#2f5fc0",
+      "src": "rule: chip colour for 'Blue and gold'"
+     },
+     "colour": {
+      "v": "Blue and gold",
+      "src": "photo:IMG_0757 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/hookah-clear-base-blue-and-gold-stem-blue-and-gold",
+      "status": "replace",
+      "large": true,
+      "src": "photo:IMG_0757 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-hookah-lion-head-glass-base-black-stem",
+   "order": 77,
+   "category": "hookahs",
+   "name": {
+    "v": "Hookah, lion-head glass base, black stem",
+    "src": "photo:IMG_0758 (the shop's photo); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "Hookah, lion-head glass base, black stem (the shop's photo)",
+    "src": "photo:IMG_0758"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: named by what the photo shows (no brand or model readable on the piece): give it its real name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140101",
+     "key": "hookah-hookah-lion-head-glass-base-black-stem#smoky-and-black",
+     "swatch_hex": {
+      "v": "#4a4a46",
+      "src": "rule: chip colour for 'Smoky and black'"
+     },
+     "colour": {
+      "v": "Smoky and black",
+      "src": "photo:IMG_0758 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/hookah-lion-head-glass-base-black-stem-smoky-and-black",
+      "status": "replace",
+      "large": true,
+      "src": "photo:IMG_0758 (the shop's own photo, as taken: to be replaced)"
+     },
+     "shop": {
+      "price_cents": {
+       "v": null,
+       "src": null
+      },
+      "display_name": {
+       "v": null,
+       "src": null
+      },
+      "stock": {
+       "v": null,
+       "src": null
+      },
+      "active": {
+       "v": false,
+       "src": "rule: off until the shop's own price is set"
+      },
+      "colour_confirmed": {
+       "v": null,
+       "src": null
+      },
+      "in_stock_here": {
+       "v": null,
+       "src": null
+      },
+      "note": {
+       "v": null,
+       "src": null
+      }
+     }
+    }
+   ]
+  },
+  {
+   "family_id": "hookah-hookah-iridescent-base-chrome-stem",
+   "order": 78,
+   "category": "hookahs",
+   "name": {
+    "v": "Hookah, iridescent base, chrome stem",
+    "src": "photo:IMG_0759 (the shop's photo); rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+   },
+   "supplier_ref": {
+    "v": "Hookah, iridescent base, chrome stem (the shop's photo)",
+    "src": "photo:IMG_0759"
+   },
+   "facts": {
+    "group": {
+     "v": null,
+     "src": null
+    },
+    "weight_g": {
+     "v": null,
+     "src": null
+    }
+   },
+   "flags": [
+    "NEEDS SHOP: named by what the photo shows (no brand or model readable on the piece): give it its real name"
+   ],
+   "variants": [
+    {
+     "sku": "OSS-140102",
+     "key": "hookah-hookah-iridescent-base-chrome-stem#chrome",
+     "swatch_hex": {
+      "v": "#c4c8cc",
+      "src": "rule: chip colour for 'Chrome'"
+     },
+     "colour": {
+      "v": "Chrome",
+      "src": "photo:IMG_0759 (the shop's own photo)"
+     },
+     "confirm": {
+      "v": "named by what the photo shows (no brand or model readable on the piece): give it its real name",
+      "src": "rule 2026-11-27 (owner: put the photographed hookahs on the site with their original photos; the shop fills the details)"
+     },
+     "photo": {
+      "img": "hookah/hookah-iridescent-base-chrome-stem-chrome",
+      "status": "replace",
+      "large": true,
+      "src": "photo:IMG_0759 (the shop's own photo, as taken: to be replaced)"
      },
      "shop": {
       "price_cents": {
