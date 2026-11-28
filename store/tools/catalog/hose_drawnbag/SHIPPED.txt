@@ -13,3 +13,12 @@ Shipped after design review (27): IMG_0565 0564 0561 0572 0566 0547 0550 0579 05
 Not shipped, still on the old photo with "Photo to be replaced": the Zanobia four (0548 0557 0552 0553, OSS-120015..120018):
   the hose is buried under crinkled film; cut-outs and redrawn tubes both failed review, needs a taut-bag reshoot. OSS-120032
   (light blue, only in the counter group shot, cut off and under glare): no photo yet ("Photo coming soon").
+Clipping fixes after the owner's note (2026-11-27, "the background of the old bag is there and cropped weirdly or the hose
+is cut off"), branch fleet/hose-fix: IMG_0568 Sager (whole hose: mouthpiece, handle, the bend below the card and the far
+fitting; the white top slab was clear bag over the wall and is gone, the eagles' wings stay as print), IMG_0547 Super Al Ameer
+(left edge follows the stem; the print runs up under the top seal and fades into the bottom seal: compose.py top_cut,
+seal_fade), IMG_0569 Zanobia (old-bag film beside the card and inside the bottom loop removed: cut.py drop_bright).
+New cut.py keys: ink_extra, area_add, drop_bright, drop_final, min_cc. compose.py writes out/<IMG>-map.json (render -> cut).
+OSS-120032 light blue Starbuzz: recolour_lb.py (the teal sibling IMG_0549 recoloured to the shop photo's light-blue shade;
+card kept), published as Star_buzz_are_76.5_inches; live state in store/catalog/live/hose-fix-2026-11-27.sql.
+Still not shipped: the Zanobia ICE red/black (0552 0553), ICE green (0548) and white (0557): see the branch report.

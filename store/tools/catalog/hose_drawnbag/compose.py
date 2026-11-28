@@ -80,11 +80,27 @@ def compose(name):
     s = min(iw / cut.width, ih / cut.height)
     prod = cut.resize((round(cut.width * s), round(cut.height * s)), Image.LANCZOS)
     P = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    if c.get("top_cut"):   # the photo cuts the product off at the top: it runs up under the header seal
+        ih = oh - seal * 0.5 - mb
+        s = min(iw / cut.width, ih / cut.height)
+        prod = cut.resize((round(cut.width * s), round(cut.height * s)), Image.LANCZOS)
     bot = oy + oh - (LOOK["bot_seal_h"] * oh * 0.5 if c.get("bottom_cut") else mb)
-    if not c.get("bottom_cut"):   # a short product (a coil) sits in the middle of the bag, not slumped at its foot
+    if c.get("top_cut"):
+        bot = oy + seal * 0.5 + prod.height
+    elif not c.get("bottom_cut"):   # a short product (a coil) sits in the middle of the bag, not slumped at its foot
         bot -= (ih - prod.height) / 2
-    P.alpha_composite(prod, (round(ox + (ow - prod.width) / 2), round(bot - prod.height)))
+    px, py = round(ox + (ow - prod.width) / 2), round(bot - prod.height)
+    P.alpha_composite(prod, (px, py))
+    rot = c.get("rotate", 0)
+    (OUT / f"{name}-map.json").write_text(json.dumps(dict(l=int(l), t=int(t), s=s, px=px, py=py, K=K, rotate=rot)))
     P = np.asarray(P).astype(np.float32) / 255
+    if c.get("seal_fade"):   # a product the photo cuts off fades into the seal it runs under, not a square photo edge
+        f = c["seal_fade"] * K
+        yy = np.arange(H, dtype=np.float32)[:, None]
+        if c.get("top_cut"):
+            P[..., 3] *= np.clip((yy - py) / f, 0, 1)
+        if c.get("bottom_cut"):
+            P[..., 3] *= np.clip((py + prod.height - yy) / f, 0, 1)
     Y, X = np.mgrid[0:H, 0:W].astype(np.float32) + 0.5
     x0, y0, x1, y1 = ox, oy, ox + ow, oy + oh
     sd = rrect_sdf(X, Y, x0, y0, x1, y1, LOOK["radius"] * ow)

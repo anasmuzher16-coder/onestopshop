@@ -20,7 +20,8 @@ export const SEED_FILES = [
   "catalog/live/hookah-clean-2026-11-27.sql",   // the first cleaned hookah photos: "Photo to be replaced" off (guarded on img, safe twice)
   "catalog/live/hookah-clean-a-2026-11-28.sql", // group A's cleaned hookah photos, the same way (after hookah-clean)
   "catalog/live/hookah-clean-b-2026-11-28.sql", // group B's cleaned hookah photos (after hookah-clean-a), and the Ace Panda's photo (guarded on its empty img)
-  "catalog/live/hookah-clean-a2-2026-11-28.sql", // group A's second pass, the same way (after hookah-clean-a and -b)
+  "catalog/live/hookah-clean-a3-2026-11-28.sql", // group A's held photos, reworked and cleaned, the same way (after hookah-clean-b)
+  "catalog/live/hookah-clean-a2-2026-11-28.sql", // group A's second pass, the same way (after hookah-clean-a3)
   "catalog/out/seed-shisha.sql",                // shisha flavours
   "catalog/out/seed-charcoal-foil-foil.sql",    // foil only (catalog.py seed --supplier charcoal-foil --category foil)
   "catalog/out/seed-charcoal-foil-charcoal.sql", // charcoal's catalogue facts (shape, material, brand) onto the rows already in seed.sql;
