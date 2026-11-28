@@ -93,7 +93,7 @@ HOOKAHS = [
 # CLEANED_A3 with hookah-clean-a3-2026-11-28.sql.
 CLEANED_FIRST = {"IMG_0715", "IMG_0673", "IMG_0681", "IMG_0674", "IMG_0678", "IMG_0697", "IMG_0699", "IMG_0670"}
 CLEANED_A = {"IMG_0683"}
-CLEANED_A3 = {"IMG_0698"}   # group A's held photos, reworked (2026-11-28): hookah-clean-a3-2026-11-28.sql
+CLEANED_A3 = {"IMG_0688", "IMG_0698", "IMG_0701"}   # group A's held photos, reworked (2026-11-28): hookah-clean-a3-2026-11-28.sql
 CLEANED = CLEANED_FIRST | CLEANED_A | CLEANED_A3
 
 

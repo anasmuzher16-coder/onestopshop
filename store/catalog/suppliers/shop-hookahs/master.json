@@ -335,9 +335,9 @@
      },
      "photo": {
       "img": "hookah/contraband-kingpin-red",
-      "status": "replace",
+      "status": "shop",
       "large": true,
-      "src": "photo:IMG_0701 (the shop's own photo, as taken: to be replaced)"
+      "src": "photo:IMG_0701 (the shop's own photo, cut out, the mat cleared: clear_glass2.py)"
      },
      "shop": {
       "price_cents": {
@@ -1319,9 +1319,9 @@
      },
      "photo": {
       "img": "hookah/hookah-white-and-gold-white-and-gold",
-      "status": "replace",
+      "status": "shop",
       "large": true,
-      "src": "photo:IMG_0688 (the shop's own photo, as taken: to be replaced)"
+      "src": "photo:IMG_0688 (the shop's own photo, cut out, the mat cleared: clear_glass2.py)"
      },
      "shop": {
       "price_cents": {
