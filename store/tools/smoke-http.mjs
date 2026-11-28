@@ -155,8 +155,8 @@ ok(m.PRODUCTS.every(p => (p.cat === "cologne" ? p.ship === "ground_only" : p.cat
 { const guard = new Map(), want = new Map(), cleared = new Map();
   for (const f of SEED_FILES) for (const x of readFileSync(seedPath(f), "utf8").matchAll(/^UPDATE products SET (?:img_more = '([^']*)' WHERE sku = '(OSS-\d+)'(?: AND img = '([^']*)')?|img = '([^']*)', img_lw = [^,]+, img_more = NULL[^\n]*\n WHERE sku = '(OSS-\d+)')/gm)) {
     if (x[2]) { guard.set(x[2], x[3]); want.set(x[2], JSON.parse(x[1])); cleared.delete(x[2]); } else { guard.delete(x[5]); want.delete(x[5]); cleared.set(x[5], x[4]); } }
-  const notCleared = [...cleared].filter(([sku, img]) => { const p = m.PRODUCTS.find(x => x.sku === sku); return !p || p.img !== img || "more" in p; }).map(([sku]) => sku);
-  ok(cleared.size && !notCleared.length, `an extra photo made the main photo shows as the main photo, with no gallery left (${cleared.size}): ` + notCleared.join(" "));
+  const notCleared = [...cleared].filter(([sku, img]) => { const p = m.PRODUCTS.find(x => x.sku === sku); return !p || p.img !== img || "more" in p || p.details?.photo !== "approved"; }).map(([sku]) => sku);   // and its "Photo to be replaced" label off
+  ok(cleared.size && !notCleared.length, `an extra photo made the main photo shows as the main photo, with no gallery and no stand-in label left (${cleared.size}): ` + notCleared.join(" "));
   const g = m.PRODUCTS.filter(p => "more" in p);
   ok(g.every(p => p.img && Array.isArray(p.more) && p.more.length && p.more.every(x => typeof x.img === "string" && x.img !== p.img && (x.lw === undefined || x.lw === 1440))), "img_more only on items with a main photo, never the main photo twice");
   const off = [...want].filter(([sku, l]) => { const p = m.PRODUCTS.find(x => x.sku === sku); if (!p) return false; const applies = guard.get(sku) === undefined || guard.get(sku) === p.img;

@@ -10,8 +10,10 @@
 --    across; -m 540x675, -s 360x450; no -l, img_lw NULL), as store/public/img/pc/<sku>{,-m,-s}.webp.
 -- Needs store/public/img/pc/** and store/src/img-versions.json deployed first. Each UPDATE is guarded on the row still showing the
 -- photo it replaces (img and details.photo, and img_more as img-more-2 left it or empty): run twice, the second run changes nothing.
--- A rebuild keeps this: the catalogue masters carry no photo for these SKUs (charcoal-foil and shisha master.json: img null), so
--- the seed rows get img '' and this file, after img-more-2 in store/tools/seed-files.mjs, puts the photo on, as live.
+-- Rebuilds: the catalogue masters carry no photo for these 13 SKUs (charcoal-foil and shisha master.json: img null), so the
+-- catalogue seed gives them img ''. The six charcoal boxes then get their photo from this file. The seven packs only where the
+-- row holds the stand-in main photo (live does; the test seed through tools/fixtures/pack-mains-live-2026-11-28.sql): a database
+-- built from the masters alone, without that fixture, leaves those seven with no photo, as before this file.
 -- Rollback (unguarded: run only to undo this file; updated_at moves on):
 --   UPDATE products SET img = 'oss-9662', img_lw = NULL, img_more = '[{"img":"oss-9662-2"}]', details = json_set(CASE WHEN json_valid(details) THEN details ELSE '{}' END, '$.photo', 'replace') WHERE sku = 'OSS-9662' AND img = 'oss-9662-2';
 --   UPDATE products SET img = 'oss-9663', img_lw = NULL, img_more = '[{"img":"oss-9663-2"}]', details = json_set(CASE WHEN json_valid(details) THEN details ELSE '{}' END, '$.photo', 'replace') WHERE sku = 'OSS-9663' AND img = 'oss-9663-2';
