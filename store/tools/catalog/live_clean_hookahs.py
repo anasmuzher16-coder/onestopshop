@@ -37,10 +37,12 @@ OUT_A3 = C.CATALOG / "live" / "hookah-clean-a3-2026-11-28.sql"
 OUT_A2 = C.CATALOG / "live" / "hookah-clean-a2-2026-11-28.sql"
 OUT_C1 = C.CATALOG / "live" / "hookah-clean-crew1-2026-11-28.sql"
 OUT_C2 = C.CATALOG / "live" / "hookah-clean-c2-2026-11-28.sql"
+OUT_C6 = C.CATALOG / "live" / "hookah-clean-c6-2026-11-28.sql"
 DRIVE2 = "drive2-2026-11-28.sql"   # inserts the Drive batch with the tag and resets facts_known while it differs: run it first
 FILES = [(OUT, S.CLEANED_FIRST, "2026-11-27"), (OUT_A, S.CLEANED_A, "2026-11-28"),
          (OUT_A3, S.CLEANED_A3, "2026-11-28"), (OUT_A2, S.CLEANED_A2, "2026-11-28"),
-         (OUT_C1, S.CLEANED_C1, "2026-11-28"), (OUT_C2, S.CLEANED_C2, "2026-11-28")]   # each in its own file; seed order: hookah-clean, -a, then OUT_B, then -a3, then -a2, then (after drive2) -crew1, -c2
+         (OUT_C1, S.CLEANED_C1, "2026-11-28"), (OUT_C2, S.CLEANED_C2, "2026-11-28"),
+         (OUT_C6, S.CLEANED_C6, "2026-11-28")]   # each in its own file; seed order: hookah-clean, -a, then OUT_B, then -a3, then -a2, then (after drive2) -crew1, -c2
 BATCH_12 = S.CLEANED_FIRST
 GROUP_B = S.CLEANED_B          # group B's cleaned photos (hookah-clean-b); the Panda: PANDA below
 PANDA = "OSS-100077"   # Ace "Panda Hookah", live with no photo: the cleaned IMG_0689 (shop_photos.py) goes on it
@@ -77,9 +79,9 @@ def sql(m, photos=None, day="2026-11-27"):
     photos = S.CLEANED_FIRST if photos is None else photos
     at = next((i for i, (_, ph, _d) in enumerate(FILES) if ph is photos or ph == photos), 0)
     after = "".join(f" and {o.name}" for o, _, _d in FILES[:at])          # the hookah-clean files that run before this one
-    if photos is S.CLEANED_A3 or photos is S.CLEANED_A2 or photos is S.CLEANED_C1 or photos is S.CLEANED_C2:   # seeded after group B's file too
+    if photos is S.CLEANED_A3 or photos is S.CLEANED_A2 or photos is S.CLEANED_C1 or photos is S.CLEANED_C2 or photos is S.CLEANED_C6:   # seeded after group B's file too
         after += f" and {OUT_B.name}"
-    if photos is S.CLEANED_C1:                                            # and after the Drive batch's own file
+    if photos is S.CLEANED_C1 or photos is S.CLEANED_C6:                  # and after the Drive batch's own file
         after += f" and {DRIVE2}"
     head = [
         f"-- The shop's hookahs whose photo has been cleaned ({day}): \"Photo to be replaced\" comes off. Not applied live yet.",

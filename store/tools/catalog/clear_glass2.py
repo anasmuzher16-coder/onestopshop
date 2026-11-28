@@ -151,6 +151,9 @@ Each PHOTOS entry (pixels of the 2600 px tall photo):
   smooth   [x0, x1, depth, sigma]: a coloured (opaque-drawn) base's bottom rim, the `depth` rows above its outline in
            columns x0..x1, blurred along the rim (sigma px) row by row, so the mat print bent through the thick rim goes
            and the rim's own shading (darker edge, the thin pale lip) stays. Near-white speculars are kept.
+  add_poly list of polygons [[x, y], ...]: opaque inside, with the photo's own pixels (a pale part the cut-out took for wall).
+  tex_light alpha of the glass's own bright detail (finer than tex's sigma, brighter than its surround), drawn white,
+           and its bright part left out of the dark texture: bubble glass, whose seeds read white on any tile.
 Needs numpy, scipy, pillow, onnxruntime (rembg's venv at C:\\dev\\_tools\\rembg-venv has them) and, for ratio, lama and
 any photo with a retouch, the LaMa model (Carve/LaMa-ONNX lama_fp32.onnx, Apache-2.0; --lama PATH).
 """
@@ -315,6 +318,31 @@ PHOTOS_CREW2 = {
                                "bridge": [[2200, 2360, "left"], [2200, 2360, "right"]], "inset": [[2370, 2560, 9, "left"]]},
 }
 PHOTOS.update(PHOTOS_CREW2)
+PHOTOS_CREW6 = {
+    # OSS-140080 Smokah, bubble-glass base on the marble
+    "IMG_0734": {"foot": [1050, 2300, [306, 307], 237, 3.0, 0, 60], "fill": True, "glass": [1795, 2560], "stem": [1012, 1800, 1084, 2215], "keep_dark": [[960, 1785, 1140, 1825, 60]], "notex": [[925, 1790, 1125, 1860]],
+                 "glass_extra": [[812, 880]], "fade": 3, "tex": [12, 5.0], "tex_median": 1, "tex_light": 0.8},
+    # OSS-140081 clear teardrop base standing in a clear dish, black stem with a clear tube, on the marble
+    "IMG_0725": {"foot": [1033, 2160, [242, 242], 160, 2.2, 0, 60], "fill": True, "disc": [1039, 2350, 305, 160, 18, 0.5],
+                 "glass": [1615, 2560], "stem": [998, 1615, 1054, 2089], "keep_dark": [[925, 1600, 1115, 1655, 70]], "notex": [[955, 1612, 1080, 1672]], "glass_extra": [[812, 1095]],
+                 "keep": [[956, 800, 1022, 1105]], "fade": 3, "tex_light": 0.6, "rim": [0.3, 3.0, 0.08],
+                 # the table's back edge seen through the bulb, and the shop's gold foil sticker on its shoulder, painted out
+                 "retouch": [[880, 1995, 997, 2020], [1055, 1995, 1290, 2020], [895, 1860, 990, 1970]]},
+    # OSS-140083 gold trophy stem on a mirrored gold football base: opaque, kept as shot; the pale plate under the tray
+    # arm (seen edge-on, with its small third lobe at the right) is put back, the cut-out took it for wall
+    "IMG_0727": {"photo_rgb": True, "erase": [[632, 1054, 955, 1068]],
+                 "add_poly": [[[628, 1046], [800, 1043], [1100, 1040], [1330, 1037], [1327, 1041], [1100, 1046], [800, 1049], [628, 1052]],
+                                                 [[1240, 1037], [1290, 1025], [1318, 1012], [1328, 1016], [1322, 1030], [1300, 1038]]]},
+    # OSS-140085 clear acrylic tube on a lit black base: straight walls, the black downstem kept, the frosted foot ring as shot
+    "IMG_0737": {"glass": [1058, 1900], "tube": [[1060, 1900, 846, 871, 1140, 1149]], "stem": [961, 1058, 1030, 1628], "erase_light": [[175, 1029, 1560, 1046, 1632]], "photo_rgb": True, "streaks": [1120, 1880, 8], "tex_light": 0.6,
+                 "fade": 3, "rim": [0.3, 3.0, 0.08]},
+    # OSS-140084 deep red glass base (kept as shot: the marble barely shows through it), rifle-rail stem with scope and
+    # light; the marble vein bent through the base's front painted out
+    "IMG_0728": {"photo_rgb": True, "retouch": [[1095, 2350, 1180, 2505]],
+                 # the wall seen through the rail's diamond holes (both side columns; the engraved labels in the middle stay)
+                 "erase_light": [[180, 880, 780, 940, 1450], [180, 1005, 780, 1085, 1450], [180, 700, 1295, 725, 1375]]},
+}
+PHOTOS.update(PHOTOS_CREW6)
 
 DARK = np.array([36, 44, 50], float)     # the glass's dark layer: a cool grey, as clear soda glass reads at a slant
 
@@ -696,7 +724,7 @@ def masks(photo, cut_a, cfg):
 def glass_layers(photo, glass, sil, mat, fine, lama, texture=True, rim_from=None, body=0.05, frost=None, tex_mat=1.0,
                  edge_clear=0, body_edge=None, spec_mat=1.0, notex=None, tex=(7, 2.2), borrow=None, parts=(),
                  rim_k=(0.50, 3.5, 0.12, 20.0, 0.18), ring=0.0, tex_to=None, inner_s=None, body_w=0.0, spec_min=0,
-                 streaks=None, spec_off=(), tex_median=3, mat_gain=1.0):
+                 streaks=None, spec_off=(), tex_median=3, mat_gain=1.0, tex_light=0.0):
     """Returns (dark alpha, highlight alpha) for the glass pixels of a window of the photo."""
     L = lum(photo)
     h, w = L.shape
@@ -741,7 +769,7 @@ def glass_layers(photo, glass, sil, mat, fine, lama, texture=True, rim_from=None
         # backdrop over the marble and wall: a LaMa clean plate, broad tone only
         hole = nd.binary_dilation(glass, iterations=6)
         plate = nd.gaussian_filter(lum(lama_fill(photo.astype(np.uint8), hole, lama)), 6)
-        f_plate = np.clip(1 - L / np.maximum(plate, 1), 0, 1) + 0.6 * np.clip((L - plate) / np.maximum(255 - plate, 20), 0, 1)
+        f_plate = np.clip(1 - L / np.maximum(plate, 1), 0, 1) + (0.0 if tex_light else 0.6) * np.clip((L - plate) / np.maximum(255 - plate, 20), 0, 1)
         f = f_plate
         if mat.any():
             Lm = nd.median_filter(L, size=9)
@@ -825,6 +853,16 @@ def glass_layers(photo, glass, sil, mat, fine, lama, texture=True, rim_from=None
         inner = 1 - (1 - inner) * (1 - ring * r_)
     a_d = 1 - (1 - 0.55 * f) * (1 - rim) * (1 - body)
     hi = 1 - (1 - spec) * (1 - 0.22 * nd.gaussian_filter(f, 1.0)) * (1 - inner) * (1 - body_w)
+    if tex_light and texture:          # the glass's own bright detail (white seeds in bubble glass) drawn white, not dark
+        Lb = nd.median_filter(L, size=tex_median)
+        gm = glass.astype(float)              # the surround is the glass only: a dark collar or stem beside it is no halo
+        loc = nd.gaussian_filter(Lb * gm, tex[0]) / np.maximum(nd.gaussian_filter(gm, tex[0]), 1e-3)
+        fb = np.clip((Lb - loc - 4) / 40, 0, 1) * nd.binary_erosion(glass, iterations=2)
+        for x0, y0, x1, y1 in spec_off:
+            fb[max(y0, 0):max(y1, 0), max(x0, 0):max(x1, 0)] = 0
+        if notex is not None:
+            fb = fb * (1 - notex)
+        hi = 1 - (1 - hi) * (1 - tex_light * nd.gaussian_filter(fb, 0.7))
     if spec_min:                       # and on the finished layer: any bright piece still under spec_min px is toned down
         lab, k = nd.label((hi > 0.45) & glass)
         if k:
@@ -923,6 +961,14 @@ def run_one(src, cut_p, cfg, method, lama, tile=None, matting=None):
         cut[..., :3] = np.where(m[..., None], fill, cut[..., :3]).astype(np.uint8)
     if cfg.get("photo_rgb"):                # opaque parts take the photo's own pixels: an `outline` or foot that reaches past
         cut[..., :3] = photo.clip(0, 255).astype(np.uint8)   # the cut-out shows the product there, not the cut-out's black
+    if cfg.get("add_poly"):                 # a pale part the cut-out took for wall: opaque inside the polygon, the photo's pixels
+        from PIL import ImageDraw
+        pm = Image.new("L", (cut.shape[1], cut.shape[0]), 0)
+        for poly in cfg["add_poly"]:
+            ImageDraw.Draw(pm).polygon([tuple(p_) for p_ in poly], fill=255)
+        pa = nd.gaussian_filter(np.asarray(pm, float), 0.7)
+        cut[..., :3] = np.where(pa[..., None] > 0, photo.clip(0, 255), cut[..., :3]).astype(np.uint8)
+        cut[..., 3] = np.maximum(cut[..., 3], pa.clip(0, 255)).astype(np.uint8)
     sil, glass, opaque, mat, fine, parts = masks(photo, cut[..., 3], cfg)
     if "stem_collar" in cfg:                # the collar's pixels are its glint, not the stem: the stem's own pixels from just
         x0, y0, x1, y1, _ = cfg["stem_collar"]   # below the collar, cloned upward (mirrored, so the seam at y1 matches)
@@ -975,7 +1021,7 @@ def run_one(src, cut_p, cfg, method, lama, tile=None, matting=None):
                               rim_from=rim_from, body=cfg["tint"][3] if "tint" in cfg else cfg["body"][0] if "body" in cfg else 0.05,
                               frost=cfg.get("frost") if i == 0 else None, tex_mat=cfg.get("tex_mat", 1.0),
                               edge_clear=cfg.get("edge_clear", 0), spec_mat=cfg.get("spec_mat", 1.0), body_edge=cfg["tint"][4] if len(cfg.get("tint", [])) > 4 else None,
-                              tex=cfg.get("tex", (7, 2.2)), borrow=(cfg["borrow"][0] - y0, cfg["borrow"][1]) if "borrow" in cfg else None,
+                              tex_light=cfg.get("tex_light", 0.0), tex=cfg.get("tex", (7, 2.2)), borrow=(cfg["borrow"][0] - y0, cfg["borrow"][1]) if "borrow" in cfg else None,
                               parts=[p_[w] for p_ in parts],
                               rim_k=tuple(list(cfg.get("rim", [])) + [0.50, 3.5, 0.12, 20.0, 0.18][len(cfg.get("rim", [])):]),
                               ring=cfg["disc"][5] if len(cfg.get("disc", [])) > 5 else 0.0,

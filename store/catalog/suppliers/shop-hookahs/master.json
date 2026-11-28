@@ -5859,9 +5859,9 @@
      },
      "photo": {
       "img": "hookah/smokah-hookah-bubble-glass-base",
-      "status": "replace",
+      "status": "shop",
       "large": true,
-      "src": "photo:IMG_0734 (the shop's own photo, as taken: to be replaced)"
+      "src": "photo:IMG_0734 (the shop's own photo, cut out, the mat cleared: clear_glass2.py)"
      },
      "shop": {
       "price_cents": {
@@ -5939,9 +5939,9 @@
      },
      "photo": {
       "img": "hookah/hookah-clear-teardrop-base-black-stem-with-clear-tube-black",
-      "status": "replace",
+      "status": "shop",
       "large": true,
-      "src": "photo:IMG_0725 (the shop's own photo, as taken: to be replaced)"
+      "src": "photo:IMG_0725 (the shop's own photo, cut out, the mat cleared: clear_glass2.py)"
      },
      "shop": {
       "price_cents": {
@@ -6179,9 +6179,9 @@
      },
      "photo": {
       "img": "hookah/hookah-red-glass-base-rifle-rail-stem-red-and-copper",
-      "status": "replace",
+      "status": "shop",
       "large": true,
-      "src": "photo:IMG_0728 (the shop's own photo, as taken: to be replaced)"
+      "src": "photo:IMG_0728 (the shop's own photo, cut out, the mat cleared: clear_glass2.py)"
      },
      "shop": {
       "price_cents": {
