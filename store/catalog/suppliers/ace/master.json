@@ -1253,13 +1253,13 @@
       "src": "pdf:ace-2026-10#p25:colour square 4 fill (chip colour only; never a colour name)"
      },
      "colour": {
-      "v": null,
-      "src": null
+      "v": "black",
+      "src": "photo:IMG_0689 (the shop's own photo); human-confirm"
      },
      "photo": {
-      "img": null,
-      "status": "none",
-      "src": null
+      "img": "shop/ace-panda-black",
+      "status": "shop",
+      "src": "photo:IMG_0689 (the shop's own photo, cut out); Panda hookah (catalogue p25): PANDA on the collar, the drip-textured clear base; the black chip, which had no photo"
      },
      "shop": {
       "price_cents": {
