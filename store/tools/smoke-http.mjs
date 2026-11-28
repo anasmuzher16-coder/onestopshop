@@ -125,7 +125,8 @@ const listed = coal.filter(p => p.sku !== "OSS-150001"), dura = coal.find(p => p
 ok(coal.every(p => p.ship === "pickup_only" && p.details.charcoal === true) && listed.every(p => p.stock === 10), "every charcoal item is pickup only; the listed ones start at 10 in stock");
 ok(dura && dura.state === "tbd" && dura.price === null && dura.stock === 0 && dura.ship === "pickup_only" && dura.img === "shop/duracubes-coconut-charcoal-cubes-72-cubes" && dura.facts.photo === "own" && !("needs_confirm" in dura.facts) && !("confirm_why" in dura.facts),
   `the Duracubes 72 box: Price TBD, not counted, pickup only, the shop's photo, no internal notes: ${JSON.stringify(dura && { s: dura.state, p: dura.price, st: dura.stock, img: dura.img })}`);
-ok(listed.filter(p => p.img).length === 28 && listed.every(p => p.img ? p.details.photo === "approved" : p.details.photo === "coming"), "28 charcoal photos on the listed items, the rest carry photo status coming");
+// (a stand-in photo of a similar pack, "Photo to be replaced", as live: tools/fixtures/pack-mains-live-2026-11-28.sql)
+ok(listed.filter(p => p.img && p.details.photo === "approved").length === 28 && listed.every(p => p.img ? ["approved", "replace"].includes(p.details.photo) : p.details.photo === "coming"), "28 charcoal photos on the listed items, stand-ins marked, the rest carry photo status coming");
 for (const p of coal.filter(x => x.img)) { const r = await fetch(B + `/img/pc/${p.img}-s.webp`); ok(r.status === 200, `photo ${p.img}-s.webp: ${r.status}`); }
 ok((await fetch(B + "/img/pc/coming-charcoal.svg")).status === 200, "the drawn stand-in is served");
 // every promise follows the card switch (2026-11-27): with card payment off (this suite's mode, the live demo's) every order is a
@@ -146,10 +147,18 @@ ok(m.PRODUCTS.every(p => (p.cat === "cologne" ? p.ship === "ground_only" : p.cat
 
 // more photos of one item (products.img_more, 2026-11-28): every SKU the seed gives extra photos carries them, in order, each
 // served at the main photo's sizes (-s, -m, the 720 and the 1440 -l when lw says so); never on an item without a main photo
-{ const want = new Map(SEED_FILES.flatMap(f => [...readFileSync(seedPath(f), "utf8").matchAll(/^UPDATE products SET img_more = '([^']*)' WHERE sku = '(OSS-\d+)'/gm)].map(x => [x[2], JSON.parse(x[1])])));
+// (each line is guarded on the main photo it was framed beside: where the seed's row has another main photo, it gets none)
+{ const guard = new Map(), want = new Map(SEED_FILES.flatMap(f => [...readFileSync(seedPath(f), "utf8").matchAll(/^UPDATE products SET img_more = '([^']*)' WHERE sku = '(OSS-\d+)'(?: AND img = '([^']*)')?/gm)].map(x => { guard.set(x[2], x[3]); return [x[2], JSON.parse(x[1])]; })));
   const g = m.PRODUCTS.filter(p => "more" in p);
   ok(g.every(p => p.img && Array.isArray(p.more) && p.more.length && p.more.every(x => typeof x.img === "string" && x.img !== p.img && (x.lw === undefined || x.lw === 1440))), "img_more only on items with a main photo, never the main photo twice");
-  ok([...want].every(([sku, l]) => { const p = m.PRODUCTS.find(x => x.sku === sku); return p && JSON.stringify((p.more || []).map(x => x.img)) === JSON.stringify(l.map(x => x.img)); }), "the seed's extra photos come through in order");
+  const off = [...want].filter(([sku, l]) => { const p = m.PRODUCTS.find(x => x.sku === sku); if (!p) return false; const applies = guard.get(sku) === undefined || guard.get(sku) === p.img;
+    return JSON.stringify((p.more || []).map(x => x.img)) !== JSON.stringify(applies ? l.map(x => x.img) : []); }).map(([sku]) => sku);
+  const absent = [...want.keys()].filter(sku => !m.PRODUCTS.some(x => x.sku === sku));
+  const skipped = [...want.keys()].filter(sku => { const p = m.PRODUCTS.find(x => x.sku === sku); return p && guard.get(sku) !== undefined && guard.get(sku) !== p.img; });
+  ok(!off.length, "the seed's extra photos come through in order: " + off.join(" "));
+  ok(!absent.length, "every SKU given extra photos is on view: missing " + absent.join(" "));
+  ok(!skipped.length, "every img_more line's main-photo guard holds in the seed (as it must live): " + skipped.join(" "));
+  ok(g.length >= want.size, `every SKU given extra photos has its gallery (${g.length} of ${want.size})`);
   for (const p of g) for (const x of p.more) for (const suf of ["", "-s", "-m", ...(x.lw ? ["-l"] : [])]) { const r = await fetch(B + `/img/pc/${x.img}${suf}.webp`, { signal: AbortSignal.timeout(15000) }); ok(r.status === 200 && r.headers.get("content-type") === "image/webp", `extra photo ${x.img}${suf}.webp of ${p.sku}: ${r.status}`); await r.arrayBuffer(); } }
 const post = await fetch(B + "/api/catalog", { method: "POST" }); ok(post.status === 405, "POST /api/catalog gave " + post.status);
 console.log(f ? `FAIL ${f} of ${n} checks` : `PASS ${n} checks`);

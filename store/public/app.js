@@ -920,9 +920,14 @@ function paintColour(tile, v, alt) {
     const olds = [...tile.querySelectorAll(":scope > .shot")], last = olds[olds.length - 1], had = olds.includes(document.activeElement);
     tile.querySelectorAll(":scope > .shot__tag").forEach(t => t.remove()); tile.classList.toggle("tile--photo", fullTile(v)); img.classList.add("shot--in"); last.after(img); if (tag) img.after(tag);
     // the product photo is the zoom's button (fx-zoom.js arm): the new one keeps that, and keeps the keyboard's place
-    if (last.hasAttribute("tabindex")) { img.tabIndex = 0; img.setAttribute("role", "button"); img.setAttribute("aria-label", "Enlarge photo: " + img.alt); }
+    const zoomable = img.matches("img.shot:not(.shot--drawn)");   // the zoom never opens a drawn stand-in (fx-zoom.js)
+    if (zoomable && last.hasAttribute("tabindex")) { img.tabIndex = 0; img.setAttribute("role", "button"); img.setAttribute("aria-label", "Enlarge photo: " + img.alt); }
     if (had) img.focus({ preventScroll: true });
-    requestAnimationFrame(() => { img.classList.add("is-on"); const end = () => { olds.forEach(o => o.remove()); img.classList.remove("shot--in", "is-on"); }; if (matchMedia("(prefers-reduced-motion: reduce)").matches) end(); else setTimeout(end, 280); }); };
+    // the zoom may arm an old picture while the new one fades in (fx-zoom.js loads late): its button role and the focus move on with it
+    requestAnimationFrame(() => { img.classList.add("is-on"); const end = () => { const armed = olds.find(o => o.hasAttribute("tabindex")), focused = olds.includes(document.activeElement);
+      olds.forEach(o => o.remove()); img.classList.remove("shot--in", "is-on");
+      if (armed && zoomable && img.isConnected && !img.hasAttribute("tabindex")) { img.tabIndex = 0; img.setAttribute("role", "button"); img.setAttribute("aria-label", "Enlarge photo: " + img.alt); }
+      if (focused && img.isConnected) img.focus({ preventScroll: true }); }; if (matchMedia("(prefers-reduced-motion: reduce)").matches) end(); else setTimeout(end, 280); }); };
   (img.decode ? img.decode() : Promise.resolve()).then(done, done);
 }
 function pickColour(btn, focus) {
@@ -1103,7 +1108,7 @@ function focusKey(el) {
   if (!el || el === document.body) return null;
   for (const k of ["data-qty", "data-add"]) if (el.hasAttribute(k)) return `[${k}="${el.getAttribute(k)}"]` + (el.dataset.n ? `[aria-label="${el.getAttribute("aria-label")}"]` : "");
   if (el.name === "ship" || el.name === "pay") return `input[name="${el.name}"][value="${el.value}"]`;
-  if (el.matches?.("[data-stage] > .shot")) return "[data-stage] > .shot";   // the product photo (the zoom's button) and its gallery
+  if (el.matches?.("[data-stage] > img.shot:not(.shot--drawn)")) return "[data-stage] > .shot";   // the product photo (the zoom's button) and its gallery
   if (el.dataset?.galTo) return `[data-gal-to="${el.dataset.galTo}"]`;
   return null;
 }
@@ -1561,7 +1566,7 @@ function render({ chunk = false } = {}) {
   document.body.dataset.route = a || "home";
   syncChrome();
   centreChip();
-  if (keep) { const el = document.querySelector(keep); if (el) { if (el.matches(".shot") && !el.hasAttribute("tabindex")) el.tabIndex = 0; el.focus({ preventScroll: true }); } }   // the photo: fx-zoom.js arms it a moment later
+  if (keep) { const el = document.querySelector(keep); if (el) { if (el.matches("img.shot:not(.shot--drawn)") && !el.hasAttribute("tabindex")) el.tabIndex = 0; el.focus({ preventScroll: true }); } }   // the photo: fx-zoom.js arms it a moment later
   priceLocal();
   preloadColours();
   galInit();
