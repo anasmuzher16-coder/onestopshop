@@ -126,16 +126,17 @@ ok(coal.every(p => p.ship === "pickup_only" && p.details.charcoal === true) && l
 ok(dura && dura.state === "tbd" && dura.price === null && dura.stock === 0 && dura.ship === "pickup_only" && dura.img === "shop/duracubes-coconut-charcoal-cubes-72-cubes" && dura.facts.photo === "own" && !("needs_confirm" in dura.facts) && !("confirm_why" in dura.facts),
   `the Duracubes 72 box: Price TBD, not counted, pickup only, the shop's photo, no internal notes: ${JSON.stringify(dura && { s: dura.state, p: dura.price, st: dura.stock, img: dura.img })}`);
 // (a stand-in photo of a similar pack, "Photo to be replaced", as live: tools/fixtures/pack-mains-live-2026-11-28.sql)
-ok(listed.filter(p => p.img && p.details.photo === "approved").length === 28 && listed.every(p => p.img ? ["approved", "replace"].includes(p.details.photo) : p.details.photo === "coming"), "28 charcoal photos on the listed items, stand-ins marked, the rest carry photo status coming");
+// since catalog/live/pack-photos-2026-11-28.sql: 37 (the shop's own photos replaced 3 stand-ins and gave 6 boxes their first photo)
+ok(listed.filter(p => p.img && p.details.photo === "approved").length === 37 && listed.every(p => p.img ? ["approved", "replace"].includes(p.details.photo) : p.details.photo === "coming"), "37 charcoal photos on the listed items, stand-ins marked, the rest carry photo status coming");
 for (const p of coal.filter(x => x.img)) { const r = await fetch(B + `/img/pc/${p.img}-s.webp`); ok(r.status === 200, `photo ${p.img}-s.webp: ${r.status}`); }
 ok((await fetch(B + "/img/pc/coming-charcoal.svg")).status === 200, "the drawn stand-in is served");
 // every promise follows the card switch (2026-11-27): with card payment off (this suite's mode, the live demo's) every order is a
 // pickup paid at the counter, so the charcoal page says pickup only; with card on it says pickup or local delivery
-const coalPage = await get("/p/OSS-9101"), cardOn = /<meta name="oss-pay" content="card">/.test(coalPage.t);
+const coalPage = await get("/p/OSS-9147"), cardOn = /<meta name="oss-pay" content="card">/.test(coalPage.t);
 ok((cardOn ? /Pickup in Windsor or local delivery near Windsor\. Not shipped/.test(coalPage.t) : /Pickup in Windsor, paid in the shop\./.test(coalPage.t) && !/local delivery|shipped across/i.test(((coalPage.t.match(/<main[^>]*>([\s\S]*?)<\/main>/) || [])[1] || "") + ((coalPage.t.match(/<meta name="description" content="([^"]*)"/) || [])[1] || "")))
   && /og:image" content="[^"]+\/img\/share\.jpg"/.test(coalPage.t), `a charcoal page without a photo says how it is bought (${cardOn ? "pickup or local delivery" : "pickup only, card off"}) and shares the shop image`);
 if (!cardOn) {   // card off: no page the shop draws promises local delivery or shipping, in its description, its text or its footer
-  for (const path of ["/", "/shop", "/shop/charcoal", "/shop/heat", "/shop/hookahs", "/p/OSS-9101"]) {
+  for (const path of ["/", "/shop", "/shop/charcoal", "/shop/heat", "/shop/hookahs", "/p/OSS-9147"]) {
     const pg = await get(path), desc = (pg.t.match(/<meta name="description" content="([^"]*)"/) || [])[1] || "", foot = (pg.t.match(/<p class="foot__en">([^<]*)</) || [])[1] || "";
     ok(!/local delivery|shipp|across Canada/i.test(desc + " " + foot) && /pickup|Pickup/.test(foot) && /hidden/.test((pg.t.match(/<div class="dstrip"[^>]*>/) || [""])[0]), `card off, ${path}: description and footer offer pickup only, no delivery bar: "${desc}" / "${foot}"`);
   }
