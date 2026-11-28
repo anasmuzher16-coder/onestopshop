@@ -135,7 +135,7 @@ if (process.env.PERSIST) {
   // the shop's original hookah photos and every hose (owner 2026-11-27): "Photo to be replaced" on the card and the page; an
   // approved photo (the red Ace Rose, the shop's own cleaned photo) never carries it
   { const tagOf = async (path, sel) => { await p.goto(B + path, { waitUntil: "load" }); await p.waitForTimeout(800); return p.evaluate(s => document.querySelector(s)?.textContent || "", sel); };
-    const hk = P1.find(x => x.sku === "OSS-140012"), web = P1.find(x => x.sku === "OSS-140001"), hose = P1.find(x => /^OSS-12\d{4}$/.test(x.sku) && x.img && !DRAWN.has(x.sku)) || P1.find(x => x.sku === "OSS-120011");   // a hose still waiting for its drawn-bag photo, while one is
+    const hk = P1.find(x => /^OSS-14\d{4}$/.test(x.sku) && x.facts?.photo_label === "replace" && x.lead), web = P1.find(x => x.sku === "OSS-140001"), hose = P1.find(x => /^OSS-12\d{4}$/.test(x.sku) && x.img && !DRAWN.has(x.sku)) || P1.find(x => x.sku === "OSS-120011");   // a hose still waiting for its drawn-bag photo, while one is
     const hkCard = await tagOf("/shop/hookahs", `#main a[data-piece="${hk.sku}"] .shot__tag--tbd`), hkPage = await tagOf("/p/" + hk.sku, "[data-stage] .shot__tag--tbd");
     const hkFull = await p.evaluate(() => !!document.querySelector("[data-stage].tile--photo > img.shot--photo"));
     ok(hkCard === "Photo to be replaced" && hkPage === "Photo to be replaced" && hkFull, `a shop hookah's original photo fills its tile and is tagged on its card and page: "${hkCard}" "${hkPage}" ${hkFull}`);
