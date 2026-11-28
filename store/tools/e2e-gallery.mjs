@@ -110,5 +110,27 @@ for (const [tag, type, ctx, touch] of [
     await c.close();
   } finally { await b.close(); }
 }
+// the race behind the 2026-11-28 WebKit flake, made certain: the zoom (fx-zoom.js, loaded 300 ms after boot) arms the picture that is
+// fading out. Here the zoom is held back, and the moment a swipe puts the new picture in, the old one is armed exactly as the zoom
+// would; when the fade ends the photo left on screen must be the keyboard's button at once, with no grace wait.
+{ const b = await chromium.launch();
+  try {
+    const c = await b.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true }), p = await c.newPage(), errs = []; p.on("pageerror", e => errs.push(e.message));
+    await p.route("**/fx-zoom.js*", r => r.abort());
+    await p.goto(B + "/p/" + SKU, { waitUntil: "domcontentloaded" }); await p.waitForSelector("[data-stage] > .shot", { state: "attached" }); await wait(400);
+    await p.evaluate(() => { const s = document.querySelector("[data-stage]"); new MutationObserver((ms, o) => { const l = s.querySelectorAll(":scope > .shot"); if (l.length > 1) { const old = l[0]; old.tabIndex = 0; old.setAttribute("role", "button"); old.setAttribute("aria-label", "Enlarge photo: " + old.alt); old.focus(); o.disconnect(); } }).observe(s, { childList: true }); });
+    const r = await p.evaluate(() => { const b = document.querySelector("[data-stage]").getBoundingClientRect(); return { x: b.left + b.width / 2, y: b.top + b.height / 2 }; });
+    const cdp = await c.newCDPSession(p), pt = (x, y) => [{ x, y, id: 1 }];
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: pt(r.x, r.y) });
+    for (let k = 1; k <= 8; k++) { await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: pt(r.x - 20 * k, r.y) }); await wait(16); }
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+    await p.waitForFunction(() => document.querySelectorAll("[data-stage] > .shot").length === 1 && document.querySelector("[data-stage]").dataset.gal === "1", null, { timeout: 4000 }).catch(() => {});
+    const k = await p.evaluate(() => { const i = document.querySelector("[data-stage] > .shot"); return { n: document.querySelectorAll("[data-stage] > .shot").length, tab: i.tabIndex, role: i.getAttribute("role"), focused: document.activeElement === i, gal: i.closest("[data-stage]").dataset.gal }; });
+    t("race: the zoom armed the outgoing picture; the photo left is the keyboard's button and has the focus", k.n === 1 && k.gal === "1" && k.tab === 0 && k.role === "button" && k.focused, JSON.stringify(k));
+    await p.keyboard.press("ArrowRight"); await wait(500);
+    t("race: the arrow key works on it straight away", await p.evaluate(() => document.querySelector("[data-stage]").dataset.gal === "0"));
+    t("race: no page errors", !errs.length, errs.join(" | "));
+  } finally { await b.close(); }
+}
 console.log(f ? `FAIL ${f} of ${n} checks` : `PASS ${n} checks`);
 process.exit(f ? 1 : 0);
