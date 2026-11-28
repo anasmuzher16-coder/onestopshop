@@ -53,6 +53,8 @@ export const SEED_FILES = [
   "tools/fixtures/pack-mains-live-2026-11-28.sql", // test seed only: the seven packs' live main photos, so batch 2's guards apply here as live
   "catalog/live/img-more-2-2026-11-28.sql",      // batch 2: the shop's own photos of seven packs (guarded on img)
   "catalog/live/img-more-2-2026-11-28.sql",      // run twice: proves it is safe twice
+  "catalog/live/pack-photos-2026-11-28.sql",     // the shop's own photos as main photos: the seven packs' stand-ins off (img_more emptied), six charcoal boxes photographed (guarded on img)
+  "catalog/live/pack-photos-2026-11-28.sql",     // run twice: proves it is safe twice
 ];
 export const seedPath = f => fileURLToPath(new URL(f, STORE));
 

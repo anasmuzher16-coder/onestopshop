@@ -126,16 +126,17 @@ ok(coal.every(p => p.ship === "pickup_only" && p.details.charcoal === true) && l
 ok(dura && dura.state === "tbd" && dura.price === null && dura.stock === 0 && dura.ship === "pickup_only" && dura.img === "shop/duracubes-coconut-charcoal-cubes-72-cubes" && dura.facts.photo === "own" && !("needs_confirm" in dura.facts) && !("confirm_why" in dura.facts),
   `the Duracubes 72 box: Price TBD, not counted, pickup only, the shop's photo, no internal notes: ${JSON.stringify(dura && { s: dura.state, p: dura.price, st: dura.stock, img: dura.img })}`);
 // (a stand-in photo of a similar pack, "Photo to be replaced", as live: tools/fixtures/pack-mains-live-2026-11-28.sql)
-ok(listed.filter(p => p.img && p.details.photo === "approved").length === 28 && listed.every(p => p.img ? ["approved", "replace"].includes(p.details.photo) : p.details.photo === "coming"), "28 charcoal photos on the listed items, stand-ins marked, the rest carry photo status coming");
+// since catalog/live/pack-photos-2026-11-28.sql: 37 (the shop's own photos replaced 3 stand-ins and gave 6 boxes their first photo)
+ok(listed.filter(p => p.img && p.details.photo === "approved").length === 37 && listed.every(p => p.img ? ["approved", "replace"].includes(p.details.photo) : p.details.photo === "coming"), "37 charcoal photos on the listed items, stand-ins marked, the rest carry photo status coming");
 for (const p of coal.filter(x => x.img)) { const r = await fetch(B + `/img/pc/${p.img}-s.webp`); ok(r.status === 200, `photo ${p.img}-s.webp: ${r.status}`); }
 ok((await fetch(B + "/img/pc/coming-charcoal.svg")).status === 200, "the drawn stand-in is served");
 // every promise follows the card switch (2026-11-27): with card payment off (this suite's mode, the live demo's) every order is a
 // pickup paid at the counter, so the charcoal page says pickup only; with card on it says pickup or local delivery
-const coalPage = await get("/p/OSS-9101"), cardOn = /<meta name="oss-pay" content="card">/.test(coalPage.t);
+const coalPage = await get("/p/OSS-9147"), cardOn = /<meta name="oss-pay" content="card">/.test(coalPage.t);
 ok((cardOn ? /Pickup in Windsor or local delivery near Windsor\. Not shipped/.test(coalPage.t) : /Pickup in Windsor, paid in the shop\./.test(coalPage.t) && !/local delivery|shipped across/i.test(((coalPage.t.match(/<main[^>]*>([\s\S]*?)<\/main>/) || [])[1] || "") + ((coalPage.t.match(/<meta name="description" content="([^"]*)"/) || [])[1] || "")))
   && /og:image" content="[^"]+\/img\/share\.jpg"/.test(coalPage.t), `a charcoal page without a photo says how it is bought (${cardOn ? "pickup or local delivery" : "pickup only, card off"}) and shares the shop image`);
 if (!cardOn) {   // card off: no page the shop draws promises local delivery or shipping, in its description, its text or its footer
-  for (const path of ["/", "/shop", "/shop/charcoal", "/shop/heat", "/shop/hookahs", "/p/OSS-9101"]) {
+  for (const path of ["/", "/shop", "/shop/charcoal", "/shop/heat", "/shop/hookahs", "/p/OSS-9147"]) {
     const pg = await get(path), desc = (pg.t.match(/<meta name="description" content="([^"]*)"/) || [])[1] || "", foot = (pg.t.match(/<p class="foot__en">([^<]*)</) || [])[1] || "";
     ok(!/local delivery|shipp|across Canada/i.test(desc + " " + foot) && /pickup|Pickup/.test(foot) && /hidden/.test((pg.t.match(/<div class="dstrip"[^>]*>/) || [""])[0]), `card off, ${path}: description and footer offer pickup only, no delivery bar: "${desc}" / "${foot}"`);
   }
@@ -148,7 +149,14 @@ ok(m.PRODUCTS.every(p => (p.cat === "cologne" ? p.ship === "ground_only" : p.cat
 // more photos of one item (products.img_more, 2026-11-28): every SKU the seed gives extra photos carries them, in order, each
 // served at the main photo's sizes (-s, -m, the 720 and the 1440 -l when lw says so); never on an item without a main photo
 // (each line is guarded on the main photo it was framed beside: where the seed's row has another main photo, it gets none)
-{ const guard = new Map(), want = new Map(SEED_FILES.flatMap(f => [...readFileSync(seedPath(f), "utf8").matchAll(/^UPDATE products SET img_more = '([^']*)' WHERE sku = '(OSS-\d+)'(?: AND img = '([^']*)')?/gm)].map(x => { guard.set(x[2], x[3]); return [x[2], JSON.parse(x[1])]; })));
+// A later file that moves the extra photo to the main photo and empties img_more (catalog/live/pack-photos-2026-11-28.sql:
+// "UPDATE products SET img = '<new main>', img_lw = ..., img_more = NULL ... WHERE sku = ...") takes that SKU off the list, in seed order,
+// and the SKU must then show the new main photo with no gallery.
+{ const guard = new Map(), want = new Map(), cleared = new Map();
+  for (const f of SEED_FILES) for (const x of readFileSync(seedPath(f), "utf8").matchAll(/^UPDATE products SET (?:img_more = '([^']*)' WHERE sku = '(OSS-\d+)'(?: AND img = '([^']*)')?|img = '([^']*)', img_lw = [^,]+, img_more = NULL[^\n]*\n WHERE sku = '(OSS-\d+)')/gm)) {
+    if (x[2]) { guard.set(x[2], x[3]); want.set(x[2], JSON.parse(x[1])); cleared.delete(x[2]); } else { guard.delete(x[5]); want.delete(x[5]); cleared.set(x[5], x[4]); } }
+  const notCleared = [...cleared].filter(([sku, img]) => { const p = m.PRODUCTS.find(x => x.sku === sku); return !p || p.img !== img || "more" in p || p.details?.photo !== "approved"; }).map(([sku]) => sku);   // and its "Photo to be replaced" label off
+  ok(cleared.size && !notCleared.length, `an extra photo made the main photo shows as the main photo, with no gallery and no stand-in label left (${cleared.size}): ` + notCleared.join(" "));
   const g = m.PRODUCTS.filter(p => "more" in p);
   ok(g.every(p => p.img && Array.isArray(p.more) && p.more.length && p.more.every(x => typeof x.img === "string" && x.img !== p.img && (x.lw === undefined || x.lw === 1440))), "img_more only on items with a main photo, never the main photo twice");
   const off = [...want].filter(([sku, l]) => { const p = m.PRODUCTS.find(x => x.sku === sku); if (!p) return false; const applies = guard.get(sku) === undefined || guard.get(sku) === p.img;

@@ -70,7 +70,7 @@ try {
   t("a product with no stock shows as sold and cannot be added", await p.locator("[data-add]").count() === 0 && /Sold out/.test(await p.locator(".soldline").innerText()));
   // 3b charcoal: pickup or our own local delivery only, never Canada Post (owner, 2026-11-24); nothing about age or ID for the customer.
   await p.evaluate(() => { localStorage.setItem("oss:postal", JSON.stringify("M5V 2T6")); localStorage.removeItem("oss:ship"); });
-  await p.goto(B + "/p/OSS-9101", { waitUntil: "networkidle" });
+  await p.goto(B + "/p/OSS-9147", { waitUntil: "networkidle" });   // Coco Fire: a charcoal box still without a photo (Coco Cafe, OSS-9101, got the shop's photo 2026-11-28)
   const pdp = await p.locator(".pdp__info").innerText();
   t(CARD ? "charcoal product page says pickup or local delivery only, offers no Canada Post, and says nothing about age or ID" : "no keys: charcoal product page says pickup at the counter like every item (2026-11-27: no separate never-shipped note while all is pickup), offers no Canada Post or delivery, and says nothing about age or ID", (CARD ? /Pickup or local delivery only/.test(pdp) : /Pickup at the Windsor counter/.test(pdp) && /Paid in the shop/.test(pdp) && !/Never shipped|local delivery/i.test(pdp)) &&!/Canada Post (Regular|Expedited|Xpresspost|Priority)/.test(pdp) && !/photo id|\bage\b|adult/i.test(pdp), pdp.slice(0, 200));
   t("a charcoal item with no photo shows the drawn stand-in, never a broken image", await p.locator(".pdp__tile img.shot--drawn").count() === 1 && await p.evaluate(() => [...document.images].every(i => !i.getAttribute("src") || !i.complete || i.naturalWidth > 0)));
@@ -79,12 +79,12 @@ try {
   await p.goto(B + "/cart", { waitUntil: "networkidle" }); await p.waitForTimeout(600);
   let ways = await p.locator('input[name="ship"]').evaluateAll(els => els.map(e => e.value));
   if (!CARD) {   // no keys: the mixed cart is one pickup, paid at the counter; no leaving the charcoal out, no delivery
-    const line = await p.locator(".line", { hasText: "Coco Cafe" }).innerText();
+    const line = await p.locator(".line", { hasText: "Coco Fire" }).innerText();
     // design review 2026-11-27: card off, the whole site is pickup only, so the cart line no longer repeats it (rewritten for that rule)
     t("no keys: a charcoal cart is one pickup, with no other way offered", ways.length === 0 && await p.locator(".pickline").count() === 1 && !/Pickup with this order|Pickup only/.test(line) && !/local delivery/i.test(await p.locator("#main").innerText()), ways.join() + " " + line);
   } else {
   t("a mixed cart going to Toronto offers pickup or leaving the charcoal out, never Canada Post", ways.join() === "pickup,drop", ways.join());
-  t("the cart line says pickup or local delivery only", /Pickup or local delivery only/.test(await p.locator(".line", { hasText: "Coco Cafe" }).innerText()));
+  t("the cart line says pickup or local delivery only", /Pickup or local delivery only/.test(await p.locator(".line", { hasText: "Coco Fire" }).innerText()));
   await p.locator('input[name="ship"][value="drop"]').tap()   /* the radio acts at once and leaves the page, so it is tapped, not "checked" */; await p.waitForTimeout(500);
   ways = await p.locator('input[name="ship"]').evaluateAll(els => els.map(e => e.value));
   t("leaving the charcoal out keeps the rest and opens Canada Post for it", await p.locator(".line").count() === 1 && ways.some(w => /^cp-/.test(w)), ways.join());
