@@ -878,7 +878,10 @@ class TestShopHookahs(Base):
         import src_shop_hookahs as S
         for out, photos, day in L.FILES:
             self.assertEqual(out.read_text(encoding="utf-8"), L.sql(self.as_named_before(), photos, day), out.name)
-        self.assertFalse(S.CLEANED_FIRST & S.CLEANED_A)          # each cleaned photo goes live in one file only
+        sets = [p for _, p, _ in L.FILES] + [S.CLEANED_B]          # each cleaned photo goes live in one file only
+        for i, a in enumerate(sets):
+            for b in sets[i + 1:]:
+                self.assertFalse(a & b, sorted(a & b))
         self.assertEqual(set().union(*[p for _, p, _ in L.FILES]) | S.CLEANED_B, S.CLEANED)   # and every one has its file (B: OUT_B)
         self.assertEqual(L.OUT_B.read_text(encoding="utf-8"), L.sql_b(self.hk, C.load_master("ace") if L.PANDA_READY else None))
 
@@ -917,7 +920,7 @@ class TestShopHookahs(Base):
     def test_live_clean_b_holds_only_group_b(self):
         import live_clean_hookahs as L
         import src_shop_hookahs as S
-        self.assertFalse(S.CLEANED_B & (S.CLEANED_FIRST | S.CLEANED_A))   # group B goes live in its own file only
+        self.assertFalse(S.CLEANED_B & (S.CLEANED_FIRST | S.CLEANED_A | S.CLEANED_A3))   # group B goes live in its own file only
         b = {r["sku"] for r in L.cleaned_rows(self.hk, S.CLEANED_B)}
         others = set().union(*[{r["sku"] for r in L.cleaned_rows(self.hk, p)} for _, p, _ in L.FILES])
         self.assertFalse(b & others)

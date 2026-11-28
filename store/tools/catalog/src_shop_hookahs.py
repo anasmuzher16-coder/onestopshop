@@ -90,11 +90,12 @@ HOOKAHS = [
 # framed like the Ace hookahs (frame_cutouts.py --kind hookah --glass). Each passed an atelier:design-reviewer check at 200%
 # on two tile colours before it went in. They replace the original under the same file name, without the tag.
 # CLEANED_FIRST goes live with hookah-clean-2026-11-27.sql; CLEANED_A (group A, 2026-11-28) with hookah-clean-a-2026-11-28.sql;
-# CLEANED_B (group B, 2026-11-28) with hookah-clean-b-2026-11-28.sql.
+# CLEANED_B (group B, 2026-11-28) with hookah-clean-b-2026-11-28.sql; CLEANED_A3 with hookah-clean-a3-2026-11-28.sql.
 CLEANED_FIRST = {"IMG_0715", "IMG_0673", "IMG_0681", "IMG_0674", "IMG_0678", "IMG_0697", "IMG_0699", "IMG_0670"}
 CLEANED_A = {"IMG_0683"}
 CLEANED_B = {"IMG_0705", "IMG_0706", "IMG_0712", "IMG_0714", "IMG_0679", "IMG_0709", "IMG_0710"}
-CLEANED = CLEANED_FIRST | CLEANED_A | CLEANED_B
+CLEANED_A3 = {"IMG_0688", "IMG_0698", "IMG_0701"}   # group A's held photos, reworked (2026-11-28): hookah-clean-a3-2026-11-28.sql
+CLEANED = CLEANED_FIRST | CLEANED_A | CLEANED_B | CLEANED_A3
 
 
 def photo_name(name: str, colour: str) -> str:
