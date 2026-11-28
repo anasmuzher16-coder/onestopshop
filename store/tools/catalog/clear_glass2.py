@@ -498,6 +498,33 @@ PHOTOS.update(PHOTOS_CREW7)
 
 DARK = np.array([36, 44, 50], float)     # the glass's dark layer: a cool grey, as clear soda glass reads at a slant
 
+# Crew 11 (2026-11-28): Drive-batch shop hookahs, OSS-140052 to 140063 (1958 x 2600 after the resize).
+PHOTOS_CREW11 = {
+    # OSS-140052 cut-crystal fluted base on the mat
+    "PXL_20261128_005523706": {"photo_rgb": True, "foot": [978, 2390, [312, 312], 168, 2.4, 0, 60], "fill": True,
+                               "unmat": [978, 2390, 315, 200, 2150, 2.4], "unmat_lift": 0.55, "unmat_gain": 0.8, "unmat_win": [41, 25], "unmat_tint": [1, 1, 1], "unmat_skip": [[955, 2150, 1000, 2200]],
+                               "see_through": [150, 0.35, 205, 1760]},
+    # OSS-140057 smooth smoked base on the mat (blue stem)
+    "PXL_20261128_010051374": {"photo_rgb": True, "foot": [994, 2335, [311, 311], 225, 2.6, 0, 60], "fill": True, "glass": [2120, 2600], "fade": 40,
+                               "stem": [962, 1700, 1003, 2205], "texture": False, "tint": [39, 27, 3, 0.72, 0.92], "rim": [0.3, 3.0, 0.08], "spec_min": 40,
+                               "see_through": [45, 0.45, 170, 1700]},
+    # OSS-140062 smooth clear base on the mat, black textured stem: drawn by the ratio method (no texture over the mat)
+    "PXL_20261128_005930716": {"foot": [993, 2400, [281, 281], 160, 2.4, 0, 60], "fill": True, "glass": [1840, 2600], "fade": 3, "keep_above": [997, 1800, 100, 60],
+                               "outline": [[2160, 990, 144], [2180, 990.5, 180.5], [2200, 991.5, 205.5], [2220, 991.5, 224.5], [2240, 991.5, 239], [2260, 992, 249],
+                                           [2280, 992.5, 258], [2300, 992.5, 265.5], [2320, 993, 272], [2340, 993, 277], [2360, 993, 280], [2400, 993, 281]],
+                               "stem": [984, 1855, 1010, 2312], "mat": [[995, 2390, 340, 230]], "texture": "wall", "edge_clear": 50,
+                               "rim": [0.4, 3.5, 0.10], "spec_min": 25, "spec_off": [[870, 2250, 1130, 2460]], "notex": [[880, 2125, 1110, 2220]], "body": [0.08, 0.02],
+                               "arcs": [[995, 2478, 257, 72, 0, 180, 0.6, 4]]},
+    # OSS-140055 green ribbed base on the mat, kept as shot: the foot cuts the mat ring off, the green carried out to the
+    # outline where the mat's inks show at the rim
+    "PXL_20261128_005618124": {"photo_rgb": True, "foot": [976, 2580, [112, 112], 12, 2.0, 0, 8], "fill": True,
+                               "outline": [[2250, 975, 200], [2270, 975, 211], [2290, 975, 224], [2305, 975, 233], [2335, 975, 237.5], [2367, 975, 238.5],
+                                           [2400, 974, 236], [2430, 973, 231], [2455, 972, 222], [2480, 971, 210], [2500, 970, 198],
+                                           [2517, 970, 184], [2535, 971, 167], [2549, 972, 150], [2565, 974, 132], [2580, 976, 112]],
+                               "recolour": [[700, 2380, 1250, 2600, 8, 14]], "smooth": [760, 1190, 40, 9], "edge_clear": 0},
+}
+PHOTOS.update(PHOTOS_CREW11)
+
 
 def lum(rgb):
     return rgb @ np.array([0.2126, 0.7152, 0.0722])
