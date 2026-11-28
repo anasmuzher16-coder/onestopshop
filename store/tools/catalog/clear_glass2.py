@@ -169,6 +169,16 @@ Each PHOTOS entry (pixels of the 2600 px tall photo):
            columns x0..x1, blurred along the rim (sigma px) row by row, so the mat print bent through the thick rim goes
            and the rim's own shading (darker edge, the thin pale lip) stays. Near-white speculars are kept.
   add_poly list of polygons [[x, y], ...]: opaque inside, with the photo's own pixels (a pale part the cut-out took for wall).
+  defringe [n, t]: within n px of the outline, pixels lighter than the nearest pixel n px in by more than t take its
+           colour (eased over t): the wall's light fringe on a dark part's edge (glass excluded).
+  cut_below list of [cx, cy, rx, ry, x0, x1]: in columns x0..x1, everything below the ellipse's lower arc is cleared
+           (and below row cy outside it): a metal part's reflection on the table under its round bottom edge.
+  choke    list of [x0, y0, x1, y1, px]: in that box the outline is pulled in by px (alpha eroded): the wall's light halo
+           round a bright metal part, which defringe cannot tell from the metal.
+  keep_poly list of polygons [[x, y], ...]: inside, the photo stays as cut (opaque) (a steel tube
+           seen through clear glass, traced off the photo where a stem box would be too wide).
+  keep_print list of [x0, y0, x1, y1, S]: in that box, the pixels whose chroma (strongest minus weakest channel) is above S
+           (a gold or coloured print on clear glass, every letter) stay as cut, in pieces of at least 40 px, softened by 1 px.
   tex_light alpha of the glass's own bright detail (finer than tex's sigma, brighter than its surround), drawn white,
            and its bright part left out of the dark texture: bubble glass, whose seeds read white on any tile.
 Needs numpy, scipy, pillow, onnxruntime (rembg's venv at C:\\dev\\_tools\\rembg-venv has them) and, for ratio, lama and
@@ -403,6 +413,72 @@ PHOTOS.update({
     # painted out from the glass round it, the thin bright glass letting some tile through, the outer 6 px eased to 65%
     "IMG_0758": {"retouch": [[640, 2195, 790, 2335]], "retouch_in": 6, "edge_ease": [6, 0.65], "see_through": [120, 0.35, 225]},
 })
+
+# crew 8 (2026-11-28): Drive batch 1, standing on the marble table against the wall, OSS-140082 upward
+PHOTOS_CREW8 = {
+    # OSS-140087 deep blue-black glass base, opaque, kept as shot: the foot, fitted to its
+    # black edge, cuts off its reflection on the glossy marble; the wall's light fringe taken off the edges
+    "IMG_0741": {"photo_rgb": True, "fill": True, "foot": [1094.5, 2300, [308.5, 308.5], 200, 2.3, 0, 4], "defringe": [4, 25]},
+    # OSS-140086 smoked grey glass base, kept as shot (the marble barely reads through it); its crisp reflection on the
+    # marble under the dark rim cut off (outline and foot read off the photo), the shop's two price stickers painted out
+    "IMG_0739": {"photo_rgb": True, "fill": True, "defringe": [4, 25], "foot": [994.0, 2263, [294.2, 294.2], 227, 1.8, 0, 4],
+                 "outline": [[2215, 994.0, 284.5], [2230, 994.0, 289.3], [2245, 994.0, 292.9], [2260, 994.0, 294.2], [2263, 994.0, 294.2]],
+                 "retouch": [[996, 2280, 1080, 2355], [990, 1588, 1062, 1642]]},
+    # OSS-140091 black glass egg on a black tripod with gold feet: opaque, kept as shot; the wall left in the leg's gap and
+    # in the bowl's right window cleared, the coal clip's halo choked
+    "IMG_0746": {"photo_rgb": True, "defringe": [4, 25], "erase_light": [[120, 945, 1800, 975, 1845], [120, 984, 1764, 1000, 1784], [120, 972, 1780, 990, 1802],
+                                 [170, 1080, 850, 1135, 915]],
+                 "choke": [[1325, 1095, 1415, 1160, 3], [1080, 850, 1120, 912, 1]]},
+    # OSS-140092 lime green glass egg on a black tripod with lime arms: the deep green glass kept as shot (it passes almost
+    # no blue, so no tile could read through it truthfully), the wall's light fringe taken off the edges
+    "IMG_0747": {"photo_rgb": True, "defringe": [4, 25],
+                 # the lime rod seen through the black feet's slots, which the cut-out took for wall
+                 "add_poly": [[[486, 2106], [512, 2106], [500, 2312], [474, 2312]], [[1408, 2080], [1440, 2080], [1450, 2252], [1418, 2252]]]},
+    # OSS-140097 cobalt cut-glass base, kept as shot (deep blue: the wall reads through it only as blue), the maker's
+    # swing tag left on as sold; the outline and foot, fitted to the blue edge, cut off its shadow and reflection on the
+    # marble; the wall inside the hanging tool's ring cleared
+    "IMG_0754": {"photo_rgb": True, "fill": True, "foot": [1020.5, 2300, [299.8, 299.8], 234, 2.1, 0, 4], "defringe": [4, 25], "erase_light": [[170, 790, 940, 835, 985]],
+                 "outline": [[2200, 1020.5, 262.5], [2215, 1020.5, 270.6], [2230, 1020.5, 280.0], [2245, 1020.5, 286.7], [2260, 1020.5, 291.8], [2275, 1020.5, 298.2], [2290, 1020.5, 299.4], [2300, 1020.5, 299.8]]},
+    # OSS-140099 clear glass etched white all over, with blue glass at the neck and blue painted bands and dragon: kept as
+    # shot (the etching covers the body, so the wall behind it reads only as the frost's own white)
+    "IMG_0756": {"photo_rgb": True, "defringe": [4, 25]},   # held (see hk-claims OSS-140099 HELD.txt)
+    # OSS-140093 brushed steel stem and caged tripod base, kept as shot; its clear glass bowl (raised dots) drawn as glass;
+    # the steel cage's reflection on the marble under its bottom edge cleared
+    "IMG_0748": {"photo_rgb": True, "defringe": [4, 25], "glass_extra": [[160, 468]], "fade": 3, "tex_light": 0.6,
+                 "cut_below": [[975, 2186, 112, 60, 948, 1095]]},
+    # OSS-140098 smooth clear glass base on the marble (ratio method over the wall/marble plate), steel stem and collar
+    "IMG_0755": {"glass": [1782, 2560], "fade": 3, "stem": [949, 1782, 997, 2242], "foot": [976, 2360, [247, 247], 164, 3.0, 0, 60],
+                 "fill": True, "rim": [0.3, 3.0, 0.08]},
+    # OSS-140089 cut-crystal clear base on the marble (ratio method over the wall/marble plate, the facets read on a wider
+    # band); the foot ring's outline from the cut-out's right edge (the left lies in the shadow), the shadow under it cut off
+    "IMG_0743": {"glass": [1700, 2560], "fade": 3, "stem": [969, 1762, 1006, 2250], "keep_dark": [[860, 1640, 1120, 1715, 60]],
+                 "fill": True, "foot": [996, 2291, [296.1, 296.1], 209, 2.5, 0, 4], "outline": [[2160, 996.0, 226.0], [2175, 996.0, 240.1], [2190, 996.0, 254.0], [2205, 996.0, 265.6], [2220, 996.0, 275.1], [2235, 996.0, 283.5], [2250, 996.0, 289.6], [2265, 996.0, 293.8], [2280, 996.0, 296.1], [2291, 996.0, 296.1]],
+                 "tex": [14, 5.5], "tex_median": 5, "tex_light": 0.7, "rim": [0.3, 3.0, 0.08]},
+    # OSS-140088 clear bubble glass base on the marble: the seeds kept white (tex_light), the outline from the cut-out's
+    # right edge, the shadow under the foot cut off
+    "IMG_0742": {"glass": [1712, 2560], "fade": 3, "stem": [957, 1757, 1008, 2233], "keep_dark": [[870, 1640, 1110, 1716, 60]],
+                 "fill": True, "foot": [1006, 2299, [276.6, 276.6], 206, 2.5, 0, 4], "outline": [[2140, 1006.0, 152.0], [2155, 1006.0, 179.3], [2170, 1006.0, 202.5], [2185, 1006.0, 221.2], [2200, 1006.0, 237.0], [2215, 1006.0, 248.9], [2230, 1006.0, 257.9], [2245, 1006.0, 265.4], [2260, 1006.0, 271.1], [2275, 1006.0, 274.6], [2290, 1006.0, 276.5], [2299, 1006.0, 276.6]],
+                 "tex": [12, 5.0], "tex_median": 1, "tex_light": 0.8, "rim": [0.3, 3.0, 0.08]},
+    # OSS-140090 the same cut-crystal base as OSS-140089, read the same way
+    "IMG_0744": {"glass": [1738, 2560], "fade": 3, "stem": [997, 1745, 1034, 2240], "keep_dark": [[870, 1660, 1150, 1740, 60]],
+                 "fill": True, "foot": [1017.5, 2300, [290.5, 290.5], 203, 2.5, 0, 4], "outline": [[2140, 1017.5, 190.5], [2155, 1017.5, 208.0], [2170, 1017.5, 227.2], [2185, 1017.5, 241.7], [2200, 1017.5, 254.3], [2215, 1017.5, 264.8], [2230, 1017.5, 273.7], [2245, 1017.5, 280.1], [2260, 1017.5, 285.2], [2275, 1017.5, 288.8], [2290, 1017.5, 290.0], [2300, 1017.5, 290.5]],
+                 "tex": [14, 5.5], "tex_median": 5, "tex_light": 0.7, "rim": [0.3, 3.0, 0.08]},
+    # OSS-140094, 140095, 140096 opaque painted / deep cobalt bulb bases, kept as shot: the outline from the
+    # photo's right edge (the left is lost in the shadow on the marble), smoothed, and one fitted foot cut the shadow off
+    "IMG_0749": {"photo_rgb": True, "fill": True, "defringe": [4, 25], "foot": [1028.0, 2297, [221.8, 221.8], 234, 2.1, 0, 4],
+                 "outline": [[2230, 1028.0, 211.0], [2245, 1028.0, 213.9], [2260, 1028.0, 217.2], [2275, 1028.0, 219.7], [2290, 1028.0, 221.5], [2297, 1028.0, 221.8]]},
+    "IMG_0750": {"photo_rgb": True, "fill": True, "defringe": [4, 25], "foot": [1003.5, 2284, [217.7, 217.7], 241, 2.2, 0, 4],
+                 "outline": [[2230, 1003.5, 206.5], [2245, 1003.5, 210.3], [2260, 1003.5, 214.4], [2275, 1003.5, 216.2], [2284, 1003.5, 217.7]]},
+    "IMG_0753": {"photo_rgb": True, "fill": True, "defringe": [4, 25], "foot": [1020.0, 2320, [215.6, 215.6], 247, 2.1, 0, 4],
+                 "outline": [[2240, 1020.0, 202.0], [2255, 1020.0, 205.3], [2270, 1020.0, 208.5], [2285, 1020.0, 211.3], [2300, 1020.0, 214.1], [2315, 1020.0, 215.5], [2320, 1020.0, 215.6]]},
+    # OSS-140082 Amir's: clear square glass base on the marble (ratio method over the wall/marble plate), its gold print
+    # (the lotus and AMIR'S in front, the same seen backwards through the back face) kept as cut; the steel tube and its
+    # nozzle traced off the photo (wider low down, seen through the cube)
+    "IMG_0726": {"glass": [1538, 2350], "fade": 3, "keep_poly": [[[928, 1588], [991, 1588], [991, 1700], [1000, 1800], [1004, 1866], [1012, 1870], [1014, 1905], [1004, 1926],
+                                [934, 1926], [924, 1905], [925, 1870], [928, 1866]]], "keep_dark": [[790, 1530, 1130, 1595, 60]], "tex": [12, 3.0], "streaks": [1592, 1722, 6], "arcs": [[965, 1712, 140, 14, 0, 180, 0.25, 3.0]],
+                 "keep_print": [[700, 1950, 1200, 2230, 45], [640, 1780, 1260, 1910, 32]]},
+}
+PHOTOS.update(PHOTOS_CREW8)
 
 # Crew 7 (2026-11-28): Drive-batch shop hookahs, OSS-140041 upward (1958 x 2600 after the resize).
 PHOTOS_CREW7 = {
@@ -782,6 +858,21 @@ def masks(photo, cut_a, cfg):
         if k > 1:                                   # the one big piece: loose bits of coloured reflection are glass
             sizes = nd.sum(d, lab, range(1, k + 1)); d = lab == (1 + int(np.argmax(sizes)))
         opaque = np.maximum(opaque, nd.gaussian_filter(d.astype(float), 1.2))
+    if cfg.get("keep_poly"):                # a part seen through the glass whose outline no box fits (a tube widening as the
+        from PIL import ImageDraw            # glass in front magnifies it): opaque inside the polygon
+        pm = Image.new("L", (w, h), 0)
+        for poly in cfg["keep_poly"]:
+            ImageDraw.Draw(pm).polygon([tuple(p_) for p_ in poly], fill=255)
+        opaque = np.maximum(opaque, nd.gaussian_filter(np.asarray(pm, float) / 255, 0.8))
+    for x0, y0, x1, y1, sv in cfg.get("keep_print", []):   # printed lettering on the glass: every coloured stroke as cut
+        d = np.zeros((h, w), bool)
+        box = photo[y0:y1, x0:x1]
+        d[y0:y1, x0:x1] = (box.max(2) - box.min(2)) > sv            # chroma: gold has two strong channels
+        d = nd.binary_closing(nd.binary_opening(d, iterations=1), iterations=1)
+        lab, k = nd.label(d)
+        if k:                                       # strokes, not loose specks of coloured reflection
+            sizes = nd.sum(d, lab, range(1, k + 1)); d = np.isin(lab, 1 + np.flatnonzero(sizes >= 40))
+        opaque = np.maximum(opaque, nd.gaussian_filter(d.astype(float), 0.8))
     for cx, cy, rx, ry, t, x0, x1 in cfg.get("keep_band", []):   # a rubber ring seen through the neck, as one clean band
         y, x = np.mgrid[0:h, 0:w].astype(float)
         arc = cy + ry * np.sqrt(np.clip(1 - ((x - cx) / rx) ** 2, 0, 1))
@@ -1185,6 +1276,23 @@ def run_one(src, cut_p, cfg, method, lama, tile=None, matting=None):
         a = 1 - wgt
         C = (P - (1 - a)[..., None] * wall) / np.maximum(a, 1e-3)[..., None]
         out[..., :3] = C.clip(0, 255).astype(np.uint8); out[..., 3] = (A * a * 255).clip(0, 255).astype(np.uint8)
+    for x0, y0, x1, y1, px in cfg.get("choke", []):   # the outline pulled in by px inside a box (a light halo on a bright part)
+        A = out[y0:y1, x0:x1, 3]
+        out[y0:y1, x0:x1, 3] = np.minimum(A, nd.grey_erosion(A, size=(2 * px + 1, 2 * px + 1)))
+    for cx, cy, rx, ry, x0, x1 in cfg.get("cut_below", []):   # a part's reflection under its round bottom edge, cleared
+        yy, xx = np.mgrid[0:out.shape[0], x0:x1].astype(float)
+        arc = cy + ry * np.sqrt(np.clip(1 - ((xx - cx) / rx) ** 2, 0, 1))
+        keep = np.clip(arc - yy + 0.5, 0, 1) * (np.abs(xx - cx) < rx) + (np.abs(xx - cx) >= rx) * (yy < cy)
+        out[:, x0:x1, 3] = (out[:, x0:x1, 3] * np.where(yy < cy, 1.0, keep)).astype(np.uint8)
+    if "defringe" in cfg:                   # the bright wall left on the cut-out's edge: within n px of the outline, a pixel
+        n, t = cfg["defringe"]               # lighter than the part n px in by more than t takes that part's colour
+        A = out[..., 3] > 127
+        dist = nd.distance_transform_edt(A)
+        deep = A & (dist >= n)
+        _, (iy, ix) = nd.distance_transform_edt(~deep, return_indices=True)
+        P = out[..., :3].astype(float); Q = P[iy, ix]
+        k = np.clip((lum(P) - lum(Q) - t) / max(t, 1), 0, 1) * ((out[..., 3] > 0) & (dist < n) & ~glass)
+        out[..., :3] = (P * (1 - k[..., None]) + Q * k[..., None]).clip(0, 255).astype(np.uint8)
     if "iris" in cfg:
         out = iris(out, photo, glass, opaque, runs, cfg["iris"], cfg.get("fade", 16))
     return out
