@@ -153,6 +153,16 @@ Each PHOTOS entry (pixels of the 2600 px tall photo):
   recolour list of [x0, y0, x1, y1, C, depth]: in that box, the pixels within `depth` px of the outline that are not the
            coloured glass (one channel C above the other two: mat, dish or shadow seen at a coloured base's edge) take the
            colour of the nearest pixel that is, softened over 2 px: the base's own colour carried out to its outline.
+  unmat    [cx, cy, rx, ry, y_top(, k)]: tinted see-through glass kept as shot (photo_rgb) over the two-ink mat: inside
+           this superellipse (exponent k, default 2) and below y_top, the dark-ink parts of the print are lifted to the
+           pale-ink level read locally through the glass (two passes, windows unmat_win, default [81, 45]), so the
+           print goes and the glass's reflections stay. unmat_skip: boxes left alone (a downstem). unmat_lift: the
+           share of the lift (default 1). unmat_tint [r, g, b]: the region recoloured to the glass's own colour at each
+           pixel's level (near-white speculars kept); unmat_gain: that level scaled (below 1: darker glass). With
+           unmat_lift 0 only the tint is applied (a pale ink's cast taken out of clear crystal).
+  keep_quad list of [y0, y1, xl0, xl1, xr0, xr1]: kept opaque between two straight lines, the format of `tube` (a
+           slanted rod inside a clear tube).
+  see_through takes an optional fourth value y0: it acts only from that row down (eased over 12 rows).
   photo_rgb true: opaque parts take the photo's own pixels (not the cut-out's), so an `outline` or `foot` that reaches
            a little past rembg's edge shows the product there, not black (a mirrored or iridescent base kept as shot).
   smooth   [x0, x1, depth, sigma]: a coloured (opaque-drawn) base's bottom rim, the `depth` rows above its outline in
@@ -466,6 +476,22 @@ PHOTOS_CREW8 = {
 }
 PHOTOS.update(PHOTOS_CREW8)
 
+# Crew 7 (2026-11-28): Drive-batch shop hookahs, OSS-140041 upward (1958 x 2600 after the resize).
+PHOTOS_CREW7 = {
+    # OSS-140041 smoked see-through base on the mat, clear tube column with a steel rod inside
+    # (the smoked glass kept as shot, the print seen through it lifted out by unmat; the tube drawn as clear glass)
+    "PXL_20261128_004355270": {"photo_rgb": True, "foot": [956, 2350, [279, 279], 198, 1.8, 0, 60], "fill": True,
+                               "unmat": [956, 2350, 272, 182, 2160, 1.8], "unmat_gain": 0.7, "unmat_tint": [87, 82, 66], "see_through": [70, 0.2, 110, 1845], "unmat_skip": [[934, 2160, 975, 2280], [935, 2280, 968, 2292], [941, 2292, 962, 2300]],
+                               "glass_extra": [[1035, 1695]], "fade": 3, "tube": [[1035, 1650, 826, 846, 1020, 1031]],
+                               "keep_quad": [[1035, 1650, 897, 911, 949, 962]], "keep_below": [940, 1668, 105, 32, 3]},
+    # OSS-140042 cut-crystal base on the mat's pale ink, kept as shot: the mat ring cut off by the foot, the pale ink's
+    # cyan cast taken out (unmat with no lift: tint only), the bright crystal letting some tile through
+    "PXL_20261128_004452376": {"photo_rgb": True, "foot": [1023, 2370, [245, 245], 164, 2.0, 170, 60], "fill": True, "bridge": [[2215, 2345, "right"], [2215, 2345, "left"]],
+                               "unmat": [1020, 2370, 262, 190, 2190], "unmat_lift": 0, "unmat_tint": [1, 1, 1],
+                               "see_through": [150, 0.35, 205, 1890]},
+}
+PHOTOS.update(PHOTOS_CREW7)
+
 DARK = np.array([36, 44, 50], float)     # the glass's dark layer: a cool grey, as clear soda glass reads at a slant
 
 
@@ -627,6 +653,54 @@ def smooth_rim(rgb, sil, sm):
     wgt = (wv * wx * (1 - spec)) * band
     out[band] = sm_rgb[vv, xx] * wgt[band][:, None] + out[band] * (1 - wgt[band][:, None])
     return out
+
+
+def unmat_pass(rgb, m, win, lift=1.0):
+    """One pass of `unmat` over a crop: lift the dark-ink parts of the print to the pale-ink level seen through the glass."""
+    Lb = nd.gaussian_filter(rgb.mean(2), 1.2)
+    hi = nd.gaussian_filter(nd.percentile_filter(Lb, 85, size=win), win / 3)    # the local pale-ink level through the glass
+    lo = nd.gaussian_filter(nd.percentile_filter(Lb, 12, size=win), win / 3)    # the local dark-ink level
+    wgt = np.clip((Lb - lo) / np.maximum(hi - lo, 8), 0, 1)                      # 1 over pale ink, 0 over dark, between at edges
+    pale, dark = wgt > 0.8, wgt < 0.2
+    D = np.zeros_like(rgb)
+    for c in range(3):                     # per channel: pale ink's colour through the glass minus dark ink's, smoothed
+        ch = nd.gaussian_filter(rgb[..., c], 1.2)
+        mp = nd.gaussian_filter(np.where(pale, ch, 0), win / 2) / (nd.gaussian_filter(pale * 1.0, win / 2) + 1e-3)
+        md = nd.gaussian_filter(np.where(dark, ch, 0), win / 2) / (nd.gaussian_filter(dark * 1.0, win / 2) + 1e-3)
+        D[..., c] = np.clip(mp - md, 0, None)
+    ease = nd.gaussian_filter(m * 1.0, 6)[..., None]
+    res = rgb + lift * (1 - wgt)[..., None] * D * ease
+    gy, gx = np.gradient(nd.gaussian_filter(wgt, 1))     # what is left of the print's edges: fine detail along them damped
+    gw = nd.gaussian_filter(np.hypot(gx, gy), 2)
+    RL = res.mean(2); hp = RL - nd.gaussian_filter(RL, 4)
+    return res - hp[..., None] * ((np.clip(gw * 6, 0, 1) * (RL < 170))[..., None] * ease)
+
+
+def unmat(photo, cfg):
+    """`unmat`: tinted see-through glass kept as shot over the two-ink mat: inside the ellipse (below y_top, minus the
+    unmat_skip boxes) the photo is the glass over pale ink everywhere, so the print goes and the glass's own reflections
+    and speculars stay (photo = t * ink + reflection; the dark-ink pixels get t * (pale - dark) added, read locally)."""
+    cx, cy, rx, ry, ytop = cfg["unmat"][:5]; k = cfg["unmat"][5] if len(cfg["unmat"]) > 5 else 2.0
+    h, w = photo.shape[:2]
+    y, x = np.mgrid[0:h, 0:w].astype(float)
+    reg = (np.abs((x - cx) / rx) ** k + np.abs((y - cy) / ry) ** k <= 1) & (y >= ytop)
+    for x0, y0, x1, y1 in cfg.get("unmat_skip", []):
+        reg[y0:y1, x0:x1] = False
+    ys, xs = np.where(reg)
+    if not len(ys):                         # nothing inside the region: the photo as it is
+        return photo
+    pad = 40                                # past the 6 px ease every change is weighted by, so no seam at the box edge
+    Y0, Y1, X0, X1 = max(ys.min() - pad, 0), min(ys.max() + pad + 1, h), max(xs.min() - pad, 0), min(xs.max() + pad + 1, w)
+    rgb = photo[Y0:Y1, X0:X1].astype(float); m = reg[Y0:Y1, X0:X1]
+    for win in (cfg.get("unmat_win", [81, 45]) if cfg.get("unmat_lift", 1.0) > 0 else []):   # lift 0: only the tint
+        rgb = unmat_pass(rgb, m, win, cfg.get("unmat_lift", 1.0))
+    if "unmat_tint" in cfg:                 # the pale ink's cool cast taken out: the glass's own colour (read off the glass
+        tint = np.maximum(np.array(cfg["unmat_tint"], float), 1.0)   # over the wall) at each pixel's level; speculars kept
+        L = rgb.mean(2); spec = np.clip((L - 170) / 50, 0, 1)[..., None]
+        e = nd.gaussian_filter(m * 1.0, 6)[..., None] * (1 - spec)
+        rgb = rgb * (1 - e) + L[..., None] * cfg.get("unmat_gain", 1.0) * (tint / tint.mean()) * e   # gain: the glass darker
+    out = photo.astype(float).copy(); out[Y0:Y1, X0:X1] = rgb
+    return out.clip(0, 255)
 
 
 def lama_fill(img, mask, sess):
@@ -804,6 +878,12 @@ def masks(photo, cut_a, cfg):
     for x0, y0, x1, y1 in plates(cfg) + cfg.get("keep", []):
         p = np.zeros((h, w)); p[y0:y1, x0:x1] = 1
         opaque = np.maximum(opaque, nd.gaussian_filter(p, 0.8))
+    for y0, y1, xl0, xl1, xr0, xr1 in cfg.get("keep_quad", []):   # a slanted rod in a clear tube: kept between two lines
+        p = np.zeros((h, w)); xx = np.arange(w, dtype=float)
+        for r in range(max(y0, 0), min(y1, h)):
+            t_ = (r - y0) / max(y1 - y0, 1)
+            p[r] = np.clip(xx - (xl0 + (xl1 - xl0) * t_) + 0.5, 0, 1) * np.clip(xr0 + (xr1 - xr0) * t_ - xx + 0.5, 0, 1)
+        opaque = np.maximum(opaque, nd.gaussian_filter(p, 0.6))
     if "dark" in cfg:
         lv, y0, y1 = cfg["dark"]
         d = lum(photo) < lv
@@ -1092,6 +1172,8 @@ def run_one(src, cut_p, cfg, method, lama, tile=None, matting=None):
         fill = lama_fill(photo.astype(np.uint8), m, lama)
         photo = fill
         cut[..., :3] = np.where(m[..., None], fill, cut[..., :3]).astype(np.uint8)
+    if "unmat" in cfg:                      # tinted glass kept as shot over the mat: the print seen through it lifted out
+        photo = unmat(photo, cfg)
     if cfg.get("photo_rgb"):                # opaque parts take the photo's own pixels: an `outline` or foot that reaches past
         cut[..., :3] = photo.clip(0, 255).astype(np.uint8)   # the cut-out shows the product there, not the cut-out's black
     if cfg.get("add_poly"):                 # a pale part the cut-out took for wall: opaque inside the polygon, the photo's pixels
@@ -1175,9 +1257,12 @@ def run_one(src, cut_p, cfg, method, lama, tile=None, matting=None):
         d = nd.distance_transform_edt(out[..., 3] > 127)
         out[..., 3] = (out[..., 3] * np.where(d < n, a0 + (1 - a0) * d / n, 1.0)).astype(np.uint8)
     if "see_through" in cfg:                # tinted glass kept as cut: where it is thin (bright: the wall seen through it) some
-        L0, amax, wall = cfg["see_through"]  # tile shows, the colour solved so that over the wall it is the photo again
+        L0, amax, wall = cfg["see_through"][:3]  # tile shows, the colour solved so that over the wall it is the photo again
         P = out[..., :3].astype(float); A = out[..., 3].astype(float) / 255
         wgt = amax * np.clip((nd.gaussian_filter(lum(P), 2) - L0) / 60, 0, 1) * (A > 0.99)
+        if len(cfg["see_through"]) > 3:     # a fourth value: only from that row down (the glass below the metal fittings),
+            y_ = np.arange(wgt.shape[0], dtype=float)[:, None]   # eased in over 12 rows
+            wgt = wgt * np.clip((y_ - cfg["see_through"][3]) / 12, 0, 1)
         a = 1 - wgt
         C = (P - (1 - a)[..., None] * wall) / np.maximum(a, 1e-3)[..., None]
         out[..., :3] = C.clip(0, 255).astype(np.uint8); out[..., 3] = (A * a * 255).clip(0, 255).astype(np.uint8)

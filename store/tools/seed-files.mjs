@@ -50,10 +50,13 @@ export const SEED_FILES = [
   "catalog/live/hookah-clean-c2-2026-11-28.sql", // crew 2's cleaned photos from the second batch, the same way (after drive2 and crew 1, which reset or touch those rows)
   "catalog/live/hookah-clean-c5-2026-11-28.sql", // crew 5's cleaned Drive-batch hookah photos, the same way (after drive2, which resets those rows' facts)
   "catalog/live/hookah-clean-c6-2026-11-28.sql", // crew 6's cleaned Drive-batch photos, the same way (after drive2, which resets those rows' facts)
-  "catalog/live/hookah-clean-c8-2026-11-28.sql", // crew 8's cleaned Drive-batch photos, the same way (after drive2 and crew 6)
+  "catalog/live/hookah-clean-c7-2026-11-28.sql", // crew 7's cleaned Drive-batch hookah photos, the same way (after drive2, which resets those rows' facts)
+  "catalog/live/hookah-clean-c8-2026-11-28.sql", // crew 8's cleaned Drive-batch photos, the same way (after drive2, crew 6 and crew 7)
   "tools/fixtures/pack-mains-live-2026-11-28.sql", // test seed only: the seven packs' live main photos, so batch 2's guards apply here as live
   "catalog/live/img-more-2-2026-11-28.sql",      // batch 2: the shop's own photos of seven packs (guarded on img)
   "catalog/live/img-more-2-2026-11-28.sql",      // run twice: proves it is safe twice
+  "catalog/live/pack-photos-2026-11-28.sql",     // the shop's own photos as main photos: the seven packs' stand-ins off (img_more emptied), six charcoal boxes photographed (guarded on img)
+  "catalog/live/pack-photos-2026-11-28.sql",     // run twice: proves it is safe twice
 ];
 export const seedPath = f => fileURLToPath(new URL(f, STORE));
 
