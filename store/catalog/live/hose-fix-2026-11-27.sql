@@ -1,0 +1,15 @@
+-- The light-blue Starbuzz ribbed hose (OSS-120032) gets its photo on the drawn clear bag. There is no usable photo of it alone:
+-- it only lies at the cut-off edge of the shop's counter photo "Star buzz are 76.5 inches", under glare and the counter's violet
+-- lights. Its picture is the teal sibling's cut-out (same Starbuzz ribbed tube, stem and card, IMG_0549) with the tube and stem
+-- recoloured to the light-blue hose's own shade, sampled from that counter photo and white-balanced on the bag's barcode label
+-- (store/tools/catalog/hose_drawnbag/recolour_lb.py); the printed card is left as photographed. The file is
+-- store/public/img/pc/hose/starbuzz-ribbed-hose-light-blue{,-m,-s}.webp, added in the same commit (version in store/src/img-versions.json).
+-- Not applied live yet. Run after missing-items-2026-11-27.sql (which adds the row with no image: img '' and facts photo 'none',
+-- "Photo coming soon"); if that file or a re-seed of shop-hoses is run again afterwards, run this file again after it.
+-- This moves only the photo: img becomes the new file, facts_known.photo 'own' (as every other shop hose), details.photo
+-- 'approved', the stock-check note (confirm_why) loses its "no photo of its own yet" clause (the check that it is still in
+-- stock stays), and a "Photo to be replaced" tag (facts_known.photo_label 'replace') is taken off if one is there. Safe to run twice.
+-- Rollback (as missing-items-2026-11-27.sql left it):
+--   UPDATE products SET img = '', facts_known = json_set(facts_known, '$.photo', 'none'), details = json_remove(details, '$.photo'),
+--     updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE sku = 'OSS-120032' AND supplier_id = 'shop-hoses' AND json_valid(facts_known) AND json_valid(details);
+UPDATE products SET img = 'hose/starbuzz-ribbed-hose-light-blue', details = json_set(CASE WHEN json_valid(details) THEN details ELSE '{}' END, '$.photo', 'approved'), facts_known = json_remove(CASE WHEN json_extract(facts_known, '$.confirm_why') IS NULL THEN json_set(facts_known, '$.photo', 'own') ELSE json_set(facts_known, '$.photo', 'own', '$.confirm_why', replace(json_extract(facts_known, '$.confirm_why'), '; no photo of its own yet (in that photo it lies in a group, cut off at the edge)', '; its photo is the teal one recoloured to its shade from that counter photo')) END, CASE WHEN json_extract(facts_known, '$.photo_label') = 'replace' THEN '$.photo_label' ELSE '$.__none__' END), updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE sku = 'OSS-120032' AND supplier_id = 'shop-hoses' AND json_valid(facts_known) AND json_type(facts_known) = 'object' AND (details IS NULL OR details = '' OR (json_valid(details) AND json_type(details) = 'object')) AND (img IS NOT 'hose/starbuzz-ribbed-hose-light-blue' OR json_extract(facts_known, '$.photo') IS NOT 'own' OR json_extract(CASE WHEN json_valid(details) THEN details ELSE '{}' END, '$.photo') IS NOT 'approved' OR json_extract(facts_known, '$.photo_label') IS 'replace' OR instr(json_extract(facts_known, '$.confirm_why'), 'no photo of its own yet') > 0);
