@@ -26,4 +26,11 @@ SHOP_PHOTOS = {
     "ace-tsar-molotov##5271ff": ("shop/ace-tsar-molotov-blue", "blue", "IMG_0685",
                                  "Tsar Molotov (catalogue p26): TSAR on the stem and on the X swing tag; the blue chip, in "
                                  "place of the maker's web photo (the shop's own piece)"),
+    # IMG_0689 (2026-11-28): the Panda (catalogue p25; PANDA on the collar) in black, drip-textured clear glass base stood on
+    # the shop's patterned mat. clear_glass2.py redraws the glass (the mat and its MOZE print cleared, the glass's own drips
+    # and highlights kept); framed as the Tsar and the Rose (-l not kept):
+    #   clear_glass2.py SRC CUT OUT IMG_0689; frame_cutouts.py OUT FRAMED --kind hookah --glass IMG_0689
+    "ace-panda##000000": ("shop/ace-panda-black", "black", "IMG_0689",
+                          "Panda hookah (catalogue p25): PANDA on the collar, the drip-textured clear base; the black chip, "
+                          "which had no photo"),
 }
