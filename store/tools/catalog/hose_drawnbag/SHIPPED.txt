@@ -1,0 +1,13 @@
+Drawn clear bag (owner 2026-11-27, approved on the samples sheet: "That's so much better"). Each hose and its bag print is cut
+out of the shop's photo (cut.py) and laid in one drawn clear bag, identical for every hose (compose.py: 385x810 at 720, side
+folds, shine, crimped seals, contact shadow; a short product centred, one the photo cuts off runs into the bottom seal).
+Per-photo settings: cfg.json (the three samples) and cfg.d/<IMG>.json; bags.json is the hand-read bag outline per photo.
+The photos stay outside the repo: set HOSE_WORK to the folder holding hoses-work/full/IMG_xxxx.jpg and hose-drawnbag/.
+Run per photo: python cut.py IMG; python compose.py IMG; python check.py IMG (source | chartreuse | orange | teal).
+Publish: python store/tools/catalog/photos_hoses.py <dir of IMG_xxxx.png> IMG ...; node store/tools/photo-versions.mjs.
+Live state: store/catalog/live/hose-drawnbag-2026-11-27.sql (gen_sql.py writes it from the shipped SKUs).
+Shipped after design review (17): IMG_0565 0564 0561 0572 0566 0547 0550 0579 0545 0577 0575 0576 0578 0563 0556 0558 0568
+  (OSS-120001..120014, 120019, 120020, 120028). Known limits left in: crinkle on printed film or cards (0561 0547 0575 0576
+  0578), some clear film over the right run of 0563.
+Not shipped, still on the old photo with "Photo to be replaced": the Zanobia four (0548 0557 0552 0553: hose buried under
+  crinkled film, needs a taut-bag reshoot) and group 3 (0543 0549 0551 0555 0544 0559 0560 0569 0571 0562) until reviewed.

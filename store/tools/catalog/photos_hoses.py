@@ -3,7 +3,7 @@ see-through film, on transparency) -> store/public/img/pc/hose/<name>.webp, -m, 
 every catalogue photo (photos.save_set). The creased film is detailed, so these files come out about 4x heavier than the Ace
 cut-outs at the same size (-s median about 64 KB against about 18 KB). The masters stay outside the repo; only the web sizes are kept.
 
-  python store/tools/catalog/photos_hoses.py CROPS_DIR
+  python store/tools/catalog/photos_hoses.py CROPS_DIR [IMG_xxxx ...]   (only those photos when named)
   node store/tools/photo-versions.mjs          then, so each photo gets its version
 """
 from __future__ import annotations
@@ -19,10 +19,12 @@ import photos  # noqa: E402
 import src_shop_hoses  # noqa: E402
 
 
-def main(crops: Path):
-    done = 0
+def main(crops: Path, only: set[str] | None = None):
+    done, seen = 0, set()
     for name, _cap, _len, _brand, shots, _why in src_shop_hoses.HOSES:
         for photo, colour, _ in shots:
+            if only and photo not in only:
+                continue
             if not (crops / f"{photo}.png").exists() and not photo.startswith("IMG_"):
                 print(f"skipped {name} {colour}: no cut-out of {photo} (no photo of its own yet)")
                 continue
@@ -31,8 +33,11 @@ def main(crops: Path):
                 raise SystemExit(f"{photo}.png is {im.size}, not the {photos.W}x{photos.H} frame")
             photos.save_set(im, C.STORE / "public" / "img" / "pc" / src_shop_hoses.photo_name(name, colour))
             done += 1
+            seen.add(photo)
     print(f"{done} hose photos published to store/public/img/pc/hose/")
+    if only and only - seen:
+        raise SystemExit(f"not a hose photo: {' '.join(sorted(only - seen))} (names as in src_shop_hoses.HOSES, e.g. IMG_0565)")
 
 
 if __name__ == "__main__":
-    main(Path(sys.argv[1]))
+    main(Path(sys.argv[1]), set(sys.argv[2:]) or None)
