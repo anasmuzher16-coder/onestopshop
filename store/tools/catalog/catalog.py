@@ -263,7 +263,7 @@ def build_hookahs(reg, day):
                                   "shop": C.blank_shop()})
     retired = C.retire_missing(reg, "shop-hookahs", live, day, "not on the shop's hookah list any more")
     m = {"schema": C.SCHEMA_ID, "supplier": SUPPLIER_META["shop-hookahs"],
-         "sources": [{"id": src_shop_hookahs.SRC_ID, "kind": "shop photos", "file": "IMG_0670..IMG_0715 (hookahs on the counter)",
+         "sources": [{"id": src_shop_hookahs.SRC_ID, "kind": "shop photos", "file": "IMG_0670..IMG_0715 (hookahs on the counter) + the 2026-11-28 batch (IMG_0672..IMG_0759, PXL_20261128_*, standing)",
                       "sha256": C.sha256_text(json.dumps(src_shop_hookahs.HOOKAHS, ensure_ascii=False)), "products": len(live),
                       "edition": src_shop_hookahs.EDITION, "received": src_shop_hookahs.RECEIVED}],
          "rulings": ["owner 2026-11-27: whatever is ready goes on the site now so the shop can add the details",

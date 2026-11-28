@@ -16,9 +16,9 @@
   "20": 1,
   "30": 1,
   "11": 40,
-  "12": 33,
+  "12": 34,
   "13": 66,
-  "14": 28,
+  "14": 103,
   "15": 2
  },
  "skus": {
@@ -3747,6 +3747,462 @@
    "key": "charcoal-shop-duracubes-coconut-charcoal-cubes-72-cubes",
    "status": "active",
    "assigned": "2026-11-27"
+  },
+  "OSS-140028": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-hookah-smoky-teardrop-base-black-stem#black",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140029": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-hookah-bubble-glass-base-yellow-and-red-stem#yellow-and-red",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140030": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-hookah-blue-cut-glass-base-gold-stem#gold-and-blue",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140031": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-hookah-champagne-glass-base-gold-stem#gold",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140032": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-led-hookah-acrylic-frame#yellow",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140033": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-led-hookah-acrylic-frame#blue",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140034": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-hookah-stone-mosaic-stem-and-base#cream-and-gold",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140035": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-hookah-black-base-rifle-stem#black-and-gold",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140036": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-mob-hookah-rifle-stem#rose-gold",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140037": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-mob-hookah-rifle-stem#magenta",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140038": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-mishaismyshisha-hookah#blue",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140039": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-mishaismyshisha-hookah#pink",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140040": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-mya-hookah#green",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140041": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-hookah-smoky-base-steel-stem-in-a-clear-column#silver",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140042": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-hookah-cut-crystal-base-steel-stem#silver",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140043": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-contraband-hookah-resin-stem#orange-and-purple",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140044": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-hookah-cut-crystal-base-wood-look-teardrop-stem#wood-and-gold",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140045": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-hookah-clear-base-bronze-stem#bronze",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140046": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-hookah-cut-crystal-base-spring-stem#red",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140047": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-hookah-cut-crystal-base-spring-stem#blue",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140048": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-hookah-cut-crystal-base-spring-stem#lavender",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140049": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-hookah-camel-engraved-stem#blue",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140050": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-hookah-camel-engraved-stem#lime",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140051": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-hookah-quilted-glass-base-steel-stem#silver",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140052": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-hookah-fluted-base-steel-and-resin-stem#red",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140053": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-hookah-fluted-base-steel-and-resin-stem#burgundy",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140054": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-hookah-fluted-base-steel-and-resin-stem#yellow",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140055": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-hookah-green-ribbed-base-chrome-stem#green",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140056": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-hookah-fluted-teardrop-stem#red",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140057": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-hookah-fluted-teardrop-stem#blue",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140058": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-hookah-fluted-teardrop-stem#lime",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140059": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-hookah-fluted-teardrop-stem#steel-blue",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140060": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-mattpear-hookah#black-crackle-base",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140061": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-mattpear-hookah#black-clear-base",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140062": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-hookah-clear-base-black-textured-stem#black",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140063": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-moze-hookah-resin-stem#purple",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140064": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-hookah-bulb-vase-on-a-black-stand#black-and-gold",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140065": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-hookah-teardrop-base-steel-stem#champagne",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140066": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-hookah-teardrop-base-steel-stem#smoky-grey",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140067": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-hookah-smoky-teardrop-base-red-stem#red",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140068": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-hookah-iridescent-base-gold-stem#gold",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140069": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-hookah-chrome-stem-acrylic-base#chrome",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140070": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-hookah-clear-base-slim-bronze-stem#bronze",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140071": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-hookah-cut-crystal-base-gold-and-blue-stem#gold-and-blue",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140072": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-hookah-hexagonal-base-cream-stem#cream",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140073": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-hookah-amber-pyramid-base-gunmetal-stem#gunmetal",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140074": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-hookah-cut-glass-base-gold-and-silver-stem#gold-and-silver",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140075": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-hookah-cut-glass-base-black-and-gold-fleck-stem#black-and-gold",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140076": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-amy-deluxe-hookah-gold-rocket-stem#gold",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140077": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-hookah-cut-glass-base-black-and-gold-stem#black-and-gold",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140078": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-mr-eds-hookah#gold-and-silver",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140079": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-smokah-hookah#frosted-print-base",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140080": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-smokah-hookah#bubble-glass-base",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140081": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-hookah-clear-teardrop-base-black-stem-with-clear-tube#black",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140082": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-amir-s-hookah-square-glass-base#wood-and-clear",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140083": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-hookah-football-base-gold-trophy-stem#gold",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140084": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-hookah-red-glass-base-rifle-rail-stem#red-and-copper",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140085": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-hookah-clear-tube-on-a-lit-black-base#black",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140086": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-hookah-tinted-base-wood-and-resin-stem#wood-and-green",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140087": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-hookah-tinted-base-wood-and-resin-stem#wood-and-blue",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140088": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-koress-k3-hookah#red-and-yellow",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140089": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-hookah-cut-glass-base-comic-print-stem#purple",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140090": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-hookah-cut-glass-base-comic-print-stem#red",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140091": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-hookah-egg-shaped-base-on-tripod-legs#black",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140092": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-hookah-egg-shaped-base-on-tripod-legs#green",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140093": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-hookah-canister-base-on-tripod-legs#silver",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140094": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-amy-deluxe-hookah-gunmetal-stem#black-and-green",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140095": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-amy-deluxe-hookah-gunmetal-stem#black-and-gold",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140096": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-hookah-cobalt-tiered-base-chrome-stem#cobalt-blue",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140097": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-amy-deluxe-hookah-blue-marble-stem#blue",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140098": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-hookah-clear-base-brushed-steel-stem#silver",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140099": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-starbuzz-hookah#blue",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140100": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-hookah-clear-base-blue-and-gold-stem#blue-and-gold",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140101": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-hookah-lion-head-glass-base-black-stem#smoky-and-black",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-140102": {
+   "supplier": "shop-hookahs",
+   "key": "hookah-hookah-iridescent-base-chrome-stem#chrome",
+   "status": "active",
+   "assigned": "2026-11-28"
+  },
+  "OSS-120033": {
+   "supplier": "shop-hoses",
+   "key": "hose-simba-disposable-hose#green",
+   "status": "active",
+   "assigned": "2026-11-28"
   }
  }
 }

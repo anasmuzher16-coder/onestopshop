@@ -526,6 +526,26 @@ class TestAceAccessories(Base):
         self.assertTrue(all(r[2] for r in acc))   # the shop can see what it is pricing
 
 
+# the Drive folder's new items (2026-11-28, drive2-2026-11-28.sql): the live files made before carry the masters without them
+DRIVE2_SKUS = {f"OSS-14{n:04d}" for n in range(28, 103)} | {"OSS-120033"}
+
+
+def before_drive2(m):
+    """A master as it was before the Drive folder's items of 2026-11-28 went in: those variants (and emptied families) out."""
+    m = copy.deepcopy(m)
+    for f in m["families"]:
+        f["variants"] = [v for v in f["variants"] if v["sku"] not in DRIVE2_SKUS]
+    m["families"] = [f for f in m["families"] if f["variants"]]
+    if m["supplier"]["id"] == "shop-hoses":     # the source line and the Simba card's flags as they read then
+        m["sources"][0].update(products=32, sha256="2d7f4538a7ee69a5c64343716ce3eecd71b67501f8cb1a957f0311fc40b7bf8c")
+        for f in m["families"]:
+            f["flags"] = [x for x in f["flags"] if not x.startswith("NEEDS SHOP: Green: only in the shop's counter photo IMG_20261125")]
+    if m["supplier"]["id"] == "shop-hookahs":   # the source line as it read then
+        m["sources"][0].update(file="IMG_0670..IMG_0715 (hookahs on the counter)", products=27,
+                               sha256="4c9f270d50d0f4695bb513323d4768a30d982f9536c79c83a67b808872535aa9")
+    return m
+
+
 class TestShopHoses(Base):
     """The shop's own hanging hoses (2026-11-27): every one on view, Price TBD, in the shop, never from Ace."""
     @classmethod
@@ -536,7 +556,7 @@ class TestShopHoses(Base):
     def test_master_validates_and_counts(self):
         C.validate_master(self.hoses, self.reg)
         self.assertEqual(len(self.hoses["families"]), 21)
-        self.assertEqual(sum(len(f["variants"]) for f in self.hoses["families"]), 32)   # 31 on the rack + Starbuzz light blue
+        self.assertEqual(sum(len(f["variants"]) for f in self.hoses["families"]), 33)   # 31 on the rack + Starbuzz light blue + Simba green
         self.assertTrue(all(re.fullmatch(r"OSS-12\d{4}", v["sku"]) for _, v in C.iter_variants(self.hoses)))
 
     def test_rebuild_is_stable(self):
@@ -559,7 +579,7 @@ class TestShopHoses(Base):
 
     def test_rows_on_view_tbd_not_ace(self):
         rows = K.desired_rows("shop-hoses", self.hoses)
-        self.assertEqual(len(rows), 32)
+        self.assertEqual(len(rows), 33)
         unsure = 0
         for r in rows:
             s, f = r["shop"], json.loads(r["sup"]["facts_known"])
@@ -569,14 +589,14 @@ class TestShopHoses(Base):
             self.assertTrue(r["sup"]["family"].startswith("hose-"))
             self.assertIsNone(f["weight_g"])
             self.assertIn("length", f)
-            # the light blue (OSS-120032) has no photo of its own yet: "Photo coming soon" until the shop uploads one
-            self.assertTrue(r["sup"]["img"].startswith("hose/") or (r["sku"] == "OSS-120032" and r["sup"]["img"] == "" and f["photo"] == "none"), r["sku"])
+            # the light blue (OSS-120032) and the green Simba (OSS-120033) have no photo of their own yet: "Photo coming soon"
+            self.assertTrue(r["sup"]["img"].startswith("hose/") or (r["sku"] in ("OSS-120032", "OSS-120033") and r["sup"]["img"] == "" and f["photo"] == "none"), r["sku"])
             unsure += bool(f.get("needs_confirm"))
             self.assertEqual(bool(f.get("needs_confirm")), bool(f.get("confirm_why")), r["sku"])
-        self.assertEqual(unsure, 20)   # 12 captioned for sure, 20 marked for the shop to check (medium matches, Babylon, no caption, the light blue from a counter photo)
+        self.assertEqual(unsure, 21)   # 12 captioned for sure, 21 marked for the shop to check (medium matches, Babylon, no caption, the light blue and the green Simba from counter photos)
 
     def test_photos_exist(self):
-        self.assertEqual([v["sku"] for _, v in C.iter_variants(self.hoses) if v["photo"]["status"] == "none"], ["OSS-120032"])
+        self.assertEqual([v["sku"] for _, v in C.iter_variants(self.hoses) if v["photo"]["status"] == "none"], ["OSS-120033", "OSS-120032"])   # master order: the Simba card comes before the Starbuzz
         for f, v in C.iter_variants(self.hoses):
             if v["photo"]["status"] == "none":
                 continue
@@ -584,17 +604,18 @@ class TestShopHoses(Base):
                 self.assertTrue((C.STORE / "public" / "img" / "pc" / (v["photo"]["img"] + suf + ".webp")).exists(), v["photo"]["img"])
 
     def test_live_file_matches_master(self):
-        # hoses-2026-11-27.sql is the first upload (kept as it was applied); the newest live file carries the current seed
-        self.assertEqual(live_sections(LIVE_MISSING)["shop-hoses"], K.seed_sql("shop-hoses", self.hoses))
+        # hoses-2026-11-27.sql is the first upload (kept as it was applied); missing-items-2026-11-27.sql carries the seed as it
+        # was before the Drive folder's green Simba (drive2-2026-11-28.sql adds that row alone, TestDrive2)
+        self.assertEqual(live_sections(LIVE_MISSING)["shop-hoses"], K.seed_sql("shop-hoses", before_drive2(self.hoses)))
 
     def test_every_hose_photo_to_be_replaced(self):
         # owner 2026-11-27: "put a photo to be changed tag on all the hoses"; the photos themselves stay as they are
         rows = K.desired_rows("shop-hoses", self.hoses)
-        self.assertEqual(len(rows), 32)
+        self.assertEqual(len(rows), 33)
         for r in rows:
             f = json.loads(r["sup"]["facts_known"])
             # the light blue (OSS-120032) has no photo yet, so nothing to tag: it shows "Photo coming soon"
-            want = ("none", None) if r["sku"] == "OSS-120032" else ("own", "replace")
+            want = ("none", None) if r["sku"] in ("OSS-120032", "OSS-120033") else ("own", "replace")
             self.assertEqual((f["photo"], f.get("photo_label")), want, r["sku"])
 
     def test_live_tag_over_applied_hoses_changes_only_the_label(self):
@@ -617,7 +638,7 @@ class TestShopHoses(Base):
 
     def test_apply_twice_is_stable(self):
         p1 = K.apply_supplier(self.con, "shop-hoses", self.hoses)
-        self.assertEqual(len(p1["added"]), 32)
+        self.assertEqual(len(p1["added"]), 33)
         p2 = K.apply_supplier(self.con, "shop-hoses", self.hoses)
         self.assertEqual((len(p2["added"]), len(p2["changed"]), len(p2["retired"])), (0, 0, 0))
 
@@ -690,7 +711,7 @@ class TestReverseSearch(Base):
 
 LIVE_SHOP = "shop-photos-2026-11-27.sql"
 LIVE_HOOKAHS = "shop-hookahs-2026-11-27.sql"
-LIVE_MISSING = "missing-items-2026-11-27.sql"   # the newest live file carrying the current bowl and hose seeds
+LIVE_MISSING = "missing-items-2026-11-27.sql"   # the live file carrying the bowl and hose seeds (hoses: before the green Simba, drive2)
 
 
 class TestShopPhotosForAce(Base):
@@ -857,7 +878,7 @@ class TestShopHookahs(Base):
 
     def as_first_uploaded(self):
         """The master as shop-hookahs-2026-11-27.sql was made from it: every cleaned photo back to the tagged original."""
-        m = self.as_named_before()
+        m = before_drive2(self.as_named_before())
         for _, v in C.iter_variants(m):
             if v["photo"]["status"] == "shop":
                 v["photo"]["status"] = "replace"
@@ -963,9 +984,9 @@ class TestShopHookahs(Base):
 
     def test_master_validates_and_counts(self):
         C.validate_master(self.hk, self.reg)
-        self.assertEqual(len(self.hk["families"]), 22)
+        self.assertEqual(len(self.hk["families"]), 22 + 57)   # + the Drive folder's 57 cards (2026-11-28)
         skus = [v["sku"] for _, v in C.iter_variants(self.hk)]
-        self.assertEqual(skus, [f"OSS-14{n:04d}" for n in range(1, 28)])
+        self.assertEqual(skus, [f"OSS-14{n:04d}" for n in range(1, 103)])
         self.assertNotIn("IMG_0689", json.dumps(self.hk))   # the Panda is OSS-100077 already: never a second card
 
     def test_rebuild_is_stable(self):
@@ -978,7 +999,7 @@ class TestShopHookahs(Base):
 
     def test_rows_on_view_tbd_flagged_tagged(self):
         rows = K.desired_rows("shop-hookahs", self.hk)
-        self.assertEqual(len(rows), 27)
+        self.assertEqual(len(rows), 102)
         web = [r for r in rows if "photo_src" in json.loads(r["sup"]["facts_known"])]
         self.assertEqual([r["sku"] for r in web], ["OSS-140001", "OSS-140002", "OSS-140003", "OSS-140004"])   # the Steamulations
         for r in rows:
@@ -1036,10 +1057,70 @@ class TestShopHookahs(Base):
 
     def test_apply_twice_is_stable(self):
         p1 = K.apply_supplier(self.con, "shop-hookahs", self.hk)
-        self.assertEqual(len(p1["added"]), 27)
+        self.assertEqual(len(p1["added"]), 102)
         p2 = K.apply_supplier(self.con, "shop-hookahs", self.hk)
         self.assertEqual((len(p2["added"]), len(p2["changed"]), len(p2["retired"])), (0, 0, 0))
 
+
+
+class TestDrive2(Base):
+    """The shop's Google Drive folder, 2026-11-28 (reports/DRIVE-MANIFEST-2026-11-28.csv): every NEW item on the site as new
+    rows only: 75 hookah colours in 57 cards (src_shop_hookahs.BATCH_2) and the green Simba hose."""
+    LIVE = "drive2-2026-11-28.sql"
+
+    def test_live_file_matches_masters(self):
+        import live_drive2 as L
+        self.assertEqual((C.CATALOG / "live" / self.LIVE).read_text(encoding="utf-8"), L.sql())
+        self.assertEqual({s for k in L.NEW.values() for s in k}, DRIVE2_SKUS)
+
+    def test_batch_is_upright_originals_tagged(self):
+        import src_shop_hookahs as S
+        hk = C.load_master("shop-hookahs")
+        new = [(f, v) for f, v in C.iter_variants(hk) if v["sku"] in DRIVE2_SKUS]
+        self.assertEqual((len(new), len({f["family_id"] for f, _ in new})), (75, 57))
+        self.assertEqual(len(S.UPRIGHT), 75)
+        for f, v in new:
+            self.assertEqual(v["photo"]["status"], "replace", v["sku"])   # the shop's original, "Photo to be replaced"
+            self.assertTrue(any(f"photo:{p} " in v["photo"]["src"] for p in S.UPRIGHT), v["sku"])
+            self.assertTrue(f["family_id"].startswith("hookah-"), f["family_id"])
+        # the ones already on the site never get a second card
+        text = json.dumps(hk)
+        for photo in ("PXL_20261128_002516743", "PXL_20261128_002808548", "IMG_0730", "IMG_0731", "IMG_0733"):
+            self.assertNotIn(photo, text)
+
+    def test_touches_only_new_rows_and_is_safe_twice(self):
+        con = self.con
+        con.executescript(live_sections(LIVE_HOOKAHS)["shop-hookahs"])
+        con.executescript(live_sections(LIVE_MISSING)["shop-hoses"])
+        cols = "sku, name, price_cents, stock, active, listed, availability, img, family, variant_label, facts_known, updated_at"
+        before = {r[0]: r[1:] for r in con.execute(f"SELECT {cols} FROM products")}
+        text = (C.CATALOG / "live" / self.LIVE).read_text(encoding="utf-8")
+        for line in text.splitlines():
+            m = re.search(r"VALUES \('(OSS-\d+)'|WHERE sku = '(OSS-\d+)'", line)
+            if m:
+                self.assertIn(next(g for g in m.groups() if g), DRIVE2_SKUS, line[:120])
+            self.assertNotIn("NOT IN (", line)            # no whole-supplier sweep
+            self.assertFalse(line.startswith("INSERT OR IGNORE INTO catalog_imports"), line[:80])
+        con.executescript(text)
+        after = {r[0]: r[1:] for r in con.execute(f"SELECT {cols} FROM products")}
+        self.assertEqual(sorted(set(after) - set(before)), sorted(DRIVE2_SKUS))
+        for s in before:
+            self.assertEqual(before[s], after[s], s)
+        rows = {r["sku"]: r for r in K.desired_rows("shop-hookahs", C.load_master("shop-hookahs"))}
+        rows.update({r["sku"]: r for r in K.desired_rows("shop-hoses", C.load_master("shop-hoses"))})
+        for s in DRIVE2_SKUS:   # each new row is what the master says, on view, Price TBD, in the shop
+            got = dict(zip(cols.split(", ")[1:], after[s]))
+            self.assertEqual((got["price_cents"], got["stock"], got["active"], got["listed"], got["availability"]), (0, 0, 0, 1, "in_store_uncounted"), s)
+            self.assertEqual((got["img"], got["family"], json.loads(got["facts_known"])),
+                             (rows[s]["sup"]["img"], rows[s]["sup"]["family"], json.loads(rows[s]["sup"]["facts_known"])), s)
+        n = con.total_changes
+        con.executescript(text)
+        self.assertEqual(con.total_changes - n, 0)
+
+    def test_green_simba_joins_the_simba_card(self):
+        h = C.load_master("shop-hoses")
+        f, v = next((f, v) for f, v in C.iter_variants(h) if v["sku"] == "OSS-120033")
+        self.assertEqual((f["family_id"], v["colour"]["v"], v["photo"]["status"]), ("hose-simba-disposable-hose", "Green", "none"))
 
 
 class TestShopCharcoal(Base):
