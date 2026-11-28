@@ -146,6 +146,8 @@ Each PHOTOS entry (pixels of the 2600 px tall photo):
   recolour list of [x0, y0, x1, y1, C, depth]: in that box, the pixels within `depth` px of the outline that are not the
            coloured glass (one channel C above the other two: mat, dish or shadow seen at a coloured base's edge) take the
            colour of the nearest pixel that is, softened over 2 px: the base's own colour carried out to its outline.
+  photo_rgb true: opaque parts take the photo's own pixels (not the cut-out's), so an `outline` or `foot` that reaches
+           a little past rembg's edge shows the product there, not black (a mirrored or iridescent base kept as shot).
   smooth   [x0, x1, depth, sigma]: a coloured (opaque-drawn) base's bottom rim, the `depth` rows above its outline in
            columns x0..x1, blurred along the rim (sigma px) row by row, so the mat print bent through the thick rim goes
            and the rim's own shading (darker edge, the thin pale lip) stays. Near-white speculars are kept.
@@ -172,8 +174,17 @@ PHOTOS = {
                  "bridge": [[2060, 2180, "left", "fill"], [2230, 2370, "left", "fill"], [2200, 2320, "right", "fill"]],
                  "notex": [[1265, 2420, 1300, 2452]], "retouch": [[936, 470, 1030, 532]], "stem_glass": 1.0, "stem_seen": 1.0, "fade": 3, "tex_mat": 0.6, "edge_clear": 45, "glass": [1612, 2600], "stem": [984, 1612, 1035, 2228],
                  "mat": [[1015, 2330, 335, 225]], "mat_fine": [[1010, 2305, 140, 45]]},
+    # crew 1 (2026-11-28), the Drive batch: shot upright on the marble table against the wall, no mat. Mirrored, smoked or
+    # iridescent glass is kept as photographed (photo_rgb), only its outline read off the photo (the cut-out took marble and
+    # shadow round the foot)
+    "PXL_20261128_000402468": {"photo_rgb": True, "foot": [985, 2110, [237, 237], 165, 2.0, 0, 60], "fill": True},
+    "PXL_20261128_000920111": {"photo_rgb": True, "fade": 3, "foot": [1033, 2290, [241, 241], 212, 2.4, 0, 60], "fill": True,
+                               "outline": [[1650, 1028, 83], [1700, 1028, 83], [1750, 1027.5, 82.5], [1800, 1028.5, 82.5], [1900, 1029.5, 82.5],
+                                           [1930, 1030.5, 84.5], [1960, 1031, 90], [1990, 1031, 98], [2020, 1031, 109], [2050, 1031.5, 123.5],
+                                           [2080, 1031.5, 146], [2110, 1031.5, 173.5], [2140, 1032, 195], [2170, 1032, 212], [2200, 1032.5, 225.5],
+                                           [2230, 1033, 235], [2260, 1033, 239.5], [2290, 1033, 241]]},
     # painted opaque base, off the mat
-    "IMG_0670": {"foot": [1028, 2400, [174, 176], 112, 2.0], "fill": True},
+    "IMG_0670":{"foot": [1028, 2400, [174, 176], 112, 2.0], "fill": True},
     # clear glass on marble, black rubber ring round the neck
     # (the black cord tied round the neck, with its clip, is the shop's, not the hookah's: painted out)
     "IMG_0679": {"glass": [1752, 2530], "fade": 3,
@@ -895,6 +906,8 @@ def run_one(src, cut_p, cfg, method, lama, tile=None, matting=None):
         fill = lama_fill(photo.astype(np.uint8), m, lama)
         photo = fill
         cut[..., :3] = np.where(m[..., None], fill, cut[..., :3]).astype(np.uint8)
+    if cfg.get("photo_rgb"):                # opaque parts take the photo's own pixels: an `outline` or foot that reaches past
+        cut[..., :3] = photo.clip(0, 255).astype(np.uint8)   # the cut-out shows the product there, not the cut-out's black
     sil, glass, opaque, mat, fine, parts = masks(photo, cut[..., 3], cfg)
     if "stem_collar" in cfg:                # the collar's pixels are its glint, not the stem: the stem's own pixels from just
         x0, y0, x1, y1, _ = cfg["stem_collar"]   # below the collar, cloned upward (mirrored, so the seam at y1 matches)
