@@ -17,6 +17,8 @@ export const SEED_FILES = [
   "catalog/out/seed-shop-hookahs.sql",          // the shop's own hookahs, Price TBD, original photos (catalog.py seed --supplier shop-hookahs)
   "catalog/live/shop-hookahs-2026-11-27.sql",   // the same hookahs + every hose's "Photo to be replaced" tag, as the live database gets them (run twice)
   "catalog/live/missing-items-2026-11-27.sql", // the shop's bowls with no brand (37) + the Starbuzz light blue hose, as the live database gets them (run twice; after shop-hookahs, the order the live database got them)
+  "catalog/live/hookah-clean-2026-11-27.sql",   // the first cleaned hookah photos: "Photo to be replaced" off (guarded on img, safe twice)
+  "catalog/live/hookah-clean-a-2026-11-28.sql", // group A's cleaned hookah photos, the same way (after hookah-clean)
   "catalog/out/seed-shisha.sql",                // shisha flavours
   "catalog/out/seed-charcoal-foil-foil.sql",    // foil only (catalog.py seed --supplier charcoal-foil --category foil)
   "catalog/out/seed-charcoal-foil-charcoal.sql", // charcoal's catalogue facts (shape, material, brand) onto the rows already in seed.sql;
