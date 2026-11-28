@@ -590,10 +590,12 @@ class TestShopHoses(Base):
     def test_every_hose_photo_to_be_replaced(self):
         # owner 2026-11-27: "put a photo to be changed tag on all the hoses"; the photos themselves stay as they are
         rows = K.desired_rows("shop-hoses", self.hoses)
-        self.assertEqual(len(rows), 31)
+        self.assertEqual(len(rows), 32)
         for r in rows:
             f = json.loads(r["sup"]["facts_known"])
-            self.assertEqual((f["photo"], f.get("photo_label")), ("own", "replace"), r["sku"])
+            # the light blue (OSS-120032) has no photo yet, so nothing to tag: it shows "Photo coming soon"
+            want = ("none", None) if r["sku"] == "OSS-120032" else ("own", "replace")
+            self.assertEqual((f["photo"], f.get("photo_label")), want, r["sku"])
 
     def test_live_tag_over_applied_hoses_changes_only_the_label(self):
         """Over hoses as shop-photos-2026-11-27.sql left them, the new live file changes facts_known only (the tag), and a
@@ -603,7 +605,7 @@ class TestShopHoses(Base):
         before = {r[0]: r[1:] for r in con.execute("SELECT sku, name, price_cents, stock, active, listed, img, family, variant_label, facts_known FROM products WHERE supplier_id = 'shop-hoses'")}
         con.executescript(live_sections(LIVE_MISSING)["shop-hoses"])
         after = {r[0]: r[1:] for r in con.execute("SELECT sku, name, price_cents, stock, active, listed, img, family, variant_label, facts_known FROM products WHERE supplier_id = 'shop-hoses'")}
-        self.assertEqual(sorted(before), sorted(after))
+        self.assertEqual(sorted(before) + ["OSS-120032"], sorted(after))   # the light blue is a new row, added by the same file
         for s in before:
             self.assertEqual(before[s][:-1], after[s][:-1], s)
             old, new = json.loads(before[s][-1]), json.loads(after[s][-1])
@@ -841,9 +843,21 @@ class TestShopHookahs(Base):
         cls.hk = C.load_master("shop-hookahs")
         cls.cleaned = {v["sku"] for _, v in C.iter_variants(cls.hk) if v["photo"]["status"] == "shop"}
 
+    # names found later by an exact visual match (Yandex, LENS.csv; renamed in missing-items-2-2026-11-27.sql): the files
+    # made before carry the plain name the hookah was first given
+    RENAMED = {"OSS-140015": ("MOB Cloud King Supreme", "Hookah, frosted white base, red stripes"),
+               "OSS-140019": ("Smokah Professional", "Hookah, clear base, brown stem")}
+
+    def as_named_before(self):
+        m = copy.deepcopy(self.hk)
+        for _, v in C.iter_variants(m):
+            if v["sku"] in self.RENAMED:
+                v["shop"]["display_name"] = {"v": None, "src": None}
+        return m
+
     def as_first_uploaded(self):
         """The master as shop-hookahs-2026-11-27.sql was made from it: every cleaned photo back to the tagged original."""
-        m = copy.deepcopy(self.hk)
+        m = self.as_named_before()
         for _, v in C.iter_variants(m):
             if v["photo"]["status"] == "shop":
                 v["photo"]["status"] = "replace"
@@ -863,9 +877,20 @@ class TestShopHookahs(Base):
         import live_clean_hookahs as L
         import src_shop_hookahs as S
         for out, photos, day in L.FILES:
-            self.assertEqual(out.read_text(encoding="utf-8"), L.sql(self.hk, photos, day), out.name)
+            self.assertEqual(out.read_text(encoding="utf-8"), L.sql(self.as_named_before(), photos, day), out.name)
         self.assertFalse(S.CLEANED_FIRST & S.CLEANED_A)          # each cleaned photo goes live in one file only
         self.assertEqual(set().union(*[p for _, p, _ in L.FILES]), S.CLEANED)   # and every one has its file
+
+    def test_renamed_from_the_visual_match(self):
+        rows = {r["sku"]: r for r in K.desired_rows("shop-hookahs", self.hk)}
+        for sku, (new, old) in self.RENAMED.items():
+            v = next(v for _, v in C.iter_variants(self.hk) if v["sku"] == sku)
+            self.assertEqual(rows[sku]["shop"]["name"], new)
+            self.assertIn("web: Yandex visual match, https://", v["shop"]["display_name"]["src"])   # shop: prefix so a rebuild keeps it (carry_shop)
+        live = (C.CATALOG / "live" / "missing-items-2-2026-11-27.sql").read_text(encoding="utf-8")
+        for sku, (new, old) in self.RENAMED.items():   # guarded on the plain name: a name the shop typed is never overwritten
+            self.assertIn(f"UPDATE products SET name = {K.q(new)}, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') "
+                          f"WHERE sku = '{sku}' AND supplier_id = 'shop-hookahs' AND name = {K.q(old)};", live)
 
     def test_live_clean_file_moves_only_photo_keys_and_is_safe_twice(self):
         import live_clean_hookahs as L
@@ -966,6 +991,48 @@ class TestShopHookahs(Base):
         p1 = K.apply_supplier(self.con, "shop-hookahs", self.hk)
         self.assertEqual(len(p1["added"]), 27)
         p2 = K.apply_supplier(self.con, "shop-hookahs", self.hk)
+        self.assertEqual((len(p2["added"]), len(p2["changed"]), len(p2["retired"])), (0, 0, 0))
+
+
+
+class TestShopCharcoal(Base):
+    """Charcoal in the shop's photos but not on its price list (2026-11-27): the Duracubes 72-cube box, Price TBD, pickup only."""
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.coal = C.load_master("shop-charcoal")
+
+    def test_master_and_rebuild(self):
+        C.validate_master(self.coal, self.reg)
+        self.assertEqual([v["sku"] for _, v in C.iter_variants(self.coal)], ["OSS-150001"])
+        reg = copy.deepcopy(self.reg)
+        m, retired = K.build_shop_charcoal(reg, "2099-01-01")
+        C.carry_shop(self.coal, m)
+        self.assertEqual((retired, C.dumps(m), reg), ([], C.dumps(self.coal), self.reg))
+
+    def test_row_is_tbd_charcoal_pickup_only(self):
+        (r,) = K.desired_rows("shop-charcoal", self.coal)
+        s, f = r["shop"], json.loads(r["sup"]["facts_known"])
+        self.assertEqual((s["name"], s["category_id"], s["price_cents"], s["stock"], s["active"], s["listed"], s["ship_class"], s["availability"]),
+                         ("Duracubes Coconut Charcoal Cubes, 72 cubes", "charcoal", 0, 0, 0, 1, "pickup_only", "in_store_uncounted"))
+        self.assertTrue(r["sup"]["family"].startswith("charcoal-"))   # charcoal wherever the back office moves it
+        self.assertEqual((f["photo"], f["brand"], f["count"], f["weight_g"]), ("own", "Duracubes", 72, None))
+        self.assertTrue(f["needs_confirm"] and f["confirm_why"])
+        for suf, size in (("", (720, 900)), ("-m", (540, 675)), ("-s", (360, 450)), ("-l", (1440, 1800))):
+            from PIL import Image
+            with Image.open(C.STORE / "public" / "img" / "pc" / (r["sup"]["img"] + suf + ".webp")) as im:
+                self.assertEqual((im.size, im.mode, im.getpixel((0, 0))[3]), (size, "RGBA", 0))
+
+    def test_live_file_matches_and_adds_only(self):
+        text = (C.CATALOG / "live" / "missing-items-2-2026-11-27.sql").read_text(encoding="utf-8")
+        part1 = live_sections("missing-items-2-2026-11-27.sql")["shop-charcoal"].split("-- Two of the shop's hookahs")[0]   # part 2: hookah names
+        self.assertEqual(part1, K.seed_sql("shop-charcoal", self.coal))
+        self.assertNotIn("DELETE", chr(10).join(l for l in text.splitlines() if not l.startswith("--")))
+
+    def test_apply_twice_is_stable(self):
+        p1 = K.apply_supplier(self.con, "shop-charcoal", self.coal)
+        self.assertEqual(p1["added"], ["OSS-150001"])
+        p2 = K.apply_supplier(self.con, "shop-charcoal", self.coal)
         self.assertEqual((len(p2["added"]), len(p2["changed"]), len(p2["retired"])), (0, 0, 0))
 
 

@@ -48,13 +48,13 @@ const m = await import("data:text/javascript;base64," + Buffer.from(mod.t).toStr
 const ref = await import("../../site/catalog.js");
 const { SAMPLE_SKUS } = await import("../src/samples.js");
 // Every made-up sample is off since 2026-11-24 (owner: "Hide samples, show coming soon"). What is on view is the real stock:
-// 69 charcoal items, 15 foil packs (Heat), 47 shisha flavours, 91 Ace colours (Price TBD): only the colours on pages the shop
+// 69 charcoal items on the shop's list + the Duracubes 72 box (Price TBD), 15 foil packs (Heat), 47 shisha flavours, 91 Ace colours (Price TBD): only the colours on pages the shop
 // ticked (86 stamped, 5 with an unclear tick); the 205 on unticked pages are off view (owner, 2026-11-26: a tick means in the
 // shop, in stock; nothing is ordered in). Plus the 39 Ace accessories the shop ticked (Price TBD). All ten sections stay; the
 // ones left with nothing say "stock arriving soon".
 const coal = m.PRODUCTS.filter(p => p.cat === "charcoal"), heat = m.PRODUCTS.filter(p => p.cat === "heat"), foil = heat.filter(p => /foil/i.test(p.name));
 const acc = m.PRODUCTS.filter(p => p.acc), accBy = id => acc.filter(p => p.cat === id).length;
-ok(m.PRODUCTS.length === 69 + 15 + 47 + 91 + 39 + 32 + 65 + 27 && m.CATEGORIES.length === ref.CATEGORIES.length + 4, `catalogue size ${m.PRODUCTS.length}/${69 + 15 + 47 + 91 + 39 + 32 + 65 + 27}, sections ${m.CATEGORIES.length}`);
+ok(m.PRODUCTS.length === 69 + 1 + 15 + 47 + 91 + 39 + 32 + 65 + 27 && m.CATEGORIES.length === ref.CATEGORIES.length + 4, `catalogue size ${m.PRODUCTS.length}/${69 + 1 + 15 + 47 + 91 + 39 + 32 + 65 + 27}, sections ${m.CATEGORIES.length}`);
 // the shop's own hookahs (2026-11-27): 27 colours (26 in 21 hookah-... families, the blue Ace Rose in the Ace Rose's family), all
 // in Hookahs, Price TBD; the four Steamulations on the maker's photo, untagged; the other 23 on the shop's original photo, full
 // tile, tagged "to be replaced" (facts.photo_label 'replace') unless a hookah-clean file has put its cleaned photo in; every hose carries the same tag; no approved or catalogue photo
@@ -109,7 +109,7 @@ ok(m.CATEGORIES.map(c => c.id).join(",") === "hookahs,shisha,charcoal,heat,bowls
 ok(foil.length === 15 && foil.every(p => p.state === "sale" && p.ship === "pickup_only" && p.weightTbd), "15 foil packs: on sale, pickup or local delivery while their weight is TBD");
 ok(!m.PRODUCTS.some(p => SAMPLE_SKUS.has(p.sku)) && SAMPLE_SKUS.size === 100 && !SAMPLE_SKUS.has("OSS-7009"), "no made-up sample is left in the catalogue (100 sample numbers, never 7009, the back office's next cologne; 98 are in this database, kept and switched off)");
 ok(ref.PRODUCTS.every(a => SAMPLE_SKUS.has(a.sku)), "every row of the mockup's sample file is in the samples list");
-ok(coal.length === 69 && heat.length === 15 + 18 && foil.length === 15 && !heat.some(p => p.details.charcoal), `Charcoal holds the 69 charcoal items; Heat holds the 15 foil packs, 18 accessories and no charcoal: ${coal.length}/${heat.length}`);
+ok(coal.length === 70 && heat.length === 15 + 18 && foil.length === 15 && !heat.some(p => p.details.charcoal), `Charcoal holds the 69 listed charcoal items and the Duracubes 72 box; Heat holds the 15 foil packs, 18 accessories and no charcoal: ${coal.length}/${heat.length}`);
 // the sections the samples leave empty: still there, answering 200, saying the stock is on its way and the phone, kept out of search
 const empty = m.CATEGORIES.filter(c => !m.PRODUCTS.some(p => p.cat === c.id)).map(c => c.id);
 ok(["cologne", "misc"].every(id => empty.includes(id)) && empty.length === 2, "two sections wait for their stock (Bases, Bowls, Hoses and Parts have Ace accessories since 2026-11-26): " + empty.join(","));
@@ -119,8 +119,12 @@ for (const id of empty) { const s = await get("/shop/" + id); ok(s.r.status === 
   for (const sku of all) { const r = await fetch(B + "/p/" + sku, { redirect: "manual" }); if (["OSS-7005", "OSS-7007"].includes(sku)) { if (r.status !== 404) wrong.push(`${sku}:${r.status}`); continue; }   // listed in case a database kept them; this one never had them
     const sec = ref.PRODUCTS.find(a => a.sku === sku)?.cat || { 7: "cologne", 8: "misc" }[sku[4]]; if (r.status !== 301 || !(r.headers.get("location") || "").endsWith("/shop/" + sec)) wrong.push(`${sku}:${r.status}`); }
   ok(!wrong.length, `every sample's old address redirects to its section (${all.length}): ${wrong.slice(0, 5).join(" ")}`); }
-ok(coal.every(p => p.ship === "pickup_only" && p.details.charcoal === true && p.stock === 10), "every charcoal item is pickup only and starts at 10 in stock");
-ok(coal.filter(p => p.img).length === 28 && coal.every(p => p.img ? p.details.photo === "approved" : p.details.photo === "coming"), "28 charcoal photos, the rest carry photo status coming");
+// the Duracubes 72-cube box (OSS-150001, 2026-11-27) is in the shop's photo but not on its price list: Price TBD, not counted
+const listed = coal.filter(p => p.sku !== "OSS-150001"), dura = coal.find(p => p.sku === "OSS-150001");
+ok(coal.every(p => p.ship === "pickup_only" && p.details.charcoal === true) && listed.every(p => p.stock === 10), "every charcoal item is pickup only; the listed ones start at 10 in stock");
+ok(dura && dura.state === "tbd" && dura.price === null && dura.stock === 0 && dura.ship === "pickup_only" && dura.img === "shop/duracubes-coconut-charcoal-cubes-72-cubes" && dura.facts.photo === "own" && !("needs_confirm" in dura.facts) && !("confirm_why" in dura.facts),
+  `the Duracubes 72 box: Price TBD, not counted, pickup only, the shop's photo, no internal notes: ${JSON.stringify(dura && { s: dura.state, p: dura.price, st: dura.stock, img: dura.img })}`);
+ok(listed.filter(p => p.img).length === 28 && listed.every(p => p.img ? p.details.photo === "approved" : p.details.photo === "coming"), "28 charcoal photos on the listed items, the rest carry photo status coming");
 for (const p of coal.filter(x => x.img)) { const r = await fetch(B + `/img/pc/${p.img}-s.webp`); ok(r.status === 200, `photo ${p.img}-s.webp: ${r.status}`); }
 ok((await fetch(B + "/img/pc/coming-charcoal.svg")).status === 200, "the drawn stand-in is served");
 // every promise follows the card switch (2026-11-27): with card payment off (this suite's mode, the live demo's) every order is a

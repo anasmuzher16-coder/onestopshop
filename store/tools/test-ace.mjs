@@ -71,7 +71,7 @@ ok(/og:description" content="[^"]*Pickup in Windsor, paid in the shop/.test(shis
 ok(feed.products.filter(p => /^OSS-96/.test(p.sku)).every(p => p.ship_class === "pickup_only"), "the feed says shisha is pickup while it is paid at the counter");
 const shishaSec = await (await fetch(B + "/shop/shisha")).text();
 ok(/name="description" content="[^"]*Pickup, paid in the shop/.test(shishaSec) && !/shipped across Canada/i.test(shishaSec.match(/name="description" content="[^"]*/)?.[0] || ""), "the Shisha section says pickup, paid in the shop");
-ok(new RegExp(`name="description" content="69 kinds of hookah charcoal[^"]*${payOn ? "Pickup or local delivery only" : counterWords}`).test(coalPage), "the Charcoal section says pickup or local delivery only (card off: pickup, paid in the shop)");
+ok(new RegExp(`name="description" content="70 kinds of hookah charcoal[^"]*${payOn ? "Pickup or local delivery only" : counterWords}`).test(coalPage), "the Charcoal section says pickup or local delivery only (card off: pickup, paid in the shop)");
 // Heat holds the 15 foil packs and 18 Ace accessories (2026-11-26); every weight is TBD, so the section is
 // pickup or local delivery, and says so. It says "shipped" again once anything in it can ship.
 ok(new RegExp(`name="description" content="33 foil and heat items at our Windsor counter\\. ${payOn ? "Pickup or local delivery only" : counterWords}`).test(heatPage), "Heat (foil and accessories, weight TBD) says pickup or local delivery only (card off: pickup, paid in the shop)");
