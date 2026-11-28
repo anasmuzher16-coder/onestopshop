@@ -1,8 +1,13 @@
 // Address checks for the store Worker: status codes, page titles, robots, security headers, catalogue module.
 // Needs the store running (npx wrangler dev --port 4420 --local). node store/tools/smoke-http.mjs
+import { readFileSync } from "node:fs";
+import { SEED_FILES, seedPath } from "./seed-files.mjs";
 const B = process.env.BASE || "http://127.0.0.1:4420";
 // hoses whose drawn-bag photo is approved (store/catalog/live/hose-drawnbag-2026-11-27.sql): those lose the "to be replaced" tag
 const DRAWN = new Set(((await import("node:fs")).readFileSync(new URL("../catalog/live/hose-drawnbag-2026-11-27.sql", import.meta.url), "utf8").match(/^UPDATE products SET details[^\n]*WHERE sku IN \(([^)]*)\)/m)?.[1] || "").match(/OSS-\d+/g) || []);
+// the shop hookahs whose cleaned photo the seed puts in (the hookah-clean files): no tag, framed like the Ace hookahs
+const CLEANED = new Set(SEED_FILES.filter(f => /\/hookah-clean/.test(f))
+  .flatMap(f => [...readFileSync(seedPath(f), "utf8").matchAll(/^UPDATE products .* WHERE sku = '(OSS-14\d{4})'/gm)].map(m => m[1])));
 let n = 0, f = 0;
 const ok = (cond, msg) => { n++; if (!cond) { f++; console.log("FAIL", msg); } };
 const get = async p => { const r = await fetch(B + p, { redirect: "manual", signal: AbortSignal.timeout(15000) }); return { r, t: await r.text() }; };
@@ -52,14 +57,16 @@ const acc = m.PRODUCTS.filter(p => p.acc), accBy = id => acc.filter(p => p.cat =
 ok(m.PRODUCTS.length === 69 + 15 + 47 + 91 + 39 + 32 + 65 + 27 && m.CATEGORIES.length === ref.CATEGORIES.length + 4, `catalogue size ${m.PRODUCTS.length}/${69 + 15 + 47 + 91 + 39 + 32 + 65 + 27}, sections ${m.CATEGORIES.length}`);
 // the shop's own hookahs (2026-11-27): 27 colours (26 in 21 hookah-... families, the blue Ace Rose in the Ace Rose's family), all
 // in Hookahs, Price TBD; the four Steamulations on the maker's photo, untagged; the other 23 on the shop's original photo, full
-// tile, tagged "to be replaced" (facts.photo_label 'replace'); every hose carries the same tag; no approved or catalogue photo
+// tile, tagged "to be replaced" (facts.photo_label 'replace') unless a hookah-clean file has put its cleaned photo in; every hose carries the same tag; no approved or catalogue photo
 // ever does; the back office's notes never reach the storefront
 { const hk = m.PRODUCTS.filter(p => /^OSS-14\d{4}$/.test(p.sku)), fams = new Set(hk.map(p => p.family));
-  const web = hk.filter(p => !p.facts.photo_label), orig = hk.filter(p => p.facts.photo_label === "replace");
+  const clean = hk.filter(p => CLEANED.has(p.sku)), web = hk.filter(p => !p.facts.photo_label && !CLEANED.has(p.sku)), orig = hk.filter(p => p.facts.photo_label === "replace");
   ok(hk.length === 27 && fams.size === 22 && hk.every(p => p.cat === "hookahs" && p.state === "tbd" && p.price === null && p.stock === 0 && p.glass && p.colour && p.facts.stamp === "shelf" && p.facts.photo === "own" && /^hookah\//.test(p.img) && !("needs_confirm" in p.facts) && !("confirm_why" in p.facts) && !("photo_src" in p.facts) && p.height == null),
     `27 shop hookahs, Price TBD, own photos, no internal notes: ${hk.length} in ${fams.size} families`);
-  ok(web.length === 4 && web.every(p => /^Steamulation /.test(p.name) && !p.facts.photo_full) && orig.length === 23 && orig.every(p => p.facts.photo_full === true),
-    `4 Steamulations on the maker's photo, untagged; 23 originals full tile and tagged: ${web.length}/${orig.length}`);
+  ok(web.length === 4 && web.every(p => /^Steamulation /.test(p.name) && !p.facts.photo_full) && orig.length === 23 - CLEANED.size && orig.every(p => p.facts.photo_full === true),
+    `4 Steamulations on the maker's photo, untagged; ${23 - CLEANED.size} originals full tile and tagged: ${web.length}/${orig.length}`);
+  ok(CLEANED.size > 0 && clean.length === CLEANED.size && clean.every(p => !p.facts.photo_label && !p.facts.photo_full),
+    `the ${CLEANED.size} cleaned shop photos carry no tag and are framed: ${clean.length}`);
   ok(hk.filter(p => p.lead).length === 21 && hk.find(p => p.family === "ace-rose")?.lead === false, "one card per shop hookah family; the blue Rose is a chip on the red Rose's card");
   for (const p of hk) for (const suf of ["", "-s"]) { const r = await fetch(B + `/img/pc/${p.img}${suf}.webp`); ok(r.status === 200, `photo ${p.img}${suf}.webp: ${r.status}`); }
   const hose = m.PRODUCTS.filter(p => /^hose-/.test(p.family || ""));
@@ -69,7 +76,7 @@ ok(m.PRODUCTS.length === 69 + 15 + 47 + 91 + 39 + 32 + 65 + 27 && m.CATEGORIES.l
   ok(DRAWN.size > 0 && hose.length === 32 && hose.every(p => DRAWN.has(p.sku) ? !p.facts.photo_label : p.img ? p.facts.photo_label === "replace" : p.sku === "OSS-120032" && !p.facts.photo_label),
     `every photographed hose is tagged "to be replaced" until its drawn-bag photo is approved: ${waiting.filter(p => p.facts.photo_label === "replace").length}/${waiting.length} tagged, ${DRAWN.size} approved, of ${hose.length}`);
   const tagged = m.PRODUCTS.filter(p => p.facts?.photo_label === "replace").map(p => p.sku);
-  ok(tagged.length === 23 + waiting.length && tagged.every(s => /^OSS-1[24]\d{4}$/.test(s)), `only the shop hookahs and hoses carry the tag: ${tagged.length}`); }
+  ok(tagged.length === 23 - CLEANED.size + waiting.length && tagged.every(s => /^OSS-1[24]\d{4}$/.test(s)), `only the shop hookahs and hoses carry the tag: ${tagged.length}`); }
 // the shop's own bowls (2026-11-27): 65 colours in 28 families (28 branded, 37 under plain names) (one card each, colours as chips), all in Bowls, Price TBD, the
 // shop's own photo; the back office's check-the-name notes never reach the storefront
 { const bowl = m.PRODUCTS.filter(p => /^bowl-/.test(p.family || ""));
