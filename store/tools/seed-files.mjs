@@ -54,6 +54,7 @@ export const SEED_FILES = [
   "catalog/live/hookah-clean-c8-2026-11-28.sql", // crew 8's cleaned Drive-batch photos, the same way (after drive2, crew 6 and crew 7)
   "catalog/live/hookah-clean-c9-2026-11-28.sql", // crew 9's cleaned Drive-batch hookah photos, the same way (after drive2, which resets those rows' facts)
   "catalog/live/hookah-clean-c10-2026-11-28.sql", // crew 10's cleaned Drive-batch hookah photos, the same way (after drive2 and crew 9)
+  "catalog/live/hookah-clean-c11-2026-11-28.sql", // crew 11's cleaned Drive-batch photos, the same way (after drive2 and crews 8-10)
   "tools/fixtures/pack-mains-live-2026-11-28.sql", // test seed only: the seven packs' live main photos, so batch 2's guards apply here as live
   "catalog/live/img-more-2-2026-11-28.sql",      // batch 2: the shop's own photos of seven packs (guarded on img)
   "catalog/live/img-more-2-2026-11-28.sql",      // run twice: proves it is safe twice
