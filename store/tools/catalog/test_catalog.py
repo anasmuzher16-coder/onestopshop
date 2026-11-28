@@ -941,7 +941,7 @@ class TestShopHookahs(Base):
     def test_live_clean_b_holds_only_group_b(self):
         import live_clean_hookahs as L
         import src_shop_hookahs as S
-        self.assertFalse(S.CLEANED_B & (S.CLEANED_FIRST | S.CLEANED_A | S.CLEANED_A3 | S.CLEANED_A2))   # group B goes live in its own file only
+        self.assertFalse(S.CLEANED_B & (S.CLEANED_FIRST | S.CLEANED_A | S.CLEANED_A3 | S.CLEANED_A2 | S.CLEANED_C2))   # group B goes live in its own file only
         b = {r["sku"] for r in L.cleaned_rows(self.hk, S.CLEANED_B)}
         others = set().union(*[{r["sku"] for r in L.cleaned_rows(self.hk, p)} for _, p, _ in L.FILES])
         self.assertFalse(b & others)
@@ -1080,7 +1080,8 @@ class TestDrive2(Base):
         self.assertEqual((len(new), len({f["family_id"] for f, _ in new})), (75, 57))
         self.assertEqual(len(S.UPRIGHT), 75)
         for f, v in new:
-            self.assertEqual(v["photo"]["status"], "replace", v["sku"])   # the shop's original, "Photo to be replaced"
+            cleaned = any(f"photo:{p} " in v["photo"]["src"] for p in S.CLEANED)   # cleaned since: its tag off (a hookah-clean file)
+            self.assertEqual(v["photo"]["status"], "shop" if cleaned else "replace", v["sku"])   # else the shop's original, "Photo to be replaced"
             self.assertTrue(any(f"photo:{p} " in v["photo"]["src"] for p in S.UPRIGHT), v["sku"])
             self.assertTrue(f["family_id"].startswith("hookah-"), f["family_id"])
         # the ones already on the site never get a second card
@@ -1116,6 +1117,37 @@ class TestDrive2(Base):
         n = con.total_changes
         con.executescript(text)
         self.assertEqual(con.total_changes - n, 0)
+
+    def test_clean_files_after_drive2_take_only_the_tag_off(self):
+        """A hookah-clean file for Drive items runs after this file (seed-files.mjs): on the rows it inserted, the cleaned
+        ones end with the tag off and every other key as inserted, the rest untouched; safe twice."""
+        import live_clean_hookahs as L
+        con = self.con
+        con.executescript(live_sections(LIVE_HOOKAHS)["shop-hookahs"])
+        con.executescript(live_sections(LIVE_MISSING)["shop-hoses"])
+        con.executescript((C.CATALOG / "live" / self.LIVE).read_text(encoding="utf-8"))
+        hk = C.load_master("shop-hookahs")
+        seeds = (C.STORE / "tools" / "seed-files.mjs").read_text(encoding="utf-8")
+        for out, photos, _d in L.FILES:
+            mine = {r["sku"] for r in L.cleaned_rows(hk, photos)} & DRIVE2_SKUS
+            if not mine:
+                continue
+            self.assertGreater(seeds.index(out.name), seeds.index(self.LIVE), out.name)
+            before = {r[0]: json.loads(r[1]) for r in con.execute("SELECT sku, facts_known FROM products")}
+            con.executescript(out.read_text(encoding="utf-8"))
+            after = {r[0]: json.loads(r[1]) for r in con.execute("SELECT sku, facts_known FROM products")}
+            for s in after:
+                if s in mine:
+                    self.assertEqual(after[s].get("photo"), "own", s)
+                    self.assertNotIn("photo_label", after[s], s)
+                    self.assertNotIn("photo_full", after[s], s)
+                    self.assertEqual({k: v for k, v in after[s].items() if k not in L.PHOTO_KEYS},
+                                     {k: v for k, v in before[s].items() if k not in L.PHOTO_KEYS}, s)
+                else:
+                    self.assertEqual(after[s], before[s], s)
+            n = con.total_changes
+            con.executescript(out.read_text(encoding="utf-8"))
+            self.assertEqual(con.total_changes - n, 0, out.name)
 
     def test_green_simba_joins_the_simba_card(self):
         h = C.load_master("shop-hoses")

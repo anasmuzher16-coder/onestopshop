@@ -45,6 +45,8 @@ export const SEED_FILES = [
   "catalog/live/drive2-2026-11-28.sql",          // the Drive folder's new items: 75 hookah colours + the green Simba hose, new rows only; last, as live: the earlier hookah and hose files' sweeps drop these rows and this file's guard lines bring them back
   "catalog/live/img-more-2026-11-28.sql",        // more photos of one item: the extra angles (products.img_more, migration 0013), guarded on img
   "catalog/live/img-more-2026-11-28.sql",        // run twice: proves it is safe twice
+  "catalog/live/hookah-clean-crew1-2026-11-28.sql", // crew 1's cleaned Drive-batch hookah photos: "Photo to be replaced" off (after drive2, which resets those rows' facts; guarded on img, safe twice)
+  "catalog/live/hookah-clean-c2-2026-11-28.sql", // crew 2's cleaned photos from the second batch, the same way (after drive2 and crew 1, which reset or touch those rows)
   "catalog/live/img-more-2-2026-11-28.sql",      // batch 2: the shop's own photos of seven packs (guarded on img)
   "catalog/live/img-more-2-2026-11-28.sql",      // run twice: proves it is safe twice
 ];
