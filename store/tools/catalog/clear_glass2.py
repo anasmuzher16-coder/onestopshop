@@ -89,10 +89,11 @@ Each PHOTOS entry (pixels of the 2600 px tall photo):
            more than t are kept as highlights (the glass's own reflections, fainter than a specular).
   tex_median px: the median that takes noise out of the texture before its band is read (default 3); cut glass wants
            about 7, so its facets read as flat planes with crisp edges, not crinkled cellophane.
+  mat_gain the strength of the texture read over the mat (default 1): below 1 where the print still shows as blotches.
   spec_off list of [x0, y0, x1, y1]: no highlight kept there (one that reads as a printed mark).
   spec_min px: highlights in pieces smaller than this are dropped (lone specks read as noise, not as glass).
   thick    list of [cx, cy, rx, ry, y0, s]: glass outside the ellipse and below row y0 (eased over 30 rows) gets s more
-           body (the thick foot's front face).
+           body (the thick foot's front face); a negative s makes it that much lighter instead.
   keep_above [cx, cy, rx, ry]: above this ellipse's lower arc (a metal flange's curved lower edge) stays as cut.
   keep_below [cx, cy, rx, ry]: below this ellipse's upper arc (a water line, a base seen through the glass) the glass
            stays as cut, and beside the ellipse everything below cy - ry - 60 does; the change eases over 10 px.
@@ -131,8 +132,9 @@ PHOTOS = {
                  "band": [995, 2320, 302, 142, 57, 1.8], "plate": [[917, 2464, 1027, 2524], [900, 1688, 1070, 1731]], "texture": False,
                  "mat": [[998, 2290, 320, 250], [998, 2470, 320, 95]], "mat_fine": [[1015, 2335, 170, 55]]},
     # cut-glass (faceted) clear base on the mat, clear collar under the stem's metal
-    "IMG_0687": {"foot": [993, 2320, [308, 312], 205, 2.3, 60, 60], "fill": True, "glass": [1650, 2600], "stem": [972, 1690, 1012, 2290],
-                 "keep_above": [995, 1656, 130, 43], "mat": [[993, 2450, 330, 150]], "tex": [28, 3.4], "tex_median": 7, "borrow": [2300, 170],
+    "IMG_0687": {"foot": [993, 2320, [308, 312], 205, 3.2, 60, 60], "fill": True, "glass": [1650, 2600], "stem": [972, 1752, 1012, 2290],
+                 "keep_above": [995, 1656, 130, 43], "mat": [[993, 2490, 330, 110]], "tex": [20, 2.6], "tex_to": 2410, "mat_gain": 0.0,
+                 "bridge": [[2040, 2140, "left"], [2040, 2140, "right"]],
                  "rim": [0.0, 2.0, 0.08], "inner": 0.14, "body": [0.0, 0.03], "spec_min": 25},
     # smooth clear bulb standing in a wide clear dish, both on the mat
     "IMG_0690": {"foot": [1044, 2150, [200, 200], 90, 2.4, 110, 80], "fill": True, "disc": [1042, 2293, 318, 204, 22], "glass": [1722, 2600], "stem": [1017, 1735, 1078, 2185],
@@ -147,8 +149,9 @@ PHOTOS = {
     "IMG_0700": {"foot": [940, 2340, [355, 352], 197, 2.0, 0, 60], "fill": True, "glass": [1520, 2600], "stem": [912, 1600, 965, 2185],
                  "keep_above": [958, 1530, 140, 38], "keep_band": [[958, 1560, 150, 36, 41, 848, 1062]], "texture": False,
                  "tex_to": 2080, "rim": [0.0, 2.0, 0.06], "inner": 0.14, "body": [0.0, 0.04], "spec_min": 80, "tex": [20, 2.4], "streaks": [1650, 2080, 10], "spec_off": [[945, 2200, 970, 2240], [955, 2415, 1005, 2455]],
-                 "arcs": [[940, 2340, 343, 187, 15, 165, 0.07, 3.0]], "thick": [[940, 2340, 343, 187, 2470, 0.08]],
-                 "bridge": [[1990, 2100, "left"], [2140, 2300, "right"]]},
+                 "arcs": [[940, 2340, 343, 187, 15, 165, 0.0, 3.0], [940, 2340, 349, 193, 140, 200, 0.05, 2.5, 180]],
+                 "thick": [[940, 2340, 343, 187, 2460, -0.10]],
+                 "bridge": [[1990, 2100, "left"], [2140, 2300, "right"], [2245, 2310, "left"]]},
     # blue swirl glass bell on a wide clear foot, on the mat
     "IMG_0698": {"foot": [1011, 2320, [282, 281], 195, 2.5, 0, 60], "fill": True, "glass": [2040, 2600], "holes": True,
                  "erase": [[845, 2030, 896, 2095], [1122, 2030, 1200, 2098]], "keep_above": [998, 2060, 120, 50],
@@ -477,7 +480,7 @@ def masks(photo, cut_a, cfg):
 
 
 def glass_layers(photo, glass, sil, mat, fine, lama, texture=True, rim_from=None, tex=(7, 2.2), borrow=None, parts=(),
-                 rim=(0.50, 3.5), tex_to=None, inner_s=0.18, body=(0.05, 0.0), spec_min=0, streaks=None, spec_off=(), tex_median=3):
+                 rim=(0.50, 3.5), tex_to=None, inner_s=0.18, body=(0.05, 0.0), spec_min=0, streaks=None, spec_off=(), tex_median=3, mat_gain=1.0):
     """Returns (dark alpha, highlight alpha) for the glass pixels of a window of the photo."""
     L = lum(photo)
     h, w = L.shape
@@ -537,7 +540,7 @@ def glass_layers(photo, glass, sil, mat, fine, lama, texture=True, rim_from=None
         f = np.clip(f - 0.04, 0, None)
         f = nd.median_filter(f, size=tex_median)                    # single-pixel noise is not texture (cut glass: crinkle)
         # detail only: broad patches are misread backdrop. Over the mat the band stays narrow (7 px) whatever `tex` says
-        narrow = np.clip(f - nd.gaussian_filter(f, 7) - 0.02, 0, None) * 2.2
+        narrow = np.clip(f - nd.gaussian_filter(f, 7) - 0.02, 0, None) * 2.2 * mat_gain
         f = narrow if tuple(tex) == (7, 2.2) else (1 - wm) * np.clip(f - nd.gaussian_filter(f, tex[0]) - 0.02, 0, None) * tex[1] + wm * narrow
         f = np.clip(f, 0, 1)
         if tex_to is not None:             # texture read only above this row (the wall behind); below it the mat: none
@@ -614,7 +617,10 @@ def drawn_edges(h, w, cfg, photo=None):
     for cx, cy, rx, ry, y0, s in cfg.get("thick", []):
         dist, _ = ell_dist(h, w, cx, cy, rx, ry)
         q = np.clip((np.arange(h) - y0) / 30, 0, 1)[:, None] * np.clip(dist / 3, 0, 1)
-        d_ = 1 - (1 - d_) * (1 - s * q)
+        if s < 0:                                        # negative: the face reads lighter (white body), never darker
+            h_ = 1 - (1 - h_) * (1 + s * q)
+        else:
+            d_ = 1 - (1 - d_) * (1 - s * q)
     return d_, h_
 
 
@@ -685,7 +691,7 @@ def run_one(src, cut_p, cfg, method, lama, tile=None, matting=None):
                                      inner_s=cfg.get("inner", 0.18), body=cfg.get("body", (0.05, 0.0)), spec_min=cfg.get("spec_min", 0),
                                      streaks=(cfg["streaks"][0] - y0, cfg["streaks"][1] - y0, cfg["streaks"][2]) if "streaks" in cfg else None,
                                      spec_off=[(a - x0, b - y0, c - x0, d - y0) for a, b, c, d in cfg.get("spec_off", [])],
-                                     tex_median=cfg.get("tex_median", 3))
+                                     tex_median=cfg.get("tex_median", 3), mat_gain=cfg.get("mat_gain", 1.0))
         if "arcs" in cfg or "thick" in cfg:
             e_d, e_h = drawn_edges(*glass.shape, cfg, photo)
             a_d = np.where(glass, 1 - (1 - a_d) * (1 - e_d), 0); hi = np.where(glass, 1 - (1 - hi) * (1 - e_h), 0)
