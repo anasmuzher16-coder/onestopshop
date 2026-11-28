@@ -4343,9 +4343,9 @@
      },
      "photo": {
       "img": "hookah/mattpear-hookah-black-crackle-base",
-      "status": "replace",
+      "status": "shop",
       "large": true,
-      "src": "photo:PXL_20261128_005851370 (the shop's own photo, as taken: to be replaced)"
+      "src": "photo:PXL_20261128_005851370 (the shop's own photo, cut out, the mat cleared: clear_glass2.py)"
      },
      "shop": {
       "price_cents": {

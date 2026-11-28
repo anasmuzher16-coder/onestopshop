@@ -420,6 +420,36 @@ PHOTOS_CREW7 = {
 }
 PHOTOS.update(PHOTOS_CREW7)
 
+# Crew 9 (2026-11-28): Drive-batch shop hookahs, OSS-140044 upward (1958 x 2600 after the resize).
+PHOTOS_CREW9 = {
+    # OSS-140058 black faceted glass base, opaque as shot, on the mat's black ring: the outline (read off the glass's grey
+    # lip) cuts the ring off; the clear bowl on top drawn as glass, its green swirl's hue kept (iris)
+    "PXL_20261128_011030855": {"photo_rgb": True, "foot": [955, 2320, [310, 310], 212, 2.6, 0, 60], "fill": True, "glass_extra": [[478, 657]], "fade": 3, "iris": [1.0, 1.0, 0.06], "rim": [0.3, 3.0, 0.08], "body": [0.12, 0.10], "tex": [7, 3.2],
+                               "outline": [[2100, 962.5, 204.5], [2120, 962.5, 221.5], [2140, 963.5, 241], [2160, 962, 259], [2200, 960, 285], [2240, 959.5, 302.5], [2280, 960.5, 309.5], [2320, 960.5, 310.5],
+                                           [2360, 960, 305], [2400, 961, 294], [2430, 963, 283], [2463, 967.5, 252.5], [2480, 970, 235], [2497, 965, 205], [2513, 961, 164], [2525, 955, 116]]},
+    # OSS-140060 MattPear black crackle base, opaque as shot, on the mat's black ring
+    "PXL_20261128_005851370": {"photo_rgb": True, "foot": [950, 2320, [258, 258], 185, 2.3, 0, 60], "fill": True,
+                               "outline": [[2120, 961, 137], [2140, 961, 154], [2160, 959, 176], [2180, 958, 198], [2200, 957, 221],
+                                           [2230, 959.5, 237.5], [2260, 960, 247], [2280, 960.5, 252.5], [2320, 957, 256], [2360, 955.5, 255.5], [2400, 955, 247], [2420, 953, 230], [2440, 953, 214], [2460, 953, 189.4], [2480, 953, 152.2], [2495, 951.5, 104.1]]},
+    # OSS-140061 MattPear, smooth clear base on the marble (no mat): drawn by the ratio method over the clean plate
+    "IMG_0745": {"foot": [1022, 2310, [304, 304], 211, 2.4, 0, 60], "fill": True, "glass": [1640, 2560], "fade": 3,
+                 # the grey rubber grommet in the mouth, the steel downstem and its diffuser kept as shot
+                 "keep_quad": [[1666, 1737, 941, 943, 1077, 1075], [1733, 1742, 943, 955, 1075, 1066], [1738, 1748, 955, 985, 1066, 1042], [1744, 2200, 989, 1003, 1043, 1058], [2193, 2203, 1003, 997, 1067, 1073], [2197, 2256, 997, 997, 1073, 1073], [2252, 2257, 997, 998, 1073, 1072], [2254, 2259, 997, 1000, 1073, 1070], [2256, 2261, 998, 1002, 1072, 1068], [2258, 2263, 1000, 1005, 1070, 1065], [2260, 2265, 1002, 1010, 1068, 1060], [2262, 2267, 1005, 1017, 1065, 1053], [2264, 2269, 1010, 1035, 1060, 1035], [2266, 2271, 1017, 1035, 1053, 1035]],
+                 "keep_above": [1005, 1640, 110, 40], "rim": [0.4, 3.0, 0.12], "body": [0.10, 0.05],
+                 "thick": [[1022, 2300, 268, 182, 2380, 0.25]], "spec_min": 30},
+    # OSS-140064 clear bulb standing in a black dish stand (on the mat): bulb drawn as glass over the wall, the dish seen
+    # through its lower part kept as cut, the stand's outline a superellipse that cuts the mat ring off
+    "PXL_20261128_010217372": {"foot": [972, 2275, [351, 351], 239, 2.2, 120, 60], "fill": True, "glass": [1805, 2240], "fade": 3,
+                               "stem": [948, 1805, 990, 2075], "keep_below": [972, 2241, 351, 235, 5], "rim": [0.3, 3.0, 0.06]},
+    # OSS-140051 quilted cut-crystal base on the mat, kept as shot (HELD: the mat's black ring shows through its edges and
+    # foot; unmat's lift turns the cut pattern milky, so only the cyan cast is taken out here)
+    "PXL_20261128_005254462": {"photo_rgb": True, "foot": [970, 2290, [308, 308], 243, 2.7, 0, 60], "fill": True,
+                               "outline": [[2110, 968, 220], [2140, 965, 258], [2170, 967, 280], [2200, 969.5, 291.5], [2250, 969.5, 306], [2290, 970, 308]],
+                               "unmat": [970, 2290, 300, 236, 2120, 2.7], "unmat_lift": 0, "unmat_tint": [1, 1, 1],
+                               "see_through": [150, 0.35, 205, 1820]},
+}
+PHOTOS.update(PHOTOS_CREW9)
+
 DARK = np.array([36, 44, 50], float)     # the glass's dark layer: a cool grey, as clear soda glass reads at a slant
 
 
