@@ -308,6 +308,14 @@ PHOTOS = {
                  "mat": [[1005, 2300, 350, 280]], "mat_fine": [[1005, 2280, 160, 90]]},
 }
 
+# Crew 2 (2026-11-28): the second batch's shop hookahs (Drive photos, 1958 x 2600 after the resize), OSS-140065 upward.
+PHOTOS_CREW2 = {
+    # OSS-140065 champagne mirrored teardrop (opaque: it reflects the shop, nothing seen through it), on the mat
+    "PXL_20261128_010247337": {"foot": [1000, 2400, [202, 202], 178, 2.1, 0, 60], "fill": True,
+                               "bridge": [[2200, 2360, "left"], [2200, 2360, "right"]], "inset": [[2370, 2560, 9, "left"]]},
+}
+PHOTOS.update(PHOTOS_CREW2)
+
 DARK = np.array([36, 44, 50], float)     # the glass's dark layer: a cool grey, as clear soda glass reads at a slant
 
 

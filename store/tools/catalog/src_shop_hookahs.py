@@ -204,7 +204,8 @@ CLEANED_A3 = {"IMG_0688", "IMG_0698", "IMG_0701"}   # group A's held photos, rew
 CLEANED_A2 = {"IMG_0695", "IMG_0700", "IMG_0687"}                 # group A, second pass (2026-11-28): hookah-clean-a2-2026-11-28.sql
 CLEANED_C1 = {"PXL_20261128_000402468", "PXL_20261128_000920111", "PXL_20261128_000711649", "PXL_20261128_001048012",
               "PXL_20261128_001542699"}   # crew 1, the Drive batch (OSS-140028 up, 2026-11-28): hookah-clean-crew1-2026-11-28.sql
-CLEANED = CLEANED_FIRST | CLEANED_A | CLEANED_B | CLEANED_A3 | CLEANED_A2 | CLEANED_C1
+CLEANED_C2 = {"PXL_20261128_010247337"}   # crew 2, the second batch (2026-11-28): hookah-clean-c2-2026-11-28.sql
+CLEANED = CLEANED_FIRST | CLEANED_A | CLEANED_B | CLEANED_A3 | CLEANED_A2 | CLEANED_C1 | CLEANED_C2
 
 
 def photo_name(name: str, colour: str) -> str:
