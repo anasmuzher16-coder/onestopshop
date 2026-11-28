@@ -34,6 +34,7 @@ export const SEED_FILES = [
   "catalog/live/web-photos-2026-11-27.sql",     // sharper web photos of the same products: their source kept, labels off where now crisp
   "catalog/live/upscaled-photos-2-2026-11-27.sql", // one foil photo upscaled (1440 -l on, 'upscale' -> 'approved'); guarded on img, safe twice
   "catalog/live/web-sweep-2026-11-27.sql",      // sharper web photos of 6 charcoal packs and the Ace Ice Hose: source kept (private), labels off; guarded on img, safe twice
+  "catalog/live/hose-drawnbag-2026-11-27.sql",   // hoses on the drawn clear bag: photo 'approved', the "Photo to be replaced" tag off (after shop-hookahs); safe twice
 ];
 export const seedPath = f => fileURLToPath(new URL(f, STORE));
 
