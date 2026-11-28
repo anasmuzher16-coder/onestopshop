@@ -862,6 +862,17 @@ class TestShopHookahs(Base):
     def test_live_clean_file_matches_master(self):
         import live_clean_hookahs as L
         self.assertEqual(L.OUT.read_text(encoding="utf-8"), L.sql(self.hk))
+        self.assertEqual(L.OUT_B.read_text(encoding="utf-8"), L.sql_b(self.hk, C.load_master("ace") if L.PANDA_READY else None))
+
+    def test_live_clean_files_split_the_cleaned_photos(self):
+        import live_clean_hookahs as L
+        import src_shop_hookahs as S
+        self.assertFalse(L.BATCH_12 & L.GROUP_B)
+        self.assertTrue(S.CLEANED <= L.BATCH_12 | L.GROUP_B)   # every cleaned photo is in one of the two files
+        a = {r["sku"] for r in L.cleaned_rows(self.hk, L.BATCH_12)}
+        b = {r["sku"] for r in L.cleaned_rows(self.hk, L.GROUP_B)}
+        self.assertFalse(a & b)
+        self.assertEqual(a | b, self.cleaned)
 
     def test_live_clean_file_moves_only_photo_keys_and_is_safe_twice(self):
         import live_clean_hookahs as L
@@ -870,6 +881,7 @@ class TestShopHookahs(Base):
         cols = "sku, name, price_cents, stock, active, listed, img, family, variant_label, facts_known"
         before = {r[0]: r[1:] for r in con.execute(f"SELECT {cols} FROM products WHERE supplier_id = 'shop-hookahs'")}
         con.executescript(L.OUT.read_text(encoding="utf-8"))
+        con.executescript(L.OUT_B.read_text(encoding="utf-8"))
         after = {r[0]: r[1:] for r in con.execute(f"SELECT {cols} FROM products WHERE supplier_id = 'shop-hookahs'")}
         want = {r["sku"]: json.loads(r["sup"]["facts_known"]) for r in K.desired_rows("shop-hookahs", self.hk)}
         for s in before:
@@ -881,6 +893,7 @@ class TestShopHookahs(Base):
                 self.assertEqual(before[s][-1], after[s][-1], s)
         n = con.total_changes
         con.executescript(L.OUT.read_text(encoding="utf-8"))
+        con.executescript(L.OUT_B.read_text(encoding="utf-8"))
         self.assertEqual(con.total_changes - n, 0)
 
     def test_master_validates_and_counts(self):
